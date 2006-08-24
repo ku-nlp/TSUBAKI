@@ -1,0 +1,57 @@
+サーチエンジン用プログラム
+
+Written by 
+	黒橋禎夫
+	河原大輔
+	新里圭司
+	柴田知秀
+	笹野遼平
+	中澤敏明
+	笹田鉄郎
+
+
+1. 標準フォーマットxmlのJUMAN部分を読み込み、ドキュメントごとに単語頻度を計数
+
+ "-in" で指定したディレクトリを開き、ファイル名が"<数字>.xml"のファイルを読み込む
+ "-out"で指定したディレクトリに、"<数字>.idx"ファイルを作成
+
+ Usage: ./make_idx.pl -in INPUT_DIR -out OUTPUT_DIR
+
+
+2. 単語頻度の計数結果をマージ (全てをメモリ上に処理)
+
+ ディレクトリを開き、拡張子がidxのファイルを読み込む
+ 標準出力に、マージした結果を出力
+
+ Usage: ./merge_idx.pl -d DIR > merge.idx
+ 
+ 標準入力から読み込み、標準出力に出力ことも可能
+
+ Usage: cat 1.idx 2.idx 3.idx | ./merge_idx.pl > merge.idx
+
+
+3. ソートされたインデックスファイルをマージするプログラム(ダイナミックに出力)
+
+ ディレクトリを開き、拡張子がidxのファイルを読み込む
+ 標準出力に、マージした結果を出力
+
+ Usage: ./merge_sorted_idx.pl -d DIR > merge.idx
+
+
+4. idxファイルをバイナリ化するプログラム(オフセット値も同時に保存)
+
+ 引数に指定されたファイル(<NAME>.idx)からデータを読み、バイナリ化
+ idx<NAME>.dat に結果を出力
+ offset<NAME>.dbにオフセット値を保存(BerkeleyDB)
+
+ Usage: ./binarize_idx.pl <NAME>.idx
+
+
+5. 標準入力から入力された単語を含む文書IDを検索するプログラム
+
+ 引数に指定されたディレクトリ中のバイナリファイル(idx<NAME>.dat)を開き、
+ (同一ディレクトリ中にoffset<NAME>.dbが存在する必要あり)
+ 標準入力から受け取ったクエリを含む文書IDを出力
+ スペース区切りでAND検索も可能
+
+ Usage: echo "検索" | nkf -w | ./retrieve.pl -d DIR
