@@ -25,7 +25,7 @@ Written by
 
  Usage: ./merge_idx.pl -d DIR > merge.idx
  
- 標準入力から読み込み、標準出力に出力ことも可能
+ 標準入力から読み込み、標準出力に出力することも可能
 
  Usage: cat 1.idx 2.idx 3.idx | ./merge_idx.pl > merge.idx
 
