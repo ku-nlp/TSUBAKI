@@ -1,0 +1,16 @@
+2006-08-28  Ryohei Sasano  <ryohei@nlp.kuee.kyoto-u.ac.jp.ac.jp>
+
+	* scripts/make_idx.pl:
+	大量のファイルを読み込むときにMemoryが足りなくなるバグを修正
+	XMLをテキストとして処理するオプション(-direct)を追加
+	
+2006-08-25  Ryohei Sasano  <ryohei@nlp.kuee.kyoto-u.ac.jp.ac.jp>
+
+	* doc/overview.ppt:
+        New file.
+
+2006-08-24  Ryohei Sasano  <ryohei@nlp.kuee.kyoto-u.ac.jp.ac.jp>
+
+	* scripts/make_idx.pl, scripts/merge_sorted_idx.pl, scripts/binarize_idx.pl, scripts/merge_idx.pl, scripts/retrieve.pl:
+        imported.
+
