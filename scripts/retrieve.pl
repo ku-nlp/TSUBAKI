@@ -25,7 +25,7 @@ while (<STDIN>) {
     }
     else {
 	foreach my $i (@result) {
-	    print "$i->{did} $i->{freq}\n";
+	    printf "%s %.3f\n", $i->{did}, $i->{score};
 	}
 	# print "@result\n";
     }
