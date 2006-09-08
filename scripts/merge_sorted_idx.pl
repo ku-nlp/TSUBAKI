@@ -23,7 +23,7 @@ opendir (DIR, $opt{dir}) || die "$!\n";
 #  最後に読み込んだ行の見出し語(midasi)、
 #  最後に読み込んだ行のテキスト/頻度文字列(data) 
 # を持ち、常に見出し語でソートされている
-# ex.  ((あい 0 "1:1 3:3 4:2") (あい 2 "8:2 9:1") (あう 1 "5:3 7:2")) ・・・
+# ex.  ((0 あい "1:1 3:3 4:2") (2 あい "8:2 9:1") (1 あう "5:3 7:2")) ・・・
 
 # ファイルをオープンする
 my @FH;
@@ -54,17 +54,21 @@ while (@INDEX) {
 
     my $index = shift(@INDEX);
 
-    # 見出し語が同じ時は後に追加
+    # 見出し語が同じ時はbufの後に追加
     if ($buf->{midasi} eq $index->{midasi}) {
 	$buf->{data} .= " " . $index->{data};
     }
     # 見出し語が変化した場合はbufを出力して、見出し語を変える
     else {
+	# 文書IDのソート
+	$buf->{data} = join(' ', sort(split(/ /, $buf->{data})));
+
 	print $buf->{midasi} . " " . $buf->{data} . "\n" if ($buf->{midasi});
 	$buf->{midasi} = $index->{midasi};
 	$buf->{data} = $index->{data};
     }
-    
+
+    # 先ほど取り出したファイル番号について，新しい行を取り出し，@INDEXの適当な位置に挿入
     if (($_ = $FH[$index->{file_num}]->getline)) {
 	chomp;
         /^(\S+) (.*)/;

@@ -24,6 +24,9 @@ while (<STDIN>) {
 	print "No file was found.\n";
     }
     else {
-	print "@result\n";
+	foreach my $i (@result) {
+	    print "$i->{did} $i->{freq}\n";
+	}
+	# print "@result\n";
     }
 }
