@@ -1,3 +1,11 @@
+2006-09-08  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* scripts/retrieve.pl:
+	retrieve.plをモジュール化
+
+	* scripts/Retrieve.pm:
+	added.
+
 2006-08-28  Ryohei Sasano  <ryohei@nlp.kuee.kyoto-u.ac.jp.ac.jp>
 
 	* scripts/make_idx.pl:
