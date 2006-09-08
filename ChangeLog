@@ -1,3 +1,8 @@
+2006-09-08  Tetsuro Sasada  <sasada@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Retrieve.pm:
+	added OKAPI.
+
 2006-09-08  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* sample_dat:
