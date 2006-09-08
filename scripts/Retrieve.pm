@@ -14,7 +14,7 @@ use FileHandle;
 
 ######################################################################
 # 全文書数
-our $N = 5;
+our $N = 3000000;
 ######################################################################
 
 
@@ -92,8 +92,8 @@ sub search {
     }
 
     # return &_calc_d_score_AND(\%did_info, scalar(@query_list));
-    return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
-    # return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list));
+    # return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
+     return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list), \@df);
 }   
 
 sub DESTROY {
@@ -158,8 +158,20 @@ sub _calc_d_score_TF_IDF {
 
 sub _calc_d_score_OKAPI {
 
-    # under construction by Sasada
+    my ($did_info, $key_num, $df) = @_;
+    my (@result) = ();
 
+    foreach my $did (keys(%{$did_info})) {
+	my $flag = 1;
+	for (my $k = 0; $k < $key_num; $k++) {
+	    if (defined $did_info->{$did}{freq}[$k]) {
+		$did_info->{$did}{FREQ} += $did_info->{$did}{freq}[$k];
+		$did_info->{$did}{score} += (3 * $did_info->{$did}{freq}[$k] / (2 + $did_info->{$did}{freq}[$k])) * log(($N - $df->[$k] + 0.5) / ($df->[$k] + 0.5));
+	    }
+	}
+	push(@result, {"did" => $did, "score" => $did_info->{$did}{score}});
+    }
+    return sort {$b->{score} <=> $a->{score}} @result;
 }
 
 
