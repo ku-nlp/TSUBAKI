@@ -41,6 +41,8 @@ sub new {
 	$this->{FILE_NUM}++;
     }
 
+    closedir(DIR);
+
     bless $this;
 }
 
