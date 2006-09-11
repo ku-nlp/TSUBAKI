@@ -1,3 +1,8 @@
+2006-09-11  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* scripts/Retrieve.pm:
+	closedirしていなかったのを修正
+
 2006-09-08  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/api.cgi:
