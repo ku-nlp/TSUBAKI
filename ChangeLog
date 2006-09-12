@@ -1,3 +1,8 @@
+2006-09-12  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/index.cgi:
+	added.
+
 2006-09-11  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* scripts/Retrieve.pm:
