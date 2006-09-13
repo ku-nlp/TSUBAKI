@@ -51,7 +51,8 @@ sub search {
 
     my @query_list = split(/[\s　]+/, $key);
     my @df;
-    my %did_info;
+    # my %did_info;
+    my @did_info;
 
     # idxごとに処理
     for (my $f_num = 0; $f_num < $this->{FILE_NUM}; $f_num++) {
@@ -85,7 +86,8 @@ sub search {
 			read($this->{IN}[$f_num], $buf, 4);
 			my $freq = unpack('L', $buf);
 
-			$did_info{$did}{freq}[$k] = $freq; 
+			# $did_info{$did}{freq}[$k] = $freq; 
+			push(@{$did_info[$k]}, $did);
 		    }
 		    last;
 		}
@@ -93,9 +95,10 @@ sub search {
 	}
     }
 
+    return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
     # return &_calc_d_score_AND(\%did_info, scalar(@query_list));
     # return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
-     return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list), \@df);
+    # return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list), \@df);
 }   
 
 sub DESTROY {
@@ -106,6 +109,47 @@ sub DESTROY {
 	$this->{IN}[$f_num]->close;
 	untie %{$this->{OFFSET}[$this->{FILE_NUM}]};
     }
+}
+
+######################################################################
+# AND(ハッシュを使わない高速版)
+
+sub _calc_d_score_AND_wo_hash {
+
+    my ($did_info, $key_num) = @_;
+    my (@result) = ();
+
+    # 入力リストをサイズ順にソート(一番短い配列を先頭にするため)
+    @{$did_info} = sort {scalar(@{$a}) <=> scalar(@{$b})} @{$did_info};
+
+    # 一番短かい配列に含まれる文書が、他の配列に含まれるかを調べる
+    for (my $i = 0; $i < @{$did_info->[0]}; $i++) {
+
+	# 対象の文書を含まない配列があった場合
+	# $flagが1のままループを終了する
+	my $flag;
+
+	# 一番短かい配列以外を順に調べる
+	for (my $k = 1;  $k < $key_num; $k++) {
+	    $flag = 1; 
+
+	    while (@{$did_info->[$k]}) {
+		if ($did_info->[$k][0] < $did_info->[0][$i]) {
+		    shift(@{$did_info->[$k]});
+		}
+		elsif ($did_info->[$k][0] == $did_info->[0][$i]) {
+		    $flag = 0;
+		    last;
+		}
+		elsif ($did_info->[$k][0] > $did_info->[0][$i]) {
+		    last;
+		}
+	    }
+	    last if ($flag);
+	}
+	push(@result, {"did" => $did_info->[0][$i], "score" => 1}) if (!$flag);
+    }
+    return @result;
 }
 
 ######################################################################
@@ -173,7 +217,8 @@ sub _calc_d_score_OKAPI {
 	}
 	push(@result, {"did" => $did, "score" => $did_info->{$did}{score}});
     }
-    return sort {$b->{score} <=> $a->{score}} @result;
+    # return sort {$b->{score} <=> $a->{score}} @result;
+    return @result;
 }
 
 
