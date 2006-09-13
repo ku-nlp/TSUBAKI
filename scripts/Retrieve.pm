@@ -51,8 +51,8 @@ sub search {
 
     my @query_list = split(/[\s　]+/, $key);
     my @df;
-    my %did_info;
-    # my @did_info;
+    # my %did_info;
+    my @did_info;
 
     # idxごとに処理
     for (my $f_num = 0; $f_num < $this->{FILE_NUM}; $f_num++) {
@@ -86,8 +86,8 @@ sub search {
 			read($this->{IN}[$f_num], $buf, 4);
 			my $freq = unpack('L', $buf);
 
-			$did_info{$did}{freq}[$k] = $freq; 
-			# push(@{$did_info[$k]}, $did);
+			# $did_info{$did}{freq}[$k] = $freq; 
+			push(@{$did_info[$k]}, $did);
 		    }
 		    last;
 		}
@@ -95,8 +95,8 @@ sub search {
 	}
     }
 
-    # return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
-    return &_calc_d_score_AND(\%did_info, scalar(@query_list));
+    return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
+    # return &_calc_d_score_AND(\%did_info, scalar(@query_list));
     # return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
     # return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list), \@df);
 }   
@@ -175,8 +175,7 @@ sub _calc_d_score_AND {
 	    push(@result, {"did" => $did, "score" => $did_info->{$did}{FREQ}});
 	}
     }
-    # return sort {$b->{score} <=> $a->{score}} @result;
-    return @result;
+    return sort {$b->{score} <=> $a->{score}} @result;
 }
 
 ######################################################################
