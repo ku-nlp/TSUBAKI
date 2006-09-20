@@ -4,6 +4,8 @@ use strict;
 use CGI qw/:standard/;
 use CGI::Carp qw(fatalsToBrowser);
 use URI::Escape;
+use Retrieve;
+use Encode;
 
 my $cgi = new CGI;
 my $URL = $cgi->param('URL');
@@ -18,6 +20,8 @@ my @COLOR = ("ffff66", "a0ffff", "99ff99", "ff9999", "ff66ff",
 my $retrieve_script_dir = '/usr/local/apache/htdocs/SearchEngine/scripts/';
 my $INDEX_dir = '/share3/text/WWW/tau060911';
 my $PRINT_THRESHOLD = 1000;
+
+my $retrieve = new Retrieve($INDEX_dir);
 
 # HTTPヘッダ出力
 print header(-charset => 'euc-jp');
@@ -77,21 +81,20 @@ END_OF_HTML
 	close OUT;
 	
 	# 解析
-	my $result; 
-	$result = `echo $INPUT | nkf -w | /share/usr/bin/perl -I $retrieve_script_dir/ $retrieve_script_dir/retrieve.pl -d $INDEX_dir`;
+	my @result = $retrieve->search(decode('euc-jp', $INPUT));
 	
 	# undefの場合は形態素で分割する
 	# (要変更) Retrieve.pmの中に入れる
-	if ($result =~ /No file was found/) {
+	unless (@result) {
 	    my $juman = `echo $INPUT | /share/usr/bin/juman`;
 	    $INPUT = "";
 	    for (split(/\n/, $juman)) {
 		$INPUT .= &GetData($_) . " ";
 	    }
 	    $INPUT =~ s/ $//;
-	    $result = `echo $INPUT | nkf -w | /share/usr/bin/perl -I $retrieve_script_dir/ $retrieve_script_dir/retrieve.pl -d $INDEX_dir`;
+	    @result = $retrieve->search(decode('euc-jp', $INPUT))
 	}
-	
+
 	# 解析結果の表示
 	my $color;
 	for my $key (split(/\s/, $INPUT)) {
@@ -100,20 +103,13 @@ END_OF_HTML
 	    $color++;
 	}
 	print ": ";
-	
-	if ($result =~ /No file was found/) {
-	    print "$result";
+
+	unless (@result) {
+	    print "No file was found";
 	}
-# 	elsif (/undef/) {
-# 	    print "$result";
-# 	}
 	else {
 	    my $output;
-	    my @tmp_ids = split (' ', $result);
-	    my @ids;
-	    for (my $i = 0; $i < @tmp_ids; $i += 2) { # skip freq
-		push(@ids, $tmp_ids[$i]);
-	    }
+	    my @ids = map({$_->{did}} @result);
 
 	    print $#ids + 1 . "個のファイルが見つかりました<BR>";
 	    print "最初の${PRINT_THRESHOLD}件を表示します<BR>" if @ids > $PRINT_THRESHOLD;
