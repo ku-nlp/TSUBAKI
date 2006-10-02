@@ -95,6 +95,11 @@ sub search {
 	}
     }
 
+    for(my $k = 0; $k < @query_list; $k++){
+	return () unless(defined($did_info[$k]));
+    }
+
+#   return @did_info if(scalar(@did_info) < 1);
     return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
     # return &_calc_d_score_AND(\%did_info, scalar(@query_list));
     # return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
@@ -115,7 +120,6 @@ sub DESTROY {
 # AND(ハッシュを使わない高速版)
 
 sub _calc_d_score_AND_wo_hash {
-
     my ($did_info, $key_num) = @_;
     my (@result) = ();
 
