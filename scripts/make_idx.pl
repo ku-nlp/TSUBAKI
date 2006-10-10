@@ -105,8 +105,14 @@ sub CountData
     return if ($w[5] =~ /^空白$/);
     return if ($w[5] =~ /^(形式|副詞的)名詞$/);
     
+    my $word = $w[2];
+    if($input =~ /代表表記:(.+)\//){
+	$word = $1;
+    }
+
     # 各単語IDの頻度を計数
-    $freq{$w[2]}++;
+#    $freq{$w[2]}++;
+    $freq{$word}++;
 }
 
 sub Output
