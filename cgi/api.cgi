@@ -1,4 +1,4 @@
-#!/share/usr/bin/perl
+#!/usr/local/bin/perl
 
 # REST API for search
 
@@ -25,12 +25,19 @@ use POSIX qw(strftime);
 use Encode;
 use URI::Escape qw(uri_escape);
 
-my $CACHE_PROGRAM = 'http://reed.kuee.kyoto-u.ac.jp/SearchEngine/index.cgi';
-my $HTML_PATH_TEMPLATE = 'INDEX/%02d/h%04d/%08d.html';
-my $SF_PATH_TEMPLATE   = 'INDEX/%02d/x%04d/%08d.xml';
+# my $CACHE_PROGRAM = 'http://reed.kuee.kyoto-u.ac.jp/SearchEngine/index.cgi';
+my $INDEX_DIR = '/se_tmp/indexes';
+my $CACHE_PROGRAM = 'http://157.1.128.160/cgi-bin/index.cgi';
+# my $HTML_PATH_TEMPLATE = "$INDEX_DIR/%02d/h%04d/%08d.html";
+# my $SF_PATH_TEMPLATE   = "$INDEX_DIR/%02d/x%04d/%08d.xml";
+my $HTML_PATH_TEMPLATE = "INDEX/%02d/h%04d/%08d.html";
+my $SF_PATH_TEMPLATE   = "INDEX/%02d/x%04d/%08d.xml";
 
-my $retrieve = new Retrieve('INDEX'); # give the index dir
+my $retrieve = new Retrieve($INDEX_DIR); # give the index dir
 my $cgi = new CGI;
+
+# current time
+my $timestamp = strftime("%Y-%m-%d %T", localtime(time));
 
 # utf8 encoded query
 my $query = decode('utf8', $cgi->param('query'));
@@ -40,56 +47,79 @@ my $uri_escaped_query = uri_escape(encode('euc-jp', $query)); # uri_escape_utf8(
 my $result_num = $cgi->param('results');
 $result_num = 10 unless $result_num; # default number of results
 
+my $ranking_method = $cgi->param('rank');
+$ranking_method = 'AND' unless $ranking_method; # default number of results
+
 # start position of results
 my $start_num = $cgi->param('start');
 $start_num = 1 unless $start_num;
 
-# current time
-my $timestamp = strftime("%Y-%m-%d %T", localtime(time));
-
-# print HTTP header
-print $cgi->header(-type => 'text/xml', 
-		   -charset => 'utf-8', 
-		  );
-
-# prepare XML output
-my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
-$writer->xmlDecl('utf-8');
+# get an operation
+my $file_type = $cgi->param('type');
 
 # XML DOM Parser for acquiring information of HTML
-my $parser = new XML::DOM::Parser;
+    my $parser = new XML::DOM::Parser;
+
+if($file_type){
+    my $fid = $cgi->param('id');
+    print $cgi->header(-type => "text/$file_type", 
+		       -charset => 'utf-8', 
+		       );
+    $fid =~ /(\d\d)(\d\d)\d+/;
+    my $dir_id = $1;
+    my $subdir_id = "$1$2";
+    my $dir_prefix = substr($file_type, 0, 1);
+
+#   my $filepath = "INDEX/$dir_prefix$subdir_id/$fid.$file_type";
+    my $filepath = "$INDEX_DIR/$dir_id/$dir_prefix$subdir_id/$fid.$file_type";
+    my $htmlfp = "$INDEX_DIR/$dir_id/h$subdir_id/$fid.html";
+    my $content = `/usr/local/bin/nkf --utf8 $filepath`;
+    my $url = `head -1 ${htmlfp} | cut -f 2 -d ' '`;
+    $content =~ s/Url=\"\"/Url=\"${url}\"/;
+    print $content;
+}else{
+# print HTTP header
+    print $cgi->header(-type => 'text/xml', 
+		       -charset => 'utf-8', 
+		       );
+
+# prepare XML output
+    my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
+    $writer->xmlDecl('utf-8');
 
 # search
-my @result = $retrieve->search($query);
-my @ret_result = &get_results_specified_num(\@result, $start_num, $result_num);
-
-$writer->startTag('ResultSet', time => $timestamp, query => $query, 
-		  totalResultsAvailable => scalar(@result), 
-		  totalResultsReturned => scalar(@ret_result), 
-		  firstResultPosition => $start_num);
-
-for my $d (@ret_result) {
-    $writer->startTag('Result', Id => sprintf("%08d", $d->{did}), Score => sprintf("%.5f", $d->{score}));
+    my @result = $retrieve->search($query,$ranking_method);
+    my @ret_result = &get_results_specified_num(\@result, $start_num, $result_num);
+    
+    $writer->startTag('ResultSet', time => $timestamp, query => $query, 
+		      totalResultsAvailable => scalar(@result), 
+		      totalResultsReturned => scalar(@ret_result), 
+		      firstResultPosition => $start_num,
+		      rankingMethod => $ranking_method);
+    
+    for my $d (@ret_result) {
+#	$writer->startTag('Result', Id => sprintf("%08d", $d->{did}), Score => sprintf("%.5f", $d->{score}), Size => &get_cache_size($d->{did}));
+	$writer->startTag('Result', Id => sprintf("%08d", $d->{did}), Score => sprintf("%.5f", $d->{score}));
 
 #    $writer->startTag('Title');
 #    $writer->characters(&get_file_info($d->{did}));
 #    $writer->endTag('Title');
-
-    $writer->startTag('Cache');
-    $writer->startTag('Url');
-    $writer->characters(&get_cache_location($d->{did}, $uri_escaped_query));
-    $writer->endTag('Url');
-    $writer->startTag('Size');
-    $writer->characters(&get_cache_size($d->{did}));
-    $writer->endTag('Size');
-    $writer->endTag('Cache');
-
-    $writer->endTag('Result');
+	
+	$writer->startTag('Cache');
+	$writer->startTag('Url');
+	$writer->characters(&get_cache_location($d->{did}, $uri_escaped_query));
+	$writer->endTag('Url');
+	$writer->startTag('Size');
+	$writer->characters(&get_cache_size($d->{did}));
+	$writer->endTag('Size');
+	$writer->endTag('Cache');
+	
+	$writer->endTag('Result');
+    }
+    
+    $writer->endTag('ResultSet');
+    $writer->end();
 }
-
-$writer->endTag('ResultSet');
-$writer->end();
-
 
 sub get_results_specified_num {
     my ($result, $start, $num) = @_;
