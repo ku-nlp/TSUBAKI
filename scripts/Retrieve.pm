@@ -14,7 +14,7 @@ use FileHandle;
 
 ######################################################################
 # 全文書数
-our $N = 3000000;
+our $N = 23000000;
 ######################################################################
 
 
@@ -47,12 +47,12 @@ sub new {
 }
 
 sub search {
-    my ($this, $key) = @_;
+    my ($this, $key, $ranking_method) = @_;
 
     my @query_list = split(/[\s　]+/, $key);
     my @df;
-    # my %did_info;
-    my @did_info;
+    my %did_info;
+#    my @did_info;
 
     # idxごとに処理
     for (my $f_num = 0; $f_num < $this->{FILE_NUM}; $f_num++) {
@@ -86,8 +86,8 @@ sub search {
 			read($this->{IN}[$f_num], $buf, 4);
 			my $freq = unpack('L', $buf);
 
-			# $did_info{$did}{freq}[$k] = $freq; 
-			push(@{$did_info[$k]}, $did);
+			$did_info{$did}{freq}[$k] = $freq; 
+#			push(@{$did_info[$k]}, $did);
 		    }
 		    last;
 		}
@@ -95,15 +95,20 @@ sub search {
 	}
     }
 
-    for(my $k = 0; $k < @query_list; $k++){
-	return () unless(defined($did_info[$k]));
-    }
+#    for(my $k = 0; $k < @query_list; $k++){
+#	return () unless(defined($did_info[$k]));
+#    }
 
-#   return @did_info if(scalar(@did_info) < 1);
-    return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
-    # return &_calc_d_score_AND(\%did_info, scalar(@query_list));
-    # return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
-    # return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list), \@df);
+#    return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
+
+    if($ranking_method eq "TFIDF"){
+	return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
+    }elsif($ranking_method eq "OKAPI"){
+	return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list), \@df);
+    }else{
+	# AND
+	return &_calc_d_score_AND(\%did_info, scalar(@query_list));
+    }
 }   
 
 sub DESTROY {
@@ -221,8 +226,8 @@ sub _calc_d_score_OKAPI {
 	}
 	push(@result, {"did" => $did, "score" => $did_info->{$did}{score}});
     }
-    # return sort {$b->{score} <=> $a->{score}} @result;
-    return @result;
+    return sort {$b->{score} <=> $a->{score}} @result;
+#    return @result;
 }
 
 
