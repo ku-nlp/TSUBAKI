@@ -47,7 +47,7 @@ sub new {
 }
 
 sub search {
-    my ($this, $key, $ranking_method) = @_;
+    my ($this, $key, $ranking_method, $logical_cond) = @_;
 
     my @query_list = split(/[\s　]+/, $key);
     my @df;
@@ -101,6 +101,7 @@ sub search {
 
 #    return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
 
+    %did_info = &intersect(\%did_info) if($logical_cond eq "AND");
     if($ranking_method eq "TFIDF"){
 	return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
     }elsif($ranking_method eq "OKAPI"){
@@ -163,6 +164,29 @@ sub _calc_d_score_AND_wo_hash {
 
 ######################################################################
 # AND
+
+sub intersect{
+    my ($did_info, $key_num) = @_;
+    my (%result) = {};
+
+    foreach my $did (keys(%{$did_info})){
+	my $flag = 1;
+	for(my $k = 0; $k < $key_num; $k++){
+	    if(!defined $did_info->{$did}{freq}[$k]){
+		if(exists($result{$did})){
+		    delete($result{$did});
+		}
+		last;
+	    }else{
+		unless(exists($result{$did})){
+		    $result{$did} = {freq => []};
+		}
+		$result{$did}{freq}[$k] = $did_info->{$did}{freq}[$k];
+	    }
+	}
+    }
+    return %result;
+}
 
 sub _calc_d_score_AND {
 
