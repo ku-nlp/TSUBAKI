@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use IO::Socket;
@@ -6,7 +6,7 @@ use Retrieve;
 use Encode;
 use URI::Escape;
 
-my $port = 9684; # ポート番号を設定
+my $port = 9686; # ポート番号を設定
 # my $JUMAN_HOME = "/share/tool/juman/bin";
 my $JUMAN_HOME = "/home/skeiji/local/bin";
 my $listening_socket = IO::Socket::INET->new(LocalPort => $port,
@@ -15,13 +15,13 @@ my $listening_socket = IO::Socket::INET->new(LocalPort => $port,
 					     Reuse     => 1,
 					     );
 
-my $INDEX_dir = $ARGV[0];
-my $PRINT_THRESHOLD = 50;
-my $retrieve = new Retrieve($INDEX_dir);
-
 unless($listening_socket){
     die "listen できませんでした。 $!\n";
 }
+
+my $INDEX_dir = $ARGV[0];
+my $PRINT_THRESHOLD = 50;
+my $retrieve = new Retrieve($INDEX_dir);
 
 # print "ポート $port を見張ります。\n";
 
@@ -40,10 +40,10 @@ while(1){
     my $search_q = "";
     while($search_q = <$new_socket>){
 	chomp($search_q);
-	my($input,$ranking_method) = split(/,/,$search_q);
+	my($input,$ranking_method,$logical_cond) = split(/,/,$search_q);
 	# 解析
 #	$input = "京都";
-	my @result = $retrieve->search(decode('euc-jp',$input),$ranking_method);
+	my @result = $retrieve->search(decode('euc-jp',$input),$ranking_method,$logical_cond);
 
 	# undefの場合は形態素で分割する
 	# (要変更) Retrieve.pmの中に入れる
@@ -56,7 +56,7 @@ while(1){
 	    }
 	    $input =~ s/ $//;
 	    print "now retrieving the keyword(s) ($input)\n";
-	    @result = $retrieve->search(decode('euc-jp',$input),$ranking_method);
+	    @result = $retrieve->search(decode('euc-jp',$input),$ranking_method,$logical_cond);
 	}
 
 	unless(@result){
