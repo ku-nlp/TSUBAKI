@@ -16,6 +16,8 @@ my $cgi = new CGI;
 my $URL = $cgi->param('URL');
 my $INPUT = $cgi->param('INPUT');
 my $RANKING_METHOD = $cgi->param('rank');
+my $LOGICAL_COND = $cgi->param('logical');
+
 my $date = `date +%m%d-%H%M%S`;
 chomp ($date);
 
@@ -50,7 +52,7 @@ for(my $i = 1; $i < 24; $i++){
 # $hosts[2] = "nlpc01";
 
 #my @hosts = @ARGV;
-my $port = 9684;
+my $port = 9686;
 
 #my $retrieve = new Retrieve($INDEX_dir);
 my $tool_home='/home/skeiji/local/bin';
@@ -108,6 +110,14 @@ END_OF_HTML
 	print "<INPUT type=\"radio\" name=\"rank\" value=\"OKAPI\"/>OKAPI\n";
     }
 
+    if($LOGICAL_COND eq "AND"){
+	print "<INPUT type=\"radio\" name=\"logical\" value=\"AND\" checked/>AND\n";
+	print "<INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>OR\n";
+    }else{
+	print "<INPUT type=\"radio\" name=\"logical\" value=\"AND\"/>AND\n";
+	print "<INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>OR\n";
+    }
+
     print "</FORM>\n";
     print "<HR>\n";
     
@@ -116,7 +126,7 @@ END_OF_HTML
 	
 	# ログの保存
 	open(OUT, ">> /se_tmp/input.log");
-	print OUT "$date $ENV{REMOTE_ADDR}\t$INPUT\n";
+	print OUT "$date $ENV{REMOTE_ADDR}\t$INPUT $RANKING_METHOD $LOGICAL_COND\n";
 	close OUT;
 	
 	my $hitcount = 0;
@@ -139,7 +149,7 @@ END_OF_HTML
 	    
 	    # 文字列を送信
 #	    print "送信メッセージ: $query\n";
-	    print $socket "$INPUT,$RANKING_METHOD\n";
+	    print $socket "$INPUT,$RANKING_METHOD,$LOGICAL_COND\n";
 	    $socket->flush();
 	}
 	
@@ -205,8 +215,9 @@ END_OF_HTML
  		my $xmlpath = sprintf("INDEX/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
 
 		my $htmldoc = `$tool_home/nkf -e $url`;
+		my $htmltitle = 'no title';
 		$htmldoc =~ /\<title\>((?:.|\n)+)\<\/title\>/i;
-		my $htmltitle = $1;
+		$htmltitle = $1 if($1 ne '');
 
 		my $xmldoc = `$tool_home/nkf -e $xmlpath`;
 		my $snippet = '';
