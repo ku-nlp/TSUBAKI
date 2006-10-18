@@ -1,3 +1,7 @@
+2006-10-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* cgi/Retrieve.pm:
+	intersect_wo_hash関数で、全ての検索クエリを含まない文書が選択されるバグを修正.
+
 2006-09-20  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/index.cgi:
