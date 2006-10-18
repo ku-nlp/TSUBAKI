@@ -51,8 +51,8 @@ sub search {
 
     my @query_list = split(/[\s　]+/, $key);
     my @df;
-    my %did_info;
-#    my @did_info;
+#   my %did_info;
+    my @did_info;
 
     # idxごとに処理
     for (my $f_num = 0; $f_num < $this->{FILE_NUM}; $f_num++) {
@@ -86,8 +86,8 @@ sub search {
 			read($this->{IN}[$f_num], $buf, 4);
 			my $freq = unpack('L', $buf);
 
-			$did_info{$did}{freq}[$k] = $freq; 
-#			push(@{$did_info[$k]}, $did);
+#			$did_info{$did}{freq}[$k] = $freq; 
+			push(@{$did_info[$k]}, {qid => $k, did => $did, freq => $freq});
 		    }
 		    last;
 		}
@@ -101,14 +101,23 @@ sub search {
 
 #    return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
 
-    %did_info = &intersect(\%did_info) if($logical_cond eq "AND");
-    if($ranking_method eq "TFIDF"){
-	return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
-    }elsif($ranking_method eq "OKAPI"){
-	return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list), \@df);
+#   %did_info = &intersect(\%did_info) if($logical_cond eq "AND");
+    @did_info = @{&intersect_wo_hash(\@did_info,scalar(@query_list))} if($logical_cond eq "AND");
+    if(scalar(@did_info) < 1){
+	print STDERR "ERROR.\n";
+	return ();
     }else{
-	# AND
-	return &_calc_d_score_AND(\%did_info, scalar(@query_list));
+	if($ranking_method eq "TFIDF"){
+#	    return &_calc_d_score_TF_IDF(\%did_info, scalar(@query_list), \@df);
+	    return &_calc_d_score_TF_IDF_wo_hash(\@did_info, scalar(@query_list), \@df);
+	}elsif($ranking_method eq "OKAPI"){
+#	    return &_calc_d_score_OKAPI(\%did_info, scalar(@query_list), \@df);
+	    return &_calc_d_score_OKAPI_wo_hash(\@did_info, scalar(@query_list), \@df);
+	}else{
+	    # FREQ
+#	    return &_calc_d_score_AND(\%did_info, scalar(@query_list));
+	    return &_calc_d_score_FREQ_wo_hash(\@did_info, scalar(@query_list));
+	}
     }
 }   
 
@@ -162,8 +171,32 @@ sub _calc_d_score_AND_wo_hash {
     return @result;
 }
 
+sub _calc_d_score_FREQ_wo_hash{
+    my ($did_info, $key_num, $df) = @_;
+    my (@result) = ();
+
+    my %did2index = {};
+    foreach my $k (@{$did_info}){
+	for(my $i = 0; $i < scalar(@{$did_info->[$k]}); $i++){
+	    my $did = $did_info->[$k]->{did};
+	    my $freq = $did_info->[$k]->{freq};
+
+	    my $index = scalar(@result);
+	    if(exists($did2index{$did})){
+		$index = $did2index{$did};
+		$result[$index]->{score} += $freq;
+	    }else{
+		$did2index{$did} = $index;
+		push(@result, {did => $did, score => $freq});
+	    }
+	}
+    }
+    return sort {$b->{score} <=> $a->{score}} @result;
+}
+
+
 ######################################################################
-# AND
+# intersect
 
 sub intersect{
     my ($did_info, $key_num) = @_;
@@ -186,6 +219,57 @@ sub intersect{
 	}
     }
     return %result;
+}
+
+sub intersect_wo_hash{
+    my ($did_info, $key_num) = @_;
+    my (@result) = ();
+
+    ## 空の配列があるかどうかのチェック
+    my @atemp = ();
+    for(my $i = 0; $i < scalar(@$did_info); $i++){
+	if(scalar(@{$did_info->[$i]}) > 0){
+	    push(@atemp, $did_info->[$i]);
+	}else{
+	    return ();
+	}
+    }
+
+    # 入力リストをサイズ順にソート(一番短い配列を先頭にするため)
+    my @temp = sort {scalar(@{$a}) <=> scalar(@{$b})} @atemp;
+    $did_info = \@temp;
+    # 一番短かい配列に含まれる文書が、他の配列に含まれるかを調べる
+    for (my $i = 0; $i < scalar(@{$did_info->[0]}); $i++) {
+#	print STDERR ">> $i " . scalar(@{$did_info->[0]}) . "\n";
+
+	# 対象の文書を含まない配列があった場合
+	# $flagが1のままループを終了する
+	my $flag = 0;
+	# 一番短かい配列以外を順に調べる
+	for (my $k = 1;  $k < $key_num; $k++) {
+	    $flag = 1; 
+	    print STDERR "$k/$key_num\n" if($did_info->[$k]->[0]->{did} == 10000013);
+	    while(defined($did_info->[$k]->[0])){
+		if($did_info->[$k]->[0]->{did} < $did_info->[0]->[$i]->{did}){
+		    shift(@{$did_info->[$k]});
+		}elsif($did_info->[$k]->[0]->{did} == $did_info->[0]->[$i]->{did}){
+		    $flag = 0;
+		    last;
+		}elsif($did_info->[$k]->[0]->{did} > $did_info->[0]->[$i]->{did}){
+		    last;
+		}
+	    }
+	    last if($flag > 0);
+	}
+	
+	if($flag < 1){
+	    push(@{$result[0]}, $did_info->[0]->[$i]);
+	    for(my $k = 1; $k < $key_num; $k++){
+		push(@{$result[$k]}, $did_info->[$k]->[0]);
+	    }
+	}
+    } # end of for (my $i = 0; $i < @{$did_info->[0]}; $i++)
+    return \@result;
 }
 
 sub _calc_d_score_AND {
@@ -215,7 +299,6 @@ sub _calc_d_score_AND {
 # TFIDF
 
 sub _calc_d_score_TF_IDF {
-
     my ($did_info, $key_num, $df) = @_;
     my (@result) = ();
 
@@ -228,6 +311,31 @@ sub _calc_d_score_TF_IDF {
 	    }
 	}
 	push(@result, {"did" => $did, "score" => $did_info->{$did}{score}});
+    }
+    return sort {$b->{score} <=> $a->{score}} @result;
+}
+
+sub _calc_d_score_TF_IDF_wo_hash{
+    my ($did_info, $key_num, $df) = @_;
+    my (@result) = ();
+
+    my %did2index = {};
+    foreach my $k (@{$did_info}) {
+	for(my $i = 0; $i < scalar(@{$k}); $i++){
+	    my $did = $k->[$i]->{did};
+	    my $freq = $k->[$i]->{freq};
+	    my $qid = $k->[$i]->{qid};
+	    my $score = $freq * log($N/$df->[$qid]);
+
+	    my $index = scalar(@result);
+	    if(exists($did2index{$did})){
+		$index = $did2index{$did};
+		$result[$index]->{score} += $score;
+	    }else{
+		$did2index{$did} = $index;
+		push(@result, {did => $did, score => $score});
+	    }
+	}
     }
     return sort {$b->{score} <=> $a->{score}} @result;
 }
@@ -252,6 +360,31 @@ sub _calc_d_score_OKAPI {
     }
     return sort {$b->{score} <=> $a->{score}} @result;
 #    return @result;
+}
+
+sub _calc_d_score_OKAPI_wo_hash{
+    my ($did_info, $key_num, $df) = @_;
+    my (@result) = ();
+
+    my %did2index = ();
+    foreach my $k (@{$did_info}) {
+	for(my $i = 0; $i < scalar(@{$k}); $i++){
+	    my $did = $k->[$i]->{did};
+	    my $freq = $k->[$i]->{freq};
+	    my $qid = $k->[$i]->{qid};
+	    my $score = ((3 * $freq) / (2 + $freq)) * log(($N - $df->[$qid] + 0.5) / ($df->[$qid] + 0.5));
+
+	    my $index = scalar(@result);
+	    if(exists($did2index{$did})){
+		$index = $did2index{$did};
+		$result[$index]->{score} += $score;
+	    }else{
+		$did2index{$did} = $index;
+		push(@result, {did => $did, score => $score});
+	    }
+	}
+    }
+    return sort {$b->{score} <=> $a->{score}} @result;
 }
 
 
