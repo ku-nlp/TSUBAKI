@@ -60,11 +60,13 @@ sub makeIndexfromKnpResult_utf8(){
 			      };
 	    }else{
 		next if ($line =~ /^(\<|\@|EOS)/);
-		next if ($line =~ /\<記号\>/);
 		
 		my @m = split(/\s+/, $line);
 		## <意味有>タグが付与された形態素を索引付けする
 		if($line =~ /\<意味有\>/){
+		    next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
+		    next if (&containsSymbols($m[2]) > 0); ## <記号>タグがついてない記号を削除
+
 		    my $word = $m[2];
 		    my @reps = ();
 		    ## 代表表記の取得
@@ -188,6 +190,35 @@ sub toUpperCase_utf8(){
 	}
     }
     return encode('utf8', pack("U0U*",@cbuff));
+}
+
+## 平仮名、カタカナ、英数字以外を含んでいるかをチェック
+sub containsSymbols(){
+    my($text) = @_;
+    my @ch_codes = unpack("U0U*", $text);
+    for(my $i = 0; $i < scalar(@ch_codes); $i++){
+	my $ch_code = $ch_codes[$i];
+	## ひらがな   0x3041 < $ch_code && $ch_code < 0x3094
+	## カタカナ   0x30A0 < $ch_code && $ch_code < 0x30FD
+	## 漢字１     0x4DFF < $ch_code && $ch_code < 0x9FFF
+	## 漢字２     0xF900 < $ch_code && $ch_code < 0xFA2F
+	## 英数字(大) 0xFF0F < $ch_code && $ch_code < 0xFF3B
+	## 英数字(小) 0xFF40 < $ch_code && $ch_code < 0xFF5B
+	## 、。       $ch_code == 0xFF0C || $ch_code == 0xFF0E
+	## 々〆       $ch_code == 0x3005 || $ch_code == 0x3006
+	unless((0x3041 < $ch_code && $ch_code < 0x3094) ||
+	       (0x30A0 < $ch_code && $ch_code < 0x30FD) ||
+	       (0x4DFF < $ch_code && $ch_code < 0x9FFF) ||
+	       (0xF900 < $ch_code && $ch_code < 0xFA2F) ||
+	       (0xFF0F < $ch_code && $ch_code < 0xFF3B) ||
+	       (0xFF40 < $ch_code && $ch_code < 0xFF5B) ||
+	       $ch_code == 0xFF0C || $ch_code == 0xFF0E ||
+	       $ch_code == 0x3005 || $ch_code == 0x3006){
+	    print "$text\n";
+	    return 1;
+	}
+    }
+    return 0;
 }
 
 1;
