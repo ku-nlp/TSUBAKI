@@ -1,3 +1,7 @@
+2006-10-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/Indexer.pm:
+	jumanまたはknpの解析結果から索引付けする要素を抽出するモジュール(Indexer.pm)を追加
+
 2006-10-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* cgi/Retrieve.pm:
 	intersect_wo_hash関数で、全ての検索クエリを含まない文書が選択されるバグを修正.
