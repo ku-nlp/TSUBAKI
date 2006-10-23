@@ -1,3 +1,7 @@
+2006-10-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/Indexer.pm:
+	<記号>でははじけない記号を文字コードを見て削除
+
 2006-10-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/make_idx.pl:
 	係り受けインデックスを作成するオプション(-knp)を追加
