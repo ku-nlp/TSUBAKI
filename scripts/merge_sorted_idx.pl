@@ -40,8 +40,14 @@ foreach my $ftmp (sort readdir(DIR)) {
     # 各ファイルの1行目を読み込み、ソートする前の初期@INDEX(@tmpINDEX)を作成する
     if ($_ = $FH[$FILE_NUM]->getline) {
 	chomp;
-	/^(\S+) (.*)/;
-	push(@tmp_INDEX, {midasi => $1, data => $2, file_num => $FILE_NUM});
+#	/^(\S+) (.*)/;
+	if($_ =~ /^([^ ]+) (.+)/){
+	    push(@tmp_INDEX, {midasi => $1, data => $2, file_num => $FILE_NUM});
+	}else{
+	    print STDERR "Format error!!\n";
+	    print STDERR "$_\n";
+	    exit(1);
+	}
     }
     $FILE_NUM++;  
 }
