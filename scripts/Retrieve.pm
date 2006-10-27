@@ -47,7 +47,7 @@ sub new {
 }
 
 sub search {
-    my ($this, $key, $ranking_method, $logical_cond) = @_;
+    my($this, $key, $ranking_method, $logical_cond,$DF) = @_;
 
     my @query_list = split(/[\s　]+/, $key);
     my @df;
@@ -73,11 +73,14 @@ sub search {
 		    # 最初はキーワード（情報としては冗長）
 		    $buf = join('', @str);
 		    @str = ();
+		    my $word = encode('euc-jp',$query);
+		    $df[$k] = $DF->{$word};
+		    print STDERR ">> word=$word, df=" . $DF->{$word} . "\n";
 
 		    # 次にキーワードの文書頻度
 		    read($this->{IN}[$f_num], $buf, 4);
 		    my $size = unpack('L', $buf);
-		    $df[$k] += $size;
+#		    $df[$k] = $size;
 
 		    # 文書IDと出現頻度
 		    for (my $i = 0; $i < $size; $i++) {
@@ -95,14 +98,21 @@ sub search {
 	}
     }
 
-#    for(my $k = 0; $k < @query_list; $k++){
-#	return () unless(defined($did_info[$k]));
-#    }
+    for(my $j = 0; $j < scalar(@did_info); $j++){
+	next unless(defined($did_info[$j]));
+	print STDERR "$j: " . scalar(@{$did_info[$j]}) . "\n";
+    }
+    print STDERR "($logical_cond)\n";
+    if($logical_cond eq "AND" && scalar(@did_info) > 1){
+	my $arryref = &intersect_wo_hash(\@did_info,scalar(@query_list));
+	return () unless(defined($arryref));
+	@did_info = @{$arryref};
+    }
 
-#    return &_calc_d_score_AND_wo_hash(\@did_info, scalar(@query_list));
+    for(my $j = 0; $j < scalar(@did_info); $j++){
+	print STDERR "$j: " . scalar(@{$did_info[$j]}) . "\n";
+    }
 
-#   %did_info = &intersect(\%did_info) if($logical_cond eq "AND");
-    @did_info = @{&intersect_wo_hash(\@did_info,scalar(@query_list))} if($logical_cond eq "AND");
     if(scalar(@did_info) < 1){
 	print STDERR "ERROR.\n";
 	return ();
@@ -227,20 +237,41 @@ sub intersect_wo_hash{
 
     ## 空の配列があるかどうかのチェック
     my @atemp = ();
-    for(my $i = 0; $i < scalar(@$did_info); $i++){
+    for(my $i = 0; $i < scalar(@{$did_info}); $i++){
+	return () unless(defined($did_info->[$i]));
+
 	if(scalar(@{$did_info->[$i]}) > 0){
-	    push(@atemp, $did_info->[$i]);
+	    my @tmp = sort{$a->{did} <=> $b->{did}} @{$did_info->[$i]};
+	    push(@atemp, \@tmp);
+#	    foreach my $d (@tmp){
+#		print STDERR ">> $d->{did}\n";
+#	    }
 	}else{
 	    return ();
 	}
+#	print STDERR "-----\n";
     }
+
+#    my @tmp;
+#    for(my $i = 0; $i < scalar(@atemp); $i++){
+#	my $size = scalar(@{$atemp[$i]});
+#	print STDERR "$atemp[$i] $size\n";
+#	for(my $j = 0; $j < $size; $j++){
+#	    push(@tmp, sort{$atemp[$i]->[$a]->{did} <=> $atemp[$i]->[$b]->{did}} $atemp[$i]);
+#	}
+#    }
+#    print STDERR "-----\n";
+    
 
     # 入力リストをサイズ順にソート(一番短い配列を先頭にするため)
     my @temp = sort {scalar(@{$a}) <=> scalar(@{$b})} @atemp;
+#    for(my $i = 0; $i < scalar(@{$temp[0]}); $i++){
+#	print ">>> $temp[0]->[$i]->{did}\n";
+#    }
     $did_info = \@temp;
     # 一番短かい配列に含まれる文書が、他の配列に含まれるかを調べる
+    print STDERR ">>>" . scalar(@{$did_info}) . "<<<\n";
     for (my $i = 0; $i < scalar(@{$did_info->[0]}); $i++) {
-#	print STDERR ">> $i " . scalar(@{$did_info->[0]}) . "\n";
 
 	# 対象の文書を含まない配列があった場合
 	# $flagが1のままループを終了する
@@ -248,7 +279,6 @@ sub intersect_wo_hash{
 	# 一番短かい配列以外を順に調べる
 	for (my $k = 1;  $k < $key_num; $k++) {
 	    $flag = 1; 
-	    print STDERR "$k/$key_num\n" if($did_info->[$k]->[0]->{did} == 10000013);
 	    while(defined($did_info->[$k]->[0])){
 		if($did_info->[$k]->[0]->{did} < $did_info->[0]->[$i]->{did}){
 		    shift(@{$did_info->[$k]});
