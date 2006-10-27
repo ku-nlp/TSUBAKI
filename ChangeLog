@@ -1,3 +1,7 @@
+2006-10-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/Retrieve.pm:
+	DF値を文書集合全体から求めるように変更.
+
 2006-10-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/merge_sorted_idx.pl:
 	正規表現にマッチしない場合のエラー処理を追加
