@@ -13,26 +13,51 @@ our @EXPORT = qw(makeIndexfromJumanResult_utf8 makeIndexfromKnpResult_utf8);
 sub makeIndexfromJumanResult_utf8(){
     my($juman_result) = @_;
     my %index = ();
+    my @buff = ();
+    my $size = 0;
     foreach my $line (split(/\n/,$juman_result)){
 	next if ($line =~ /^(\<|EOS)/);
 
-	## @の削除
-	$line =~ s/^@\s+//;
-
-	my @w = split(/\s+/, $line);
-	# 削除する条件
-	next if ($w[2] =~ /^[\s*　]*$/);
-	next if ($w[3] eq "助詞");
-	next if ($w[5] =~ /^(句|読)点$/);
-	next if ($w[5] =~ /^空白$/);
-	next if ($w[5] =~ /^(形式|副詞的)名詞$/);
-	
-	my $word = $w[2];
-	if($line =~ /代表表記:(.+?)\//){
-	    $word = $1;
+	## 代表表記が曖昧だったら
+	if($line =~ /^@ /){
+	    push(@{$buff[$size-1]}, "$'");
+	}else{
+	    push(@{$buff[$size++]}, $line);
 	}
-	$index{$word} = 0 unless(exists($index{$word}));
-	$index{$word}++;
+    }
+
+#     foreach my $e (@buff){
+# 	my @daihyou = @{$e};
+# 	foreach my $line (@daihyou){
+# 	    my @w = split(/\s+/, $line);
+# 	    my $word = $w[2];
+
+# 	    Encode::from_to($word, 'utf8', 'euc-jp');
+# 	    print "$word,";
+# 	}
+# 	print "\n";
+#     }
+
+    foreach my $e (@buff){
+	my @daihyou = @{$e};
+	my $num_daihyou = scalar(@daihyou);
+	foreach my $line (@daihyou){
+	    my @w = split(/\s+/, $line);
+
+	    # 削除する条件
+	    next if ($w[2] =~ /^[\s*　]*$/);
+	    next if ($w[3] eq "助詞");
+	    next if ($w[5] =~ /^(句|読)点$/);
+	    next if ($w[5] =~ /^空白$/);
+	    next if ($w[5] =~ /^(形式|副詞的)名詞$/);
+	
+	    my $word = $w[2];
+	    if($line =~ /代表表記:(.+?)\//){
+		$word = $1;
+	    }
+	    $index{$word} = 0 unless(exists($index{$word}));
+	    $index{$word} += (1 / $num_daihyou);
+	}
     }
 
     return \%index;
@@ -47,7 +72,6 @@ sub makeIndexfromKnpResult_utf8(){
 	my $pos = -1;
 	my $kakariSaki = -1;
 	my @bps = ();
-	
 	foreach my $line (split(/\n/,$sent)){
 	    next if($line =~ /^\* \-?\d/);
 	    
@@ -88,13 +112,16 @@ sub makeIndexfromKnpResult_utf8(){
 	} # end of foreach my $line (split(/\n/,$sent))
 	
 	## <意味有>が付いている形態素の代表表記を索引付け
+	## 代表表記が複数個ある場合は代表表記の個数で割ってカウントする
 	for(my $i = 0; $i < scalar(@bps); $i++){
 	    next unless(defined($bps[$i]->{words}));
 
 	    for(my $j = 0; $j < scalar(@{$bps[$i]->{words}}); $j++){
 		my $daihyou = $bps[$i]->{words}->[$j];
-		for(my $k = 0; $k < scalar(@{$daihyou}); $k++){
-		    $freq{"$daihyou->[$k]"}++;
+		my $num_daihyou = scalar(@{$daihyou});
+		for(my $k = 0; $k < $num_daihyou; $k++){
+#		    $freq{"$daihyou->[$k]"}++;
+		    $freq{"$daihyou->[$k]"} += (1/$num_daihyou);
 		}
 	    }
 	}
@@ -110,6 +137,7 @@ sub makeIndexfromKnpResult_utf8(){
 # 	}
 	
 	## <意味有>が付いている形態素間の係り受け関係を索引付け
+	## 係り先・係り元に代表表記が複数個ある場合は、係り先・元の代表表記の個数の積で割ってカウントする
 	for(my $i = 0; $i < scalar(@bps); $i++){
 	    my $kakariSaki = $bps[$i]->{kakarisaki};
 	    ## 基本句が文末なら
@@ -120,7 +148,8 @@ sub makeIndexfromKnpResult_utf8(){
 		}else{
 		    for(my $j = 0; $j < scalar(@{$bps[$i]->{words}}); $j++){
 			my $daihyou = $bps[$i]->{words}->[$j];
-			for(my $k = 0; $k < scalar(@{$daihyou}); $k++){
+			my $num_daihyou_moto = scalar(@{$daihyou});
+			for(my $k = 0; $k < $num_daihyou_moto; $k++){
 			    my $kakariSakiDaihyou;
 			    ## 基本句に複数の<意味有>タグ付きの形態素がある場合は分解する
 			    ## ex)
@@ -134,8 +163,11 @@ sub makeIndexfromKnpResult_utf8(){
 				next;
 			    }
 			    next unless(defined($kakariSakiDaihyou)); ## 係り先基本句に<意味有>タグが付いた形態素が無ければ
-			    for(my $l = 0; $l < scalar(@{$kakariSakiDaihyou}); $l++){
-				$freq{$daihyou->[$k] . "->" . $kakariSakiDaihyou->[$l]}++;
+
+			    my $num_daihyou_saki = scalar(@{$kakariSakiDaihyou});
+			    for(my $l = 0; $l < $num_daihyou_saki; $l++){
+#				$freq{$daihyou->[$k] . "->" . $kakariSakiDaihyou->[$l]}++;
+				$freq{$daihyou->[$k] . "->" . $kakariSakiDaihyou->[$l]} += (1 / ($num_daihyou_saki * $num_daihyou_moto));
 			    }
 			}
 		    }
@@ -149,8 +181,9 @@ sub makeIndexfromKnpResult_utf8(){
 	    ## との組を索引付け
 	    for(my $j = 0; $j < scalar(@{$bps[$i]->{words}}); $j++){
 		my $daihyou = $bps[$i]->{words}->[$j];
+		my $num_daihyou_moto = scalar(@{$daihyou});
 
-		for(my $k = 0; $k < scalar(@{$daihyou}); $k++){
+		for(my $k = 0; $k < $num_daihyou_moto; $k++){
 		    my $kakariSakiDaihyou;
 		    ## 基本句に複数の<意味有>タグ付きの形態素がある場合は分解する
 		    ## ex)
@@ -163,10 +196,13 @@ sub makeIndexfromKnpResult_utf8(){
 			## 基本句全体で係っていた基本句に係る
 			$kakariSakiDaihyou = $bps[$kakariSaki]->{words}->[0];
 		    }
-			    
+		    
 		    next unless(defined($kakariSakiDaihyou)); ## 係り先基本句に<意味有>タグが付いた形態素が無ければ
-		    for(my $l = 0; $l < scalar(@{$kakariSakiDaihyou}); $l++){
-			$freq{$daihyou->[$k] . "->" . $kakariSakiDaihyou->[$l]}++;
+
+		    my $num_daihyou_saki = scalar(@{$kakariSakiDaihyou});
+		    for(my $l = 0; $l < $num_daihyou_saki; $l++){
+#			$freq{$daihyou->[$k] . "->" . $kakariSakiDaihyou->[$l]}++;
+			$freq{$daihyou->[$k] . "->" . $kakariSakiDaihyou->[$l]} += (1 / ($num_daihyou_saki * $num_daihyou_moto));
 		    }
 		}
 	    }
