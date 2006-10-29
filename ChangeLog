@@ -1,5 +1,9 @@
 2006-10-29  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/Indexer.pm:
+	アルファベットの小文字を大文字に変換して索引付けするように変更.
+	
+2006-10-29  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/Indexer.pm:
 	複数の代表表記を持つ形態素を索引付けする際、代表表記の個数で割って頻度をとるように変更.
 	
 2006-10-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
