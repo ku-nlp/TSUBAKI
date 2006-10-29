@@ -55,6 +55,7 @@ sub makeIndexfromJumanResult_utf8(){
 	    if($line =~ /代表表記:(.+?)\//){
 		$word = $1;
 	    }
+	    $word = &toUpperCase_utf8($word);
 	    $index{$word} = 0 unless(exists($index{$word}));
 	    $index{$word} += (1 / $num_daihyou);
 	}
