@@ -7,7 +7,7 @@ package Indexer;
 use strict;
 use utf8;
 
-our @EXPORT = qw(makeIndexfromJumanResult_utf8 makeIndexfromKnpResult_utf8);
+our @EXPORT = qw(makeIndexfromJumanResult makeIndexfromKnpResult);
 
 ## JUMANの解析結果から索引語を抽出する
 # sub makeIndexfromJumanResult_utf8(){
