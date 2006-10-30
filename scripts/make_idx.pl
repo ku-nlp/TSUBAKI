@@ -7,12 +7,12 @@
 ###########################################################################
 
 use strict;
-use encoding 'utf8';
+# use encoding 'utf8';
+use utf8;
 use XML::DOM;
 use Encode qw(decode encode from_to);
 use Getopt::Long;
-use Indexer qw(makeIndexfromJumanResul_utf8 makeIndexfromKnpResult_utf8);
-
+use Indexer qw(makeIndexfromJumanResult makeIndexfromKnpResult);
 
 my (%opt); GetOptions(\%opt, 'in=s', 'out=s', 'direct', 'knp');
 
@@ -21,6 +21,8 @@ die "Option Error!\n" if (!$opt{in} || !$opt{out});
 # 単語IDの初期化
 my %freq;
 my $parser = new XML::DOM::Parser unless ($opt{direct});
+my $TAG_NAME = "Juman";
+$TAG_NAME = "Knp" if($opt{knp});
 
 # データのあるディレクトリを開く
 opendir (DIR, $opt{in});
@@ -38,63 +40,42 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
     
     # ファイルからJUMANの解析結果を読み込む
     open (FILE, '<:utf8', "$opt{in}/$ftmp") || die("no such file $ftmp\n");
-    if ($opt{knp}) {
-	# KNPの解析結果を使ってインデックスを作成
-
-	my $flag = 0;
-	my $buff = '';
-	while (<FILE>) {
-	    next if($_ =~ /^succeeded\.$/);
+    # Juman / Knpの解析結果を使ってインデックスを作成
+    
+    my $flag = 0;
+    my $buff = '';
+    while (<FILE>) {
+	next if($_ =~ /^succeeded\.$/);
 	    
+	if($_ =~ /\<S.+ Id="(\d+)"\>/){
+	    print STDERR "\rdir=$opt{in},file=$NAME (Id=$1)";
+	}
 
-	    if($_ =~ /\<S.+ Id="(\d+)"\>/){
-		print STDERR "\rdir=$opt{in},file=$NAME (Id=$1)";
+	if($_ =~ /^\]\]\><\/$TAG_NAME>/){
+#	    my $indexes = &Indexer::makeIndexfromKnpResult(encode('utf8',$buff));
+	    my $indexes;
+#	    my $temp = encode('euc-jp',$buff);
+#	    print STDERR ">>> $temp\n";
+
+	    if($opt{knp}){
+		$indexes = &Indexer::makeIndexfromKnpResult($buff);
+	    }else{
+		$indexes = &Indexer::makeIndexfromJumanResult($buff);
 	    }
 
- 	    if($_ =~ /^\]\]\><\/Knp>/){
-		my $indexes = &Indexer::makeIndexfromKnpResult_utf8(encode('utf8',$buff));
-		foreach my $k (keys %{$indexes}){
-		    $freq{$k} += $indexes->{$k};
-		}
-		$buff = '';
-		$flag = 0;
- 	    }elsif($_ =~ /.*\<Knp\>\<\!\[CDATA\[/){
+	    foreach my $k (keys %{$indexes}){
+		$freq{$k} += $indexes->{$k};
+	    }
+	    $buff = '';
+	    $flag = 0;
+ 	    }elsif($_ =~ /.*\<$TAG_NAME\>\<\!\[CDATA\[/){
 		$buff = "$'";
  		$flag = 1;
  	    }elsif($flag > 0){
 		$buff .= "$_";
 	    }
-	}
-	close FILE;
-    }else{
-	# XMLをテキストとして該当部分のみを抽出
-	if ($opt{direct}) {
-	    my $flag;
-	    while (<FILE>) {
-		if (/<\/Juman>/) {
-		    $flag = 0;
-		}
-		elsif (s/.*\<Juman\>\<\!\[CDATA\[//) {
-		    $flag = 1;
-		}
-		&CountData($_) if ($flag);
-	    }
-	    close FILE;
-	}
-
-	# XMLをXMLとして解析(デフォルト)  
-	else {
-	    my ($buf);
-	    while (<FILE>) {
-		$buf .= $_;
-	    }
-	    close FILE;
-	    
-	    my $doc = $parser->parse($buf);
-	    &read_sf($doc);
-	    $doc->dispose();   
-	}
     }
+    close FILE;
 
     # 単語IDと頻度のペアを出力
     open (OUT, '>:utf8', "$opt{out}/$NAME.idx");
@@ -153,6 +134,8 @@ sub Output
     my ($fh, $did) = @_;
 
     foreach my $wid (sort keys %freq) {
+#	my $word = encode('euc-jp',$wid);
+#	print STDERR "$word\n";
 	print $fh "$wid $did:$freq{$wid}\n";
     }
 }
