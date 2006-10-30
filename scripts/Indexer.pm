@@ -5,13 +5,13 @@ package Indexer;
 ###################################################################
 
 use strict;
-use Encode;
 use utf8;
 
 our @EXPORT = qw(makeIndexfromJumanResult_utf8 makeIndexfromKnpResult_utf8);
 
 ## JUMANの解析結果から索引語を抽出する
-sub makeIndexfromJumanResult_utf8(){
+# sub makeIndexfromJumanResult_utf8(){
+sub makeIndexfromJumanResult(){
     my($juman_result) = @_;
     my %index = ();
     my @buff = ();
@@ -66,7 +66,8 @@ sub makeIndexfromJumanResult_utf8(){
 }
 
 ## KNPの解析結果から索引語と索引付け対象となる係り受け関係を抽出する
-sub makeIndexfromKnpResult_utf8(){
+# sub makeIndexfromKnpResult_utf8(){
+sub makeIndexfromKnpResult(){
     my($knp_result) = @_;
 
     my %freq;
@@ -227,7 +228,7 @@ sub toUpperCase_utf8(){
 	    push(@cbuff, $uppercase_code);
 	}
     }
-    return encode('utf8', pack("U0U*",@cbuff));
+    return pack("U0U*",@cbuff);
 }
 
 ## 平仮名、カタカナ、英数字以外を含んでいるかをチェック
