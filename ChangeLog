@@ -1,5 +1,9 @@
 2006-10-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/Indexer.pm:
+	makeIndexfromJumanResult, makeIndexfromKnpResult に関数名を変更.
+
+2006-10-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/Indexer.pm:
 	use utf8 変更に伴う文字コード関係のバグを修正.
 
 2006-10-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
