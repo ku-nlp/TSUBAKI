@@ -1,5 +1,9 @@
 2006-10-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/Indexer.pm:
+	use utf8 変更に伴う文字コード関係のバグを修正.
+
+2006-10-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/Indexer.pm:
 	use utf8 の追加と不要な文字列が出力されるバグを修正.
 
 2006-10-29  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
