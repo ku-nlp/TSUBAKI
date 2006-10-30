@@ -6,6 +6,7 @@ package Indexer;
 
 use strict;
 use Encode;
+use utf8;
 
 our @EXPORT = qw(makeIndexfromJumanResult_utf8 makeIndexfromKnpResult_utf8);
 
@@ -79,9 +80,9 @@ sub makeIndexfromKnpResult_utf8(){
 	    if($line =~ /^\+ (\-?\d+)/){
 		$pos++;
 		$kakariSaki = $1;
-		@bps[$pos] = ();
+#		$bps[$pos] = ();
 		$bps[$pos] = {kakarisaki => $kakariSaki,
-			      words => ()
+			      words => []
 			      };
 	    }else{
 		next if ($line =~ /^(\<|\@|EOS)/);
@@ -251,7 +252,7 @@ sub containsSymbols(){
 	       (0xFF40 < $ch_code && $ch_code < 0xFF5B) ||
 	       $ch_code == 0xFF0C || $ch_code == 0xFF0E ||
 	       $ch_code == 0x3005 || $ch_code == 0x3006){
-	    print "$text\n";
+#	    print "$text\n";
 	    return 1;
 	}
     }
