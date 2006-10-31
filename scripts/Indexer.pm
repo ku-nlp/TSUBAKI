@@ -44,6 +44,7 @@ sub makeIndexfromJumanResult(){
 	my $num_daihyou = scalar(@daihyou);
 	foreach my $line (@daihyou){
 	    my @w = split(/\s+/, $line);
+	    next if (&containsSymbols($w[2]) > 0); # 記号を削除
 
 	    # 削除する条件
 	    next if ($w[2] =~ /^[\s*　]*$/);
