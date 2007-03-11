@@ -314,12 +314,17 @@ sub makeIndexfromKnpResult{
 	    } # end of else
 	} # end of foreach my $line (split(/\n/,$sent))
 
+	# 並列句において、係り元の係り先を、係り先の係り先に変更する
+	# スプーンとフォークで食べる
+	# スプーン->食べる、フォーク->食べる
 	for(my $pos = scalar(@bps); $pos > 0; $pos--){
-	    print "# $bps[$pos-1]->{kakarisaki}\n";
+#	    print "# $bps[$pos-1]->{kakarisaki}\n";
 	    if($bps[$pos-1]->{kakaritype} eq 'P'){
 		my $kakariSaki = $bps[$pos-1]->{kakarisaki};
-		$bps[$pos-1]->{kakarisaki} = $bps[$kakariSaki]->{kakarisaki};
-		print "> $kakariSaki\n";
+		if($bps[$kakariSaki]->{kakarisaki} ne '-1'){
+		    $bps[$pos-1]->{kakarisaki} = $bps[$kakariSaki]->{kakarisaki};
+#		    print "> $bps[$pos-1]->{kakarisaki}\n";
+		}
 	    }
 	}
 
