@@ -1,3 +1,7 @@
+2007-03-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/Indexer.pm:
+	係り先が最後の基本句の場合、係り元の係り先として-1をとっていたバグを修正
+	
 2007-02-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/Indexer.pm:
 	並列句の係り元の係り先を、係り先の係り先にするように変更.
