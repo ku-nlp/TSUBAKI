@@ -12,7 +12,7 @@ use utf8;
 use XML::DOM;
 use Encode qw(decode encode from_to);
 use Getopt::Long;
-use Indexer qw(makeIndexfromJumanResult makeIndexfromKnpResult makeIndexfromIndexArray);
+use Indexer;
 
 my (%opt); GetOptions(\%opt, 'in=s', 'out=s', 'direct', 'knp', 'window=s');
 
@@ -44,6 +44,7 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
     my $flag = 0;
     my $buff;
     my @index_array;
+    my $indexer = new Indexer();
     while (<FILE>) {
 	next if($_ =~ /^succeeded\.$/);
 
@@ -55,17 +56,17 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
 	    my $indexes;
 	    $buff = decode('utf8', $buff) unless(utf8::is_utf8($buff));
 	    if($opt{knp}){
-		$indexes = &Indexer::makeIndexfromKnpResult($buff);
+		$indexes = $indexer->makeIndexfromKnpResult($buff);
 		if($window > 0){
-		    my $temp = &Indexer::makeIndexArrayfromKnpResult($buff);
+		    my $temp = $indexer->makeIndexArrayfromKnpResult($buff);
 		    foreach my $e (@{$temp}){
 			push(@index_array, $e);
 		    }
 		}
 	    }else{
-		$indexes = &Indexer::makeIndexfromJumanResult($buff);
+		$indexes = $indexer->makeIndexfromJumanResult($buff);
 		if($window > 0){
-		    my $temp = &Indexer::makeIndexArrayfromJumanResult($buff);
+		    my $temp = $indexer->makeIndexArrayfromJumanResult($buff);
 		    foreach my $e (@{$temp}){
 			push(@index_array, $e);
 		    }
@@ -90,9 +91,9 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
     close FILE;
 
     if($window > 0){
-	my $temp = &Indexer::makeIndexfromIndexArray(\@index_array, $window);
+	my $temp = $indexer->makeIndexfromIndexArray(\@index_array, $window);
 	foreach my $k (keys %{$temp}){
-	    $freq{$k} += $temp->{$k};
+	    $freq{$k} += $temp->{$k}->{freq};
 	}
     }
 
@@ -153,12 +154,22 @@ sub Output
     my ($fh, $did) = @_;
 
     foreach my $e (sort {$a cmp $b} keys %freq) {
-	my $pos_str;
-	foreach my $pos (@{$freq{$e}->{poss}}){
-	    $pos_str .= "$pos,";
+#	my $pos_str;
+#	foreach my $pos (@{$freq{$e}->{poss}}){
+#	    $pos_str .= "$pos,";
+#	}
+#	chop($pos_str);
+#
+#	printf $fh ("%s %d:%.4f@%s\n", $e, $did, $freq{$e}->{freq}, $pos_str);
+#	printf $fh ("%s %d:%.4f\n", $e, $did, $freq{$e}->{freq});
+	if($freq{$e}->{freq} == int($freq{$e}->{freq})){
+	    printf $fh ("%s %d:%d\n", $e, $did, $freq{$e}->{freq});
+	}else{
+	    if($freq{$e}->{freq} =~ /\.\d{4,}$/){
+		printf $fh ("%s %d:%.4f\n", $e, $did, $freq{$e}->{freq});
+	    }else{
+		printf $fh ("%s %d:%s\n", $e, $did, $freq{$e}->{freq});
+	    }
 	}
-	chop($pos_str);
-
-	printf $fh ("%s %d:%.4f@%s\n", $e, $did, $freq{$e}->{freq}, $pos_str);
     }
 }
