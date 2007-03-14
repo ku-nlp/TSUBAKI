@@ -7,12 +7,15 @@
 ###################################################
 
 use strict;
-use encoding 'utf8';
+use utf8;
 use Getopt::Long;
-my (%opt); GetOptions(\%opt, 'dir=s');
+use Encode;
+
+my (%opt); GetOptions(\%opt, 'dir=s', 'suffix=s', 'n=s');
 
 # 単語IDの初期化
 my %freq;
+my $fcnt = 0;
 
 # ディレクトリが指定された場合
 if ($opt{dir}) {
@@ -22,7 +25,14 @@ if ($opt{dir}) {
 
     foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
 	# .idxファイルが対象
-	next if ($ftmp !~ /.+\.idx$/);
+	if($opt{suffix}){
+	    next if($ftmp !~ /.+\.$opt{suffix}$/);
+	}else{
+	    next if ($ftmp !~ /.+\.idx$/);
+	}
+
+	print STDERR "\r($fcnt)" if($fcnt%113 == 0);
+	$fcnt++;
 
 	# ファイルから読み込む
 	open (FILE, '<:utf8', "$opt{dir}/$ftmp") || die("no such file $ftmp\n");
@@ -30,8 +40,20 @@ if ($opt{dir}) {
 	    &ReadData($_);
 	}
 	close FILE;
-    }
 
+	if(defined($opt{n})){
+	    if($fcnt % $opt{n} == 0){
+		my $fname = sprintf("tmp.%d.%d.%s", 1 + $fcnt/$opt{n}, $$, $opt{suffix});
+		open(WRITER, "> $fname");
+		foreach my $wid (sort keys %freq) {
+		    my $w_utf8 = encode('utf8', $wid);
+		    print WRITER "$w_utf8 $freq{$wid}\n";
+		}
+		close(WRITER);
+		%freq = ();
+	    }
+	}
+    }
     closedir(DIR);
 }
 
@@ -42,9 +64,23 @@ else {
     }
 }
 
-# 標準出力に出力
-foreach my $wid (sort keys %freq) {
-    print "$wid $freq{$wid}\n";
+print STDERR "\r($fcnt) done.\n";
+
+if(defined($opt{n})){
+    my $fname = sprintf("tmp.%d.%d.%s", 1 + $fcnt/$opt{n}, $$, $opt{suffix});
+    open(WRITER, "> $fname");
+    # 標準出力に出力
+    foreach my $wid (sort keys %freq) {
+	my $w_utf8 = encode('utf8', $wid);
+	print WRITER "$w_utf8 $freq{$wid}\n";
+    }
+    close(WRITER);
+}else{
+    # 標準出力に出力
+    foreach my $wid (sort keys %freq) {
+	my $w_utf8 = encode('utf8', $wid);
+	print "$w_utf8 $freq{$wid}\n";
+    }
 }
 
 # データを読んで、各単語が出現するDocumentIDをマージ
