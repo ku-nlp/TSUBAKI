@@ -27,23 +27,22 @@ my $window = -1;
 $window = $opt{window} if($opt{window});
 
 # データのあるディレクトリを開く
-opendir (DIR, $opt{in});
+opendir (DIR, $opt{in}) or die;
 foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
     undef %freq;
 
     # *.xmlを読み込む
     # 数字のみのファイルが対象
-#   next if ($ftmp !~ /(^0*)(\d+)\.xml$/);
-    next if ($ftmp !~ /(^0*)(\d+)\.xml.gz$/);
+    next if ($ftmp !~ /(^0*)(\d+)\.xml$/);
+
     my $NAME = $1 . $2;
     my $SHORT_NAME = $2;
 
-#   open (FILE, '<:utf8', "$opt{in}/$ftmp") || die("no such file $ftmp\n");
-    open (FILE, "zcat $opt{in}/$ftmp |") || die("no such file $ftmp\n");
+    open (FILE, '<:utf8', "$opt{in}/$ftmp") || die("no such file $ftmp\n");
 
     # Juman / Knpの解析結果を使ってインデックスを作成
     my $flag = 0;
-    my $buff = '';
+    my $buff;
     my @index_array;
     while (<FILE>) {
 	next if($_ =~ /^succeeded\.$/);
@@ -52,9 +51,9 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
 	    print STDERR "\rdir=$opt{in},file=$NAME (Id=$1)";
 	}
 
-	if($_ =~ /^\]\]\><\/$TAG_NAME>/){
+	if($_ =~ /^\]\]\><\/Annotation>/){
 	    my $indexes;
-	    $buff = decode('utf8', $buff);
+	    $buff = decode('utf8', $buff) unless(utf8::is_utf8($buff));
 	    if($opt{knp}){
 		$indexes = &Indexer::makeIndexfromKnpResult($buff);
 		if($window > 0){
@@ -74,11 +73,12 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
 	    }
 
 	    foreach my $k (keys %{$indexes}){
-		$freq{$k} += $indexes->{$k};
+		$freq{$k}->{freq} += $indexes->{$k}->{freq};
+		push(@{$freq{$k}->{poss}}, $indexes->{$k}->{pos});
 	    }
-	    $buff = '';
+	    $buff = undef;
 	    $flag = 0;
-	}elsif($_ =~ /.*\<$TAG_NAME\>\<\!\[CDATA\[/){
+	}elsif($_ =~ /.*\<Annotation Scheme=\"$TAG_NAME\"\>\<\!\[CDATA\[/){
 	    $buff = "$'";
 	    $flag = 1;
 	}elsif($flag > 0){
@@ -90,8 +90,7 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
     close FILE;
 
     if($window > 0){
-	my $temp = &Indexer::makeIndexfromIndexArray(\@index_array, 30);
-#	my $temp = &Indexer::makeIndexfromIndexArray(\@index_array, $window);
+	my $temp = &Indexer::makeIndexfromIndexArray(\@index_array, $window);
 	foreach my $k (keys %{$temp}){
 	    $freq{$k} += $temp->{$k};
 	}
@@ -153,9 +152,13 @@ sub Output
 {
     my ($fh, $did) = @_;
 
-    foreach my $wid (sort keys %freq) {
-#	my $word = encode('euc-jp',$wid);
-#	print STDERR "$word\n";
-	print $fh "$wid $did:$freq{$wid}\n";
+    foreach my $e (sort {$a cmp $b} keys %freq) {
+	my $pos_str;
+	foreach my $pos (@{$freq{$e}->{poss}}){
+	    $pos_str .= "$pos,";
+	}
+	chop($pos_str);
+
+	printf $fh ("%s %d:%.4f@%s\n", $e, $did, $freq{$e}->{freq}, $pos_str);
     }
 }
