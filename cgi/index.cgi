@@ -23,6 +23,7 @@ my $INDEX_DIR = 'INDEX_NTCIR2';
 my @COLOR = ("ffff66", "a0ffff", "99ff99", "ff9999", "ff66ff", "880000", "00aa00", "886800", "004699", "990099");
 my $PORT = 65000;
 my $TOOL_HOME='/home/skeiji/local/bin';
+my $LOG_DIR = "/se_tmp";
 my @HOSTS;
 # for(my $i = 161; $i < 162; $i++){
 for(my $i = 161; $i < 192; $i++){
@@ -155,7 +156,7 @@ else {
 
  	    # ログの保存
 	    my $date = `date +%m%d-%H%M%S`; chomp ($date);
- 	    open(OUT, ">> /se_tmp/input.log");
+ 	    open(OUT, ">> $LOG_DIR/input.log");
 	    my $param_str;
 	    foreach my $k (sort keys %params){
 #$params{'query'} $params{'ranking_method'} $params{'logical_operator'} $hitcount $search_time\n";

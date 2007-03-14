@@ -81,6 +81,7 @@ chomp ($date);
 my $TOOL_HOME='/home/skeiji/local/bin';
 my $INDEX_DIR = 'INDEX_NTCIR2';
 my $PORT = 65000;
+my $LOG_DIR = "/se_tmp";
 my @HOSTS;
 for(my $i = 161; $i < 192; $i++){
 #    next if($i == 191);
@@ -240,7 +241,7 @@ if($file_type){
 
 	# ログの保存
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
-	open(OUT, ">> /se_tmp/input.log");
+	open(OUT, ">> $LOG_DIR/input.log");
 	my $param_str;
 	foreach my $k (sort keys %params){
 	    $param_str .= "$k=$params{$k},";
@@ -276,7 +277,7 @@ if($file_type){
 
 	# ログの保存
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
-	open(OUT, ">> /se_tmp/input.log");
+	open(OUT, ">> $LOG_DIR/input.log");
 	my $param_str;
 	foreach my $k (sort keys %params){
 	    $param_str .= "$k=$params{$k},";
