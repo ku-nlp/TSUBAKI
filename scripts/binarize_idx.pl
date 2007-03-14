@@ -7,53 +7,40 @@
 #################################################################
 
 use strict;
-use BerkeleyDB;
-use Encode;
+use Binarizer;
 
-# 引数として*.idxファイルをとる
-die "file name is not *.idx\n" if ($ARGV[0] !~ /(.*?)([^\/]+)\.idx$/);
-my $DIR = $1;
-my $NAME = $2;
+&main();
 
-# INDEXを保存するDB
-my $table =  tie my %OFFSET, 'BerkeleyDB::Hash', -Filename => "${DIR}offset$NAME.db", -Flags => DB_CREATE | DB_TRUNCATE, -Cachesize => 100000000 or die "$!\n";
-&EncodeDB($table);
+sub main {
+    unless ($ARGV[0] =~ /(.*?)([^\/]+)\.(idx.*)$/){
+	die "file name is not *.idx\n"
+    }else{
+	# 引数として*.idxファイルをとる
+	my $DIR = $1;
+	my $NAME = $2;
 
-my $offset = 0;
-open (FILE, '<:utf8', "${DIR}$NAME.idx") || die "$!\n";
-open (OUT, "> ${DIR}idx$NAME.dat") || die "$!\n";
+	my $lcnt = 0;
+	my $bins = {word => new Binarizer( 0, "${DIR}/idx$NAME.word.dat", "${DIR}/offset$NAME.word.cdb"),
+		    dpnd => new Binarizer(10, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb")};
 
-while (<FILE>) {
-    chomp;
-    my ($word, @dlist) = split;
-    my $encword = encode('utf8', $word);
-    # UTFエンコードされた単語を出力
-    print OUT $encword;
-    # 0を出力
-    print OUT pack('c', 0);
-    # 文書数をlong型で出力
-    print OUT pack('L', scalar(@dlist));
+	open (READER, '<:utf8', "${DIR}/$NAME.idx") || die "$!\n";
+	while (<READER>) {
+	    print STDERR "\rnow binarizing... ($lcnt)" if(($lcnt%1113) == 0);
+	    $lcnt++;
 
-    for (my $i = 0; $i < @dlist; $i++) {
-	my ($did, $freq) = split (/:/, $dlist[$i]);
-	
-	# 単語IDと頻度をLONGで出力
-	print OUT pack('L', $did);
-	print OUT pack('L', $freq);
+	    chomp;
+	    my ($index, @dlist) = split;
+
+	    my $bin = $bins->{word};
+	    $bin = $bins->{dpnd} if(index($index, '->') > 0);
+
+	    $bin->add($index, \@dlist);
+	}
+	print STDERR "\rbinarizing ($lcnt) done.\n";
+	close(READER);
+
+	$bins->{word}->close();
+	$bins->{dpnd}->close();
     }
-
-    # オフセットを保存し、書き込んだバイト数分増やす
-    $OFFSET{$word} = $offset;
-    $offset += length($encword) + 5 + 8 * @dlist;
 }
-close FILE;
-close OUT;
 
-# データベースのエンコード設定
-sub EncodeDB{
-    my ($db) = @_;
-    $db->filter_fetch_key(sub {$_ = &decode('euc-jp', $_)});
-    $db->filter_store_key(sub {$_ = &encode('euc-jp', $_)});
-    $db->filter_fetch_value(sub {$_ = &decode('euc-jp', $_)});
-    $db->filter_store_value(sub {$_ = &encode('euc-jp', $_)});
-}
