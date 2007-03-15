@@ -258,7 +258,7 @@ sub makeIndexArrayfromJumanResult{
 
 ## KNPの解析結果から索引語と索引付け対象となる係り受け関係を抽出する
 sub makeIndexfromKnpResult{
-    my($this,$knp_result) = @_;
+    my($this,$knp_result,$option) = @_;
 
     my %freq;
     foreach my $sent (split(/EOS\n/, $knp_result)){
@@ -343,6 +343,8 @@ sub makeIndexfromKnpResult{
 		}
 	    }
 	}
+
+	return \%freq if $option->{no_dpnd};
 
 	## <意味有>が付いている形態素間の係り受け関係を索引付け
 	## 係り先・係り元に代表表記が複数個ある場合は、係り先・元の代表表記の個数の積で割ってカウントする
