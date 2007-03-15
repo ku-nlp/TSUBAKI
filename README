@@ -1,57 +1,149 @@
-サーチエンジン用プログラム
+###################################
+# 検索エンジン TSUBAKI マニュアル #
+###################################
 
-Written by 
-	黒橋禎夫
-	河原大輔
-	新里圭司
-	柴田知秀
-	笹野遼平
-	中澤敏明
-	笹田鉄郎
+単語・係り受けインデックスの作成方法
+------------------------------------
 
+1. 標準フォーマット化された文書のKNP部分(<Annotation Sceme="Knp">
+... </Annotation>で囲まれた部分)を読み込み、文書ごとに単語・係り受けの
+頻度を計数する
 
-1. 標準フォーマットxmlのJUMAN部分を読み込み、ドキュメントごとに単語頻度を計数
+Usage: perl make_idx.pl -in INPUT_DIR -out OUTPUT_DIR
 
- "-in" で指定したディレクトリを開き、ファイル名が"<数字>.xml"のファイルを読み込む
- "-out"で指定したディレクトリに、"<数字>.idx"ファイルを作成
+"-in" で指定したディレクトリを開き、ファイル名が"<数字>.xml"のファイル
+ を読み込む
+"-out"で指定したディレクトリに、"<数字>.idx"ファイルを作成
+"-knp" で標準フォーマットに埋め込まれたKNP解析結果からインデックスを作
+成する
 
- Usage: ./make_idx.pl -in INPUT_DIR -out OUTPUT_DIR
+[skeiji@nlpc01 scripts]$ ls in
+00000010.xml  00000012.xml  00000014.xml  00000016.xml  00000018.xml
+00000011.xml  00000013.xml  00000015.xml  00000017.xml  00000019.xml
+[skeiji@nlpc01 scripts]$ ls out/
+[skeiji@nlpc01 scripts]$ perl make_idx.pl -in in -out out -knp
+dir=in,file=00000010 (Id=1) done.
+dir=in,file=00000011 (Id=15) done.
+dir=in,file=00000012 (Id=30) done.
+dir=in,file=00000013 (Id=60) done.
+dir=in,file=00000014 (Id=63) done.
+dir=in,file=00000015 (Id=28) done.
+dir=in,file=00000016 (Id=87) done.
+dir=in,file=00000017 (Id=35) done.
+dir=in,file=00000018 (Id=32) done.
+dir=in,file=00000019 (Id=30) done.
+[skeiji@nlpc01 scripts]$ ls out/
+00000010.idx  00000012.idx  00000014.idx  00000016.idx  00000018.idx
+00000011.idx  00000013.idx  00000015.idx  00000017.idx  00000019.idx
+[skeiji@nlpc01 scripts]$ head out/00000010.idx
+シーネット 10:2
+シーネット->ＭＥＴＡ 10:2
+ダンボールハウス 10:1
+ディノ 10:5
+ディノ->楽しい 10:5
+内 10:5
+内->楽しい 10:3
+楽しい->内 10:5
+玩具 10:1
+玩具->ＭＥＴＡ 10:1
 
+2. 計数した単語・係り受けの頻度をマージする
 
-2. 単語頻度の計数結果をマージ (全てをメモリ上に処理)
+Usage: perl merge_idx.pl -d DIR > merge.idx
 
- ディレクトリを開き、拡張子がidxのファイルを読み込む
- 標準出力に、マージした結果を出力
+ディレクトリDIRを開き、拡張子がidxのファイルを読み込む
+標準出力に、マージした結果を出力
 
- Usage: ./merge_idx.pl -d DIR > merge.idx
- 
- 標準入力から読み込み、標準出力に出力することも可能
+[skeiji@nlpc01 scripts]$ ls out/
+00000010.idx  00000012.idx  00000014.idx  00000016.idx  00000018.idx
+00000011.idx  00000013.idx  00000015.idx  00000017.idx  00000019.idx
+[skeiji@nlpc01 scripts]$ perl merge_idx.pl -dir out > out.idx
+(10) done.
+[skeiji@nlpc01 scripts]$ lv out.idx
+かなり 16:2
+かなり->大きい 16:1
+かなり->小さい 16:1
+き 19:0.5
+き->カイロプラクティック 19:0.5
+ごっこ 11:1
+さ 11:1
+さ->高 11:1
+さきがけ 19:2
+さきがけ->リンク 19:2
+しかし 17:1
+しかし->スイムシャツ 17:1
+する 13:1 17:4 18:1 19:1
+する->の 13:1
+する->予定 18:1
+ため 15:1 16:1 17:1
+ため->ウェア 17:1
+ため->スイムシャツ 15:1 16:1
+つく 14:2
+で 13:1 17:4
+で->する 13:1 17:3
+とても 19:1
+とても->楽しい 19:1
 
- Usage: cat 1.idx 2.idx 3.idx | ./merge_idx.pl > merge.idx
+3. 見出し順にソートされた複数個のインデックスファイル（2. のmerge.idx）
+をマージする
 
+Usage: perl merge_sorted_idx.pl -d DIR > merge.idx
 
-3. ソートされたインデックスファイルをマージするプログラム(ダイナミックに出力)
+ディレクトリDIRを開き、拡張子がidxのファイルを読み込む
+標準出力に、マージした結果を出力
 
- ディレクトリを開き、拡張子がidxのファイルを読み込む
- 標準出力に、マージした結果を出力
+4. idxファイルをバイナリ化する(オフセット値も同時に保存)
 
- Usage: ./merge_sorted_idx.pl -d DIR > merge.idx
+Usage: perl binarize_idx.pl ./<NAME>.idx
 
+引数に指定されたファイル(<NAME>.idx)からデータを読み、バイナリ化
+idx<NAME>.(word|dpnd).dat に結果を出力offset<NAME>.(word|dpnd).cdb に
+オフセット値を保存(CDB)
 
-4. idxファイルをバイナリ化するプログラム(オフセット値も同時に保存)
+[skeiji@nlpc01 scripts]$ perl binarize_idx.pl ./out.idx
+binarizing (1143) done.
+[skeiji@nlpc01 scripts]$ ls idxout.*
+idxout.dpnd.dat  idxout.word.dat
+[skeiji@nlpc01 scripts]$ ls offsetout.*
+offsetout.dpnd.cdb  offsetout.word.cdb
+[skeiji@nlpc01 scripts]$
 
- 引数に指定されたファイル(<NAME>.idx)からデータを読み、バイナリ化
- idx<NAME>.dat に結果を出力
- offset<NAME>.dbにオフセット値を保存(BerkeleyDB)
+検索エンジンの設置方法
+----------------------
 
- Usage: ./binarize_idx.pl <NAME>.idx
+1. 以下のファイルをcgiが実行可能な（同一の）ディレクトリに置く
 
+* cgi/index.cgi
+* cgi/api.cgi
+* scripts/Indexer.pm
+* cgi/QueryParser.pm
+* cgi/SearchEngine.pm
+* cgi/SnippetMaker.pm
 
-5. 標準入力から入力された単語を含む文書IDを検索するプログラム
+必要であれば、index.cgiの$PORTおよび$TOOL_HOME, $LOG_DIRを適切な数値、
+ディレクトリ(nkfがインストールされているディレクトリとクエリログを保存
+するディレクトリ)に変更する.  同様に、必要であればapi.cgiについても
+$PORT, $LOG_DIR 変数を適切な数値、ディレクトリに変更する
 
- 引数に指定されたディレクトリ中のバイナリファイル(idx<NAME>.dat)を開き、
- (同一ディレクトリ中にoffset<NAME>.dbが存在する必要あり)
- 標準入力から受け取ったクエリを含む文書IDを出力
- スペース区切りでAND検索も可能
+2. idx*.dat, offset*.dat ファイルがあるディレクトリ、
+index.cgi(api.cgi)で指定したポート番号、単語インデックスの文書頻度DB、
+係り受けインデックスの文書頻度DBを引数として与え、検索サーバを起動する
 
- Usage: echo "検索" | nkf -w | ./retrieve.pl -d DIR
+マシン名> ready!
+
+と表示されれば検索サーバの起動は成功.
+
+[skeiji@nlpc01 scripts]$ perl se_server.pl /work/ntcir_k 9684 ~/ntcir_dffiles/df
+.cdb.word ~/ntcir_dffiles/df.cdb.dep9
+nlpc01> loading df database...
+nlpc01> done.
+nlpc01> port=9684
+nlpc01> index_dir=/work/ntcir_k
+nlpc01> ready!
+
+なお、df.cdb.wordおよびdf.cdb.dep9は以下のサイトからダウンロードできる.
+
+http://nlp.kuee.kyoto-u.ac.jp/~skeiji/df.cdb.word 1.2GB
+http://nlp.kuee.kyoto-u.ac.jp/~skeiji/df.cdb.dep9 2.4GB
+
+3. 実際にindex.cgiにブラウザでアクセスし、検索を実行する
