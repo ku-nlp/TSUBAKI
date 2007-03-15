@@ -1,3 +1,8 @@
+2007-03-15  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	関数makeIndexfromKnpResultに、係り受けインデックスを行わないオプション(-no-dpnd)を追加
+
 2007-03-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/Indexer.pm:
 	係り先が最後の基本句の場合、係り元の係り先として-1をとっていたバグを修正
