@@ -1,8 +1,67 @@
+2007-03-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* cgi/QueryParser.pm:
+	Indexer.pmのオブジェクト化に対応
+
+	* scripts/make_idx.pl:
+	バグ修正.
+
+	* cgi/api.cgi
+	ログファイルを出力するディレクトリを変数化.
+
+	* cgi/index.cgi
+	ログファイルを出力するディレクトリを変数化.
+	
 2007-03-15  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/Indexer.pm:
 	関数makeIndexfromKnpResultに、係り受けインデックスを行わないオプション(-no-dpnd)を追加
 
+2007-03-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/make_idx.pl:
+	Annotationタグの変更に対応、Indexer.pmのオブジェクト化に対応.
+
+	* scripts/Retrieve.pm:
+	printLog関数追加、forkに対応.
+	
+	* scripts/Binarizer.pm:
+	idxファイルをバイナリ化するクラスを追加.
+
+	* scripts/binarize_idx.pl:
+	Binarizer.pmを用いてidxファイルのバイナリ化をするように変更.
+
+	* scripts/merge_idx.pl:
+	suffix(*.idx.gzの.gzなど)を指定するオプション-suffix、分割してマージする際のオプション-nを追加.
+
+	* scripts/merge_sorted_idx.pl:
+	suffix(*.idx.gzの.gzなど)を指定するオプション-suffixの追加.
+
+	* scripts/mk_ngram.pl:
+	文字Nグラムインデックスを作成するmk_ngram.plを追加.
+
+	* scripts/binarize_idx3.pl:
+	文字Nグラムインデックスをバイナリ化するbinarize_idx3.plを追加.
+
+	* scripts/se_server.pl:
+	forkに対応、処理を関数化(parseInput, search_wo_hash, returnSearchResults)、Retrieve.pmからいくつかの処理を移動(calculateDocumentScores, calculateOKAPIScore, intersect_wo_hash).
+
+	* scripts/idx2df.pl:
+	idxファイルを "単語 文書頻度" の形に変換するidx2df.plを追加.
+
+	* cgi/QueryParser.pm:
+	検索クエリを内部表現に変換するクラスQueryParser.pmを追加.
+
+	* cgi/SearchEngine.pm:
+	検索サーバにアクセスするクラスSearchEngine.pmを追加.
+
+	* cgi/SnippetMaker.pm:
+	標準フォーマットからsnippetを作成するクラスSnippetMaker.pmを追加.
+
+	* cgi/index.cgi:
+	snippetの作成、検索サーバへの問い合わせ、クエリの解析等apiと共通する部分をクラス化し、共有するように変更.
+
+	* cgi/api.cgi:
+	index.cgiと共通の処理を、各処理に対応したクラスを介して行うように変更.
+	
 2007-03-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/Indexer.pm:
 	係り先が最後の基本句の場合、係り元の係り先として-1をとっていたバグを修正
