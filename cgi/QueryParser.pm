@@ -7,6 +7,7 @@ my $TOOL_HOME='/home/skeiji/local/bin';
 use strict;
 use Encode;
 use utf8;
+use Indexer;
 
 our @EXPORT = qw(parse);
 
@@ -75,6 +76,7 @@ sub parse {
     
     $query_str =~ s/"([^"]+)"//g;
 
+    my $indexer = new Indexer();
     my @query_objs = ();
     my %wbuff = ();
     my %dbuff = ();
@@ -85,7 +87,7 @@ sub parse {
 	my $q_obj;
 	if($opt->{'dpnd'}){
 	    my $knp_result_eucjp = `echo "$q_euc" | $TOOL_HOME/juman | $TOOL_HOME/knp -tab -dpnd -postprocess`;
-	    my $temp = &Indexer::makeIndexfromKnpResult(decode('euc-jp', $knp_result_eucjp));
+	    my $temp = $indexer->makeIndexfromKnpResult(decode('euc-jp', $knp_result_eucjp));
 	    foreach my $k (keys %{$temp}){
 		if(index($k, '->') > -1){
 		    $dpnds{$k} = $temp->{$k};	
@@ -102,8 +104,8 @@ sub parse {
 
 	    if($opt->{'window'}){
 		my %windows = ();
-		$temp = &Indexer::makeIndexArrayfromKnpResult(decode('euc-jp', $knp_result_eucjp));
-		$temp = &Indexer::makeIndexfromIndexArray($temp, 15);
+		$temp = $indexer->makeIndexArrayfromKnpResult(decode('euc-jp', $knp_result_eucjp));
+		$temp = $indexer->makeIndexfromIndexArray($temp, 15);
 		foreach my $k (keys %{$temp}){
 		    $windows{$k} += $temp->{$k};
 		}
@@ -112,7 +114,7 @@ sub parse {
 	}else{
 	    my %words = ();
 	    my $juman_result_eucjp = `echo "$q_euc" | $TOOL_HOME/juman`;
-	    my $temp = &Indexer::makeIndexfromJumanResult(decode('euc-jp', $juman_result_eucjp));
+	    my $temp = $indexer->makeIndexfromJumanResult(decode('euc-jp', $juman_result_eucjp));
 	    foreach my $k (keys %{$temp}){
 		$words{$k} = $temp->{$k};
 		$wbuff{$k} = 0 unless(exists($wbuff{$k}));
@@ -123,8 +125,8 @@ sub parse {
 
 	    if($opt->{'window'}){
 		my %windows = ();
-		$temp = &Indexer::makeIndexArrayfromJumanResult(decode('euc-jp', $juman_result_eucjp));
-		$temp = &Indexer::makeIndexfromIndexArray($temp, 15);
+		$temp = $indexer->makeIndexArrayfromJumanResult(decode('euc-jp', $juman_result_eucjp));
+		$temp = $indexer->makeIndexfromIndexArray($temp, 15);
 		foreach my $k (keys %{$temp}){
 		    $windows{$k} += $temp->{$k};
 		}
@@ -137,7 +139,7 @@ sub parse {
     my %nbuff = ();
     # 文字トライグラムインデックスの作成
     foreach my $p (@phrases){
-	my $n_grms = &Indexer::makeNgramIndex($p, 3);
+	my $n_grms = $indexer->makeNgramIndex($p, 3);
 	foreach my $k (keys %{$n_grms}){
 	    $nbuff{$k} = 0 unless(exists($nbuff{$k}));
 	    $nbuff{$k} += $n_grms->{$k}->{score};
