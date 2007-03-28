@@ -1,4 +1,8 @@
 2007-03-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/Indexer.pm:
+	索引語の文中の位置(文の先頭から何単語目か)および文書中の位置(文書の先頭から何単語目か)を保持するように変更.（否自立語は数えない、文間はあける）
+
+2007-03-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* cgi/QueryParser.pm:
 	Indexer.pmのオブジェクト化に対応
 
