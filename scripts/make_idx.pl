@@ -2,173 +2,138 @@
 
 # $Id$
 
-###########################################################################
-# JUMANの解析結果を読み込み、ドキュメントごとに単語頻度を計数するプログラム
-###########################################################################
+#########################################################################################
+# JUMAN.KNP/SynGraphの解析結果を読み込み、ドキュメントごとに単語頻度を計数するプログラム
+#########################################################################################
 
 use strict;
-# use encoding 'utf8';
 use utf8;
-use XML::DOM;
-use Encode qw(decode encode from_to);
+use Encode;
 use Getopt::Long;
 use Indexer;
 
-my (%opt); GetOptions(\%opt, 'in=s', 'out=s', 'direct', 'knp', 'window=s');
 
-die "Option Error!\n" if (!$opt{in} || !$opt{out});
 
-# 単語IDの初期化
-my %freq;
-my $parser = new XML::DOM::Parser unless ($opt{direct});
-my $TAG_NAME = "Juman";
-$TAG_NAME = "Knp" if($opt{knp});
-my $window = -1;
-$window = $opt{window} if($opt{window});
+my (%opt);
+GetOptions(\%opt, 'in=s', 'out=s', 'jmn', 'knp', 'syn', 'position', 'z');
 
-# データのあるディレクトリを開く
-opendir (DIR, $opt{in}) or die;
-foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
-    undef %freq;
+&main();
 
-    # *.xmlを読み込む
-    # 数字のみのファイルが対象
-    next if ($ftmp !~ /(^0*)(\d+)\.xml$/);
-
-    my $NAME = $1 . $2;
-    my $SHORT_NAME = $2;
-
-    open (FILE, '<:utf8', "$opt{in}/$ftmp") || die("no such file $ftmp\n");
-
-    # Juman / Knpの解析結果を使ってインデックスを作成
-    my $flag = 0;
-    my $buff;
-    my @index_array;
-    my $indexer = new Indexer();
-    while (<FILE>) {
-	next if($_ =~ /^succeeded\.$/);
-
-	if($_ =~ /\<S.+ Id="(\d+)"\>/){
-	    print STDERR "\rdir=$opt{in},file=$NAME (Id=$1)";
-	}
-
-	if($_ =~ /^\]\]\><\/Annotation>/){
-	    my $indexes;
-	    $buff = decode('utf8', $buff) unless(utf8::is_utf8($buff));
-	    if($opt{knp}){
-		$indexes = $indexer->makeIndexfromKnpResult($buff);
-		if($window > 0){
-		    my $temp = $indexer->makeIndexArrayfromKnpResult($buff);
-		    foreach my $e (@{$temp}){
-			push(@index_array, $e);
-		    }
-		}
-	    }else{
-		$indexes = $indexer->makeIndexfromJumanResult($buff);
-		if($window > 0){
-		    my $temp = $indexer->makeIndexArrayfromJumanResult($buff);
-		    foreach my $e (@{$temp}){
-			push(@index_array, $e);
-		    }
-		}
-	    }
-
-	    foreach my $k (keys %{$indexes}){
-		$freq{$k}->{freq} += $indexes->{$k}->{freq};
-		push(@{$freq{$k}->{poss}}, $indexes->{$k}->{pos});
-	    }
-	    $buff = undef;
-	    $flag = 0;
-	}elsif($_ =~ /.*\<Annotation Scheme=\"$TAG_NAME\"\>\<\!\[CDATA\[/){
-	    $buff = "$'";
-	    $flag = 1;
-	}elsif($flag > 0){
-	    $buff .= "$_";
-	}else{
-#	    print encode('euc-jp', $_);
-	}
-    }
-    close FILE;
-
-    if($window > 0){
-	my $temp = $indexer->makeIndexfromIndexArray(\@index_array, $window);
-	foreach my $k (keys %{$temp}){
-	    $freq{$k} += $temp->{$k}->{freq};
-	}
-    }
-
-    # 単語IDと頻度のペアを出力
-    open (OUT, '>:utf8', "$opt{out}/$NAME.idx");
-    &Output(*OUT, $SHORT_NAME);
-    close OUT;
-    print STDERR " done.\n";
-}
-closedir(DIR);
-
-sub read_sf {
-    my ($doc) = @_;
-
-    my $sentences = $doc->getElementsByTagName('S');
-    for my $i (0 .. $sentences->getLength - 1) { # for each S
-        my $sentence = $sentences->item($i);
-        for my $s_child_node ($sentence->getChildNodes) {
-            if ($s_child_node->getNodeName eq 'Juman') { # one of the children of S is Text
-                for my $node ($s_child_node->getChildNodes) {
-		    my $jmn = $node->getNodeValue;
-		    for (split(/\n/, $jmn)) {
-			&CountData($_);
-		    }
-                }
-            }
-        }
-    }
-}
-
-sub CountData
-{
-    my ($input) = @_;
-    return if ($input =~ /^(\<|\@|EOS)/);
-    chomp $input;
-
-    my @w = split(/\s+/, $input);
-
-    # 削除する条件
-    return if ($w[2] =~ /^[\s*　]*$/);
-    return if ($w[3] eq "助詞");
-    return if ($w[5] =~ /^(句|読)点$/);
-    return if ($w[5] =~ /^空白$/);
-    return if ($w[5] =~ /^(形式|副詞的)名詞$/);
+sub main {
+    die "Option Error!\n" if (!$opt{in} || !$opt{out});
+    die "Not found! $opt{in}\n" unless (-e $opt{in});
+    die "Not found! $opt{out}\n" unless (-e $opt{out});
     
-    my $word = $w[2];
-    if($input =~ /代表表記:(.+?)\//){
-	$word = $1;
-    }
+    # 単語IDの初期化
+    my $TAG_NAME = "Juman";
+    $TAG_NAME = "Juman" if ($opt{jmn});
+    $TAG_NAME = "Knp" if ($opt{knp});
 
-    # 各単語IDの頻度を計数
-#    $freq{$w[2]}++;
-    $freq{$word}++;
+    if ($opt{syn}) {
+	$TAG_NAME = "SynGraph";
+	# SynGraph インデックスでは場所は考慮しない
+	$opt{position} = 0;
+    }
+    
+    # データのあるディレクトリを開く
+    opendir (DIR, $opt{in}) or die;
+    foreach my $file (sort {$a <=> $b} readdir(DIR)) {
+	# *.xmlを読み込む
+	# 数字のみのファイルが対象
+	next if ($file !~ /(^\d+)\.xml/);
+	
+	my $fid = $1;
+	if ($opt{z}) {
+	    open(READER, "zcat $opt{in}/$file |") || die ("no such file $opt{in}/$file\n");
+	    binmode(READER, ':utf8');
+	} else {
+	    open(READER, '<:utf8', "$opt{in}/$file") || die ("no such file $file\n");
+	}
+	
+	# Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
+	my $flag = 0;
+	my $result;
+	my %indice;
+	my $indexer = new Indexer();
+	while (<READER>) {
+	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if (/\<S.+ Id="(\d+)"\>/);
+	    
+	    if (/^\]\]\><\/Annotation>/) {
+#		$result = decode('utf8', $result) unless (utf8::is_utf8($result));
+		
+		my $idxs;
+		if ($opt{knp}) {
+		    $idxs = $indexer->makeIndexfromKnpResult($result);
+		} elsif($opt{syn}) {
+		    $idxs = $indexer->makeIndexfromSynGraph($result);
+		} else {
+		    $idxs = $indexer->makeIndexfromJumanResult($result);
+		}
+		
+		foreach my $k (keys %{$idxs}) {
+		    $indice{$k}->{freq} += $idxs->{$k}{freq};
+		    if ($opt{position}) {
+			push(@{$indice{$k}->{poss}}, @{$idxs->{$k}{absolute_pos}});
+		    }
+		}
+		$result = undef;
+		$flag = 0;
+	    } elsif (/.*\<Annotation Scheme=\"$TAG_NAME\"\>\<\!\[CDATA\[/) {
+		$result = "$'";
+		$flag = 1;
+	    } elsif($flag > 0) {
+		$result .= $_;
+	    }
+	}
+	close(READER);
+
+
+	my $fid_short = $fid + 0;
+	# 単語IDと頻度のペアを出力
+	open(WRITER, '>:utf8', "$opt{out}/$fid.idx");
+	if ($opt{position}) {
+	    &output_with_position(*WRITER, $fid_short, \%indice);
+	} else {
+	    &output_wo_position(*WRITER, $fid_short, \%indice);
+	}
+	close(WRITER);
+	print STDERR " done.\n";
+    }
+    closedir(DIR);
 }
 
-sub Output
-{
-    my ($fh, $did) = @_;
+sub output_with_position {
+    my ($fh, $did, $indice) = @_;
 
-    foreach my $e (sort {$a cmp $b} keys %freq) {
-#	my $pos_str;
-#	foreach my $pos (@{$freq{$e}->{poss}}){
-#	    $pos_str .= "$pos,";
-#	}
-#	chop($pos_str);
-#
-#	printf $fh ("%s %d:%.4f@%s\n", $e, $did, $freq{$e}->{freq}, $pos_str);
-#	printf $fh ("%s %d:%.4f\n", $e, $did, $freq{$e}->{freq});
-	if($freq{$e}->{freq} == int($freq{$e}->{freq})){
-	    printf $fh ("%s %d:%d\n", $e, $did, $freq{$e}->{freq});
-	}else{
-	    if($freq{$e}->{freq} =~ /\.\d{4,}$/){
-		printf $fh ("%s %d:%.4f\n", $e, $did, $freq{$e}->{freq});
-	    }else{
-		printf $fh ("%s %d:%s\n", $e, $did, $freq{$e}->{freq});
+    foreach my $k (sort {$a cmp $b} keys %{$indice}) {
+	my $freq = $indice->{$k}{freq};
+	my $pos_str = join(',', @{$indice->{$k}{poss}});
+
+	if ($freq == int($freq)) {
+	    printf $fh ("%s %d:%s@%s\n", $k, $did, $freq, $pos_str);
+	} else {
+	    if ($freq =~ /\.\d{4,}$/) {
+		printf $fh ("%s %d:%.4f@%s\n", $k, $did, $freq, $pos_str);
+	    } else {
+		printf $fh ("%s %d:%s@%s\n", $k, $did, $freq, $pos_str);
+	    }
+	}
+    }
+}
+
+sub output_wo_position {
+    my ($fh, $did, $indice) = @_;
+
+    foreach my $k (sort {$a cmp $b} keys %{$indice}) {
+	my $freq = $indice->{$k}{freq};
+
+	if ($freq == int($freq)) {
+	    printf $fh ("%s %d:%s\n", $k, $did, $freq);
+	} else {
+	    if ($freq =~ /\.\d{4,}$/) {
+		printf $fh ("%s %d:%.4f\n", $k, $did, $freq);
+	    } else {
+		printf $fh ("%s %d:%s\n", $k, $did, $freq);
 	    }
 	}
     }
