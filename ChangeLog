@@ -1,3 +1,12 @@
+2007-06-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/make_idx.pl:
+	-z, -position, -synオプションの追加.
+	コード整理.
+
+	* scripts/Indexer.pm:
+	SynGraph解析結果からインデックスを作成するメソッドの追加.
+	同一文中に複数回出現する単語の出現位置が上書きされるバグを修正.
+
 2007-06-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/Indexer.pm:
 	SynGraph解析結果からインデックスを作成するメソッドの追加，単語の出現位置を＜意味有＞の付かない語についても持つように変更. (文間をつめるように変更)
