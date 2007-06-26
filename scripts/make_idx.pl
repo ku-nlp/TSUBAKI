@@ -26,7 +26,6 @@ sub main {
     
     # 単語IDの初期化
     my $TAG_NAME = "Juman";
-    $TAG_NAME = "Juman" if ($opt{jmn});
     $TAG_NAME = "Knp" if ($opt{knp});
 
     if ($opt{syn}) {
@@ -56,7 +55,7 @@ sub main {
 	my %indice;
 	my $indexer = new Indexer();
 	while (<READER>) {
-	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if (/\<S.+ Id="(\d+)"\>/);
+	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if (/\<S.? Id="(\d+)"\>/);
 	    
 	    if (/^\]\]\><\/Annotation>/) {
 #		$result = decode('utf8', $result) unless (utf8::is_utf8($result));
