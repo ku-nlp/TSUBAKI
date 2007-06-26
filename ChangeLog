@@ -1,3 +1,7 @@
+2007-06-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+	* scripts/make_idx.pl:
+	-position指定時に出現している文IDも出力するように変更
+
 2007-06-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 	* scripts/make_idx.pl:
 	-z, -position, -synオプションの追加.
