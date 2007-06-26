@@ -30,10 +30,11 @@ sub main {
 
     if ($opt{syn}) {
 	$TAG_NAME = "SynGraph";
-	# SynGraph インデックスでは場所は考慮しない
+	# SynGraph インデックスではposition, sentenceは考慮しない
 	$opt{position} = 0;
+	$opt{sentence} = 0;
     }
-    
+
     # データのあるディレクトリを開く
     opendir (DIR, $opt{in}) or die;
     foreach my $file (sort {$a <=> $b} readdir(DIR)) {
@@ -50,12 +51,16 @@ sub main {
 	}
 	
 	# Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
+	my $sid = 0;
 	my $flag = 0;
 	my $result;
 	my %indice;
 	my $indexer = new Indexer();
 	while (<READER>) {
-	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if (/\<S.*? Id="(\d+)"\>/);
+	    if (/\<S.*? Id="(\d+)"/) {
+		print STDERR "\rdir=$opt{in},file=$fid (Id=$1)";
+		$sid = $1;
+	    }
 	    
 	    if (/^\]\]\><\/Annotation>/) {
 #		$result = decode('utf8', $result) unless (utf8::is_utf8($result));
@@ -72,6 +77,7 @@ sub main {
 		foreach my $k (keys %{$idxs}) {
 		    $indice{$k}->{freq} += $idxs->{$k}{freq};
 		    if ($opt{position}) {
+			push(@{$indice{$k}->{sids}}, $sid);
 			push(@{$indice{$k}->{poss}}, @{$idxs->{$k}{absolute_pos}});
 		    }
 		}
@@ -106,15 +112,16 @@ sub output_with_position {
 
     foreach my $k (sort {$a cmp $b} keys %{$indice}) {
 	my $freq = $indice->{$k}{freq};
+	my $sid_str = join(',', @{$indice->{$k}{sids}});
 	my $pos_str = join(',', @{$indice->{$k}{poss}});
 
 	if ($freq == int($freq)) {
-	    printf $fh ("%s %d:%s@%s\n", $k, $did, $freq, $pos_str);
+	    printf $fh ("%s %d:%s@%s#%s\n", $k, $did, $freq, $sid_str, $pos_str);
 	} else {
 	    if ($freq =~ /\.\d{4,}$/) {
-		printf $fh ("%s %d:%.4f@%s\n", $k, $did, $freq, $pos_str);
+		printf $fh ("%s %d:%.4f@%s#%s\n", $k, $did, $freq, $sid_str, $pos_str);
 	    } else {
-		printf $fh ("%s %d:%s@%s\n", $k, $did, $freq, $pos_str);
+		printf $fh ("%s %d:%s@%s#%s\n", $k, $did, $freq, $sid_str, $pos_str);
 	    }
 	}
     }
