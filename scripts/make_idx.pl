@@ -43,10 +43,10 @@ sub main {
 	
 	my $fid = $1;
 	if ($opt{z}) {
-	    open(READER, "zcat $opt{in}/$file |") || die ("no such file $opt{in}/$file\n");
+	    open(READER, "zcat $opt{in}/$file |") || die ("No such file $opt{in}/$file\n");
 	    binmode(READER, ':utf8');
 	} else {
-	    open(READER, '<:utf8', "$opt{in}/$file") || die ("no such file $file\n");
+	    open(READER, '<:utf8', "$opt{in}/$file") || die ("No such file $file\n");
 	}
 	
 	# Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
@@ -55,7 +55,7 @@ sub main {
 	my %indice;
 	my $indexer = new Indexer();
 	while (<READER>) {
-	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if (/\<S.? Id="(\d+)"\>/);
+	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if (/\<S.*? Id="(\d+)"\>/);
 	    
 	    if (/^\]\]\><\/Annotation>/) {
 #		$result = decode('utf8', $result) unless (utf8::is_utf8($result));
