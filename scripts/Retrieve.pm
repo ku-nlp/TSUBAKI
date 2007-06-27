@@ -1,4 +1,4 @@
-package Retrieve2;
+package Retrieve;
 
 # $Id$
 

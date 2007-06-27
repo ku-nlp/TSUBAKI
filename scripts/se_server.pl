@@ -31,8 +31,8 @@ my $TOOL_HOME = '/home/skeiji/local/bin';
 ##############################################################
 print STDERR "$host> loading df database...\n";
 
-my $ret_word = new Retrieve2($opt{idxdir}, 'word', $opt{skip_pos});
-my $ret_dpnd = new Retrieve2($opt{idxdir}, 'dpnd', $opt{skip_pos});
+my $ret_word = new Retrieve($opt{idxdir}, 'word', $opt{skip_pos});
+my $ret_dpnd = new Retrieve($opt{idxdir}, 'dpnd', $opt{skip_pos});
 
 print STDERR "$host> done.\n";
 print STDERR "$host> port=$opt{port}\n";
