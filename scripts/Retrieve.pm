@@ -29,7 +29,7 @@ sub new {
     opendir(DIR, $dir) or die "$dir: $!\n";
     for my $d (sort readdir(DIR)) {
 	# idx*.datというファイルを読み込む
-	next unless($d =~ /idx(\d\d).$type.dat$/);
+	next unless($d =~ /idx(\d+).$type.dat$/);
 	my $NAME = $1;
 	next if ($NAME > 50);
 
@@ -81,7 +81,7 @@ sub search_wo_hash {
     opendir(DIR, $dir);
     foreach my $d (sort readdir(DIR)) {
 	# idx*.datというファイルを読み込む
-	next if $d !~ /idx(\d\d).$this->{TYPE}.dat$/;
+	next if $d !~ /idx(\d+).$this->{TYPE}.dat$/;
 	my $id = $1;
 	next if ($id > 50);
 
