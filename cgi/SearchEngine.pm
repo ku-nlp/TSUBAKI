@@ -40,48 +40,60 @@ sub broadcastSearch {
     my($this, $query, $opts) = @_;
 
     my $search_qs_str;
-    my $trigram_qs_str;
+    my $phrase_qs_str;
     foreach my $q (@{$query}){
-	foreach my $k (sort {$q->{words}{$a}{pos} <=> $q->{words}{$b}{pos}} keys %{$q->{words}}){
-	    $search_qs_str .= "$k:";
+	my $qs_str = undef;
+	foreach my $reps (sort {$a->[0]->{pos} <=> $b->[0]->{pos}} @{$q->{words}}){
+	    foreach my $k (@{$reps}){
+		next if($k->{isContentWord} < 1 && $q->{near} < 0);
+		$qs_str .= "$k->{rawstring}_$k->{gdf}+";
+	    }
+	    chop($qs_str);
+	    unless ($qs_str =~ /@$/ &&
+		    $qs_str eq ''){
+		$qs_str .= "@";
+	    }
 	}
 
-	foreach my $k (sort {$q->{dpnds}{$a}{pos} <=> $q->{dpnds}{$b}{pos}} keys %{$q->{dpnds}}){
-	    $search_qs_str .= "$k:";
+	foreach my $reps (sort {$a->[0]->{pos} <=> $b->[0]->{pos}} @{$q->{dpnds}}){
+	    foreach my $k (@{$reps}){
+		$qs_str .= "$k->{rawstring}_$k->{gdf}+";
+	    }
+	    chop($qs_str);
+	    unless ($qs_str =~ /@$/ &&
+		    $qs_str eq ''){
+		$qs_str .= "@";
+	    }
 	}
-
-#	foreach my $k (sort {$q->{windows}{$a}{pos} <=> $q->{windows}{$b}{pos}} keys %{$q->{windows}}){
-	foreach my $k (keys %{$q->{windows}}){
-	    $search_qs_str .= "$k:";
-	}
-    
-	foreach my $k (sort {$q->{ngrams}{$a}{pos} <=> $q->{ngrams}{$b}{pos}} keys %{$q->{ngrams}}){
-	    $trigram_qs_str .= "$k:";
-	}
+	
+	chop($qs_str);
+	$search_qs_str .= $qs_str . "#";
+	$search_qs_str .= $q->{near};
+	$search_qs_str .= ";";
     }
 
     chop($search_qs_str);
-    chop($trigram_qs_str);
-    $trigram_qs_str = 'null' if($trigram_qs_str eq '');
 
     my $selecter = IO::Select->new;
     my $sleeptime = 0;
     $sleeptime = int(rand(90)) + 30 if($this->{TYPE} eq 'API');
+    $search_qs_str = encode('utf8', $search_qs_str);
     for(my $i = 0; $i < scalar(@{$this->{HOSTS}}); $i++){
 	my $host = $this->{HOSTS}->[$i];
+
 	my $socket = IO::Socket::INET->new(PeerAddr => $host,
 					   PeerPort => $this->{PORT},
 					   Proto    => 'tcp',
 					   );
-	$selecter->add($socket);
-	unless($socket){
-	    die "$host に接続できませんでした。 $!\n";
-	}
+
+	my $topN = $opts->{start} + $opts->{results};
+#	print "$i :: $host $sleeptime,SEARCH,$search_qs_str,$opts->{ranking_method},$opts->{logical_operator},$opts->{dpnd}, $opts->{force_dpnd}, $topN, $opts->{near}, $opts->{only_hitcount}\n <br>";
+
+	$selecter->add($socket) or die "$host に接続できませんでした。 $!\n";
 
 	# 文字列を送信
-	my $topN = $opts->{start} + $opts->{results};
-	print $socket "$sleeptime,SEARCH,$trigram_qs_str $search_qs_str,$opts->{ranking_method},$opts->{logical_operator},$opts->{dpnd}, $opts->{dpnd_condition},$topN\n";
-
+#	print "$sleeptime,SEARCH,$search_qs_str,$opts->{ranking_method},$opts->{logical_operator},$opts->{dpnd}, $opts->{force_dpnd}, $topN, $opts->{near}, $opts->{only_hitcount}<br>\n";
+	print $socket "$sleeptime,SEARCH,$search_qs_str,$opts->{ranking_method},$opts->{logical_operator},$opts->{dpnd}, $opts->{force_dpnd}, $topN, $opts->{near}, $opts->{only_hitcount}\n";
 	$socket->flush();
     }
     
