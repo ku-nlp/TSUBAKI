@@ -1,7 +1,7 @@
 package Indexer;
 
 ###################################################################
-# juman, knpの解析結果から索引付けする要素を抽出するモジュール
+# juman, knp, SynGraphの解析結果から索引付けする要素を抽出するClass
 ###################################################################
 
 use strict;
@@ -179,7 +179,6 @@ sub makeIndexArrayfromJumanResult{
 	    if($line =~ /代表表記:(.+?)\//){
 		$word = $1;
 	    }
-	    $word = "Ｗ杯" if($word eq "ワールドカップ");
 
 	    my $index_obj = {
 		word => &toUpperCase_utf8($word),
@@ -218,6 +217,7 @@ sub makeIndexfromKnpResult{
 		     });
 	    }else{
 		next if ($line =~ /^(\<|\@|EOS)/);
+		next if ($line =~ /^\# /);
 
 		my @m = split(/\s+/, $line);
 
@@ -230,7 +230,6 @@ sub makeIndexfromKnpResult{
 		if($line =~ /代表表記:(.+?)\//){
 		    $word = $1;
 		}
-#		$word = "Ｗ杯" if($word eq "ワールドカップ");
 
 		push(@reps, &toUpperCase_utf8($word));
 		## 代表表記に曖昧性がある場合は全部保持する
