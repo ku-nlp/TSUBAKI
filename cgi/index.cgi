@@ -13,45 +13,55 @@ use IO::Select;
 use Time::HiRes;
 use CDB_File;
 
-use Indexer qw(makeIndexfromKnpResult makeIndexfromJumanResult);
 use SearchEngine;
 use QueryParser;
 use SnippetMaker;
 
 ## 定数
-my $INDEX_DIR = 'INDEX_NTCIR2';
+my $INDEX_DIR = '/var/www/cgi-bin/tsubaki/INDEX_NTCIR2';
 my @COLOR = ("ffff66", "a0ffff", "99ff99", "ff9999", "ff66ff", "880000", "00aa00", "886800", "004699", "990099");
-my $PORT = 65000;
+my $PORT = 99557;
 my $TOOL_HOME='/home/skeiji/local/bin';
-my $LOG_DIR = "/se_tmp";
 my @HOSTS;
-# for(my $i = 161; $i < 162; $i++){
 for(my $i = 161; $i < 192; $i++){
+    next if ($i == 188);
+    next if ($i == 187);
+    next if ($i == 186);
     push(@HOSTS,   "157.1.128.$i");
+#    last;
 }
-
 
 my $cgi = new CGI;
 my %params = ();
 ## 検索条件の初期化
 $params{'ranking_method'} = 'OKAPI';
 $params{'start'} = 0;
-$params{'logical_operator'} = 'AND';
+$params{'logical_operator'} = 'WORD_AND';
 $params{'dpnd'} = 1;
 $params{'results'} = 50;
-$params{'dpnd_condition'} = 'OFF';
+$params{'force_dpnd'} = 0;
 $params{'filter_simpages'} = 0;
+$params{'near'} = 0;
+$params{'syngraph'} = 0;
 
 ## 指定された検索条件に変更
 $params{'URL'} = $cgi->param('URL') if($cgi->param('URL'));
 $params{'query'} = decode('utf8', $cgi->param('INPUT')) if($cgi->param('INPUT'));
-$params{'start'} = $cgi->param('start') if(defined($cgi->param('start')));
-$params{'logical_operator'} = $cgi->param('logical') if(defined($cgi->param('logical')));
+if($params{'query'}){
+    $params{'start'} = $cgi->param('start') if(defined($cgi->param('start')));
+    $params{'logical_operator'} = $cgi->param('logical') if(defined($cgi->param('logical')));
+}
 
-if($cgi->param('dpnd') == 1){
+if($params{'logical_operator'} eq 'DPND_AND'){
+    $params{'force_dpnd'} = 1;
     $params{'dpnd'} = 1;
+    $params{'logical_operator'} = 'AND';
 }else{
-    $params{'dpnd'} = 0;
+    if($params{'logical_operator'} eq 'WORD_AND'){
+	$params{'logical_operator'} = 'AND';
+    }
+    $params{'force_dpnd'} = 0;
+    $params{'dpnd'} = 1;
 }
 
 if($cgi->param('filter_simpages') == 1){
@@ -60,12 +70,14 @@ if($cgi->param('filter_simpages') == 1){
     $params{'filter_simpages'} = 0;
 }
 
-
-
+$params{'near'} = shift(@{$cgi->{'near'}}) if ($cgi->param('near'));
+$params{'syngraph'} = 1 if ($cgi->param('syngraph'));
+$params{'only_hitcount'} = 0;
 
 
 # HTTPヘッダ出力
 print header(-charset => 'utf-8');
+
 # 指定されたＵＲＬの表示       
 if ($params{'URL'}) {
     my $color;
@@ -104,24 +116,46 @@ else {
     &printSearchInterface();
 
 #    $params{'query'} = undef;
-
+    
     # 入力があった場合
     if($params{'query'}){
-	my $start_time = Time::HiRes::time;
-
 	# parse query
-	my $query_objs = &QueryParser::parse($params{'query'}, \%params);
+	my $start_time_genuine = Time::HiRes::time;
+
+	my $query_objs;
+	if ($params{'syngraph'}) {
+	    $query_objs = &QueryParser::parse_with_syngraph($params{'query'}, \%params);
+	    $PORT= 95666;
+	    if ($query_objs->{contains_phrasal_query}) {
+		print "<center>同義表現を考慮したフレーズ検索は実行できません。</center></DIV>\n";
+		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
+		print "</body>\n";
+		print "</html>\n";
+		exit;
+	    } elsif ($query_objs->{contains_near_operator}) {
+		print "<center>同義表現を考慮した近接検索は実行できません。</center></DIV>\n";
+		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
+		print "</body>\n";
+		print "</html>\n";
+		exit;
+	    }
+	} else {
+	    $query_objs = &QueryParser::parse($params{'query'}, \%params);
+	}
 
 	## 検索
 	my $se_obj = new SearchEngine(\@HOSTS, $PORT, 'SEARCH_ENGINE');
-	my($hitcount, $results) = $se_obj->search($query_objs->{query}, \%params);
+	my $start_time = Time::HiRes::time;
+	my ($hitcount, $results) = $se_obj->search($query_objs->{query}, \%params);
+	my $finish_time = Time::HiRes::time;
+	my $search_time = $finish_time - $start_time;
 
 	# 検索クエリの表示
 	my $cbuff = &printQueries($query_objs->{query});
 
-	if($hitcount < 1){
+	if ($hitcount < 1) {
 	    print ") を含む文書は見つかりませんでした。</DIV>";
-	}else{
+	} else {
  	    # 検索結果の表示
  	    my $output;
  	    my $until = $params{'start'} + $params{'results'};
@@ -136,6 +170,7 @@ else {
 		print "</DIV>";
 	    }
 
+	    my $start_time = Time::HiRes::time;
  	    ## merging
  	    my $max = 0;
  	    my @merged_results;
@@ -149,14 +184,14 @@ else {
  		}
  		push(@merged_results, shift(@{$results->[$max]}));
  	    }
+	    my $finish_time = Time::HiRes::time;
+	    my $merge_time = $finish_time - $start_time;
 
- 	    my $finish_time = Time::HiRes::time;
- 	    my $search_time = $finish_time - $start_time;
- 	    printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.3f [%s]</div>\n", encode('utf8', '検索時間'), $search_time, encode('utf8', '秒'));
+ 	    printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\"><font color=\"white\">%3.3f</font> %s: %3.3f [%s]</div>\n", $merge_time, encode('utf8', '検索時間'), $search_time, encode('utf8', '秒'));
 
  	    # ログの保存
 	    my $date = `date +%m%d-%H%M%S`; chomp ($date);
- 	    open(OUT, ">> $LOG_DIR/input.log");
+ 	    open(OUT, ">> /se_tmp/input.log");
 	    my $param_str;
 	    foreach my $k (sort keys %params){
 #$params{'query'} $params{'ranking_method'} $params{'logical_operator'} $hitcount $search_time\n";
@@ -168,41 +203,57 @@ else {
 
 	    my $search_k;
 	    foreach my $q (@{$query_objs->{query}}){
-		foreach my $k (sort {$q->{words}{$a}{pos} <=> $q->{words}{$b}{pos}} keys %{$q->{words}}){
-		    $search_k .= "$k:";
-		}
-
-		foreach my $k (sort {$q->{dpnds}{$a}{pos} <=> $q->{dpnds}{$b}{pos}} keys %{$q->{dpnds}}){
-		    $search_k .= "$k:";
+		my $words = $q->{words};
+ 		foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$words}){
+		    foreach my $rep (@{$reps}){
+			$search_k .= "$rep->{rawstring}:";
+		    }
 		}
 		
-		foreach my $k (sort {$q->{ngrams}{$a}{pos} <=> $q->{ngrams}{$b}{pos}} keys %{$q->{ngrams}}){
-		    $search_k .= "$k:";
-		}
+ 		my $dpnds = $q->{dpnds};
+ 		foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$dpnds}){
+ 		    foreach my $rep (@{$reps}){
+ 			$search_k .= "$rep->{rawstring}:";
+ 		    }
+ 		}
 	    }
 	    chop($search_k);
 	    
 	    $params{'query'} =~ s/\s/:/g;
 	    $params{'query'} =~ s/　/:/g;
 	    my %urldbs = ();
-	    my $dbfp = "/home/skeiji/title.cdb";
+	    my $dbfp = "title.cdb";
 	    tie my %titledb, 'CDB_File', $dbfp or die "$0: can't tie to $dbfp $!\n";
-	    my $prev_page = {title => undef, url => undef, snippts => undef, score => 0};
+	    my $prev_page = {title => undef, url => undef, snippets => undef, score => 0};
 	    for(my $rank = $params{'start'}; $rank < scalar(@merged_results); $rank++){
 		my $did = $merged_results[$rank]->{did};
 		my $score =  $merged_results[$rank]->{score};
 		my $url = sprintf("$INDEX_DIR/%02d/h%04d/%08d.html", $did / 1000000, $did / 10000, $did);
 		my $htmlpath = $url;
-		my $xmlpath = sprintf("$INDEX_DIR/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
 
- 		## snippet用に重要文を抽出
-		my $sent_objs = &SnippetMaker::extractSentence($query_objs, $xmlpath);
-#		my $sent_objs = &extractSentence($query_objs, $xmlpath);
+		## snippet用に重要文を抽出
+		my $sent_objs;
+		if ($params{'syngraph'}) {
+		    my $xmlpath = sprintf("/net2/nlpcf34/disk07/skeiji/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
+		    $sent_objs = &SnippetMaker::extractSentencefromSynGraphResult($query_objs, $xmlpath);
+		} else {
+		    my $xmlpath = sprintf("$INDEX_DIR/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
+		    $sent_objs = &SnippetMaker::extractSentencefromKnpResult($query_objs, $xmlpath);
+		}
 
  		my $snippet = '';
 		my %words = ();
  		my $length = 0;
  		foreach my $sent_obj (sort {$b->{score} <=> $a->{score}} @{$sent_objs}){
+		    my $fflag = -1;
+		    foreach my $q_obj (@{$query_objs->{query}}){
+			if(index($sent_obj->{rawstring}, $q_obj->{rawstring}) > 0){
+			    $fflag = 1;
+			    last;
+			}
+		    }
+#		    next if($fflag < 0);
+
  		    my @mrph_objs = @{$sent_obj->{list}};
  		    foreach my $m (@mrph_objs){
  			my $surf = $m->{surf};
@@ -226,16 +277,16 @@ else {
  			$length += length($surf);
  			if($length > 200){
  			    $snippet .= " <b>...</b>";
- 			    last;
+			    last;
  			}
  		    }
  		    last if($length > 200);
  		}
 
 		## フレーズの強調表示
-		foreach my $q_obj (@{$query_objs->{query}}){
-		    next unless(defined($q_obj->{ngrams}));
-		    $snippet =~ s!$q_obj->{rawstring}!<b>$q_obj->{rawstring}</b>!g;
+		foreach my $q (@{$query_objs->{query}}){
+		    next unless ($q->{near} == 1); 
+		    $snippet =~ s!$q->{rawstring}!<b>$q->{rawstring}</b>!g;
 		}
 
  		$snippet = encode('utf8', $snippet) if(utf8::is_utf8($snippet));
@@ -291,6 +342,9 @@ else {
 		$output .= "<A class=\"cache\" href=\"$url\">$url</A>\n";
  		$output .= "</DIV>";
  		print $output;
+		my $finish_time = Time::HiRes::time;
+		my $hyouji_time = $finish_time - $start_time_genuine;
+#		print "<font color=white>$hyouji_time</font><br>\n"
  	    }
 
 	    foreach my $k (keys %urldbs){
@@ -322,6 +376,7 @@ else {
     function submit(offset){
 	document.forms['search'].start.value = offset;
 	document.forms['search'].submit();
+
     }
     // -->
     </SCRIPT> 
@@ -496,110 +551,58 @@ sub printQueries {
     my $color = 0;
     print "<DIV style=\"padding: 0.25em 1em; background-color:#f1f4ff;border-top: 1px solid gray;border-bottom: 1px solid gray;mergin-left:0px;\">検索キーワード (";
     foreach my $q (@{$query_objs}){
-	foreach my $k (sort {$q->{words}{$a}{pos} <=> $q->{words}{$b}{pos}} keys %{$q->{words}}){
-	    my $k_utf8 = encode('utf8', $k);
-	    if(exists($cbuff{$k})){
-		printf("<span style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$k}->{foreground}, $cbuff{$k}->{background});
-	    }else{
-		if($color > 4){
-		    print "<span style=\"color:white;margin:0.1em 0.25em;background-color:#$COLOR[$color];\">$k_utf8</span>";
-		    $cbuff{$k}->{foreground} = 'white';
-		    $cbuff{$k}->{background} = "#$COLOR[$color]";
-		}else{
-		    print "<span style=\"margin:0.1em 0.25em;background-color:#$COLOR[$color];\">$k_utf8</span>";
-		    $cbuff{$k}->{foreground} = 'black';
-		    $cbuff{$k}->{background} = "#$COLOR[$color]";
+	if ($q->{near} == 1) {
+	    printf("<b style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$q->{rawstring}</b>");
+	} else {
+	    my $words = $q->{words};
+	    foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$words}){
+		foreach my $k (@{$reps}){
+		    next if($k->{isContentWord} < 1 && $q->{near} < 1);
+
+		    my $k_utf8 = encode('utf8', $k->{rawstring});
+		    if(exists($cbuff{$k})){
+			printf("<span style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$k->{rawstring}}->{foreground}, $cbuff{$k->{rawstring}}->{background});
+		    }else{
+			if($color > 4){
+			    print "<span style=\"color:white;margin:0.1em 0.25em;background-color:#$COLOR[$color];\">$k_utf8</span>";
+			    $cbuff{$k->{rawstring}}->{foreground} = 'white';
+			    $cbuff{$k->{rawstring}}->{background} = "#$COLOR[$color]";
+			}else{
+			    print "<span style=\"margin:0.1em 0.25em;background-color:#$COLOR[$color];\">$k_utf8</span>";
+			    $cbuff{$k->{rawstring}}->{foreground} = 'black';
+			    $cbuff{$k->{rawstring}}->{background} = "#$COLOR[$color]";
+			}
+			$color = (++$color%scalar(@COLOR));
+		    }
 		}
-		$color = (++$color%scalar(@COLOR));
 	    }
-	}
-	
-	foreach my $k (sort {$q->{dpnds}{$a}{pos} <=> $q->{dpnds}{$b}{pos}} keys %{$q->{dpnds}}){
-	    my $k_utf8 = encode('utf8', $k);
-	    if(exists($cbuff{$k})){
-		printf("<span style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$k}->{foreground}, $cbuff{$k}->{background});
-	    }else{
-		if($color > 4){
-		    print "<span style=\"color:white;margin:0.1em 0.25em;background-color:#$COLOR[$color];\">$k_utf8</span>";
-		    $cbuff{$k}->{foreground} = 'white';
-		    $cbuff{$k}->{background} = "#$COLOR[$color]";
-		}else{
-		    print "<span style=\"margin:0.1em 0.25em;background-color:#$COLOR[$color];\">$k_utf8</span>";
-		    $cbuff{$k}->{foreground} = 'black';
-		    $cbuff{$k}->{background} = "#$COLOR[$color]";
+	    
+	    my $dpnds = $q->{dpnds};
+	    foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$dpnds}){
+		foreach my $k (@{$reps}){
+		    my $k_tmp  = $k->{rawstring};
+		    $k_tmp =~ s/->/→/;
+		    my $k_utf8 = encode('utf8', $k_tmp);
+		    if(exists($cbuff{$k->{rawstring}})){
+			printf("<span style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$k->{rawstring}}->{foreground}, $cbuff{$k->{rawstring}}->{background});
+		    }else{
+			if($color > 4){
+			    print "<span style=\"color:white;margin:0.1em 0.25em;background-color:#$COLOR[$color];\">$k_utf8</span>";
+			    $cbuff{$k->{rawstring}}->{foreground} = 'white';
+			    $cbuff{$k->{rawstring}}->{background} = "#$COLOR[$color]";
+			}else{
+			    print "<span style=\"margin:0.1em 0.25em;background-color:#$COLOR[$color];\">$k_utf8</span>";
+			    $cbuff{$k->{rawstring}}->{foreground} = 'black';
+			    $cbuff{$k->{rawstring}}->{background} = "#$COLOR[$color]";
+			}
+			$color = (++$color%scalar(@COLOR));
+		    }
 		}
-		$color = (++$color%scalar(@COLOR));
 	    }
-	}
-	
-	foreach my $k (sort {$q->{ngrams}{$a}{pos} <=> $q->{ngrams}{$b}{pos}} keys %{$q->{ngrams}}){
-	    my $k_utf8 = encode('utf8', $q->{rawstring});
-	    print "<b style=\"margin:0em 0.25em;\">$k_utf8</b>";
-	    last;
 	}
     }
 
     return \%cbuff;
-}
-
-sub decodeResult{
-    my($result_str) = @_;
-    my @result_ary;
-    foreach (split(/\n/, $result_str)){
-	my($did,$score) = split(/,/, $_);
-	push(@result_ary, {did => $did, score => $score});
-    }
-    return \@result_ary;
-}
-
-sub broadcastSearch{
-    my($trigram_qs, $search_qs) = @_;
-    my $trigram_qs_str = join(':',(keys %{$trigram_qs}));
-    my $search_qs_str  = join(':',(keys %{$search_qs}));
-    $trigram_qs_str = 'null' if($trigram_qs_str eq '');
-
-    my $selecter = IO::Select->new;
-    for(my $i = 0; $i < scalar(@HOSTS); $i++){
-	my $host = $HOSTS[$i];
-	my $socket = IO::Socket::INET->new(PeerAddr => $host,
-					   PeerPort => $PORT,
-					   Proto    => 'tcp',
-					   );
-	$selecter->add($socket);
-	unless($socket){
-	    die "$host に接続できませんでした。 $!\n";
-	}
-
-	# 文字列を送信
-	my $str_search_q = join(":",keys %{$search_qs});
-	my $topN = $params{'start'} + $params{'results'};
-	print $socket "SEARCH,$trigram_qs_str $search_qs_str,$params{'ranking_method'},$params{'logical_operator'},$params{'dpnd'},$params{'dpnd_condition'},$topN\n";
-#	print $socket "SEARCH,$trigram_qs_str $search_qs_str,$params{'ranking_method'},$params{'logical_operator'},$params{'dpnd'}\n";
-	$socket->flush();
-    }
-    
-    # 文字列を受信
-    my @results;
-    my $hitcount = 0;
-    my $num_of_sockets = scalar(@HOSTS);
-    while($num_of_sockets > 0){
-	my($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
-	foreach my $socket (@{$readable_sockets}){
-	    my $buff = <$socket>;
-	    chop($buff);
-	    $hitcount += $buff;
-
-	    $buff = <$socket>;
-	    $buff =~ s/\[RET\]/\n/g;
-	    push(@results, &decodeResult($buff));
-		
-	    $selecter->remove($socket);
-	    $socket->close();
-	    $num_of_sockets--;
-	}
-    }
-    push(@results,$hitcount);
-    return \@results;
 }
 
 sub printSearchInterface{
@@ -614,10 +617,9 @@ sub printSearchInterface{
 END_OF_HTML
 
     # タイトル出力
-# print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http://i-explosion.ex.nii.ac.jp/i-explosion/html/S/A01-1/api.html\">APIの使い方</A></DIV>\n";
 print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"api.html\">APIの使い方</A></DIV>\n";
     print "<CENTER style='maring:1em; padding:1em;'>";
-    print "<A href='http://tsubaki.ixnlp.nii.ac.jp/se/index.cgi'><IMG border=0 src=logo.png></A><P>\n";
+    print "<A href='http://tsubaki.ixnlp.nii.ac.jp/index.cgi'><IMG border=0 src=logo.png></A><P>\n";
     # フォーム出力
     print "<FORM name=\"search\" method=\"post\" action=\"\" enctype=\"multipart/form-data\">\n";
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
@@ -625,66 +627,48 @@ print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"api.h
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
     print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.INPUT.value=''\"/>\n";
 
-    print "<DIV style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\">検索条件\n";
+    print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
     if($params{'logical_operator'} eq "OR"){
-	print "<INPUT type=\"radio\" name=\"logical\" value=\"AND\"/>全ての語を含む\n";
-	print "<INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む\n";
-    }else{
-	print "<INPUT type=\"radio\" name=\"logical\" value=\"AND\" checked/> 全ての語を含む\n";
-	print "<INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む\n";
+	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
+	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/>全ての語を含む</LABEL></TD>\n";
+	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む</LABEL></TD>\n";
+    }elsif($params{'logical_operator'} eq "AND"){
+	if($params{'force_dpnd'} > 0){
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\" checked/>全ての係り受けを含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/> 全ての語を含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
+	}else{
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\" checked/> 全ての語を含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
+	}
     }
-    print "</DIV>\n";
+    print "</TR>";
+
+    if ($params{syngraph}) {
+	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT>同義表現を考慮する</LABEL></TD></TR>\n";
+    } else {
+	print "<TR><TD>オプション</TD><TD colspan=3 DIV style=\"text-align:left;\"><INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL>同義表現を考慮する</LABEL></DIV></TD></TR>\n";
+    }
+    print "</TABLE>\n";
     
     print "<DIV>\n";
-    if($params{'dpnd'} == 1){
-	print "<INPUT type=\"checkbox\" name=\"dpnd\" value=\"1\" checked/>係り受けを考慮する\n";
-    }else{
-	print "<INPUT type=\"checkbox\" name=\"dpnd\" value=\"1\"/>係り受けを考慮する\n";
-    }
+#    if($params{'dpnd'} == 1){
+#	print "<INPUT type=\"checkbox\" name=\"dpnd\" value=\"1\" checked/>係り受けを考慮する\n";
+#    }else{
+#	print "<INPUT type=\"checkbox\" name=\"dpnd\" value=\"1\"/>係り受けを考慮する\n";
+#    }
 
-    if($params{'filter_simpages'} == 1){
-	print "<INPUT type=\"checkbox\" name=\"filter_simpages\" value=\"1\" checked/>類似ページを表示しない\n";
-    }else{
-	print "<INPUT type=\"checkbox\" name=\"filter_simpages\" value=\"1\"/>類似ページを表示しない\n";
-    }
+#    if($params{'filter_simpages'} == 1){
+#	print "<INPUT type=\"checkbox\" name=\"filter_simpages\" value=\"1\" checked/>類似ページを表示しない\n";
+#    }else{
+#	print "<INPUT type=\"checkbox\" name=\"filter_simpages\" value=\"1\"/>類似ページを表示しない\n";
+#    }
 
     print "</DIV>\n";
     print "</FORM>\n";
+
+#    print ("<FONT color='red'>サーバーメンテナンスのため、検索・APIともにサービスを一時的に停止致しております。</FONT>\n");
+    
     print "</CENTER>";
-}
-
-# 検索に用いる語のみを返す
-sub GetData
-{
-    my ($input) = @_;
-    return if ($input =~ /^(\<|\@|EOS)/);
-    chomp $input;
-
-    my @w = split(/\s+/, $input);
-
-    # 削除する条件
-    return if ($w[2] =~ /^[\s*　]*$/);
-    return if ($w[3] eq "助詞");
-    return if ($w[5] =~ /^(句|読)点$/);
-    return if ($w[5] =~ /^空白$/);
-    return if ($w[5] =~ /^(形式|副詞的)名詞$/);
-
-    return $w[2];
-}
-
-sub h2z_utf8{
-    my($text) = @_;
-    my @cbuff = ();
-    my @ch_codes = unpack("U0U*", $$text);
-    for(my $i = 0; $i < scalar(@ch_codes); $i++){
-	my $ch_code = $ch_codes[$i];
-	unless(0x0030 < $ch_code && $ch_code < 0x007f){
-	    push(@cbuff, $ch_code);
-	}else{
-	    $ch_code += 0xfee0;
-	    push(@cbuff, $ch_code);
-	}
-    }
-    my $stemp = encode('utf8', pack("U0U*",@cbuff));
-    return \$stemp;
 }
