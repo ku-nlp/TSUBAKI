@@ -46,13 +46,15 @@ my $cgi = new CGI;
 my %params = ();
 ## 検索条件の初期化
 $params{'ranking_method'} = 'OKAPI';
-$params{'start'} = 0;
+$params{'start'} = 1;
 $params{'logical_operator'} = 'AND';
 $params{'dpnd'} = 1;
 $params{'results'} = 10;
-$params{'dpnd_condition'} = 'OFF';
+$params{'force_dpnd'} = 0;
 $params{'filter_simpages'} = 0;
 $params{'only_hitcount'} = 0;
+$params{'no_snippets'} = 1;
+$params{'near'} = 0;
 
 ## 指定された検索条件に変更
 $params{'URL'} = $cgi->param('URL') if($cgi->param('URL'));
@@ -61,6 +63,16 @@ $params{'start'} = $cgi->param('start') if(defined($cgi->param('start')));
 $params{'logical_operator'} = $cgi->param('logical') if(defined($cgi->param('logical')));
 $params{'results'} = $cgi->param('results') if(defined($cgi->param('results')));
 $params{'only_hitcount'} = $cgi->param('only_hitcount') if(defined($cgi->param('only_hitcount')));
+$params{'force_dpnd'} = $cgi->param('force_dpnd') if(defined($cgi->param('force_dpnd')));
+if(defined($cgi->param('snippets'))) {
+    if ($cgi->param('snippets') > 0) {
+	$params{'no_snippets'} = 0;
+    } else {
+	$params{'no_snippets'} = 1;
+    }
+} else {
+    $params{'no_snippets'} = 1;
+}
 
 if($cgi->param('dpnd') == 1){
     $params{'dpnd'} = 1;
@@ -74,17 +86,21 @@ if($cgi->param('filter_simpages') == 1){
     $params{'filter_simpages'} = 0;
 }
 
+$params{'query'} =~ s/^(?: | )+//g;
+$params{'query'} =~ s/(?: | )+$//g;
 
+$params{'near'} = shift(@{$cgi->{'near'}}) if ($cgi->param('near'));
 
 my $date = `date +%m%d-%H%M%S`;
 chomp ($date);
 my $TOOL_HOME='/home/skeiji/local/bin';
-my $INDEX_DIR = 'INDEX_NTCIR2';
-my $PORT = 65000;
-my $LOG_DIR = "/se_tmp";
+my $INDEX_DIR = '/var/www/cgi-bin/tsubaki/INDEX_NTCIR2';
+my $PORT = 99557;
 my @HOSTS;
 for(my $i = 161; $i < 192; $i++){
-#    next if($i == 191);
+    next if ($i == 188);
+    next if ($i == 187);
+    next if ($i == 186);
     push(@HOSTS,   "157.1.128.$i");
 }
 my $CACHE_PROGRAM = 'http://tsubaki.ixnlp.nii.ac.jp/se/index.cgi';
@@ -99,7 +115,7 @@ my $timestamp = strftime("%Y-%m-%d %T", localtime(time));
 # # utf8 encoded query
 # my $query = decode('utf8', $cgi->param('query'));
 # my $INPUT = $query;
-my $uri_escaped_query = uri_escape(encode('euc-jp', $params{'query'})); # uri_escape_utf8($query);
+my $uri_escaped_query = uri_escape(encode('utf8', $params{'query'})); # uri_escape_utf8($query);
 
 # # number of search results
 # my $result_num = $cgi->param('results');
@@ -150,12 +166,22 @@ if($file_type){
     my $dir_prefix = substr($file_type, 0, 1);
 
     unless($file_type eq "index"){
+#	print $cgi->header(-type => "text/plain", 
 	print $cgi->header(-type => "text/$file_type", 
 			   -charset => 'utf-8', 
 			   );
 
 	# my $filepath = "INDEX/$dir_prefix$subdir_id/$fid.$file_type";
 	my $filepath = "$INDEX_DIR/$dir_id/$dir_prefix$subdir_id/$fid.$file_type";
+	if ($file_type eq 'xml') {
+	    my $fp = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $fid / 10000, $fid);
+	    if (-e "$fp.gz") {
+		$filepath = $fp;
+	    } else {
+		$filepath = "$INDEX_DIR/$dir_id/$dir_prefix$subdir_id/$fid.xml";
+	    }
+	}
+
 	my $htmlfp = "$INDEX_DIR/$dir_id/h$subdir_id/$fid.html";
 	my $content = '';
 	if(-e $filepath){
@@ -164,13 +190,17 @@ if($file_type){
 	    $filepath .= ".gz";
 	    $content = `gunzip -c $filepath | /usr/local/bin/nkf --utf8`;
 	}
-	my $url = `head -1 ${htmlfp} | cut -f 2 -d ' '`;
+
+	my $urldbfp = "/var/www/cgi-bin/dbs/$dir_id.url.cdb";
+	tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
+	my $url = $urldb{$fid};
 	$content =~ s/Url=\"\"/Url=\"${url}\"/;
+	untie %urldb;
 	print $content;
     }else{
-	print $cgi->header(-type => "text/html", 
-			   -charset => 'utf-8', 
-			   );
+#	print $cgi->header(-type => "text/html", 
+#			   -charset => 'utf-8', 
+#			   );
 
 	my $selecter = IO::Select->new;
 	for(my $i = 0; $i < scalar(@HOSTS); $i++){
@@ -241,7 +271,7 @@ if($file_type){
 
 	# ログの保存
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
-	open(OUT, ">> $LOG_DIR/input.log");
+	open(OUT, ">> /se_tmp/input.log");
 	my $param_str;
 	foreach my $k (sort keys %params){
 	    $param_str .= "$k=$params{$k},";
@@ -277,7 +307,7 @@ if($file_type){
 
 	# ログの保存
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
-	open(OUT, ">> $LOG_DIR/input.log");
+	open(OUT, ">> /se_tmp/input.log");
 	my $param_str;
 	foreach my $k (sort keys %params){
 	    $param_str .= "$k=$params{$k},";
@@ -294,6 +324,7 @@ if($file_type){
 			  totalResultsReturned => scalar(@ret_result), 
 			  firstResultPosition => $params{'start'},
 			  logicalOperator => $params{'logical_operator'},
+			  forceDpnd => $params{'force_dpnd'},
 			  dpnd => $params{'dpnd'},
 			  filterSimpages => $params{'filter_simpages'},
 	    );
@@ -444,33 +475,37 @@ sub get_results_specified_num {
 #	$result->[$i]->{charset} = $charset;
 #	$result->[$i]->{timestamp} = $time;
 
-	my $xmlpath = sprintf("$INDEX_DIR/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id);
-	## snippet用に重要文を抽出
-	my $sent_objs = &SnippetMaker::extractSentence($query_objs, $xmlpath);
-
 	my $snippet = '';
 	my %words = ();
 	my $length = 0;
-	foreach my $sent_obj (sort {$b->{score} <=> $a->{score}} @{$sent_objs}){
-	    my @mrph_objs = @{$sent_obj->{list}};
-	    foreach my $m (@mrph_objs){
-		my $surf = $m->{surf};
-		my $reps = $m->{reps};
+	if ($params{no_snippets} < 1) {
+	    my $xmlpath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/$%08d.xml.gz", $id / 10000, $id);
+	    $xmlpath = sprintf("$INDEX_DIR/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id) unless (-e $xmlpath);
 
-		foreach my $k (keys %{$reps}){
-		    $words{$k} += $reps->{$k};
+	    ## snippet用に重要文を抽出
+	    my $sent_objs = &SnippetMaker::extractSentencefromKnpResult($query_objs, $xmlpath);
+	    
+	    foreach my $sent_obj (sort {$b->{score} <=> $a->{score}} @{$sent_objs}){
+		my @mrph_objs = @{$sent_obj->{list}};
+		foreach my $m (@mrph_objs){
+		    my $surf = $m->{surf};
+		    my $reps = $m->{reps};
+		    
+		    foreach my $k (keys %{$reps}){
+			$words{$k} += $reps->{$k};
+		    }
+		    
+		    $snippet .= $surf;
+		    $length += length($surf);
+		    if($length > 200){
+			$snippet .= " ...";
+			last;
+		    }
 		}
-
-		$snippet .= $surf;
-		$length += length($surf);
-		if($length > 200){
-		    $snippet .= " ...";
-		    last;
-		}
+		last if($length > 200);
 	    }
-	    last if($length > 200);
 	}
-
+	
 	my $score = $result->[$i]->{score};
 	if($prev_page->{title} eq $title &&
 	   $prev_page->{score} == $score){
