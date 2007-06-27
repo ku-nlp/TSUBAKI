@@ -1,156 +1,325 @@
 package QueryParser;
 
 # 検索クエリを内部形式に変換するモジュール
-
 my $TOOL_HOME='/home/skeiji/local/bin';
 
 use strict;
 use Encode;
 use utf8;
+use KNP;
 use Indexer;
+use SynGraph;
 
-our @EXPORT = qw(parse);
+# use lib qw(/home/skeiji/local/lib/perl5/site_perl/5.8.8);
 
-sub h2z_ascii{
-    my($string) = @_;
+my $syndbdir = '/home/skeiji/SynGraph/syndb/i686';
 
-    $string = uc($string);
-    $string =~ s/A/Ａ/g;
-    $string =~ s/B/Ｂ/g;
-    $string =~ s/C/Ｃ/g;
-    $string =~ s/D/Ｄ/g;
-    $string =~ s/E/Ｅ/g;
-    $string =~ s/F/Ｆ/g;
-    $string =~ s/G/Ｇ/g;
-    $string =~ s/H/Ｈ/g;
-    $string =~ s/I/Ｉ/g;
-    $string =~ s/J/Ｊ/g;
-    $string =~ s/K/Ｋ/g;
-    $string =~ s/L/Ｌ/g;
-    $string =~ s/M/Ｍ/g;
-    $string =~ s/N/Ｎ/g;
-    $string =~ s/O/Ｏ/g;
-    $string =~ s/P/Ｐ/g;
-    $string =~ s/Q/Ｑ/g;
-    $string =~ s/R/Ｒ/g;
-    $string =~ s/S/Ｓ/g;
-    $string =~ s/T/Ｔ/g;
-    $string =~ s/U/Ｕ/g;
-    $string =~ s/V/Ｖ/g;
-    $string =~ s/W/Ｗ/g;
-    $string =~ s/X/Ｘ/g;
-    $string =~ s/Y/Ｙ/g;
-    $string =~ s/Z/Ｚ/g;
-    $string =~ s/1/１/g;
-    $string =~ s/2/２/g;
-    $string =~ s/3/３/g;
-    $string =~ s/4/４/g;
-    $string =~ s/5/５/g;
-    $string =~ s/6/６/g;
-    $string =~ s/7/７/g;
-    $string =~ s/8/８/g;
-    $string =~ s/9/９/g;
-    $string =~ s/0/０/g;
-    $string =~ s/\+/＋/g;
-    $string =~ s/\*/＊/g;
-    $string =~ s/\#/＃/g;
-    $string =~ s/\@/＠/g;
+our @EXPORT = qw(parse, parse_with_syngraph);
 
-    return $string;
+sub h2z_alpha{
+    my($text) = @_;
+
+    my @cbuff = ();
+    my @ch_codes = unpack("U0U*", encode('utf8', $text));
+    for(my $i = 0; $i < scalar(@ch_codes); $i++){
+	my $ch_code = $ch_codes[$i];
+	if(0x0020 < $ch_code && $ch_code < 0x007f){
+	    $ch_code += 0xfee0;
+	    push(@cbuff, $ch_code);
+	}else{
+	    push(@cbuff, $ch_code);
+	}
+    }
+    my $tmp = pack("U0U*",@cbuff);
+    return $tmp;
 }
 
 sub parse {
     my($query_str, $opt) = @_;
 
-    ## 半角アスキー文字列を全角に置換
-    $query_str = &h2z_ascii($query_str);
-
-    my @phrases = ();
-    ## フレーズを抽出("...")
-    while($query_str =~ m/"([^"]+)"/g){
-	my $phrase = $1;
-	$phrase =~ s/[ |　]//g;
-
-	push(@phrases, $phrase);
+    my $DFDB_DIR = '/var/www/cgi-bin/cdbs-knp';
+    my @DF_WORD_DBs = ();
+    my @DF_DPND_DBs = ();
+    opendir(DIR, $DFDB_DIR);
+    foreach my $cdbf (readdir(DIR)) {
+	next unless ($cdbf =~ /cdb/);
+	
+	my $fp = "$DFDB_DIR/$cdbf";
+	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	if (index($cdbf, 'dpnd') > 0) {
+	    push(@DF_DPND_DBs, \%dfdb);
+	} elsif (index($cdbf, 'word') > 0) {
+	    push(@DF_WORD_DBs, \%dfdb);
+	}
     }
-    
-    $query_str =~ s/"([^"]+)"//g;
+    closedir(DIR);
 
-    my $indexer = new Indexer();
+    ## 空白で区切る
+    my @queries = split(/(?: |　)+/, $query_str);
     my @query_objs = ();
     my %wbuff = ();
     my %dbuff = ();
-    foreach my $q (split(/[ |　]+/, $query_str)){
-	my %words = ();
-	my %dpnds = ();
-	my $q_euc = encode('euc-jp', $q);
-	my $q_obj;
-	if($opt->{'dpnd'}){
-	    my $knp_result_eucjp = `echo "$q_euc" | $TOOL_HOME/juman | $TOOL_HOME/knp -tab -dpnd -postprocess`;
-	    my $temp = $indexer->makeIndexfromKnpResult(decode('euc-jp', $knp_result_eucjp));
-	    foreach my $k (keys %{$temp}){
-		if(index($k, '->') > -1){
-		    $dpnds{$k} = $temp->{$k};	
-		    $dbuff{$k} = 0 unless(exists($dbuff{$k}));
-		    $dbuff{$k} += $temp->{$k}->{score};
-		}else{
-		    $words{$k} = $temp->{$k};
-		    $wbuff{$k} = 0 unless(exists($wbuff{$k}));
-		    $wbuff{$k} += $temp->{$k}->{score};
-		}
-	    }
+    my $indexer = new Indexer();
+    my $knp = new KNP(-Command => "$TOOL_HOME/knp",
+		      -Option => '-tab -dpnd -postprocess',
+		      -JumanCommand => "$TOOL_HOME/juman");
+    foreach my $q (@queries){
+	my $near = -1;
+	## フレーズ検索かどうかの判定
+	if($q =~ /^"(.+)?"$/){
+	    $near = 1;
+	    $q = $1;
+	}
 
-	    $q_obj = {words => \%words, dpnds => \%dpnds, ngrams => undef, windows => undef, rawstring => $q};
+	## 近接検索かどうかの判定
+	if($q =~ /^(.+)?~(\d+)$/){
+	    $q = $1;
+#	    $opt->{'near'} = $2 + 1;
+	    $near = $2 + 1;
+	}
 
-	    if($opt->{'window'}){
-		my %windows = ();
-		$temp = $indexer->makeIndexArrayfromKnpResult(decode('euc-jp', $knp_result_eucjp));
-		$temp = $indexer->makeIndexfromIndexArray($temp, 15);
-		foreach my $k (keys %{$temp}){
-		    $windows{$k} += $temp->{$k};
-		}
-		$q_obj->{windows} = \%windows;
-	    }
-	}else{
-	    my %words = ();
-	    my $juman_result_eucjp = `echo "$q_euc" | $TOOL_HOME/juman`;
-	    my $temp = $indexer->makeIndexfromJumanResult(decode('euc-jp', $juman_result_eucjp));
-	    foreach my $k (keys %{$temp}){
-		$words{$k} = $temp->{$k};
+	## 半角アスキー文字列を全角に置換する
+	$q = &h2z_alpha($q);
+
+	my %buff = ();
+	my $temp = $indexer->makeIndexfromKnpResult($knp->parse($q)->all);
+	foreach my $k (keys %{$temp}){
+	    $buff{$temp->{$k}->{group_id}} = () unless(exists($buff{$temp->{$k}->{group_id}}));
+	    push(@{$buff{$temp->{$k}->{group_id}}}, $temp->{$k});
+
+	    if(index($k, '->') > 0){
+		$dbuff{$k} = 0 unless(exists($dbuff{$k}));
+		$dbuff{$k} += $temp->{$k}{freq};
+	    }else{
 		$wbuff{$k} = 0 unless(exists($wbuff{$k}));
-		$wbuff{$k} += $temp->{$k}->{score};
+		$wbuff{$k} += $temp->{$k}{freq};
 	    }
+	}
+	
+	my @words = ();
+	my @dpnds = ();
+	foreach my $gid (sort {$buff{$a}->[0]->{pos} <=> $buff{$b}->[0]->{pos}} keys %buff){
+	    my @reps_word;
+	    my @reps_dpnd;
+	    foreach my $m (@{$buff{$gid}}){
+		my $k = $m->{rawstring};
+		my $k_utf8 = encode('utf8', $m->{rawstring});
+		my $gdf = 0;
+		if(index($k, '->') > 0){
+		    foreach my $dfdb (@DF_DPND_DBs) {
+			if (exists($dfdb->{$k_utf8})) {
+			    $gdf = $dfdb->{$k_utf8};
+			    last;
+			}
+		    }
+		    $m->{gdf} = $gdf;
 
-	    $q_obj = {words => \%words, dpnds => undef, ngrams => undef, rawstring => $q};
+		    push(@reps_dpnd, $m);
+		}else{
+		    foreach my $dfdb (@DF_WORD_DBs) {
+			if (exists($dfdb->{$k_utf8})) {
+			    $gdf = $dfdb->{$k_utf8};
+			    last;
+			}
+		    }
+		    $m->{gdf} = $gdf;
 
-	    if($opt->{'window'}){
-		my %windows = ();
-		$temp = $indexer->makeIndexArrayfromJumanResult(decode('euc-jp', $juman_result_eucjp));
-		$temp = $indexer->makeIndexfromIndexArray($temp, 15);
-		foreach my $k (keys %{$temp}){
-		    $windows{$k} += $temp->{$k};
+		    push(@reps_word, $m);
 		}
-		$q_obj->{windows} = \%windows;
+	    }
+	    push (@words, \@reps_word) if(scalar(@reps_word) > 0);
+	    push (@dpnds, \@reps_dpnd) if(scalar(@reps_dpnd) > 0);
+	}
+	
+# 	foreach my $m (@words){
+# 	    foreach my $w (@{$m}){
+# 		print $w->{rawstring} . "&nbsp;";
+# 	    }
+# 	    print "<br>\n";
+# 	}
+#	print "$near <hr>\n";
+
+	push(@query_objs, {words => \@words, dpnds => \@dpnds, near => $near, rawstring => $q});
+    }
+
+    ###########################################################
+    # 単語、係り受けそれぞれの文書頻度データベースをuntieする #
+    ###########################################################
+    foreach my $cdb (@DF_WORD_DBs) {
+	untie %{$cdb};
+    }
+    foreach my $cdb (@DF_DPND_DBs) {
+	untie %{$cdb};
+    }
+
+    return {query => \@query_objs, words => \%wbuff, dpnds => \%dbuff};
+}
+
+sub parse_with_syngraph {
+    my($query_str, $opt) = @_;
+    my $stop_hypernym_fp = '/home/skeiji/stop_hypernyms';
+    my @stops = ();
+    open(READER, "$stop_hypernym_fp");
+    while(<READER>){
+	my($freq, $word) = split(/ /,$_);
+	my($kanji, $yomi) = split(/\//, $word);
+	push(@stops, decode('euc-jp', $kanji));
+    }
+    close(READER);
+
+    my $DFDB_DIR = '/var/www/cgi-bin/cdbs-syn';
+    my @DF_WORD_DBs = ();
+    my @DF_DPND_DBs = ();
+    opendir(DIR, $DFDB_DIR);
+    foreach my $cdbf (readdir(DIR)) {
+	next unless ($cdbf =~ /cdb/);
+	
+	my $fp = "$DFDB_DIR/$cdbf";
+	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	if (index($cdbf, 'dpnd') > 0) {
+	    push(@DF_DPND_DBs, \%dfdb);
+	} elsif (index($cdbf, 'word') > 0) {
+	    push(@DF_WORD_DBs, \%dfdb);
+	}
+    }
+    closedir(DIR);
+
+    ## 空白で区切る
+    my @queries = split(/(?: |　)+/, $query_str);
+    my @query_objs = ();
+    my %wbuff = ();
+    my %dbuff = ();
+    my $indexer = new Indexer();
+    my $knp = new KNP(-Command => "$TOOL_HOME/knp",
+		      -Option => '-tab -dpnd -postprocess',
+		      -JumanCommand => "$TOOL_HOME/juman");
+    my $syn = new SynGraph($syndbdir);
+
+    my $regnode_option;
+    $regnode_option->{relation} = 1;
+    $regnode_option->{antonym} = 1;
+
+    my $sid = 0;
+    my $phrasal_flag = 0;
+    my $near_flag = 0;
+    foreach my $q (@queries){
+	my $near = -1;
+	## フレーズ検索かどうかの判定
+	if($q =~ /^"(.+)?"$/){
+	    $near = 1;
+	    $q = $1;
+	    $phrasal_flag = 1;
+	}
+
+	## 近接検索かどうかの判定
+	if($q =~ /^(.+)?~(\d+)$/){
+	    $q = $1;
+	    $near_flag = 1;
+	}
+
+	## 半角アスキー文字列を全角に置換する
+	$q = &h2z_alpha($q);
+
+	my %buff = ();
+
+	my $knp_result = $knp->parse($q);
+	$knp_result->set_id($sid++);
+	my $syn_result = $syn->OutputSynFormat($knp_result, $regnode_option);
+	my $s_all = $syn_result;
+	$s_all =~ s/>/&gt;/g;
+	$s_all =~ s/</&lt;/g;
+	$s_all =~ s/\n/<br>\n/g;
+#	print $s_all;
+#	print "<hr>\n";
+
+	my $temp = $indexer->makeIndexfromSynGraph($syn_result);
+	foreach my $k (keys %{$temp}){
+	    next unless ($k =~ /^s\d+/);
+
+	    if(index($k, '<上位語>') > 0){
+		my $stop_flag = 0;
+		foreach my $stopwd (@stops){
+		    if(index($k, "$stopwd<上位語>") > 0){
+			$stop_flag = 1;
+			last;
+		    }
+		}
+		next if($stop_flag > 0);
+	    }
+
+	    $buff{$temp->{$k}->{group_id}} = () unless(exists($buff{$temp->{$k}->{group_id}}));
+	    push(@{$buff{$temp->{$k}->{group_id}}}, $temp->{$k});
+
+	    if(index($k, '->') > 0){
+		my ($r, $l) = split('->', $k);
+		next unless ($r =~ /^s\d+/);
+		next unless ($l =~ /^s\d+/);
+
+		$dbuff{$k} = 0 unless(exists($dbuff{$k}));
+		$dbuff{$k} += $temp->{$k}{freq};
+	    }else{
+		$wbuff{$k} = 0 unless(exists($wbuff{$k}));
+		$wbuff{$k} += $temp->{$k}{freq};
 	    }
 	}
-	push(@query_objs, $q_obj);
-    }
+	
+	my @words = ();
+	my @dpnds = ();
+	foreach my $gid (sort {$buff{$a}->[0]->{pos} <=> $buff{$b}->[0]->{pos}} keys %buff){
+	    my @reps_word;
+	    my @reps_dpnd;
+	    foreach my $m (@{$buff{$gid}}){
+		my $k = $m->{rawstring};
+		my $k_utf8 = encode('utf8', $m->{rawstring});
+		my $gdf = 0;
+		if(index($k, '->') > 0){
+		    foreach my $dfdb (@DF_DPND_DBs) {
+			if (exists($dfdb->{$k_utf8})) {
+			    $gdf = $dfdb->{$k_utf8};
+			    last;
+			}
+		    }
+		    $m->{gdf} = $gdf;
 
-    my %nbuff = ();
-    # 文字トライグラムインデックスの作成
-    foreach my $p (@phrases){
-	my $n_grms = $indexer->makeNgramIndex($p, 3);
-	foreach my $k (keys %{$n_grms}){
-	    $nbuff{$k} = 0 unless(exists($nbuff{$k}));
-	    $nbuff{$k} += $n_grms->{$k}->{score};
+		    push(@reps_dpnd, $m);
+		}else{
+		    foreach my $dfdb (@DF_WORD_DBs) {
+			if (exists($dfdb->{$k_utf8})) {
+			    $gdf = $dfdb->{$k_utf8};
+			    last;
+			}
+		    }
+		    $m->{gdf} = $gdf;
+
+		    push(@reps_word, $m);
+		}
+	    }
+	    push (@words, \@reps_word) if(scalar(@reps_word) > 0);
+	    push (@dpnds, \@reps_dpnd) if(scalar(@reps_dpnd) > 0);
 	}
-	my $q_obj = {words => undef, dpnds => undef, ngrams => $n_grms, rawstring => $p};
-	push(@query_objs, $q_obj);
+	
+	foreach my $m (@words){
+	    foreach my $w (@{$m}){
+#		print $w->{rawstring} . "&nbsp;";
+	    }
+#	    print "<br>\n";
+	}
+#	print "$near <hr>\n";
+
+	push(@query_objs, {words => \@words, dpnds => \@dpnds, near => $near, rawstring => $q});
     }
 
-#   debug_print(\@query_objs);
+    ###########################################################
+    # 単語、係り受けそれぞれの文書頻度データベースをuntieする #
+    ###########################################################
+    foreach my $cdb (@DF_WORD_DBs) {
+	untie %{$cdb};
+    }
+    foreach my $cdb (@DF_DPND_DBs) {
+	untie %{$cdb};
+    }
 
-    return {query => \@query_objs, words => \%wbuff, dpnds => \%dbuff, ngrams => \%nbuff};
+    return {query => \@query_objs, words => \%wbuff, dpnds => \%dbuff, contains_phrasal_query => $phrasal_flag, contains_near_operator => $near_flag};
 }
 
 sub debug_print {
