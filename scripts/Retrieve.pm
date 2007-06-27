@@ -1,4 +1,4 @@
-package Retrieve;
+package Retrieve2;
 
 # $Id$
 
@@ -12,15 +12,17 @@ use Encode;
 use utf8;
 use FileHandle;
 use Storable;
+use Error qw(:try);
 
 my $DEBUG = 1;
 my $host = `hostname`; chop($host);
+
 # $DEBUG = 1 if($host eq "nlpc01\n");
 
 sub new {
-    my ($class, $dir, $type) = @_;
+    my ($class, $dir, $type, $pos_skip) = @_;
 
-    my $this = {IN => [], OFFSET => [], DOC_LENGTH => [], TYPE => $type, INDEX_DIR => $dir};
+    my $this = {IN => [], OFFSET => [], DOC_LENGTH => undef, TYPE => $type, INDEX_DIR => $dir, POS_SKIP => $pos_skip};
 
     my $fcnt = 0;
     # idx<NAME>.datおよび、対応するoffset<NAME>.dbのあるディレクトリを指定する
@@ -29,12 +31,7 @@ sub new {
 	# idx*.datというファイルを読み込む
 	next unless($d =~ /idx(\d\d).$type.dat$/);
 	my $NAME = $1;
-
- 	## 文書長DB(Storable形式)の保持
- 	my $dlength_fp = "$dir/$NAME.doc_length.bin";
- 	print STDERR "$host> loading doc_length database ($dlength_fp)...\n" if($DEBUG);
- 	$this->{DOC_LENGTH}[$fcnt] = retrieve($dlength_fp) or die "$host> error.\n";
- 	print STDERR "$host> done.\n" if($DEBUG);
+	next if ($NAME > 50);
 
 	## OFFSET(offset*.dat)を読み込み専用でtie
 	my $offset_fp = "$dir/offset$NAME.$type.cdb";
@@ -65,7 +62,7 @@ sub printLog{
 }
 
 sub search_wo_hash {
-    my($this, $query_list) = @_;
+    my($this, $query_list, $dbuff, $registFlag, $no_position) = @_;
 
     ## 検索クエリが空なら空の結果を返す
     unless(defined($query_list)){
@@ -86,7 +83,8 @@ sub search_wo_hash {
 	# idx*.datというファイルを読み込む
 	next if $d !~ /idx(\d\d).$this->{TYPE}.dat$/;
 	my $id = $1;
-	
+	next if ($id > 50);
+
 	# ファイル(idx*.dat)をオープンする
 	$this->{IN}[$fcnt] = new FileHandle;
 	open($this->{IN}[$fcnt], "< $dir/idx$id.$this->{TYPE}.dat") or die "$dir/idx$id.$this->{TYPE}.dat: $!\n";
@@ -96,18 +94,22 @@ sub search_wo_hash {
 
     ## idxごとに検索
     my @doc_info;
+    my @dumy = sort {$a->{gdf} <=> $b->{gdf}} @{$query_list};
+    $query_list = \@dumy;
+    my %did_buff = ();
     for (my $f_num = 0; $f_num < $fcnt; $f_num++) {
-	for (my $i = 0; $i < @{$query_list}; $i++) {
+	for (my $i = 0; $i < scalar(@{$query_list}); $i++) {
 	    my $query = $query_list->[$i]->{keyword};
 	    my $qid = $query_list->[$i]->{id};
 	    my $query_euc = encode('euc-jp',$query);
 
-	    print STDERR "$host> idx_file(s)=$f_num, keyword(s)=$query($qid)\n" if($DEBUG);
+	    print STDERR "$host> idx_file(s)=$f_num, keyword(s)=$query(qid=$qid) $i\n" if($DEBUG);
 
 	    unless(defined($this->{OFFSET}[$f_num]->{$query})){
 		unless(defined($doc_info[$i])){
-		    my @tmp = ();
-		    $doc_info[$i] = \@tmp;
+#		    my @tmp = ();
+#		    $doc_info[$i] = \@tmp;
+		    $doc_info[$i] = [];
 		}
 		print STDERR "$host> keyword=$query,ldf=0\n" if($DEBUG);
 		next;
@@ -132,16 +134,45 @@ sub search_wo_hash {
 
 		    my $ldf = unpack('L', $buf);
 		    print STDERR "$host> keyword=$query,ldf=$ldf\n" if($DEBUG);
-
+		    
 		    # 文書IDと出現頻度(tf)の取得
 		    for (my $j = 0; $j < $ldf; $j++) {
 			read($this->{IN}[$f_num], $buf, 4);
-			my $did = unpack('L', $buf);
-			read($this->{IN}[$f_num], $buf, 4);
-			my $freq = unpack('L', $buf);
-			my $length = $this->{DOC_LENGTH}[$f_num]->{sprintf("%08d", $did)};
+			my $did = unpack('L', $buf) + 0;
 			
-			push(@{$doc_info[$i]}, {did => $did, freq => $freq, length => $length, qid => $qid});
+			read($this->{IN}[$f_num], $buf, 4);
+			my $freq = unpack('L', $buf) + 0;
+#			    syswrite STDERR, "$j ldf;$ldf did:$did freq:$freq\n" if (($j * 10) % $ldf == 0);
+			
+			if(defined($dbuff)){
+			    if($registFlag > 0){
+				$dbuff->{$did} = 1;
+			    }else{
+				unless(exists($dbuff->{$did})){
+				    read($this->{IN}[$f_num], $buf, 4 * $freq);
+				    next;
+				}
+			    }
+			}
+			
+			my @pos = ();
+			unless ($this->{POS_SKIP}) {
+			    if ($no_position) {
+				seek($this->{IN}[$f_num], $freq * 4, 1);
+			    } else {
+				for (my $k = 0; $k < $freq; $k++) {
+				    read($this->{IN}[$f_num], $buf, 4);
+				    my $p = unpack('L', $buf);
+				    push(@pos, $p + 0);
+				}
+			    }
+			}
+			
+			if ($no_position) {
+			    push(@{$doc_info[$i]}, {did => $did, freq => $freq, qid => $qid});
+			} else {
+			    push(@{$doc_info[$i]}, {did => $did, freq => $freq, qid => $qid, pos => \@pos});
+			}
 		    }
 		    last;
 		}
