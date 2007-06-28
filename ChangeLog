@@ -1,5 +1,8 @@
 2007-06-28  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
+	* scripts/binarize_idx.pl:
+	足切りの閾値をオプション化
+
 	* README:
 	updated.
 
