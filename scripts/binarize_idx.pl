@@ -15,7 +15,7 @@ my (%opt);
 GetOptions(\%opt, 'wordth=i', 'dpndth=i');
 
 # 足切りの閾値
-my $wordth = $opt{dpndth} ? $opt{dpndth} : 0;
+my $wordth = $opt{wordth} ? $opt{wordth} : 0;
 my $dpndth = $opt{dpndth} ? $opt{dpndth} : 10;
 
 &main();
