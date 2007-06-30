@@ -246,7 +246,6 @@ sub makeIndexfromKnpResult{
 #		    string => $line,
 		    global_pos => $this->{absolute_pos},
 		    isContentWord => 0
-		    is_content_word => 0
 		};
 
 		push(@words, $word);
@@ -255,7 +254,6 @@ sub makeIndexfromKnpResult{
 		    next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
 		    next if (&containsSymbols($m[2]) > 0); ## <記号>タグがついてない記号を削除
 
-		    $word->{is_content_word} = 1;
 		    $word->{isContentWord} = 1;
 		    push(@{$bps[-1]->{words}}, $word);
 		}
