@@ -141,7 +141,7 @@ sub search_wo_hash {
 			my $did = unpack('L', $buf) + 0;
 			
 			read($this->{IN}[$f_num], $buf, 4);
-			my $freq = unpack('L', $buf) + 0;
+			my $freq = unpack('f', $buf) + 0;
 #			    syswrite STDERR, "$j ldf;$ldf did:$did freq:$freq\n" if (($j * 10) % $ldf == 0);
 			
 			if(defined($dbuff)){
