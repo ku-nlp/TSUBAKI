@@ -79,7 +79,8 @@ sub add {
 	    $freq = $freq_pos;
 	}
 
- 	# 文書IDと頻度をLONGで出力
+ 	# 文書IDをLONGで出力
+ 	# 頻度をfloatで出力
 	print {$this->{dat}} pack('L', $did);
 	print {$this->{dat}} pack('f', $freq);
  	print "$did:" . $freq . " " if ($this->{verbose});
