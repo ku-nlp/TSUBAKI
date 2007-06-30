@@ -12,7 +12,7 @@ use utf8;
 use Getopt::Long;
 
 my (%opt);
-GetOptions(\%opt, 'wordth=i', 'dpndth=i');
+GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'position', 'verbose');
 
 # 足切りの閾値
 my $wordth = $opt{wordth} ? $opt{wordth} : 0;
@@ -29,8 +29,10 @@ sub main {
 	my $NAME = $2;
 
 	my $lcnt = 0;
-	my $bins = {word => new Binarizer($wordth, "${DIR}/idx$NAME.word.dat", "${DIR}/offset$NAME.word.cdb"),
-		    dpnd => new Binarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb")};
+	my $bins = {
+	    word => new Binarizer($wordth, "${DIR}/idx$NAME.word.dat", "${DIR}/offset$NAME.word.cdb", $opt{position}, $opt{verbose}),
+	    dpnd => new Binarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb", $opt{position}, $opt{verbose})
+	};
 
 	open (READER, '<:utf8', "${DIR}/$NAME.idx") || die "$!\n";
 	while (<READER>) {
