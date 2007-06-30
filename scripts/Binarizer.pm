@@ -81,8 +81,8 @@ sub add {
 
  	# 文書IDと頻度をLONGで出力
 	print {$this->{dat}} pack('L', $did);
-	print {$this->{dat}} pack('L', ($freq * 10000) + 0.5); # 四捨五入
- 	print "$did:" . int(($freq * 10000) + 0.5) . " " if ($this->{verbose});
+	print {$this->{dat}} pack('f', $freq);
+ 	print "$did:" . $freq . " " if ($this->{verbose});
 
 	if ($this->{position}) {
 	    print {$this->{dat}} pack('L', $size);
