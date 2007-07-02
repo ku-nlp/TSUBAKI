@@ -20,7 +20,7 @@ sub calculate_score {
     my ($this, $args) = @_;
 
     my $freq = $args->{tf};
-    my $gdf = $args->{gdf};
+    my $gdf = $args->{df};
     my $length = $args->{length};
 
     my $tf = (3 * $freq) / ((0.5 + 1.5 * $length / $this->{average_doc_length}) + $freq);
