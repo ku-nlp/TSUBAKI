@@ -26,27 +26,14 @@ my $host = `hostname`; chop($host);
 binmode(STDOUT, ":encoding(euc-jp)");
 binmode(STDERR, ":encoding(euc-jp)");
 
-my $TOOL_HOME = '/home/skeiji/local/bin';
-
-##############################################################
-# 単語、係り受けそれぞれについて文書頻度データベースをロード #
-##############################################################
-
-######################################################################
-# 全文書数
-#our $N = 48420000;
-my $N = 51000000;
-# 平均文書長
-my $AVE_DOC_LENGTH = 871.925373263118;
-# my $AVE_DOC_LENGTH = 483.852649424932;
-######################################################################
-
 sub new {
     my ($class, $opts) = @_;
     my $this = {
 	word_retriever => new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}),
 	dpnd_retriever => new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}),
 	DOC_LENGTH_DBs => [],
+	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
+	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
 	verbose => $opts->{verbose}
     };
 
@@ -81,15 +68,12 @@ sub search {
     if ($query->{only_hitcount}) {
 	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない
     } else {
-	$cal_method = new OKAPI($AVE_DOC_LENGTH, $N);
+	$cal_method = new OKAPI($this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS});
     }
 
     my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method);
-    my $hitcount = scalar(@{$doc_list});
-    foreach my $doc (@{$doc_list}) {
-#	printf("%d %f\n", $doc->{did}, $doc->{score});
-    } 
-    print "hitcount=$hitcount\n";
+
+    return $doc_list;
 }
 
 ## 単語を含む文書の検索
@@ -225,7 +209,7 @@ sub retrieve_documents {
 #	}
 
 	# 検索キーワードごとに検索された文書の配列へpush
-	push(@{$alldocs_word}, &serialize(&intersect_wo_hash($docs_word, $keyword->{near})));
+	push(@{$alldocs_word}, &serialize(&intersect_wo_hash($docs_word, $keyword->{near}))); # クエリ中の単語間の論理演算をとる場合は変更
 	push(@{$alldocs_dpnd}, &serialize(&intersect_wo_hash($docs_dpnd, 0)));
     }
     
