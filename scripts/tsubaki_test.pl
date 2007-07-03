@@ -24,7 +24,7 @@ sub init {
     foreach my $cdbf (readdir(DIR)) {
 	next unless ($cdbf =~ /cdb/);
 	
-	my $fp = "/data/idx_pos/dfdbs/$cdbf";
+	my $fp = "$opt{dfdbdir}/$cdbf";
 	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
 	if (index($cdbf, 'dpnd') > 0) {
 	    push(@DF_DPND_DBs, \%dfdb);
@@ -41,13 +41,13 @@ sub main {
     &init();
 
     my $q_parser = new QueryParser({
-	KNP_PATH => '/home/skeiji/local/bin',
-	JUMAN_PATH => '/home/skeiji/local/bin',
-	SYNDB_PATH => '/home/skeiji/SynGraph/syndb/i686',
+	KNP_PATH => "$ENV{HOME}/local/bin",
+	JUMAN_PATH => '$ENV{HOME}/local/bin',
+	SYNDB_PATH => '$ENV{HOME}/SynGraph/syndb/i686',
 	KNP_OPTIONS => ['-dpnd','-postprocess','-tab']});
     
     my $query = $q_parser->parse(decode('euc-jp', $opt{query}));
-
+    
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
 	print $qk->to_string() . "\n";
