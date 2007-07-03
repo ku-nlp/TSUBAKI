@@ -21,6 +21,14 @@ if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $o
 my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
 
+######################################################################
+# 全文書数
+my $N = 51000000;
+# 平均文書長
+my $AVE_DOC_LENGTH = 871.925373263118;
+# my $AVE_DOC_LENGTH = 483.852649424932;
+######################################################################
+
 sub init {
     opendir(DIR, $opt{dfdbdir}) or die;
     foreach my $cdbf (readdir(DIR)) {
@@ -67,9 +75,17 @@ sub main {
 	idxdir => $opt{idxdir},
 	dlengthdbdir => $opt{dlengthdbdir},
 	skip_pos => $opt{skippos},
-	verbose => $opt{verbose}});
+	verbose => $opt{verbose},
+	average_doc_length => $AVE_DOC_LENGTH,
+	total_number_of_docs => $N });
     
-    $tsubaki->search($query, \%qid2df);
+    my $docs = $tsubaki->search($query, \%qid2df);
+    my $hitcount = scalar(@{$docs});
+
+    for (my $rank = 0; $rank < scalar(@{$docs}); $rank++) {
+	printf("rank=%d did=%08d score=%f\n", $rank + 1, $docs->[$rank]{did}, $docs->[$rank]{score});
+    } 
+    print "hitcount=$hitcount\n";
 }
 
 sub get_DF {
