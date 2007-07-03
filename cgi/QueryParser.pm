@@ -49,7 +49,7 @@ sub parse {
 
 	## 半角アスキー文字列を全角に置換する
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
-	my $q = new QueryKeyword($q_str, $near, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
+	my $q = new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
 
 	push(@qks, $q);
     }
@@ -61,7 +61,7 @@ sub parse {
 	    foreach my $rep (@{$reps}) {
 		$rep->{qid} = $qid;
 		$qid2rep{$qid} = $rep->{string};
-		$qid++
+		$qid++;
 	    }
 	}
 
@@ -69,12 +69,12 @@ sub parse {
 	    foreach my $rep (@{$reps}) {
 		$rep->{qid} = $qid;
 		$qid2rep{$qid} = $rep->{string};
-		$qid++
+		$qid++;
 	    }
 	}
     }
 	
-    return {keywords => \@qks, logical_cond => 'AND', only_hitcount => 0, qid2rep => \%qid2rep};
+    return {keywords => \@qks, logical_cond_qk => $opt->{logical_cond_qk}, only_hitcount => $opt->{only_hitcount}, qid2rep => \%qid2rep};
 }
 
 sub DESTROY {

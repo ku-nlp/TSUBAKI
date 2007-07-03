@@ -5,11 +5,12 @@ use utf8;
 use Encode;
 
 sub new {
-    my ($class, $string, $near, $opt) = @_;
+    my ($class, $string, $near, $logical_cond_qkw, $opt) = @_;
     my $this = {
 	words => [],
 	dpnds => [],
 	near => $near,
+	logical_cond_qkw => $logical_cond_qkw,
 	rawstring => $string
     };
 
@@ -30,7 +31,7 @@ sub new {
 
     my %buff;
     foreach my $k (keys %{$indice}){
-	# 代表表記化により展開された索引語をまとめる
+	# 莉｣陦ｨ陦ｨ險伜喧縺ｫ繧医ｊ螻暮幕縺輔ｌ縺溽ｴ｢蠑戊ｪ槭ｒ縺ｾ縺ｨ繧√ｋ
 	$buff{$indice->{$k}{group_id}} = [] unless (exists($buff{$indice->{$k}{group_id}}));
 	push(@{$buff{$indice->{$k}{group_id}}}, $indice->{$k});
     }
@@ -40,7 +41,12 @@ sub new {
 	my @dpnd_reps;
 	foreach my $m (@{$buff{$group_id}}){
 	    next if ($m->{isContentWord} < 1 && $this->{near} < 0);
-	    ($m->{rawstring} =~ /\-\>/) ? push(@dpnd_reps, {string => $m->{rawstring}, qid => -1}) : push(@word_reps, {string => $m->{rawstring}, qid => -1});
+
+	    if ($m->{rawstring} =~ /\-\>/) {
+		push(@dpnd_reps, {string => $m->{rawstring}, qid => -1});
+	    } else {
+		push(@word_reps, {string => $m->{rawstring}, qid => -1});
+	    }
 	}
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
@@ -79,6 +85,7 @@ sub to_string {
     my $ret = "STRING: $this->{rawstring}\n";
     $ret .= ($words_str . "\n");
     $ret .= ($dpnds_str . "\n");
+    $ret .= "LOGICAL_COND: $this->{logical_cond_qkw}\n";
     $ret .= "NEAR: $this->{near}";
 
     return $ret;

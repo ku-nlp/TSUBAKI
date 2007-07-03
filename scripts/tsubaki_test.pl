@@ -22,9 +22,7 @@ my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
 
 ######################################################################
-# 全文書数
 my $N = 51000000;
-# 平均文書長
 my $AVE_DOC_LENGTH = 871.925373263118;
 # my $AVE_DOC_LENGTH = 483.852649424932;
 ######################################################################
@@ -54,9 +52,11 @@ sub main {
 	KNP_PATH => "$ENV{HOME}/local/bin",
 	JUMAN_PATH => "$ENV{HOME}/local/bin",
 	SYNDB_PATH => "$ENV{HOME}/SynGraph/syndb/i686",
-	KNP_OPTIONS => ['-dpnd','-postprocess','-tab']});
+	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] });
     
-    my $query = $q_parser->parse(decode('euc-jp', $opt{query}));
+    # logical_cond_qk  クエリ間の論理演算
+    # logical_cond_qkw クエリ中の単語間の論理演算
+    my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'AND', logical_cond_qkw => 'AND'});
     
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
