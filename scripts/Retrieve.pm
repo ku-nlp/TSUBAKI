@@ -13,6 +13,8 @@ use utf8;
 use FileHandle;
 use Storable;
 use Error qw(:try);
+use Devel::Size qw/size total_size/;
+use Devel::Size::Report qw/report_size/;
 
 my $DEBUG = 1;
 my $host = `hostname`; chop($host);
@@ -20,9 +22,17 @@ my $host = `hostname`; chop($host);
 # $DEBUG = 1 if($host eq "nlpc01\n");
 
 sub new {
-    my ($class, $dir, $type, $pos_skip) = @_;
+    my ($class, $dir, $type, $pos_skip, $verbose) = @_;
 
-    my $this = {IN => [], OFFSET => [], DOC_LENGTH => undef, TYPE => $type, INDEX_DIR => $dir, POS_SKIP => $pos_skip};
+    my $this = {
+	IN => [],
+	OFFSET => [],
+	DOC_LENGTH => undef,
+	TYPE => $type,
+	INDEX_DIR => $dir,
+	POS_SKIP => $pos_skip,
+	VERBOSE => $verbose
+    };
 
     my $fcnt = 0;
     # idx<NAME>.datおよび、対応するoffset<NAME>.dbのあるディレクトリを指定する
@@ -31,14 +41,13 @@ sub new {
 	# idx*.datというファイルを読み込む
 	next unless($d =~ /idx(\d+).$type.dat$/);
 	my $NAME = $1;
-	next if ($NAME > 50);
 
 	## OFFSET(offset*.dat)を読み込み専用でtie
 	my $offset_fp = "$dir/offset$NAME.$type.cdb";
 	if(-e $offset_fp){
-	    print STDERR "$host> loading offset database ($offset_fp)...\n" if($DEBUG);
+	    print STDERR "$host> loading offset database ($offset_fp)...\n" if ($this->{VERBOSE});
 	    tie %{$this->{OFFSET}[$fcnt]}, 'CDB_File', $offset_fp or die "$0: can't tie to $offset_fp $!\n";
-	    print STDERR "$host> done.\n" if($DEBUG);
+	    print STDERR "$host> done.\n" if ($this->{VERBOSE});
 	}
 	$fcnt++;
     }
@@ -47,7 +56,7 @@ sub new {
     bless $this;
 }
 
-sub printLog{
+sub printLog {
     my($queries) = @_;
     my($sec, $min, $hour, $day, $mon, $year, @others) = localtime(time);
     my $date = sprintf("%d/%02d/%02d %02d:%02d:%02d", $year + 1900, $mon + 1,$day, $hour, $min, $sec);
@@ -61,19 +70,8 @@ sub printLog{
     print STDERR "$host> ($q_str)\n";
 }
 
-sub search_wo_hash {
-    my($this, $query_list, $dbuff, $registFlag, $no_position) = @_;
-
-    ## 検索クエリが空なら空の結果を返す
-    unless(defined($query_list)){
-	my @results = ();
-	push(@{$results[0]}, ());
-
-	return \@results;
-    }
-
-    ## ログの表示
-    &printLog($query_list);
+sub search {
+    my($this, $keyword, $already_retrieved_docs, $add_flag, $no_position) = @_;
 
     ## INDEXファイルの読み込み
     my $fcnt = 0;
@@ -83,7 +81,6 @@ sub search_wo_hash {
 	# idx*.datというファイルを読み込む
 	next if $d !~ /idx(\d+).$this->{TYPE}.dat$/;
 	my $id = $1;
-	next if ($id > 50);
 
 	# ファイル(idx*.dat)をオープンする
 	$this->{IN}[$fcnt] = new FileHandle;
@@ -92,98 +89,84 @@ sub search_wo_hash {
     }
     closedir(DIR);
 
+    my @docs = undef;
     ## idxごとに検索
-    my @doc_info;
-    my @dumy = sort {$a->{gdf} <=> $b->{gdf}} @{$query_list};
-    $query_list = \@dumy;
-    my %did_buff = ();
     for (my $f_num = 0; $f_num < $fcnt; $f_num++) {
-	for (my $i = 0; $i < scalar(@{$query_list}); $i++) {
-	    my $query = $query_list->[$i]->{keyword};
-	    my $qid = $query_list->[$i]->{id};
-	    my $query_euc = encode('euc-jp',$query);
-
-	    print STDERR "$host> idx_file(s)=$f_num, keyword(s)=$query(qid=$qid) $i\n" if($DEBUG);
-
-	    unless(defined($this->{OFFSET}[$f_num]->{$query})){
-		unless(defined($doc_info[$i])){
-#		    my @tmp = ();
-#		    $doc_info[$i] = \@tmp;
-		    $doc_info[$i] = [];
-		}
-		print STDERR "$host> keyword=$query,ldf=0\n" if($DEBUG);
-		next;
+	my $offset = $this->{OFFSET}[$f_num]->{$keyword->{string}};
+	# オフセットがあるかどうかのチェック
+	unless (defined($offset)) {
+	    @docs = () unless (defined(@docs));
+	    next;
+	}
+	
+	seek($this->{IN}[$f_num], $offset, 0);
+	
+	my $char;
+	my @str;
+	my $buf;
+	while (read($this->{IN}[$f_num], $char, 1)) {
+	    if (unpack('c', $char) != 0) {
+		push(@str, $char);
 	    }
+	    else {
+		# 最初はキーワード（情報としては冗長）
+		$buf = join('', @str);
+		@str = ();
+		
+		# 次にキーワードの文書頻度
+		read($this->{IN}[$f_num], $buf, 4);
+		
+		my $ldf = unpack('L', $buf);
+		print STDERR "$host> keyword=$keyword->{string},ldf=$ldf\n" if ($this->{VERBOSE});
+#		printf "ldf  = %d Byte.\n", (total_size($ldf));
 
-	    seek($this->{IN}[$f_num], $this->{OFFSET}[$f_num]->{$query}, 0);
-
-	    my $char;
-	    my @str;
-	    my $buf;
-	    while (read($this->{IN}[$f_num], $char, 1)) {
-		if (unpack('c', $char) != 0) {
-		    push(@str, $char);
-		}
-		else {
-		    # 最初はキーワード（情報としては冗長）
-		    $buf = join('', @str);
-		    @str = ();
-
-		    # 次にキーワードの文書頻度
+		# 文書IDと出現頻度(tf)の取得
+		for (my $j = 0; $j < $ldf; $j++) {
 		    read($this->{IN}[$f_num], $buf, 4);
+		    my $did = unpack('L', $buf);
+#,		    printf "$did  = %d Byte.\n", (total_size($did));
 
-		    my $ldf = unpack('L', $buf);
-		    print STDERR "$host> keyword=$query,ldf=$ldf\n" if($DEBUG);
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $freq = unpack('L', $buf);
+# 		    my $freq = unpack('f', $buf);
+#		    printf "freq = %d Byte.\n", (total_size($freq));
+
+# 		    read($this->{IN}[$f_num], $buf, 4);
+# 		    my $size = unpack('L', $buf);
+		    my $size = $freq;
 		    
-		    # 文書IDと出現頻度(tf)の取得
-		    for (my $j = 0; $j < $ldf; $j++) {
-			read($this->{IN}[$f_num], $buf, 4);
-			my $did = unpack('L', $buf) + 0;
-			
-			read($this->{IN}[$f_num], $buf, 4);
-			my $freq = unpack('f', $buf) + 0;
-#			    syswrite STDERR, "$j ldf;$ldf did:$did freq:$freq\n" if (($j * 10) % $ldf == 0);
-			
-			if(defined($dbuff)){
-			    if($registFlag > 0){
-				$dbuff->{$did} = 1;
-			    }else{
-				unless(exists($dbuff->{$did})){
-				    read($this->{IN}[$f_num], $buf, 4 * $freq);
-				    next;
-				}
-			    }
-			}
-			
+		    if (!exists($already_retrieved_docs->{$did}) && $add_flag < 1) {
+			seek($this->{IN}[$f_num], $size * 4, 1);
+		    } else {
+			$already_retrieved_docs->{$did} = 1;
+
 			my @pos = ();
-			unless ($this->{POS_SKIP}) {
-			    if ($no_position) {
-				seek($this->{IN}[$f_num], $freq * 4, 1);
-			    } else {
-				for (my $k = 0; $k < $freq; $k++) {
-				    read($this->{IN}[$f_num], $buf, 4);
-				    my $p = unpack('L', $buf);
-				    push(@pos, $p + 0);
-				}
+			if ($no_position < 0) {
+			    seek($this->{IN}[$f_num], $size * 4, 1);
+			} else {
+			    for (my $k = 0; $k < $size; $k++) {
+				read($this->{IN}[$f_num], $buf, 4);
+				my $p = unpack('L', $buf);
+				push(@pos, $p);
 			    }
 			}
 			
-			if ($no_position) {
-			    push(@{$doc_info[$i]}, {did => $did, freq => $freq, qid => $qid});
+			if ($no_position < 0) {
+			    push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}]});
 			} else {
-			    push(@{$doc_info[$i]}, {did => $did, freq => $freq, qid => $qid, pos => \@pos});
+			    push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}], $freq, pos => \@pos});
 			}
+# 			printf "docs %d Byte.\n", (total_size(\@docs));
+# 			print "-----\n";
+# 			exit if ($j > 2);
 		    }
-		    last;
 		}
+		last;
 	    }
 	}
     }
 
-    foreach my $r (@{$this->{IN}}){
-	$r->close();
-    }
-    return \@doc_info;
+    return \@docs;
 }   
 
 sub DESTROY {
