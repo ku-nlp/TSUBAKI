@@ -165,10 +165,11 @@ sub merge_docs {
 			}
 		    }
 		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
+
 		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength score=$score\n" if $this->{verbose};
+
 		    $merged_docs[$i]->{score} += $score;
 		}
-#		print "-----\n";
 	    }
 	}
     }
@@ -195,7 +196,6 @@ sub merge_docs {
 
 sub retrieve_documents {
     my ($this, $query) = @_;
-    #input,$ranking_method,$logical_cond,$sf_level,$dpnd_condition,$required_results,$near, ) = @_;
 
     # 文書の取得
     my $alldocs_word = [];
@@ -236,8 +236,15 @@ sub retrieve_documents {
 #	}
 
 	# 検索キーワードごとに検索された文書の配列へpush
-	push(@{$alldocs_word}, &serialize(&intersect_wo_hash($docs_word, $keyword->{near}))); # クエリ中の単語間の論理演算をとる場合は変更
-	push(@{$alldocs_dpnd}, &serialize(&intersect_wo_hash($docs_dpnd, 0)));
+	if ($keyword->{logical_cond_qk} eq 'AND') {
+	    # 検索キーワード中の単語間のANDをとる 
+	    push(@{$alldocs_word}, &serialize(&intersect_wo_hash($docs_word, $keyword->{near})));
+	    push(@{$alldocs_dpnd}, &serialize(&intersect_wo_hash($docs_dpnd, 0)));
+	} else {
+	    # 検索キーワード中の単語間のORをとる 
+	    push(@{$alldocs_word}, &serialize($docs_word));
+	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
+	}
     }
     
     # 論理条件にしたがい文書のマージ
@@ -318,7 +325,7 @@ sub intersect_wo_hash {
 		last if ($flag > 0);
 	    }
 
-	    if ($flag < 1){
+	    if ($flag < 1) {
 		push(@{$results[0]}, $sorted_docs[0]->[$i]);
 		for (my $j = 1; $j < scalar(@sorted_docs); $j++) {
 		    push(@{$results[$j]}, $sorted_docs[$j]->[0]);
