@@ -22,7 +22,7 @@ my $host = `hostname`; chop($host);
 # $DEBUG = 1 if($host eq "nlpc01\n");
 
 sub new {
-    my ($class, $dir, $type, $pos_skip, $verbose) = @_;
+    my ($class, $dir, $type, $skippos, $verbose) = @_;
 
     my $this = {
 	IN => [],
@@ -30,7 +30,7 @@ sub new {
 	DOC_LENGTH => undef,
 	TYPE => $type,
 	INDEX_DIR => $dir,
-	POS_SKIP => $pos_skip,
+	SKIPPOS => $skippos,
 	VERBOSE => $verbose
     };
 
@@ -127,39 +127,41 @@ sub search {
 #,		    printf "$did  = %d Byte.\n", (total_size($did));
 
 		    read($this->{IN}[$f_num], $buf, 4);
-		    my $freq = unpack('L', $buf);
-# 		    my $freq = unpack('f', $buf);
-#		    printf "freq = %d Byte.\n", (total_size($freq));
+#		    my $freq = unpack('L', $buf);
+ 		    my $freq = unpack('f', $buf);
+		    printf "freq = %d Byte.\n", (total_size($freq));
 
-# 		    read($this->{IN}[$f_num], $buf, 4);
-# 		    my $size = unpack('L', $buf);
-		    my $size = $freq;
-		    
-		    if (!exists($already_retrieved_docs->{$did}) && $add_flag < 1) {
-			seek($this->{IN}[$f_num], $size * 4, 1);
-		    } else {
-			$already_retrieved_docs->{$did} = 1;
-
-			my @pos = ();
-			if ($no_position < 0) {
+		    unless ($this->{SKIPPOS}) {
+			read($this->{IN}[$f_num], $buf, 4);
+			my $size = unpack('L', $buf);
+#			my $size = $freq;
+			
+			if (!exists($already_retrieved_docs->{$did}) && $add_flag < 1) {
 			    seek($this->{IN}[$f_num], $size * 4, 1);
 			} else {
-			    for (my $k = 0; $k < $size; $k++) {
-				read($this->{IN}[$f_num], $buf, 4);
-				my $p = unpack('L', $buf);
-				push(@pos, $p);
+			    $already_retrieved_docs->{$did} = 1;
+			    
+			    my @pos = ();
+			    if ($no_position < 0) {
+				seek($this->{IN}[$f_num], $size * 4, 1);
+			    } else {
+				for (my $k = 0; $k < $size; $k++) {
+				    read($this->{IN}[$f_num], $buf, 4);
+				    my $p = unpack('L', $buf);
+				    push(@pos, $p);
+				}
 			    }
 			}
-			
-			if ($no_position < 0) {
-			    push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}]});
-			} else {
-			    push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}], $freq, pos => \@pos});
-			}
-# 			printf "docs %d Byte.\n", (total_size(\@docs));
-# 			print "-----\n";
-# 			exit if ($j > 2);
 		    }
+
+		    if ($no_position < 0) {
+			push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}]});
+		    } else {
+			push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}], $freq, pos => \@pos});
+		    }
+		    printf "docs %d Byte.\n", (total_size(\@docs));
+		    print "-----\n";
+		    exit if ($j > 2);
 		}
 		last;
 	    }
