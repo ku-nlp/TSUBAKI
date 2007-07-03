@@ -34,7 +34,8 @@ sub new {
 	DOC_LENGTH_DBs => [],
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
-	verbose => $opts->{verbose}
+	verbose => $opts->{verbose},
+	dlengthdb_hash => $opts->{dlengthdb_hash}
     };
 
     opendir(DIR, $opts->{dlengthdbdir});
@@ -42,7 +43,16 @@ sub new {
 	next unless ($dbf =~ /doc_length\.bin/);
 	
 	my $fp = "$opts->{dlengthdbdir}/$dbf";
-	my $dlength_db = retrieve($fp) or die;
+
+	my $dlength_db;
+	# 小規模なテスト用にdlengthのDBをハッシュでもつオプション
+	if ($opts->{dlengthdb_hash}) {
+	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	}
+	else {
+	    $dlength_db = retrieve($fp) or die;
+	}
+
 	push(@{$this->{DOC_LENGTH_DBs}}, $dlength_db);
     }
     closedir(DIR);
@@ -50,7 +60,15 @@ sub new {
     bless $this;
 }	    
 
-sub DESTROY {}
+sub DESTROY {
+    my ($this) = @_;
+
+    if ($this->{dlengthdb_hash}) {
+	foreach my $db (@{$this->{DOC_LENGTH_DBs}}) {
+	    untie %{$db};
+	}
+    }
+}
 
 sub search {
     my ($this, $query, $qid2df) = @_;
@@ -129,16 +147,25 @@ sub merge_docs {
 
 		    unless (defined($dlength)) {
 			foreach my $db (@{$this->{DOC_LENGTH_DBs}}) {
-			    my $idx = $did % 1000000;
-			    $dlength = $db->[$did % 1000000];
-			    if (defined($dlength)) {
-				$d_length_buff{$did} = $dlength;
-				last;
+			    # 小規模なテスト用にdlengthのDBをハッシュでもつオプション
+			    if ($this->{dlengthdb_hash}) {
+				$dlength = $db->{$did};
+				if (defined $dlength) {
+				    $d_length_buff{$did} = $dlength;
+				    last;
+				}
+			    }
+			    else {
+				$dlength = $db->[$did % 1000000];
+				if (defined($dlength)) {
+				    $d_length_buff{$did} = $dlength;
+				    last;
+				}
 			    }
 			}
 		    }
 		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
-#		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength score=$score\n";
+		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength score=$score\n" if $this->{verbose};
 		    $merged_docs[$i]->{score} += $score;
 		}
 #		print "-----\n";
@@ -176,7 +203,7 @@ sub retrieve_documents {
     my $doc_buff = {};
     my $add_flag = 1;
     foreach my $keyword (@{$query->{keywords}}) {
-	print $keyword->{rawstring} . "\n" if ($this->{opt}{verbose});
+	print $keyword->{rawstring} . "\n" if ($this->{verbose});
 	my $docs_word = [];
 	my $docs_dpnd = [];
 	# keyword中の単語を含む文書の検索
