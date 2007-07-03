@@ -129,7 +129,7 @@ sub search {
 		    read($this->{IN}[$f_num], $buf, 4);
 #		    my $freq = unpack('L', $buf);
  		    my $freq = unpack('f', $buf);
-		    printf "freq = %d Byte.\n", (total_size($freq));
+#		    printf "freq = %d Byte.\n", (total_size($freq));
 
 		    unless ($this->{SKIPPOS}) {
 			read($this->{IN}[$f_num], $buf, 4);
@@ -159,9 +159,9 @@ sub search {
 		    } else {
 			push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}], $freq, pos => \@pos});
 		    }
-		    printf "docs %d Byte.\n", (total_size(\@docs));
-		    print "-----\n";
-		    exit if ($j > 2);
+#		    printf "docs %d Byte.\n", (total_size(\@docs));
+#		    print "-----\n";
+#		    exit if ($j > 2);
 		}
 		last;
 	    }
