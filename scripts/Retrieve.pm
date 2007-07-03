@@ -130,7 +130,8 @@ sub search {
 #		    my $freq = unpack('L', $buf);
  		    my $freq = unpack('f', $buf);
 #		    printf "freq = %d Byte.\n", (total_size($freq));
-
+		    
+		    my @pos = ();
 		    unless ($this->{SKIPPOS}) {
 			read($this->{IN}[$f_num], $buf, 4);
 			my $size = unpack('L', $buf);
@@ -141,7 +142,6 @@ sub search {
 			} else {
 			    $already_retrieved_docs->{$did} = 1;
 			    
-			    my @pos = ();
 			    if ($no_position < 0) {
 				seek($this->{IN}[$f_num], $size * 4, 1);
 			    } else {
