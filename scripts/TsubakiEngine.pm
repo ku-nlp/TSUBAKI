@@ -137,7 +137,7 @@ sub merge_docs {
 		$did2pos{$did} = $pos;
 		$pos++;
 	    }
-	    
+
 	    if (defined($cal_method)) {
 		foreach my $qid_freq (@{$doc->{qid_freq}}) {
 		    my $tf = $qid_freq->{freq};
@@ -156,6 +156,7 @@ sub merge_docs {
 				}
 			    }
 			    else {
+				# ※文書長DBをふたつ引くことを考慮する
 				$dlength = $db->[$did % 1000000];
 				if (defined($dlength)) {
 				    $d_length_buff{$did} = $dlength;
@@ -248,7 +249,7 @@ sub retrieve_documents {
     }
     
     # 論理条件にしたがい文書のマージ
-    if ($query->{logical_cond} eq 'AND') {
+    if ($query->{logical_cond_qk} eq 'AND') {
 	$alldocs_word =  &intersect_wo_hash($alldocs_word, 0);
     } else {
 	# 何もしなければ OR
