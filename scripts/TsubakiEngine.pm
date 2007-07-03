@@ -236,7 +236,7 @@ sub retrieve_documents {
 #	}
 
 	# 検索キーワードごとに検索された文書の配列へpush
-	if ($keyword->{logical_cond_qk} eq 'AND') {
+	if ($keyword->{logical_cond_qkw} eq 'AND') {
 	    # 検索キーワード中の単語間のANDをとる 
 	    push(@{$alldocs_word}, &serialize(&intersect_wo_hash($docs_word, $keyword->{near})));
 	    push(@{$alldocs_dpnd}, &serialize(&intersect_wo_hash($docs_dpnd, 0)));
