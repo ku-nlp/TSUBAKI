@@ -1,3 +1,8 @@
+2007-07-03  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm:
+	小規模なテスト用にdlengthのDBをハッシュでもつオプションを追加
+
 2007-06-28  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/binarize_idx.pl:
