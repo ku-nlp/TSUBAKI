@@ -44,8 +44,8 @@ sub main {
 
     my $q_parser = new QueryParser({
 	KNP_PATH => "$ENV{HOME}/local/bin",
-	JUMAN_PATH => '$ENV{HOME}/local/bin',
-	SYNDB_PATH => '$ENV{HOME}/SynGraph/syndb/i686',
+	JUMAN_PATH => "$ENV{HOME}/local/bin",
+	SYNDB_PATH => "$ENV{HOME}/SynGraph/syndb/i686",
 	KNP_OPTIONS => ['-dpnd','-postprocess','-tab']});
     
     my $query = $q_parser->parse(decode('euc-jp', $opt{query}));
