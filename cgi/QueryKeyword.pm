@@ -40,7 +40,7 @@ sub new {
 	my @dpnd_reps;
 	foreach my $m (@{$buff{$group_id}}){
 	    next if ($m->{isContentWord} < 1 && $this->{near} < 0);
-	    ($m->{rawstring} =~ /\-\>/) ? push(@dpnd_reps, $m->{rawstring}) : push(@word_reps, $m->{rawstring});
+	    ($m->{rawstring} =~ /\-\>/) ? push(@dpnd_reps, {string => $m->{rawstring}, qid => -1}) : push(@word_reps, {string => $m->{rawstring}, qid => -1});
 	}
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
@@ -58,8 +58,7 @@ sub to_string {
     foreach my $ws (@{$this->{words}}) {
 	my $reps = "(";
 	foreach my $w (@{$ws}) {
-#	    $reps .= "$w->{rawstring} ";
-	    $reps .= "$w ";
+	    $reps .= "$w->{string}\[$w->{qid}] ";
 	}
 	chop($reps);
 	$reps .= ")";
@@ -70,8 +69,7 @@ sub to_string {
     foreach my $ds (@{$this->{dpnds}}) {
 	my $reps = "(";
 	foreach my $d (@{$ds}) {
-#	    $reps .= "$d->{rawstring} ";
-	    $reps .= "$d ";
+	    $reps .= "$d->{string}\[$d->{qid}] ";
 	}
 	chop($reps);
 	$reps .= ")";
