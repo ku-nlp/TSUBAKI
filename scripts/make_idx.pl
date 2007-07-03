@@ -15,12 +15,19 @@ use Indexer;
 
 
 my (%opt);
-GetOptions(\%opt, 'in=s', 'out=s', 'jmn', 'knp', 'syn', 'position', 'z');
+GetOptions(\%opt, 'in=s', 'out=s', 'jmn', 'knp', 'syn', 'position', 'z', 'help');
+
+sub usage {
+    print "Usage perl $0 -in xmldir -out idxdir [-jmn|-knp|-syn] [-position] [-z]\n";
+    exit;
+}
 
 &main();
 
 sub main {
-    die "Option Error!\n" if (!$opt{in} || !$opt{out});
+    if (!$opt{in} || !$opt{out} || $opt{help}) {
+	&usage();
+    }
     die "Not found! $opt{in}\n" unless (-e $opt{in});
     die "Not found! $opt{out}\n" unless (-e $opt{out});
     
