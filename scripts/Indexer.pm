@@ -129,7 +129,6 @@ sub makeIndexfromJumanResult{
 	    if($line =~ /代表表記:(.+?)\//){
 		$word = $1;
 	    }
-	    $word = "Ｗ杯" if($word eq "ワールドカップ");
 
 	    $word = &toUpperCase_utf8($word);
 	    $index{$word}->{score} = 0 unless(exists($index{$word}));
@@ -193,7 +192,7 @@ sub makeIndexArrayfromJumanResult{
 }
 
 ## KNPの解析結果から索引語と索引付け対象となる係り受け関係を抽出する
-sub makeIndexfromKnpResult{
+sub makeIndexfromKnpResult {
     my($this,$knp_result,$option) = @_;
 
     my %freq;
@@ -224,18 +223,18 @@ sub makeIndexfromKnpResult{
 		$local_pos++;
 		$this->{absolute_pos}++;
 
-		my $word = $m[2];
+		my $midashi = "$m[2]/$m[1]";
 		my @reps = ();
 		## 代表表記の取得
-		if($line =~ /代表表記:(.+?)\//){
-		    $word = $1;
+		if ($line =~ /\<代表表記:([^>]+)\>/) {
+		    $midashi = $1;
 		}
 
-		push(@reps, &toUpperCase_utf8($word));
+		push(@reps, &toUpperCase_utf8($midashi));
 		## 代表表記に曖昧性がある場合は全部保持する
-		while($line =~ /\<ALT(.+?)\>/){
+		while ($line =~ /\<ALT(.+?)\>/) {
 		    $line = "$'";
-		    if($1 =~ /代表表記:(.+?)\//){
+		    if ($1 =~ /代表表記:(.+?)\"/) {
 			push(@reps, &toUpperCase_utf8($1));
 		    }
 		}
@@ -273,10 +272,10 @@ sub makeIndexfromKnpResult{
 	}
 
 	## 代表表記が複数個ある場合は代表表記の個数で割ってカウントする
-	for(my $pos = 0; $pos < scalar(@words); $pos++){
+	for (my $pos = 0; $pos < scalar(@words); $pos++) {
 	    my $reps = $words[$pos]->{reps};
 	    my $size = scalar(@{$reps});
-	    for(my $j = 0; $j < $size; $j++){
+	    for (my $j = 0; $j < $size; $j++) {
 		$freq{"$reps->[$j]"}->{freq} += (1 / $size);
 		push(@{$freq{"$reps->[$j]"}->{pos}}, $words[$pos]->{local_pos});
 		push(@{$freq{"$reps->[$j]"}->{absolute_pos}}, $words[$pos]->{global_pos});
