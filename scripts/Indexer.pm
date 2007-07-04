@@ -1,18 +1,23 @@
 package Indexer;
 
+# $Id$
+
 ###################################################################
-# juman, knp, SynGraphの解析結果から索引付けする要素を抽出するClass
+# Juman, KNP, SynGraphの解析結果から索引付けする要素を抽出するClass
 ###################################################################
 
 use strict;
 use utf8;
 use Encode;
 
-our @EXPORT = qw(makeIndexfromJumanResult makeIndexfromKnpResult makeNgramIndex makeIndexfromIndexArray);
+our @EXPORT = qw(makeIndexfromJumanResult makeIndexfromKnpResult makeNgramIndex);
 
 sub new {
-    my($class);
-    my $this = {absolute_pos => -1};
+    my($class, $opt);
+    my $this = {
+	absolute_pos => -1,
+	handled_yomi => $opt->{handled_yomi}
+    };
 
     bless $this;
 }
@@ -52,6 +57,17 @@ sub makeIndexfromSynGraph {
 				absolute_pos => []};
 
 		push(@{$synNodes{$bnstId}}, $syn_node);
+
+		if ($features =~ /\<上位語\>/) {
+		    $features = "$`$'";
+		    my $syn_node = {midashi => $sid . $features,
+				    score => $score,
+				    grpId => $bnstId,
+				    pos => [],
+				    absolute_pos => []};
+		    
+		    push(@{$synNodes{$bnstId}}, $syn_node);
+		}
 	    }else{
 #		print STDERR $line;
 	    }
@@ -140,55 +156,6 @@ sub makeIndexfromJumanResult{
     }
     
     return \%index;
-}
-
-sub makeIndexArrayfromJumanResult{
-    my($this,$juman_result) = @_;
-    my @buff = ();
-    my $size = 0;
-    foreach my $line (split(/\n/,$juman_result)){
-	next if ($line =~ /^(\<|EOS)/);
-
-	## 代表表記が曖昧だったら
-	if($line =~ /^@ /){
-	    push(@{$buff[$size-1]}, "$'");
-	}else{
-	    push(@{$buff[$size++]}, $line);
-	}
-    }
-
-    my $pos = 0;
-    my @index_array;
-    foreach my $e (@buff){
-	my @daihyou = @{$e};
-	my $num_daihyou = scalar(@daihyou);
-	my @buff = ();
-	foreach my $line (@daihyou){
-	    my @w = split(/\s+/, $line);
-	    next if (&containsSymbols($w[2]) > 0); # 記号を削除
-
-	    # 削除する条件
-	    next if ($w[2] =~ /^[\s*　]*$/);
-	    next if ($w[3] eq "助詞");
-	    next if ($w[5] =~ /^(句|読)点$/);
-	    next if ($w[5] =~ /^空白$/);
-	    next if ($w[5] =~ /^(形式|副詞的)名詞$/);
-
-	    my $word = $w[2];
-	    if($line =~ /代表表記:(.+?)\//){
-		$word = $1;
-	    }
-
-	    my $index_obj = {
-		word => &toUpperCase_utf8($word),
-		freq => (1 / $num_daihyou)
-		};
-	    push(@buff, $index_obj);
-	}
-	next if(scalar(@buff) < 1);
-	push(@index_array, \@buff);
-    }
-    return \@index_array;
 }
 
 ## KNPの解析結果から索引語と索引付け対象となる係り受け関係を抽出する
@@ -375,58 +342,7 @@ sub makeIndexfromKnpResult {
     return \%freq;
 }
 
-sub makeIndexArrayfromKnpResult{
-    my($this,$knp_result) = @_;
-
-    my $pos = -1;
-    my @index_array;
-    foreach my $sent (split(/EOS\n/, $knp_result)){
-	foreach my $line (split(/\n/,$sent)){
-	    next if($line =~ /^\* \-?\d/);
-	    next if($line =~ /^\+ (\-?\d+)/);
-	    next if ($line =~ /^(\<|\@|EOS)/);
-
-	    my @buff = ();
-	    my @m = split(/\s+/, $line);
-	    ## <意味有>タグが付与された形態素を索引付けする
-	    if($line =~ /\<意味有\>/){
-		next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
-		next if (&containsSymbols($m[2]) > 0); ## <記号>タグがついてない記号を削除
-
-		my $word = $m[2];
-		my @reps = ();
-		## 代表表記の取得
-		if($line =~ /代表表記:(.+?)\//){
-		    $word = $1;
-		}
-
-		push(@reps, &toUpperCase_utf8($word));
-		## 代表表記に曖昧性がある場合は全部保持する
-		my $num_daihyou = scalar(@reps);
-		while($line =~ /\<ALT(.+?)\>/){
-		    $line = "$'";
-		    if($1 =~ /代表表記:(.+?)\//){
-			push(@reps, &toUpperCase_utf8($1));
-		    }
-		}
-
-		my $num_daihyou = scalar(@reps);
-		foreach my $w (@reps){
-		    my $index_obj = {
-			word => $w,
-			freq => (1/$num_daihyou)
-			};
-		    push(@buff, $index_obj);
-		}
-	    }
-	    next if(scalar(@buff) < 1);
-	    push(@index_array, \@buff);
-	} # end of foreach my $line (split(/\n/,$sent))
-    }
-    return \@index_array;
-}
-
-sub makeNgramIndex{
+sub makeNgramIndex {
     my($this, $string, $N) = @_;
     ## make search queries.
     my $size = length($string);
@@ -448,58 +364,8 @@ sub makeNgramIndex{
     return \%indexes;
 }
 
-sub makeIndexfromIndexArray{
-    my($this, $index_array, $window) = @_;
-    my %index = ();
-    for(my $i = 0; $i < scalar(@{$index_array}); $i++){
-	foreach my $index_obj (@{$index_array->[$i]}){
-	    my $word = $index_obj->{word};
-	    my $freq = $index_obj->{freq};
-	    my $L = $i - $window - 1;
-	    my $R = $i + $window + 1;
-
-# 	    $L = 0 if($L < 0);
-# 	    $R = 0 if($R > scalar(@{$index_array}));
-# 	    for(my $j = $L; $j < $i; $j++){
-# #		my $dist = $j - $i;
-# 		my $dist = $i - $j;
-# 		next if($dist > $window);
-#
-# 		foreach my $p (@{$index_array->[$j]}){
-# 		    my $word_p = $p->{word};
-# 		    my $freq_p = $p->{freq};
-#
-# 		    my $key = $word_p . "##" . $word;
-# #		    my $frq = ($freq * $freq_p) / $dist;
-# 		    my $frq = 1;
-# 		    $index{$key} = 0 unless(exists($index{$key}));
-# 		    $index{$key} += $frq;
-# 		}
-#	    }
-
-	    for(my $j = $i + 1; $j < $R; $j++){
-		my $dist = $j - $i;
-		next if($dist > $window);
-
-		foreach my $p (@{$index_array->[$j]}){
-		    my $word_p = $p->{word};
-		    my $freq_p = $p->{freq};
-
-		    my $key = $word . "##" . $word_p;
-#		    my $frq = ($freq * $freq_p) / $dist;
-		    my $frq = 1;
-		    $index{$key} = {score => 0, pos => 0} unless(exists($index{$key}));
-		    $index{$key}->{score} += $frq;
-		    $index{$key}->{pos} = $i;
-		}
-	    }
-	}
-    }
-    return \%index;
-}
-
 ## 全角小文字アルファベット(utf8)を全角大文字アルファベットに変換(utf8)
-sub toUpperCase_utf8(){
+sub toUpperCase_utf8 {
     my($str) = @_;
     my @cbuff = ();
     my @ch_codes = unpack("U0U*", $str);
@@ -516,7 +382,7 @@ sub toUpperCase_utf8(){
 }
 
 ## 平仮名、カタカナ、英数字以外を含んでいるかをチェック
-sub containsSymbols(){
+sub containsSymbols {
     my($text) = @_;
     my @ch_codes = unpack("U0U*", $text);
     for(my $i = 0; $i < scalar(@ch_codes); $i++){
