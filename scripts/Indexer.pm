@@ -50,6 +50,9 @@ sub makeIndexfromSynGraph {
 		if($sid =~ m!^([^/]+)/!){
 		    $sid = $1;
 		}
+
+		$features = "$`$'" if ($features =~ /\<上位語\>/); # <上位語>を削除
+
 		my $syn_node = {midashi => $sid . $features,
 				score => $score,
 				grpId => $bnstId,
@@ -57,17 +60,6 @@ sub makeIndexfromSynGraph {
 				absolute_pos => []};
 
 		push(@{$synNodes{$bnstId}}, $syn_node);
-
-		if ($features =~ /\<上位語\>/) {
-		    $features = "$`$'";
-		    my $syn_node = {midashi => $sid . $features,
-				    score => $score,
-				    grpId => $bnstId,
-				    pos => [],
-				    absolute_pos => []};
-		    
-		    push(@{$synNodes{$bnstId}}, $syn_node);
-		}
 	    }else{
 #		print STDERR $line;
 	    }
