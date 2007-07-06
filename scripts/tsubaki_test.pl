@@ -10,7 +10,7 @@ use QueryParser;
 use TsubakiEngine;
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'skippos', 'verbose', 'debug');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'verbose', 'debug');
 
 if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -56,7 +56,7 @@ sub main {
     
     # logical_cond_qk  クエリ間の論理演算
     # logical_cond_qkw クエリ中の単語間の論理演算
-    my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'AND', logical_cond_qkw => 'AND'});
+    my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'AND', logical_cond_qkw => 'AND', syngraph => $opt{syngraph}});
     
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
@@ -70,7 +70,7 @@ sub main {
 	$qid2df{$qid} = $df;
 	print "qid=$qid $query->{qid2rep}{$qid} $df\n" if ($opt{debug});
     }
-    
+
     my $tsubaki = new TsubakiEngine({
 	idxdir => $opt{idxdir},
 	dlengthdbdir => $opt{dlengthdbdir},
@@ -84,7 +84,7 @@ sub main {
 
     for (my $rank = 0; $rank < scalar(@{$docs}); $rank++) {
 	printf("rank=%d did=%08d score=%f\n", $rank + 1, $docs->[$rank]{did}, $docs->[$rank]{score});
-    } 
+    }
     print "hitcount=$hitcount\n";
 }
 
