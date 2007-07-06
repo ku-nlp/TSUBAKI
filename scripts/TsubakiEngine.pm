@@ -16,9 +16,6 @@ use OKAPI;
 use Devel::Size qw/size total_size/;
 
 
-
-# my (%opt); GetOptions(\%opt, 'dfdbdir=s', 'idxdir=s', 'port=s', 'skip_pos', 'debug');
-
 # host名を得る
 my $host = `hostname`; chop($host);
 
@@ -158,6 +155,7 @@ sub merge_docs {
 			    else {
 				# ※文書長DBをふたつ引くことを考慮する
 				$dlength = $db->[$did % 1000000];
+#				$dlength = $db->{$did};
 				if (defined($dlength)) {
 				    $d_length_buff{$did} = $dlength;
 				    last;
@@ -210,9 +208,8 @@ sub retrieve_documents {
 	# keyword中の単語を含む文書の検索
 	foreach my $reps_of_word (@{$keyword->{words}}) {
 	    my $docs = &retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $keyword->{near});
-#	    printf "docs %d Byte.\n", (total_size($docs));
-
 	    $add_flag = 0 if ($add_flag > 0);
+#	    printf "docs %d Byte.\n", (total_size($docs));
 
 	    # 各語について検索された結果を納めた配列に push
 	    push(@{$docs_word}, $docs);
@@ -226,21 +223,16 @@ sub retrieve_documents {
 	    push(@{$docs_dpnd}, $docs);
 	}
 	
-	# 近接・フレーズ制約の適用
-#	if ($keyword->{near} > -1) {
-#	    $docs_word = &intersect_wo_hash($docs_word, $keyword->{near});
-#	}
-
 	# 係受け制約の適用 ※
 #	if ($keyword->{force_dpnd}) {
-#	    $docs_word = &intersect_wo_hash($docs_word, $keyword->{near});
+#	    $docs_word = &intersect($docs_word, $keyword->{near});
 #	}
 
 	# 検索キーワードごとに検索された文書の配列へpush
 	if ($keyword->{logical_cond_qkw} eq 'AND') {
 	    # 検索キーワード中の単語間のANDをとる 
-	    push(@{$alldocs_word}, &serialize(&intersect_wo_hash($docs_word, $keyword->{near})));
-	    push(@{$alldocs_dpnd}, &serialize(&intersect_wo_hash($docs_dpnd, 0)));
+	    push(@{$alldocs_word}, &serialize(&filter_by_NEAR_constraint(&intersect($docs_word),$keyword->{near})));
+	    push(@{$alldocs_dpnd}, &serialize(&intersect($docs_dpnd)));
 	} else {
 	    # 検索キーワード中の単語間のORをとる 
 	    push(@{$alldocs_word}, &serialize($docs_word));
@@ -250,7 +242,7 @@ sub retrieve_documents {
     
     # 論理条件にしたがい文書のマージ
     if ($query->{logical_cond_qk} eq 'AND') {
-	$alldocs_word =  &intersect_wo_hash($alldocs_word, 0);
+	$alldocs_word =  &intersect($alldocs_word);
     } else {
 	# 何もしなければ OR
     }
@@ -284,8 +276,8 @@ sub serialize {
     return $serialized_docs;
 }
 
-sub intersect_wo_hash {
-    my ($docs, $near) = @_;
+sub intersect {
+    my ($docs) = @_;
 
     # 初期化 & 空リストのチェック
     my @results = ();
@@ -335,21 +327,33 @@ sub intersect_wo_hash {
 	}
     }
 
-    return \@results if($near < 1);
+    return \@results;
+}
 
-    my @new_results = ();
-    for(my $i = 0; $i < scalar(@results); $i++){
-	$new_results[$i] = [];
+sub filter_by_NEAR_constraint {
+    my ($docs, $near) = @_;
+
+    return $docs if ($near < 0);
+
+    # 初期化 & 空リストのチェック
+    my @results = ();
+    my $flag = 0;
+    for (my $i = 0; $i < scalar(@{$docs}); $i++) {
+	$flag = 1 unless (defined($docs->[$i]));
+	$flag = 2 if (scalar(@{$docs->[$i]}) < 1);
+
+	$results[$i] = [];
     }
+    return \@results if ($flag > 0 || scalar(@{$docs}) < 1);
 
-    # クエリの順序でソート
-#   @results = sort{$a->[0]{qid} <=> $b->[0]{qid}} @results;
+    # 単語の（クエリ中での）出現順序でソート
+    @{$docs} = sort{$a->[0]{qid} <=> $b->[0]{qid}} @{$docs};
 
-    for (my $d = 0; $d < scalar(@{$results[0]}); $d++) {
+    for (my $d = 0; $d < scalar(@{$docs->[0]}); $d++) {
 	my @poslist = ();
 	# クエリ中の単語の出現位置リストを作成
-	for (my $q = 0; $q < scalar(@results); $q++) {
-	    foreach my $p (@{$results[$q]->[$d]->{pos}}) {
+	for (my $q = 0; $q < scalar(@{$docs}); $q++) {
+	    foreach my $p (@{$docs->[$q][$d]->{pos}}) {
 		push(@{$poslist[$q]}, $p);
 	    }
 	}
@@ -381,12 +385,15 @@ sub intersect_wo_hash {
 	    }
 
 	    if ($flag == 0) {
-		for (my $q = 0; $q < scalar(@results); $q++) {
-		    push(@{$new_results[$q]}, $results[$q]->[$d]);
+		for (my $q = 0; $q < scalar(@{$docs}); $q++) {
+		    push(@{$results[$q]}, $docs->[$q][$d]);
 		}
+		last;
 	    }
 	}
     }
 
-    return \@new_results;
+    return \@results;
 }
+
+1;
