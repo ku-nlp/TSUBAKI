@@ -51,7 +51,7 @@ sub parse {
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
 	my $q;
 	if ($opt->{syngraph}) {
-	    $q= new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}});
+	    $q= new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{syngraph_option}});
 	} else {
 	    $q= new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
 	}	    
