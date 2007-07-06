@@ -19,7 +19,8 @@ sub new {
 	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
 		       -JumanCommand => "$opts->{JUMAN_PATH}/juman"),
-	SYNGRAPH => new SynGraph($opts->{SYNDB_PATH})
+	SYNGRAPH => new SynGraph($opts->{SYNDB_PATH}),
+	SYNGRAPH_OPTION => {relation => 1, antonym => 1}
     };
 
     bless $this;
@@ -51,7 +52,7 @@ sub parse {
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
 	my $q;
 	if ($opt->{syngraph}) {
-	    $q= new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{syngraph_option}});
+	    $q= new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}});
 	} else {
 	    $q= new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
 	}	    
