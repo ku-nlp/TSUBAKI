@@ -193,7 +193,7 @@ sub makeIndexfromKnpResult {
 		## 代表表記に曖昧性がある場合は全部保持する
 		while ($line =~ /\<ALT(.+?)\>/) {
 		    $line = "$'";
-		    if ($1 =~ /代表表記:(.+?)\"/) {
+		    if ($1 =~ /代表表記:(.+?)(?: |\")/) {
 			push(@reps, &toUpperCase_utf8($1));
 		    }
 		}
