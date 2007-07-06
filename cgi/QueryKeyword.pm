@@ -19,19 +19,13 @@ sub new {
     unless ($opt->{syngraph}) {
 	$indice = $opt->{indexer}->makeIndexfromKnpResult($knpresult->all);
     } else {
-	print STDERR "Error :: Not Supported SynGraph Indice.\n";
-	exit;
-
  	$knpresult->set_id(0);
- 	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, {relation => 1, antonym => 1});
- 	my $s_all = $synresult;
-	print encode('euc-jp', $s_all);
+ 	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option});
 	$indice = $opt->{indexer}->makeIndexfromSynGraph($synresult);
     }
 
     my %buff;
     foreach my $k (keys %{$indice}){
-	# 莉｣陦ｨ陦ｨ險伜喧縺ｫ繧医ｊ螻暮幕縺輔ｌ縺溽ｴ｢蠑戊ｪ槭ｒ縺ｾ縺ｨ繧√ｋ
 	$buff{$indice->{$k}{group_id}} = [] unless (exists($buff{$indice->{$k}{group_id}}));
 	push(@{$buff{$indice->{$k}{group_id}}}, $indice->{$k});
     }

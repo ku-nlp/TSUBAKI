@@ -49,7 +49,12 @@ sub parse {
 
 	## 半角アスキー文字列を全角に置換する
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
-	my $q = new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
+	my $q;
+	if ($opt->{syngraph}) {
+	    $q= new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}});
+	} else {
+	    $q= new QueryKeyword($q_str, $near, $opt->{logical_cond_qkw}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
+	}	    
 
 	push(@qks, $q);
     }
