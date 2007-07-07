@@ -5,11 +5,12 @@ use utf8;
 use Encode;
 
 sub new {
-    my ($class, $string, $near, $logical_cond_qkw, $opt) = @_;
+    my ($class, $string, $near, $force_dpnd, $logical_cond_qkw, $opt) = @_;
     my $this = {
 	words => [],
 	dpnds => [],
 	near => $near,
+	force_dpnd => $force_dpnd,
 	logical_cond_qkw => $logical_cond_qkw,
 	rawstring => $string
     };
@@ -80,7 +81,8 @@ sub to_string {
     $ret .= ($words_str . "\n");
     $ret .= ($dpnds_str . "\n");
     $ret .= "LOGICAL_COND: $this->{logical_cond_qkw}\n";
-    $ret .= "NEAR: $this->{near}";
+    $ret .= "NEAR: $this->{near}\n";
+    $ret .= "FORCE_DPND: $this->{force_dpnd}";
 
     return $ret;
 }
