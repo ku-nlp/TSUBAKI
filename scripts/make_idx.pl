@@ -64,7 +64,7 @@ sub main {
 	my %indice;
 	my $indexer = new Indexer();
 	while (<READER>) {
-	    if (/\<S.*? Id="(\d+)"/) {
+	    if (/\<(?:S|Title).*? Id="(\d+)"/) {
 		print STDERR "\rdir=$opt{in},file=$fid (Id=$1)";
 		$sid = $1;
 	    }
