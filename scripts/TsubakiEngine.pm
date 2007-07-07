@@ -223,16 +223,23 @@ sub retrieve_documents {
 	    push(@{$docs_dpnd}, $docs);
 	}
 	
-	# 係受け制約の適用 ※
-#	if ($keyword->{force_dpnd}) {
-#	    $docs_word = &intersect($docs_word, $keyword->{near});
-#	}
-
 	# 検索キーワードごとに検索された文書の配列へpush
 	if ($keyword->{logical_cond_qkw} eq 'AND') {
 	    # 検索キーワード中の単語間のANDをとる 
-	    push(@{$alldocs_word}, &serialize(&filter_by_NEAR_constraint(&intersect($docs_word),$keyword->{near})));
-	    push(@{$alldocs_dpnd}, &serialize(&intersect($docs_dpnd)));
+	    $docs_word = &intersect($docs_word);
+	    $docs_dpnd = &intersect($docs_dpnd);
+
+	    # 係り受け制約の適用
+	    if (scalar(@{$keyword->{dpnds}}) > 0 && $keyword->{force_dpnd} > 0) {
+		print scalar(@{$keyword->{dpnds}}) . "=size\n";
+
+		$docs_word = &filter_by_force_dpnd_constraint($docs_word, $docs_dpnd); 
+	    }
+	    # 近接制約の適用
+	    $docs_word = &filter_by_NEAR_constraint($docs_word, $keyword->{near});
+
+	    push(@{$alldocs_word}, &serialize($docs_word));
+	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
 	} else {
 	    # 検索キーワード中の単語間のORをとる 
 	    push(@{$alldocs_word}, &serialize($docs_word));
@@ -347,7 +354,7 @@ sub filter_by_NEAR_constraint {
     return \@results if ($flag > 0 || scalar(@{$docs}) < 1);
 
     # 単語の（クエリ中での）出現順序でソート
-    @{$docs} = sort{$a->[0]{qid} <=> $b->[0]{qid}} @{$docs};
+    @{$docs} = sort{$a->[0]{qid_freq}[0]->{qid} <=> $b->[0]{qid_freq}[0]->{qid}} @{$docs};
 
     for (my $d = 0; $d < scalar(@{$docs->[0]}); $d++) {
 	my @poslist = ();
@@ -390,6 +397,70 @@ sub filter_by_NEAR_constraint {
 		}
 		last;
 	    }
+	}
+    }
+
+    return \@results;
+}
+
+sub filter_by_force_dpnd_constraint {
+    my ($docs_word, $docs_dpnd) = @_;
+
+    # 初期化 & 空リストのチェック
+    my @results = ();
+    my $flag = 0;
+    for (my $i = 0; $i < scalar(@{$docs_word}); $i++) {
+	$flag = 1 unless (defined($docs_word->[$i]));
+	$flag = 2 if (scalar(@{$docs_word->[$i]}) < 1);
+
+	$results[$i] = [];
+    }
+    return \@results if ($flag > 0 || scalar(@{$docs_word}) < 1);
+
+    for (my $i = 0; $i < scalar(@{$docs_dpnd}); $i++) {
+	$flag = 1 unless (defined($docs_dpnd->[$i]));
+	$flag = 2 if (scalar(@{$docs_dpnd->[$i]}) < 1);
+    }
+    return \@results if ($flag > 0 || scalar(@{$docs_dpnd}) < 1);
+
+    my %dids = ();
+    my $variation = scalar(@{$docs_dpnd});
+    if ($variation < 2) {
+	foreach my $doc (@{$docs_dpnd->[0]}) {
+	    $dids{$doc->{did}} = 1;
+	}
+    } else {
+	# 入力リストをサイズ順にソート (一番短い配列を先頭にするため)
+	my @sorted_docs = sort {scalar(@{$a}) <=> scalar(@{$b})} @{$docs_dpnd};
+	# 一番短かい配列に含まれる文書が、他の配列に含まれるかを調べる
+	for (my $i = 0; $i < scalar(@{$sorted_docs[0]}); $i++) {
+	    # 対象の文書を含まない配列があった場合 $flagが 1 のままループを終了する
+	    my $flag = 0;
+	    # 一番短かい配列以外を順に調べる
+	    for (my $j = 1; $j < $variation; $j++) {
+		$flag = 1; 
+		while (defined($sorted_docs[$j]->[0])) {
+		    if ($sorted_docs[$j]->[0]->{did} < $sorted_docs[0]->[$i]->{did}) {
+			shift(@{$sorted_docs[$j]});
+		    } elsif ($sorted_docs[$j]->[0]->{did} == $sorted_docs[0]->[$i]->{did}) {
+			$flag = 0;
+			last;
+		    } elsif ($sorted_docs[$j]->[0]->{did} > $sorted_docs[0]->[$i]->{did}) {
+			last;
+		    }
+		}
+		last if ($flag > 0);
+	    }
+
+	    $dids{$sorted_docs[0]->[$i]->{did}} = 1 if ($flag < 1);
+	}
+    }
+
+    for (my $i = 0; $i < scalar(@{$docs_word}); $i++) {
+	foreach my $doc (@{$docs_word->[$i]}) {
+	    next unless (exists($dids{$doc->{did}}));
+
+	    push(@{$results[$i]}, $doc);
 	}
     }
 
