@@ -20,9 +20,6 @@ use Devel::Size qw/size total_size/;
 my $host = `hostname`; chop($host);
 
 
-binmode(STDOUT, ":encoding(euc-jp)");
-binmode(STDERR, ":encoding(euc-jp)");
-
 sub new {
     my ($class, $opts) = @_;
     my $this = {
