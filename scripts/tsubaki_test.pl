@@ -55,15 +55,14 @@ sub main {
 	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] });
     
     # logical_cond_qk  クエリ間の論理演算
-    # logical_cond_qkw クエリ中の単語間の論理演算
-    my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'AND', logical_cond_qkw => 'AND', syngraph => $opt{syngraph}});
+    my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'AND', syngraph => $opt{syngraph}});
     
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
 	print $qk->to_string() . "\n";
 	print "*************\n";
     }
-    
+
     my %qid2df = ();
     foreach my $qid (keys %{$query->{qid2rep}}) {
 	my $df = &get_DF($query->{qid2rep}{$qid});
