@@ -183,25 +183,28 @@ sub makeIndexfromKnpResult {
 		$this->{absolute_pos}++;
 
 		my $midashi = "$m[2]/$m[1]";
-		my @reps = ();
+		my %reps = ();
 		## 代表表記の取得
 		if ($line =~ /\<代表表記:([^>]+)\>/) {
 		    $midashi = $1;
 		}
 
-		push(@reps, &toUpperCase_utf8($midashi));
+		$reps{&toUpperCase_utf8($midashi)} = 1;
+
 		## 代表表記に曖昧性がある場合は全部保持する
+		## ただし表記・読みが同一の代表表記は区別しない
+		## ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
 		while ($line =~ /\<ALT(.+?)\>/) {
 		    $line = "$'";
 		    if ($1 =~ /代表表記:(.+?)(?: |\")/) {
-			push(@reps, &toUpperCase_utf8($1));
+			$reps{&toUpperCase_utf8($1)} = 1;
 		    }
 		}
 
+		my @reps_array = sort keys %reps;
 		my $word = {
-		    reps => \@reps,
+		    reps => \@reps_array,
 		    local_pos => $local_pos,
-#		    string => $line,
 		    global_pos => $this->{absolute_pos},
 		    isContentWord => 0
 		};
