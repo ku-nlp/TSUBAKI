@@ -10,7 +10,7 @@ use QueryParser;
 use TsubakiEngine;
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'verbose', 'debug');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug');
 
 if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -81,7 +81,8 @@ sub main {
 	skip_pos => $opt{skippos},
 	verbose => $opt{verbose},
 	average_doc_length => $AVE_DOC_LENGTH,
-	total_number_of_docs => $N });
+	total_number_of_docs => $N,
+	weight_dpnd_score => $opt{weight_dpnd_score}});
     
     my $docs = $tsubaki->search($query, \%qid2df);
     my $hitcount = scalar(@{$docs});

@@ -30,7 +30,8 @@ sub new {
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
 	verbose => $opts->{verbose},
-	dlengthdb_hash => $opts->{dlengthdb_hash}
+	dlengthdb_hash => $opts->{dlengthdb_hash},
+	WEIGHT_DPND_SCORE => $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1
     };
 
     opendir(DIR, $opts->{dlengthdbdir});
@@ -184,7 +185,13 @@ sub merge_docs {
 		    my $qid = $qid_freq->{qid};
 		    my $df = $qid2df->{$qid};
 		    my $dlength = $d_length_buff{$did};
-		    $merged_docs[$i]->{score} += $cal_method->calculate_score({tf => $tf, df => $df, doc_length => $dlength});
+
+		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, doc_length => $dlength});
+		    $score *= $this->{WEIGHT_DPND_SCORE};
+
+		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength score=$score\n" if $this->{verbose};
+
+		    $merged_docs[$i]->{score} += $score;
 		}
 	    }
 	}
