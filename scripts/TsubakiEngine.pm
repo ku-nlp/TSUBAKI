@@ -1,5 +1,7 @@
 package TsubakiEngine;
 
+# $Id$
+
 use strict;
 use IO::Socket;
 use Retrieve;
@@ -8,7 +10,6 @@ use Encode qw(from_to encode decode);
 use URI::Escape;
 use Storable qw(store retrieve);
 use utf8;
-use CDB_File;
 use Data::Dumper;
 # use Devel::Size qw(total_size);
 # use Getopt::Long;
@@ -41,6 +42,7 @@ sub new {
 	my $dlength_db;
 	# 小規模なテスト用にdlengthのDBをハッシュでもつオプション
 	if ($opts->{dlengthdb_hash}) {
+	    require CDB_File;
 	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
 	}
 	else {
