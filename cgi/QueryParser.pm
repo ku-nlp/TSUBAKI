@@ -20,7 +20,7 @@ sub new {
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
 		       -JumanCommand => "$opts->{JUMAN_PATH}/juman"),
 	SYNGRAPH => new SynGraph($opts->{SYNDB_PATH}),
-	SYNGRAPH_OPTION => {relation => 1, antonym => 1}
+	SYNGRAPH_OPTION => $opts->{syngraph_option} ? $opts->{syngraph_option} : {relation => 1, antonym => 1}
     };
 
     bless $this;
