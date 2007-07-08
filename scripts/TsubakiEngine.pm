@@ -177,11 +177,13 @@ sub merge_docs {
 	    my $did = $doc->{did};
 	    if (exists($did2pos{$did})) {
 		my $i = $did2pos{$did};
-		
-		my $tf = $doc->{freq};
-		my $df = 1; # ※
-		my $dlength = $d_length_buff{$did};
-		$merged_docs[$i]->{score} += $cal_method->calculate_score({tf => $tf, df => $df, doc_length => $dlength});
+		foreach my $qid_freq (@{$doc->{qid_freq}}) {
+		    my $tf = $qid_freq->{freq};
+		    my $qid = $qid_freq->{qid};
+		    my $df = $qid2df->{$qid};
+		    my $dlength = $d_length_buff{$did};
+		    $merged_docs[$i]->{score} += $cal_method->calculate_score({tf => $tf, df => $df, doc_length => $dlength});
+		}
 	    }
 	}
     }
