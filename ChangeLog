@@ -1,6 +1,11 @@
+2007-07-09  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm, scripts/tsubaki_test.pl:
+	単語に対する係り受けのスコアの重みを指定できるようにした(デフォルト:1)
+	
 2007-07-08  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
-	* scripts/tsubame_test.pl:
+	* scripts/tsubaki_test.pl:
 	下位語数が $opt{hypocut} より大きければ、SYNノードをはりつけないようにした(デフォルト値:9)
 
 	* cgi/QueryParser.pm:
