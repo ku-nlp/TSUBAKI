@@ -1,3 +1,11 @@
+2007-07-08  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubame_test.pl:
+	下位語数が $opt{hypocut} より大きければ、SYNノードをはりつけないようにした(デフォルト値:9)
+
+	* cgi/QueryParser.pm:
+	$opts->{syngraph_option}を受け付けるようにした
+
 2007-07-03  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine.pm:
