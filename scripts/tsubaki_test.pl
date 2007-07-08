@@ -10,7 +10,7 @@ use QueryParser;
 use TsubakiEngine;
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'verbose', 'debug');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'verbose', 'debug');
 
 if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -48,11 +48,16 @@ sub init {
 sub main {
     &init();
 
+    my $syngraph_option = { relation => 1, antonym => 1};
+    $syngraph_option->{hypocut_attachnode} = $opt{hypocut} ? $opt{hypocut} : 9;
+
     my $q_parser = new QueryParser({
 	KNP_PATH => "$ENV{HOME}/local/bin",
 	JUMAN_PATH => "$ENV{HOME}/local/bin",
 	SYNDB_PATH => "$ENV{HOME}/SynGraph/syndb/i686",
-	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] });
+	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] ,
+	SYNGRAPH_OPTION => $syngraph_option
+    });
     
     # logical_cond_qk  クエリ間の論理演算
     my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'AND', syngraph => $opt{syngraph}});
