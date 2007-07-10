@@ -13,8 +13,8 @@ use utf8;
 use FileHandle;
 use Storable;
 use Error qw(:try);
-use Devel::Size qw/size total_size/;
-use Devel::Size::Report qw/report_size/;
+# use Devel::Size qw/size total_size/;
+# use Devel::Size::Report qw/report_size/;
 
 my $DEBUG = 1;
 my $host = `hostname`; chop($host);
@@ -89,7 +89,7 @@ sub search {
     }
     closedir(DIR);
 
-    my @docs = undef;
+    my @docs = ();
     ## idxごとに検索
     for (my $f_num = 0; $f_num < $fcnt; $f_num++) {
 	my $offset = $this->{OFFSET}[$f_num]->{$keyword->{string}};
@@ -123,8 +123,9 @@ sub search {
 		# 文書IDと出現頻度(tf)の取得
 		for (my $j = 0; $j < $ldf; $j++) {
 		    read($this->{IN}[$f_num], $buf, 4);
-		    my $did = unpack('L', $buf);
-#,		    printf "$did  = %d Byte.\n", (total_size($did));
+		    my $did = (unpack('L', $buf) / 1);
+#		    my $did = 0;
+#		    printf "did :: $did  = %d Byte.\n", (total_size($did));
 
 		    read($this->{IN}[$f_num], $buf, 4);
 #		    my $freq = unpack('L', $buf);
@@ -136,6 +137,8 @@ sub search {
 			read($this->{IN}[$f_num], $buf, 4);
 			my $size = unpack('L', $buf);
 #			my $size = $freq;
+
+#			printf "$j docs %d Byte.\n", 0;
 			
 			if (!exists($already_retrieved_docs->{$did}) && $add_flag < 1) {
 			    seek($this->{IN}[$f_num], $size * 4, 1);
@@ -155,18 +158,24 @@ sub search {
 		    }
 
 		    if ($no_position < 0) {
-			push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}]});
+			push(@docs, [$did, $freq]);
 		    } else {
-			push(@docs, {did => $did, qid_freq => [{qid => $keyword->{qid}, freq => $freq}], $freq, pos => \@pos});
+			push(@docs, [$did, $freq, \@pos]);
 		    }
-#		    printf "docs %d Byte.\n", (total_size(\@docs));
-#		    print "-----\n";
-#		    exit if ($j > 2);
+
+#		    if ($j % 1113 == 0) {
+#			printf "$j $size docs %d Byte.\n", 0;
+#			printf "$j $keyword->{qid} docs %d Byte.\n", (total_size(\@docs));
+#			print "-----\n";
+#		    }
 		}
 		last;
 	    }
 	}
     }
+
+#    printf "$keyword->{qid} docs %.3f M Byte (size=%d).\n", (total_size(\@docs)) / (1024 * 1024), scalar(@docs);
+#    print "-----\n";
 
     return \@docs;
 }   
