@@ -83,7 +83,7 @@ sub search {
     if ($query->{only_hitcount}) {
 	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない
     } else {
-	$cal_method = new OKAPI($this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS});
+	$cal_method = new OKAPI($this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS}, $this->{verbose});
     }
 
     my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method);
@@ -96,20 +96,23 @@ sub retrieve_from_dat {
     my ($retriever, $reps, $doc_buff, $add_flag, $position) = @_;
 
     ## 代表表記化／SynGraph により複数個の索引に分割された場合の処理 (かんこう -> 観光 OR 刊行 OR 敢行 OR 感光 を検索する)
+    my %idx2qid;
     my @results;
-    foreach my $rep (@{$reps}) {
-	# ※ 文書数が ldf より 1 多い
-	# print $rep . " " . scalar(@{$results[-1]}) . "\n";
-
+    for (my $i = 0; $i < scalar(@{$reps}); $i++) {
 	# rep は構造体
 	# rep = {qid, string}
-	push(@results, $retriever->search($rep, $doc_buff, $add_flag, $position));
+	my $rep = $reps->[$i];
+
+	# $retriever->search($rep, $doc_buff, $add_flag, $position);
+	# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
+	$results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position);
+
+	$idx2qid{$i} = $rep->{qid};
     }
 
-    # ※ クエリが重なったときの対応について考える
-    my $ret = &serialize(\@results);
+    # ★ クエリが重なったときの対応について考える
+    my $ret = &serialize2(\@results, \%idx2qid);
 
-#   print scalar(@$ret) . "\n";
     return $ret;
 }
 
@@ -163,9 +166,11 @@ sub merge_docs {
 			    }
 			}
 		    }
-		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
 
-		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength score=$score\n" if $this->{verbose};
+		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength\n" if ($this->{verbose});
+		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
+		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength score=$score\n" if ($this->{verbose});
+
 
 		    $merged_docs[$i]->{score} += $score;
 		}
@@ -282,6 +287,37 @@ sub serialize {
 	    } else {
 		$serialized_docs->[$pos] = $d;
 		$did2pos{$d->{did}} = $pos;
+		$pos++;
+	    }
+	}
+    }
+    @{$serialized_docs} = sort {$a->{did} <=> $b->{did}} @{$serialized_docs};
+
+    return $serialized_docs;
+}
+
+# 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
+sub serialize2 {
+    my ($docs_list, $idx2qid) = @_;
+
+    my $serialized_docs = [];
+    my $pos = 0;
+    my %did2pos = ();
+    for(my $i = 0; $i < scalar(@{$docs_list}); $i++) {
+	my $qid = $idx2qid->{$i};
+	foreach my $d (@{$docs_list->[$i]}) {
+	    next unless (defined($d)); # 本来なら空はないはず
+
+	    my $did = $d->[0];
+	    my $freq = $d->[1];
+	    my $poss = $d->[2];
+	    if (exists($did2pos{$did})) {
+		my $j = $did2pos{$did};
+		push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq});
+	    } else {
+		$serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq}]};
+		$serialized_docs->[$pos]->{pos} = $poss if (defined($poss));
+		$did2pos{$did} = $pos;
 		$pos++;
 	    }
 	}
