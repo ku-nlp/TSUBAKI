@@ -31,7 +31,7 @@ sub new {
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
 	verbose => $opts->{verbose},
 	dlengthdb_hash => $opts->{dlengthdb_hash},
-	WEIGHT_DPND_SCORE => $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1
+	WEIGHT_DPND_SCORE => defined $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1
     };
 
     opendir(DIR, $opts->{dlengthdbdir});
