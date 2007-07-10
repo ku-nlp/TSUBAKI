@@ -53,6 +53,8 @@ sub makeIndexfromSynGraph {
 
 		$features = "$`$'" if ($features =~ /\<上位語\>/); # <上位語>を削除
 
+		$features =~ s/<下位語数:\d+>//; # <下位語数:(数字)>を削除
+
 		my $syn_node = {midashi => $sid . $features,
 				score => $score,
 				grpId => $bnstId,
