@@ -86,7 +86,7 @@ sub search {
 	$cal_method = new OKAPI($this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS}, $this->{verbose});
     }
 
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method);
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf});
 
     return $doc_list;
 }
@@ -117,7 +117,7 @@ sub retrieve_from_dat {
 }
 
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf) = @_;
     my %did2pos = ();
 
     my $pos = 0;
@@ -143,6 +143,7 @@ sub merge_docs {
 		    my $tf = $qid_freq->{freq};
 		    my $qid = $qid_freq->{qid};
 		    my $df = $qid2df->{$qid};
+		    my $qtf = $qid2qtf->{$qid};
 		    my $dlength = $d_length_buff{$did};
 
 		    unless (defined($dlength)) {
@@ -167,12 +168,11 @@ sub merge_docs {
 			}
 		    }
 
-		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength\n" if ($this->{verbose});
 		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
-		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength score=$score\n" if ($this->{verbose});
+		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
 
-		    $merged_docs[$i]->{score} += $score;
+		    $merged_docs[$i]->{score} += $score * $qtf;
 		}
 	    }
 	}
@@ -189,14 +189,15 @@ sub merge_docs {
 		    my $tf = $qid_freq->{freq};
 		    my $qid = $qid_freq->{qid};
 		    my $df = $qid2df->{$qid};
+		    my $qtf = $qid2qtf->{$qid};
 		    my $dlength = $d_length_buff{$did};
 
 		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, doc_length => $dlength});
 		    $score *= $this->{WEIGHT_DPND_SCORE};
 
-		    print "did=$did qid=$qid tf=$tf df=$df length=$dlength score=$score\n" if $this->{verbose};
+		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if $this->{verbose};
 
-		    $merged_docs[$i]->{score} += $score;
+		    $merged_docs[$i]->{score} += $score * $qtf;
 		}
 	    }
 	}

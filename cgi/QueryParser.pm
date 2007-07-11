@@ -74,11 +74,13 @@ sub parse {
 
     my $qid = 0;
     my %qid2rep = ();
+    my %qid2qtf = ();
     foreach my $qk (@qks) {
 	foreach my $reps (@{$qk->{words}}) {
 	    foreach my $rep (@{$reps}) {
 		$rep->{qid} = $qid;
 		$qid2rep{$qid} = $rep->{string};
+		$qid2qtf{$qid} = $rep->{freq};
 		$qid++;
 	    }
 	}
@@ -87,12 +89,13 @@ sub parse {
 	    foreach my $rep (@{$reps}) {
 		$rep->{qid} = $qid;
 		$qid2rep{$qid} = $rep->{string};
+		$qid2qtf{$qid} = $rep->{freq};
 		$qid++;
 	    }
 	}
     }
 	
-    return {keywords => \@qks, logical_cond_qk => $opt->{logical_cond_qk}, only_hitcount => $opt->{only_hitcount}, qid2rep => \%qid2rep};
+    return {keywords => \@qks, logical_cond_qk => $opt->{logical_cond_qk}, only_hitcount => $opt->{only_hitcount}, qid2rep => \%qid2rep, qid2qtf => \%qid2qtf};
 }
 
 sub DESTROY {

@@ -38,9 +38,9 @@ sub new {
 	    next if ($m->{isContentWord} < 1 && $this->{near} < 0);
 
 	    if ($m->{rawstring} =~ /\-\>/) {
-		push(@dpnd_reps, {string => $m->{rawstring}, qid => -1});
+		push(@dpnd_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}});
 	    } else {
-		push(@word_reps, {string => $m->{rawstring}, qid => -1});
+		push(@word_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}});
 	    }
 	}
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
