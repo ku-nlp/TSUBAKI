@@ -192,7 +192,7 @@ sub merge_docs {
 		    my $qtf = $qid2qtf->{$qid};
 		    my $dlength = $d_length_buff{$did};
 
-		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, doc_length => $dlength});
+		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
 		    $score *= $this->{WEIGHT_DPND_SCORE};
 
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if $this->{verbose};
