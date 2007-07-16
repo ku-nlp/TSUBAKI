@@ -30,6 +30,7 @@ sub new {
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
 	verbose => $opts->{verbose},
+	store_verbose => $opts->{store_verbose},
 	dlengthdb_hash => $opts->{dlengthdb_hash},
 	WEIGHT_DPND_SCORE => defined $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1
     };
@@ -173,6 +174,7 @@ sub merge_docs {
 
 
 		    $merged_docs[$i]->{score} += $score * $qtf;
+		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
 		}
 	    }
 	}
@@ -198,6 +200,7 @@ sub merge_docs {
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if $this->{verbose};
 
 		    $merged_docs[$i]->{score} += $score * $qtf;
+		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
 		}
 	    }
 	}
