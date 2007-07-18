@@ -14,14 +14,38 @@ use QueryKeyword;
 
 sub new {
     my ($class, $opts) = @_;
+
     my $this = {
-	INDEXER => new Indexer(),
 	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
 		       -JumanCommand => "$opts->{JUMAN_PATH}/juman"),
 	SYNGRAPH => new SynGraph($opts->{SYNDB_PATH}),
 	SYNGRAPH_OPTION => $opts->{SYNGRAPH_OPTION} ? $opts->{SYNGRAPH_OPTION} : {relation => 1, antonym => 1}
     };
+
+    # ストップワードの処理
+    if ($opts->{STOP_WORDS}) {
+	my %stop_words;
+	foreach my $word (@{$opts->{STOP_WORDS}}) {
+	    # 代表表記ではない場合、代表表記を得る
+	    unless ($word =~ /\//) {
+		my $result = $this->{KNP}->parse($word);
+
+		if (scalar ($result->mrph) == 1) {
+		    $word = ($result->mrph)[0]->repname;
+		}
+		# 一形態素ではない場合、Parse Errorの可能性あり
+		else {
+		    print STDERR "$word: Parse Error?\n";
+		}
+	    }
+	    $stop_words{$word} = 1;
+	}
+	$this->{INDEXER} = new Indexer({ STOP_WORDS => \%stop_words });
+    }
+    else {
+	$this->{INDEXER} = new Indexer();
+    }
 
     bless $this;
 }

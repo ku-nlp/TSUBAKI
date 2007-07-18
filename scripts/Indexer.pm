@@ -19,6 +19,10 @@ sub new {
 	handled_yomi => $opt->{handled_yomi}
     };
 
+    if ($opt->{STOP_WORDS}) {
+	$this->{STOP_WORDS} = $opt->{STOP_WORDS};
+    }
+
     bless $this;
 }
 
@@ -190,6 +194,8 @@ sub makeIndexfromKnpResult {
 		if ($line =~ /\<代表表記:([^>]+)\>/) {
 		    $midashi = $1;
 		}
+
+		next if defined $this->{STOP_WORDS}{$midashi};
 
 		$reps{&toUpperCase_utf8($midashi)} = 1;
 
