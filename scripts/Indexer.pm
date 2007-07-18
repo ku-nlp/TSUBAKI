@@ -13,7 +13,7 @@ use Encode;
 our @EXPORT = qw(makeIndexfromJumanResult makeIndexfromKnpResult makeNgramIndex);
 
 sub new {
-    my($class, $opt);
+    my($class, $opt) = @_;
     my $this = {
 	absolute_pos => -1,
 	handled_yomi => $opt->{handled_yomi}
