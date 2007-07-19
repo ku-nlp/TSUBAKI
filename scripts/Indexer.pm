@@ -34,7 +34,6 @@ sub makeIndexfromSynGraph {
     my %freq = ();
     my %dpndInfo = ();
     my %synNodes = ();
-
     foreach my $line (split(/\n/, $syngraph)){
 	if($line =~ /^!! /){
 	    my($dumy, $id, $kakari, $midashi) = split(/ /, $line);
@@ -58,7 +57,6 @@ sub makeIndexfromSynGraph {
 		$features = "$`$'" if ($features =~ /\<上位語\>/); # <上位語>を削除
 
 		$features =~ s/<下位語数:\d+>//; # <下位語数:(数字)>を削除
-
 		my $syn_node = {midashi => $sid . $features,
 				score => $score,
 				grpId => $bnstId,
@@ -66,14 +64,12 @@ sub makeIndexfromSynGraph {
 				absolute_pos => []};
 
 		push(@{$synNodes{$bnstId}}, $syn_node);
-	    }else{
-#		print STDERR $line;
 	    }
 	}
     }
 
     my $pos = 0;
-    foreach my $id (sort keys %synNodes){
+    foreach my $id (sort {$a <=> $b} keys %synNodes) {
 	foreach my $synNode (@{$synNodes{$id}}){
 	    my $kakariSakis = $dpndInfo{$id}->{kakariSaki};
 	    my $kakariType = $dpndInfo{$id}->{kakariType};
@@ -81,8 +77,7 @@ sub makeIndexfromSynGraph {
 	    my $score = $synNode->{score};
 	    
 	    $freq{$synNode->{midashi}}->{freq} += $score;
-# 	    push(@{$synNode->{midashi}->{pos}}, $pos);
-# 	    push(@{$synNode->{midashi}->{absolute_pos}}, $pos);
+	    push(@{$freq{$synNode->{midashi}}->{pos}}, $pos);
 	    $freq{$synNode->{midashi}}->{group_id} = $groupId;
 	    $freq{$synNode->{midashi}}->{rawstring} = $synNode->{midashi};
 	    $freq{$synNode->{midashi}}->{isContentWord} = 1;
@@ -92,8 +87,7 @@ sub makeIndexfromSynGraph {
 		foreach my $kakariSakiNode (@{$kakariSakiNodes}){
 		    my $s = $score * $kakariSakiNode->{score};
 		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{freq} += $s;
-#		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{absolute_pos} = $pos;
-#		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{grp_id} = "$groupId\/$kakariSakiNode->{grpId}";
+		    push(@{$freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{pos}}, $pos);
 		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{group_id} = "$groupId\/$kakariSakiNode->{grpId}";
 		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{rawstring} = "$synNode->{midashi}->$kakariSakiNode->{midashi}";
 		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{isContentWord} = 1;
@@ -188,11 +182,14 @@ sub makeIndexfromKnpResult {
 		$local_pos++;
 		$this->{absolute_pos}++;
 
+		my $surf = $m[0];
 		my $midashi = "$m[2]/$m[1]";
+#		my $midashi = "$m[2]";
 		my %reps = ();
 		## 代表表記の取得
 		if ($line =~ /\<代表表記:([^>]+)\>/) {
 		    $midashi = $1;
+#		    $midashi =~ s/\/.+//g;
 		}
 
 		next if defined $this->{STOP_WORDS}{$midashi};
@@ -205,12 +202,14 @@ sub makeIndexfromKnpResult {
 		while ($line =~ /\<ALT(.+?)\>/) {
 		    $line = "$'";
 		    if ($1 =~ /代表表記:(.+?)(?: |\")/) {
-			$reps{&toUpperCase_utf8($1)} = 1;
+			my $midashi = $1;
+			$reps{&toUpperCase_utf8($midashi)} = 1;
 		    }
 		}
 
 		my @reps_array = sort keys %reps;
 		my $word = {
+		    surf => $surf,
 		    reps => \@reps_array,
 		    local_pos => $local_pos,
 		    global_pos => $this->{absolute_pos},
@@ -243,6 +242,7 @@ sub makeIndexfromKnpResult {
 
 	## 代表表記が複数個ある場合は代表表記の個数で割ってカウントする
 	for (my $pos = 0; $pos < scalar(@words); $pos++) {
+	    my $surf = $words[$pos]->{surf};
 	    my $reps = $words[$pos]->{reps};
 	    my $size = scalar(@{$reps});
 	    for (my $j = 0; $j < $size; $j++) {
@@ -251,6 +251,7 @@ sub makeIndexfromKnpResult {
 		push(@{$freq{"$reps->[$j]"}->{absolute_pos}}, $words[$pos]->{global_pos});
 		$freq{"$reps->[$j]"}->{group_id} = $words[$pos]->{local_pos};
 		$freq{"$reps->[$j]"}->{rawstring} = $reps->[$j];
+		$freq{"$reps->[$j]"}->{surf} = $surf;
 		$freq{"$reps->[$j]"}->{isContentWord} = $words[$pos]->{isContentWord};
 	    }
 	}
@@ -294,7 +295,7 @@ sub makeIndexfromKnpResult {
 				$freq{$reps->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{freq} += (1 / ($num_daihyou_saki * $num_daihyou_moto));
 				push(@{$freq{$reps->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{pos}}, @{$freq{$reps->[$j]}->{pos}});
 				push(@{$freq{$reps->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{absolute_pos}}, @{$freq{$reps->[$j]}->{absolute_pos}});
-				$freq{$reps->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{group_id} = $freq{$reps->[$j]}->{group_id};
+				$freq{$reps->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{group_id} = "$freq{$reps->[$j]}->{group_id}:$freq{$kakariSakiDaihyou->[$k]}->{group_id}";
 				$freq{$reps->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{rawstring} = $reps->[$j] . "->" . $kakariSakiDaihyou->[$k];
 				$freq{$reps->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{isContentWord} = 1;
 			    }
@@ -310,7 +311,6 @@ sub makeIndexfromKnpResult {
 	    ## との組を索引語として抽出
 	    for(my $i = 0; $i < scalar(@{$bps[$pos]->{words}}); $i++){
 		my $daihyou = $bps[$pos]->{words}->[$i]->{reps};
-#		print STDERR encode('euc-jp', ($bps[$pos]->{words}->[$i]->{string})) . "\n";
 		my $num_daihyou_moto = scalar(@{$daihyou});
 
 		for(my $j = 0; $j < $num_daihyou_moto; $j++){
@@ -334,7 +334,7 @@ sub makeIndexfromKnpResult {
 			$freq{$daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{freq} += (1 / ($num_daihyou_saki * $num_daihyou_moto));
 			push(@{$freq{$daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{pos}}, @{$freq{$daihyou->[$j]}->{pos}});
 			push(@{$freq{$daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{absolute_pos}}, @{$freq{$daihyou->[$j]}->{absolute_pos}});
-			$freq{$daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{group_id} = $freq{$daihyou->[$j]}->{group_id};
+			$freq{$daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{group_id} = "$freq{$daihyou->[$j]}->{group_id}:$freq{$kakariSakiDaihyou->[$k]}->{group_id}";
 			$freq{$daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{rawstring} = $daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k];
 			$freq{$daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k]}->{isContentWord} = 1;
 		    }
