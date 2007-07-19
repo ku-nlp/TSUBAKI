@@ -20,7 +20,7 @@ sub new {
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
 		       -JumanCommand => "$opts->{JUMAN_PATH}/juman"),
 	SYNGRAPH => new SynGraph($opts->{SYNDB_PATH}),
-	SYNGRAPH_OPTION => $opts->{SYNGRAPH_OPTION} ? $opts->{SYNGRAPH_OPTION} : {relation => 1, antonym => 1}
+	SYNGRAPH_OPTION => {relation => 1, antonym => 1, hypocut_attachnode => 9}
     };
 
     # ストップワードの処理
@@ -62,10 +62,10 @@ sub parse {
 	my $near = -1;
 	my $logical_cond_qkw = 'AND';
 	my $force_dpnd = -1;
-
+	my $sentence_flag = -1;
 	## フレーズ検索かどうかの判定
 	if ($q_str =~ /^"(.+)?"$/){
-	    $near = 1;
+	    $near = 0;
 	    $q_str = $1;
 	}
 
@@ -73,9 +73,10 @@ sub parse {
 	if ($q_str =~ /^(.+)?~(.+)$/){
 	    $q_str = $1;
 	    my $constraint_tag = $2;
-	    if ($constraint_tag =~ /^(\d+)$/) {
+	    if ($constraint_tag =~ /^(\d+)(W|S)$/) {
 		$logical_cond_qkw = 'AND';
 		$near = $1;
+		$sentence_flag = 1 if ($2 eq 'S');
 	    } elsif ($constraint_tag =~ /(AND|OR)/) {
 		$logical_cond_qkw = $1;
 	    } elsif ($constraint_tag =~ /FD/) {
@@ -87,10 +88,10 @@ sub parse {
 	## 半角アスキー文字列を全角に置換する
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
 	my $q;
-	if ($opt->{syngraph}) {
-	    $q= new QueryKeyword($q_str, $near, $force_dpnd, $logical_cond_qkw, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}});
+	if ($opt->{syngraph} > 0) {
+	    $q= new QueryKeyword($q_str, $sentence_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}});
 	} else {
-	    $q= new QueryKeyword($q_str, $near, $force_dpnd, $logical_cond_qkw, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
+	    $q= new QueryKeyword($q_str, $sentence_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
 	}
 
 	push(@qks, $q);
