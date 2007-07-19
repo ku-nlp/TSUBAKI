@@ -26,7 +26,7 @@ sub new {
     my $this = {
 	word_retriever => new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}),
 	dpnd_retriever => new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}),
-	DOC_LENGTH_DBs => [],
+	DOC_LENGTH_DBs => $opts->{doc_length_dbs},
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
 	verbose => $opts->{verbose},
@@ -37,26 +37,25 @@ sub new {
 
     opendir(DIR, $opts->{dlengthdbdir});
     foreach my $dbf (readdir(DIR)) {
-	next unless ($dbf =~ /doc_length\.bin/);
-	
-	my $fp = "$opts->{dlengthdbdir}/$dbf";
+ 	next unless ($dbf =~ /doc_length\.bin/);
 
-	my $dlength_db;
-	# 小規模なテスト用にdlengthのDBをハッシュでもつオプション
-	if ($opts->{dlengthdb_hash}) {
-	    require CDB_File;
-	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-	}
-	else {
+ 	my $fp = "$opts->{dlengthdbdir}/$dbf";
+ 	my $dlength_db;
+ 	# 小規模なテスト用にdlengthのDBをハッシュでもつオプション
+ 	if ($opts->{dlengthdb_hash}) {
+ 	    require CDB_File;
+ 	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+ 	}
+ 	else {
 	    $dlength_db = retrieve($fp) or die;
-	}
+ 	}
 
-	push(@{$this->{DOC_LENGTH_DBs}}, $dlength_db);
+ 	push(@{$this->{DOC_LENGTH_DBs}}, $dlength_db);
     }
     closedir(DIR);
 
     bless $this;
-}	    
+}
 
 sub DESTROY {
     my ($this) = @_;
@@ -94,7 +93,7 @@ sub search {
 
 ## 単語を含む文書の検索
 sub retrieve_from_dat {
-    my ($retriever, $reps, $doc_buff, $add_flag, $position) = @_;
+    my ($retriever, $reps, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag) = @_;
 
     ## 代表表記化／SynGraph により複数個の索引に分割された場合の処理 (かんこう -> 観光 OR 刊行 OR 敢行 OR 感光 を検索する)
     my %idx2qid;
@@ -106,7 +105,7 @@ sub retrieve_from_dat {
 
 	# $retriever->search($rep, $doc_buff, $add_flag, $position);
 	# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
-	$results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position);
+	$results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
 
 	$idx2qid{$i} = $rep->{qid};
     }
@@ -158,9 +157,7 @@ sub merge_docs {
 				}
 			    }
 			    else {
-				# ※文書長DBをふたつ引くことを考慮する
-				$dlength = $db->[$did % 1000000];
-#				$dlength = $db->{$did};
+				$dlength = $db->{$did};
 				if (defined($dlength)) {
 				    $d_length_buff{$did} = $dlength;
 				    last;
@@ -172,7 +169,6 @@ sub merge_docs {
 		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
-
 		    $merged_docs[$i]->{score} += $score * $qtf;
 		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
 		}
@@ -181,7 +177,7 @@ sub merge_docs {
     }
 
     return \@merged_docs unless (defined($cal_method));
-
+    
     foreach my $docs_dpnd (@{$alldocs_dpnds}) {
 	foreach my $doc (@{$docs_dpnd}) {
 	    my $did = $doc->{did};
@@ -197,15 +193,15 @@ sub merge_docs {
 		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
 		    $score *= $this->{WEIGHT_DPND_SCORE};
 
-		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if $this->{verbose};
+		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
 		    $merged_docs[$i]->{score} += $score * $qtf;
-		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
+		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if ($this->{store_verbose});
 		}
 	    }
 	}
     }
-
+    
     @merged_docs = sort {$b->{score} <=> $a->{score}} @merged_docs;
     return \@merged_docs;
 }
@@ -219,22 +215,45 @@ sub retrieve_documents {
     my $doc_buff = {};
     my $add_flag = 1;
     foreach my $keyword (@{$query->{keywords}}) {
-	print $keyword->{rawstring} . "\n" if ($this->{verbose});
 	my $docs_word = [];
 	my $docs_dpnd = [];
 	# keyword中の単語を含む文書の検索
+	# ★AND の場合は文書頻度の低い単語から検索する
 	foreach my $reps_of_word (@{$keyword->{words}}) {
-	    my $docs = &retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $keyword->{near});
-	    $add_flag = 0 if ($add_flag > 0);
-#	    printf "docs %d Byte.\n", (total_size($docs));
+	    if ($this->{verose}) {
+		foreach my $e (@{$reps_of_word}) {
+		    foreach my $kkk (keys %{$e}) {
+			print $kkk . " " . encode('euc-jp', $e->{$kkk}) ."\n";
+		    }
+		}
+	    }
+
+	    my $docs = &retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
+	    print $add_flag . "=aflag\n" if ($this->{verose}) ;
+	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
+
+	    print scalar(@$docs) . "=size\n" if ($this->{verose});
 
 	    # 各語について検索された結果を納めた配列に push
 	    push(@{$docs_word}, $docs);
 	}
 
+	$add_flag = 1;
 	# keyword中の係受けを含む文書の検索
 	foreach my $reps_of_dpnd (@{$keyword->{dpnds}}) {
-	    my $docs = &retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, $add_flag, $keyword->{near});
+	    if ($this->{verose}) {
+		foreach my $e (@{$reps_of_dpnd}) {
+		    foreach my $kkk (keys %{$e}) {
+			print $kkk . " " . encode('euc-jp', $e->{$kkk}) ."\n";
+		    }
+		}
+	    }
+
+	    my $docs = &retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
+	    print $add_flag . "=aflag\n" if ($this->{verose});
+	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
+
+	    print scalar(@$docs) . "=size\n" if ($this->{verose});
 
 	    # 各係受けについて検索された結果を納めた配列に push
 	    push(@{$docs_dpnd}, $docs);
@@ -242,18 +261,17 @@ sub retrieve_documents {
 	
 	# 検索キーワードごとに検索された文書の配列へpush
 	if ($keyword->{logical_cond_qkw} eq 'AND') {
-	    # 検索キーワード中の単語間のANDをとる 
+	    # 検索キーワード中の単語間のANDをとる
 	    $docs_word = &intersect($docs_word);
 	    $docs_dpnd = &intersect($docs_dpnd);
 
 	    # 係り受け制約の適用
 	    if (scalar(@{$keyword->{dpnds}}) > 0 && $keyword->{force_dpnd} > 0) {
-		print scalar(@{$keyword->{dpnds}}) . "=size\n";
-
-		$docs_word = &filter_by_force_dpnd_constraint($docs_word, $docs_dpnd); 
+		$docs_word = $this->filter_by_force_dpnd_constraint($docs_word, $docs_dpnd);
 	    }
+
 	    # 近接制約の適用
-	    $docs_word = &filter_by_NEAR_constraint($docs_word, $keyword->{near});
+	    $docs_word = &filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
 
 	    push(@{$alldocs_word}, &serialize($docs_word));
 	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
@@ -263,14 +281,13 @@ sub retrieve_documents {
 	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
 	}
     }
-    
+
     # 論理条件にしたがい文書のマージ
     if ($query->{logical_cond_qk} eq 'AND') {
 	$alldocs_word =  &intersect($alldocs_word);
     } else {
 	# 何もしなければ OR
     }
-
     return ($alldocs_word, $alldocs_dpnd);
 }
 
@@ -386,7 +403,7 @@ sub intersect {
 }
 
 sub filter_by_NEAR_constraint {
-    my ($docs, $near) = @_;
+    my ($docs, $near, $sentence_flag) = @_;
 
     return $docs if ($near < 0);
 
@@ -424,14 +441,26 @@ sub filter_by_NEAR_constraint {
 			last;
 		    }
 
-		    if ($pos < $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near + 2) {
-			$flag = 0;
-			last;
-		    } elsif ($poslist[$q]->[0] < $pos) {
-			shift(@{$poslist[$q]});
+		    if ($sentence_flag > 0) {
+			if ($pos <= $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near + 1) {
+			    $flag = 0;
+			    last;
+			} elsif ($poslist[$q]->[0] < $pos) {
+			    shift(@{$poslist[$q]});
+			} else {
+			    $flag = 1;
+			    last;
+			}
 		    } else {
-			$flag = 1;
-			last;
+			if ($pos < $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near + 2) {
+			    $flag = 0;
+			    last;
+			} elsif ($poslist[$q]->[0] < $pos) {
+			    shift(@{$poslist[$q]});
+			} else {
+			    $flag = 1;
+			    last;
+			}
 		    }
 		}
 
@@ -452,7 +481,7 @@ sub filter_by_NEAR_constraint {
 }
 
 sub filter_by_force_dpnd_constraint {
-    my ($docs_word, $docs_dpnd) = @_;
+    my ($this, $docs_word, $docs_dpnd) = @_;
 
     # 初期化 & 空リストのチェック
     my @results = ();
@@ -481,19 +510,37 @@ sub filter_by_force_dpnd_constraint {
 	# 入力リストをサイズ順にソート (一番短い配列を先頭にするため)
 	my @sorted_docs = sort {scalar(@{$a}) <=> scalar(@{$b})} @{$docs_dpnd};
 	# 一番短かい配列に含まれる文書が、他の配列に含まれるかを調べる
+
+	my %idxmap = ();
+	for (my $j = 1; $j < $variation; $j++) {
+	    $idxmap{$j} = 0;
+	}
+
 	for (my $i = 0; $i < scalar(@{$sorted_docs[0]}); $i++) {
 	    # 対象の文書を含まない配列があった場合 $flagが 1 のままループを終了する
 	    my $flag = 0;
 	    # 一番短かい配列以外を順に調べる
 	    for (my $j = 1; $j < $variation; $j++) {
 		$flag = 1; 
+		if ($this->{verbose}) {
+		    for (my $k = 0; $k < scalar(@sorted_docs); $k++) {
+			print "loop $i idx $k size " . scalar(@{$sorted_docs[$k]}) ."\n";
+			foreach my $ddd (@{$sorted_docs[$k]}) {
+			    print $ddd->{did} . " ";
+			}
+			print "\n";
+		    }
+		    print "-----\n";
+		}
+
 		while (defined($sorted_docs[$j]->[0])) {
-		    if ($sorted_docs[$j]->[0]->{did} < $sorted_docs[0]->[$i]->{did}) {
-			shift(@{$sorted_docs[$j]});
-		    } elsif ($sorted_docs[$j]->[0]->{did} == $sorted_docs[0]->[$i]->{did}) {
+		    if ($sorted_docs[$j]->[$idxmap{$j}]->{did} < $sorted_docs[0]->[$i]->{did}) {
+			$idxmap{$j}++;
+#			shift(@{$sorted_docs[$j]});
+		    } elsif ($sorted_docs[$j]->[$idxmap{$j}]->{did} == $sorted_docs[0]->[$i]->{did}) {
 			$flag = 0;
 			last;
-		    } elsif ($sorted_docs[$j]->[0]->{did} > $sorted_docs[0]->[$i]->{did}) {
+		    } elsif ($sorted_docs[$j]->[$idxmap{$j}]->{did} > $sorted_docs[0]->[$i]->{did}) {
 			last;
 		    }
 		}
