@@ -5,20 +5,55 @@ package SearchEngine;
 my $TOOL_HOME='/home/skeiji/local/bin';
 
 use strict;
-use Encode;
 use utf8;
+use Encode;
+use Getopt::Long;
+use Storable;
 use IO::Socket;
 use IO::Select;
+use MIME::Base64;
 use Time::HiRes;
 use CDB_File;
+
+use QueryParser;
+use TsubakiEngine;
 
 # コンストラクタ
 # 接続先ホスト、ポート番号
 sub new {
-    my($d, $hosts, $port, $type) = @_;
-    my $this = {HOSTS => $hosts, PORT => $port, TYPE => $type};
+    my($class, $syngraph) = @_;
+    my $this = {hosts => []};
 
+    if ($syngraph > 0) {
+	for (my $i = 2; $i < 33; $i++) {
+	    next if ($i == 28 || $i == 29);
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 33333});
+	}
+    } else {
+	for (my $i = 6; $i < 33; $i++) {
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 10033});
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 10035});
+	}
+    }
+    
     bless $this;
+}
+
+sub init {
+    my ($this, $dir) = @_;
+    opendir(DIR, $dir) or die;
+    foreach my $cdbf (readdir(DIR)) {
+	next unless ($cdbf =~ /cdb/);
+	
+	my $fp = "$dir/$cdbf";
+	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	if (index($cdbf, 'df.dpnd.cdb') > -1) {
+	    push(@{$this->{DF_DPND_DBs}}, \%dfdb);
+	} elsif (index($cdbf, 'df.word.cdb') > -1) {
+	    push(@{$this->{DF_WORD_DBs}}, \%dfdb);
+	}
+    }
+    closedir(DIR);
 }
 
 # デストラクタ
@@ -26,99 +61,92 @@ sub DESTROY {}
 
 ## 呼出用検索インターフェイス
 sub search {
-    my ($this, $query, $opts) = @_;
-
-    ## 検索サーバーに対してクエリを投げる
-    my $results = $this->broadcastSearch($query, $opts);
-    my $hitcount = pop(@{$results});
+    my ($this, $query) = @_;
     
-    return ($hitcount, $results, $opts);
+    ## 検索サーバーに対してクエリを投げる
+    return $this->broadcastSearch($query);
+}
+
+sub get_DF {
+    my ($this, $k) = @_;
+    my $k_utf8 = encode('utf8', $k);
+    my $gdf = -1;
+    my $DFDBs = (index($k, '->') > 0) ? $this->{DF_DPND_DBs} : $this->{DF_WORD_DBs};
+    foreach my $dfdb (@{$DFDBs}) {
+ 	if (exists($dfdb->{$k_utf8})) {
+ 	    $gdf = $dfdb->{$k_utf8};
+ 	    last;
+ 	}
+    }
+    return $gdf;
 }
 
 # 実際に検索を行うメソッド
 sub broadcastSearch {
-    my($this, $query, $opts) = @_;
-
-    my $search_qs_str;
-    my $phrase_qs_str;
-    foreach my $q (@{$query}){
-	my $qs_str = undef;
-	foreach my $reps (sort {$a->[0]->{pos} <=> $b->[0]->{pos}} @{$q->{words}}){
-	    foreach my $k (@{$reps}){
-		next if($k->{isContentWord} < 1 && $q->{near} < 0);
-		$qs_str .= "$k->{rawstring}_$k->{gdf}+";
-	    }
-	    chop($qs_str);
-	    unless ($qs_str =~ /@$/ &&
-		    $qs_str eq ''){
-		$qs_str .= "@";
-	    }
-	}
-
-	foreach my $reps (sort {$a->[0]->{pos} <=> $b->[0]->{pos}} @{$q->{dpnds}}){
-	    foreach my $k (@{$reps}){
-		$qs_str .= "$k->{rawstring}_$k->{gdf}+";
-	    }
-	    chop($qs_str);
-	    unless ($qs_str =~ /@$/ &&
-		    $qs_str eq ''){
-		$qs_str .= "@";
-	    }
-	}
-	
-	chop($qs_str);
-	$search_qs_str .= $qs_str . "#";
-	$search_qs_str .= $q->{near};
-	$search_qs_str .= ";";
+    my($this, $query) = @_;
+    
+    my %qid2df = ();
+    foreach my $qid (keys %{$query->{qid2rep}}) {
+	my $df = $this->get_DF($query->{qid2rep}{$qid});
+	$qid2df{$qid} = $df;
+#	print "qid=$qid $query->{qid2rep}{$qid} $df\n" if ($opt{debug});
     }
 
-    chop($search_qs_str);
-
-    my $selecter = IO::Select->new;
-    my $sleeptime = 0;
-    $sleeptime = int(rand(90)) + 30 if($this->{TYPE} eq 'API');
-    $search_qs_str = encode('utf8', $search_qs_str);
-    for(my $i = 0; $i < scalar(@{$this->{HOSTS}}); $i++){
-	my $host = $this->{HOSTS}->[$i];
-
-	my $socket = IO::Socket::INET->new(PeerAddr => $host,
-					   PeerPort => $this->{PORT},
-					   Proto    => 'tcp',
-					   );
-
-	my $topN = $opts->{start} + $opts->{results};
-#	print "$i :: $host $sleeptime,SEARCH,$search_qs_str,$opts->{ranking_method},$opts->{logical_operator},$opts->{dpnd}, $opts->{force_dpnd}, $topN, $opts->{near}, $opts->{only_hitcount}\n <br>";
-
-	$selecter->add($socket) or die "$host に接続できませんでした。 $!\n";
-
-	# 文字列を送信
-#	print "$sleeptime,SEARCH,$search_qs_str,$opts->{ranking_method},$opts->{logical_operator},$opts->{dpnd}, $opts->{force_dpnd}, $topN, $opts->{near}, $opts->{only_hitcount}<br>\n";
-	print $socket "$sleeptime,SEARCH,$search_qs_str,$opts->{ranking_method},$opts->{logical_operator},$opts->{dpnd}, $opts->{force_dpnd}, $topN, $opts->{near}, $opts->{only_hitcount}\n";
+    # 検索クエリの送信
+    my $selecter = IO::Select->new();
+    for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
+	my $socket = IO::Socket::INET->new(
+	    PeerAddr => $this->{hosts}->[$i]->{name},
+	    PeerPort => $this->{hosts}->[$i]->{port},
+	    Proto    => 'tcp' );
+	
+	$selecter->add($socket) or die "Cannot connect to the server $this->{hosts}->[$i]->{name}:$this->{hotst}->[$i]->{port}. $!\n";
+	
+ 	# 検索クエリの送信
+ 	print $socket encode_base64(Storable::freeze($query), "") . "\n";
+	print $socket "EOQ\n";
+	
+	# qid2dfの送信
+ 	print $socket encode_base64(Storable::freeze(\%qid2df), "") . "\n";
+	print $socket "END\n";
+	
 	$socket->flush();
     }
     
-    ## 検索サーバーより検索結果を受信
-    my @results;
-    my $hitcount = 0;
-    my $num_of_sockets = scalar(@{$this->{HOSTS}});
-    while($num_of_sockets > 0){
-	my($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
-	foreach my $socket (@{$readable_sockets}){
-	    my $buff = <$socket>;
-	    chop($buff);
-	    $hitcount += $buff;
+    # 検索結果の受信
+    my @results = ();
+    my $total_hitcount = 0;
+    my $num_of_sockets = scalar(@{$this->{hosts}});
+    while ($num_of_sockets > 0) {
+	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
+	foreach my $socket (@{$readable_sockets}) {
+	    my $buff = undef;
+	    while (<$socket>) {
+		last if ($_ eq "END_OF_HITCOUNT\n");
+		$buff .= $_;
+	    }
+	    $total_hitcount += decode_base64($buff) if (defined($buff));
 
-	    $buff = <$socket>;
-	    $buff =~ s/\[RET\]/\n/g;
-	    push(@results, &decodeResult($buff));
-		
+	    my $docs;
+	    unless ($query->{only_hitcount}) {
+		$buff = undef; 
+		while (<$socket>) {
+		    last if ($_ eq "END\n");
+		    $buff .= $_;
+		}
+		if (defined($buff)) {
+		    $docs = Storable::thaw(decode_base64($buff));
+		    # ★ 受信順をそろえる必要あり
+		    push(@results, $docs);
+		}
+	    }
+
 	    $selecter->remove($socket);
 	    $socket->close();
 	    $num_of_sockets--;
 	}
     }
-    push(@results,$hitcount);
-    return \@results;
+    return ($total_hitcount, \@results);
 }
 
 sub decodeResult {
