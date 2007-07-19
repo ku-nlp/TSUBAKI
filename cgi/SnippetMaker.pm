@@ -48,21 +48,21 @@ sub makeSnippetfromSentences {
 sub extractSentencefromSynGraphResult {
     my($query, $xmlpath) = @_;
 
-    my @sent_objs = ();
-    if(-e $xmlpath){
+    my @sentences = ();
+    if (-e $xmlpath) {
 	open(READER, $xmlpath);
-    }else{
+    } else {
 	$xmlpath .= ".gz";
-	open(READER,"zcat $xmlpath |");
+	open(READER, "zcat $xmlpath |");
     }
 
     my $buff;
     my $indexer = new Indexer();
-    while(<READER>){
+    while (<READER>) {
 	$buff .= $_;
-	if($_ =~ m!</Annotation>!){
+	if ($_ =~ m!</Annotation>!) {
 	    $buff = decode('utf8', $buff);
-	    if($buff =~ m/<Annotation Scheme=\"SynGraph\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/){
+	    if ($buff =~ m/<Annotation Scheme=\"SynGraph\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my %words = ();
 		my %dpnds = ();
 		my @temp2 = ();
@@ -79,81 +79,50 @@ sub extractSentencefromSynGraphResult {
 		my $bnstcnt = -1;
 		my %bnstmap = ();
 
-		my $syn_idxs = $indexer->makeIndexfromSynGraph($synresult);
-		foreach my $s (keys %{$syn_idxs}){
-		    if(index($s, '->') > 0){
-			$sent_obj->{dpnds}->{$s} = 0 unless(exists($sent_obj->{dpnds}->{$s}));
-			$sent_obj->{dpnds}->{$s} += $syn_idxs->{$s}->{freq};
-		    }
-		}
-		
-		foreach my $line (split(/\n/, $synresult)) {
-		    next if($line =~ /^!! /);
-		    next if($line =~ /^\* /);
-		    next if($line =~ /^# /);
-		    next if($line =~ /EOS/);
-		    if($line =~ /^\+ /){
-			$start = $count;
-			$bnstcnt++;
-			next;
+		my $score = 0;
+		my $indice = $indexer->makeIndexfromSynGraph($synresult);
+
+		foreach my $qk (@{$query}) {
+		    foreach my $reps (@{$qk->{words}}) {
+			foreach my $rep (@{$reps}) {
+			    if (exists($indice->{$rep->{string}})) {
+				$score += $indice->{$rep->{string}}{freq};
+			    }
+			}
 		    }
 
-		    unless($line =~ /^! /){
-			my @m = split(/\s+/, $line);
-			my $surf = $m[0];
-			my $word = $m[2];
-			my %synNodes = ();
-			my $mrph_obj = {surf => undef,
-					reps => undef,
-					isContentWord => 0
-			};
-
-			$sent_obj->{rawstring} .= $surf;
-			$mrph_obj->{surf} = $surf;
-			$mrph_obj->{reps} = \%synNodes;
-			$mrph_obj->{isContentWord} = 1 if(index($line, '<意味有>') > 0);
-
-			push(@{$sent_obj->{list}}, $mrph_obj);
-			push(@{$bnstmap{$bnstcnt}}, $count++);
-		    }else{
-			my($dumy, $bnstId, $syn_node_str) = split(/ /, $line);
-			if($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>(<[^>]+>)*$!){
-			    my $sid = $1;
-			    my $score = $2;
-			    my $features = $3;
-			    if($sid =~ m!^([^/]+)/!){
-				$sid = $1;
+		    foreach my $reps (@{$qk->{dpnds}}) {
+			foreach my $rep (@{$reps}) {
+			    if (exists($indice->{$rep->{string}})) {
+				$score += $indice->{$rep->{string}}{freq};
 			    }
-
-			    foreach my $bid (split(/,/, $bnstId)){
-				foreach my $i (@{$bnstmap{$bid}}){
-				    my $m = $sent_obj->{list}->[$i];
-				    next if($m->{isContentWord} < 1);
-
-				    $m->{reps}->{"$sid$features"} = $score;
-				    $sent_obj->{words}->{"$sid$features"} = $score;
-				}
-			    }
-			}else{
 			}
 		    }
 		}
-		
-		my $score = 0;
-		foreach my $k (keys %{$query->{words}}){
-		    next if($k =~ /^(?:が|の|に|を)$/);
-		    $score += $sent_obj->{words}->{$k} if(exists($sent_obj->{words}->{$k}));
-		}
 
-		foreach my $k (keys %{$query->{dpnds}}){
-		    if(exists($sent_obj->{dpnds}->{$k})){
-			$score += $sent_obj->{dpnds}->{$k}
+		if ($score > 0) {
+		    my $sentence = {
+			rawstring => undef,
+			words => {},
+			dpnds => {},
+			surfs => [],
+			reps => [],
+			score => $score
+		    };
+
+		    my $word_list = &make_word_list_syngraph($synresult);
+
+		    foreach my $w (@{$word_list}) {
+			my $surf = $w->{surf};
+			my $reps = $w->{reps};
+
+			$sentence->{rawstring} .= $surf;
+			push(@{$sentence->{surfs}}, $surf);
+			push(@{$sentence->{reps}}, $w->{reps});
 		    }
-		}
-
-		if($score > 0){
-		    $sent_obj->{score} = ($score * log(length($sent_obj->{rawstring})));
-		    push(@sent_objs, $sent_obj);
+		    
+		    $sentence->{score} = $sentence->{score} * log(scalar(@{$sentence->{surfs}}));
+		    push(@sentences, $sentence);
 		}
 	    } # end of if
 	    $buff = '';
@@ -161,104 +130,74 @@ sub extractSentencefromSynGraphResult {
     }
     close(READER);
  
-    return \@sent_objs;
+    return \@sentences;
 }
+
 
 sub extractSentencefromKnpResult {
     my($query, $xmlpath) = @_;
 
-    my @sent_objs = ();
-    if(-e $xmlpath){
-	open(READER, $xmlpath);
-    }else{
+    if (-e $xmlpath) {
+	open(READER, $xmlpath) or die;
+    } else {
 	$xmlpath .= ".gz";
-	open(READER,"zcat $xmlpath |");
+	open(READER,"zcat $xmlpath |") or die;
     }
 
     my $buff;
     my $indexer = new Indexer();
-    while(<READER>){
+    my @sentences = ();
+    while (<READER>) {
 	$buff .= $_;
-	if($_ =~ m!</Annotation>!){
+	if ($_ =~ m!</Annotation>!) {
 	    $buff = decode('utf8', $buff);
 	    if($buff =~ m/<Annotation Scheme=\"Knp\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/){
-		my %words = ();
-		my %dpnds = ();
-		my @temp2 = ();
 		my $knpresult = $1;
-		my $sent_obj = {rawstring => undef,
-				words => \%words,
-				dpnds => \%dpnds,
-				list  => \@temp2,
-				score => 0.0
-		};
 
-		my $dpnd_idxs = $indexer->makeIndexfromKnpResult($knpresult);
-		foreach my $d (keys %{$dpnd_idxs}){
-		    $d = &h2z_ascii($d);
-		    $sent_obj->{dpnds}->{$d} = 0 unless(exists($sent_obj->{dpnds}->{$d}));
-		    $sent_obj->{dpnds}->{$d} += $dpnd_idxs->{$d}->{freq};
-		}
+		my $score = 0;
+		my $indice = $indexer->makeIndexfromKnpResult($knpresult);
 
-		foreach my $line (split(/\n/, $knpresult)){
-		    next if($line =~ /^\* /);
-		    next if($line =~ /^\+ /);
-		    next if($line =~ /EOS/);
-		    
-		    my @m = split(/\s+/, $line);
-		    my $surf = $m[0];
-		    my $word = $m[2];
-		    my $mrph_obj = {surf => undef,
-				    reps => undef
-		    };
-
-		    $sent_obj->{rawstring} .= $surf;
-		    $mrph_obj->{surf} = $surf;
-#		    if($line =~ /\<意味有\>/){
-#			next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
-			
-			my %reps = ();
-			## 代表表記の取得
-			if($line =~ /代表表記:(.+?)\//){
-			    $word = $1;
-			}
-
-			$reps{$word} = 1;
-			## 代表表記に曖昧性がある場合は全部保持する
-			while($line =~ /\<ALT(.+?)\>/){
-			    $line = "$'";
-			    if($1 =~ /代表表記:(.+?)\//){
-				$reps{$word} = 1;
+		foreach my $qk (@{$query}) {
+		    foreach my $reps (@{$qk->{words}}) {
+			foreach my $rep (@{$reps}) {
+			    if (exists($indice->{$rep->{string}})) {
+				$score += $indice->{$rep->{string}}{freq};
 			    }
 			}
+		    }
 
-			my $size = scalar(keys %reps);
-			foreach my $w (keys %reps){
-			    $w = &h2z_ascii($w);
-			    $sent_obj->{words}->{$w} = 0 unless(exists($sent_obj->{words}->{$w}));
-			    $sent_obj->{words}->{$w} += (1 / $size);
+		    foreach my $reps (@{$qk->{dpnds}}) {
+			foreach my $rep (@{$reps}) {
+			    if (exists($indice->{$rep->{string}})) {
+				$score += $indice->{$rep->{string}}{freq};
+			    }
 			}
-			$mrph_obj->{reps} = \%reps;
-#		    }
-
-		    push(@{$sent_obj->{list}}, $mrph_obj);
-		}
-			    
-		my $score = 0;
-		foreach my $k (keys %{$query->{words}}){
-		    next if($k =~ /^(?:が|の|に|を)$/);
-		    $score += $sent_obj->{words}->{$k} if(exists($sent_obj->{words}->{$k}));
-		}
-
-		foreach my $k (keys %{$query->{dpnds}}){
-		    if(exists($sent_obj->{dpnds}->{$k})){
-			$score += $sent_obj->{dpnds}->{$k}
 		    }
 		}
 
-		if($score > 0){
-		    $sent_obj->{score} = ($score * log(length($sent_obj->{rawstring})));
-		    push(@sent_objs, $sent_obj);
+		if ($score > 0) {
+		    my $sentence = {
+			rawstring => undef,
+			words => {},
+			dpnds => {},
+			surfs => [],
+			reps => [],
+			score => $score
+		    };
+
+		    my $word_list = &make_word_list($knpresult);
+
+		    foreach my $w (@{$word_list}) {
+			my $surf = $w->{surf};
+			my $reps = $w->{reps};
+
+			$sentence->{rawstring} .= $surf;
+			push(@{$sentence->{surfs}}, $surf);
+			push(@{$sentence->{reps}}, $w->{reps});
+		    }
+		    
+		    $sentence->{score} = $sentence->{score} * log(scalar(@{$sentence->{surfs}}));
+		    push(@sentences, $sentence);
 		}
 	    } # end of if
 	    $buff = '';
@@ -266,7 +205,135 @@ sub extractSentencefromKnpResult {
     }
     close(READER);
  
-    return \@sent_objs;
+    return \@sentences;
+}
+
+sub make_word_list {
+    my ($sent) = @_;
+
+    my @words;
+    foreach my $line (split(/\n/,$sent)){
+	next if($line =~ /^\* \-?\d/);
+
+	unless ($line =~ /^\+ (\-?\d+)([a-zA-Z])/){
+	    next if ($line =~ /^(\<|\@|EOS)/);
+	    next if ($line =~ /^\# /);
+	    
+	    my @m = split(/\s+/, $line);
+	    
+	    my $surf = $m[0];
+	    my $midashi = "$m[2]/$m[1]";
+	    my %reps = ();
+	    ## 代表表記の取得
+	    if ($line =~ /\<代表表記:([^>]+)\>/) {
+		$midashi = $1;
+	    }
+	    
+	    $reps{&toUpperCase_utf8($midashi)} = 1;
+	    
+	    ## 代表表記に曖昧性がある場合は全部保持する
+	    ## ただし表記・読みが同一の代表表記は区別しない
+	    ## ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
+	    while ($line =~ /\<ALT(.+?)\>/) {
+		$line = "$'";
+		my $alt_cont = $1;
+		if ($alt_cont =~ /代表表記:(.+?)(?: |\")/) {
+		    my $midashi = $1;
+		    $reps{&toUpperCase_utf8($midashi)} = 1;
+		} elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
+		    my $midashi = "$3/$2";
+		    $reps{&toUpperCase_utf8($midashi)} = 1;
+		}
+	    }
+	    
+	    my @reps_array = sort keys %reps;
+	    my $word = {
+		surf => $surf,
+		reps => \@reps_array,
+		isContentWord => 0
+	    };
+
+	    push(@words, $word);
+
+	    if($line =~ /\<意味有\>/){
+		next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
+		$word->{isContentWord} = 1;
+	    }
+	} # end of else
+    } # end of foreach my $line (split(/\n/,$sent))
+
+    return \@words;
+}
+
+sub make_word_list_syngraph {
+    my ($synresult) = @_;
+
+    my @words;
+    my $start = 0;
+    my $bnstcnt = -1;
+    my $wordcnt = 0;
+    my %bnst2pos = ();
+    foreach my $line (split(/\n/, $synresult)) {
+	next if($line =~ /^!! /);
+	next if($line =~ /^\* /);
+	next if($line =~ /^# /);
+	next if($line =~ /EOS/);
+
+	if ($line =~ /^\+ /) {
+	    $bnstcnt++;
+	    next;
+	}
+
+	unless ($line =~ /^! /) {
+	    my @m = split(/\s+/, $line);
+	    my $surf = $m[0];
+	    my $word = {
+		surf => $surf,
+		reps => [],
+		isContentWord => 0
+	    };
+	    $word->{isContentWord} = 1 if (index($line, '<意味有>') > 0);
+
+	    $words[$wordcnt] = $word;
+	    push(@{$bnst2pos{$bnstcnt}}, $wordcnt);
+	    $wordcnt++;
+	} else {
+	    my ($dumy, $bnstId, $syn_node_str) = split(/ /, $line);
+	    if ($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>(<[^>]+>)*$!) {
+		my $sid = $1;
+		my $features = $3;
+		$sid = $1 if ($sid =~ m!^([^/]+)/!);
+		
+		foreach my $bid (split(/,/, $bnstId)) {
+		    foreach my $pos (@{$bnst2pos{$bid}}) {
+			next if ($words[$pos]->{isContentWord} < 1);
+			
+			push(@{$words[$pos]->{reps}}, "$sid$features");
+		    }
+		}
+	    }
+	} # end of else
+    } # end of foreach my $line (split(/\n/,$sent))
+
+    return \@words;
+}
+
+
+## 全角小文字アルファベット(utf8)を全角大文字アルファベットに変換(utf8)
+sub toUpperCase_utf8 {
+    my($str) = @_;
+    my @cbuff = ();
+    my @ch_codes = unpack("U0U*", $str);
+    for(my $i = 0; $i < scalar(@ch_codes); $i++){
+	my $ch_code = $ch_codes[$i];
+	unless(0xff40 < $ch_code && $ch_code < 0xff5b){
+	    push(@cbuff, $ch_code);
+	}else{
+	    my $uppercase_code = $ch_code - 0x0020;
+	    push(@cbuff, $uppercase_code);
+	}
+    }
+    return pack("U0U*",@cbuff);
 }
 
 sub h2z_ascii {
