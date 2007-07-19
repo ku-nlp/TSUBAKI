@@ -5,14 +5,16 @@ use utf8;
 use Encode;
 
 sub new {
-    my ($class, $string, $near, $force_dpnd, $logical_cond_qkw, $opt) = @_;
+    my ($class, $string, $sentence_flag, $near, $force_dpnd, $logical_cond_qkw, $syngraph, $opt) = @_;
     my $this = {
 	words => [],
 	dpnds => [],
+	sentence_flag => $sentence_flag,
 	near => $near,
 	force_dpnd => $force_dpnd,
 	logical_cond_qkw => $logical_cond_qkw,
-	rawstring => $string
+	rawstring => $string,
+	syngraph => $syngraph
     };
 
     my $indice;
@@ -34,13 +36,13 @@ sub new {
     foreach my $group_id (sort {$buff{$a}->[0]{pos}[0] <=> $buff{$b}->[0]{pos}[0]} keys %buff) {
 	my @word_reps;
 	my @dpnd_reps;
-	foreach my $m (@{$buff{$group_id}}){
+	foreach my $m (@{$buff{$group_id}}) {
 	    next if ($m->{isContentWord} < 1 && $this->{near} < 0);
 
 	    if ($m->{rawstring} =~ /\-\>/) {
-		push(@dpnd_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}});
+		push(@dpnd_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}, isContentWord => $m->{isContentWord}});
 	    } else {
-		push(@word_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}});
+		push(@word_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}, isContentWord => $m->{isContentWord}});
 	    }
 	}
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
@@ -81,7 +83,11 @@ sub to_string {
     $ret .= ($words_str . "\n");
     $ret .= ($dpnds_str . "\n");
     $ret .= "LOGICAL_COND: $this->{logical_cond_qkw}\n";
-    $ret .= "NEAR: $this->{near}\n";
+    if ($this->{sentence_flag} > 0) {
+	$ret .= "NEAR_SENT: $this->{near}\n";
+    } else {
+	$ret .= "NEAR_WORD: $this->{near}\n";
+    }
     $ret .= "FORCE_DPND: $this->{force_dpnd}";
 
     return $ret;
