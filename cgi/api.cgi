@@ -64,6 +64,8 @@ $params{'logical_operator'} = $cgi->param('logical') if(defined($cgi->param('log
 $params{'results'} = $cgi->param('results') if(defined($cgi->param('results')));
 $params{'only_hitcount'} = $cgi->param('only_hitcount') if(defined($cgi->param('only_hitcount')));
 $params{'force_dpnd'} = $cgi->param('force_dpnd') if(defined($cgi->param('force_dpnd')));
+$params{'syngraph'} = 0;
+
 if(defined($cgi->param('snippets'))) {
     if ($cgi->param('snippets') > 0) {
 	$params{'no_snippets'} = 0;
@@ -95,18 +97,11 @@ my $date = `date +%m%d-%H%M%S`;
 chomp ($date);
 my $TOOL_HOME='/home/skeiji/local/bin';
 my $INDEX_DIR = '/var/www/cgi-bin/tsubaki/INDEX_NTCIR2';
-my $PORT = 99557;
-my @HOSTS;
-for(my $i = 161; $i < 192; $i++){
-    next if ($i == 188);
-    next if ($i == 187);
-    next if ($i == 186);
-    push(@HOSTS,   "157.1.128.$i");
-}
-my $CACHE_PROGRAM = 'http://tsubaki.ixnlp.nii.ac.jp/se/index.cgi';
-my $HTML_PATH_TEMPLATE = "$INDEX_DIR/%02d/h%04d/%08d.html";
-my $SF_PATH_TEMPLATE   = "$INDEX_DIR/%02d/x%04d/%08d.xml";
 
+my $CACHE_PROGRAM = 'http://tsubaki.ixnlp.nii.ac.jp/index.cgi';
+# my $HTML_PATH_TEMPLATE = "$INDEX_DIR/%02d/h%04d/%08d.html";
+my $HTML_PATH_TEMPLATE = "/net2/nlpcf34/disk02/skeiji/htmls/%02d/h%04d/%08d.html";
+my $SF_PATH_TEMPLATE   = "$INDEX_DIR/%02d/x%04d/%08d.xml";
 
 
 # current time
@@ -160,86 +155,35 @@ if($file_type){
 	exit(1);
     }
 
-    $fid =~ /(\d\d)(\d\d)\d+/;
-    my $dir_id = $1;
-    my $subdir_id = "$1$2";
-    my $dir_prefix = substr($file_type, 0, 1);
-
-    unless($file_type eq "index"){
-#	print $cgi->header(-type => "text/plain", 
-	print $cgi->header(-type => "text/$file_type", 
-			   -charset => 'utf-8', 
-			   );
-
-	# my $filepath = "INDEX/$dir_prefix$subdir_id/$fid.$file_type";
-	my $filepath = "$INDEX_DIR/$dir_id/$dir_prefix$subdir_id/$fid.$file_type";
-	if ($file_type eq 'xml') {
-	    my $fp = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $fid / 10000, $fid);
-	    if (-e "$fp.gz") {
-		$filepath = $fp;
-	    } else {
-		$filepath = "$INDEX_DIR/$dir_id/$dir_prefix$subdir_id/$fid.xml";
-	    }
+    print $cgi->header(-type => "text/$file_type", -charset => 'utf-8');
+#    print $cgi->header(-type => "text/plain", -charset => 'utf-8');
+    my $filepath;
+    if ($file_type eq 'xml') {
+	$filepath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $fid / 10000, $fid);
+	unless (-e $filepath || -e "$filepath.gz") {
+	    $filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $fid / 1000000, $fid / 10000, $fid);
 	}
-
-	my $htmlfp = "$INDEX_DIR/$dir_id/h$subdir_id/$fid.html";
-	my $content = '';
-	if(-e $filepath){
-	    $content = `/usr/local/bin/nkf --utf8 $filepath`;
-	}else{
-	    $filepath .= ".gz";
-	    $content = `gunzip -c $filepath | /usr/local/bin/nkf --utf8`;
-	}
-
-	my $urldbfp = "/var/www/cgi-bin/dbs/$dir_id.url.cdb";
-	tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
-	my $url = $urldb{$fid};
-	$content =~ s/Url=\"\"/Url=\"${url}\"/;
-	untie %urldb;
-	print $content;
-    }else{
-#	print $cgi->header(-type => "text/html", 
-#			   -charset => 'utf-8', 
-#			   );
-
-	my $selecter = IO::Select->new;
-	for(my $i = 0; $i < scalar(@HOSTS); $i++){
-	    my $host = $HOSTS[$i];
-	    my $socket = IO::Socket::INET->new(PeerAddr => $host,
-					       PeerPort => $PORT,
-					       Proto    => 'tcp',
-					       );
-	    $selecter->add($socket);
-	    unless($socket){
-		die "$host に接続できませんでした。 $!\n";
-	    }
-	    
-	    # 文字列を送信
-	    print $socket "GET,$fid\n";
-	    $socket->flush();
-	}
-
-	# 文字列を受信
-	my $buff = '';
-	my $num_of_sockets = scalar(@HOSTS);
-	while($num_of_sockets > 0){
-	    my($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
-	    foreach my $socket (@{$readable_sockets}){
-		$buff = <$socket>;
-		chomp($buff);
-#		print "$buff\n";
-#		from_to($buff, 'euc-jp', 'utf8');
-#		$buff = `echo $buff | /usr/local/bin/nkf --utf8`;
-		foreach (split(/,/,$buff)){
-		    print "$_\n";
-		}
-		$selecter->remove($socket);
-		$socket->close();
-		$num_of_sockets--;
-	    }
+    } elsif ($file_type eq 'html') {
+	$filepath = sprintf("/net2/nlpcf34/disk02/skeiji/htmls/%02d/h%04d/%08d.html", $fid / 1000000, $fid / 10000, $fid);
+    }
+    
+    my $content = '';
+    if (-e $filepath) {
+	$content = `/home/skeiji/local/bin/nkf --utf8 $filepath`;
+    } else {
+	$filepath .= ".gz";
+	if (-e $filepath) {
+	    $content = `zcat $filepath | /home/skeiji/local/bin/nkf --utf8`;
 	}
     }
-}else{
+
+    my $urldbfp = sprintf("/var/www/cgi-bin/dbs/%02d.url.cdb", $fid / 1000000);
+    tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
+    my $url = $urldb{$fid};
+    $content =~ s/Url=\"\"/Url=\"${url}\"/;
+    untie %urldb;
+    print $content;
+} else {
 #    print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
 #    print "ご迷惑をお掛けして申し訳ございませんが、APIサービスは現在停止しております。\n再開までしばらくお待ち下さい。\n";
 #    exit(1);
@@ -259,13 +203,36 @@ if($file_type){
     }
 
     # parse query
-    my $query_objs = &QueryParser::parse($params{'query'}, \%params);
+    my $q_parser = new QueryParser({
+	KNP_PATH => "/home/skeiji/local/bin",
+	JUMAN_PATH => "/home/skeiji/local/bin",
+	SYNDB_PATH => "/home/skeiji/SynGraph/syndb/i686",
+	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] });
 
-    ## 検索
-    my $se_obj = new SearchEngine(\@HOSTS, $PORT, 'API');
-    my($hitcount, $results) = $se_obj->search($query_objs->{query}, \%params);
+    $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
     
-    if($params{'only_hitcount'}){
+    # logical_cond_qk  クエリ間の論理演算
+    my $query = $q_parser->parse($params{query}, {logical_cond_qk => $params{logical_operator}, syngraph => $params{syngraph}});
+    $query->{results} = $params{results};
+    foreach my $qk (@{$query->{keywords}}) {
+	$qk->{force_dpnd} = 1 if ($params{force_dpnd});
+	$qk->{logical_cond_qkw} = 'OR' if ($params{logical_operator} eq 'OR');
+    }
+
+    # 検索
+    my $se_obj = new SearchEngine($params{syngraph});
+    if ($params{syngraph} > 0) {
+	$se_obj->init('/data/idx_syn/dfdbs');
+    } else {
+	$se_obj->init('/var/www/cgi-bin/dbs/dfdbs');
+    }
+
+    my $start_time = Time::HiRes::time;
+    my ($hitcount, $results) = $se_obj->search($query);
+    my $finish_time = Time::HiRes::time;
+    my $search_time = $finish_time - $start_time;
+
+    if ($params{'only_hitcount'}) {
 	my $finish_time = Time::HiRes::time;
 	my $search_time = $finish_time - $start_time;
 
@@ -281,21 +248,20 @@ if($file_type){
 	close(OUT);
 
 	printf ("%d\n", $hitcount);
-    }else{
-	# 解析結果の表示
+    } else {
 	## merging
-
 	my $until = $params{'start'} + $params{'results'} - 1;
 	$until = $hitcount if($hitcount < $until);
 	$params{'results'} = $hitcount if($params{'results'} > $hitcount);
 
+	## merging
 	my $max = 0;
 	my @merged_results;
-	while($until > scalar(@merged_results)){
-	    for(my $k = 0; $k < scalar(@{$results}); $k++){
-		next unless(defined($results->[$k]->[0]));
+	while ($until > scalar(@merged_results)) {
+	    for (my $k = 0; $k < scalar(@{$results}); $k++) {
+		next unless (defined($results->[$k][0]));
 		
-		if($results->[$max]->[0]->{score} <= $results->[$k]->[0]->{score}){
+		if ($results->[$max][0]{score} <= $results->[$k][0]{score}) {
 		    $max = $k;
 		}
 	    }
@@ -304,7 +270,7 @@ if($file_type){
 	
 	my $finish_time = Time::HiRes::time;
 	my $search_time = $finish_time - $start_time;
-
+	
 	# ログの保存
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
 	open(OUT, ">> /se_tmp/input.log");
@@ -318,7 +284,7 @@ if($file_type){
 	
 	my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
 	$writer->xmlDecl('utf-8');
-	my @ret_result = &get_results_specified_num(\@merged_results, $params{'start'} - 1, $params{'results'}, $query_objs);
+	my @ret_result = &get_results_specified_num(\@merged_results, $params{'start'} - 1, $params{'results'}, $query);
 	$writer->startTag('ResultSet', time => $timestamp, query => $params{'query'}, 
 			  totalResultsAvailable => scalar($hitcount), 
 			  totalResultsReturned => scalar(@ret_result), 
@@ -354,14 +320,6 @@ if($file_type){
 	    $writer->characters($d->{snippet});
 	    $writer->endTag('Snippet');
 	    
-#	$writer->startTag('Charset');
-#	$writer->characters($d->{charset});
-#	$writer->endTag('Charset');
-	    
-#	$writer->startTag('TimeStamp');
-#	$writer->characters($d->{timestamp});
-#	$writer->endTag('TimeStamp');
-	    
 	    $writer->startTag('Cache');
 	    $writer->startTag('Url');
 	    $writer->characters(&get_cache_location($d->{did}, $uri_escaped_query));
@@ -379,77 +337,14 @@ if($file_type){
     }
 }
 
-sub parseQuery{
-    my($string) = @_;
-
-    my $rawstring;
-    my %trigram = ();
-    my @rawtrigrams = ();
-    $string = uc($string);
-    $string =~ s/A/Ａ/g;
-    $string =~ s/B/Ｂ/g;
-    $string =~ s/C/Ｃ/g;
-    $string =~ s/D/Ｄ/g;
-    $string =~ s/E/Ｅ/g;
-    $string =~ s/F/Ｆ/g;
-    $string =~ s/G/Ｇ/g;
-    $string =~ s/H/Ｈ/g;
-    $string =~ s/I/Ｉ/g;
-    $string =~ s/J/Ｊ/g;
-    $string =~ s/K/Ｋ/g;
-    $string =~ s/L/Ｌ/g;
-    $string =~ s/M/Ｍ/g;
-    $string =~ s/N/Ｎ/g;
-    $string =~ s/O/Ｏ/g;
-    $string =~ s/P/Ｐ/g;
-    $string =~ s/Q/Ｑ/g;
-    $string =~ s/R/Ｒ/g;
-    $string =~ s/S/Ｓ/g;
-    $string =~ s/T/Ｔ/g;
-    $string =~ s/U/Ｕ/g;
-    $string =~ s/V/Ｖ/g;
-    $string =~ s/W/Ｗ/g;
-    $string =~ s/X/Ｘ/g;
-    $string =~ s/Y/Ｙ/g;
-    $string =~ s/Z/Ｚ/g;
-    $string =~ s/1/１/g;
-    $string =~ s/2/２/g;
-    $string =~ s/3/３/g;
-    $string =~ s/4/４/g;
-    $string =~ s/5/５/g;
-    $string =~ s/6/６/g;
-    $string =~ s/7/７/g;
-    $string =~ s/8/８/g;
-    $string =~ s/9/９/g;
-    $string =~ s/0/０/g;
-
-    while($string =~ m/"([^"]+)"/g){
-	my $head = "$`";
-	my $tail = "$'";
-	my $trigram_kwd = $1;
-
-	$rawstring .= ("$head $tail");
-	$trigram_kwd =~ s/[ |　]//g;
-	push(@rawtrigrams, $trigram_kwd);
-	my $temp = &Indexer::makeNgramIndex($trigram_kwd, 3);
-	foreach my $k (keys %{$temp}){
-	    $trigram{$k} = $temp->{$k};
-	}
-    }
-    $rawstring = $string unless($string =~ /"([^"]+)"/);
-    my @rawstrings = split(/[ |　]/, $rawstring);
-
-    return (\%trigram, \@rawstrings, \@rawtrigrams);
-}
-
 sub get_results_specified_num {
-    my ($result, $start, $num, $query_objs) = @_;
+    my ($result, $start, $num, $query) = @_;
     my (@ret);
 
     my %urldbs = ();
-    my $dbfp = "/home/skeiji/title.cdb";
+    my $dbfp = "/var/www/cgi-bin/dbs/title.cdb";
     tie my %titledb, 'CDB_File', $dbfp or die "$0: can't tie to $dbfp $!\n";
-#    $start--; # index starts from 0
+
     my $prev_page = undef;
     for my $i ($start .. $start + $num - 1) {
 	last if $i >= scalar(@$result);
@@ -472,63 +367,54 @@ sub get_results_specified_num {
 
 	$result->[$i]->{title} = $title;
 	$result->[$i]->{original_url} = $url;
-#	$result->[$i]->{charset} = $charset;
-#	$result->[$i]->{timestamp} = $time;
 
 	my $snippet = '';
 	my %words = ();
 	my $length = 0;
 	if ($params{no_snippets} < 1) {
-	    my $xmlpath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/$%08d.xml.gz", $id / 10000, $id);
-	    $xmlpath = sprintf("$INDEX_DIR/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id) unless (-e $xmlpath);
-
+	    my $xmlpath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id);
 	    ## snippet用に重要文を抽出
-	    my $sent_objs = &SnippetMaker::extractSentencefromKnpResult($query_objs, $xmlpath);
-	    
-	    foreach my $sent_obj (sort {$b->{score} <=> $a->{score}} @{$sent_objs}){
-		my @mrph_objs = @{$sent_obj->{list}};
-		foreach my $m (@mrph_objs){
-		    my $surf = $m->{surf};
-		    my $reps = $m->{reps};
-		    
-		    foreach my $k (keys %{$reps}){
-			$words{$k} += $reps->{$k};
-		    }
-		    
+	    my $sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $xmlpath);
+	    my $wordcnt = 0;
+	    foreach my $sentence (sort {$b->{score} <=> $a->{score}} @{$sentences}) {
+		foreach my $surf (@{$sentence->{surfs}}) {
 		    $snippet .= $surf;
-		    $length += length($surf);
-		    if($length > 200){
+		    $wordcnt++;
+		    
+		    if ($wordcnt > 100) {
 			$snippet .= " ...";
 			last;
 		    }
 		}
-		last if($length > 200);
+		$snippet .= " ";
+
+		# ★ 多重 foreach の脱出に label をつかうこと
+		last if ($wordcnt > 100);
 	    }
 	}
 	
 	my $score = $result->[$i]->{score};
-	if($prev_page->{title} eq $title &&
-	   $prev_page->{score} == $score){
-	    if($params{'filter_simpages'}){
+	if ($prev_page->{title} eq $title && $prev_page->{score} == $score) {
+	    if ($params{'filter_simpages'}) {
 		next;
 	    }
-	}else{
+	} else {
 	    my $sim = 0;
-	    if(defined($prev_page->{words})){
-		$sim = &calculateSimilarity($prev_page->{words}, \%words);
-	    }
+# 	    if(defined($prev_page->{words})){
+# 		$sim = &calculateSimilarity($prev_page->{words}, \%words);
+# 	    }
 	    
-	    $prev_page->{words} = \%words;
-	    $prev_page->{title} = $title;
-	    $prev_page->{score} = $score;
+# 	    $prev_page->{words} = \%words;
+# 	    $prev_page->{title} = $title;
+# 	    $prev_page->{score} = $score;
 	    
-	    if($params{'filter_simpages'} && $sim > 0.9){
-		next;
-	    }
+# 	    if($params{'filter_simpages'} && $sim > 0.9){
+# 		next;
+# 	    }
 	}
 	
 	$result->[$i]->{snippet} = encode('utf8', $snippet);
-	$result->[$i]->{snippet} = encode('utf8', $snippet) if(utf8::is_utf8($snippet));
+	$result->[$i]->{snippet} = encode('utf8', $snippet) if (utf8::is_utf8($snippet));
 	push(@ret, $result->[$i]);
     }
     
@@ -570,133 +456,6 @@ sub calculateSimilarity {
     }
 #   return $sim;
 }
-
-sub h2z_ascii {
-    my($string) = @_;
-
-    $string =~ s/ａ/Ａ/g;
-    $string =~ s/ｂ/Ｂ/g;
-    $string =~ s/ｃ/Ｃ/g;
-    $string =~ s/ｄ/Ｄ/g;
-    $string =~ s/ｅ/Ｅ/g;
-    $string =~ s/ｆ/Ｆ/g;
-    $string =~ s/ｇ/Ｇ/g;
-    $string =~ s/ｈ/Ｈ/g;
-    $string =~ s/ｉ/Ｉ/g;
-    $string =~ s/ｊ/Ｊ/g;
-    $string =~ s/ｋ/Ｋ/g;
-    $string =~ s/ｌ/Ｌ/g;
-    $string =~ s/ｍ/Ｍ/g;
-    $string =~ s/ｎ/Ｎ/g;
-    $string =~ s/ｏ/Ｏ/g;
-    $string =~ s/ｐ/Ｐ/g;
-    $string =~ s/ｑ/Ｑ/g;
-    $string =~ s/ｒ/Ｒ/g;
-    $string =~ s/ｓ/Ｓ/g;
-    $string =~ s/ｔ/Ｔ/g;
-    $string =~ s/ｕ/Ｕ/g;
-    $string =~ s/ｖ/Ｖ/g;
-    $string =~ s/ｗ/Ｗ/g;
-    $string =~ s/ｘ/Ｘ/g;
-    $string =~ s/Y/Ｙ/g;
-    $string =~ s/Z/Ｚ/g;
-
-    return $string;
-}
-
-sub extractSentence {
-    my($query, $xmlpath) = @_;
-
-    my @sent_objs = ();
-    if(-e $xmlpath){
-	open(READER, $xmlpath);
-    }else{
-	$xmlpath .= ".gz";
-	open(READER,"zcat $xmlpath |");
-    }
-
-    my $buff;
-    while(<READER>){
-	$buff .= $_;
-	if($_ =~ m!</Annotation>!){
-	    $buff = decode('utf8', $buff);
-	    if($buff =~ m/<Annotation Scheme=\"Knp\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/){
-		my %temp1 = ();
-		my @temp2 = ();
-		my $knpresult = $1;
-		my $sent_obj = {rawstring => undef,
-				words => \%temp1,
-				list => \@temp2,
-				score => 0.0
-		};
-		
-		foreach my $line (split(/\n/, $knpresult)){
-		    next if($line =~ /^\* /);
-		    next if($line =~ /^\+ /);
-		    next if($line =~ /EOS/);
-		    
-		    my @m = split(/\s+/, $line);
-		    my $surf = $m[0];
-		    my $word = $m[2];
-		    my $mrph_obj = {surf => undef,
-				    reps => undef
-		    };
-
-		    $sent_obj->{rawstring} .= $surf;
-		    $mrph_obj->{surf} = $surf;
-		    if($line =~ /\<意味有\>/){
-			next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
-			
-			my %reps = ();
-			## 代表表記の取得
-			if($line =~ /代表表記:(.+?)\//){
-			    $word = $1;
-			}
-
-			$reps{$word} = 1;
-			## 代表表記に曖昧性がある場合は全部保持する
-			while($line =~ /\<ALT(.+?)\>/){
-			    $line = "$'";
-			    if($1 =~ /代表表記:(.+?)\//){
-				$reps{$word} = 1;
-			    }
-			}
-
-			my $size = scalar(keys %reps);
-			foreach my $w (keys %reps){
-			    $w = &h2z_ascii($w);
-			    $sent_obj->{words}->{$w} = 0 unless(exists($sent_obj->{words}->{$w}));
-			    $sent_obj->{words}->{$w} += (1 / $size);
-			}
-			$mrph_obj->{reps} = \%reps;
-		    }
-
-		    push(@{$sent_obj->{list}}, $mrph_obj);
-		}
-			    
-		my $score = 0;
-		foreach my $k (keys %{$query->{words}}){
-		    $score += $sent_obj->{words}->{$k} if(exists($sent_obj->{words}->{$k}));
-		}
-
-		foreach my $k (keys %{$query->{ngrams}}){
-		    $score += 1 if($sent_obj->{rawstring} =~ /$k/);
-		}
-
-		if($score > 0){
-#		    $sent_obj->{score} = ($score * length($sent_obj->{rawstring}));
-		    $sent_obj->{score} = ($score * log(length($sent_obj->{rawstring})));
-		    push(@sent_objs, $sent_obj);
-		}
-	    }
-	    $buff = '';
-	}
-    }
-    close(READER);
- 
-    return \@sent_objs;
-}
-
 
 sub get_cache_location {
     my ($id, $query) = @_;
