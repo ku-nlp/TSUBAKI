@@ -8,6 +8,7 @@ use Encode;
 use Getopt::Long;
 use QueryParser;
 use TsubakiEngine;
+use Storable;
 
 my (%opt);
 GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug');
@@ -43,6 +44,27 @@ sub init {
     closedir(DIR);
 }
 
+my @DOC_LENGTH_DBs;
+opendir(DIR, $opt{dlengthdbdir});
+foreach my $dbf (readdir(DIR)) {
+    next unless ($dbf =~ /doc_length\.bin/);
+    
+    my $fp = "$opt{dlengthdbdir}/$dbf";
+    
+    my $dlength_db;
+    # 小規模なテスト用にdlengthのDBをハッシュでもつオプション
+    if ($opt{dlengthdb_hash}) {
+	require CDB_File;
+	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+    }
+    else {
+	$dlength_db = retrieve($fp) or die;
+    }
+    
+    push(@DOC_LENGTH_DBs, $dlength_db);
+}
+closedir(DIR);
+
 &main();
 
 sub main {
@@ -54,17 +76,17 @@ sub main {
     my $q_parser = new QueryParser({
 	KNP_PATH => "$ENV{HOME}/local/bin",
 	JUMAN_PATH => "$ENV{HOME}/local/bin",
-	SYNDB_PATH => "$ENV{HOME}/SynGraph/syndb/i686",
-	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] ,
+	SYNDB_PATH => "$ENV{HOME}/cvs/SynGraph/syndb/i686",
+	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] });
 	SYNGRAPH_OPTION => $syngraph_option
     });
     
     # logical_cond_qk  クエリ間の論理演算
-    my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'AND', syngraph => $opt{syngraph}});
+    my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
     
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
-	print $qk->to_string() . "\n";
+	print encode('euc-jp', $qk->to_string()) . "\n";
 	print "*************\n";
     }
 
@@ -72,7 +94,8 @@ sub main {
     foreach my $qid (keys %{$query->{qid2rep}}) {
 	my $df = &get_DF($query->{qid2rep}{$qid});
 	$qid2df{$qid} = $df;
-	print "qid=$qid $query->{qid2rep}{$qid} $df\n" if ($opt{debug});
+	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n" if ($opt{verbose});
+    	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n";
     }
 
     my $tsubaki = new TsubakiEngine({
@@ -81,6 +104,7 @@ sub main {
 	skip_pos => $opt{skippos},
 	verbose => $opt{verbose},
 	average_doc_length => $AVE_DOC_LENGTH,
+	doc_length_dbs => \@DOC_LENGTH_DBs,
 	total_number_of_docs => $N,
 	weight_dpnd_score => $opt{weight_dpnd_score}});
     
