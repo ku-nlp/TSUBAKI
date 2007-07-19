@@ -63,16 +63,20 @@ sub add {
     for(my $i = 0; $i < $dlength; $i++) {
  	my ($did, $freq_pos) = split (/:/, $docs->[$i]);
 
-	my ($freq, $pos_str, @poss, $size);
+	my ($freq, $sid_pos_str, @sids, @poss, $sids_size, $poss_size);
 	if ($freq_pos =~ /@/) {
-	    ($freq, $pos_str) = split (/@/, $freq_pos);
+	    ($freq, $sid_pos_str) = split (/@/, $freq_pos);
+	    my ($sid_str, $pos_str) = split(/\#/, $sid_pos_str);
+	    @sids = split (/,/, $sid_str);
 	    @poss = split (/,/, $pos_str);
-	    $size = scalar(@poss);
+	    $sids_size = scalar(@sids);
+	    $poss_size = scalar(@poss);
 	} else {
 	    if ($this->{position}) {
 		# position が指定されているのにインデックスの位置情報がない場合
 		print STDERR "\nOption error!\n";
 		print STDERR "Not found the locations of indexed terms.\n";
+		print STDERR encode('euc-jp', "$index $docs->[$i]") . "\n";
 		exit(1);
 	    }
 
@@ -86,14 +90,22 @@ sub add {
  	print "$did:" . $freq . " " if ($this->{verbose});
 
 	if ($this->{position}) {
-	    print {$this->{dat}} pack('L', $size);
-	    print ":$size:" if ($this->{verbose});
+	    print {$this->{dat}} pack('L', $sids_size + $poss_size);
+	    print ":$sids_size:" if ($this->{verbose});
+	    print {$this->{dat}} pack('L', $poss_size);
+	    print ":$poss_size:" if ($this->{verbose});
+
+	    foreach my $sid (@sids) {
+		print {$this->{dat}} pack('L', $sid);
+		print "$sid," if ($this->{verbose});
+	    }
+	    $byte_pos += ($sids_size * 4);
 
 	    foreach my $pos (@poss) {
 		print {$this->{dat}} pack('L', $pos);
 		print "$pos," if ($this->{verbose});
 	    }
-	    $byte_pos += ($size * 4);
+	    $byte_pos += ($poss_size * 4);
 	}
     }
     print "\n" if ($this->{verbose});
@@ -115,6 +127,7 @@ sub add {
     $this->{offset} += (2 * 4 * $dlength); # (文書ID + 出現頻度) * 文書数
 
     if ($this->{position}) {
+	$this->{offset} += (4 * $dlength); # 文ID情報数 * 文書数
 	$this->{offset} += (4 * $dlength); # 位置情報数 * 文書数
 	$this->{offset} += $byte_pos; # 位置情報のサイズ
     }
