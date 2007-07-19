@@ -25,6 +25,28 @@ if (!$opt{idxdir} || !$opt{port} || !$opt{dlengthdbdir} || $opt{help}) {
     exit;
 }
 
+my @DOC_LENGTH_DBs;
+opendir(DIR, $opt{dlengthdbdir});
+foreach my $dbf (readdir(DIR)) {
+    next unless ($dbf =~ /doc_length\.bin/);
+    
+    my $fp = "$opt{dlengthdbdir}/$dbf";
+    
+    my $dlength_db;
+    # 小規模なテスト用にdlengthのDBをハッシュでもつオプション
+    if ($opt{dlengthdb_hash}) {
+	require CDB_File;
+	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+    }
+    else {
+	$dlength_db = retrieve($fp) or die;
+    }
+
+    print $fp . "\n";
+    push(@DOC_LENGTH_DBs, $dlength_db);
+}
+closedir(DIR);
+
 &main();
 
 sub main {
@@ -74,28 +96,37 @@ sub main {
 	    }
 	    my $qid2df = Storable::thaw(decode_base64($buff));
 
-	    print "*** QUERY ***\n";
-	    foreach my $qk (@{$query->{keywords}}) {
-		print $qk->to_string() . "\n";
-		print "*************\n";
-	    }
-
 	    my $tsubaki = new TsubakiEngine({
 		idxdir => $opt{idxdir},
-		dlengthdbdir => $opt{dlengthdbdir},
 		skip_pos => $opt{skippos},
 		verbose => $opt{verbose},
 		average_doc_length => $AVE_DOC_LENGTH,
-		total_number_of_docs => $N });
+		total_number_of_docs => $N,
+		doc_length_dbs => \@DOC_LENGTH_DBs,
+		dlengthdb_hash => $opt{dlengthdb_hash},
+		verbose => 0 });
 	    
 	    my $docs = $tsubaki->search($query, $qid2df);
 
+	    my $hitcount = scalar(@{$docs});
 	    # 検索結果の送信
 	    if ($query->{only_hitcount}) {
-		my $hitcount = scalar(@{$docs});
-		print $new_socket encode_base64(Storable::freeze($hitcount)) , "\n";
+		print $new_socket encode_base64($hitcount, "") , "\n";
+		print $new_socket "END_OF_HITCOUNT\n";
 	    } else {
-		print $new_socket encode_base64(Storable::freeze($docs)) , "\n";
+		my $ret = [];
+		if ($hitcount < $query->{results}) {
+		    $ret = $docs;
+		} else {
+		    for (my $rank = 0; $rank < $query->{results}; $rank++) {
+			push(@{$ret}, $docs->[$rank]);
+		    }
+		}
+
+		print $new_socket encode_base64($hitcount, "") , "\n";
+		print $new_socket "END_OF_HITCOUNT\n";
+
+		print $new_socket encode_base64(Storable::freeze($ret), "") , "\n";
 		print $new_socket "END\n";
 	    }
 
