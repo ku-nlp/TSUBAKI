@@ -9,9 +9,10 @@ use Getopt::Long;
 use QueryParser;
 use TsubakiEngine;
 use Storable;
+use Time::HiRes;
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed');
 
 if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -29,6 +30,7 @@ my $AVE_DOC_LENGTH = 871.925373263118;
 ######################################################################
 
 sub init {
+    my $start_time = Time::HiRes::time;
     opendir(DIR, $opt{dfdbdir}) or die;
     foreach my $cdbf (readdir(DIR)) {
 	next unless ($cdbf =~ /cdb/);
@@ -42,6 +44,11 @@ sub init {
 	}
     }
     closedir(DIR);
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($opt{show_speed}) {
+	printf ("@@@ %.4f sec. dfdb loading.\n", $conduct_time);
+    }
 }
 
 my @DOC_LENGTH_DBs;
@@ -76,9 +83,11 @@ sub main {
     my $q_parser = new QueryParser({
 	KNP_PATH => "$ENV{HOME}/local/bin",
 	JUMAN_PATH => "$ENV{HOME}/local/bin",
-	SYNDB_PATH => "$ENV{HOME}/cvs/SynGraph/syndb/i686",
-	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] });
-	SYNGRAPH_OPTION => $syngraph_option
+#	SYNDB_PATH => "$ENV{HOME}/cvs/SynGraph/syndb/i686",
+	SYNDB_PATH => "$ENV{HOME}/cvs/SearchEngine/scripts/tmp/SearchEngine/scripts/tmp/SynGraph/syndb/i686",
+	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'],
+	SYNGRAPH_OPTION => $syngraph_option,
+	SHOW_SPEED => $opt{show_speed}
     });
     
     # logical_cond_qk  クエリ間の論理演算
@@ -98,15 +107,15 @@ sub main {
     	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n";
     }
 
-    my $tsubaki = new TsubakiEngine({
-	idxdir => $opt{idxdir},
-	dlengthdbdir => $opt{dlengthdbdir},
-	skip_pos => $opt{skippos},
-	verbose => $opt{verbose},
-	average_doc_length => $AVE_DOC_LENGTH,
-	doc_length_dbs => \@DOC_LENGTH_DBs,
-	total_number_of_docs => $N,
-	weight_dpnd_score => $opt{weight_dpnd_score}});
+    my $tsubaki = new TsubakiEngine({idxdir => $opt{idxdir},
+				     dlengthdbdir => $opt{dlengthdbdir},
+				     skip_pos => $opt{skippos},
+				     verbose => $opt{verbose},
+				     average_doc_length => $AVE_DOC_LENGTH,
+				     doc_length_dbs => \@DOC_LENGTH_DBs,
+				     total_number_of_docs => $N,
+				     weight_dpnd_score => $opt{weight_dpnd_score},
+				     show_speed => $opt{show_speed}});
     
     my $docs = $tsubaki->search($query, \%qid2df);
     my $hitcount = scalar(@{$docs});
@@ -119,6 +128,7 @@ sub main {
 
 sub get_DF {
     my ($k) = @_;
+    my $start_time = Time::HiRes::time;
     my $k_utf8 = encode('utf8', $k);
     my $gdf = -1;
     my $DFDBs = (index($k, '->') > 0) ? \@DF_DPND_DBs : \@DF_WORD_DBs;
@@ -128,5 +138,12 @@ sub get_DF {
  	    last;
  	}
     }
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($opt{show_speed}) {
+	printf ("@@@ %.4f sec. df value loading (key=%s).\n", $conduct_time, encode('euc-jp', $k));
+    }
+
     return $gdf;
 }

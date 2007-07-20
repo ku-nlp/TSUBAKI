@@ -23,16 +23,20 @@ my $host = `hostname`; chop($host);
 
 sub new {
     my ($class, $opts) = @_;
+
+    my $start_time = Time::HiRes::time;
+
     my $this = {
-	word_retriever => new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}),
-	dpnd_retriever => new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}),
+	word_retriever => new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed}),
+	dpnd_retriever => new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed}),
 	DOC_LENGTH_DBs => $opts->{doc_length_dbs},
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
 	verbose => $opts->{verbose},
 	store_verbose => $opts->{store_verbose},
 	dlengthdb_hash => $opts->{dlengthdb_hash},
-	WEIGHT_DPND_SCORE => defined $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1
+	WEIGHT_DPND_SCORE => defined $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1,
+	show_speed => $opts->{show_speed}
     };
 
     opendir(DIR, $opts->{dlengthdbdir});
@@ -54,6 +58,12 @@ sub new {
     }
     closedir(DIR);
 
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{show_speed}) {
+	printf ("@@@ %.4f sec. TsubakiEngine's constructor calling.\n", $conduct_time);
+    }
+
     bless $this;
 }
 
@@ -69,6 +79,8 @@ sub DESTROY {
 
 sub search {
     my ($this, $query, $qid2df) = @_;
+
+    my $start_time = Time::HiRes::time;
 
     my ($alldocs_word, $alldocs_dpnd) = $this->retrieve_documents($query);
     
@@ -88,12 +100,20 @@ sub search {
 
     my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf});
 
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{show_speed}) {
+	printf ("@@@ %.4f sec. search method calling.\n", $conduct_time);
+    }
+
     return $doc_list;
 }
 
 ## 単語を含む文書の検索
 sub retrieve_from_dat {
-    my ($retriever, $reps, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag) = @_;
+    my ($this, $retriever, $reps, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag) = @_;
+
+    my $start_time = Time::HiRes::time;
 
     ## 代表表記化／SynGraph により複数個の索引に分割された場合の処理 (かんこう -> 観光 OR 刊行 OR 敢行 OR 感光 を検索する)
     my %idx2qid;
@@ -111,16 +131,24 @@ sub retrieve_from_dat {
     }
 
     # ★ クエリが重なったときの対応について考える
-    my $ret = &serialize2(\@results, \%idx2qid);
+    my $ret = $this->serialize2(\@results, \%idx2qid);
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{show_speed}) {
+	printf ("@@@ %.4f sec. doclist retrieving from dat.\n", $conduct_time);
+    }
 
     return $ret;
 }
 
 sub merge_docs {
     my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf) = @_;
-    my %did2pos = ();
+
+    my $start_time = Time::HiRes::time;
 
     my $pos = 0;
+    my %did2pos = ();
     my @merged_docs = ();
     my %d_length_buff = ();
 
@@ -176,8 +204,15 @@ sub merge_docs {
 	}
     }
 
-    return \@merged_docs unless (defined($cal_method));
-    
+    unless (defined($cal_method)) {
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $start_time;
+	if ($this->{show_speed}) {
+	    printf ("@@@ %.4f sec. doclist merging.\n", $conduct_time);
+	}
+	return \@merged_docs;
+    }
+
     foreach my $docs_dpnd (@{$alldocs_dpnds}) {
 	foreach my $doc (@{$docs_dpnd}) {
 	    my $did = $doc->{did};
@@ -203,11 +238,20 @@ sub merge_docs {
     }
     
     @merged_docs = sort {$b->{score} <=> $a->{score}} @merged_docs;
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{show_speed}) {
+	printf ("@@@ %.4f sec. doc_list merging.\n", $conduct_time);
+    }
+
     return \@merged_docs;
 }
 
 sub retrieve_documents {
     my ($this, $query) = @_;
+
+    my $start_time = Time::HiRes::time;
 
     # 文書の取得
     my $alldocs_word = [];
@@ -228,7 +272,7 @@ sub retrieve_documents {
 		}
 	    }
 
-	    my $docs = &retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
+	    my $docs = $this->retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
 	    print $add_flag . "=aflag\n" if ($this->{verose}) ;
 	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
 
@@ -249,7 +293,7 @@ sub retrieve_documents {
 		}
 	    }
 
-	    my $docs = &retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
+	    my $docs = $this->retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
 	    print $add_flag . "=aflag\n" if ($this->{verose});
 	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
 
@@ -288,6 +332,13 @@ sub retrieve_documents {
     } else {
 	# 何もしなければ OR
     }
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{show_speed}) {
+	printf ("@@@ %.4f sec. doclist retrieving.\n", $conduct_time);
+    }
+
     return ($alldocs_word, $alldocs_dpnd);
 }
 
@@ -319,7 +370,9 @@ sub serialize {
 
 # 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
 sub serialize2 {
-    my ($docs_list, $idx2qid) = @_;
+    my ($this, $docs_list, $idx2qid) = @_;
+
+    my $start_time = Time::HiRes::time;
 
     my $serialized_docs = [];
     my $pos = 0;
@@ -344,6 +397,12 @@ sub serialize2 {
 	}
     }
     @{$serialized_docs} = sort {$a->{did} <=> $b->{did}} @{$serialized_docs};
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{show_speed}) {
+	printf ("@@@ %.4f sec. doclist serializing (2).\n", $conduct_time);
+    }
 
     return $serialized_docs;
 }
