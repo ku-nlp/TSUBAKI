@@ -192,7 +192,7 @@ sub makeIndexfromKnpResult {
 #		    $midashi =~ s/\/.+//g;
 		}
 
-		next if defined $this->{STOP_WORDS}{$midashi};
+		next if (defined $this->{STOP_WORDS}{$midashi});
 
 		$reps{&toUpperCase_utf8($midashi)} = 1;
 
@@ -201,8 +201,12 @@ sub makeIndexfromKnpResult {
 		## ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
 		while ($line =~ /\<ALT(.+?)\>/) {
 		    $line = "$'";
-		    if ($1 =~ /代表表記:(.+?)(?: |\")/) {
+		    my $alt_cont = $1;
+		    if ($alt_cont =~ /代表表記:(.+?)(?: |\")/) {
 			my $midashi = $1;
+			$reps{&toUpperCase_utf8($midashi)} = 1;
+		    } elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
+			my $midashi = "$3/$2";
 			$reps{&toUpperCase_utf8($midashi)} = 1;
 		    }
 		}
