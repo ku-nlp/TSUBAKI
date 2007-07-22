@@ -145,7 +145,7 @@ sub search {
 		    printf ("@@@ %.4f sec. reed df value from dat file.\n", $conduct_time);
 		}
 
-		print STDERR "$host> keyword=$keyword->{string},ldf=$ldf\n" if ($this->{VERBOSE});
+		print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n" if ($this->{VERBOSE});
 
 		my $total_push_time = 0;
 		my $total_seek_time = 0;
@@ -166,6 +166,7 @@ sub search {
 			$buff_time = Time::HiRes::time;
 			seek($this->{IN}[$f_num], 4, 1); # 出現頻度をスキップ
 			unless ($this->{SKIPPOS}) {
+			    read($this->{IN}[$f_num], $buf, 4);
 			    my $sid_size = unpack('L', $buf);
 			    seek($this->{IN}[$f_num], $sid_size * 4, 1); # 文情報をスキップ
 
