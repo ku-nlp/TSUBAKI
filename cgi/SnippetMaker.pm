@@ -147,6 +147,7 @@ sub extractSentencefromKnpResult {
     my $buff;
     my $indexer = new Indexer();
     my @sentences = ();
+    my %sbuff = ();
     while (<READER>) {
 	$buff .= $_;
 	if ($_ =~ m!</Annotation>!) {
@@ -196,8 +197,11 @@ sub extractSentencefromKnpResult {
 			push(@{$sentence->{reps}}, $w->{reps});
 		    }
 		    
-		    $sentence->{score} = $sentence->{score} * log(scalar(@{$sentence->{surfs}}));
-		    push(@sentences, $sentence);
+		    unless (exists($sbuff{$sentence->{rawstring}})) {
+			$sentence->{score} = $sentence->{score} * log(scalar(@{$sentence->{surfs}}));
+			push(@sentences, $sentence);
+			$sbuff{$sentence->{rawstring}} = 1;
+		    }
 		}
 	    } # end of if
 	    $buff = '';
