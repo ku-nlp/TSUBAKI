@@ -124,7 +124,7 @@ else {
 	    KNP_PATH => "/home/skeiji/local/bin",
 	    JUMAN_PATH => "/home/skeiji/local/bin",
 	    SYNDB_PATH => "/home/skeiji/SynGraph/syndb/i686",
-	    KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] });
+	    KNP_OPTIONS => ['-postprocess','-tab'] });
 
 	$q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
 	
@@ -233,9 +233,11 @@ else {
 		    my $xmlpath = sprintf("/net2/nlpcf34/disk07/skeiji/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
 		    $sentences = &SnippetMaker::extractSentencefromSynGraphResult($query->{keywords}, $xmlpath);
 		} else {
-		    my $xmlpath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
-#		    my $xmlpath = sprintf("$INDEX_DIR2/x%04d/%08d.xml", $did / 10000, $did);
-		    $sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $xmlpath);
+		    my $filepath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $did / 10000, $did);
+		    unless (-e $filepath || -e "$filepath.gz") {
+			$filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
+		    }
+		    $sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $filepath);
 		}
 
 		# ハイライトされたスニペッツの生成
