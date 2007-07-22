@@ -372,9 +372,13 @@ sub get_results_specified_num {
 	my %words = ();
 	my $length = 0;
 	if ($params{no_snippets} < 1) {
-	    my $xmlpath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id);
+	    my $filepath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $id / 10000, $id);
+	    unless (-e $filepath || -e "$filepath.gz") {
+		$filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id);
+	    }
+
 	    ## snippet用に重要文を抽出
-	    my $sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $xmlpath);
+	    my $sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $filepath);
 	    my $wordcnt = 0;
 	    foreach my $sentence (sort {$b->{score} <=> $a->{score}} @{$sentences}) {
 		foreach my $surf (@{$sentence->{surfs}}) {
