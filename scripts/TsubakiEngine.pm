@@ -264,19 +264,19 @@ sub retrieve_documents {
 	# keyword中の単語を含む文書の検索
 	# ★AND の場合は文書頻度の低い単語から検索する
 	foreach my $reps_of_word (@{$keyword->{words}}) {
-	    if ($this->{verose}) {
+	    if ($this->{verbose}) {
 		foreach my $e (@{$reps_of_word}) {
 		    foreach my $kkk (keys %{$e}) {
-			print $kkk . " " . encode('euc-jp', $e->{$kkk}) ."\n";
+			print $kkk . " " . encode('euc-jp', $e->{$kkk}) ." here.\n";
 		    }
 		}
 	    }
 
 	    my $docs = $this->retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
-	    print $add_flag . "=aflag\n" if ($this->{verose}) ;
+	    print $add_flag . "=aflag\n" if ($this->{verbose}) ;
 	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
 
-	    print scalar(@$docs) . "=size\n" if ($this->{verose});
+	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
 
 	    # 各語について検索された結果を納めた配列に push
 	    push(@{$docs_word}, $docs);
@@ -285,7 +285,7 @@ sub retrieve_documents {
 	$add_flag = 1;
 	# keyword中の係受けを含む文書の検索
 	foreach my $reps_of_dpnd (@{$keyword->{dpnds}}) {
-	    if ($this->{verose}) {
+	    if ($this->{verbose}) {
 		foreach my $e (@{$reps_of_dpnd}) {
 		    foreach my $kkk (keys %{$e}) {
 			print $kkk . " " . encode('euc-jp', $e->{$kkk}) ."\n";
@@ -294,10 +294,10 @@ sub retrieve_documents {
 	    }
 
 	    my $docs = $this->retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
-	    print $add_flag . "=aflag\n" if ($this->{verose});
+	    print $add_flag . "=aflag\n" if ($this->{verbose});
 	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
 
-	    print scalar(@$docs) . "=size\n" if ($this->{verose});
+	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
 
 	    # 各係受けについて検索された結果を納めた配列に push
 	    push(@{$docs_dpnd}, $docs);
