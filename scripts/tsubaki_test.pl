@@ -6,9 +6,9 @@ use strict;
 use utf8;
 use Encode;
 use Getopt::Long;
+use Storable;
 use QueryParser;
 use TsubakiEngine;
-use Storable;
 use Time::HiRes;
 
 my (%opt);
@@ -22,12 +22,12 @@ if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $o
 
 my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
+my @DOC_LENGTH_DBs = ();
 
-######################################################################
-my $N = 51000000;
-my $AVE_DOC_LENGTH = 871.925373263118;
-# my $AVE_DOC_LENGTH = 483.852649424932;
-######################################################################
+my $N = 51000000; # 全文書数
+my $AVE_DOC_LENGTH = 871.925373263118; # 平均文書長
+
+&main();
 
 sub init {
     my $start_time = Time::HiRes::time;
@@ -44,35 +44,33 @@ sub init {
 	}
     }
     closedir(DIR);
+
+    opendir(DIR, $opt{dlengthdbdir});
+    foreach my $dbf (readdir(DIR)) {
+	next unless ($dbf =~ /doc_length\.bin/);
+    
+	my $fp = "$opt{dlengthdbdir}/$dbf";
+	
+	my $dlength_db;
+	# 小規模なテスト用にdlengthのDBをハッシュでもつオプション
+	if ($opt{dlengthdb_hash}) {
+	    require CDB_File;
+	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	}
+	else {
+	    $dlength_db = retrieve($fp) or die;
+	}
+	
+	push(@DOC_LENGTH_DBs, $dlength_db);
+    }
+    closedir(DIR);
+
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
     if ($opt{show_speed}) {
 	printf ("@@@ %.4f sec. dfdb loading.\n", $conduct_time);
     }
 }
-
-my @DOC_LENGTH_DBs;
-opendir(DIR, $opt{dlengthdbdir});
-foreach my $dbf (readdir(DIR)) {
-    next unless ($dbf =~ /doc_length\.bin/);
-    
-    my $fp = "$opt{dlengthdbdir}/$dbf";
-    
-    my $dlength_db;
-    # 小規模なテスト用にdlengthのDBをハッシュでもつオプション
-    if ($opt{dlengthdb_hash}) {
-	require CDB_File;
-	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-    }
-    else {
-	$dlength_db = retrieve($fp) or die;
-    }
-    
-    push(@DOC_LENGTH_DBs, $dlength_db);
-}
-closedir(DIR);
-
-&main();
 
 sub main {
     &init();
@@ -90,7 +88,7 @@ sub main {
 	SHOW_SPEED => $opt{show_speed}
     });
     
-    # logical_cond_qk  クエリ間の論理演算
+    # logical_cond_qk : クエリ間の論理演算
     my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
     
     print "*** QUERY ***\n";
@@ -104,7 +102,6 @@ sub main {
 	my $df = &get_DF($query->{qid2rep}{$qid});
 	$qid2df{$qid} = $df;
 	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n" if ($opt{verbose});
-    	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n";
     }
 
     my $tsubaki = new TsubakiEngine({idxdir => $opt{idxdir},
@@ -126,6 +123,7 @@ sub main {
     print "hitcount=$hitcount\n";
 }
 
+# 文書頻度をDBから読み込む
 sub get_DF {
     my ($k) = @_;
     my $start_time = Time::HiRes::time;
