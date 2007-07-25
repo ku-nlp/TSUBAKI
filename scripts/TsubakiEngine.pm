@@ -20,7 +20,7 @@ use Devel::Size qw/size total_size/;
 # host名を得る
 my $host = `hostname`; chop($host);
 
-
+# コンストラクタ
 sub new {
     my ($class, $opts) = @_;
 
@@ -67,6 +67,7 @@ sub new {
     bless $this;
 }
 
+# デストラクタ
 sub DESTROY {
     my ($this) = @_;
 
@@ -82,15 +83,9 @@ sub search {
 
     my $start_time = Time::HiRes::time;
 
+    # 検索
     my ($alldocs_word, $alldocs_dpnd) = $this->retrieve_documents($query);
     
-#    printf "alldocs_word %d Byte.\n", (total_size($alldocs_word));
-#    printf "alldocs_dpnd %d Byte.\n", (total_size($alldocs_dpnd));
-
-#    print "*** dump ***\n";
-#    print Dumper($alldocs_word);
-#    print "*** dump ***\n";
-
     my $cal_method;
     if ($query->{only_hitcount}) {
 	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない
@@ -98,6 +93,7 @@ sub search {
 	$cal_method = new OKAPI($this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS}, $this->{verbose});
     }
 
+    # 文書のスコアリング
     my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf});
 
     my $finish_time = Time::HiRes::time;
@@ -130,7 +126,7 @@ sub retrieve_from_dat {
 	$idx2qid{$i} = $rep->{qid};
     }
 
-    # ★ クエリが重なったときの対応について考える
+    # todo: クエリが重なったときの対応について考える
     my $ret = $this->serialize2(\@results, \%idx2qid);
 
     my $finish_time = Time::HiRes::time;
@@ -142,6 +138,7 @@ sub retrieve_from_dat {
     return $ret;
 }
 
+# 文書のスコアリング
 sub merge_docs {
     my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf) = @_;
 
@@ -253,7 +250,6 @@ sub retrieve_documents {
 
     my $start_time = Time::HiRes::time;
 
-    # 文書の取得
     my $alldocs_word = [];
     my $alldocs_dpnd = [];
     my $doc_buff = {};
@@ -262,16 +258,17 @@ sub retrieve_documents {
 	my $docs_word = [];
 	my $docs_dpnd = [];
 	# keyword中の単語を含む文書の検索
-	# ★AND の場合は文書頻度の低い単語から検索する
+	# todo: AND の場合は文書頻度の低い単語から検索する
 	foreach my $reps_of_word (@{$keyword->{words}}) {
 	    if ($this->{verbose}) {
-		foreach my $e (@{$reps_of_word}) {
-		    foreach my $kkk (keys %{$e}) {
-			print $kkk . " " . encode('euc-jp', $e->{$kkk}) ." here.\n";
+		foreach my $rep_of_word (@{$reps_of_word}) {
+		    foreach my $k (keys %{$rep_of_word}) {
+			print $k . " " . encode('euc-jp', $rep_of_word->{$k}) . "\n";
 		    }
 		}
 	    }
 
+	    # バイナリファイルから文書の取得
 	    my $docs = $this->retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
 	    print $add_flag . "=aflag\n" if ($this->{verbose}) ;
 	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
@@ -283,16 +280,17 @@ sub retrieve_documents {
 	}
 
 	$add_flag = 1;
-	# keyword中の係受けを含む文書の検索
+	# keyword中の係り受けを含む文書の検索
 	foreach my $reps_of_dpnd (@{$keyword->{dpnds}}) {
 	    if ($this->{verbose}) {
-		foreach my $e (@{$reps_of_dpnd}) {
-		    foreach my $kkk (keys %{$e}) {
-			print $kkk . " " . encode('euc-jp', $e->{$kkk}) ."\n";
+		foreach my $rep_of_dpnd (@{$reps_of_dpnd}) {
+		    foreach my $k (keys %{$rep_of_dpnd}) {
+			print $k . " " . encode('euc-jp', $rep_of_dpnd->{$k}) ."\n";
 		    }
 		}
 	    }
 
+	    # バイナリファイルから文書の取得
 	    my $docs = $this->retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
 	    print $add_flag . "=aflag\n" if ($this->{verbose});
 	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
@@ -304,23 +302,25 @@ sub retrieve_documents {
 	}
 	
 	# 検索キーワードごとに検索された文書の配列へpush
-	if ($keyword->{logical_cond_qkw} eq 'AND') {
+	if ($keyword->{logical_cond_qkw} eq 'OR') {
+	    # 検索キーワード中の単語間のORをとる 
+	    # 文書配列の直列化
+	    push(@{$alldocs_word}, &serialize($docs_word));
+	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
+	} else {
 	    # 検索キーワード中の単語間のANDをとる
 	    $docs_word = &intersect($docs_word);
 	    $docs_dpnd = &intersect($docs_dpnd);
-
+	    
 	    # 係り受け制約の適用
 	    if (scalar(@{$keyword->{dpnds}}) > 0 && $keyword->{force_dpnd} > 0) {
 		$docs_word = $this->filter_by_force_dpnd_constraint($docs_word, $docs_dpnd);
 	    }
-
+	    
 	    # 近接制約の適用
-	    $docs_word = &filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
-
-	    push(@{$alldocs_word}, &serialize($docs_word));
-	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
-	} else {
-	    # 検索キーワード中の単語間のORをとる 
+	    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
+	    
+	    # 文書配列の直列化
 	    push(@{$alldocs_word}, &serialize($docs_word));
 	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
 	}
@@ -351,7 +351,7 @@ sub serialize {
     my %did2pos = ();
     foreach my $docs (@{$docs_list}) {
 	foreach my $d (@{$docs}) {
-	    next unless (defined($d)); # ※本来なら空はないはず
+	    next unless (defined($d)); # 本来なら空はないはず
 
 	    if (exists($did2pos{$d->{did}})) {
 		my $i = $did2pos{$d->{did}};
@@ -407,6 +407,7 @@ sub serialize2 {
     return $serialized_docs;
 }
 
+# 配列の配列を受け取り、各配列間の共通要素をとる
 sub intersect {
     my ($docs) = @_;
 
@@ -423,6 +424,7 @@ sub intersect {
 
     my $variation = scalar(@{$docs});
     if ($variation < 2) {
+#	return $docs;
 	foreach my $doc (@{$docs->[0]}) {
 	    push(@{$results[0]}, $doc);
 	}
@@ -461,6 +463,8 @@ sub intersect {
     return \@results;
 }
 
+# 近接条件の適用
+# 近接条件の適用
 sub filter_by_NEAR_constraint {
     my ($docs, $near, $sentence_flag) = @_;
 
@@ -492,6 +496,7 @@ sub filter_by_NEAR_constraint {
 	while (scalar(@{$poslist[0]}) > 0) {
 	    my $flag = 0;
 	    my $pos = shift(@{$poslist[0]}); # クエリ中の先頭の単語の出現位置
+	    my $distance_history = 0; # 各単語間の距離の総和
 	    for (my $q = 1; $q < scalar(@poslist); $q++) {
 		while (1) {
 		    # クエリ中の単語の出現位置リストが空なら終了
@@ -501,7 +506,8 @@ sub filter_by_NEAR_constraint {
 		    }
 
 		    if ($sentence_flag > 0) {
-			if ($pos <= $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near + 1) {
+			if ($pos <= $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near - $distance_history) {
+			    $distance_history += ($poslist[$q]->[0] - $pos);
 			    $flag = 0;
 			    last;
 			} elsif ($poslist[$q]->[0] < $pos) {
@@ -511,7 +517,8 @@ sub filter_by_NEAR_constraint {
 			    last;
 			}
 		    } else {
-			if ($pos < $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near + 2) {
+			if ($pos < $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near - $distance_history) {
+			    $distance_history += ($poslist[$q]->[0] - $pos);
 			    $flag = 0;
 			    last;
 			} elsif ($poslist[$q]->[0] < $pos) {
@@ -539,6 +546,7 @@ sub filter_by_NEAR_constraint {
     return \@results;
 }
 
+# 係り受け条件の適用
 sub filter_by_force_dpnd_constraint {
     my ($this, $docs_word, $docs_dpnd) = @_;
 
