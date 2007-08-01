@@ -213,7 +213,7 @@ if($file_type){
     
     # logical_cond_qk  クエリ間の論理演算
     my $query = $q_parser->parse($params{query}, {logical_cond_qk => $params{logical_operator}, syngraph => $params{syngraph}});
-    $query->{results} = $params{results};
+    $query->{results} = $params{results} + $params{start} - 1;
     foreach my $qk (@{$query->{keywords}}) {
 	$qk->{force_dpnd} = 1 if ($params{force_dpnd});
 	$qk->{logical_cond_qkw} = 'OR' if ($params{logical_operator} eq 'OR');
@@ -254,9 +254,10 @@ if($file_type){
 	$until = $hitcount if($hitcount < $until);
 	$params{'results'} = $hitcount if($params{'results'} > $hitcount);
 
-	## merging
+#	print "$params{start} $until $params{results}\n";
 	my $max = 0;
 	my @merged_results;
+	my %didbuff = ();
 	while ($until > scalar(@merged_results)) {
 	    for (my $k = 0; $k < scalar(@{$results}); $k++) {
 		next unless (defined($results->[$k][0]));
@@ -265,9 +266,14 @@ if($file_type){
 		    $max = $k;
 		}
 	    }
-	    push(@merged_results, shift(@{$results->[$max]}));
+
+	    if (exists($didbuff{$results->[$max][0]->{did}})) {
+		shift(@{$results->[$max]});
+	    } else {
+		$didbuff{$results->[$max][0]->{did}} = 1;
+		push(@merged_results, shift(@{$results->[$max]}));
+	    }
 	}
-	
 	my $finish_time = Time::HiRes::time;
 	my $search_time = $finish_time - $start_time;
 	
@@ -284,10 +290,11 @@ if($file_type){
 	
 	my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
 	$writer->xmlDecl('utf-8');
-	my @ret_result = &get_results_specified_num(\@merged_results, $params{'start'} - 1, $params{'results'}, $query);
+	my $ret_result = &get_results_specified_num(\@merged_results, $params{'start'} - 1, $until, $query);
+
 	$writer->startTag('ResultSet', time => $timestamp, query => $params{'query'}, 
 			  totalResultsAvailable => scalar($hitcount), 
-			  totalResultsReturned => scalar(@ret_result), 
+			  totalResultsReturned => scalar(@{$ret_result}), 
 			  firstResultPosition => $params{'start'},
 			  logicalOperator => $params{'logical_operator'},
 			  forceDpnd => $params{'force_dpnd'},
@@ -295,8 +302,8 @@ if($file_type){
 			  filterSimpages => $params{'filter_simpages'},
 	    );
 	
-	for my $d (@ret_result) {
-	    $writer->startTag('Result', Id => sprintf("%08d", $d->{did}), Score => sprintf("%.5f", $d->{score}));
+	for my $d (@{$ret_result}) {
+	    $writer->startTag('Result', Rank => $d->{rank}, Id => sprintf("%08d", $d->{did}), Score => sprintf("%.5f", $d->{score}));
 	    
 	    $writer->startTag('Title');
 	    if(utf8::is_utf8($d->{title})){
@@ -338,18 +345,16 @@ if($file_type){
 }
 
 sub get_results_specified_num {
-    my ($result, $start, $num, $query) = @_;
-    my (@ret);
+    my ($result, $start, $until, $query) = @_;
+    my @ret = ();
 
     my %urldbs = ();
     my $dbfp = "/var/www/cgi-bin/dbs/title.cdb";
     tie my %titledb, 'CDB_File', $dbfp or die "$0: can't tie to $dbfp $!\n";
 
     my $prev_page = undef;
-    for my $i ($start .. $start + $num - 1) {
-	last if $i >= scalar(@$result);
-
-	my $id = $result->[$i]->{did};
+    for (my $i = $start; $i < $until; $i++) {
+	my $id = $result->[$i]{did};
 	my $url;
 	my $idtmp = sprintf("%08d", $id);
 	$idtmp =~ /(\d\d)\d\d\d\d\d\d$/;
@@ -371,54 +376,55 @@ sub get_results_specified_num {
 	my $snippet = '';
 	my %words = ();
 	my $length = 0;
-	if ($params{no_snippets} < 1) {
-	    my $filepath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $id / 10000, $id);
-	    unless (-e $filepath || -e "$filepath.gz") {
-		$filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id);
-	    }
+ 	if ($params{no_snippets} < 1) {
+ 	    my $filepath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $id / 10000, $id);
+ 	    unless (-e $filepath || -e "$filepath.gz") {
+ 		$filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id);
+ 	    }
 
-	    ## snippet用に重要文を抽出
-	    my $sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $filepath);
-	    my $wordcnt = 0;
-	    foreach my $sentence (sort {$b->{score} <=> $a->{score}} @{$sentences}) {
-		foreach my $surf (@{$sentence->{surfs}}) {
-		    $snippet .= $surf;
-		    $wordcnt++;
+ 	    ## snippet用に重要文を抽出
+ 	    my $sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $filepath);
+ 	    my $wordcnt = 0;
+ 	    foreach my $sentence (sort {$b->{score} <=> $a->{score}} @{$sentences}) {
+ 		foreach my $surf (@{$sentence->{surfs}}) {
+ 		    $snippet .= $surf;
+ 		    $wordcnt++;
 		    
-		    if ($wordcnt > 100) {
-			$snippet .= " ...";
-			last;
-		    }
-		}
-		$snippet .= " ";
+ 		    if ($wordcnt > 100) {
+ 			$snippet .= " ...";
+ 			last;
+ 		    }
+ 		}
+ 		$snippet .= " ";
 
-		# ★ 多重 foreach の脱出に label をつかうこと
-		last if ($wordcnt > 100);
-	    }
-	}
+ 		# ★ 多重 foreach の脱出に label をつかうこと
+ 		last if ($wordcnt > 100);
+ 	    }
+ 	}
 	
 	my $score = $result->[$i]->{score};
-	if ($prev_page->{title} eq $title && $prev_page->{score} == $score) {
-	    if ($params{'filter_simpages'}) {
-		next;
-	    }
-	} else {
-	    my $sim = 0;
+#	if ($prev_page->{title} eq $title && $prev_page->{score} == $score) {
+#	    if ($params{'filter_simpages'}) {
+#		next;
+#	    }
+#	} else {
+#	    my $sim = 0;
 # 	    if(defined($prev_page->{words})){
 # 		$sim = &calculateSimilarity($prev_page->{words}, \%words);
 # 	    }
-	    
+#	    
 # 	    $prev_page->{words} = \%words;
 # 	    $prev_page->{title} = $title;
 # 	    $prev_page->{score} = $score;
-	    
+#	    
 # 	    if($params{'filter_simpages'} && $sim > 0.9){
 # 		next;
 # 	    }
-	}
+#	}
 	
 	$result->[$i]->{snippet} = encode('utf8', $snippet);
 	$result->[$i]->{snippet} = encode('utf8', $snippet) if (utf8::is_utf8($snippet));
+	$result->[$i]{rank} = $i + 1;
 	push(@ret, $result->[$i]);
     }
     
@@ -426,7 +432,7 @@ sub get_results_specified_num {
 	untie %{$urldbs{$k}};
     }
     untie %titledb;
-    return @ret;
+    return \@ret;
 }
 
 sub norm {
