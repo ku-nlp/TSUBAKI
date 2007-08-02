@@ -1,9 +1,14 @@
 package QueryKeyword;
 
+#$Id$
+
+# 1つの検索語を表すクラス
+
 use strict;
 use utf8;
 use Encode;
 
+# コンストラクタ
 sub new {
     my ($class, $string, $sentence_flag, $near, $force_dpnd, $logical_cond_qkw, $syngraph, $opt) = @_;
     my $this = {
@@ -20,13 +25,16 @@ sub new {
     my $indice;
     my $knpresult = $opt->{knp}->parse($string);
     unless ($opt->{syngraph}) {
+	# KNP 結果から索引語を抽出
 	$indice = $opt->{indexer}->makeIndexfromKnpResult($knpresult->all);
     } else {
+	# SynGraph 結果から索引語を抽出
  	$knpresult->set_id(0);
  	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option});
 	$indice = $opt->{indexer}->makeIndexfromSynGraph($synresult);
     }
 
+    # Indexer.pm より返される索引語を同じ代表表記ごとにまとめる
     my %buff;
     foreach my $k (keys %{$indice}){
 	$buff{$indice->{$k}{group_id}} = [] unless (exists($buff{$indice->{$k}{group_id}}));
@@ -37,6 +45,7 @@ sub new {
 	my @word_reps;
 	my @dpnd_reps;
 	foreach my $m (@{$buff{$group_id}}) {
+	    # 近接条件が指定されていない かつ 機能語 の場合は検索に用いない
 	    next if ($m->{isContentWord} < 1 && $this->{near} < 0);
 
 	    if ($m->{rawstring} =~ /\-\>/) {
@@ -52,8 +61,10 @@ sub new {
     bless $this;
 }
 
+# デストラクタ
 sub DESTROY {}
 
+# 文字列表現を返すメソッド
 sub to_string {
     my ($this) = @_;
 
