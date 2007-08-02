@@ -11,14 +11,10 @@ use URI::Escape;
 use Storable qw(store retrieve);
 use utf8;
 use Data::Dumper;
-# use Devel::Size qw(total_size);
-# use Getopt::Long;
 use OKAPI;
 use Devel::Size qw/size total_size/;
 
 
-# host名を得る
-my $host = `hostname`; chop($host);
 
 # コンストラクタ
 sub new {
@@ -28,7 +24,7 @@ sub new {
 
     my $this = {
 	word_retriever => new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed}),
-	dpnd_retriever => new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed}),
+	dpnd_retriever => new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed}),
 	DOC_LENGTH_DBs => $opts->{doc_length_dbs},
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
@@ -38,25 +34,6 @@ sub new {
 	WEIGHT_DPND_SCORE => defined $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1,
 	show_speed => $opts->{show_speed}
     };
-
-    opendir(DIR, $opts->{dlengthdbdir});
-    foreach my $dbf (readdir(DIR)) {
- 	next unless ($dbf =~ /doc_length\.bin/);
-
- 	my $fp = "$opts->{dlengthdbdir}/$dbf";
- 	my $dlength_db;
- 	# 小規模なテスト用にdlengthのDBをハッシュでもつオプション
- 	if ($opts->{dlengthdb_hash}) {
- 	    require CDB_File;
- 	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
- 	}
- 	else {
-	    $dlength_db = retrieve($fp) or die;
- 	}
-
- 	push(@{$this->{DOC_LENGTH_DBs}}, $dlength_db);
-    }
-    closedir(DIR);
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
@@ -78,6 +55,7 @@ sub DESTROY {
     }
 }
 
+# 検索を行うメソッド
 sub search {
     my ($this, $query, $qid2df) = @_;
 
@@ -105,7 +83,7 @@ sub search {
     return $doc_list;
 }
 
-## 単語を含む文書の検索
+# インデックスファイルから単語を含む文書の検索
 sub retrieve_from_dat {
     my ($this, $retriever, $reps, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag) = @_;
 
@@ -126,12 +104,11 @@ sub retrieve_from_dat {
 	$idx2qid{$i} = $rep->{qid};
     }
 
-    # todo: クエリが重なったときの対応について考える
-    my $ret = $this->serialize2(\@results, \%idx2qid);
+    my $ret = $this->merge_search_result(\@results, \%idx2qid);
 
-    my $finish_time = Time::HiRes::time;
-    my $conduct_time = $finish_time - $start_time;
     if ($this->{show_speed}) {
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $start_time;
 	printf ("@@@ %.4f sec. doclist retrieving from dat.\n", $conduct_time);
     }
 
@@ -191,7 +168,13 @@ sub merge_docs {
 			}
 		    }
 
-		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
+#		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
+#		    my $score = $tf * $df; #$this->calculate_score($tf, $df, $dlength, $this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS});
+		    # 関数化するよりも高速
+		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+		    my $score = $tff * $idf;
+
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
 		    $merged_docs[$i]->{score} += $score * $qtf;
@@ -243,6 +226,17 @@ sub merge_docs {
     }
 
     return \@merged_docs;
+}
+
+sub calculate_score {
+    my ($this, $freq, $gdf, $length, $ave_doc_length, $total_number_of_docs) = @_;
+    return -1 if ($freq <= 0 || $gdf <= 0 || $length <= 0);
+
+    my $tf = (3 * $freq) / ((0.5 + 1.5 * $length / $ave_doc_length) + $freq);
+#    print "log(($this->{total_number_of_docs} - $gdf + 0.5) / ($gdf + 0.5))\n" if ($this->{debug});
+    my $idf =  log(($total_number_of_docs - $gdf + 0.5) / ($gdf + 0.5));
+
+    return $tf * $idf;
 }
 
 sub retrieve_documents {
@@ -303,8 +297,7 @@ sub retrieve_documents {
 	
 	# 検索キーワードごとに検索された文書の配列へpush
 	if ($keyword->{logical_cond_qkw} eq 'OR') {
-	    # 検索キーワード中の単語間のORをとる 
-	    # 文書配列の直列化
+	    # 検索語について収集された文書をマージ
 	    push(@{$alldocs_word}, &serialize($docs_word));
 	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
 	} else {
@@ -318,24 +311,24 @@ sub retrieve_documents {
 	    }
 	    
 	    # 近接制約の適用
-	    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
-	    
-	    # 文書配列の直列化
+	    $docs_word = &filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
+
+	    # 検索語について収集された文書をマージ
 	    push(@{$alldocs_word}, &serialize($docs_word));
 	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
 	}
     }
 
-    # 論理条件にしたがい文書のマージ
+    # 論理条件にしたがい検索語ごとに収集された文書のマージ
     if ($query->{logical_cond_qk} eq 'AND') {
 	$alldocs_word =  &intersect($alldocs_word);
     } else {
 	# 何もしなければ OR
     }
 
-    my $finish_time = Time::HiRes::time;
-    my $conduct_time = $finish_time - $start_time;
     if ($this->{show_speed}) {
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $start_time;
 	printf ("@@@ %.4f sec. doclist retrieving.\n", $conduct_time);
     }
 
@@ -369,7 +362,7 @@ sub serialize {
 }
 
 # 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
-sub serialize2 {
+sub merge_search_result {
     my ($this, $docs_list, $idx2qid) = @_;
 
     my $start_time = Time::HiRes::time;
@@ -463,7 +456,6 @@ sub intersect {
     return \@results;
 }
 
-# 近接条件の適用
 # 近接条件の適用
 sub filter_by_NEAR_constraint {
     my ($docs, $near, $sentence_flag) = @_;
