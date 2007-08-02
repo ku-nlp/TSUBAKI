@@ -1,7 +1,8 @@
 package QueryParser;
 
-# 検索クエリを内部形式に変換するモジュール
-# my $TOOL_HOME='/home/skeiji/local/bin';
+#$id$
+
+# 検索クエリを内部形式に変換するクラス
 
 use strict;
 use Encode;
@@ -12,9 +13,9 @@ use Indexer;
 use SynGraph;
 use QueryKeyword;
 
+# コンストラクタ
 sub new {
     my ($class, $opts) = @_;
-
     my $this = {
 	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
@@ -24,7 +25,9 @@ sub new {
     };
 
     # ストップワードの処理
-    if ($opts->{STOP_WORDS}) {
+    unless ($opts->{STOP_WORDS}) {
+	$this->{INDEXER} = new Indexer();
+    } else {
 	my %stop_words;
 	foreach my $word (@{$opts->{STOP_WORDS}}) {
 	    # 代表表記ではない場合、代表表記を得る
@@ -43,43 +46,63 @@ sub new {
 	}
 	$this->{INDEXER} = new Indexer({ STOP_WORDS => \%stop_words });
     }
-    else {
-	$this->{INDEXER} = new Indexer();
-    }
 
     bless $this;
 }
 
+# 検索クエリを解析
 sub parse {
     my ($this, $qks_str, $opt) = @_;
 
-    ## 空白で区切る
     my @qks = ();
     my %wbuff = ();
     my %dbuff = ();
 
+    ## 空白で区切る
     foreach my $q_str (split(/(?: |　)+/, $qks_str)) {
 	my $near = -1;
-	my $logical_cond_qkw = 'AND';
+	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
 	my $force_dpnd = -1;
 	my $sentence_flag = -1;
-	## フレーズ検索かどうかの判定
+	# フレーズ検索かどうかの判定
 	if ($q_str =~ /^"(.+)?"$/){
 	    $near = 0;
 	    $q_str = $1;
+
+	    # 同義表現を考慮したフレーズ検索はできない
+	    if ($opt->{syngraph} > 0) {
+		print "<center>同義表現を考慮したフレーズ検索は実行できません。</center></DIV>\n";
+		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
+		print "</body>\n";
+		print "</html>\n";
+		exit;
+	    }
 	}
 
-	## 近接検索かどうかの判定
+	# 近接検索かどうかの判定
 	if ($q_str =~ /^(.+)?~(.+)$/){
+	    # 同義表現を考慮した場合は近接制約を指定できない
+	    if ($opt->{syngraph} > 0) {
+		print "<center>同義表現を考慮した近接検索は実行できません。</center></DIV>\n";
+		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
+		print "</body>\n";
+		print "</html>\n";
+		exit;
+	    }
+
 	    $q_str = $1;
+	    # 検索制約の取得
 	    my $constraint_tag = $2;
 	    if ($constraint_tag =~ /^(\d+)(W|S)$/) {
+		# 近接制約
 		$logical_cond_qkw = 'AND';
 		$near = $1;
 		$sentence_flag = 1 if ($2 eq 'S');
 	    } elsif ($constraint_tag =~ /(AND|OR)/) {
+		# 論理条件制約
 		$logical_cond_qkw = $1;
 	    } elsif ($constraint_tag =~ /FD/) {
+		# 係り受け強制制約
 		$logical_cond_qkw = 'AND';
 		$force_dpnd = 1;
 	    }
@@ -87,6 +110,7 @@ sub parse {
 
 	## 半角アスキー文字列を全角に置換する
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
+
 	my $q;
 	if ($opt->{syngraph} > 0) {
 	    $q= new QueryKeyword($q_str, $sentence_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}});
@@ -100,6 +124,7 @@ sub parse {
     my $qid = 0;
     my %qid2rep = ();
     my %qid2qtf = ();
+    # 検索語中の各索引語にIDをふる
     foreach my $qk (@qks) {
 	foreach my $reps (@{$qk->{words}}) {
 	    foreach my $rep (@{$reps}) {
@@ -120,17 +145,18 @@ sub parse {
 	}
     }
 	
-    return {keywords => \@qks, logical_cond_qk => $opt->{logical_cond_qk}, only_hitcount => $opt->{only_hitcount}, qid2rep => \%qid2rep, qid2qtf => \%qid2qtf};
+    # 検索クエリを表す構造体
+    my $ret = {
+	keywords => \@qks,
+	logical_cond_qk => $opt->{logical_cond_qk},
+	only_hitcount => $opt->{only_hitcount},
+	qid2rep => \%qid2rep,
+	qid2qtf => \%qid2qtf
+    };
+    return $ret;
 }
 
-sub DESTROY {
-    my ($this) = @_;
-#     foreach my $cdb (@{$this->{DF_WORD_DBs}}) {
-# 	untie %{$cdb};
-#     }
-#     foreach my $cdb (@{$this->{DF_DPND_DBs}}) {
-# 	untie %{$cdb};
-#     }
-}
+# デストラクタ
+sub DESTROY {}
 
 1;
