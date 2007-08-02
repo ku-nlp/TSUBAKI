@@ -16,9 +16,9 @@ my $query = $ARGV[0];
 from_to($query, 'euc-jp', 'utf-8');
 my $uri_escaped_query = uri_escape($query);
 
-my $base_url = 'http://reed.kuee.kyoto-u.ac.jp/SearchEngine/api.cgi';
+my $base_url = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi';
 my $results = 20;
-my $req_url = "$base_url?query=$uri_escaped_query&results=$results";
+my $req_url = "$base_url?query=$uri_escaped_query&start=1&results=$results";
 
 # Get Response from API
 my $response = get($req_url);
