@@ -13,7 +13,7 @@ use Getopt::Long;
 use Encode;
 
 my (%opt);
-GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'position', 'verbose');
+GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'position', 'verbose', 'z');
 
 # 足切りの閾値
 my $wordth = $opt{wordth} ? $opt{wordth} : 0;
@@ -22,9 +22,10 @@ my $dpndth = $opt{dpndth} ? $opt{dpndth} : 0;
 &main();
 
 sub main {
-    unless ($ARGV[0] =~ /(.*?)([^\/]+)\.(idx.*)$/){
+    my $fp = $ARGV[0];
+    unless ($fp =~ /(.*?)([^\/]+)\.(idx.*)$/) {
 	die "file name is not *.idx\n"
-    }else{
+    } else {
 	# 引数として*.idxファイルをとる
 	my $DIR = $1;
 	my $NAME = $2;
@@ -35,13 +36,18 @@ sub main {
 	    dpnd => new Binarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb", undef, $opt{verbose})
 	};
 
-	open (READER, '<:utf8', "${DIR}/$NAME.idx") || die "$!\n";
+	if ($opt{z}) {
+	    open (READER, "zcat $fp |") || die "$!\n";
+	} else {
+	    open (READER, $fp) || die "$!\n";
+	}
+
 	while (<READER>) {
-	    print STDERR "\rnow binarizing... ($lcnt)" if (($lcnt%1113) == 0);
+	    print STDERR "\rnow binarizing... ($lcnt)" if (($lcnt%1000) == 0);
 	    $lcnt++;
 
 	    chomp;
-	    my ($index, @dlist) = split;
+	    my ($index, @dlist) = split(' ', decode('utf8', $_));
 
 	    my $bin = $bins->{word};
 	    $bin = $bins->{dpnd} if (index($index, '->') > 0);
