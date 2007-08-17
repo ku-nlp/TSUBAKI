@@ -10,13 +10,14 @@ use strict;
 use Binarizer;
 use utf8;
 use Getopt::Long;
+use Encode;
 
 my (%opt);
 GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'position', 'verbose');
 
 # 足切りの閾値
 my $wordth = $opt{wordth} ? $opt{wordth} : 0;
-my $dpndth = $opt{dpndth} ? $opt{dpndth} : 10;
+my $dpndth = $opt{dpndth} ? $opt{dpndth} : 0;
 
 &main();
 
@@ -31,19 +32,19 @@ sub main {
 	my $lcnt = 0;
 	my $bins = {
 	    word => new Binarizer($wordth, "${DIR}/idx$NAME.word.dat", "${DIR}/offset$NAME.word.cdb", $opt{position}, $opt{verbose}),
-	    dpnd => new Binarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb", $opt{position}, $opt{verbose})
+	    dpnd => new Binarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb", undef, $opt{verbose})
 	};
 
 	open (READER, '<:utf8', "${DIR}/$NAME.idx") || die "$!\n";
 	while (<READER>) {
-	    print STDERR "\rnow binarizing... ($lcnt)" if(($lcnt%1113) == 0);
+	    print STDERR "\rnow binarizing... ($lcnt)" if (($lcnt%1113) == 0);
 	    $lcnt++;
 
 	    chomp;
 	    my ($index, @dlist) = split;
 
 	    my $bin = $bins->{word};
-	    $bin = $bins->{dpnd} if(index($index, '->') > 0);
+	    $bin = $bins->{dpnd} if (index($index, '->') > 0);
 
 	    $bin->add($index, \@dlist);
 	}
