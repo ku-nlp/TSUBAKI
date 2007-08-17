@@ -1,4 +1,4 @@
-package Binarizer;
+package Binarizer2;
 
 #############################################################
 # idxファイルをバイナリ化するクラス(オフセット値も同時に保存)
@@ -15,18 +15,18 @@ sub new {
     open($dat, "> $datfp") || die "$!\n";
     my $offset_cdb = new CDB_File ("$cdbfp", "$cdbfp.$$") or die;
 
-    my $this = {offset => 0,
-		odb => $offset_cdb,
-		dat => $dat,
-		odbfp => $cdbfp,
-		datfp => $datfp,
-		threshold => $th,
-		totalbytes => 0,
-		odbcnt => 0,
-		position => $position,
-		verbose => $verbose,
+    my $this = {
+	offset => 0,
+	odb => $offset_cdb,
+	dat => $dat,
+	odbfp => $cdbfp,
+	datfp => $datfp,
+	threshold => $th,
+	totalbytes => 0,
+	odbcnt => 0,
+	position => $position,
+	verbose => $verbose,
     };
-
     bless $this;
 }
 
@@ -59,16 +59,18 @@ sub add {
     print {$this->{dat}} pack('L', $dlength);
     print "$dlength:" if ($this->{verbose});
 
-    my $byte_pos = 0;
+    my $did_bytes;
+    my $frq_bytes;
+    my $sid_bytes;
+    my $pos_bytes;
     for(my $i = 0; $i < $dlength; $i++) {
- 	my ($did, $freq_pos) = split (/:/, $docs->[$i]);
-
-	my ($freq, $sid_pos_str, @sids, @poss, $sids_size, $poss_size);
-	if ($freq_pos =~ /@/) {
-	    ($freq, $sid_pos_str) = split (/@/, $freq_pos);
-	    my ($sid_str, $pos_str) = split(/\#/, $sid_pos_str);
-	    @sids = split (/,/, $sid_str);
-	    @poss = split (/,/, $pos_str);
+ 	my ($did, $freq_sid_pos) = split (/:/, $docs->[$i]);
+	my ($freq, $sid_pos, @sids, @poss, $sids_size, $poss_size);
+	if ($freq_sid_pos =~ /@/) {
+	    ($freq, $sid_pos) = split (/@/, $freq_sid_pos);
+	    my ($sids_str, $poss_str) = split(/\#/, $sid_pos);
+	    @sids = split (/,/, $sids_str);
+	    @poss = split (/,/, $poss_str);
 	    $sids_size = scalar(@sids);
 	    $poss_size = scalar(@poss);
 	} else {
@@ -77,38 +79,50 @@ sub add {
 		print STDERR "\nOption error!\n";
 		print STDERR "Not found the locations of indexed terms.\n";
 		print STDERR encode('euc-jp', "$index $docs->[$i]") . "\n";
-		exit(1);
+#		exit(1);
 	    }
-
-	    $freq = $freq_pos;
+	    $freq = $freq_sid_pos;
 	}
-
- 	# 文書IDをLONGで出力
- 	# 頻度をfloatで出力
-	print {$this->{dat}} pack('L', $did);
-	print {$this->{dat}} pack('f', $freq);
- 	print "$did:" . $freq . " " if ($this->{verbose});
+	$did_bytes .= pack('L', $did);
+	$frq_bytes .= pack('f', $freq);
 
 	if ($this->{position}) {
-	    print {$this->{dat}} pack('L', $sids_size + $poss_size);
-	    print ":$sids_size:" if ($this->{verbose});
-	    print {$this->{dat}} pack('L', $poss_size);
-	    print ":$poss_size:" if ($this->{verbose});
-
+	    my $prev;
+	    my $buff;
+	    my $cnt = 0;
+#	    $sid_bytes .= pack('L', $sids_size);
 	    foreach my $sid (@sids) {
-		print {$this->{dat}} pack('L', $sid);
-		print "$sid," if ($this->{verbose});
+		next if ($prev == $sid);
+		$buff .= pack('L', $sid);
+		$prev = $sid;
+		$cnt++;
 	    }
-	    $byte_pos += ($sids_size * 4);
+	    $sid_bytes .= pack('L', $cnt);
+	    $sid_bytes .= $buff;
 
+	    $cnt = 0;
+	    my $buff2;
+#	    $pos_bytes .= pack('L', $poss_size);
 	    foreach my $pos (@poss) {
-		print {$this->{dat}} pack('L', $pos);
-		print "$pos," if ($this->{verbose});
+		next if ($prev == $pos);
+		$buff2 .= pack('L', $pos);
+		$prev = $pos;
+		$cnt++;
 	    }
-	    $byte_pos += ($poss_size * 4);
+	    $pos_bytes .= pack('L', $cnt);
+	    $pos_bytes .= $buff2;
 	}
     }
-    print "\n" if ($this->{verbose});
+
+    # 各バイナリデータの書き込み
+    print {$this->{dat}} $did_bytes;
+    print {$this->{dat}} $frq_bytes;
+    if ($this->{position}) {
+	print {$this->{dat}} pack('L', length($sid_bytes));
+	print {$this->{dat}} pack('L', length($pos_bytes));
+	print {$this->{dat}} $sid_bytes;
+	print {$this->{dat}} $pos_bytes;
+    }
 
     # オフセットを保存し、下の処理で書き込むバイト数分増やす
     $this->{totalbytes} += (length($index_utf8) + length("$this->{offset}"));
@@ -124,15 +138,14 @@ sub add {
     $this->{offset} += length($index_utf8); # 索引語
     $this->{offset} += 1; # デリミタ0
     $this->{offset} += 4; # 文書頻度
-    $this->{offset} += (2 * 4 * $dlength); # (文書ID + 出現頻度) * 文書数
+    $this->{offset} += length($did_bytes); # 文書情報
+    $this->{offset} += length($frq_bytes); # 文書頻度情報
 
     if ($this->{position}) {
-	$this->{offset} += (4 * $dlength); # 文ID情報数 * 文書数
-	$this->{offset} += (4 * $dlength); # 位置情報数 * 文書数
-	$this->{offset} += $byte_pos; # 位置情報のサイズ
+	$this->{offset} += (4 + 4); # 文ID情報数サイズ + 出現位置情報サイズ
+	$this->{offset} += length($sid_bytes); # 文ID情報
+	$this->{offset} += length($pos_bytes); # 出現位置情報
     }
-
-#   printf ("offset: %s %d (next %d + %d + 4 + %d + %d)\n", $index_utf8, $this->{offset}, length($index_utf8), length('0'), (8 * $dlength), $byte_pos) if ($this->{verbose});
 }
 
 1;
