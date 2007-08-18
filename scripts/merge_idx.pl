@@ -23,31 +23,31 @@ if ($opt{dir}) {
     # データのあるディレクトリを開く
     opendir (DIR, $opt{dir});
 
-    foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
+    foreach my $file (sort {$a <=> $b} readdir(DIR)) {
 	# .idxファイルが対象
 	if($opt{suffix}){
-	    next if($ftmp !~ /.+\.$opt{suffix}$/);
+	    next if($file !~ /.+\.$opt{suffix}$/);
 	}else{
-	    next if ($ftmp !~ /.+\.idx$/);
+	    next if ($file !~ /.+\.idx$/);
 	}
 
 	print STDERR "\r($fcnt)" if($fcnt%113 == 0);
 	$fcnt++;
 
 	# ファイルから読み込む
-	open (FILE, '<:utf8', "$opt{dir}/$ftmp") || die("no such file $ftmp\n");
+	open (FILE, '<:utf8', "$opt{dir}/$file") or die("no such file $file\n");
 	while (<FILE>) {
 	    &ReadData($_);
 	}
 	close FILE;
 
-	if(defined($opt{n})){
-	    if($fcnt % $opt{n} == 0){
-		my $fname = sprintf("tmp.%d.%d.%s", 1 + $fcnt/$opt{n}, $$, $opt{suffix});
+	if (defined($opt{n})) {
+	    if ($fcnt % $opt{n} == 0) {
+		my $fname = sprintf("$opt{dir}.%d.%d.%s", $fcnt/$opt{n}, $$, $opt{suffix});
 		open(WRITER, "> $fname");
-		foreach my $wid (sort keys %freq) {
-		    my $w_utf8 = encode('utf8', $wid);
-		    print WRITER "$w_utf8 $freq{$wid}\n";
+		foreach my $k (sort {$a cmp $b} keys %freq) {
+		    my $k_utf8 = encode('utf8', $k);
+		    print WRITER "$k_utf8 $freq{$k}\n";
 		}
 		close(WRITER);
 		%freq = ();
@@ -66,18 +66,20 @@ else {
 
 print STDERR "\r($fcnt) done.\n";
 
-if(defined($opt{n})){
-    my $fname = sprintf("tmp.%d.%d.%s", 1 + $fcnt/$opt{n}, $$, $opt{suffix});
-    open(WRITER, "> $fname");
-    # 標準出力に出力
-    foreach my $wid (sort keys %freq) {
-	my $w_utf8 = encode('utf8', $wid);
-	print WRITER "$w_utf8 $freq{$wid}\n";
+if (defined($opt{n})) {
+    my $size = scalar(keys %freq);
+    if ($size > 0) {
+	my $fname = sprintf("$opt{dir}.%d.%d.%s", 1 + $fcnt/$opt{n}, $$, $opt{suffix});
+	open(WRITER, "> $fname");
+	foreach my $k (sort {$a cmp $b} keys %freq) {
+	    my $k_utf8 = encode('utf8', $k);
+	    print WRITER "$k_utf8 $freq{$k}\n";
+	}
+	close(WRITER);
     }
-    close(WRITER);
 }else{
     # 標準出力に出力
-    foreach my $wid (sort keys %freq) {
+    foreach my $wid (sort {$a cmp $b} keys %freq) {
 	my $w_utf8 = encode('utf8', $wid);
 	print "$w_utf8 $freq{$wid}\n";
     }
