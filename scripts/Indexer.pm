@@ -46,6 +46,7 @@ sub makeIndexfromSynGraph {
 	    
 	}elsif($line =~ /^! /){
 	    my($dumy, $bnstId, $syn_node_str) = split(/ /, $line);
+	    my $pos = ($bnstId =~ /,(\d+)$/) ? $1 : $bnstId;
 	    if($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>(<[^>]+>)*$!){
 		my $sid = $1;
 		my $score = $2;
@@ -57,27 +58,27 @@ sub makeIndexfromSynGraph {
 		$features = "$`$'" if ($features =~ /\<上位語\>/); # <上位語>を削除
 
 		$features =~ s/<下位語数:\d+>//; # <下位語数:(数字)>を削除
-		my $syn_node = {midashi => $sid . $features,
-				score => $score,
-				grpId => $bnstId,
-				pos => [],
-				absolute_pos => []};
-
+		my $syn_node = {
+		    midashi => $sid . $features,
+		    score => $score,
+		    grpId => $bnstId,
+		    pos => $pos,
+		    absolute_pos => $this->{absolute_pos} + $pos + 1};
 		push(@{$synNodes{$bnstId}}, $syn_node);
 	    }
 	}
     }
 
-    my $pos = 0;
     foreach my $id (sort {$a <=> $b} keys %synNodes) {
 	foreach my $synNode (@{$synNodes{$id}}){
 	    my $kakariSakis = $dpndInfo{$id}->{kakariSaki};
 	    my $kakariType = $dpndInfo{$id}->{kakariType};
 	    my $groupId = $synNode->{grpId};
 	    my $score = $synNode->{score};
+	    my $pos =  $synNode->{absolute_pos};
 	    
 	    $freq{$synNode->{midashi}}->{freq} += $score;
-	    push(@{$freq{$synNode->{midashi}}->{pos}}, $pos);
+	    push(@{$freq{$synNode->{midashi}}->{absolute_pos}}, $pos);
 	    $freq{$synNode->{midashi}}->{group_id} = $groupId;
 	    $freq{$synNode->{midashi}}->{rawstring} = $synNode->{midashi};
 	    $freq{$synNode->{midashi}}->{isContentWord} = 1;
@@ -86,15 +87,16 @@ sub makeIndexfromSynGraph {
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
 		foreach my $kakariSakiNode (@{$kakariSakiNodes}){
 		    my $s = $score * $kakariSakiNode->{score};
-		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{freq} += $s;
-		    push(@{$freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{pos}}, $pos);
-		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{group_id} = "$groupId\/$kakariSakiNode->{grpId}";
-		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{rawstring} = "$synNode->{midashi}->$kakariSakiNode->{midashi}";
-		    $freq{"$synNode->{midashi}->$kakariSakiNode->{midashi}"}->{isContentWord} = 1;
+		    my $key = $synNode->{midashi} . '->' . $kakariSakiNode->{midashi};
+		    $freq{$key}->{freq} += $s;
+		    push(@{$freq{$key}->{absolute_pos}}, $pos);
+		    $freq{$key}->{group_id} = "$groupId\/$kakariSakiNode->{grpId}";
+		    $freq{$key}->{rawstring} = "$synNode->{midashi}->$kakariSakiNode->{midashi}";
+		    $freq{$key}->{isContentWord} = 1;
 		}
 	    }
+	    $this->{absolute_pos} = $pos;
 	}
-	$pos++;
     }
 
     return \%freq;
