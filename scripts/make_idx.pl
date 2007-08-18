@@ -34,13 +34,7 @@ sub main {
     # 単語IDの初期化
     my $TAG_NAME = "Juman";
     $TAG_NAME = "Knp" if ($opt{knp});
-
-    if ($opt{syn}) {
-	$TAG_NAME = "SynGraph";
-	# SynGraph インデックスではposition, sentenceは考慮しない
-	$opt{position} = 0;
-	$opt{sentence} = 0;
-    }
+    $TAG_NAME = "SynGraph" if ($opt{syn});
 
     # データのあるディレクトリを開く
     opendir (DIR, $opt{in}) or die;
