@@ -87,14 +87,11 @@ sub add {
 	$frq_bytes .= pack('f', $freq);
 
 	if ($this->{position}) {
-	    my $prev;
 	    my $buff;
 	    my $cnt = 0;
 #	    $sid_bytes .= pack('L', $sids_size);
 	    foreach my $sid (@sids) {
-		next if ($prev == $sid);
 		$buff .= pack('L', $sid);
-		$prev = $sid;
 		$cnt++;
 	    }
 	    $sid_bytes .= pack('L', $cnt);
@@ -104,9 +101,7 @@ sub add {
 	    my $buff2;
 #	    $pos_bytes .= pack('L', $poss_size);
 	    foreach my $pos (@poss) {
-		next if ($prev == $pos);
 		$buff2 .= pack('L', $pos);
-		$prev = $pos;
 		$cnt++;
 	    }
 	    $pos_bytes .= pack('L', $cnt);
