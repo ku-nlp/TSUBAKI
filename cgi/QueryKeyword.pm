@@ -10,11 +10,12 @@ use Encode;
 
 # コンストラクタ
 sub new {
-    my ($class, $string, $sentence_flag, $near, $force_dpnd, $logical_cond_qkw, $syngraph, $opt) = @_;
+    my ($class, $string, $sentence_flag, $is_phrasal_search, $near, $force_dpnd, $logical_cond_qkw, $syngraph, $opt) = @_;
     my $this = {
 	words => [],
 	dpnds => [],
 	sentence_flag => $sentence_flag,
+	is_phrasal_search => $is_phrasal_search,
 	near => $near,
 	force_dpnd => $force_dpnd,
 	logical_cond_qkw => $logical_cond_qkw,
@@ -56,6 +57,10 @@ sub new {
 	}
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
+    }
+
+    if ($is_phrasal_search > 0) {
+	$this->{near} = scalar(@{$this->{words}});
     }
 
     bless $this;
