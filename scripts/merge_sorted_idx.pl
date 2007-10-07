@@ -13,7 +13,7 @@ use Getopt::Long;
 use FileHandle;
 
 my (%opt);
-GetOptions(\%opt, 'dir=s', 'suffix=s');
+GetOptions(\%opt, 'dir=s', 'suffix=s', 'z');
 
 # データのあるディレクトリを開く
 opendir (DIR, $opt{dir}) || die "$!\n";
@@ -39,7 +39,12 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
     }
 
     $FH[$FILE_NUM] = new FileHandle;
-    open($FH[$FILE_NUM], '<:utf8', "$opt{dir}/$ftmp") || die "$!\n";
+    if ($opt{z}) {
+	open($FH[$FILE_NUM], "zcat $opt{dir}/$ftmp |") || die "$!\n";
+	binmode($FH[$FILE_NUM], ':utf8');
+    } else {
+	open($FH[$FILE_NUM], '<:utf8', "$opt{dir}/$ftmp") || die "$!\n";
+    }
 
     # 各ファイルの1行目を読み込み、ソートする前の初期@INDEX(@tmpINDEX)を作成する
     if ($_ = $FH[$FILE_NUM]->getline) {
