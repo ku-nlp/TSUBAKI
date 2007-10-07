@@ -64,9 +64,10 @@ sub parse {
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
 	my $force_dpnd = -1;
 	my $sentence_flag = -1;
+	my $phrasal_flag = -1;
 	# フレーズ検索かどうかの判定
 	if ($q_str =~ /^"(.+)?"$/){
-	    $near = 0;
+	    $phrasal_flag = 1;
 	    $q_str = $1;
 
 	    # 同義表現を考慮したフレーズ検索はできない
@@ -113,9 +114,9 @@ sub parse {
 
 	my $q;
 	if ($opt->{syngraph} > 0) {
-	    $q= new QueryKeyword($q_str, $sentence_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}});
+	    $q= new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}});
 	} else {
-	    $q= new QueryKeyword($q_str, $sentence_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
+	    $q= new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
 	}
 
 	push(@qks, $q);
@@ -124,11 +125,14 @@ sub parse {
     my $qid = 0;
     my %qid2rep = ();
     my %qid2qtf = ();
+    my %rep2qid = ();
+    my %dpnd_map = ();
     # 検索語中の各索引語にIDをふる
     foreach my $qk (@qks) {
 	foreach my $reps (@{$qk->{words}}) {
 	    foreach my $rep (@{$reps}) {
 		$rep->{qid} = $qid;
+		$rep2qid{$rep->{string}} = $qid;
 		$qid2rep{$qid} = $rep->{string};
 		$qid2qtf{$qid} = $rep->{freq};
 		$qid++;
@@ -140,6 +144,8 @@ sub parse {
 		$rep->{qid} = $qid;
 		$qid2rep{$qid} = $rep->{string};
 		$qid2qtf{$qid} = $rep->{freq};
+		my ($kakarimoto, $kakarisaki) = split('->', $rep->{string});
+		push(@{$dpnd_map{$rep2qid{$kakarimoto}}}, {kakarisaki_qid => $rep2qid{$kakarisaki}, dpnd_qid => $qid});
 		$qid++;
 	    }
 	}
@@ -151,7 +157,8 @@ sub parse {
 	logical_cond_qk => $opt->{logical_cond_qk},
 	only_hitcount => $opt->{only_hitcount},
 	qid2rep => \%qid2rep,
-	qid2qtf => \%qid2qtf
+	qid2qtf => \%qid2qtf,
+	dpnd_map => \%dpnd_map
     };
     return $ret;
 }
