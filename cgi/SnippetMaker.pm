@@ -56,8 +56,10 @@ sub extractSentencefromSynGraphResult {
 	open(READER, "zcat $xmlpath |");
     }
 
+    my $sid = 0;
     my $buff;
     my $indexer = new Indexer();
+    my %sbuff = ();
     while (<READER>) {
 	$buff .= $_;
 	if ($_ =~ m!</Annotation>!) {
@@ -107,6 +109,7 @@ sub extractSentencefromSynGraphResult {
 			dpnds => {},
 			surfs => [],
 			reps => [],
+			sid => $sid,
 			score => $score
 		    };
 
@@ -120,10 +123,15 @@ sub extractSentencefromSynGraphResult {
 			push(@{$sentence->{surfs}}, $surf);
 			push(@{$sentence->{reps}}, $w->{reps});
 		    }
-		    
-		    $sentence->{score} = $sentence->{score} * log(scalar(@{$sentence->{surfs}}));
-		    push(@sentences, $sentence);
+
+		    $sentence->{rawstring} =~ s/^S\-ID:\d+//;
+		    unless (exists($sbuff{$sentence->{rawstring}})) {
+			$sentence->{score} = $sentence->{score} * log(scalar(@{$sentence->{surfs}}));
+			push(@sentences, $sentence);
+			$sbuff{$sentence->{rawstring}} = 1;
+		    }
 		}
+		$sid++;
 	    } # end of if
 	    $buff = '';
 	}
@@ -148,6 +156,7 @@ sub extractSentencefromKnpResult {
     my $indexer = new Indexer();
     my @sentences = ();
     my %sbuff = ();
+    my $sid = 0;
     while (<READER>) {
 	$buff .= $_;
 	if ($_ =~ m!</Annotation>!) {
@@ -183,6 +192,7 @@ sub extractSentencefromKnpResult {
 			dpnds => {},
 			surfs => [],
 			reps => [],
+			sid => $sid,
 			score => $score
 		    };
 
@@ -203,6 +213,7 @@ sub extractSentencefromKnpResult {
 			$sbuff{$sentence->{rawstring}} = 1;
 		    }
 		}
+		$sid++;
 	    } # end of if
 	    $buff = '';
 	}
