@@ -28,7 +28,7 @@ use utf8;
 use CDB_File;
 use Data::Dumper;
 
-use SearchEngine2;
+use SearchEngine;
 use QueryParser;
 use SnippetMaker;
 
@@ -218,7 +218,7 @@ if($file_type){
     }
 
     # 検索
-    my $se_obj = new SearchEngine2($params{syngraph});
+    my $se_obj = new SearchEngine($params{syngraph});
     $se_obj->init($ORDINARY_DFDB_PATH);
 
     my $start_time = Time::HiRes::time;
