@@ -2,8 +2,6 @@ package SearchEngine;
 
 # 各検索サーバーとindex.cgiおよびapi.cgiを結ぶブリッジ
 
-my $TOOL_HOME='/home/skeiji/local/bin';
-
 use strict;
 use utf8;
 use Encode;
@@ -16,7 +14,6 @@ use Time::HiRes;
 use CDB_File;
 
 use QueryParser;
-use TsubakiEngine;
 
 # コンストラクタ
 # 接続先ホスト、ポート番号
@@ -25,14 +22,17 @@ sub new {
     my $this = {hosts => []};
 
     if ($syngraph > 0) {
-	for (my $i = 2; $i < 33; $i++) {
-	    next if ($i == 28 || $i == 29);
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 33333});
+	for (my $i = 6; $i < 49; $i++) {
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 50001});
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 50002});
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 50003}) if (32 < $i && $i < 48);
 	}
     } else {
-	for (my $i = 6; $i < 33; $i++) {
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 10033});
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 10035});
+	for (my $i = 6; $i < 32; $i++) {
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 40001});
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 40002});
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 40003});
+	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 40004}) if ($i < 26);
 	}
     }
     
@@ -47,9 +47,9 @@ sub init {
 	
 	my $fp = "$dir/$cdbf";
 	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-	if (index($cdbf, 'df.dpnd.cdb') > -1) {
+	if (index($cdbf, 'dpnd.cdb') > -1) {
 	    push(@{$this->{DF_DPND_DBs}}, \%dfdb);
-	} elsif (index($cdbf, 'df.word.cdb') > -1) {
+	} elsif (index($cdbf, 'word.cdb') > -1) {
 	    push(@{$this->{DF_WORD_DBs}}, \%dfdb);
 	}
     }
@@ -84,7 +84,7 @@ sub get_DF {
 # 実際に検索を行うメソッド
 sub broadcastSearch {
     my($this, $query) = @_;
-    
+
     my %qid2df = ();
     foreach my $qid (keys %{$query->{qid2rep}}) {
 	my $df = $this->get_DF($query->{qid2rep}{$qid});
@@ -136,7 +136,6 @@ sub broadcastSearch {
 		}
 		if (defined($buff)) {
 		    $docs = Storable::thaw(decode_base64($buff));
-		    # ★ 受信順をそろえる必要あり
 		    push(@results, $docs);
 		}
 	    }
@@ -146,6 +145,9 @@ sub broadcastSearch {
 	    $num_of_sockets--;
 	}
     }
+
+    # 受信した結果を揃える
+    @results = sort {$b->[0]{score} <=> $a->[0]{score}} @results;
     return ($total_hitcount, \@results);
 }
 
