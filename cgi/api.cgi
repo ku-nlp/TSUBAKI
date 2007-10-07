@@ -23,15 +23,12 @@ use File::stat;
 use POSIX qw(strftime);
 use Encode qw(encode decode from_to);
 use URI::Escape qw(uri_escape);
-use IO::Socket;
-use IO::Select;
 use Time::HiRes;
 use utf8;
 use CDB_File;
 use Data::Dumper;
 
-use Indexer qw(makeIndexfromKnpResult makeIndexfromJumanResult);
-use SearchEngine;
+use SearchEngine2;
 use QueryParser;
 use SnippetMaker;
 
@@ -51,7 +48,7 @@ $params{'logical_operator'} = 'AND';
 $params{'dpnd'} = 1;
 $params{'results'} = 10;
 $params{'force_dpnd'} = 0;
-$params{'filter_simpages'} = 0;
+$params{'filter_simpages'} = 1;
 $params{'only_hitcount'} = 0;
 $params{'no_snippets'} = 1;
 $params{'near'} = 0;
@@ -76,17 +73,15 @@ if(defined($cgi->param('snippets'))) {
     $params{'no_snippets'} = 1;
 }
 
-if($cgi->param('dpnd') == 1){
-    $params{'dpnd'} = 1;
-}else{
-    $params{'dpnd'} = 0;
-}
+# if($cgi->param('dpnd') == 0){
+#     $params{'dpnd'} = 0;
+# }
 
-if($cgi->param('filter_simpages') == 1){
-    $params{'filter_simpages'} = 1;
-}else{
-    $params{'filter_simpages'} = 0;
-}
+# if($cgi->param('filter_simpages') == 1){
+#     $params{'filter_simpages'} = 1;
+# }else{
+#     $params{'filter_simpages'} = 0;
+# }
 
 $params{'query'} =~ s/^(?: | )+//g;
 $params{'query'} =~ s/(?: | )+$//g;
@@ -96,13 +91,25 @@ $params{'near'} = shift(@{$cgi->{'near'}}) if ($cgi->param('near'));
 my $date = `date +%m%d-%H%M%S`;
 chomp ($date);
 my $TOOL_HOME='/home/skeiji/local/bin';
-my $INDEX_DIR = '/var/www/cgi-bin/tsubaki/INDEX_NTCIR2';
+my $ORDINARY_DFDB_PATH = '/var/www/cgi-bin/dbs/dfdbs';
+my $SYNGRAPH_DFDB_PATH = '/home/skeiji/tmp';
+
+my $KNP_PATH = $TOOL_HOME;
+my $JUMAN_PATH = $TOOL_HOME;
+my $SYNDB_PATH = '/home/skeiji/tmp/SynGraph/syndb/i686';
 
 my $CACHE_PROGRAM = 'http://tsubaki.ixnlp.nii.ac.jp/index.cgi';
-# my $HTML_PATH_TEMPLATE = "$INDEX_DIR/%02d/h%04d/%08d.html";
-my $HTML_PATH_TEMPLATE = "/net2/nlpcf34/disk02/skeiji/htmls/%02d/h%04d/%08d.html";
-my $SF_PATH_TEMPLATE   = "$INDEX_DIR/%02d/x%04d/%08d.xml";
+my $ORDINARY_SF_PATH = '/net2/nlpcf34/disk08/skeiji';
+my $HTML_FILE_PATH = '/net2/nlpcf34/disk08/skeiji';
+my $HTML_PATH_TEMPLATE = "/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html";
+my $SF_PATH_TEMPLATE   = "/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml";
 
+my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
+my $TITLE_DB_PATH = '/work/skeiji/titledb';
+my $URL_DB_PATH = '/work/skeiji/urldb';
+
+my %titledbs = ();
+my %urldbs = ();
 
 # current time
 my $timestamp = strftime("%Y-%m-%d %T", localtime(time));
@@ -159,12 +166,9 @@ if($file_type){
 #    print $cgi->header(-type => "text/plain", -charset => 'utf-8');
     my $filepath;
     if ($file_type eq 'xml') {
-	$filepath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $fid / 10000, $fid);
-	unless (-e $filepath || -e "$filepath.gz") {
-	    $filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $fid / 1000000, $fid / 10000, $fid);
-	}
+	$filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $ORDINARY_SF_PATH, $fid / 1000000, $fid / 10000, $fid);
     } elsif ($file_type eq 'html') {
-	$filepath = sprintf("/net2/nlpcf34/disk02/skeiji/htmls/%02d/h%04d/%08d.html", $fid / 1000000, $fid / 10000, $fid);
+	$filepath = sprintf("%s/h%03d/h%05d/%09d.html", $HTML_FILE_PATH, $fid / 1000000, $fid / 10000, $fid);
     }
     
     my $content = '';
@@ -176,12 +180,6 @@ if($file_type){
 	    $content = `zcat $filepath | /home/skeiji/local/bin/nkf --utf8`;
 	}
     }
-
-    my $urldbfp = sprintf("/var/www/cgi-bin/dbs/%02d.url.cdb", $fid / 1000000);
-    tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
-    my $url = $urldb{$fid};
-    $content =~ s/Url=\"\"/Url=\"${url}\"/;
-    untie %urldb;
     print $content;
 } else {
 #    print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
@@ -204,10 +202,10 @@ if($file_type){
 
     # parse query
     my $q_parser = new QueryParser({
-	KNP_PATH => "/home/skeiji/local/bin",
-	JUMAN_PATH => "/home/skeiji/local/bin",
-	SYNDB_PATH => "/home/skeiji/SynGraph/syndb/i686",
-	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'] });
+	KNP_PATH => $KNP_PATH,
+	JUMAN_PATH => $JUMAN_PATH,
+	SYNDB_PATH => $SYNDB_PATH,
+	KNP_OPTIONS => ['-postprocess','-tab'] });
 
     $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
     
@@ -220,12 +218,8 @@ if($file_type){
     }
 
     # 検索
-    my $se_obj = new SearchEngine($params{syngraph});
-    if ($params{syngraph} > 0) {
-	$se_obj->init('/data/idx_syn/dfdbs');
-    } else {
-	$se_obj->init('/var/www/cgi-bin/dbs/dfdbs');
-    }
+    my $se_obj = new SearchEngine2($params{syngraph});
+    $se_obj->init($ORDINARY_DFDB_PATH);
 
     my $start_time = Time::HiRes::time;
     my ($hitcount, $results) = $se_obj->search($query);
@@ -250,136 +244,309 @@ if($file_type){
 	printf ("%d\n", $hitcount);
     } else {
 	## merging
-	my $until = $params{'start'} + $params{'results'} - 1;
-	$until = $hitcount if($hitcount < $until);
-	$params{'results'} = $hitcount if($params{'results'} > $hitcount);
-
-#	print "$params{start} $until $params{results}\n";
-	my $max = 0;
-	my @merged_results;
-	my %didbuff = ();
-	while ($until > scalar(@merged_results)) {
-	    for (my $k = 0; $k < scalar(@{$results}); $k++) {
-		next unless (defined($results->[$k][0]));
+	my $size = $params{'start'} + $params{'results'} - 1;
+	$size = $hitcount if ($hitcount < $size);
+	$params{'results'} = $hitcount if ($params{'results'} > $hitcount);
 		
-		if ($results->[$max][0]{score} <= $results->[$k][0]{score}) {
-		    $max = $k;
-		}
-	    }
+	# 検索サーバから得られた検索結果のマージ
+	my $mg_result = &merge_search_results($results, $size);
+	$size = (scalar(@{$mg_result}) < $size) ? scalar(@{$mg_result}) : $size;
 
-	    if (exists($didbuff{$results->[$max][0]->{did}})) {
-		shift(@{$results->[$max]});
-	    } else {
-		$didbuff{$results->[$max][0]->{did}} = 1;
-		push(@merged_results, shift(@{$results->[$max]}));
-	    }
-	}
-	my $finish_time = Time::HiRes::time;
-	my $search_time = $finish_time - $start_time;
-	
-	# ログの保存
-	my $date = `date +%m%d-%H%M%S`; chomp ($date);
-	open(OUT, ">> /se_tmp/input.log");
-	my $param_str;
-	foreach my $k (sort keys %params){
-	    $param_str .= "$k=$params{$k},";
-	}
-	$param_str .= "hitcount=$hitcount,time=$search_time";
-	print OUT "$date $ENV{REMOTE_ADDR} API $param_str\n";
-	close(OUT);
-	
-	my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
-	$writer->xmlDecl('utf-8');
-	my $ret_result = &get_results_specified_num(\@merged_results, $params{'start'} - 1, $until, $query);
-
-	$writer->startTag('ResultSet', time => $timestamp, query => $params{'query'}, 
-			  totalResultsAvailable => scalar($hitcount), 
-			  totalResultsReturned => scalar(@{$ret_result}), 
-			  firstResultPosition => $params{'start'},
-			  logicalOperator => $params{'logical_operator'},
-			  forceDpnd => $params{'force_dpnd'},
-			  dpnd => $params{'dpnd'},
-			  filterSimpages => $params{'filter_simpages'},
-	    );
-	
-	for my $d (@{$ret_result}) {
-	    $writer->startTag('Result', Rank => $d->{rank}, Id => sprintf("%08d", $d->{did}), Score => sprintf("%.5f", $d->{score}));
-	    
-	    $writer->startTag('Title');
-	    if(utf8::is_utf8($d->{title})){
-		$d->{title} = encode('utf8', $d->{title});
-	    }
-
-	    $d->{title} =~ s/\x09//g;
-	    $d->{title} =~ s/\x0a//g;
-	    $d->{title} =~ s/\x0b//g;
-	    $d->{title} =~ s/\x0c//g;
-	    $d->{title} =~ s/\x0d//g;
-
-	    $writer->characters($d->{title});
-	    $writer->endTag('Title');
-	    
-	    $writer->startTag('Url');
-	    $writer->characters($d->{original_url});
-	    $writer->endTag('Url');
-
-	    $writer->startTag('Snippet');
-	    $writer->characters($d->{snippet});
-	    $writer->endTag('Snippet');
-	    
-	    $writer->startTag('Cache');
-	    $writer->startTag('Url');
-	    $writer->characters(&get_cache_location($d->{did}, $uri_escaped_query));
-	    $writer->endTag('Url');
-	    $writer->startTag('Size');
-	    $writer->characters(&get_cache_size($d->{did}));
-	    $writer->endTag('Size');
-	    $writer->endTag('Cache');
-	    
-	    $writer->endTag('Result');
-	}
-	
-	$writer->endTag('ResultSet');
-	$writer->end();
+	# 検索結果の表示
+	&print_search_result(\%params, $mg_result, $query, $params{'start'} - 1, $size, $hitcount);
     }
+    
+# 	my $until = $params{'start'} + $params{'results'} - 1;
+# 	$until = $hitcount if($hitcount < $until);
+# 	$params{'results'} = $hitcount if($params{'results'} > $hitcount);
+
+# 	my $max = 0;
+# 	my @merged_results;
+# 	my %didbuff = ();
+
+# 	while (scalar(@merged_results) < $until) {
+# 	    for (my $k = 0; $k < scalar(@{$results}); $k++) {
+# 		next unless (defined($results->[$k][0]));
+		
+# 		if ($results->[$max][0]{score} <= $results->[$k][0]{score}) {
+# 		    $max = $k;
+# 		}
+# 	    }
+
+# 	    if (exists($didbuff{$results->[$max][0]->{did}})) {
+# 		shift(@{$results->[$max]});
+# #		$until--;
+# 	    } else {
+# 		$didbuff{$results->[$max][0]->{did}} = 1;
+# 		push(@merged_results, shift(@{$results->[$max]}));
+# 	    }
+# 	}
+# 	my $finish_time = Time::HiRes::time;
+# 	my $search_time = $finish_time - $start_time;
+	
+# 	# ログの保存
+# 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
+# 	open(OUT, ">> /se_tmp/input.log");
+# 	my $param_str;
+# 	foreach my $k (sort keys %params){
+# 	    $param_str .= "$k=$params{$k},";
+# 	}
+# 	$param_str .= "hitcount=$hitcount,time=$search_time";
+# 	print OUT "$date $ENV{REMOTE_ADDR} API $param_str\n";
+# 	close(OUT);
+	
+	
+# 	for my $d (@{$ret_result}) {
+# 	    $writer->startTag('Result', Rank => $d->{rank}, Id => sprintf("%08d", $d->{did}), Score => sprintf("%.5f", $d->{score}));
+	    
+# 	    $writer->startTag('Title');
+# 	    if(utf8::is_utf8($d->{title})){
+# 		$d->{title} = encode('utf8', $d->{title});
+# 	    }
+
+# 	    $d->{title} =~ s/\x09//g;
+# 	    $d->{title} =~ s/\x0a//g;
+# 	    $d->{title} =~ s/\x0b//g;
+# 	    $d->{title} =~ s/\x0c//g;
+# 	    $d->{title} =~ s/\x0d//g;
+
+# 	    $writer->characters($d->{title});
+# 	    $writer->endTag('Title');
+	    
+# 	    $writer->startTag('Url');
+# 	    $writer->characters($d->{original_url});
+# 	    $writer->endTag('Url');
+
+# 	    $writer->startTag('Snippet');
+# 	    $writer->characters($d->{snippet});
+# 	    $writer->endTag('Snippet');
+	    
+# 	    $writer->startTag('Cache');
+# 	    $writer->startTag('Url');
+# 	    $writer->characters(&get_cache_location($d->{did}, $uri_escaped_query));
+# 	    $writer->endTag('Url');
+# 	    $writer->startTag('Size');
+# 	    $writer->characters(&get_cache_size($d->{did}));
+# 	    $writer->endTag('Size');
+# 	    $writer->endTag('Cache');
+	    
+# 	    $writer->endTag('Result');
+# 	}
+	
+#	$writer->endTag('ResultSet');
+#	$writer->end();
+#    }
+}
+
+# 装飾されたスニペットを生成する関数
+sub create_snippet {
+    my ($did, $query, $params) = @_;
+
+    # snippet用に重要文を抽出
+    my $sentences;
+    if ($params->{'syngraph'}) {
+# 	my $xmlpath = sprintf("%s/x%05d/%09d.xml", $SYNGRAPH_SF_PATH, $did / 10000, $did);
+# 	unless (-e "$xmlpath.gz") {
+# 	    $xmlpath = sprintf("/net2/nlpcf34/disk03/skeiji/sfs_w_syn/x%05d/%09d.xml", $did / 10000, $did);
+# 	}
+# 	$sentences = &SnippetMaker::extractSentencefromSynGraphResult($query->{keywords}, $xmlpath);
+    } else {
+	my $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $ORDINARY_SF_PATH, $did / 1000000, $did / 10000, $did);
+	unless (-e $filepath || -e "$filepath.gz") {
+	    $filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
+	}
+	$sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $filepath);
+    }
+
+    my $wordcnt = 0;
+    my %snippets = ();
+    # スコアの高い順に処理
+    foreach my $sentence (sort {$b->{score} <=> $a->{score}} @{$sentences}) {
+	my $sid = $sentence->{sid};
+	for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
+	    $snippets{$sid} .= $sentence->{surfs}[$i];
+	    $wordcnt++;
+
+	    # スニペットが N 単語を超えた終了
+	    if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET) {
+		$snippets{$sid} .= " ...";
+		last;
+	    }
+	}
+	# ★ 多重 foreach の脱出に label をつかう
+	last if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET);
+    }
+
+    my $snippet;
+    my $prev_sid = -1;
+    foreach my $sid (sort {$a <=> $b} keys %snippets) {
+	if ($sid - $prev_sid > 1 && $prev_sid > -1) {
+	    $snippet .= " ... " unless ($snippet =~ /\.\.\.$/);
+	}
+	$snippet .= $snippets{$sid};
+	$prev_sid = $sid;
+    }
+
+    $snippet =~ s/S\-ID:\d+//g;
+    $snippet = encode('utf8', $snippet) if (utf8::is_utf8($snippet));
+
+    return $snippet;
+}
+
+sub print_search_result {
+    my ($params, $result, $query, $from, $end, $hitcount) = @_;
+
+    my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
+    $writer->xmlDecl('utf-8');
+    $writer->startTag('ResultSet', time => $timestamp, query => $params->{'query'}, 
+		      totalResultsAvailable => $hitcount, 
+		      totalResultsReturned => $end - $from, 
+		      firstResultPosition => $params->{'start'},
+		      logicalOperator => $params->{'logical_operator'},
+		      forceDpnd => $params->{'force_dpnd'},
+		      dpnd => $params->{'dpnd'},
+		      filterSimpages => $params->{'filter_simpages'}
+	);
+
+    for (my $rank = $from; $rank < $end; $rank++) {
+	my $did = sprintf("%09d", $result->[$rank]{did});
+	my $url = $result->[$rank]{url};
+	my $score = $result->[$rank]{score};
+	my $title = $result->[$rank]{title};
+	
+	# 装飾されたスニペッツの生成
+	my $snippet = ($params{no_snippets} < 1) ? &create_snippet($did, $query, $params) : '';
+
+	$writer->startTag('Result', Rank => $rank + 1, Id => $did, Score => sprintf("%.5f", $score));
+	$writer->startTag('Title');
+
+	$title =~ s/\x09//g;
+	$title =~ s/\x0a//g;
+	$title =~ s/\x0b//g;
+	$title =~ s/\x0c//g;
+	$title =~ s/\x0d//g;
+
+	$writer->characters($title);
+	$writer->endTag('Title');
+	    
+	$writer->startTag('Url');
+	$writer->characters($url);
+	$writer->endTag('Url');
+
+	$writer->startTag('Snippet');
+	$writer->characters($snippet);
+	$writer->endTag('Snippet');
+	    
+	$writer->startTag('Cache');
+	$writer->startTag('Url');
+	$writer->characters(&get_cache_location($did, $uri_escaped_query));
+	$writer->endTag('Url');
+	$writer->startTag('Size');
+	$writer->characters(&get_cache_size($did));
+	$writer->endTag('Size');
+	$writer->endTag('Cache');
+
+	$writer->endTag('Result');
+    }
+    $writer->endTag('ResultSet');
+    $writer->end();
+}
+
+sub merge_search_results {
+    my ($results, $size) = @_;
+
+    my $max = 0;
+    my @merged_result;
+    my $pos = 0;
+    my %url2pos = ();
+    my $prev = undef;
+    while (scalar(@merged_result) < $size) {
+	my $flag = 0;
+	for (my $i = 0; $i < scalar(@{$results}); $i++) {
+	    next unless (defined $results->[$i][0]{score});
+	    $flag = 1;
+	    if ($results->[$max][0]{score} < $results->[$i][0]{score}) {
+		$max = $i;
+	    } elsif ($results->[$max][0]{score} == $results->[$i][0]{score}) {
+		$max = $i if ($results->[$max][0]{did} < $results->[$i][0]{did});
+	    }
+	}
+	last if ($flag < 1);
+
+	my $did = sprintf("%09d", $results->[$max][0]{did});
+	# タイトルの取得
+	my $title = &get_title($did);
+	# URL の取得
+	my $url = &get_url($did);
+	my $url_mod = &get_normalized_url($url);
+
+	$results->[$max][0]{title} = $title;
+	$results->[$max][0]{url} = $url;
+
+	my $p = $url2pos{$url_mod};
+	if (defined $p) {
+	    push(@{$merged_result[$p]->{similar_pages}}, shift(@{$results->[$max]}));
+	} else {
+	    if (defined $prev && $prev->{title} eq $title &&
+		$prev->{score} - $results->[$max][0]{score} < 0.05) {
+		push(@{$merged_result[$pos - 1]->{similar_pages}}, shift(@{$results->[$max]}));
+		$url2pos{$url_mod} = $pos - 1;
+		$prev->{score} = $results->[$max][0]{score};
+	    } else {
+		$prev->{title} = $title;
+		$prev->{score} = $results->[$max][0]{score};
+		$merged_result[$pos] = shift(@{$results->[$max]});
+		$url2pos{$url_mod} = $pos++;
+	    }
+	}
+    }
+
+    # DB の untie
+    foreach my $k (keys %titledbs){
+	untie %{$titledbs{$k}};
+    }
+    foreach my $k (keys %urldbs){
+	untie %{$urldbs{$k}};
+    }
+
+    return \@merged_result;
+}
+
+# URLの正規化
+sub get_normalized_url {
+    my ($url) = @_;
+    my $url_mod = $url;
+    $url_mod =~ s/\d+/0/g;
+    $url_mod =~ s/\/+/\//g;
+
+    my ($proto, $host, @dirpaths) = split('/', $url_mod);
+    my $dirpath_mod;
+    for (my $i = 0; $i < 2; $i++) {
+	$dirpath_mod .= "/$dirpaths[$i]";
+    }
+
+    return uc("$host/$dirpath_mod");
 }
 
 sub get_results_specified_num {
     my ($result, $start, $until, $query) = @_;
     my @ret = ();
 
-    my %urldbs = ();
-    my $dbfp = "/var/www/cgi-bin/dbs/title.cdb";
-    tie my %titledb, 'CDB_File', $dbfp or die "$0: can't tie to $dbfp $!\n";
-
     my $prev_page = undef;
     for (my $i = $start; $i < $until; $i++) {
-	my $id = $result->[$i]{did};
-	my $url;
-	my $idtmp = sprintf("%08d", $id);
-	$idtmp =~ /(\d\d)\d\d\d\d\d\d$/;
-	if(exists($urldbs{$1})){
-	    $url = $urldbs{$1}->{$idtmp};
-	}else{
-	    my $urldbfp = "/var/www/cgi-bin/dbs/$1.url.cdb";
-	    tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
-	    $urldbs{$1} = \%urldb;
-	    $url = $urldb{$idtmp};
-	}
-
- 	my $title;
-	$title = decode('euc-jp', $titledb{$idtmp}) if(exists($titledb{$idtmp}));
-
-	$result->[$i]->{title} = $title;
-	$result->[$i]->{original_url} = $url;
+	my $did = sprintf("%09d", $result->[$i]{did});
+	# タイトルの取得
+	$result->[$i]->{title} = &get_title($did);
+	# URL の取得
+	$result->[$i]->{original_url} = &get_url($did);
 
 	my $snippet = '';
 	my %words = ();
 	my $length = 0;
  	if ($params{no_snippets} < 1) {
- 	    my $filepath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $id / 10000, $id);
+ 	    my $filepath = sprintf("/net/nlpcf2/export2/skeiji/data/xmls/x%04d/%08d.xml", $did / 10000, $did);
  	    unless (-e $filepath || -e "$filepath.gz") {
- 		$filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $id / 1000000, $id / 10000, $id);
+ 		$filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
  	    }
 
  	    ## snippet用に重要文を抽出
@@ -428,10 +595,14 @@ sub get_results_specified_num {
 	push(@ret, $result->[$i]);
     }
     
+    # DB の untie
+    foreach my $k (keys %titledbs){
+	untie %{$titledbs{$k}};
+    }
     foreach my $k (keys %urldbs){
 	untie %{$urldbs{$k}};
     }
-    untie %titledb;
+
     return \@ret;
 }
 
@@ -606,6 +777,42 @@ sub get_file_info {
 #     push(@results,$hitcount);
 #     return \@results;
 # }
+
+sub get_title {
+    my ($did) = @_;
+
+    # タイトルの取得
+    my $did_prefix = sprintf("%03d", $did / 1000000);
+    my $title = $titledbs{$did_prefix}->{$did};
+    unless (defined($title)) {
+	my $titledbfp = "$TITLE_DB_PATH/$did_prefix.title.cdb";
+	tie my %titledb, 'CDB_File', "$titledbfp" or die "$0: can't tie to $titledbfp $!\n";
+	$titledbs{$did_prefix} = \%titledb;
+	$title = $titledb{$did};
+    }
+
+    if ($title eq '') {
+	return 'no title.';
+    } else {
+	return $title;
+    }
+}
+
+sub get_url {
+    my ($did) = @_;
+
+    # URL の取得
+    my $did_prefix = sprintf("%03d", $did / 1000000);
+    my $url = $urldbs{$did_prefix}->{$did};
+    unless (defined($url)) {
+	my $urldbfp = "$URL_DB_PATH/$did_prefix.url.cdb";
+	tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
+	$urldbs{$did_prefix} = \%urldb;
+	$url = $urldb{$did};
+    }
+
+    return $url;
+}
 
 sub decodeResult{
     my($result_str) = @_;
