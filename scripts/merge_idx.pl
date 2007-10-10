@@ -17,19 +17,17 @@ my (%opt); GetOptions(\%opt, 'dir=s', 'suffix=s', 'n=s');
 my %freq;
 my $fcnt = 0;
 
+$opt{suffix} = 'idx' unless $opt{suffix};
+
 # ディレクトリが指定された場合
 if ($opt{dir}) {
 
     # データのあるディレクトリを開く
-    opendir (DIR, $opt{dir});
+    opendir (DIR, $opt{dir}) or die;
 
     foreach my $file (sort {$a <=> $b} readdir(DIR)) {
-	# .idxファイルが対象
-	if($opt{suffix}){
-	    next if($file !~ /.+\.$opt{suffix}$/);
-	}else{
-	    next if ($file !~ /.+\.idx$/);
-	}
+	# 拡張子が$opt{suffix}(デフォルトidx)であるファイルが対象
+	next if($file !~ /.+\.$opt{suffix}$/);
 
 	print STDERR "\r($fcnt)" if($fcnt%113 == 0);
 	$fcnt++;
@@ -44,7 +42,7 @@ if ($opt{dir}) {
 	if (defined($opt{n})) {
 	    if ($fcnt % $opt{n} == 0) {
 		my $fname = sprintf("$opt{dir}.%d.%d.%s", $fcnt/$opt{n}, $$, $opt{suffix});
-		open(WRITER, "> $fname");
+		open(WRITER, "> $fname") or die;
 		foreach my $k (sort {$a cmp $b} keys %freq) {
 		    my $k_utf8 = encode('utf8', $k);
 		    print WRITER "$k_utf8 $freq{$k}\n";
@@ -70,7 +68,7 @@ if (defined($opt{n})) {
     my $size = scalar(keys %freq);
     if ($size > 0) {
 	my $fname = sprintf("$opt{dir}.%d.%d.%s", 1 + $fcnt/$opt{n}, $$, $opt{suffix});
-	open(WRITER, "> $fname");
+	open(WRITER, "> $fname") or die;
 	foreach my $k (sort {$a cmp $b} keys %freq) {
 	    my $k_utf8 = encode('utf8', $k);
 	    print WRITER "$k_utf8 $freq{$k}\n";
