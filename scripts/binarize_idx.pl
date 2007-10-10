@@ -28,6 +28,7 @@ sub main {
     } else {
 	# 引数として*.idxファイルをとる
 	my $DIR = $1;
+	$DIR = '.' unless $DIR; # カレントディレクトリにあるファイルの場合、$DIRが空になるので、'.'を入れる
 	my $NAME = $2;
 
 	my $lcnt = 0;
