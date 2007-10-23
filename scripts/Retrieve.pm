@@ -42,7 +42,7 @@ sub new {
     opendir(DIR, $dir) or die "$dir: $!\n";
     for my $d (sort readdir(DIR)) {
 	# idx*.datというファイルを読み込む
-	next unless($d =~ /idx(\d+).$type.dat$/);
+	next unless($d =~ /idx(.+?).$type.dat$/);
 	my $NAME = $1;
 
 	## OFFSET(offset*.dat)を読み込み専用でtie
@@ -54,7 +54,7 @@ sub new {
 	}
 
 	# idx*.datというファイルを読み込む
-	next if $d !~ /idx(\d+).$this->{TYPE}.dat$/;
+	next if $d !~ /idx(.+?).$this->{TYPE}.dat$/;
 	my $id = $1;
 
 	# ファイル(idx*.dat)をオープンする
