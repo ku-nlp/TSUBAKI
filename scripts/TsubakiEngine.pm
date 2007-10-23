@@ -2,28 +2,48 @@ package TsubakiEngine;
 
 # $Id$
 
+############################################################################
+# 検索の流れを管理する（抽象）クラス
+# ユーザはこのクラスを継承し以下のメソッドをオーバーライドしなくてはならない
+#
+# sub merge_docs : 検索条件にマッチした文書をスコアリングするメソッド
+# sub merge_search_result : 配列の配列をマージして単一の配列にするメソッド
+############################################################################
+
 use strict;
-use IO::Socket;
 use Retrieve;
-use Indexer qw(makeIndexfromKnpResult makeIndexfromJumanResult);
 use Encode qw(from_to encode decode);
-use URI::Escape;
-use Storable qw(store retrieve);
 use utf8;
-use Data::Dumper;
 use OKAPI;
 use Devel::Size qw/size total_size/;
 
 
+##################################################################
+# ★抽象メソッド一覧★
+# サブクラスは以下の抽象メソッドをオーバーライドしなくてはならない
+##################################################################
 
+# 検索条件にマッチした文書をスコアリングする抽象メソッド
+# サブクラスでオーバーライドする必要有
+sub merge_docs { die "The method `merge_docs' is not overridden." }
+
+# 配列の配列を受け取り OR をとる抽象メソッド (配列の配列をマージして単一の配列にする)
+# サブクラスでオーバーライドする必要有
+sub merge_search_result { die "The method `merge_search_result' is not overridden." }
+
+
+
+################
 # コンストラクタ
+################
+
 sub new {
     my ($class, $opts) = @_;
 
     my $start_time = Time::HiRes::time;
     my $this = {
-	word_retriever => new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed}),
-	dpnd_retriever => new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed}),
+	word_retriever => undef,
+	dpnd_retriever => undef,
 	DOC_LENGTH_DBs => $opts->{doc_length_dbs},
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
@@ -70,7 +90,7 @@ sub search {
     }
 
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map});
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid});
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
@@ -111,165 +131,6 @@ sub retrieve_from_dat {
     }
 
     return $ret;
-}
-
-# 文書のスコアリング
-sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map) = @_;
-
-    my $start_time = Time::HiRes::time;
-
-    my $pos = 0;
-    my %did2pos = ();
-    my @merged_docs = ();
-    my %d_length_buff = ();
-    # 検索キーワードごとに区切る
-    foreach my $docs_word (@{$alldocs_words}) {
-	foreach my $doc (@{$docs_word}) {
-	    my $i;
-	    my $did = $doc->{did};
-	    if (exists($did2pos{$did})) {
-		$i = $did2pos{$did};
-	    } else {
-		$i = $pos;
-		$merged_docs[$pos] = {did => $did, word_score => 0, dpnd_score => {}, near_score => {}};
-		$did2pos{$did} = $pos;
-		$pos++;
-	    }
-
-	    my %qid2poslist = ();
-	    if (defined($cal_method)) {
-		foreach my $qid_freq (@{$doc->{qid_freq}}) {
-		    my $tf = $qid_freq->{freq};
-		    my $qid = $qid_freq->{qid};
-		    my $df = $qid2df->{$qid};
-		    my $qtf = $qid2qtf->{$qid};
-		    my $dlength = $d_length_buff{$did};
-
-		    unless (defined($dlength)) {
-			foreach my $db (@{$this->{DOC_LENGTH_DBs}}) {
-			    # 小規模なテスト用にdlengthのDBをハッシュでもつオプション
-			    if ($this->{dlengthdb_hash}) {
-				$dlength = $db->{$did};
-				if (defined $dlength) {
-				    $d_length_buff{$did} = $dlength;
-				    last;
-				}
-			    }
-			    else {
-				$dlength = $db->{$did};
-				if (defined($dlength)) {
-				    $d_length_buff{$did} = $dlength;
-				    last;
-				}
-			    }
-			}
-		    }
-
-		    # 関数化するよりも高速
-		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
-		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-		    my $score = $tff * $idf;
-		    $qid2poslist{$qid} = $qid_freq->{pos};
-
-		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
-
-		    $merged_docs[$i]->{word_score} += $score * $qtf;
-		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
-		}
-
-		foreach my $qid (keys %$dpnd_map) {
-		    foreach my $e (@{$dpnd_map->{$qid}}) {
-			my $dpnd_qid = $e->{dpnd_qid};
-			my $kakarisaki_qid = $e->{kakarisaki_qid};
-			my $dlength = $d_length_buff{$did};
-
-			my $dist = &get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
-			if ($dist > 30) {
-			    $merged_docs[$i]->{near_score}{$dpnd_qid} = 0;
-			} else {
-			    my $tf = (30 - $dist) / 30;
-			    my $df = $qid2df->{$dpnd_qid};
-			    my $qtf = $qid2qtf->{$dpnd_qid};
-
-			    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
-			    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-			    my $score = $qtf * $tff * $idf;
-
-			    $merged_docs[$i]->{near_score}{$dpnd_qid} = $score;
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-    unless (defined($cal_method)) {
-	my $finish_time = Time::HiRes::time;
-	my $conduct_time = $finish_time - $start_time;
-	if ($this->{show_speed}) {
-	    printf ("@@@ %.4f sec. doclist merging.\n", $conduct_time);
-	}
-	return \@merged_docs;
-    }
-
-    foreach my $docs_dpnd (@{$alldocs_dpnds}) {
-	foreach my $doc (@{$docs_dpnd}) {
-	    my $did = $doc->{did};
-	    if (exists($did2pos{$did})) {
-		my $i = $did2pos{$did};
-		foreach my $qid_freq (@{$doc->{qid_freq}}) {
-		    my $tf = $qid_freq->{freq};
-		    my $qid = $qid_freq->{qid};
-		    my $df = $qid2df->{$qid};
-		    my $qtf = $qid2qtf->{$qid};
-		    my $dlength = $d_length_buff{$did};
-
-		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
-		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-		    my $score = $tff * $idf;
-		    $score *= $this->{WEIGHT_DPND_SCORE};
-
-		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
-
-		    $merged_docs[$i]->{dpnd_score}{$qid} = $score * $qtf;
-#		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if ($this->{store_verbose});
-		}
-	    }
-	}
-    }
-
-    my @result;
-    foreach my $e (@merged_docs) {
-	my $score = $e->{word_score};
-	while (my ($qid, $score_of_qid) = each(%{$e->{near_score}})) {
-	    if ($e->{dpnd_score}{$qid} == 0) {
-		$score += $score_of_qid;
-	    } else {
-		$score += $e->{dpnd_score}{$qid};
-	    }
-
-	    printf ("did=%09d qid=%02d w=%.3f d=%.3f n=%.3f total=%.3f\n", $e->{did}, $qid, $e->{word_score}, $e->{dpnd_score}{$qid}, $score_of_qid, $score) if ($this->{verbose});
-	}
-	print "-----\n" if ($this->{verbose});
-
-	push(@result, {did => $e->{did},
-		       score_total => $score,
-		       score_word => $e->{score_word},
-		       score_dpnd => $e->{score_dpnd},
-		       score_dist => $e->{score_dist}
-	     });
-    }
-
-    @result = sort {$b->{score_total} <=> $a->{score_total}} @result;
-
-    my $finish_time = Time::HiRes::time;
-    my $conduct_time = $finish_time - $start_time;
-    if ($this->{show_speed}) {
-	printf ("@@@ %.4f sec. doc_list merging.\n", $conduct_time);
-    }
-
-    return \@result;
 }
 
 sub get_minimum_distance {
@@ -428,51 +289,6 @@ sub serialize {
     return $serialized_docs;
 }
 
-# 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
-sub merge_search_result {
-    my ($this, $docs_list, $idx2qid) = @_;
-
-    my $start_time = Time::HiRes::time;
-
-    my $serialized_docs = [];
-    my $pos = 0;
-    my %did2pos = ();
-    for(my $i = 0; $i < scalar(@{$docs_list}); $i++) {
-	my $qid = $idx2qid->{$i};
-	foreach my $d (@{$docs_list->[$i]}) {
-	    next unless (defined($d)); # 本来なら空はないはず
-
-	    my $did = $d->[0];
-	    my $freq = $d->[1];
-	    my $poss = $d->[2];
-	    if (exists($did2pos{$did})) {
-		my $j = $did2pos{$did};
-		if (defined($poss)) {
-		    push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq, pos => $poss});
-		} else {
-		    push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq});
-		}
-	    } else {
-		if (defined($poss)) {
-		    $serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq, pos => $poss}]};
-		} else {
-		    $serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq}]};
-		}
-		$did2pos{$did} = $pos;
-		$pos++;
-	    }
-	}
-    }
-    @{$serialized_docs} = sort {$a->{did} <=> $b->{did}} @{$serialized_docs};
-
-    my $finish_time = Time::HiRes::time;
-    my $conduct_time = $finish_time - $start_time;
-    if ($this->{show_speed}) {
-	printf ("@@@ %.4f sec. doclist serializing (2).\n", $conduct_time);
-    }
-
-    return $serialized_docs;
-}
 
 # 配列の配列を受け取り、各配列間の共通要素をとる
 sub intersect {
