@@ -21,7 +21,6 @@ sub new {
     my ($class, $opts) = @_;
 
     my $start_time = Time::HiRes::time;
-
     my $this = {
 	word_retriever => new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed}),
 	dpnd_retriever => new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed}),
@@ -60,19 +59,18 @@ sub search {
     my ($this, $query, $qid2df) = @_;
 
     my $start_time = Time::HiRes::time;
-
     # 検索
     my ($alldocs_word, $alldocs_dpnd) = $this->retrieve_documents($query);
     
     my $cal_method;
-    if ($query->{only_hitcount}) {
+    if ($query->{only_hitcount} > 0) {
 	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない
     } else {
 	$cal_method = new OKAPI($this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS}, $this->{verbose});
     }
 
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf});
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map});
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
@@ -117,7 +115,7 @@ sub retrieve_from_dat {
 
 # 文書のスコアリング
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -125,7 +123,6 @@ sub merge_docs {
     my %did2pos = ();
     my @merged_docs = ();
     my %d_length_buff = ();
-
     # 検索キーワードごとに区切る
     foreach my $docs_word (@{$alldocs_words}) {
 	foreach my $doc (@{$docs_word}) {
@@ -135,11 +132,12 @@ sub merge_docs {
 		$i = $did2pos{$did};
 	    } else {
 		$i = $pos;
-		$merged_docs[$pos] = {did => $did, score => 0};
+		$merged_docs[$pos] = {did => $did, word_score => 0, dpnd_score => {}, near_score => {}};
 		$did2pos{$did} = $pos;
 		$pos++;
 	    }
 
+	    my %qid2poslist = ();
 	    if (defined($cal_method)) {
 		foreach my $qid_freq (@{$doc->{qid_freq}}) {
 		    my $tf = $qid_freq->{freq};
@@ -168,17 +166,39 @@ sub merge_docs {
 			}
 		    }
 
-#		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
-#		    my $score = $tf * $df; #$this->calculate_score($tf, $df, $dlength, $this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS});
 		    # 関数化するよりも高速
 		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 		    my $score = $tff * $idf;
+		    $qid2poslist{$qid} = $qid_freq->{pos};
 
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
-		    $merged_docs[$i]->{score} += $score * $qtf;
+		    $merged_docs[$i]->{word_score} += $score * $qtf;
 		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
+		}
+
+		foreach my $qid (keys %$dpnd_map) {
+		    foreach my $e (@{$dpnd_map->{$qid}}) {
+			my $dpnd_qid = $e->{dpnd_qid};
+			my $kakarisaki_qid = $e->{kakarisaki_qid};
+			my $dlength = $d_length_buff{$did};
+
+			my $dist = &get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
+			if ($dist > 30) {
+			    $merged_docs[$i]->{near_score}{$dpnd_qid} = 0;
+			} else {
+			    my $tf = (30 - $dist) / 30;
+			    my $df = $qid2df->{$dpnd_qid};
+			    my $qtf = $qid2qtf->{$dpnd_qid};
+
+			    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+			    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+			    my $score = $qtf * $tff * $idf;
+
+			    $merged_docs[$i]->{near_score}{$dpnd_qid} = $score;
+			}
+		    }
 		}
 	    }
 	}
@@ -205,19 +225,43 @@ sub merge_docs {
 		    my $qtf = $qid2qtf->{$qid};
 		    my $dlength = $d_length_buff{$did};
 
-		    my $score = $cal_method->calculate_score({tf => $tf, df => $df, length => $dlength});
+		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+		    my $score = $tff * $idf;
 		    $score *= $this->{WEIGHT_DPND_SCORE};
 
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
-		    $merged_docs[$i]->{score} += $score * $qtf;
-		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if ($this->{store_verbose});
+		    $merged_docs[$i]->{dpnd_score}{$qid} = $score * $qtf;
+#		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if ($this->{store_verbose});
 		}
 	    }
 	}
     }
-    
-    @merged_docs = sort {$b->{score} <=> $a->{score}} @merged_docs;
+
+    my @result;
+    foreach my $e (@merged_docs) {
+	my $score = $e->{word_score};
+	while (my ($qid, $score_of_qid) = each(%{$e->{near_score}})) {
+	    if ($e->{dpnd_score}{$qid} == 0) {
+		$score += $score_of_qid;
+	    } else {
+		$score += $e->{dpnd_score}{$qid};
+	    }
+
+	    printf ("did=%09d qid=%02d w=%.3f d=%.3f n=%.3f total=%.3f\n", $e->{did}, $qid, $e->{word_score}, $e->{dpnd_score}{$qid}, $score_of_qid, $score) if ($this->{verbose});
+	}
+	print "-----\n" if ($this->{verbose});
+
+	push(@result, {did => $e->{did},
+		       score_total => $score,
+		       score_word => $e->{score_word},
+		       score_dpnd => $e->{score_dpnd},
+		       score_dist => $e->{score_dist}
+	     });
+    }
+
+    @result = sort {$b->{score_total} <=> $a->{score_total}} @result;
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
@@ -225,7 +269,28 @@ sub merge_docs {
 	printf ("@@@ %.4f sec. doc_list merging.\n", $conduct_time);
     }
 
-    return \@merged_docs;
+    return \@result;
+}
+
+sub get_minimum_distance {
+    my ($poslist1, $poslist2, $dlength) = @_;
+
+    my $j = 0;
+    my $min_dist = $dlength;
+    return $dlength unless (defined $poslist1 && defined $poslist2);
+
+    for (my $i = 0; $i < scalar(@{$poslist1}); $i++) {
+	while ($poslist1->[$i] > $poslist2->[$j] && $j < scalar(@{$poslist2})) {
+	    $j++;
+	}
+
+	last unless ($j < scalar(@{$poslist2}));
+
+	my $dist = $poslist2->[$j] - $poslist1->[$i];
+	$min_dist = $dist if ($min_dist > $dist);
+    }
+
+    return $min_dist;
 }
 
 sub calculate_score {
@@ -253,6 +318,7 @@ sub retrieve_documents {
 	my $docs_dpnd = [];
 	# keyword中の単語を含む文書の検索
 	# todo: AND の場合は文書頻度の低い単語から検索する
+#	foreach my $reps_of_word (sort {$a->[0]{gdf} <=> $b->[0]{gdf}} @{$keyword->{words}}) {
 	foreach my $reps_of_word (@{$keyword->{words}}) {
 	    if ($this->{verbose}) {
 		foreach my $rep_of_word (@{$reps_of_word}) {
@@ -263,14 +329,14 @@ sub retrieve_documents {
 	    }
 
 	    # バイナリファイルから文書の取得
-	    my $docs = $this->retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
-	    print $add_flag . "=aflag\n" if ($this->{verbose}) ;
-	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
+ 	    my $docs = $this->retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+ 	    print $add_flag . "=aflag\n" if ($this->{verbose}) ;
+ 	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
 
-	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
+ 	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
 
-	    # 各語について検索された結果を納めた配列に push
-	    push(@{$docs_word}, $docs);
+ 	    # 各語について検索された結果を納めた配列に push
+ 	    push(@{$docs_word}, $docs);
 	}
 
 	$add_flag = 1;
@@ -303,7 +369,8 @@ sub retrieve_documents {
 	} else {
 	    # 検索キーワード中の単語間のANDをとる
 	    $docs_word = &intersect($docs_word);
-	    $docs_dpnd = &intersect($docs_dpnd);
+	    $docs_dpnd = &intersect($docs_dpnd); # ★★★★★ intersect
+	    # ★ 整理する
 	    
 	    # 係り受け制約の適用
 	    if (scalar(@{$keyword->{dpnds}}) > 0 && $keyword->{force_dpnd} > 0) {
@@ -313,7 +380,7 @@ sub retrieve_documents {
 	    # 近接制約の適用
 	    $docs_word = &filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
 
-	    # 検索語について収集された文書をマージ
+	    # 検索キーワードについて収集された文書をマージ
 	    push(@{$alldocs_word}, &serialize($docs_word));
 	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
 	}
@@ -380,10 +447,17 @@ sub merge_search_result {
 	    my $poss = $d->[2];
 	    if (exists($did2pos{$did})) {
 		my $j = $did2pos{$did};
-		push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq});
+		if (defined($poss)) {
+		    push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq, pos => $poss});
+		} else {
+		    push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq});
+		}
 	    } else {
-		$serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq}]};
-		$serialized_docs->[$pos]->{pos} = $poss if (defined($poss));
+		if (defined($poss)) {
+		    $serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq, pos => $poss}]};
+		} else {
+		    $serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq}]};
+		}
 		$did2pos{$did} = $pos;
 		$pos++;
 	    }
@@ -477,15 +551,32 @@ sub filter_by_NEAR_constraint {
     @{$docs} = sort{$a->[0]{qid_freq}[0]->{qid} <=> $b->[0]{qid_freq}[0]->{qid}} @{$docs};
 
     for (my $d = 0; $d < scalar(@{$docs->[0]}); $d++) {
+	my $did = $docs->[0][$d]->{did};
 	my @poslist = ();
 	# クエリ中の単語の出現位置リストを作成
 	for (my $q = 0; $q < scalar(@{$docs}); $q++) {
-	    foreach my $p (@{$docs->[$q][$d]->{pos}}) {
-		push(@{$poslist[$q]}, $p);
+	    my $qid_freq_size = scalar(@{$docs->[$q][$d]->{qid_freq}});
+	    if ($qid_freq_size < 2) {
+		foreach my $p (@{$docs->[$q][$d]->{qid_freq}[0]{pos}}) {
+		    push(@{$poslist[$q]}, $p);
+		}
+	    } else {
+		my %buff = ();
+		for (my $j = 0; $j < $qid_freq_size; $j++) {
+		    foreach my $p (@{$docs->[$q][$d]->{qid_freq}[$j]{pos}}) {
+			$buff{$p} = 1;
+		    }
+		}
+		foreach my $p (keys %buff) {
+		    push(@{$poslist[$q]}, $p);
+		}
 	    }
 	}
 
-	while (scalar(@{$poslist[0]}) > 0) {
+	###########################################################
+	# Binarizer.pm のバグのため position がないものはスキップ #
+	###########################################################
+	while (defined $poslist[0] && scalar(@{$poslist[0]}) > 0) {
 	    my $flag = 0;
 	    my $pos = shift(@{$poslist[0]}); # クエリ中の先頭の単語の出現位置
 	    my $distance_history = 0; # 各単語間の距離の総和
@@ -509,6 +600,7 @@ sub filter_by_NEAR_constraint {
 			    last;
 			}
 		    } else {
+#			print "$pos < $poslist[$q]->[0] && $poslist[$q]->[0] < ", ($pos + $near - $distance_history) . "\n";
 			if ($pos < $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near - $distance_history) {
 			    $distance_history += ($poslist[$q]->[0] - $pos);
 			    $flag = 0;
