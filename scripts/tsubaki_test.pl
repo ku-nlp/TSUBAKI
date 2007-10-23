@@ -37,9 +37,9 @@ sub init {
 	
 	my $fp = "$opt{dfdbdir}/$cdbf";
 	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-	if (index($cdbf, 'dpnd') > 0) {
+	if (index($cdbf, 'dpnd') > -1) {
 	    push(@DF_DPND_DBs, \%dfdb);
-	} elsif (index($cdbf, 'word') > 0) {
+	} elsif (index($cdbf, 'word') > -1) {
 	    push(@DF_WORD_DBs, \%dfdb);
 	}
     }
@@ -81,7 +81,7 @@ sub main {
     my $q_parser = new QueryParser({
 	KNP_PATH => "$ENV{HOME}/local/bin",
 	JUMAN_PATH => "$ENV{HOME}/local/bin",
-#	SYNDB_PATH => "$ENV{HOME}/cvs/SynGraph/syndb/i686",
+#	SYNDB_PATH => "$ENV{HOME}/tmp/SynGraph/syndb/i686",
 	SYNDB_PATH => "$ENV{HOME}/cvs/SearchEngine/scripts/tmp/SearchEngine/scripts/tmp/SynGraph/syndb/i686",
 	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'],
 	SYNGRAPH_OPTION => $syngraph_option,
@@ -104,21 +104,22 @@ sub main {
 	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n" if ($opt{verbose});
     }
 
-    my $tsubaki = new TsubakiEngine({idxdir => $opt{idxdir},
-				     dlengthdbdir => $opt{dlengthdbdir},
-				     skip_pos => $opt{skippos},
-				     verbose => $opt{verbose},
-				     average_doc_length => $AVE_DOC_LENGTH,
-				     doc_length_dbs => \@DOC_LENGTH_DBs,
-				     total_number_of_docs => $N,
-				     weight_dpnd_score => $opt{weight_dpnd_score},
-				     show_speed => $opt{show_speed}});
+    my $tsubaki = new TsubakiEngine({
+	idxdir => $opt{idxdir},
+	dlengthdbdir => $opt{dlengthdbdir},
+	skip_pos => $opt{skippos},
+	verbose => $opt{verbose},
+	average_doc_length => $AVE_DOC_LENGTH,
+	doc_length_dbs => \@DOC_LENGTH_DBs,
+	total_number_of_docs => $N,
+	weight_dpnd_score => $opt{weight_dpnd_score},
+	show_speed => $opt{show_speed}});
     
     my $docs = $tsubaki->search($query, \%qid2df);
     my $hitcount = scalar(@{$docs});
 
     for (my $rank = 0; $rank < scalar(@{$docs}); $rank++) {
-	printf("rank=%d did=%08d score=%f\n", $rank + 1, $docs->[$rank]{did}, $docs->[$rank]{score});
+	printf("rank=%d did=%09d score=%f\n", $rank + 1, $docs->[$rank]{did}, $docs->[$rank]{score});
     }
     print "hitcount=$hitcount\n";
 }
