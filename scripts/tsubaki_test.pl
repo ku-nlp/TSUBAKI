@@ -22,12 +22,14 @@ if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $o
 
 my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
-my @DOC_LENGTH_DBs = ();
 
-my $N = 51000000; # 全文書数
-my $AVE_DOC_LENGTH = 871.925373263118; # 平均文書長
-
-&main();
+######################################################################
+my $N = 100132750;
+my $AVE_DOC_LENGTH = 907.077;
+# my $N = 51000000;
+# my $AVE_DOC_LENGTH = 871.925373263118;
+# my $AVE_DOC_LENGTH = 483.852649424932;
+######################################################################
 
 sub init {
     my $start_time = Time::HiRes::time;
@@ -44,33 +46,35 @@ sub init {
 	}
     }
     closedir(DIR);
-
-    opendir(DIR, $opt{dlengthdbdir});
-    foreach my $dbf (readdir(DIR)) {
-	next unless ($dbf =~ /doc_length\.bin/);
-    
-	my $fp = "$opt{dlengthdbdir}/$dbf";
-	
-	my $dlength_db;
-	# 小規模なテスト用にdlengthのDBをハッシュでもつオプション
-	if ($opt{dlengthdb_hash}) {
-	    require CDB_File;
-	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-	}
-	else {
-	    $dlength_db = retrieve($fp) or die;
-	}
-	
-	push(@DOC_LENGTH_DBs, $dlength_db);
-    }
-    closedir(DIR);
-
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
     if ($opt{show_speed}) {
 	printf ("@@@ %.4f sec. dfdb loading.\n", $conduct_time);
     }
 }
+
+my @DOC_LENGTH_DBs;
+opendir(DIR, $opt{dlengthdbdir});
+foreach my $dbf (readdir(DIR)) {
+    next unless ($dbf =~ /doc_length\.bin/);
+    
+    my $fp = "$opt{dlengthdbdir}/$dbf";
+    
+    my $dlength_db;
+    # 小規模なテスト用にdlengthのDBをハッシュでもつオプション
+    if ($opt{dlengthdb_hash}) {
+	require CDB_File;
+	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+    }
+    else {
+	$dlength_db = retrieve($fp) or die;
+    }
+    
+    push(@DOC_LENGTH_DBs, $dlength_db);
+}
+closedir(DIR);
+
+&main();
 
 sub main {
     &init();
@@ -103,7 +107,7 @@ sub main {
 	$qid2df{$qid} = $df;
 	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n" if ($opt{verbose});
     }
-
+    
     my $tsubaki = new TsubakiEngine({
 	idxdir => $opt{idxdir},
 	dlengthdbdir => $opt{dlengthdbdir},
@@ -119,23 +123,21 @@ sub main {
     my $hitcount = scalar(@{$docs});
 
     for (my $rank = 0; $rank < scalar(@{$docs}); $rank++) {
-	printf("rank=%d did=%09d score=%f\n", $rank + 1, $docs->[$rank]{did}, $docs->[$rank]{score});
+	printf("rank=%d did=%09d score=%f\n", $rank + 1, $docs->[$rank]{did}, $docs->[$rank]{score_total});
     }
     print "hitcount=$hitcount\n";
 }
 
-# 文書頻度をDBから読み込む
 sub get_DF {
     my ($k) = @_;
+
     my $start_time = Time::HiRes::time;
     my $k_utf8 = encode('utf8', $k);
     my $gdf = -1;
     my $DFDBs = (index($k, '->') > 0) ? \@DF_DPND_DBs : \@DF_WORD_DBs;
     foreach my $dfdb (@{$DFDBs}) {
- 	if (exists($dfdb->{$k_utf8})) {
- 	    $gdf = $dfdb->{$k_utf8};
- 	    last;
- 	}
+	$gdf = $dfdb->{$k_utf8};
+	last if (defined $gdf);
     }
 
     my $finish_time = Time::HiRes::time;
@@ -143,6 +145,5 @@ sub get_DF {
     if ($opt{show_speed}) {
 	printf ("@@@ %.4f sec. df value loading (key=%s).\n", $conduct_time, encode('euc-jp', $k));
     }
-
     return $gdf;
 }
