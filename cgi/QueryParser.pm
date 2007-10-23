@@ -1,6 +1,6 @@
 package QueryParser;
 
-#$id$
+# $id:$
 
 # 検索クエリを内部形式に変換するクラス
 
@@ -69,6 +69,7 @@ sub parse {
 	if ($q_str =~ /^"(.+)?"$/){
 	    $phrasal_flag = 1;
 	    $q_str = $1;
+	    $near = 1;
 
 	    # 同義表現を考慮したフレーズ検索はできない
 	    if ($opt->{syngraph} > 0) {
@@ -82,8 +83,12 @@ sub parse {
 
 	# 近接検索かどうかの判定
 	if ($q_str =~ /^(.+)?~(.+)$/){
+	    $q_str = $1;
+	    # 検索制約の取得
+	    my $constraint_tag = $2;
+
 	    # 同義表現を考慮した場合は近接制約を指定できない
-	    if ($opt->{syngraph} > 0) {
+	    if ($opt->{syngraph} > 0 && $constraint_tag !~ /OR|AND/) {
 		print "<center>同義表現を考慮した近接検索は実行できません。</center></DIV>\n";
 		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
 		print "</body>\n";
@@ -91,9 +96,6 @@ sub parse {
 		exit;
 	    }
 
-	    $q_str = $1;
-	    # 検索制約の取得
-	    my $constraint_tag = $2;
 	    if ($constraint_tag =~ /^(\d+)(W|S)$/) {
 		# 近接制約
 		$logical_cond_qkw = 'AND';
