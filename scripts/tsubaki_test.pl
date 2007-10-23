@@ -6,9 +6,8 @@ use strict;
 use utf8;
 use Encode;
 use Getopt::Long;
-use Storable;
 use QueryParser;
-use TsubakiEngine;
+use TsubakiEngineFactory;
 use Time::HiRes;
 
 my (%opt);
@@ -22,14 +21,6 @@ if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $o
 
 my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
-
-######################################################################
-my $N = 100132750;
-my $AVE_DOC_LENGTH = 907.077;
-# my $N = 51000000;
-# my $AVE_DOC_LENGTH = 871.925373263118;
-# my $AVE_DOC_LENGTH = 483.852649424932;
-######################################################################
 
 sub init {
     my $start_time = Time::HiRes::time;
@@ -53,27 +44,6 @@ sub init {
     }
 }
 
-my @DOC_LENGTH_DBs;
-opendir(DIR, $opt{dlengthdbdir});
-foreach my $dbf (readdir(DIR)) {
-    next unless ($dbf =~ /doc_length\.bin/);
-    
-    my $fp = "$opt{dlengthdbdir}/$dbf";
-    
-    my $dlength_db;
-    # 小規模なテスト用にdlengthのDBをハッシュでもつオプション
-    if ($opt{dlengthdb_hash}) {
-	require CDB_File;
-	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-    }
-    else {
-	$dlength_db = retrieve($fp) or die;
-    }
-    
-    push(@DOC_LENGTH_DBs, $dlength_db);
-}
-closedir(DIR);
-
 &main();
 
 sub main {
@@ -85,8 +55,8 @@ sub main {
     my $q_parser = new QueryParser({
 	KNP_PATH => "$ENV{HOME}/local/bin",
 	JUMAN_PATH => "$ENV{HOME}/local/bin",
-#	SYNDB_PATH => "$ENV{HOME}/tmp/SynGraph/syndb/i686",
-	SYNDB_PATH => "$ENV{HOME}/cvs/SearchEngine/scripts/tmp/SearchEngine/scripts/tmp/SynGraph/syndb/i686",
+	SYNDB_PATH => "$ENV{HOME}/tmp/SynGraph/syndb/i686",
+#	SYNDB_PATH => "$ENV{HOME}/cvs/SearchEngine/scripts/tmp/SearchEngine/scripts/tmp/SynGraph/syndb/i686",
 	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'],
 	SYNGRAPH_OPTION => $syngraph_option,
 	SHOW_SPEED => $opt{show_speed}
@@ -107,18 +77,10 @@ sub main {
 	$qid2df{$qid} = $df;
 	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n" if ($opt{verbose});
     }
-    
-    my $tsubaki = new TsubakiEngine({
-	idxdir => $opt{idxdir},
-	dlengthdbdir => $opt{dlengthdbdir},
-	skip_pos => $opt{skippos},
-	verbose => $opt{verbose},
-	average_doc_length => $AVE_DOC_LENGTH,
-	doc_length_dbs => \@DOC_LENGTH_DBs,
-	total_number_of_docs => $N,
-	weight_dpnd_score => $opt{weight_dpnd_score},
-	show_speed => $opt{show_speed}});
-    
+
+    my $factory = new TsubakiEngineFactory(\%opt);
+    my $tsubaki = $factory->get_instance();
+
     my $docs = $tsubaki->search($query, \%qid2df);
     my $hitcount = scalar(@{$docs});
 
