@@ -22,7 +22,7 @@ my $host = `hostname`; chop($host);
 # $DEBUG = 1 if($host eq "nlpc01\n");
 
 sub new {
-    my ($class, $dir, $type, $skippos, $verbose, $show_speed) = @_;
+    my ($class, $dir, $type, $skippos, $verbose, $dpnd, $show_speed) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -34,6 +34,7 @@ sub new {
 	INDEX_DIR => $dir,
 	SKIPPOS => $skippos,
 	VERBOSE => $verbose,
+	dpnd => $dpnd,
 	SHOW_SPEED => $show_speed
     };
 
@@ -47,10 +48,12 @@ sub new {
 
 	## OFFSET(offset*.dat)を読み込み専用でtie
 	my $offset_fp = "$dir/offset$NAME.$type.cdb";
-	if(-e $offset_fp){
-	    print STDERR "$host> loading offset database ($offset_fp)...\n" if ($this->{VERBOSE});
-	    tie %{$this->{OFFSET}[$fcnt]}, 'CDB_File', $offset_fp or die "$0: can't tie to $offset_fp $!\n";
-	    print STDERR "$host> done.\n" if ($this->{VERBOSE});
+	print STDERR "$host> loading offset database ($offset_fp)...\n" if ($this->{VERBOSE});
+	tie %{$this->{OFFSET}[$fcnt][0]}, 'CDB_File', $offset_fp or die "$0: can't tie to $offset_fp $!\n";
+	my $suffix = 1;
+	while (-e "$offset_fp.$suffix") {
+	    tie %{$this->{OFFSET}[$fcnt][$suffix]}, 'CDB_File', "$offset_fp.$suffix" or die "$0: can't tie to $offset_fp.$suffix $!\n";
+	    $suffix++;
 	}
 
 	# idx*.datというファイルを読み込む
@@ -87,17 +90,22 @@ sub printLog {
     print STDERR "$host> ($q_str)\n";
 }
 
-sub search {
+sub search_syngraph {
     my($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search) = @_;
 
-#   my $start_time = 0;
     my $start_time = Time::HiRes::time;
 
+    my $offset_j = 0;
     my @docs = ();
     my $total_byte = 0;
     ## idxごとに検索
     for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
-	my $offset = $this->{OFFSET}[$f_num]->{$keyword->{string}};
+	my $offset;
+	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
+	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+	    last if (defined $offset);
+	}
+
 	# オフセットがあるかどうかのチェック
 	unless (defined($offset)) {
 	    @docs = () unless (defined(@docs));
@@ -109,7 +117,7 @@ sub search {
 	my $finish_time = Time::HiRes::time;
 	my $conduct_time = $finish_time - $first_seek_time;
 	if ($this->{SHOW_SPEED}) {
-	    printf ("@@@ %.4f sec. first seek time.\n", $conduct_time);
+	    printf ("@@@ %f sec. first seek time.\n", $conduct_time);
 	}
 	
 	my $char;
@@ -129,139 +137,27 @@ sub search {
 		my $finish_time = Time::HiRes::time;
 		my $conduct_time = $finish_time - $time_buff;
 		if ($this->{SHOW_SPEED}) {
-		    printf ("@@@ %.4f sec. reed indexed keyword from dat file.\n", $conduct_time);
+		    printf ("@@@ %f sec. reed indexed keyword from dat file.\n", $conduct_time);
 		}
 		@str = ();
 
 		$time_buff = Time::HiRes::time;
 		# 次にキーワードの文書頻度
 		read($this->{IN}[$f_num], $buf, 4);
+
 		my $ldf = unpack('L', $buf);
-		$total_byte += 4;
-
-		$finish_time = Time::HiRes::time;
-		$conduct_time = $finish_time - $time_buff;
-		if ($this->{SHOW_SPEED}) {
-		    printf ("@@@ %.4f sec. reed df value from dat file.\n", $conduct_time);
-		}
-
-		print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n" if ($this->{VERBOSE});
-
-		my $total_push_time = 0;
-		my $total_seek_time = 0;
-		my $total_reed_freq_time = 0;
-		my $total_reed_did_time = 0;
-		my $start_loop = Time::HiRes::time;
+		    
 		# 文書IDと出現頻度(tf)の取得
 		for (my $j = 0; $j < $ldf; $j++) {
 		    read($this->{IN}[$f_num], $buf, 4);
-		    $total_byte += 4;
-		    my $buff_time = Time::HiRes::time;
-		    my $did = (unpack('L', $buf) / 1);
-		    $finish_time = Time::HiRes::time;
-		    $conduct_time = $finish_time - $buff_time;
-		    $total_reed_did_time += $conduct_time;
-
-		    if (!exists($already_retrieved_docs->{$did}) && $add_flag < 1) {
-			$buff_time = Time::HiRes::time;
-			seek($this->{IN}[$f_num], 4, 1); # 出現頻度をスキップ
-			unless ($this->{SKIPPOS}) {
-			    read($this->{IN}[$f_num], $buf, 4);
-			    my $sid_size = unpack('L', $buf);
-			    seek($this->{IN}[$f_num], $sid_size * 4, 1); # 文情報をスキップ
-
-			    read($this->{IN}[$f_num], $buf, 4);
-			    $total_byte += 4;
-			    my $pos_size = unpack('L', $buf);
-			    seek($this->{IN}[$f_num], $pos_size * 4, 1); # 位置情報をスキップ
-			}
-			$finish_time = Time::HiRes::time;
-			$conduct_time = $finish_time - $buff_time;
-			$total_seek_time += $conduct_time;
-		    } else {
-			$already_retrieved_docs->{$did} = 1;
-
-			$buff_time = Time::HiRes::time;
-			read($this->{IN}[$f_num], $buf, 4);
-			$total_byte += 4;
-
-			my $freq;
-			if ($syngraph_search < 0) {
-			    $freq = unpack('f', $buf);
-			} else {
-			    $freq = unpack('L', $buf) / 10000;
-			}
-			$finish_time = Time::HiRes::time;
-			$conduct_time = $finish_time - $buff_time;
-			$total_reed_freq_time += $conduct_time;
-
-			my @sid = ();
-			my @pos = ();
-			$buff_time = Time::HiRes::time;
-			unless ($this->{SKIPPOS}) {
-			    read($this->{IN}[$f_num], $buf, 4);
-			    $total_byte += 4;
-			    my $sid_size = unpack('L', $buf);
-			    if ($no_position < 0) {
-				seek($this->{IN}[$f_num], $sid_size * 4, 1);
-				$total_byte += ($sid_size * 4);
-			    } else {
-				$total_byte += ($sid_size * 4);
-				for (my $k = 0; $k < $sid_size; $k++) {
-				    read($this->{IN}[$f_num], $buf, 4);
-				    my $s = unpack('L', $buf);
-				    push(@sid, $s);
-				}
-			    }
-
-			    read($this->{IN}[$f_num], $buf, 4);
-			    my $pos_size = unpack('L', $buf);
-			    if ($no_position < 0) {
-				seek($this->{IN}[$f_num], $pos_size * 4, 1);
-				$total_byte += ($sid_size * 4);
-			    } else {
-				$total_byte += ($sid_size * 4);
-				for (my $k = 0; $k < $pos_size; $k++) {
-				    read($this->{IN}[$f_num], $buf, 4);
-				    my $p = unpack('L', $buf);
-				    push(@pos, $p);
-				}
-			    }
-			}
-			$finish_time = Time::HiRes::time;
-			$conduct_time = $finish_time - $buff_time;
-			$total_seek_time += $conduct_time;
-
-			$buff_time = Time::HiRes::time;
-			if ($no_position < 0) {
-			    push(@docs, [$did, $freq]);
-			} else {
-			    if ($sentence_flag > 0) {
-				push(@docs, [$did, $freq, \@sid]);
-			    } else {
-				push(@docs, [$did, $freq, \@pos]);
-			    }
-			}
-			$finish_time = Time::HiRes::time;
-			$conduct_time = $finish_time - $buff_time;
-			$total_push_time += $conduct_time;
-		    }
-		}
-		$finish_time = Time::HiRes::time;
-		$conduct_time = $finish_time - $start_loop;
-		my $loop_time = $conduct_time;
-
-		if ($this->{SHOW_SPEED}) {
-		    printf ("@@@ %.4f sec. total time spending reed func. for did.\n", $total_reed_did_time);
-		    printf ("@@@ %.4f sec. total time spending reed func. for freq.\n", $total_reed_freq_time);
-		    printf ("@@@ %.4f sec. total time spending seek func.\n", $total_seek_time);
-		    printf ("@@@ %.4f sec. total time spending push func.\n", $total_push_time);
-		    printf ("@@@ %.4f sec. total time of did loop.\n", $loop_time);
+		    my $did = unpack('L', $buf) + 0;
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $freq = unpack('L', $buf) / 10000;
+		    push(@docs, [$did, $freq]);
 		}
 		last;
 	    }
 	}
-	print "$offset $total_byte\n";
     }
 
     my $finish_time = Time::HiRes::time;
@@ -271,6 +167,484 @@ sub search {
     }
 
     return \@docs;
+}   
+
+sub search_syngraph_with_position {
+    my($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search) = @_;
+
+    my $start_time = Time::HiRes::time;
+
+    my $offset_j = 0;
+    my @docs = ();
+    my $total_byte = 0;
+    ## idxごとに検索
+    for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
+	my $offset;
+	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
+	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+	    last if (defined $offset);
+	}
+
+	# オフセットがあるかどうかのチェック
+	unless (defined($offset)) {
+	    @docs = () unless (defined(@docs));
+	    next;
+	}
+
+	my $first_seek_time = Time::HiRes::time;
+	seek($this->{IN}[$f_num], $offset, 0);
+	$total_byte = $offset;
+
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $first_seek_time;
+	if ($this->{SHOW_SPEED}) {
+	    printf ("@@@ %f sec. first seek time.\n", $conduct_time);
+	}
+	
+	my $char;
+	my @str;
+	my $buf;
+	my $time_buff = Time::HiRes::time;
+	while (read($this->{IN}[$f_num], $char, 1)) {
+	    if (unpack('c', $char) != 0) {
+		push(@str, $char);
+		$total_byte++;
+	    }
+	    else {
+		# 最初はキーワード（情報としては冗長）
+		$buf = join('', @str);
+		$total_byte++;
+
+		my $finish_time = Time::HiRes::time;
+		my $conduct_time = $finish_time - $time_buff;
+		if ($this->{SHOW_SPEED}) {
+		    printf ("@@@ %f sec. reed indexed keyword from dat file.\n", $conduct_time);
+		}
+		@str = ();
+
+		$time_buff = Time::HiRes::time;
+		# 次にキーワードの文書頻度
+		read($this->{IN}[$f_num], $buf, 4);
+		my $ldf = unpack('L', $buf);
+		$total_byte += 4;
+
+		# 文書IDと出現頻度(tf)の取得
+		for (my $j = 0; $j < $ldf; $j++) {
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $did = unpack('L', $buf) + 0;
+		    $total_byte += 4;
+
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $freq = unpack('f', $buf);
+		    $total_byte += 4;
+
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $size_of_sids_poss = unpack('L', $buf);
+		    $total_byte += 4;
+
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $size_poss = unpack('L', $buf);
+		    $total_byte += 4;
+
+ 		    seek($this->{IN}[$f_num], 4 * ($size_of_sids_poss - $size_poss), 1);
+		    $total_byte += (4 * ($size_of_sids_poss - $size_poss));
+
+		    push(@docs, [$did, $freq, $f_num, $total_byte, $size_poss]);
+
+ 		    seek($this->{IN}[$f_num], 4 * $size_poss, 1);
+		    $total_byte += (4 * $size_poss);
+		}
+		last;
+	    }
+	}
+    }
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{SHOW_SPEED}) {
+	printf ("@@@ %.4f sec. search method calling in Retrieve.pm.\n", $conduct_time);
+    }
+
+    return \@docs;
+}   
+
+sub search_syngraph_with_position_dpnd {
+    my($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search) = @_;
+
+    my $start_time = Time::HiRes::time;
+
+    my $offset_j = 0;
+    my @docs = ();
+    my $total_byte = 0;
+    ## idxごとに検索
+    for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
+	my $offset;
+	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
+	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+	    last if (defined $offset);
+	}
+
+	# オフセットがあるかどうかのチェック
+	unless (defined($offset)) {
+	    @docs = () unless (defined(@docs));
+	    next;
+	}
+
+	my $first_seek_time = Time::HiRes::time;
+	seek($this->{IN}[$f_num], $offset, 0);
+	$total_byte = $offset;
+
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $first_seek_time;
+	if ($this->{SHOW_SPEED}) {
+	    printf ("@@@ %f sec. first seek time.\n", $conduct_time);
+	}
+	
+	my $char;
+	my @str;
+	my $buf;
+	my $time_buff = Time::HiRes::time;
+	while (read($this->{IN}[$f_num], $char, 1)) {
+	    if (unpack('c', $char) != 0) {
+		push(@str, $char);
+		$total_byte++;
+	    }
+	    else {
+		# 最初はキーワード（情報としては冗長）
+		$buf = join('', @str);
+		$total_byte++;
+
+		my $finish_time = Time::HiRes::time;
+		my $conduct_time = $finish_time - $time_buff;
+		if ($this->{SHOW_SPEED}) {
+		    printf ("@@@ %f sec. reed indexed keyword from dat file.\n", $conduct_time);
+		}
+		@str = ();
+
+		$time_buff = Time::HiRes::time;
+		# 次にキーワードの文書頻度
+		read($this->{IN}[$f_num], $buf, 4);
+		my $ldf = unpack('L', $buf);
+		$total_byte += 4;
+
+		# 文書IDと出現頻度(tf)の取得
+		for (my $j = 0; $j < $ldf; $j++) {
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $did = unpack('L', $buf) + 0;
+		    $total_byte += 4;
+
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $freq = unpack('f', $buf);
+		    $total_byte += 4;
+
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $size_poss = unpack('L', $buf);
+		    $total_byte += 4;
+
+		    push(@docs, [$did, $freq, $f_num, $total_byte, $size_poss]);
+
+ 		    seek($this->{IN}[$f_num], 4 * $size_poss, 1);
+		    $total_byte += (4 * $size_poss);
+		}
+		last;
+	    }
+	}
+    }
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{SHOW_SPEED}) {
+	printf ("@@@ %.4f sec. search method calling in Retrieve.pm.\n", $conduct_time);
+    }
+
+    return \@docs;
+}   
+
+sub load_position {
+    my ($this, $f_num, $offset, $size_poss) = @_;
+
+    seek($this->{IN}[$f_num], $offset, 0);
+    my $buf;
+    my @pos_list = ();
+    for (my $k = 0; $k < $size_poss; $k++) {
+	read($this->{IN}[$f_num], $buf, 4);
+	my $pos = unpack('L', $buf);
+	push(@pos_list, $pos);
+    }
+
+    return \@pos_list;
+}
+
+sub search {
+    my($this, $keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search) = @_;
+
+    if ($syngraph_search) {
+	return $this->search_syngraph_with_position($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search);
+    } else {
+	my $start_time = Time::HiRes::time;
+
+	my $offset_j = 0;
+	my @docs = ();
+	my $total_byte = 0;
+	## idxごとに検索
+	for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
+	    my $offset;
+	    for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
+		$offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+		last if (defined $offset);
+	    }
+
+	    # オフセットがあるかどうかのチェック
+	    unless (defined($offset)) {
+		@docs = () unless (defined(@docs));
+		next;
+	    }
+	    # print STDERR $offset . "=offset\n";
+	    
+	    my $first_seek_time = Time::HiRes::time;
+	    seek($this->{IN}[$f_num], $offset, 0);
+	    my $finish_time = Time::HiRes::time;
+	    my $conduct_time = $finish_time - $first_seek_time;
+	    if ($this->{SHOW_SPEED}) {
+		printf ("@@@ %f sec. first seek time.\n", $conduct_time);
+	    }
+	    
+	    my $char;
+	    my @str;
+	    my $buf;
+	    my $time_buff = Time::HiRes::time;
+	    while (read($this->{IN}[$f_num], $char, 1)) {
+		if (unpack('c', $char) != 0) {
+		    push(@str, $char);
+		    $total_byte++;
+		}
+		else {
+		    # 最初はキーワード（情報としては冗長）
+		    $buf = join('', @str);
+		    $total_byte++;
+
+		    my $finish_time = Time::HiRes::time;
+		    my $conduct_time = $finish_time - $time_buff;
+		    if ($this->{SHOW_SPEED}) {
+			printf ("@@@ %f sec. reed indexed keyword from dat file.\n", $conduct_time);
+		    }
+		    @str = ();
+
+		    $time_buff = Time::HiRes::time;
+		    # 次にキーワードの文書頻度
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $ldf = unpack('L', $buf);
+		    # print "$f_num $this->{TYPE} $ldf=ldf\n";
+
+		    $total_byte += 4;
+
+		    $finish_time = Time::HiRes::time;
+		    $conduct_time = $finish_time - $time_buff;
+		    if ($this->{SHOW_SPEED}) {
+			printf ("@@@ %f sec. reed df value from dat file.\n", $conduct_time);
+		    }
+
+		    my $did_idx = 0;
+		    # print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n";# if ($this->{VERBOSE});
+		    for (my $j = 0; $j < $ldf; $j++) {
+			read($this->{IN}[$f_num], $buf, 4);
+			my $did = unpack('L', $buf);
+			$docs[$offset_j + $j]->[0] = $did;
+		    }
+
+		    for (my $j = 0; $j < $ldf; $j++) {
+			read($this->{IN}[$f_num], $buf, 4);
+			my $freq = unpack('f', $buf);
+			$docs[$offset_j + $j]->[1] = $freq;
+		    }
+
+		    unless ($this->{SKIPPOS}) {
+			print "only_hitcount = $only_hitcount\n";
+			if ($only_hitcount < 1) {
+			    read($this->{IN}[$f_num], $buf, 4);
+			    my $sids_size = unpack('L', $buf);
+			    read($this->{IN}[$f_num], $buf, 4);
+			    my $poss_size = unpack('L', $buf);
+			    my $total_bytes = 0;
+			    if ($sentence_flag > 0) {
+				for (my $i = 0; $total_bytes < $sids_size; $i++) {
+				    read($this->{IN}[$f_num], $buf, 4);
+				    my $size = unpack('L', $buf);
+				    for (my $j = 0; $j < $size; $j++) {
+					read($this->{IN}[$f_num], $buf, 4);
+					push(@{$docs[$offset_j + $i]->[2]}, unpack('L', $buf));
+				    }
+				    $total_bytes += (($size + 1) * 4);
+				}
+			    } else {
+				seek($this->{IN}[$f_num], $sids_size, 1);
+				for (my $i = 0; $total_bytes < $poss_size; $i++) {
+				    read($this->{IN}[$f_num], $buf, 4);
+				    my $size = unpack('L', $buf);
+				    my @poss = ();
+				    for (my $j = 0; $j < $size; $j++) {
+					read($this->{IN}[$f_num], $buf, 4);
+					my $p = unpack('L', $buf);
+					push(@poss, $p);
+				    }
+				    $docs[$offset_j + $i]->[2] = \@poss;
+				    $total_bytes += (($size + 1) * 4);
+				}
+			    }
+			}
+		    }
+		    $offset_j += $ldf;
+		    last;
+		}
+	    }
+	}
+
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $start_time;
+	if ($this->{SHOW_SPEED}) {
+	    printf ("@@@ %.4f sec. search method calling in Retrieve.pm.\n", $conduct_time);
+	}
+
+	return \@docs;
+    }
+}   
+
+sub search4syngraph {
+    my($this, $keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search) = @_;
+
+    if ($syngraph_search) {
+	if ($this->{dpnd} > 0) {
+	    return $this->search_syngraph_with_position_dpnd($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search);
+	} else {
+	    return $this->search_syngraph_with_position($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search);
+	}
+    } else {
+	my $start_time = Time::HiRes::time;
+
+	my $offset_j = 0;
+	my @docs = ();
+	my $total_byte = 0;
+	## idxごとに検索
+	for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
+	    my $offset;
+	    for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
+		$offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+		last if (defined $offset);
+	    }
+
+	    # オフセットがあるかどうかのチェック
+	    unless (defined($offset)) {
+		@docs = () unless (defined(@docs));
+		next;
+	    }
+	    # print STDERR $offset . "=offset\n";
+	    
+	    my $first_seek_time = Time::HiRes::time;
+	    seek($this->{IN}[$f_num], $offset, 0);
+	    my $finish_time = Time::HiRes::time;
+	    my $conduct_time = $finish_time - $first_seek_time;
+	    if ($this->{SHOW_SPEED}) {
+		printf ("@@@ %f sec. first seek time.\n", $conduct_time);
+	    }
+	    
+	    my $char;
+	    my @str;
+	    my $buf;
+	    my $time_buff = Time::HiRes::time;
+	    while (read($this->{IN}[$f_num], $char, 1)) {
+		if (unpack('c', $char) != 0) {
+		    push(@str, $char);
+		    $total_byte++;
+		}
+		else {
+		    # 最初はキーワード（情報としては冗長）
+		    $buf = join('', @str);
+		    $total_byte++;
+
+		    my $finish_time = Time::HiRes::time;
+		    my $conduct_time = $finish_time - $time_buff;
+		    if ($this->{SHOW_SPEED}) {
+			printf ("@@@ %f sec. reed indexed keyword from dat file.\n", $conduct_time);
+		    }
+		    @str = ();
+
+		    $time_buff = Time::HiRes::time;
+		    # 次にキーワードの文書頻度
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $ldf = unpack('L', $buf);
+		    # print "$f_num $this->{TYPE} $ldf=ldf\n";
+
+		    $total_byte += 4;
+
+		    $finish_time = Time::HiRes::time;
+		    $conduct_time = $finish_time - $time_buff;
+		    if ($this->{SHOW_SPEED}) {
+			printf ("@@@ %f sec. reed df value from dat file.\n", $conduct_time);
+		    }
+
+		    my $did_idx = 0;
+		    # print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n";# if ($this->{VERBOSE});
+		    for (my $j = 0; $j < $ldf; $j++) {
+			read($this->{IN}[$f_num], $buf, 4);
+			my $did = unpack('L', $buf);
+			$docs[$offset_j + $j]->[0] = $did;
+		    }
+
+		    for (my $j = 0; $j < $ldf; $j++) {
+			read($this->{IN}[$f_num], $buf, 4);
+			my $freq = unpack('f', $buf);
+			$docs[$offset_j + $j]->[1] = $freq;
+		    }
+
+		    unless ($this->{SKIPPOS}) {
+			print "only_hitcount = $only_hitcount\n";
+			if ($only_hitcount < 1) {
+			    read($this->{IN}[$f_num], $buf, 4);
+			    my $sids_size = unpack('L', $buf);
+			    read($this->{IN}[$f_num], $buf, 4);
+			    my $poss_size = unpack('L', $buf);
+			    my $total_bytes = 0;
+			    if ($sentence_flag > 0) {
+				for (my $i = 0; $total_bytes < $sids_size; $i++) {
+				    read($this->{IN}[$f_num], $buf, 4);
+				    my $size = unpack('L', $buf);
+				    for (my $j = 0; $j < $size; $j++) {
+					read($this->{IN}[$f_num], $buf, 4);
+					push(@{$docs[$offset_j + $i]->[2]}, unpack('L', $buf));
+				    }
+				    $total_bytes += (($size + 1) * 4);
+				}
+			    } else {
+				seek($this->{IN}[$f_num], $sids_size, 1);
+				for (my $i = 0; $total_bytes < $poss_size; $i++) {
+				    read($this->{IN}[$f_num], $buf, 4);
+				    my $size = unpack('L', $buf);
+				    my @poss = ();
+				    for (my $j = 0; $j < $size; $j++) {
+					read($this->{IN}[$f_num], $buf, 4);
+					my $p = unpack('L', $buf);
+					push(@poss, $p);
+				    }
+				    $docs[$offset_j + $i]->[2] = \@poss;
+				    $total_bytes += (($size + 1) * 4);
+				}
+			    }
+			}
+		    }
+		    $offset_j += $ldf;
+		    last;
+		}
+	    }
+	}
+
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $start_time;
+	if ($this->{SHOW_SPEED}) {
+	    printf ("@@@ %.4f sec. search method calling in Retrieve.pm.\n", $conduct_time);
+	}
+
+	return \@docs;
+    }
 }   
 
 sub DESTROY {
