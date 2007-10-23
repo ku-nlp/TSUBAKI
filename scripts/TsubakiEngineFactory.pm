@@ -34,9 +34,9 @@ sub new {
 	    show_speed => $opts->{show_speed}});
     } else {
 	# 通常検索用 TsubakiEngine を返す
-	require TsubakiEngine4OrdinalSearch;
+	require TsubakiEngine4OrdinarySearch;
 
-	$this->{tsubaki} = new TsubakiEngine4OrdinalSearch({
+	$this->{tsubaki} = new TsubakiEngine4OrdinarySearch({
 	    idxdir => $opts->{idxdir},
 	    dlengthdbdir => $opts->{dlengthdbdir},
 	    skip_pos => $opts->{skippos},
