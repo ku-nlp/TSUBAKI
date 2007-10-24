@@ -500,12 +500,16 @@ sub search {
 					# スキップ
 					seek($this->{IN}[$f_num], $num_of_sids * 4, 1);
 				    } else {
-					for (my $j = 0; $j < $num_of_sids; $j++) {
-					    # 文IDを読み込み
- 					    read($this->{IN}[$f_num], $buf, 4);
- 					    my $sid = unpack('L', $buf);
- 					    push(@{$docs[$offset_j + $pos]->[2]}, $sid);
- 					}
+					$docs[$offset_j + $pos]->[2] = $f_num;
+					$docs[$offset_j + $pos]->[3] = $total_byte;
+					$docs[$offset_j + $pos]->[4] = $num_of_sids;
+					seek($this->{IN}[$f_num], $num_of_sids * 4, 1);
+# 					for (my $j = 0; $j < $num_of_sids; $j++) {
+# 					    # 文IDを読み込み
+#  					    read($this->{IN}[$f_num], $buf, 4);
+#  					    my $sid = unpack('L', $buf);
+#  					    push(@{$docs[$offset_j + $pos]->[2]}, $sid);
+#  					}
 				    }
 				    $total_byte += ($num_of_sids * 4);
 				    $soeji++;
@@ -528,11 +532,15 @@ sub search {
 					# スキップ
 					seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
 				    } else {
-					for (my $j = 0; $j < $num_of_poss; $j++) {
-					    read($this->{IN}[$f_num], $buf, 4);
-					    my $p = unpack('L', $buf);
-					    push(@{$docs[$offset_j + $pos]->[2]}, $p);
-					}
+					$docs[$offset_j + $pos]->[2] = $f_num;
+					$docs[$offset_j + $pos]->[3] = $total_byte;
+					$docs[$offset_j + $pos]->[4] = $num_of_poss;
+					seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
+# 					for (my $j = 0; $j < $num_of_poss; $j++) {
+# 					    read($this->{IN}[$f_num], $buf, 4);
+# 					    my $p = unpack('L', $buf);
+# 					    push(@{$docs[$offset_j + $pos]->[2]}, $p);
+# 					}
 				    }
 				    $total_byte += ($num_of_poss * 4);
 				    $soeji++;
