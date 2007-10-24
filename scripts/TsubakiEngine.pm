@@ -16,6 +16,12 @@ use Encode qw(from_to encode decode);
 use utf8;
 use OKAPI;
 use Devel::Size qw/size total_size/;
+# use Data::Dumper;
+# {
+#     package Data::Dumper;
+#     sub qquote { return shift; }
+# }
+# $Data::Dumper::Useperl = 1;
 
 
 ##################################################################
@@ -80,7 +86,7 @@ sub search {
 
     my $start_time = Time::HiRes::time;
     # 検索
-    my ($alldocs_word, $alldocs_dpnd) = $this->retrieve_documents($query);
+    my ($alldocs_word, $alldocs_dpnd) = $this->retrieve_documents($query, $qid2df);
     
     my $cal_method;
     if ($query->{only_hitcount} > 0) {
@@ -166,7 +172,7 @@ sub calculate_score {
 }
 
 sub retrieve_documents {
-    my ($this, $query) = @_;
+    my ($this, $query, $qid2df) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -177,10 +183,10 @@ sub retrieve_documents {
     foreach my $keyword (@{$query->{keywords}}) {
 	my $docs_word = [];
 	my $docs_dpnd = [];
+
 	# keyword中の単語を含む文書の検索
-	# todo: AND の場合は文書頻度の低い単語から検索する
-#	foreach my $reps_of_word (sort {$a->[0]{gdf} <=> $b->[0]{gdf}} @{$keyword->{words}}) {
-	foreach my $reps_of_word (@{$keyword->{words}}) {
+	# 文書頻度の低い単語から検索する
+	foreach my $reps_of_word (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{words}}) {
 	    if ($this->{verbose}) {
 		foreach my $rep_of_word (@{$reps_of_word}) {
 		    foreach my $k (keys %{$rep_of_word}) {
@@ -212,9 +218,9 @@ sub retrieve_documents {
 	    }
 
 	    # バイナリファイルから文書の取得
-	    my $docs = $this->retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, $add_flag, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
-	    print $add_flag . "=aflag\n" if ($this->{verbose});
-	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
+	    my $docs = $this->retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, 1, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
+#	    print $add_flag . "=aflag\n" if ($this->{verbose});
+#	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
 
 	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
 
@@ -288,7 +294,6 @@ sub serialize {
 
     return $serialized_docs;
 }
-
 
 # 配列の配列を受け取り、各配列間の共通要素をとる
 sub intersect {
