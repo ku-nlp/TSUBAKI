@@ -168,11 +168,15 @@ sub merge_docs {
     my @result;
     foreach my $e (@merged_docs) {
 	my $score = $e->{word_score};
+	my $dpnd_score = 0;
+	my $dist_score = 0;
 	while (my ($qid, $score_of_qid) = each(%{$e->{near_score}})) {
 	    if ($e->{dpnd_score}{$qid} == 0) {
 		$score += $score_of_qid;
+		$dist_score += $score_of_qid;
 	    } else {
 		$score += $e->{dpnd_score}{$qid};
+		$dpnd_score += $e->{dpnd_score}{$qid};
 	    }
 
 	    printf ("did=%09d qid=%02d w=%.3f d=%.3f n=%.3f total=%.3f\n", $e->{did}, $qid, $e->{word_score}, $e->{dpnd_score}{$qid}, $score_of_qid, $score) if ($this->{verbose});
@@ -181,9 +185,9 @@ sub merge_docs {
 
 	push(@result, {did => $e->{did},
 		       score_total => $score,
-		       score_word => $e->{score_word},
-		       score_dpnd => $e->{score_dpnd},
-		       score_dist => $e->{score_dist}
+		       score_word => $e->{word_score},
+		       score_dpnd => $dpnd_score,
+		       score_dist => $dist_score
 	     });
     }
 
