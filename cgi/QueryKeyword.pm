@@ -47,7 +47,7 @@ sub new {
 	my @dpnd_reps;
 	foreach my $m (@{$buff{$group_id}}) {
 	    # 近接条件が指定されていない かつ 機能語 の場合は検索に用いない
-	    next if ($m->{isContentWord} < 1 && $this->{near} < 0);
+	    next if ($m->{isContentWord} < 1 && $this->{is_phrasal_search} < 0);
 
 	    if ($m->{rawstring} =~ /\-\>/) {
 		push(@dpnd_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}, isContentWord => $m->{isContentWord}});
