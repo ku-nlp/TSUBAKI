@@ -402,6 +402,7 @@ sub search {
 	    # print STDERR $offset . "=offset\n";
 	    
 	    my $first_seek_time = Time::HiRes::time;
+	    $total_byte = $offset;
 	    seek($this->{IN}[$f_num], $offset, 0);
 	    my $finish_time = Time::HiRes::time;
 	    my $conduct_time = $finish_time - $first_seek_time;
@@ -449,6 +450,7 @@ sub search {
 		    my %soeji2pos = ();
 		    # print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n";# if ($this->{VERBOSE});
 		    for (my $j = 0; $j < $ldf; $j++) {
+			$total_byte += 4;
 			read($this->{IN}[$f_num], $buf, 4);
 			my $did = unpack('L', $buf);
 
@@ -463,6 +465,7 @@ sub search {
 
 		    # 出現頻度の読み込み
 		    for (my $j = 0; $j < $ldf; $j++) {
+			$total_byte += 4;
 			read($this->{IN}[$f_num], $buf, 4);
 			my $pos = $soeji2pos{$j};
 			next unless (defined $pos);
@@ -474,17 +477,21 @@ sub search {
 		    # 出現位置情報の読み込み
 		    unless ($this->{SKIPPOS}) {
 			if ($only_hitcount < 1) {
+			    $total_byte += 4;
 			    read($this->{IN}[$f_num], $buf, 4);
 			    my $sids_size = unpack('L', $buf);
+
+			    $total_byte += 4;
 			    read($this->{IN}[$f_num], $buf, 4);
 			    my $poss_size = unpack('L', $buf);
-			    my $total_bytes = 0;
 
 			    my $soeji = 0;
 			    # 索引が出現している文IDを取得
 			    if ($sentence_flag > 0) {
-				for (my $i = 0; $total_bytes < $sids_size; $i++) {
+				my $end = $total_byte + $sids_size;
+				for (my $i = 0; $total_byte < $end; $i++) {
 				    # 文IDの個数を読み込み
+				    $total_byte += 4;
 				    read($this->{IN}[$f_num], $buf, 4);
 				    my $num_of_sids = unpack('L', $buf);
 
@@ -495,12 +502,12 @@ sub search {
 				    } else {
 					for (my $j = 0; $j < $num_of_sids; $j++) {
 					    # 文IDを読み込み
-					    read($this->{IN}[$f_num], $buf, 4);
-					    my $sid = unpack('L', $buf);
-					    push(@{$docs[$offset_j + $pos]->[2]}, $sid);
-					}
+ 					    read($this->{IN}[$f_num], $buf, 4);
+ 					    my $sid = unpack('L', $buf);
+ 					    push(@{$docs[$offset_j + $pos]->[2]}, $sid);
+ 					}
 				    }
-				    $total_bytes += (($num_of_sids + 1) * 4);
+				    $total_byte += ($num_of_sids * 4);
 				    $soeji++;
 				}
 			    }
@@ -508,8 +515,11 @@ sub search {
 			    else {
 				# 位置情報までスキップ
 				seek($this->{IN}[$f_num], $sids_size, 1);
+				$total_byte += $sids_size;
 
-				for (my $i = 0; $total_bytes < $poss_size; $i++) {
+				my $end = $total_byte + $poss_size;
+				for (my $i = 0; $total_byte < $end; $i++) {
+				    $total_byte += 4;
 				    read($this->{IN}[$f_num], $buf, 4);
 				    my $num_of_poss = unpack('L', $buf);
 
@@ -524,7 +534,7 @@ sub search {
 					    push(@{$docs[$offset_j + $pos]->[2]}, $p);
 					}
 				    }
-				    $total_bytes += (($num_of_poss + 1) * 4);
+				    $total_byte += ($num_of_poss * 4);
 				    $soeji++;
 				}
 			    }
