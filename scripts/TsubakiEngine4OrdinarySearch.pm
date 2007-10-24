@@ -104,9 +104,16 @@ sub merge_docs {
 			    my $df = $qid2df->{$dpnd_qid};
 			    my $qtf = $qid2qtf->{$dpnd_qid};
 
-			    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
-			    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-			    my $score = $qtf * $tff * $idf;
+			    my $score;
+			    # 検索クエリに含まれる係り受けが、ドキュメント集合に一度も出てこない場合
+			    if ($df == -1) {
+				$score = 0;
+			    }
+			    else {
+				my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+				my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+				$score = $qtf * $tff * $idf;
+			    }
 
 			    $merged_docs[$i]->{near_score}{$dpnd_qid} = $score;
 			}
@@ -137,10 +144,17 @@ sub merge_docs {
 		    my $qtf = $qid2qtf->{$qid};
 		    my $dlength = $d_length_buff{$did};
 
-		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
-		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-		    my $score = $tff * $idf;
-		    $score *= $this->{WEIGHT_DPND_SCORE};
+		    my $score;
+		    # 検索クエリに含まれる係り受けが、ドキュメント集合に一度も出てこない場合
+		    if ($df == -1) {
+			$score = 0;
+		    }
+		    else {
+			my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+			$score = $tff * $idf;
+			$score *= $this->{WEIGHT_DPND_SCORE};
+		    }
 
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
