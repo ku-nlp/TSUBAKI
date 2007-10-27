@@ -11,10 +11,10 @@ use MIME::Base64;
 use IO::Socket;
 use Storable;
 use QueryParser;
-use TsubakiEngine;
+use TsubakiEngineFactory;
+use CDB_File;
 
-my $N = 51000000;
-my $AVE_DOC_LENGTH = 871.925373263118;
+my $MAX_RANK_FOR_SETTING_URL_AND_TITLE = 0;
 
 my (%opt);
 GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug');
@@ -47,7 +47,26 @@ foreach my $dbf (readdir(DIR)) {
 }
 closedir(DIR);
 
+
+my %TITLE_DBs = ();
+my %URL_DBs = ();
+opendir(DIR, $opt{idxdir});
+foreach my $file (readdir(DIR)) {
+    my $fp = "$opt{idxdir}/$file";
+    if ($file =~ /title.cdb/) {
+	tie %TITLE_DBs, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+    }
+    elsif ($file =~ /url.cdb/) {
+	tie %URL_DBs, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+    }
+}
+closedir(DIR);
+
+
 &main();
+
+untie %TITLE_DBs;
+untie %URL_DBs;
 
 sub main {
 
@@ -96,16 +115,9 @@ sub main {
 	    }
 	    my $qid2df = Storable::thaw(decode_base64($buff));
 
-	    my $tsubaki = new TsubakiEngine({
-		idxdir => $opt{idxdir},
-		skip_pos => $opt{skippos},
-		verbose => $opt{verbose},
-		average_doc_length => $AVE_DOC_LENGTH,
-		total_number_of_docs => $N,
-		doc_length_dbs => \@DOC_LENGTH_DBs,
-		dlengthdb_hash => $opt{dlengthdb_hash},
-		verbose => 0 });
-	    
+	    my $factory = new TsubakiEngineFactory(\%opt);
+	    my $tsubaki = $factory->get_instance();
+
 	    my $docs = $tsubaki->search($query, $qid2df);
 
 	    my $hitcount = scalar(@{$docs});
@@ -118,7 +130,17 @@ sub main {
 		if ($hitcount < $query->{results}) {
 		    $ret = $docs;
 		} else {
-		    for (my $rank = 0; $rank < $query->{results}; $rank++) {
+		    my $docs_size = $hitcount;
+		    my $results = ($query->{accuracy}) ? $query->{results} * $query->{accuracy} : $query->{results};
+		    $results += $query->{start};
+		    $results = $docs_size if ($docs_size < $results);
+		    for (my $rank = 0; $rank < $results; $rank++) {
+			if ($rank < $MAX_RANK_FOR_SETTING_URL_AND_TITLE) {
+			    my $did = sprintf("%09d", $docs->[$rank]{did});
+			    $docs->[$rank]{url} = $URL_DBs{$did};
+			    $docs->[$rank]{title} = $TITLE_DBs{$did};
+			    $docs->[$rank]{title} = 'no title.' unless ($docs->[$rank]{title});
+			}
 			push(@{$ret}, $docs->[$rank]);
 		    }
 		}
