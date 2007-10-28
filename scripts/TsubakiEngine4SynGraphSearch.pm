@@ -117,7 +117,9 @@ sub merge_docs {
 		my $tff = 3 * $tf / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 		my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 
-		my $pos = $this->{word_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{size});
+		print "$qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums}\n";
+
+		my $pos = $this->{word_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums});
 
 		my $size = scalar(@$pos);
 		my $scr = $qtf * $tff * $idf / $size;
@@ -303,13 +305,13 @@ sub merge_search_result {
 	    if (exists($did2pos{$did})) {
 		my $j = $did2pos{$did};
 		if (defined($offset)) {
-		    push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq, fnum => $fnum, offset => $offset, size => $size});
+		    push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq, fnum => $fnum, offset => $offset, nums => $size});
 		} else {
 		    push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, freq => $freq});
 		}
 	    } else {
 		if (defined($offset)) {
-		    $serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq, fnum => $fnum, offset => $offset, size => $size}]};
+		    $serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq, fnum => $fnum, offset => $offset, nums => $size}]};
 		} else {
 		    $serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, freq => $freq}]};
 		}
