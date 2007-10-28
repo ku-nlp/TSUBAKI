@@ -34,7 +34,7 @@ sub main {
 	my $lcnt = 0;
 	my $bins = {
 	    word => new Binarizer($wordth, "${DIR}/idx$NAME.word.dat", "${DIR}/offset$NAME.word.cdb", $opt{position}, $opt{verbose}),
-	    dpnd => new Binarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb", undef, $opt{verbose})
+	    dpnd => new Binarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb", $opt{position}, $opt{verbose})
 	};
 
 	if ($opt{z}) {
