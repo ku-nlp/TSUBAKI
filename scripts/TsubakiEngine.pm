@@ -140,7 +140,7 @@ sub retrieve_from_dat {
 }
 
 sub get_minimum_distance {
-    my ($poslist1, $poslist2, $dlength) = @_;
+    my ($this, $poslist1, $poslist2, $dlength) = @_;
 
     my $j = 0;
     my $min_dist = $dlength;
