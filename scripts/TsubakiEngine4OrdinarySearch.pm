@@ -251,25 +251,4 @@ sub merge_search_result {
     return $serialized_docs;
 }
 
-sub get_minimum_distance {
-    my ($poslist1, $poslist2, $dlength) = @_;
-
-    my $j = 0;
-    my $min_dist = $dlength;
-    return $dlength unless (defined $poslist1 && defined $poslist2);
-
-    for (my $i = 0; $i < scalar(@{$poslist1}); $i++) {
-	while ($poslist1->[$i] > $poslist2->[$j] && $j < scalar(@{$poslist2})) {
-	    $j++;
-	}
-
-	last unless ($j < scalar(@{$poslist2}));
-
-	my $dist = $poslist2->[$j] - $poslist1->[$i];
-	$min_dist = $dist if ($min_dist > $dist);
-    }
-
-    return $min_dist;
-}
-
 1;
