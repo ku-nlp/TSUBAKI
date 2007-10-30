@@ -96,7 +96,7 @@ sub merge_docs {
 			my $kakarisaki_qid = $e->{kakarisaki_qid};
 			my $dlength = $d_length_buff{$did};
 
-			my $dist = &get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
+			my $dist = $this->get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
 			if ($dist > 30) {
 			    $merged_docs[$i]->{near_score}{$dpnd_qid} = 0;
 			} else {
