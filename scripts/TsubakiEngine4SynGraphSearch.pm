@@ -117,7 +117,7 @@ sub merge_docs {
 		my $tff = 3 * $tf / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 		my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 
-		print "$qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums}\n";
+#		print "$qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums}\n";
 
 		my $pos = $this->{word_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums});
 
@@ -145,7 +145,7 @@ sub merge_docs {
  		    my $df = $qid2df->{$dpnd_qid};
  		    next if ($df < 0);
 
- 		    my $dist = &get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
+ 		    my $dist = $this->get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
 		    my $gid = $qid2gid->{$dpnd_qid};
 
 		    # print "did=$did qid=$dpnd_qid dist=$dist\n";
@@ -211,16 +211,23 @@ sub merge_docs {
 		    my $qtf = $qid2qtf->{$qid};
 		    my $dlength = $d_length_buff{$did};
 
-		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
-		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+		    my ($pos, $scr);
+		    # 検索クエリに含まれる係り受けが、ドキュメント集合に一度も出てこない場合
+		    if ($df == -1) {
+			$scr = 0;
+		    }
+		    else {
+			my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 
-		    my $pos = $this->{dpnd_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{size});
+			$pos = $this->{dpnd_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums});
 
-		    my $size = scalar(@$pos);
-		    my $scr = $qtf * $tff * $idf / $size;
-		    $scr *= $this->{WEIGHT_DPND_SCORE};
+			my $size = scalar(@$pos);
+			$scr = $qtf * $tff * $idf / $size;
+			$scr *= $this->{WEIGHT_DPND_SCORE};
 
-		    $did2gid_dpnd{$did}->{$qid2gid->{$qid}} = 1;
+			$did2gid_dpnd{$did}->{$qid2gid->{$qid}} = 1;
+		    }
 
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$scr\n" if ($this->{store_verbose});
 
