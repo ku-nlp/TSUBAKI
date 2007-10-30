@@ -1,3 +1,11 @@
+2007-10-31  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	検索クエリに含まれる係り受けがドキュメント集合に一度も出てこない場合にdieしていたのを修正
+
+	* scripts/TsubakiEngine.pm:
+	関数get_minimum_distanceを外部関数に
+
 2007-10-24  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine4OrdinarySearch.pm:
