@@ -159,7 +159,7 @@ sub merge_docs {
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
 		    $merged_docs[$i]->{dpnd_score}{$qid} = $score * $qtf;
-#		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if ($this->{store_verbose});
+		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if ($this->{store_verbose});
 		}
 	    }
 	}
@@ -189,6 +189,8 @@ sub merge_docs {
 		       score_dpnd => $dpnd_score,
 		       score_dist => $dist_score
 	     });
+
+	$result[-1]{verbose} = $e->{verbose} if $this->{store_verbose};
     }
 
     @result = sort {$b->{score_total} <=> $a->{score_total}} @result;
