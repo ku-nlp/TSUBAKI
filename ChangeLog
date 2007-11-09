@@ -1,3 +1,8 @@
+2007-11-10  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm, scripts/TsubakiEngineFactory.pm:
+	store_verboseオプションを復活
+
 2007-10-31  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine4SynGraphSearch.pm:
