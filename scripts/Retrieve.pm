@@ -15,6 +15,7 @@ use Storable;
 use Error qw(:try);
 # use Devel::Size qw/size total_size/;
 # use Devel::Size::Report qw/report_size/;
+use Time::HiRes;
 
 my $DEBUG = 1;
 my $host = `hostname`; chop($host);
@@ -388,7 +389,7 @@ sub search {
 	my $offset;
 	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
 	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
-	    print $offset . "=offset\n";
+#	    print $offset . "=offset\n";
 	    last if (defined $offset);
 	}
 
@@ -452,7 +453,7 @@ sub search {
 		    $total_byte += 4;
 		    read($this->{IN}[$f_num], $buf, 4);
 		    my $did = unpack('L', $buf);
-		    print STDERR $did . "=did\n";
+#		    print STDERR $did . "=did\n";
 		    # 先の索引で検索された文書であれば登録（AND検索時）
 		    if (exists $already_retrieved_docs->{$did} || $add_flag > 0) {
 			$already_retrieved_docs->{$did} = 1;
@@ -471,7 +472,7 @@ sub search {
 
 		    my $freq = unpack('f', $buf);
 		    $docs[$offset_j + $pos]->[1] = $freq;
-		    print STDERR $freq . "=freq\n";
+#		    print STDERR $freq . "=freq\n";
 		}
 
 		# 出現位置情報の読み込み
