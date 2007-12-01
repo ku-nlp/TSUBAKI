@@ -29,37 +29,48 @@ sub new {
 sub DESTROY {}
 
 sub makeIndexfromSynGraph {
-    my($this, $syngraph) = @_;
+    my($this, $syngraph, $indice) = @_;
 
-    my %freq = ();
+    # SynNode間の係り受け関係を管理する変数
     my %dpndInfo = ();
+    # SynNodeの情報を管理する変数
     my %synNodes = ();
-    foreach my $line (split(/\n/, $syngraph)){
-	if($line =~ /^!! /){
-	    my($dumy, $id, $kakari, $midashi) = split(/ /, $line);
-	    if($kakari =~ /^(.+)(A|I|D|P)$/){
+    foreach my $line (split(/\n/, $syngraph)) {
+	## SynNode 間の係り受け関係の取得
+	if ($line =~ /^!! /) {
+	    my ($dumy, $id, $kakari, $midashi) = split(/ /, $line);
+	    if ($kakari =~ /^(.+)(A|I|D|P)$/) {
 		$dpndInfo{$id}->{kakariType} = $2;
-		foreach my $kakariSakiID (split(/\//, $1)){
+		foreach my $kakariSakiID (split(/\//, $1)) {
 		    push(@{$dpndInfo{$id}->{kakariSaki}}, $kakariSakiID);
 		}
 	    }
-	    
-	}elsif($line =~ /^! /){
-	    my($dumy, $bnstId, $syn_node_str) = split(/ /, $line);
+	} elsif ($line =~ /^! /) {
+	    my ($dumy, $bnstId, $syn_node_str) = split(/ /, $line);
+
+	    ## 複数の語からマップされている SynNode の場合は語の最後尾を出現位置とする
+	    ## 「事務/所」と「オフィス」の場合、「オフィス」は「所」の部分に現れていると見なす
 	    my $pos = ($bnstId =~ /,(\d+)$/) ? $1 : $bnstId;
-	    if($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>(<[^>]+>)*$!){
-		my $sid = $1;
+
+	    if ($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>((<[^>]+>)*)$!) {
+		my $synid = $1;
 		my $score = $2;
 		my $features = $3;
-		if($sid =~ m!^([^/]+)/!){
-		    $sid = $1;
-		}
 
-		$features = "$`$'" if ($features =~ /\<上位語\>/); # <上位語>を削除
+		# 読みの削除
+		$synid = $1 if ($synid =~ m!^([^/]+)/!);
+		# <上位語>を削除
+		$features = "$`$'" if ($features =~ /\<上位語\>/);
+		# <下位語数:(数字)>を削除
+		$features =~ s/<下位語数:\d+>//;
 
-		$features =~ s/<下位語数:\d+>//; # <下位語数:(数字)>を削除
+		# featureの順序を固定する
+		my $tmp = join('>', sort {$a cmp $b} split('>', $features)) . '>' unless ($features eq '');
+
 		my $syn_node = {
-		    midashi => $sid . $features,
+		    midashi => $synid . $features,
+		    synId => $synid,
+		    features => $features,
 		    score => $score,
 		    grpId => $bnstId,
 		    pos => $pos,
@@ -69,37 +80,41 @@ sub makeIndexfromSynGraph {
 	}
     }
 
-    foreach my $id (sort {$a <=> $b} keys %synNodes) {
-	foreach my $synNode (@{$synNodes{$id}}){
-	    my $kakariSakis = $dpndInfo{$id}->{kakariSaki};
-	    my $kakariType = $dpndInfo{$id}->{kakariType};
-	    my $groupId = $synNode->{grpId};
+    # 索引の作成
+    foreach my $bnstId (sort {$a <=> $b} keys %synNodes) {
+	foreach my $synNode (@{$synNodes{$bnstId}}){
+	    my $groupID = $synNode->{grpId};
 	    my $score = $synNode->{score};
 	    my $pos =  $synNode->{absolute_pos};
-	    
-	    $freq{$synNode->{midashi}}->{freq} += $score;
-	    push(@{$freq{$synNode->{midashi}}->{absolute_pos}}, $pos);
-	    $freq{$synNode->{midashi}}->{group_id} = $groupId;
-	    $freq{$synNode->{midashi}}->{rawstring} = $synNode->{midashi};
-	    $freq{$synNode->{midashi}}->{isContentWord} = 1;
-	    
+	    my $midashi = $synNode->{midashi};
+	    my $index = {
+		rawstring => $midashi,
+		group_id => $groupID,
+		freq => $score,
+		pos => $pos,
+		isContentWord => 1
+	    };
+	    push(@$indice, $index);
+
+	    # 係り受け関係について索引を作成
+	    my $kakariSakis = $dpndInfo{$bnstId}->{kakariSaki};
+	    my $kakariType = $dpndInfo{$bnstId}->{kakariType};
 	    foreach my $kakariSakiID (@{$kakariSakis}){
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
 		foreach my $kakariSakiNode (@{$kakariSakiNodes}){
-		    my $s = $score * $kakariSakiNode->{score};
-		    my $key = $synNode->{midashi} . '->' . $kakariSakiNode->{midashi};
-		    $freq{$key}->{freq} += $s;
-		    push(@{$freq{$key}->{absolute_pos}}, $pos);
-		    $freq{$key}->{group_id} = "$groupId\/$kakariSakiNode->{grpId}";
-		    $freq{$key}->{rawstring} = "$synNode->{midashi}->$kakariSakiNode->{midashi}";
-		    $freq{$key}->{isContentWord} = 1;
+		    my $index_dpnd = {
+			rawstring => ($midashi . '->' . $kakariSakiNode->{midashi}),
+			group_id => ($groupID . '/' . $kakariSakiNode->{grpId}),
+			freq => ($score * $kakariSakiNode->{score}),
+			pos => $pos,
+			isContentWord => 1
+		    };
+		    push(@$indice, $index_dpnd);
 		}
 	    }
 	    $this->{absolute_pos} = $pos;
 	}
     }
-
-    return \%freq;
 }
 
 
