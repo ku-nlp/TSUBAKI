@@ -1,6 +1,6 @@
 package QueryParser;
 
-# $id:$
+#$id$
 
 # 検索クエリを内部形式に変換するクラス
 
@@ -83,12 +83,8 @@ sub parse {
 
 	# 近接検索かどうかの判定
 	if ($q_str =~ /^(.+)?~(.+)$/){
-	    $q_str = $1;
-	    # 検索制約の取得
-	    my $constraint_tag = $2;
-
 	    # 同義表現を考慮した場合は近接制約を指定できない
-	    if ($opt->{syngraph} > 0 && $constraint_tag !~ /OR|AND/) {
+	    if ($opt->{syngraph} > 0) {
 		print "<center>同義表現を考慮した近接検索は実行できません。</center></DIV>\n";
 		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
 		print "</body>\n";
@@ -96,6 +92,9 @@ sub parse {
 		exit;
 	    }
 
+	    $q_str = $1;
+	    # 検索制約の取得
+	    my $constraint_tag = $2;
 	    if ($constraint_tag =~ /^(\d+)(W|S)$/) {
 		# 近接制約
 		$logical_cond_qkw = 'AND';
@@ -128,6 +127,7 @@ sub parse {
     my %qid2rep = ();
     my %qid2qtf = ();
     my %rep2qid = ();
+    my %qid2gid = ();
     my %dpnd_map = ();
     # 検索語中の各索引語にIDをふる
     foreach my $qk (@qks) {
@@ -137,6 +137,7 @@ sub parse {
 		$rep2qid{$rep->{string}} = $qid;
 		$qid2rep{$qid} = $rep->{string};
 		$qid2qtf{$qid} = $rep->{freq};
+		$qid2gid{$qid} = $rep->{gid};
 		$qid++;
 	    }
 	}
@@ -146,6 +147,7 @@ sub parse {
 		$rep->{qid} = $qid;
 		$qid2rep{$qid} = $rep->{string};
 		$qid2qtf{$qid} = $rep->{freq};
+		$qid2gid{$qid} = $rep->{gid};
 		my ($kakarimoto, $kakarisaki) = split('->', $rep->{string});
 		push(@{$dpnd_map{$rep2qid{$kakarimoto}}}, {kakarisaki_qid => $rep2qid{$kakarisaki}, dpnd_qid => $qid});
 		$qid++;
@@ -160,6 +162,7 @@ sub parse {
 	only_hitcount => $opt->{only_hitcount},
 	qid2rep => \%qid2rep,
 	qid2qtf => \%qid2qtf,
+	qid2gid => \%qid2gid,
 	dpnd_map => \%dpnd_map
     };
     return $ret;
