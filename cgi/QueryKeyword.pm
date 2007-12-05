@@ -25,6 +25,7 @@ sub new {
 
     my $indice;
     my $knpresult = $opt->{knp}->parse($string);
+    my %buff;
     unless ($opt->{syngraph}) {
 	# KNP 結果から索引語を抽出
 	$indice = $opt->{indexer}->makeIndexfromKnpResult($knpresult->all);
@@ -36,10 +37,9 @@ sub new {
     }
 
     # Indexer.pm より返される索引語を同じ代表表記ごとにまとめる
-    my %buff;
-    foreach my $k (keys %{$indice}){
-	$buff{$indice->{$k}{group_id}} = [] unless (exists($buff{$indice->{$k}{group_id}}));
-	push(@{$buff{$indice->{$k}{group_id}}}, $indice->{$k});
+    foreach my $idx (@{$indice}) {
+	$buff{$idx->{group_id}} = [] unless (exists($buff{$idx->{group_id}}));
+	push(@{$buff{$idx->{group_id}}}, $idx);
     }
 
     foreach my $group_id (sort {$buff{$a}->[0]{pos}[0] <=> $buff{$b}->[0]{pos}[0]} keys %buff) {
@@ -50,9 +50,9 @@ sub new {
 	    next if ($m->{isContentWord} < 1 && $this->{is_phrasal_search} < 0);
 
 	    if ($m->{rawstring} =~ /\-\>/) {
-		push(@dpnd_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}, isContentWord => $m->{isContentWord}});
+		push(@dpnd_reps, {string => $m->{rawstring}, gid => $group_id, qid => -1, freq => $m->{freq}, isContentWord => $m->{isContentWord}});
 	    } else {
-		push(@word_reps, {string => $m->{rawstring}, qid => -1, freq => $m->{freq}, isContentWord => $m->{isContentWord}});
+		push(@word_reps, {string => $m->{rawstring}, gid => $group_id, qid => -1, freq => $m->{freq}, isContentWord => $m->{isContentWord}});
 	    }
 	}
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
@@ -80,7 +80,7 @@ sub to_string {
 	    $reps .= "$w->{string}\[$w->{qid}] ";
 	}
 	chop($reps);
-	$reps .= ")";
+	$reps .= ")\n";
 	$words_str .= " $reps";
     }
 
@@ -91,7 +91,7 @@ sub to_string {
 	    $reps .= "$d->{string}\[$d->{qid}] ";
 	}
 	chop($reps);
-	$reps .= ")";
+	$reps .= ")\n";
 	$dpnds_str .= " $reps";
     }
 
