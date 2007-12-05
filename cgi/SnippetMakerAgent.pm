@@ -10,6 +10,12 @@ use IO::Socket;
 use IO::Select;
 use MIME::Base64;
 use QueryParser;
+use Data::Dumper;
+{
+    package Data::Dumper;
+    sub qquote { return shift; }
+}
+$Data::Dumper::Useperl = 1;
 
 # 定数
 my %DID2HOST = ();
@@ -123,6 +129,7 @@ my $JUMAN_PATH = $TOOL_HOME;
 my $SYNDB_PATH = '/home/skeiji/tmp/SynGraph/syndb/i686';
 
 my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
+my $SNIPPET_SERVER_PORT = 35000;
 
 sub new {
     my ($class) = @_;
@@ -134,7 +141,7 @@ sub new {
     };
 
     for (my $i = 33; $i < 49; $i++) {
-	push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 33335});
+	push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => $SNIPPET_SERVER_PORT});
     }
 
     $this->{query_parser} = new QueryParser({
@@ -147,7 +154,7 @@ sub new {
 }
 
 sub create_snippets {
-    my ($this, $query, $dids) = @_;
+    my ($this, $query, $dids, $opt) = @_;
 
     # 文書IDを標準フォーマットを管理しているホストに割り振る
     my %host2dids = ();
@@ -174,6 +181,10 @@ sub create_snippets {
  	# 文書IDの送信
  	print $socket encode_base64(Storable::freeze($host2dids{$this->{hosts}[$i]{name}}), "") . "\n";
 	print $socket "EOD\n";
+
+	# スニペット生成のオプションを送信
+ 	print $socket encode_base64(Storable::freeze($opt), "") . "\n";
+	print $socket "EOO\n";
 	
 	$socket->flush();
 	$num_of_sockets++;
@@ -213,8 +224,17 @@ sub get_snippets_for_each_did {
 	my $sentences = $this->{did2snippets}{$did};
 
 	# スコアの高い順に処理
-	foreach my $sentence (sort {$b->{score_total} <=> $a->{score_total}} @{$sentences}) {
+	my %sbuf = ();
+	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
+	    next if (exists($sbuf{$sentence->{rawstring}}));
+	    $sbuf{$sentence->{rawstring}} = 1;
+
 	    my $sid = $sentence->{sid};
+	    my $length = $sentence->{length};
+	    my $num_of_whitespaces = $sentence->{num_of_whitespaces};
+
+	    next if ($num_of_whitespaces / $length > 0.2);
+
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		$snippets{$sid} .= $sentence->{surfs}[$i];
 		$wordcnt++;
@@ -257,14 +277,29 @@ sub get_decorated_snippets_for_each_did {
 	my $sentences = $this->{did2snippets}{$did};
 
 	# スコアの高い順に処理
-	foreach my $sentence (sort {$b->{score} <=> $a->{score}} @{$sentences}) {
+	my %sbuf = ();
+	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
+	    next if (exists($sbuf{$sentence->{rawstring}}));
+	    $sbuf{$sentence->{rawstring}} = 1;
+
 	    my $sid = $sentence->{sid};
+	    my $length = $sentence->{length};
+	    my $num_of_whitespaces = $sentence->{num_of_whitespaces};
+
+	    if ($num_of_whitespaces / $length > 0.2) {
+# 		print $num_of_whitespaces . " ";
+# 		print $length . " ";
+# 		print $sentence->{rawstring} . "<br>\n";
+		next;
+	    }
+
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		my $highlighted = -1;
 		my $surf = $sentence->{surfs}[$i];
 		foreach my $rep (@{$sentence->{reps}[$i]}) {
 		    if (exists($color->{$rep})) {
 			# 代表表記レベルでマッチしたらハイライト
+
 			$snippets{$sid} .= sprintf("<span style=\"color:%s;margin:0.1em 0.25em;background-color:%s;\">%s<\/span>", $color->{$rep}->{foreground}, $color->{$rep}->{background}, $surf);
 			$highlighted = 1;
 		    }
