@@ -9,9 +9,11 @@ use Getopt::Long;
 use MIME::Base64;
 use IO::Socket;
 use Storable;
+use SnippetMaker;
 
 my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
-my $DIR_PREFFIX = '/data/sfs';
+my $DIR_PREFFIX1 = '/data/sfs_w_syn';
+my $DIR_PREFFIX2 = '/data/sfs';
 
 my (%opt);
 GetOptions(\%opt, 'help', 'port=s', 'verbose');
@@ -74,12 +76,19 @@ sub main {
 	    my $dids = Storable::thaw(decode_base64($buff));
 	    print "restore dids\n" if ($opt{verbose});
 
+	    # スニペッツ生成のオプションを取得
+	    $buff = undef;
+	    while (<$new_socket>) {
+		last if ($_ eq "EOO\n");
+		$buff .= $_;
+	    }
+	    my $option = Storable::thaw(decode_base64($buff));
+
 	    # スニペッツの生成
 	    my %result = ();
 	    print "begin with snippet creation\n" if ($opt{verbose});
 	    foreach my $did (@{$dids}) {
-		my $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $DIR_PREFFIX, $did / 1000000, $did / 10000, $did);
-		$result{$did} = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $filepath);
+		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
 	    }
 	    print "finish of snippet creation\n" if ($opt{verbose});
 
