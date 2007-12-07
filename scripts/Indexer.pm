@@ -36,12 +36,14 @@ sub makeIndexfromSynGraph4Indexing {
     my %dpndInfo = ();
     # SynNodeの情報を管理する変数
     my %synNodes = ();
+    my $position= 0;
     foreach my $line (split(/\n/, $syngraph)) {
 	## SynNode 間の係り受け関係の取得
 	if ($line =~ /^!! /) {
 	    my ($dumy, $id, $kakari, $midashi) = split(/ /, $line);
 	    if ($kakari =~ /^(.+)(A|I|D|P)$/) {
 		$dpndInfo{$id}->{kakariType} = $2;
+		$dpndInfo{$id}->{pos} = $position++;
 		foreach my $kakariSakiID (split(/\//, $1)) {
 		    push(@{$dpndInfo{$id}->{kakariSaki}}, $kakariSakiID);
 		}
@@ -78,6 +80,24 @@ sub makeIndexfromSynGraph4Indexing {
 		    absolute_pos => $this->{absolute_pos} + $pos + 1};
 		push(@{$synNodes{$bnstId}}, $syn_node);
 	    }
+	}
+    }
+
+    # 並列句において、係り元の係り先を、係り先の係り先に変更する
+    # スプーンとフォークで食べる
+    # スプーン->食べる、フォーク->食べる
+    foreach my $id (sort {$dpndInfo{$b}->{pos} <=> $dpndInfo{$a}->{pos}} keys %dpndInfo) {
+	my $dinfo = $dpndInfo{$id};
+	if ($dinfo->{kakariType} eq 'P') {
+	    my @new_kakariSaki = ();
+	    foreach my $kakarisakiID (@{$dinfo->{kakariSaki}}) {
+		my $kakariSakiInfo = $dpndInfo{$kakarisakiID};
+		foreach my $kakariSakiNoKakaiSakiID (@{$kakariSakiInfo->{kakariSaki}}) {
+		    next if ($kakariSakiNoKakaiSakiID eq '-1');
+		    push(@new_kakariSaki, $kakariSakiNoKakaiSakiID);
+		}
+	    }
+	    $dinfo->{kakariSaki} = \@new_kakariSaki;
 	}
     }
 
@@ -128,11 +148,13 @@ sub makeIndexfromSynGraph {
 
     my %dpndInfo = ();
     my %synNodes = ();
+    my $position= 0;
     foreach my $line (split(/\n/, $syngraph)) {
 	if ($line =~ /^!! /) {
 	    my($dumy, $id, $kakari, $midashi) = split(/ /, $line);
 	    if ($kakari =~ /^(.+)(A|I|D|P)$/) {
 		$dpndInfo{$id}->{kakariType} = $2;
+		$dpndInfo{$id}->{pos} = $position++;
 		foreach my $kakariSakiID (split(/\//, $1)) {
 		    push(@{$dpndInfo{$id}->{kakariSaki}}, $kakariSakiID);
 		}
@@ -158,6 +180,24 @@ sub makeIndexfromSynGraph {
 
 		push(@{$synNodes{$bnstId}}, $syn_node);
 	    }
+	}
+    }
+
+    # 並列句において、係り元の係り先を、係り先の係り先に変更する
+    # スプーンとフォークで食べる
+    # スプーン->食べる、フォーク->食べる
+    foreach my $id (sort {$dpndInfo{$b}->{pos} <=> $dpndInfo{$a}->{pos}} keys %dpndInfo) {
+	my $dinfo = $dpndInfo{$id};
+	if ($dinfo->{kakariType} eq 'P') {
+	    my @new_kakariSaki = ();
+	    foreach my $kakarisakiID (@{$dinfo->{kakariSaki}}) {
+		my $kakariSakiInfo = $dpndInfo{$kakarisakiID};
+		foreach my $kakariSakiNoKakaiSakiID (@{$kakariSakiInfo->{kakariSaki}}) {
+		    next if ($kakariSakiNoKakaiSakiID eq '-1');
+		    push(@new_kakariSaki, $kakariSakiNoKakaiSakiID);
+		}
+	    }
+	    $dinfo->{kakariSaki} = \@new_kakariSaki;
 	}
     }
 
