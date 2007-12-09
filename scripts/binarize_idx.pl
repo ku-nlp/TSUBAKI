@@ -14,7 +14,7 @@ use Getopt::Long;
 use Encode;
 
 my (%opt);
-GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'wordpos', 'dpndpos', 'verbose', 'cdbdir=s', 'z', 'syn');
+GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'wordpos', 'dpndpos', 'verbose', 'cdbdir=s', 'z', 'syn', 'quiet');
 
 # 足切りの閾値
 my $wordth = $opt{wordth} ? $opt{wordth} : 0;
@@ -22,36 +22,38 @@ my $dpndth = $opt{dpndth} ? $opt{dpndth} : 0;
 
 # 同義表現係り受けインデックス用に、索引として登録する係り受けのデータベースを読み込む
 my @cdbs = ();
-opendir(DIR, $opt{cdbdir});
-foreach my $f (sort {$a cmp $b} readdir(DIR)) {
-    next unless ($f =~ /.dpnd.cdb.keymap/);
+if ($opt{cdbdir}) {
+    opendir(DIR, $opt{cdbdir});
+    foreach my $f (sort {$a cmp $b} readdir(DIR)) {
+	next unless ($f =~ /.dpnd.cdb.keymap/);
 
-    # $f は登録されているキーのうち最も小さいキーとCDBファイルの対応が書かれたファイル
-    # 例
-    # % cat $f
-    # s17699:ものを一つにする->s34274:買い物<尊敬> df.dpnd.cdb.1
-    # s253:内部<反義語><否定>->s19414:ようすをしらべる<否定> df.dpnd.cdb.2
-    # s3255:着く<可能>->s19215:賞<反義語><否定> df.dpnd.cdb.3
-    # s720:漬かる<否定>->s26930:見られる<否定> df.dpnd.cdb.4
-    # アイスブレーキング->探す df.dpnd.cdb.5
-    # ...
-    open(READER, '<:utf8', "$opt{cdbdir}/$f");
-    while (<READER>) {
- 	chop($_);
- 	my ($k, $file) = split(/ /, $_);
- 	my $dbfp = "$opt{cdbdir}/$file";
-	if (scalar(@cdbs) < 1) {
-	    my $new_dbfp = $dbfp;
-	    $new_dbfp =~ s/\d+$/0/;
-	    tie my %cdb, 'CDB_File', $new_dbfp or die "$0: can't tie to $new_dbfp $!\n";
-	    push(@cdbs, {key => '', cdb => \%cdb});
+	# $f は登録されているキーのうち最も小さいキーとCDBファイルの対応が書かれたファイル
+	# 例
+	# % cat $f
+	# s17699:ものを一つにする->s34274:買い物<尊敬> df.dpnd.cdb.1
+	# s253:内部<反義語><否定>->s19414:ようすをしらべる<否定> df.dpnd.cdb.2
+	# s3255:着く<可能>->s19215:賞<反義語><否定> df.dpnd.cdb.3
+	# s720:漬かる<否定>->s26930:見られる<否定> df.dpnd.cdb.4
+	# アイスブレーキング->探す df.dpnd.cdb.5
+	# ...
+	open(READER, '<:utf8', "$opt{cdbdir}/$f");
+	while (<READER>) {
+	    chop($_);
+	    my ($k, $file) = split(/ /, $_);
+	    my $dbfp = "$opt{cdbdir}/$file";
+	    if (scalar(@cdbs) < 1) {
+		my $new_dbfp = $dbfp;
+		$new_dbfp =~ s/\d+$/0/;
+		tie my %cdb, 'CDB_File', $new_dbfp or die "$0: can't tie to $new_dbfp $!\n";
+		push(@cdbs, {key => '', cdb => \%cdb});
+	    }
+	    tie my %cdb, 'CDB_File', $dbfp or die "$0: can't tie to $dbfp $!\n";
+	    push(@cdbs, {key => $k, cdb => \%cdb});
 	}
- 	tie my %cdb, 'CDB_File', $dbfp or die "$0: can't tie to $dbfp $!\n";
-	push(@cdbs, {key => $k, cdb => \%cdb});
+	close(READER);
     }
-    close(READER);
+    closedir(DIR);
 }
-closedir(DIR);
 
 &main();
 
@@ -86,7 +88,7 @@ sub main {
 	}
 
 	while (<READER>) {
-	    print STDERR "\rnow binarizing... ($lcnt)" if (($lcnt%10) == 0);
+	    print STDERR "\rnow binarizing... ($lcnt)" if (!$opt{quiet} && ($lcnt%10) == 0);
 	    $lcnt++;
 
 	    chomp;
@@ -97,20 +99,25 @@ sub main {
 		# 同義表現間の係り受け関係インデックスの場合は文書頻度データベースをひいて登録するか
 		# どうかをチェックする（文書頻度データベースはあらかじめ足切りがされていること）
 		if ($index =~ /s\d+/) {
-		    my $cdb = $cdbs[-1]->{cdb};
-		    foreach my $e (@cdbs) {
-			if ($index gt $e->{key}) {
-			    $cdb = $e->{cdb};
+		    if ($opt{cdbdir}) {
+			my $cdb = $cdbs[-1]->{cdb};
+			foreach my $e (@cdbs) {
+			    if ($index gt $e->{key}) {
+				$cdb = $e->{cdb};
+			    } else {
+				last;
+			    }
+			}
+
+			my $df = $cdb->{$index};
+			if ($df > 0) {
+			    $bin = $bins->{dpnd};
 			} else {
-			    last;
+			    $bin = undef;
 			}
 		    }
-
-		    my $df = $cdb->{$index};
-		    if ($df > 0) {
+		    else {
 			$bin = $bins->{dpnd};
-		    } else {
-			$bin = undef;
 		    }
 		} else {		    
 		    $bin = $bins->{dpnd};
@@ -118,7 +125,7 @@ sub main {
 	    }
 	    $bin->add($index, \@dlist) if (defined $bin);
 	}
-	print STDERR "\rbinarizing ($lcnt) done.\n";
+	print STDERR "\rbinarizing ($lcnt) done.\n" if (!$opt{quiet});
 	close(READER);
 
 	$bins->{word}->close();
