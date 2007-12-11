@@ -48,7 +48,8 @@ sub retrieve_from_dat {
 
 	# $retriever->search($rep, $doc_buff, $add_flag, $position);
 	# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
-	$results[$i] = $retriever->search4syngraph($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
+#	$results[$i] = $retriever->search4syngraph($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
+	$results[$i] = $retriever->search_syngraph_test_for_new_format($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
 
 	$idx2qid{$i} = $rep->{qid};
     }
@@ -66,6 +67,227 @@ sub retrieve_from_dat {
 
 # 文書のスコアリング
 sub merge_docs {
+    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $gid2df) = @_;
+
+    my $start_time = Time::HiRes::time;
+
+    my $pos = 0;
+    my %did2pos = ();
+    my @merged_docs = ();
+    my %d_length_buff = ();
+    my %did2pos_score = ();
+    my %gid2near_score = ();
+    my %gid2df = ();
+
+    # 検索キーワードごとに区切る
+    foreach my $docs_word (@{$alldocs_words}) {
+	foreach my $doc (@{$docs_word}) {
+	    my $did = $doc->{did};
+
+	    unless (exists($did2pos_score{$did})) {
+		$did2pos_score{$did} = {};
+	    }
+
+	    my %qid2poslist = ();
+	    foreach my $qid_freq (@{$doc->{qid_freq}}) {
+		my $qid = $qid_freq->{qid};
+		my $dlength = $d_length_buff{$did};
+
+		unless (defined($dlength)) {
+		    foreach my $db (@{$this->{DOC_LENGTH_DBs}}) {
+			# 小規模なテスト用にdlengthのDBをハッシュでもつオプション
+			if ($this->{dlengthdb_hash}) {
+			    $dlength = $db->{$did};
+			    if (defined $dlength) {
+				$d_length_buff{$did} = $dlength;
+				last;
+			    }
+			}
+			else {
+			    $dlength = $db->{$did};
+			    if (defined($dlength)) {
+				$d_length_buff{$did} = $dlength;
+				last;
+			    }
+			}
+		    }
+		}
+
+		my $pos = $this->{word_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{size});
+		my $score = $this->{word_retriever}->load_score($qid_freq->{fnum}, $qid_freq->{offset_score}, $qid_freq->{size});
+
+		$qid2poslist{$qid} = $pos;
+
+		my $qtf = $qid2qtf->{$qid};
+		for (my $i = 0; $i < scalar(@$pos); $i++) {
+		    my $p = $pos->[$i];
+		    my $s = $qtf * $score->[$i];
+		    print "did=$did pos=$p qid=$qid qtf=$qtf score=$score->[$i] qtf * score = $s\n" if ($this->{verbose});
+
+ 		    my $max_score_at_p = $did2pos_score{$did}->{$p}{score};
+ 		    unless (defined $max_score_at_p) {
+ 			$did2pos_score{$did}->{$p}{score} = $s;
+ 			$did2pos_score{$did}->{$p}{gid} = $qid2gid->{$qid};
+ 		    } else {
+			if ($max_score_at_p < $s) {
+			    $did2pos_score{$did}->{$p}{score} = $s;
+			    $did2pos_score{$did}->{$p}{gid} = $qid2gid->{$qid};
+			}
+ 		    }
+ 		}
+		print "-----\n" if ($this->{verbose});
+	    }
+
+ 	    foreach my $qid (keys %$dpnd_map) {
+ 		foreach my $e (@{$dpnd_map->{$qid}}) {
+ 		    my $dpnd_qid = $e->{dpnd_qid};
+ 		    my $kakarisaki_qid = $e->{kakarisaki_qid};
+ 		    my $dlength = $d_length_buff{$did};
+ 		    my $df = $qid2df->{$dpnd_qid};
+ 		    next if ($df < 0);
+
+ 		    my $dist = &get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
+		    my $gid = $qid2gid->{$dpnd_qid};
+
+		    # print "did=$did qid=$dpnd_qid dist=$dist\n";
+ 		    if ($dist > 30) {
+			$gid2near_score{$did}->{$gid} = 0 unless (defined $gid2near_score{$gid});
+ 		    } else {
+ 			my $d = (30 - $dist) / 30;
+ 			my $qtf = $qid2qtf->{$dpnd_qid};
+
+ 			my $tff = (3 * $d) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $d);
+ 			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+ 			my $score = $qtf * $tff * $idf;
+
+			unless (defined $gid2near_score{$gid}) {
+			    $gid2near_score{$did}->{$gid} = $score;
+			} else {
+			    $gid2near_score{$did}->{$gid} = $score if ($score > $gid2near_score{$gid});
+			}
+ 		    }
+ 		}
+	    }
+	}
+    }
+
+
+    my $i = 0;
+    my $did2pos = ();
+    while (my ($did, $pos2score) = each(%did2pos_score)) {
+	my %scores;
+	while (my ($pos, $score_gid) = each(%{$pos2score})) {
+	    $scores{$score_gid->{gid}} += $score_gid->{score};
+	}
+
+	my $okapi_score;
+	foreach my $gid (keys %scores) {
+	    my $score = $scores{$gid};
+	    my $df = $gid2df->{$gid};
+	    my $dlength = $d_length_buff{$did};
+
+	    # 関数化するよりも高速
+ 	    my $tff = 3 * $score / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $score);
+ 	    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+ 	    $okapi_score += ($tff * $idf);
+
+ 	    print "did=$did gid=$gid score=$score df=$df length=$dlength score=$okapi_score\n" if ($this->{verbose});
+	}
+	$merged_docs[$i] = {did => $did, score_total => $okapi_score};
+	$did2pos{$did} = $i;
+	$i++;
+    }
+
+    unless (defined($cal_method)) {
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $start_time;
+	if ($this->{show_speed}) {
+	    printf ("@@@ %.4f sec. doclist merging.\n", $conduct_time);
+	}
+	return \@merged_docs;
+    }
+
+    my %did2gid_dpnd = ();
+    my %did2pos_score = ();
+    foreach my $docs_dpnd (@{$alldocs_dpnds}) {
+	foreach my $doc (@{$docs_dpnd}) {
+	    my $did = $doc->{did};
+	    my $i = $did2pos{$did};
+	    if (defined $i) {
+		unless (exists($did2pos_score{$did})) {
+		    $did2pos_score{$did} = {};
+		}
+
+		foreach my $qid_freq (@{$doc->{qid_freq}}) {
+		    my $qid = $qid_freq->{qid};
+
+		    my $pos = $this->{dpnd_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{size});
+		    my $score = $this->{dpnd_retriever}->load_score($qid_freq->{fnum}, $qid_freq->{offset_score}, $qid_freq->{size});
+
+		    $did2gid_dpnd{$did}->{$qid2gid->{$qid}} = 1;
+		    my $gid = $qid2gid->{$qid};
+		    my $qtf = $qid2qtf->{$qid};
+		    for (my $i = 0; $i < scalar(@$pos); $i++) {
+			my $p = $pos->[$i];
+			my $s = $qtf * $score->[$i];
+
+			my $max_score_at_p = $did2pos_score{$did}->{$p};
+			unless (defined $max_score_at_p) {
+			    $did2pos_score{$did}->{$p}{score} = $s;
+			    $did2pos_score{$did}->{$p}{gid} = $gid;
+			} else {
+			    if ($max_score_at_p < $s) {
+				$did2pos_score{$did}->{$p}{score} = $s;
+				$did2pos_score{$did}->{$p}{gid} = $gid;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    while (my ($did, $gid2near) = each %gid2near_score) {
+	my %sum_of_dpnd_score;
+	foreach my $pos (keys %{$did2pos_score{$did}}) {
+	    my $gid = $did2pos_score{$did}->{$pos}{gid};
+	    $sum_of_dpnd_score{$gid} += $did2pos_score{$did}->{$pos}{score};
+	}
+
+	my $i = $did2pos{$did};
+	my $okapi_score;
+	foreach my $gid (keys %sum_of_dpnd_score) {
+	    my $score = $sum_of_dpnd_score{$gid};
+	    my $df = $gid2df->{$gid};
+	    my $dlength = $d_length_buff{$did};
+
+	    # 関数化するよりも高速
+	    my $tff = 3 * $score / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $score);
+	    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+	    $okapi_score += ($tff * $idf * $this->{WEIGHT_DPND_SCORE});
+	    print "did=$did gid=$gid score=$score df=$df length=$dlength score=$okapi_score\n" if ($this->{verbose});
+	}
+	$merged_docs[$i]->{score_total} += $okapi_score;
+
+ 	foreach my $gid (keys %{$gid2near}) {
+ 	    next if (defined $did2gid_dpnd{$did}->{$gid});
+
+	    $merged_docs[$i]->{score_total} += $gid2near->{$gid};
+	}
+    }
+
+    @merged_docs = sort {$b->{score_total} <=> $a->{score_total}} @merged_docs;
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{show_speed}) {
+	printf ("@@@ %.4f sec. doc_list merging.\n", $conduct_time);
+    }
+
+    return \@merged_docs;
+}
+
+sub merge_docs2 {
     my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid) = @_;
 
     my $start_time = Time::HiRes::time;
@@ -291,7 +513,55 @@ sub merge_docs {
 }
 
 # 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
+# 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
 sub merge_search_result {
+    my ($this, $docs_list, $idx2qid) = @_;
+
+    my $start_time = Time::HiRes::time;
+
+    my $serialized_docs = [];
+    my $pos = 0;
+    my %did2pos = ();
+    for(my $i = 0; $i < scalar(@{$docs_list}); $i++) {
+	my $qid = $idx2qid->{$i};
+	foreach my $d (@{$docs_list->[$i]}) {
+	    next unless (defined($d)); # 本来なら空はないはず
+
+	    my $did = $d->[0];
+	    my $fnum = $d->[1];
+	    my $size = $d->[2];
+	    my $offset_pos = $d->[3];
+	    my $offset_score = $d->[4];
+
+# 	    print $size . "\n";
+# 	    print $fnum . "\n";
+# 	    print $offset_pos . "\n";
+# 	    print $offset_score . "\n";
+# 	    print "-----\n";
+
+	    if (exists($did2pos{$did})) {
+		my $j = $did2pos{$did};
+		push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, fnum => $fnum, size => $size, offset => $offset_pos, offset_score => $offset_score});
+	    } else {
+		$serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, fnum => $fnum, size => $size, offset => $offset_pos, offset_score => $offset_score}]};
+
+		$did2pos{$did} = $pos;
+		$pos++;
+	    }
+	}
+    }
+    @{$serialized_docs} = sort {$a->{did} <=> $b->{did}} @{$serialized_docs};
+
+    my $finish_time = Time::HiRes::time;
+    my $conduct_time = $finish_time - $start_time;
+    if ($this->{show_speed}) {
+	printf ("@@@ %.4f sec. doclist serializing (2).\n", $conduct_time);
+    }
+
+    return $serialized_docs;
+}
+
+sub merge_search_result2 {
     my ($this, $docs_list, $idx2qid) = @_;
 
     my $start_time = Time::HiRes::time;
