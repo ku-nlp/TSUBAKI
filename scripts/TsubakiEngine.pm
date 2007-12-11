@@ -96,7 +96,7 @@ sub search {
     }
 
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid});
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $qid2df);
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
