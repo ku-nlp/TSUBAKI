@@ -112,7 +112,7 @@ sub makeIndexfromSynGraph4Indexing {
 		midashi => $midashi,
 		rawstring => $midashi,
 		group_id => $groupID,
-		freq => $score,
+		score => $score,
 		pos => $pos,
 		isContentWord => 1
 	    };
@@ -128,7 +128,7 @@ sub makeIndexfromSynGraph4Indexing {
 			midashi => ($midashi . '->' . $kakariSakiNode->{midashi}),
 			rawstring => ($midashi . '->' . $kakariSakiNode->{midashi}),
 			group_id => ($groupID . '/' . $kakariSakiNode->{grpId}),
-			freq => ($score * $kakariSakiNode->{score}),
+			score => ($score * $kakariSakiNode->{score}),
 			pos => $pos,
 			isContentWord => 1
 		    };
