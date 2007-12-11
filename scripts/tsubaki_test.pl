@@ -26,7 +26,7 @@ sub init {
     my $start_time = Time::HiRes::time;
     opendir(DIR, $opt{dfdbdir}) or die;
     foreach my $cdbf (readdir(DIR)) {
-	next unless ($cdbf =~ /cdb/);
+	next unless ($cdbf =~ /cdb.\d+/);
 	
 	my $fp = "$opt{dfdbdir}/$cdbf";
 	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
@@ -55,8 +55,7 @@ sub main {
     my $q_parser = new QueryParser({
 	KNP_PATH => "$ENV{HOME}/local/bin",
 	JUMAN_PATH => "$ENV{HOME}/local/bin",
-	SYNDB_PATH => "$ENV{HOME}/tmp/SynGraph/syndb/i686",
-#	SYNDB_PATH => "$ENV{HOME}/cvs/SearchEngine/scripts/tmp/SearchEngine/scripts/tmp/SynGraph/syndb/i686",
+	SYNDB_PATH => "$ENV{HOME}/cvs/SynGraph/syndb/i686",
 	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'],
 	SYNGRAPH_OPTION => $syngraph_option,
 	SHOW_SPEED => $opt{show_speed}
@@ -107,5 +106,6 @@ sub get_DF {
     if ($opt{show_speed}) {
 	printf ("@@@ %.4f sec. df value loading (key=%s).\n", $conduct_time, encode('euc-jp', $k));
     }
+
     return $gdf;
 }
