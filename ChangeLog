@@ -1,3 +1,8 @@
+2007-12-16  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngineFactory.pm:
+	文書平均長をオプションで指定できるように変更
+
 2007-11-10  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine4SynGraphSearch.pm, scripts/TsubakiEngineFactory.pm:
