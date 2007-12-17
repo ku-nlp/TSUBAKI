@@ -142,10 +142,11 @@ sub retrieve_from_dat {
 sub get_minimum_distance {
     my ($this, $poslist1, $poslist2, $dlength) = @_;
 
-    my $j = 0;
-    my $min_dist = $dlength;
-    return $dlength unless (defined $poslist1 && defined $poslist2);
+    my $MAX = 1000000;
+    my $min_dist = $MAX;
+    return -1 unless (defined $poslist1 && defined $poslist2);
 
+    my $j = 0;
     for (my $i = 0; $i < scalar(@{$poslist1}); $i++) {
 	while ($poslist1->[$i] > $poslist2->[$j] && $j < scalar(@{$poslist2})) {
 	    $j++;
