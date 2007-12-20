@@ -21,13 +21,13 @@ sub new {
     $obj->{word_retriever} = new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed});
 
     # DAT ファイルから係り受けを含む文書を検索する retriever オブジェクトをセットする
-    $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
+    $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed});
 
     bless $obj;
 }
 
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -35,6 +35,7 @@ sub merge_docs {
     my %did2pos = ();
     my @merged_docs = ();
     my %d_length_buff = ();
+    my @q2scores = ();
     # 検索キーワードごとに区切る
     foreach my $docs_word (@{$alldocs_words}) {
 	foreach my $doc (@{$docs_word}) {
@@ -87,6 +88,7 @@ sub merge_docs {
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
 
 		    $merged_docs[$i]->{word_score} += $score * $qtf;
+		    $q2scores[$i]->{word}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
 		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
 		}
 
@@ -115,6 +117,7 @@ sub merge_docs {
 				$score = $qtf * $tff * $idf;
 			    }
 
+			    $q2scores[$i]->{near}{$qid} = {dist => $dist, qtf => $qtf, df => $df, dlength => $dlength, score => $score, kakarisaki_qid => $kakarisaki_qid};
 			    $merged_docs[$i]->{near_score}{$dpnd_qid} = $score;
 			}
 		    }
@@ -157,6 +160,7 @@ sub merge_docs {
 		    }
 
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
+		    $q2scores[$i]->{dpnd}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
 
 		    $merged_docs[$i]->{dpnd_score}{$qid} = $score * $qtf;
 		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if ($this->{store_verbose});
@@ -166,17 +170,22 @@ sub merge_docs {
     }
 
     my @result;
-    foreach my $e (@merged_docs) {
+    for (my $i = 0; $i < @merged_docs; $i++) {
+	my $e = $merged_docs[$i];
 	my $score = $e->{word_score};
 	my $dpnd_score = 0;
 	my $dist_score = 0;
 	while (my ($qid, $score_of_qid) = each(%{$e->{near_score}})) {
 	    if ($e->{dpnd_score}{$qid} == 0) {
-		$score += $score_of_qid;
-		$dist_score += $score_of_qid;
+		if ($dist_on) {
+		    $score += $score_of_qid;
+		    $dist_score += $score_of_qid;
+		}
 	    } else {
-		$score += $e->{dpnd_score}{$qid};
-		$dpnd_score += $e->{dpnd_score}{$qid};
+		if ($dpnd_on) {
+		    $score += $e->{dpnd_score}{$qid};
+		    $dpnd_score += $e->{dpnd_score}{$qid};
+		}
 	    }
 
 	    printf ("did=%09d qid=%02d w=%.3f d=%.3f n=%.3f total=%.3f\n", $e->{did}, $qid, $e->{word_score}, $e->{dpnd_score}{$qid}, $score_of_qid, $score) if ($this->{verbose});
@@ -187,7 +196,8 @@ sub merge_docs {
 		       score_total => $score,
 		       score_word => $e->{word_score},
 		       score_dpnd => $dpnd_score,
-		       score_dist => $dist_score
+		       score_dist => $dist_score,
+		       q2score => $q2scores[$i]
 	     });
 
 	$result[-1]{verbose} = $e->{verbose} if $this->{store_verbose};
