@@ -9,6 +9,12 @@ package Indexer;
 use strict;
 use utf8;
 use Encode;
+use Data::Dumper;
+{
+    package Data::Dumper;
+    sub qquote { return shift; }
+}
+$Data::Dumper::Useperl = 1;
 
 our @EXPORT = qw(makeIndexfromJumanResult makeIndexfromKnpResult makeNgramIndex);
 
@@ -89,14 +95,15 @@ sub makeIndexfromSynGraph4Indexing {
     foreach my $id (sort {$dpndInfo{$b}->{pos} <=> $dpndInfo{$a}->{pos}} keys %dpndInfo) {
 	my $dinfo = $dpndInfo{$id};
 	if ($dinfo->{kakariType} eq 'P') {
-	    my @new_kakariSaki = ();
+	    my %kakarisaki_buff = ();
 	    foreach my $kakarisakiID (@{$dinfo->{kakariSaki}}) {
 		my $kakariSakiInfo = $dpndInfo{$kakarisakiID};
 		foreach my $kakariSakiNoKakaiSakiID (@{$kakariSakiInfo->{kakariSaki}}) {
 		    next if ($kakariSakiNoKakaiSakiID eq '-1');
-		    push(@new_kakariSaki, $kakariSakiNoKakaiSakiID);
+		    $kakarisaki_buff{$kakariSakiNoKakaiSakiID} = 1;
 		}
 	    }
+	    my @new_kakariSaki = sort {$a <=> $b} keys %kakarisaki_buff;
 	    $dinfo->{kakariSaki} = \@new_kakariSaki;
 	}
     }
@@ -125,11 +132,11 @@ sub makeIndexfromSynGraph4Indexing {
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
 		foreach my $kakariSakiNode (@{$kakariSakiNodes}){
 		    my $index_dpnd = {
-			midashi => ($midashi . '->' . $kakariSakiNode->{midashi}),
-			rawstring => ($midashi . '->' . $kakariSakiNode->{midashi}),
-			group_id => ($groupID . '/' . $kakariSakiNode->{grpId}),
-			score => ($score * $kakariSakiNode->{score}),
-			pos => $pos,
+  			midashi => ($midashi . '->' . $kakariSakiNode->{midashi}),
+  			rawstring => ($midashi . '->' . $kakariSakiNode->{midashi}),
+ 			group_id => ($groupID . '/' . $kakariSakiNode->{grpId}),
+ 			score => ($score * $kakariSakiNode->{score}),
+ 			pos => $pos,
 			isContentWord => 1
 		    };
 		    push(@indice, $index_dpnd);
@@ -189,14 +196,15 @@ sub makeIndexfromSynGraph {
     foreach my $id (sort {$dpndInfo{$b}->{pos} <=> $dpndInfo{$a}->{pos}} keys %dpndInfo) {
 	my $dinfo = $dpndInfo{$id};
 	if ($dinfo->{kakariType} eq 'P') {
-	    my @new_kakariSaki = ();
+	    my %kakarisaki_buff = ();
 	    foreach my $kakarisakiID (@{$dinfo->{kakariSaki}}) {
 		my $kakariSakiInfo = $dpndInfo{$kakarisakiID};
 		foreach my $kakariSakiNoKakaiSakiID (@{$kakariSakiInfo->{kakariSaki}}) {
 		    next if ($kakariSakiNoKakaiSakiID eq '-1');
-		    push(@new_kakariSaki, $kakariSakiNoKakaiSakiID);
+		    $kakarisaki_buff{$kakariSakiNoKakaiSakiID} = 1;
 		}
 	    }
+	    my @new_kakariSaki = sort {$a <=> $b} keys %kakarisaki_buff;
 	    $dinfo->{kakariSaki} = \@new_kakariSaki;
 	}
     }
