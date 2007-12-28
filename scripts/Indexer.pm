@@ -338,6 +338,7 @@ sub makeIndexfromKnpResult {
 		## 代表表記に曖昧性がある場合は全部保持する
 		## ただし表記・読みが同一の代表表記は区別しない
 		## ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
+		my $lbuf = $line;
 		while ($line =~ /\<ALT(.+?)\>/) {
 		    $line = "$'";
 		    my $alt_cont = $1;
@@ -349,6 +350,7 @@ sub makeIndexfromKnpResult {
 			$reps{&toUpperCase_utf8($midashi)} = 1;
 		    }
 		}
+		$line = $lbuf;
 
 		my @reps_array = sort keys %reps;
 		my $word = {
