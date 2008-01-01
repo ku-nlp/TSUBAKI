@@ -89,7 +89,7 @@ sub merge_docs {
 
 		    $merged_docs[$i]->{word_score} += $score * $qtf;
 		    $q2scores[$i]->{word}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
-		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
+		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score * $qtf} if $this->{store_verbose};
 		}
 
 		foreach my $qid (keys %$dpnd_map) {
@@ -99,6 +99,7 @@ sub merge_docs {
 			my $dlength = $d_length_buff{$did};
 
 			my $dist = $this->get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
+			next if $dist == -1;
 			if ($dist > 30) {
 			    $merged_docs[$i]->{near_score}{$dpnd_qid} = 0;
 			} else {
