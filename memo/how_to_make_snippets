@@ -1,0 +1,27 @@
+★ スニペット生成方法 08/01/16
+
+スニペットの生成手順は以下の通り．
+
+1. クエリを構文解析し、Indexer.pm により索引語・係り受けを抽出
+2. 標準フォーマットデータ中の構文解析結果からIndexer.pm により索引語・係り受けを抽出
+3. 各文のスコアを計算
+
+   score(s) = num_of_included_query_types(s) * num_of_included_queries(s) * log(length(s))
+
+   num_of_included_query_types(s) ... s中に含まれる索引語・係り受けのタイプ数
+   num_of_included_queries(s) ... s中に含まれる索引語・係り受けの数
+   length(s) ... sの単語数
+
+4. 前後N文のスコアの考慮してスムージング（現在はN=5）
+
+   smoothed_score(s) = score(s)
+   smoothed_score(s) += score(s_+i) / (2^i) + score(s_-i) / (2^i) (1 <= i <= N)
+
+5. 全角空白などの割合が高い文を削除（現在は以下の値が0.2以上）
+
+   num_of_whitespace(s) / length(s)
+
+   num_of_whitespace(s) ... (　|・|，|、|＞|−|｜|／)を表層形に含んでいる形態素数
+   length(s) ... sの単語数
+
+6. 単語数がMを超えるまでsmoothed_scoreの値が高い順に文を連結しスニペットとする（M=100）
