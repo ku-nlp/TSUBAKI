@@ -1,0 +1,56 @@
+★ TSUBAKIの起動方法 08/01/16
+
+* 西千葉
+
+   検索が4並列で動いてますので、以下のコマンドの★の部分を 1, 2, 3, 4
+   と読み替えて、全部で4回実行します。
+
+   1. gxpを起動します。
+
+   2. 検索サーバーで使うノードを獲得します。
+
+      edges -> nlpc0[6,7,8,9]
+      edges -> iccc011
+      edges -> iccc02?
+      edges -> iccc03[1,2]
+      explore
+
+   3. プログラムがあるディレクトリに移動
+
+      cd $HOME/cvs/SearchEngine/scripts
+
+   4. プログラムで使用できるメモリの上限を解除
+
+      e ulimit -Ss unlimited 
+
+   5. 検索サーバプログラムの起動
+
+      e perl -I ~$HOME/cvs/SynGraph/perl tsubaki_server.pl -idxdir /data/skeiji/idx_070828/dat★ -dlengthdbdir /data/home/skeiji/dat★ -port 2200★
+
+
+
+* NICT
+
+   検索が4並列で動いてますので、以下のコマンドの★の部分を 1, 2, 3, 4
+   と読み替えて、全部で4回実行します。
+
+   1. gxpを起動します。
+
+   2. 検索サーバーで使うノードを獲得します。
+
+      edges -> iccc01[1,2,3,4,5,6,7,8,9]
+      edges -> iccc02?
+      edges -> iccc03[1,2,3,4,5,6]
+      explore
+
+   3. プログラムがあるディレクトリに移動
+
+      cd /share09/home/skeiji/cvs/SearchEngine/scripts
+
+   4. プログラムで使用できるメモリの上限を解除
+
+      e ulimit -Ss unlimited 
+
+   5. 検索サーバプログラムの起動
+
+      e perl -I ~/tmp/SynGraph/perl tsubaki_server.pl -idxdir /data/home/skeiji/dat★ -dlengthdbdir /data/home/skeiji/dat1 -port 5000★
