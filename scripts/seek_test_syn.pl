@@ -30,6 +30,7 @@ foreach my $offsetdb (@offsets) {
 
 my $idxfile = sprintf("%s/idx%s.%s.dat", $opt{dir}, $opt{id}, $opt{type});
 print $idxfile . "\n";
+print $offset . "\n";
 open(DAT, $idxfile) or die;
 my $char;
 my $buf;
@@ -56,41 +57,42 @@ while (read(DAT, $char, 1)) {
 	    $docs[$j]->{did} = $did;
 	}
 
-# 	for (my $j = 0; $j < $ldf; $j++) {
-# 	    read(DAT, $buf, 2);
-# 	    my $freq = unpack('S', $buf);
-# 	    $docs[$j]->{freq} = $freq / 1000;
-# 	    print $freq . "\n";
-# 	}
+	for (my $j = 0; $j < $ldf; $j++) {
+	    read(DAT, $buf, 4);
 
+	    my $freq = unpack('f', $buf);
+	    $docs[$j]->{freq} = $freq;
+	    print $freq . "=freq\n";
+	}
+
+	read(DAT, $buf, 4);
+	my $sids_size = unpack('L', $buf);
 	read(DAT, $buf, 4);
 	my $poss_size = unpack('L', $buf);
-	read(DAT, $buf, 4);
-	my $frqs_size = unpack('L', $buf);
 
 	my $total_bytes = 0;
-	$total_bytes = 0;
-	for(my $i = 0; $total_bytes < $poss_size; $i++) {
+	for (my $i = 0; $total_bytes < $sids_size; $i++) {
 	    read(DAT, $buf, 4);
 	    my $size = unpack('L', $buf);
+	    for (my $j = 0; $j < $size; $j++) {
+		read(DAT, $buf, 4);
+		my $sid = unpack('L', $buf);
+		push(@{$docs[$i]->{sids}}, $sid);
+	    }
+	    $total_bytes += (($size + 1) * 4);
+	}
+
+	$total_bytes = 0;
+	for (my $i = 0; $total_bytes < $poss_size; $i++) {
+	    read(DAT, $buf, 4);
+	    my $size = unpack('L', $buf);
+	    print $size . "\n";
 	    for (my $j = 0; $j < $size; $j++) {
 		read(DAT, $buf, 4);
 		my $pos = unpack('L', $buf);
 		push(@{$docs[$i]->{poss}}, $pos);
 	    }
 	    $total_bytes += (($size + 1) * 4);
-	}
-
-	$total_bytes = 0;
-	for(my $i = 0; $total_bytes < $frqs_size; $i++) {
-	    read(DAT, $buf, 4);
-	    my $size = unpack('L', $buf);
-	    for (my $j = 0; $j < $size; $j++) {
-		read(DAT, $buf, 2);
-		my $freq = unpack('S', $buf);
-		push(@{$docs[$i]->{freqs}}, $freq / 1000);
-	    }
-	    $total_bytes += (($size * 2) + 4);
 	}
 	last;
     }
@@ -99,17 +101,17 @@ close(DAT);
 
 foreach my $d (@docs) {
     print "$d->{did}=did\n";
-#   print "$d->{freq}=freq\n";
+    print "$d->{freq}=freq\n";
 
     if ($position > 0) {
+ 	foreach my $sid (@{$d->{sids}}) {
+ 	    print "$sid,";
+ 	}
+ 	print "=sids\n";
+
 	foreach my $pos (@{$d->{poss}}) {
 	    print "$pos,";
 	}
 	print "=poss\n";
-
-	foreach my $freq (@{$d->{freqs}}) {
-	    print "$freq,";
-	}
-	print "=freqs\n";
     }
 }

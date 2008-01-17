@@ -11,7 +11,7 @@ use utf8;
 use Getopt::Long;
 use Encode;
 
-my (%opt); GetOptions(\%opt, 'dir=s', 'suffix=s', 'n=s');
+my (%opt); GetOptions(\%opt, 'dir=s', 'suffix=s', 'n=s', 'z', 'compress', 'verbose');
 
 # 単語IDの初期化
 my %freq;
@@ -26,14 +26,23 @@ if ($opt{dir}) {
     opendir (DIR, $opt{dir}) or die;
 
     foreach my $file (sort {$a <=> $b} readdir(DIR)) {
-	# 拡張子が$opt{suffix}(デフォルトidx)であるファイルが対象
-	next if($file !~ /.+\.$opt{suffix}$/);
+	# .idxファイルが対象
+	if($opt{z}){
+	    next if($file !~ /.+\.$opt{suffix}\.gz$/);
+	}else{
+	    next if ($file !~ /.+\.$opt{suffix}$/);
+	}
 
-	print STDERR "\r($fcnt)" if($fcnt%113 == 0);
+	print STDERR "\r($fcnt)" if($fcnt%113 == 0 && $opt{verbose});
 	$fcnt++;
 
 	# ファイルから読み込む
-	open (FILE, '<:utf8', "$opt{dir}/$file") or die("no such file $file\n");
+	if ($opt{z}) {
+	    open (FILE, "zcat $opt{dir}/$file |") or die("no such file $file\n");
+	    binmode(FILE, ':utf8');
+	} else {
+	    open (FILE, '<:utf8', "$opt{dir}/$file") or die("no such file $file\n");
+	}
 	while (<FILE>) {
 	    &ReadData($_);
 	}
@@ -42,12 +51,7 @@ if ($opt{dir}) {
 	if (defined($opt{n})) {
 	    if ($fcnt % $opt{n} == 0) {
 		my $fname = sprintf("$opt{dir}.%d.%d.%s", $fcnt/$opt{n}, $$, $opt{suffix});
-		open(WRITER, "> $fname") or die;
-		foreach my $k (sort {$a cmp $b} keys %freq) {
-		    my $k_utf8 = encode('utf8', $k);
-		    print WRITER "$k_utf8 $freq{$k}\n";
-		}
-		close(WRITER);
+		&output_data($fname, \%freq);
 		%freq = ();
 	    }
 	}
@@ -68,19 +72,39 @@ if (defined($opt{n})) {
     my $size = scalar(keys %freq);
     if ($size > 0) {
 	my $fname = sprintf("$opt{dir}.%d.%d.%s", 1 + $fcnt/$opt{n}, $$, $opt{suffix});
-	open(WRITER, "> $fname") or die;
-	foreach my $k (sort {$a cmp $b} keys %freq) {
-	    my $k_utf8 = encode('utf8', $k);
-	    print WRITER "$k_utf8 $freq{$k}\n";
-	}
-	close(WRITER);
+	&output_data($fname, \%freq);
     }
 }else{
     # 標準出力に出力
-    foreach my $wid (sort {$a cmp $b} keys %freq) {
-	my $w_utf8 = encode('utf8', $wid);
-	print "$w_utf8 $freq{$wid}\n";
+    foreach my $midashi (sort {$a cmp $b} keys %freq) {
+	my $midashi_utf8 = encode('utf8', $midashi);
+	print "$midashi_utf8";
+	foreach my $did (sort {$a <=> $b} keys %{$freq{$midashi}}) {
+	    print " $freq{$midashi}->{$did}";
+	}
+	print "\n";
     }
+}
+
+sub output_data {
+    my ($fname, $freq) = @_;
+
+    if ($opt{compress}) {
+	$fname .= ".gz";
+	open(WRITER, "| gzip > $fname");
+    } else {
+	open(WRITER, "> $fname");
+    }
+    binmode(WRITER, ':utf8');
+
+    foreach my $midashi (sort {$a cmp $b} keys %$freq) {
+	print WRITER "$midashi";
+	foreach my $did (sort {$a <=> $b} keys %{$freq->{$midashi}}) {
+	    print WRITER " $freq->{$midashi}->{$did}";
+	}
+	print WRITER "\n";
+    }
+    close(WRITER);
 }
 
 # データを読んで、各単語が出現するDocumentIDをマージ
@@ -89,12 +113,8 @@ sub ReadData
     my ($input) = @_;
     chomp $input;
 
-    my ($str, $did) = split(/\s+/, $input);
-    
+    my ($midashi, $etc) = split(/\s+/, $input);
+    my ($did, $dinfo) = split(':', $etc);
     # 各単語IDの頻度を計数
-    if (defined $freq{$str}) {
-	$freq{$str} .= " $did";
-    } else {
-	$freq{$str} = $did;
-    }
+    $freq{$midashi}->{$did} = $etc;
 }
