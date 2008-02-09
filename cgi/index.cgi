@@ -228,6 +228,10 @@ sub parse_query {
     my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}});
     # 取得ページ数のセット
     $query->{results} = $params->{results};
+    # 取得ページの精度をセット
+    $query->{accuracy} = $params->{accuracy};
+    # start をセット
+    $query->{start} = $params->{start};
     
     # 検索語にインターフェースより得られる検索制約を追加
     foreach my $qk (@{$query->{keywords}}) {
@@ -286,6 +290,7 @@ sub get_cgi_parameters {
     $params{'filter_simpages'} = 0;
     $params{'near'} = 0;
     $params{'syngraph'} = 0;
+    $params{'accuracy'} = 0.2;
 
 
     # 指定された検索条件に変更
