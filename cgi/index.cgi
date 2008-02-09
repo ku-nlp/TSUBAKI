@@ -369,7 +369,6 @@ sub print_search_result {
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $result->[$rank]{did});
 	my $score = $result->[$rank]{score_total};
-	my $htmlpath = sprintf("%s/h%03d/h%05d/%09d.html", $HTML_FILE_PATH, $did / 1000000, $did / 10000, $did);
 	
 	# 装飾されたスニペッツの生成
 	my $snippet = $did2snippets->{$did};
@@ -377,10 +376,10 @@ sub print_search_result {
 	my $output = "<DIV class=\"result\">";
 	$score = sprintf("%.4f", $score);
 	$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
-	$output .= "<A class=\"title\" href=index.cgi?URL=$htmlpath&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+	$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
 	$output .= $result->[$rank]{title} . "</a>";
-	if (defined $result->[$rank]{similar_pages}) {
-	    my $num_of_sim_pages = scalar(@{$result->[$rank]{similar_pages}});
+	my $num_of_sim_pages = scalar(@{$result->[$rank]{similar_pages}});
+	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
 	    my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
 	    my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
 	    $output .= encode('utf8', "<DIV class=\"meta\">id=$did, score=$score, <A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n");
@@ -395,14 +394,13 @@ sub print_search_result {
 	foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
 	    my $did = sprintf("%09d", $sim_page->{did});
  	    my $score = $sim_page->{score_total};
- 	    my $htmlpath = sprintf("%s/h%03d/h%05d/%09d.html", $HTML_FILE_PATH, $did / 1000000, $did / 10000, $did);
 	
  	    # 装飾されたスニペッツの生成
 	    my $snippet = $did2snippets->{$did};
  	    $score = sprintf("%.4f", $score);
 
  	    $output .= "<DIV class=\"similar\">";
- 	    $output .= "<A class=\"title\" href=index.cgi?URL=$htmlpath&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+ 	    $output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
  	    $output .= $sim_page->{title} . "</a>";
  	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
  	    $output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
@@ -485,7 +483,12 @@ sub print_footer {
     // -->
     </SCRIPT> 
 
-    <DIV class="footer">&copy;2007 黒橋研究室</DIV>
+    <DIV style="text-align:center;padding:1em;">
+    TSUBAKI利用時の良かった点、問題点などご意見を頂けると幸いです。<br>
+    ご意見は tsubaki あっと nlp.kyoto-u.ac.jp までお願い致します。
+    <P>
+    <DIV><B>&copy;2006 - 2008 黒橋研究室</B></DIV> 
+    </DIV>
     </body>
     </html>
 END_OF_HTML
