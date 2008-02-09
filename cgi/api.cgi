@@ -62,6 +62,8 @@ $params{'logical_operator'} = $cgi->param('logical') if(defined($cgi->param('log
 $params{'results'} = $cgi->param('results') if(defined($cgi->param('results')));
 $params{'only_hitcount'} = $cgi->param('only_hitcount') if(defined($cgi->param('only_hitcount')));
 $params{'force_dpnd'} = $cgi->param('force_dpnd') if(defined($cgi->param('force_dpnd')));
+$params{'min_size'} = $cgi->param('min_size') if (defined($cgi->param('min_size')));
+$params{'max_size'} = $cgi->param('max_size') if (defined($cgi->param('max_size')));
 $params{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
 
 if(defined($cgi->param('snippets'))) {
@@ -645,6 +647,31 @@ sub merge_search_results {
 	last if ($flag < 1);
 
 	my $did = sprintf("%09d", $results->[$max][0]{did});
+
+	if (!defined $params{'min_size'} && !defined $params{'max_size'}) {
+	    # nothting to do.
+	} else {
+	    my $size = &get_cache_size($did);
+	    if (defined $params{'min_size'} && !defined $params{'max_size'}) {
+		if ($size <= $params{'min_size'}) {
+		    shift(@{$results->[$max]});
+		    next;
+		}
+	    }
+	    elsif (!defined $params{'min_size'} && defined $params{'max_size'}) {
+		if ($size >= $params{'max_size'}) {
+		    shift(@{$results->[$max]});
+		    next;
+		}
+	    }
+	    else {
+		if ($size <= $params{'min_size'} && $size >= $params{'max_size'}) {
+		    shift(@{$results->[$max]});
+		    next;
+		}
+	    }
+	}
+
 	# タイトルの取得
 	my $title;
 	if ($results->[$max][0]{title}) {
