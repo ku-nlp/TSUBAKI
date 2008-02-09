@@ -52,6 +52,7 @@ $params{'filter_simpages'} = 1;
 $params{'only_hitcount'} = 0;
 $params{'no_snippets'} = 1;
 $params{'near'} = 0;
+$params{'syngraph'} = 0;
 
 ## 指定された検索条件に変更
 $params{'URL'} = $cgi->param('URL') if($cgi->param('URL'));
@@ -61,7 +62,7 @@ $params{'logical_operator'} = $cgi->param('logical') if(defined($cgi->param('log
 $params{'results'} = $cgi->param('results') if(defined($cgi->param('results')));
 $params{'only_hitcount'} = $cgi->param('only_hitcount') if(defined($cgi->param('only_hitcount')));
 $params{'force_dpnd'} = $cgi->param('force_dpnd') if(defined($cgi->param('force_dpnd')));
-$params{'syngraph'} = 0;
+$params{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
 
 if(defined($cgi->param('snippets'))) {
     if ($cgi->param('snippets') > 0) {
@@ -318,6 +319,7 @@ if (defined $field) {
     $query->{results} = $params{results} + $params{start} - 1;
     foreach my $qk (@{$query->{keywords}}) {
 	$qk->{force_dpnd} = 1 if ($params{force_dpnd});
+	$qk->{near} = $params{near} if ($params{near} > 0);
 	$qk->{logical_cond_qkw} = 'OR' if ($params{logical_operator} eq 'OR');
 
 	# uri escaped query の生成
