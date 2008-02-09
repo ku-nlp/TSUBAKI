@@ -145,9 +145,9 @@ sub merge_search_results {
 
 	my $did = sprintf("%09d", $results->[$max][0]{did});
 	# タイトルの取得
-	my $title = &get_title($did);
+	my $title = ($results->[$max][0]{title}) ? $results->[$max][0]{title} : &get_title($did);
 	# URL の取得
-	my $url = &get_url($did);
+	my $url = ($results->[$max][0]{url}) ? $results->[$max][0]{url} : &get_url($did);
 	my $url_mod = &get_normalized_url($url);
 
 	$results->[$max][0]{title} = $title;
