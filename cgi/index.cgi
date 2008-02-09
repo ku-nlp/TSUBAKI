@@ -75,6 +75,7 @@ sub main {
 
 	    # 検索エンジンオブジェクトの初期化
 	    my $se_obj = new SearchEngine($params->{syngraph});
+	    my $start_time = Time::HiRes::time;
 	    ($params->{syngraph} > 0) ? $se_obj->init($SYNGRAPH_DFDB_PATH) : $se_obj->init($ORDINARY_DFDB_PATH);
 	    my $df_time = Time::HiRes::time - $start_time; # DFDBをひくのに要した時間を取得
 
