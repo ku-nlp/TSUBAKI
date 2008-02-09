@@ -29,6 +29,7 @@ binmode(READER, ":utf8");
 
 while (<READER>) {
     next if (index($_, '->') > 0);
+    next if (index($_, '*') > 0);
 
     chop($_);
     my ($word, @did_freqs) = split(' ', $_);
