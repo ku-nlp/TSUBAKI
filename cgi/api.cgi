@@ -254,8 +254,12 @@ if (defined $field) {
 	exit(1);
     }
 
-    print $cgi->header(-type => "text/$file_type", -charset => 'utf-8');
-#    print $cgi->header(-type => "text/plain", -charset => 'utf-8');
+    if ($cgi->param('no_encoding') && $file_type ne 'xml') {
+	print $cgi->header(-type => "text/$file_type");
+    } else {
+	print $cgi->header(-type => "text/$file_type", -charset => 'utf-8');
+    }
+
     my $filepath;
     if ($file_type eq 'xml') {
 	$filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $ORDINARY_SF_PATH, $fid / 1000000, $fid / 10000, $fid);
@@ -265,11 +269,19 @@ if (defined $field) {
     
     my $content = '';
     if (-e $filepath) {
-	$content = `/home/skeiji/local/bin/nkf --utf8 $filepath`;
+	if ($cgi->param('no_encoding')) {
+	    $content = `cat $filepath`;
+	} else {
+	    $content = `cat $filepath | /home/skeiji/local/bin/nkf --utf8`;
+	}
     } else {
 	$filepath .= ".gz";
 	if (-e $filepath) {
-	    $content = `zcat $filepath | /home/skeiji/local/bin/nkf --utf8`;
+	    if ($cgi->param('no_encoding')) {
+		$content = `zcat $filepath`;
+	    } else {
+		$content = `zcat $filepath | /home/skeiji/local/bin/nkf --utf8`;
+	    }
 	}
     }
     print $content;
