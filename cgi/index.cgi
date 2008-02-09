@@ -41,6 +41,7 @@ my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
 my $MAX_LENGTH_OF_TITLE = 60;
 my $TITLE_DB_PATH = '/work/skeiji/titledb';
 my $URL_DB_PATH = '/work/skeiji/urldb';
+my $SERVICE_STOP_FLAG = 0;
 
 my %titledbs = ();
 my %urldbs = ();
@@ -61,6 +62,7 @@ sub main {
 	# TSUBAKI のトップ画面を表示
 	&print_tsubaki_interface($params);
 
+	$params->{query} = undef if ($SERVICE_STOP_FLAG);
 	unless ($params->{query}) {
 	    # フッターの表示
 	    &print_footer($params, 0, 0);
