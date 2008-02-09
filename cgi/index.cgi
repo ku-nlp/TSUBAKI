@@ -294,7 +294,7 @@ sub get_cgi_parameters {
 
 
     # 指定された検索条件に変更
-    $params{'URL'} = $cgi->param('URL') if($cgi->param('URL'));
+    $params{'cache'} = $cgi->param('cache') if($cgi->param('cache'));
     $params{'query'} = decode('utf8', $cgi->param('INPUT')) if($cgi->param('INPUT'));
     if($params{'query'}){
 	$params{'start'} = $cgi->param('start') if(defined($cgi->param('start')));
