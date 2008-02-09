@@ -153,6 +153,24 @@ my $field = $cgi->param('field');
 # my $SIM_PAGES = $cgi->param('filter_simpages');
 # $SIM_PAGES = 0 unless($SIM_PAGES);
 
+unless (defined $cgi->param('result_items')) {
+    $params{Id} = 1;
+    $params{Score} = 1;
+    $params{Rank} = 1;
+    $params{Url} = 1;
+    $params{Snippet} = 0;
+    $params{Cache} = 1;
+    $params{Title} = 1;
+    $params{Snippet} = 1 if ($params{'no_snippets'} < 1);
+} else {
+    foreach my $item_name (split(':', $cgi->param('result_items'))) {
+	$params{$item_name} = 1;
+    }
+
+    $params{'no_snippets'} = 0 if (exists $params{Snippet});
+}
+
+
 # XML DOM Parser for acquiring information of HTML
 my $parser = new XML::DOM::Parser;
 
@@ -491,34 +509,55 @@ sub print_search_result {
 	# 装飾されたスニペッツの生成
 	my $snippet = ($params{no_snippets} < 1) ? &create_snippet($did, $query, $params) : '';
 
-	$writer->startTag('Result', Rank => $rank + 1, Id => $did, Score => sprintf("%.5f", $score));
-	$writer->startTag('Title');
+	if ($params{Score} > 0) {
+	    if ($params{Id} > 0) {
+		$writer->startTag('Result', Rank => $rank + 1, Id => $did, Score => sprintf("%.5f", $score));
+	    } else {
+		$writer->startTag('Result', Rank => $rank + 1, Score => sprintf("%.5f", $score));
+	    }
+	} else {
+	    if ($params{Id} > 0) {
+		$writer->startTag('Result', Rank => $rank + 1, Id => $did);
+	    } else {
+		$writer->startTag('Result', Rank => $rank + 1);
+	    }
+	}
 
-	$title =~ s/\x09//g;
-	$title =~ s/\x0a//g;
-	$title =~ s/\x0b//g;
-	$title =~ s/\x0c//g;
-	$title =~ s/\x0d//g;
+	if ($params{Title} > 0) {
+	    $writer->startTag('Title');
 
-	$writer->characters($title);
-	$writer->endTag('Title');
+	    $title =~ s/\x09//g;
+	    $title =~ s/\x0a//g;
+	    $title =~ s/\x0b//g;
+	    $title =~ s/\x0c//g;
+	    $title =~ s/\x0d//g;
+
+	    $writer->characters($title);
+	    $writer->endTag('Title');
+	}
 	    
-	$writer->startTag('Url');
-	$writer->characters($url);
-	$writer->endTag('Url');
+	if ($params{Url} > 0) {
+	    $writer->startTag('Url');
+	    $writer->characters($url);
+	    $writer->endTag('Url');
+	}
 
-	$writer->startTag('Snippet');
-	$writer->characters($snippet);
-	$writer->endTag('Snippet');
+	if ($params{Snippet} > 0) {
+	    $writer->startTag('Snippet');
+	    $writer->characters($did2snippets->{$did});
+	    $writer->endTag('Snippet');
+	}
 	    
-	$writer->startTag('Cache');
-	$writer->startTag('Url');
-	$writer->characters(&get_cache_location($did, $uri_escaped_query));
-	$writer->endTag('Url');
-	$writer->startTag('Size');
-	$writer->characters(&get_cache_size($did));
-	$writer->endTag('Size');
-	$writer->endTag('Cache');
+	if ($params{Cache} > 0) {
+	    $writer->startTag('Cache');
+	    $writer->startTag('Url');
+	    $writer->characters(&get_cache_location($did, $uri_escaped_query));
+	    $writer->endTag('Url');
+	    $writer->startTag('Size');
+	    $writer->characters(&get_cache_size($did));
+	    $writer->endTag('Size');
+	    $writer->endTag('Cache');
+	}
 
 	$writer->endTag('Result');
     }
