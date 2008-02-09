@@ -146,11 +146,11 @@ sub merge_search_results {
     while (scalar(@merged_result) < $size) {
 	my $flag = 0;
 	for (my $i = 0; $i < scalar(@{$results}); $i++) {
-	    next unless (defined $results->[$i][0]{score});
+	    next unless (defined $results->[$i][0]{score_total});
 	    $flag = 1;
-	    if ($results->[$max][0]{score} < $results->[$i][0]{score}) {
+	    if ($results->[$max][0]{score_total} < $results->[$i][0]{score_total}) {
 		$max = $i;
-	    } elsif ($results->[$max][0]{score} == $results->[$i][0]{score}) {
+	    } elsif ($results->[$max][0]{score_total} == $results->[$i][0]{score_total}) {
 		$max = $i if ($results->[$max][0]{did} < $results->[$i][0]{did});
 	    }
 	}
@@ -171,13 +171,13 @@ sub merge_search_results {
 	    push(@{$merged_result[$p]->{similar_pages}}, shift(@{$results->[$max]}));
 	} else {
 	    if (defined $prev && $prev->{title} eq $title &&
-		$prev->{score} - $results->[$max][0]{score} < 0.05) {
+		$prev->{score} - $results->[$max][0]{score_total} < 0.05) {
 		push(@{$merged_result[$pos - 1]->{similar_pages}}, shift(@{$results->[$max]}));
 		$url2pos{$url_mod} = $pos - 1;
-		$prev->{score} = $results->[$max][0]{score};
+		$prev->{score} = $results->[$max][0]{score_total};
 	    } else {
 		$prev->{title} = $title;
-		$prev->{score} = $results->[$max][0]{score};
+		$prev->{score} = $results->[$max][0]{score_total};
 		$merged_result[$pos] = shift(@{$results->[$max]});
 		$url2pos{$url_mod} = $pos++;
 	    }
@@ -416,7 +416,7 @@ sub print_search_result {
 
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $result->[$rank]{did});
-	my $score = $result->[$rank]{score};
+	my $score = $result->[$rank]{score_total};
 	my $htmlpath = sprintf("%s/h%03d/h%05d/%09d.html", $HTML_FILE_PATH, $did / 1000000, $did / 10000, $did);
 	
 	# 装飾されたスニペッツの生成
@@ -442,7 +442,7 @@ sub print_search_result {
 	$output .= "<DIV id=\"simpages_$rank\" style=\"display: none;\">";
 	foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
 	    my $did = sprintf("%09d", $sim_page->{did});
- 	    my $score = $sim_page->{score};
+ 	    my $score = $sim_page->{score_total};
  	    my $htmlpath = sprintf("%s/h%03d/h%05d/%09d.html", $HTML_FILE_PATH, $did / 1000000, $did / 10000, $did);
 	
  	    # 装飾されたスニペッツの生成
