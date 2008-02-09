@@ -146,9 +146,8 @@ sub broadcastSearch {
 	    $num_of_sockets--;
 	}
     }
-
     # 受信した結果を揃える
-    @results = sort {$b->[0]{score} <=> $a->[0]{score}} @results;
+    @results = sort {$b->[0]{score_total} <=> $a->[0]{score_total}} @results;
     return ($total_hitcount, \@results);
 }
 
