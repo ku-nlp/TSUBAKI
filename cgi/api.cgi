@@ -359,6 +359,7 @@ if (defined $field) {
 	# 検索結果の表示
 	&print_search_result(\%params, $mg_result, $query, $params{'start'} - 1, $size, $hitcount);
 
+
 	# ログの保存
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
 	open(OUT, ">> /se_tmp/input.log");
