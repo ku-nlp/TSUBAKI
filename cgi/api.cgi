@@ -101,7 +101,8 @@ my $SYNDB_PATH = '/home/skeiji/tmp/SynGraph/syndb/i686';
 my $CACHE_PROGRAM = 'http://tsubaki.ixnlp.nii.ac.jp/index.cgi';
 my $ORDINARY_SF_PATH = '/net2/nlpcf34/disk08/skeiji';
 my $HTML_FILE_PATH = '/net2/nlpcf34/disk08/skeiji';
-my $HTML_PATH_TEMPLATE = "/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html";
+my $CACHED_PAGE_ACCESS_TEMPLATE = "cache=%09d";
+my $CACHED_HTML_PATH_TEMPLATE = "/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html";
 my $SF_PATH_TEMPLATE   = "/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml";
 
 my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
@@ -135,6 +136,8 @@ my $uri_escaped_query = uri_escape(encode('utf8', $params{'query'})); # uri_esca
 # get an operation
 my $file_type = $cgi->param('format');
 
+my $field = $cgi->param('field');
+
 # my $LOGICAL_COND = $cgi->param('logical');
 # $LOGICAL_COND = 'AND' unless $LOGICAL_COND; # default number of results
 
@@ -153,7 +156,78 @@ my $file_type = $cgi->param('format');
 # XML DOM Parser for acquiring information of HTML
 my $parser = new XML::DOM::Parser;
 
-if($file_type){
+if (defined $field) {
+    my %request_items = ();
+    foreach my $ri (split(':', $field)) {
+	$request_items{$ri} = 1;
+    }
+
+    my $fid = $cgi->param('id');
+    if ($fid eq '') {
+	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
+	print "パラメータidの値が必要です。\n";
+	exit(1);
+    }
+
+    my $query_str = $cgi->param('query');
+    if ($query_str eq '') {
+	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
+	print "パラメータqueryの値が必要です。\n";
+	exit(1);
+    }
+
+    # parse query
+    my $q_parser = new QueryParser({
+	KNP_PATH => $KNP_PATH,
+	JUMAN_PATH => $JUMAN_PATH,
+	SYNDB_PATH => $SYNDB_PATH,
+	KNP_OPTIONS => ['-postprocess','-tab'] });
+    $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
+
+    my $query_obj = $q_parser->parse($query_str, {logical_cond_qk => 'AND', syngraph => 0});
+
+    if (exists $request_items{'Snippet'}) {
+	my $sni_obj = new SnippetMakerAgent();
+	$sni_obj->create_snippets($query_obj, [$fid], {discard_title => 0, syngraph => 0, window_size => 5});
+	my $did2snippets = $sni_obj->get_snippets_for_each_did();
+	$request_items{'Snippet'} = $did2snippets->{$fid};
+    }
+
+    if (exists $request_items{'Title'}) {
+	$request_items{'Title'} = &get_title($fid);
+    }
+
+    if (exists $request_items{'Url'}) {
+	$request_items{'Url'} = &get_url($fid);
+    }
+
+    if (exists $request_items{'Cache'}) {
+	my $cache = {
+	    URL  => &get_cache_location($fid, &get_uri_escaped_query($query_obj)),
+	    Size => &get_cache_size($fid) };
+	$request_items{'Cache'} = $cache;
+    }
+
+    print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
+    my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
+    $writer->xmlDecl('utf-8');
+    $writer->startTag('Result', Id => sprintf("%08d", $fid));
+    foreach my $ri (sort {$b cmp $a} keys %request_items) {
+	$writer->startTag($ri);
+	if ($ri ne 'Cache') {
+	    $writer->characters($request_items{$ri}. "\n");
+	} else {
+	    $writer->startTag('Url');
+	    $writer->characters($request_items{Cache}->{URL});
+	    $writer->endTag('Url');
+	    $writer->startTag('Size');
+	    $writer->characters($request_items{Cache}->{Size});
+	    $writer->endTag('Size');
+	}
+	$writer->endTag($ri);
+    }
+    $writer->endTag('Result');
+} elsif ($file_type) {
     my $fid = $cgi->param('id');
 
     if($fid eq ''){
@@ -639,17 +713,17 @@ sub calculateSimilarity {
 }
 
 sub get_cache_location {
-    my ($id, $query) = @_;
+    my ($id, $uri_escaped_query) = @_;
 
-    my $loc = sprintf($HTML_PATH_TEMPLATE, $id / 1000000, $id / 10000, $id);
+    my $loc = sprintf($CACHED_PAGE_ACCESS_TEMPLATE, $id);
 #    return "${CACHE_PROGRAM}?loc=$loc&query=$uri_escaped_query";
-    return "${CACHE_PROGRAM}?URL=$loc&KEYS=$uri_escaped_query";
+    return "${CACHE_PROGRAM}?$loc&KEYS=$uri_escaped_query";
 }
 
 sub get_cache_size {
     my ($id) = @_;
 
-    my $st = stat(sprintf($HTML_PATH_TEMPLATE, $id / 1000000, $id / 10000, $id) . ".gz");
+    my $st = stat(sprintf($CACHED_HTML_PATH_TEMPLATE, $id / 1000000, $id / 10000, $id) . ".gz");
     return '' unless $st;
     return $st->size;
 }
@@ -822,4 +896,28 @@ sub decodeResult{
 	push(@result_ary, {"did" => $did, "score" => $score});
     }
     return \@result_ary;
+}
+
+sub get_uri_escaped_query {
+    my ($query) = @_;
+    my $uriescaped_query;
+    foreach my $qk (@{$query->{keywords}}) {
+	# uri escaped query の生成
+	my $words = $qk->{words};
+	foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$words}) {
+	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @{$reps}) {
+		next if ($rep->{isContentWord} < 1 && $qk->{is_phrasal_search} < 1);
+
+		my $mod_k = $rep->{string};
+		$mod_k =~ s/\/.+$//; # 読みを削除
+		if ($mod_k =~ /s\d+:/) {
+		    $mod_k =~ s/s\d+://g;
+		    $mod_k = "&lt;$mod_k&gt;";
+		}
+		$uriescaped_query .= (uri_escape(encode('utf8', $mod_k) . ":"));
+	    }
+	}
+	$uriescaped_query =~ s/%3A$//; # 最後の : を削除
+    }
+    return $uriescaped_query;
 }
