@@ -501,6 +501,7 @@ sub print_query {
     my $color = 0;
     print "<DIV style=\"padding: 0.25em 1em; background-color:#f1f4ff;border-top: 1px solid gray;border-bottom: 1px solid gray;mergin-left:0px;\">検索キーワード (";
 
+    my %syndb;
     foreach my $qk (@{$keywords}){
 	if ($qk->{is_phrasal_search} > 0 && $qk->{sentence_flag} < 0) {
 	    printf("<b style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$qk->{rawstring}</b>");
@@ -510,22 +511,36 @@ sub print_query {
 		foreach my $rep (sort {$b->{string} cmp $a->{string}} @{$reps}){
 		    next if ($rep->{isContentWord} < 1 && $qk->{is_phrasal_search} < 1);
 
+		    my $tips;
 		    my $mod_k = $rep->{string};
 		    if ($mod_k =~ /s\d+:/) {
+			unless (defined %syndb) {
+			    tie %syndb, 'CDB_File', "$SYNDB_PATH/syndb.mod.cdb" or die $! . "<br>\n";
+			}
+
+			foreach my $synonym (split('\|', $syndb{$mod_k})) {
+			    if($synonym =~ m!^([^/]+)/!){
+				$synonym = $1;
+			    }
+			    $synonym =~ s/<[^>]+>//g;
+			    $tips .= ($synonym . ",");
+			}
+			chop($tips);
+
 			$mod_k =~ s/s\d+://g;
 			$mod_k = "&lt;$mod_k&gt;";
 		    }
 
 		    my $k_utf8 = encode('utf8', $mod_k);
 		    if(exists($cbuff{$rep})){
-			printf("<span style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$rep->{string}}->{foreground}, $cbuff{$rep->{string}}->{background});
+			printf("<span title=\"$tips\" style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$rep->{string}}->{foreground}, $cbuff{$rep->{string}}->{background});
 		    }else{
 			if($color > 4){
-			    print "<span style=\"color:white;margin:0.1em 0.25em;background-color:#$HIGHLIGHT_COLOR[$color];\">$k_utf8</span>";
+			    print "<span title=\"$tips\" style=\"color:white;margin:0.1em 0.25em;background-color:#$HIGHLIGHT_COLOR[$color];\">$k_utf8</span>";
 			    $cbuff{$rep->{string}}->{foreground} = 'white';
 			    $cbuff{$rep->{string}}->{background} = "#$HIGHLIGHT_COLOR[$color]";
 			}else{
-			    print "<span style=\"margin:0.1em 0.25em;background-color:#$HIGHLIGHT_COLOR[$color];\">$k_utf8</span>";
+			    print "<span title=\"$tips\" style=\"margin:0.1em 0.25em;background-color:#$HIGHLIGHT_COLOR[$color];\">$k_utf8</span>";
 			    $cbuff{$rep->{string}}->{foreground} = 'black';
 			    $cbuff{$rep->{string}}->{background} = "#$HIGHLIGHT_COLOR[$color]";
 			}
@@ -557,6 +572,10 @@ sub print_query {
 # 		}
 # 	    }
 	}
+    }
+
+    if (defined %syndb) {
+	untie %syndb;
     }
 
     return \%cbuff;
