@@ -586,7 +586,7 @@ sub print_tsubaki_interface {
     print << "END_OF_HTML";
     <html>
 	<head>
-	<title>検索エンジン基盤 TSUBAKI</title>
+	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<link rel="stylesheet" type="text/css" href="http://nlpc06.ixnlp.nii.ac.jp/se.css">
 	<script language="JavaScript">
@@ -637,9 +637,9 @@ print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http:
     print "</TR>";
 
     if ($params->{syngraph}) {
-	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT>同義表現を考慮する</LABEL></TD></TR>\n";
+	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
     } else {
-	print "<TR><TD>オプション</TD><TD colspan=3 DIV style=\"text-align:left;\"><INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL>同義表現を考慮する</LABEL></DIV></TD></TR>\n";
+	print "<TR><TD>オプション</TD><TD colspan=3 DIV style=\"text-align:left;\"><INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL></DIV></TD></TR>\n";
     }
     print "</TABLE>\n";
     
