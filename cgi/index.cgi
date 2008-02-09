@@ -19,6 +19,7 @@ $Data::Dumper::Useperl = 1;
 
 use SearchEngine;
 use QueryParser;
+use SnippetMakerAgent;
 use SnippetMaker;
 
 # 定数
@@ -89,6 +90,8 @@ sub main {
 
 	    # 検索クエリの表示
 	    my $cbuff = &print_query($query->{keywords});
+	    $query->{color} = $cbuff;
+
 	    if ($hitcount < 1) {
 		print ") を含む文書は見つかりませんでした。</DIV>";
 	    } else {
@@ -275,7 +278,7 @@ sub print_cached_page {
 	$color = (++$color%scalar(@HIGHLIGHT_COLOR));
     }
     print "</U></DIV>";
-    print encode('utf8', $html);
+    print encode('utf8', $htmldat);
 }
 
 # cgiパラメタを取得
@@ -329,78 +332,6 @@ sub get_cgi_parameters {
     return \%params;
 }
 
-# 装飾されたスニペットを生成する関数
-sub create_decorated_snippet {
-    my ($did, $query, $params, $color) = @_;
-
-    # snippet用に重要文を抽出
-    my $sentences;
-    if ($params->{'syngraph'}) {
-	my $xmlpath = sprintf("%s/x%05d/%09d.xml", $SYNGRAPH_SF_PATH, $did / 10000, $did);
-	unless (-e "$xmlpath.gz") {
-	    $xmlpath = sprintf("/net2/nlpcf34/disk03/skeiji/sfs_w_syn/x%05d/%09d.xml", $did / 10000, $did);
-	}
-	$sentences = &SnippetMaker::extractSentencefromSynGraphResult($query->{keywords}, $xmlpath);
-    } else {
-	my $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $ORDINARY_SF_PATH, $did / 1000000, $did / 10000, $did);
-	unless (-e $filepath || -e "$filepath.gz") {
-	    $filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
-	}
-	$sentences = &SnippetMaker::extractSentencefromKnpResult($query->{keywords}, $filepath);
-    }
-
-    my $wordcnt = 0;
-    my %snippets = ();
-    # スコアの高い順に処理
-    foreach my $sentence (sort {$b->{score} <=> $a->{score}} @{$sentences}) {
-	my $sid = $sentence->{sid};
-	for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
-	    my $highlighted = -1;
-	    my $surf = $sentence->{surfs}[$i];
-	    foreach my $rep (@{$sentence->{reps}[$i]}) {
-		if (exists($color->{$rep})) {
-		    # 代表表記レベルでマッチしたらハイライト
-		    $snippets{$sid} .= sprintf("<span style=\"color:%s;margin:0.1em 0.25em;background-color:%s;\">%s<\/span>", $color->{$rep}->{foreground}, $color->{$rep}->{background}, $surf);
-		    $highlighted = 1;
-		}
-		last if ($highlighted > 0);
-	    }
-	    # ハイライトされなかった場合
-	    $snippets{$sid} .= $surf if ($highlighted < 0);
-	    $wordcnt++;
-
-	    # スニペットが N 単語を超えた終了
-	    if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET) {
-		$snippets{$sid} .= " <b>...</b>";
-		last;
-	    }
-	}
-	# ★ 多重 foreach の脱出に label をつかう
-	last if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET);
-    }
-
-    my $snippet;
-    my $prev_sid = -1;
-    foreach my $sid (sort {$a <=> $b} keys %snippets) {
-	if ($sid - $prev_sid > 1 && $prev_sid > -1) {
-	    $snippet .= " <b>...</b> " unless ($snippet =~ /<b>\.\.\.<\/b>$/);
-	}
-	$snippet .= $snippets{$sid};
-	$prev_sid = $sid;
-    }
-
-    # フレーズの強調表示
-    foreach my $qk (@{$query->{keywords}}){
-	next if ($qk->{is_phrasal_search} < 0);
-	$snippet =~ s!$qk->{rawstring}!<b>$qk->{rawstring}</b>!g;
-    }
-
-    $snippet =~ s/S\-ID:\d+//g;
-    $snippet = encode('utf8', $snippet) if (utf8::is_utf8($snippet));
-
-    return $snippet;
-}
-
 sub print_search_result {
     my ($params, $result, $query, $from, $end, $hitcount, $color) = @_;
 
@@ -424,11 +355,24 @@ sub print_search_result {
 
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $result->[$rank]{did});
+	push(@{$query->{dids}}, $did);
+	foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
+	    my $did = sprintf("%09d", $sim_page->{did});
+	    push(@{$query->{dids}}, $did);
+	}
+    }
+
+    my $sni_obj = new SnippetMakerAgent();
+    $sni_obj->create_snippets($query, $query->{dids}, {discard_title => 0, syngraph => $params->{'syngraph'}, window_size => 5});
+    my $did2snippets = $sni_obj->get_decorated_snippets_for_each_did($query, $query->{color});
+
+    for (my $rank = $from; $rank < $end; $rank++) {
+	my $did = sprintf("%09d", $result->[$rank]{did});
 	my $score = $result->[$rank]{score_total};
 	my $htmlpath = sprintf("%s/h%03d/h%05d/%09d.html", $HTML_FILE_PATH, $did / 1000000, $did / 10000, $did);
 	
 	# 装飾されたスニペッツの生成
-	my $snippet = &create_decorated_snippet($did, $query, $params, $color);
+	my $snippet = $did2snippets->{$did};
 
 	my $output = "<DIV class=\"result\">";
 	$score = sprintf("%.4f", $score);
@@ -454,7 +398,7 @@ sub print_search_result {
  	    my $htmlpath = sprintf("%s/h%03d/h%05d/%09d.html", $HTML_FILE_PATH, $did / 1000000, $did / 10000, $did);
 	
  	    # 装飾されたスニペッツの生成
- 	    my $snippet = &create_decorated_snippet($did, $query, $params, $color);
+	    my $snippet = $did2snippets->{$did};
  	    $score = sprintf("%.4f", $score);
 
  	    $output .= "<DIV class=\"similar\">";
