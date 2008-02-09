@@ -209,9 +209,39 @@ sub create_snippets {
 	    my $results = Storable::thaw(decode_base64($buff));
 	    foreach my $did (keys %$results) {
 		$this->{did2snippets}{$did} = $results->{$did};
+#		$this->{did2snippets}{$did} = &select_snippets($results->{$did});
 	    }
 	}
     }
+}
+
+# サーバから受信したスコア付きの文リストからスニペットで使う文だけを選び出す
+sub select_snippets {
+    my ($sentences) = @_;
+
+    my $wordcnt = 0;
+    my @snippets = ();
+
+    # スコアの高い順に処理
+    my %sbuf = ();
+    foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
+	next if (exists($sbuf{$sentence->{rawstring}}));
+	$sbuf{$sentence->{rawstring}} = 1;
+
+	my $sid = $sentence->{sid};
+	my $length = $sentence->{length};
+	my $num_of_whitespaces = $sentence->{num_of_whitespaces};
+
+	next if ($num_of_whitespaces / $length > 0.2);
+
+	push(@snippets, $sentence);
+	$wordcnt += scalar(@{$sentence->{reps}});
+
+	# スニペットが N 単語を超えたら終了
+	last if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET);
+    }
+
+    return \@snippets;
 }
 
 sub get_snippets_for_each_did {
