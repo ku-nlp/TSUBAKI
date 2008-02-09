@@ -172,7 +172,7 @@ sub merge_search_results {
 	if (defined $p) {
 	    push(@{$merged_result[$p]->{similar_pages}}, shift(@{$results->[$max]}));
 	} else {
-	    if (defined $prev && $prev->{title} eq $title &&
+	    if (defined $prev && $prev->{title} eq $title && $title ne 'no title.'&&
 		$prev->{score} - $results->[$max][0]{score_total} < 0.05) {
 		push(@{$merged_result[$pos - 1]->{similar_pages}}, shift(@{$results->[$max]}));
 		$url2pos{$url_mod} = $pos - 1;
