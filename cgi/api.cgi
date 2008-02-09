@@ -30,7 +30,7 @@ use Data::Dumper;
 
 use SearchEngine;
 use QueryParser;
-use SnippetMaker;
+use SnippetMakerAgent;
 
 my @loadave = split(/ /, `uptime`);
 chop($loadave[14]);
@@ -488,6 +488,17 @@ sub create_snippet {
 sub print_search_result {
     my ($params, $result, $query, $from, $end, $hitcount) = @_;
 
+    my $did2snippets = {};
+    if ($params{no_snippets} < 1 || $params{Snippet} > 0) {
+	my @dids = ();
+	for (my $rank = $from; $rank < $end; $rank++) {
+	    push(@dids, sprintf("%09d", $result->[$rank]{did}));
+	}
+	my $sni_obj = new SnippetMakerAgent();
+	$sni_obj->create_snippets($query, \@dids, {discard_title => 0, syngraph => $params->{'syngraph'}, window_size => 5});
+	$did2snippets = $sni_obj->get_snippets_for_each_did();
+    }
+
     my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
     $writer->xmlDecl('utf-8');
     $writer->startTag('ResultSet', time => $timestamp, query => $params->{'query'}, 
@@ -507,7 +518,7 @@ sub print_search_result {
 	my $title = $result->[$rank]{title};
 	
 	# 装飾されたスニペッツの生成
-	my $snippet = ($params{no_snippets} < 1) ? &create_snippet($did, $query, $params) : '';
+#	my $snippet = ($params{no_snippets} < 1) ? &create_snippet($did, $query, $params) : '';
 
 	if ($params{Score} > 0) {
 	    if ($params{Id} > 0) {
