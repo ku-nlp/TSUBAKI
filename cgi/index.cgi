@@ -10,6 +10,12 @@ use utf8;
 
 use Time::HiRes;
 use CDB_File;
+use Data::Dumper;
+{
+    package Data::Dumper;
+    sub qquote { return shift; }
+}
+$Data::Dumper::Useperl = 1;
 
 use SearchEngine;
 use QueryParser;
@@ -83,7 +89,7 @@ sub main {
 		print ") を含む文書は見つかりませんでした。</DIV>";
 	    } else {
 		# ヒット件数の表示
-		print ") を含む文書が ${hitcount} 件見つかりました。"; 
+		print ") を含む文書が ${hitcount} 件見つかりました。\n"; 
 
 		my $size = $params->{'start'} + $params->{'results'};
 		$size = $hitcount if ($hitcount < $size);
@@ -95,7 +101,8 @@ sub main {
 		    print "</DIV>";
 		}
 		# 検索にかかった時間を表示 (★cssに変更)
-		printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.3f [%s]</div>\n", encode('utf8', '検索時間'), $search_time, encode('utf8', '秒'));
+		$|=1;
+		printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f [%s]</div>\n", encode('utf8', '検索時間'), $search_time, encode('utf8', '秒'));
 
 		# 検索サーバから得られた検索結果のマージ
 		my $mg_result = &merge_search_results($results, $size);
@@ -231,29 +238,29 @@ sub print_cached_page {
     my ($params) = @_;
 
     my $color;
-    my $html = '';
+    my $htmldat = '';
     if (-e $params->{'URL'}) {
-	$html = `$TOOL_HOME/nkf -w $params->{'URL'}`;
+	$htmldat = `$TOOL_HOME/nkf -w $params->{'URL'}`;
     } else {
 	my $newurl = $params->{'URL'} . ".gz";
-	$html = `gunzip -c  $newurl | $TOOL_HOME/nkf -w`;
+	$htmldat = `gunzip -c  $newurl | $TOOL_HOME/nkf -w`;
     }
-    $html = decode('utf8', $html);
-    $html =~ s/charset=//i;
+    $htmldat = decode('utf8', $html);
+    $htmldat =~ s/charset=//i;
 
     # KEYごとに色を付ける
     my @KEYS = split(/:/, decode('utf8', $params->{'KEYS'}));
     print "<DIV style=\"padding:1em; background-color:#f1f4ff; border-top:1px solid gray; border-bottom:1px solid gray;\"><U>次のキーワードがハイライトされています:&nbsp;";
-    for my $key (@KEYS) {
+    foreach my $key (@KEYS) {
 	next unless ($key);
 
 	print "<span style=\"background-color:#$HIGHLIGHT_COLOR[$color];\">";
 	print encode('utf8', $key) . "</span>&nbsp;";
 	if($color > 4){
 	    # background-color が暗いので foreground-color を白に変更
-	    $html =~ s/$key/<span style="color:white; background-color:#$HIGHLIGHT_COLOR[$color];">$key<\/span>/g;
+	    $htmldat =~ s/$key/<span style="color:white; background-color:#$HIGHLIGHT_COLOR[$color];">$key<\/span>/g;
 	}else{
-	    $html =~ s/$key/<span style="background-color:#$HIGHLIGHT_COLOR[$color];">$key<\/span>/g;
+	    $htmldat =~ s/$key/<span style="background-color:#$HIGHLIGHT_COLOR[$color];">$key<\/span>/g;
 	}
 	$color = (++$color%scalar(@HIGHLIGHT_COLOR));
     }
