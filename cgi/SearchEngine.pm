@@ -44,6 +44,7 @@ sub init {
     opendir(DIR, $dir) or die;
     foreach my $cdbf (readdir(DIR)) {
 	next unless ($cdbf =~ /cdb/);
+	next if ($cdbf =~ /keymap/);
 	
 	my $fp = "$dir/$cdbf";
 	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
