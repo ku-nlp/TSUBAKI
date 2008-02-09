@@ -310,36 +310,4 @@ sub toUpperCase_utf8 {
     return pack("U0U*",@cbuff);
 }
 
-sub h2z_ascii {
-    my($string) = @_;
-    $string =~ s/ａ/Ａ/g;
-    $string =~ s/ｂ/Ｂ/g;
-    $string =~ s/ｃ/Ｃ/g;
-    $string =~ s/ｄ/Ｄ/g;
-    $string =~ s/ｅ/Ｅ/g;
-    $string =~ s/ｆ/Ｆ/g;
-    $string =~ s/ｇ/Ｇ/g;
-    $string =~ s/ｈ/Ｈ/g;
-    $string =~ s/ｉ/Ｉ/g;
-    $string =~ s/ｊ/Ｊ/g;
-    $string =~ s/ｋ/Ｋ/g;
-    $string =~ s/ｌ/Ｌ/g;
-    $string =~ s/ｍ/Ｍ/g;
-    $string =~ s/ｎ/Ｎ/g;
-    $string =~ s/ｏ/Ｏ/g;
-    $string =~ s/ｐ/Ｐ/g;
-    $string =~ s/ｑ/Ｑ/g;
-    $string =~ s/ｒ/Ｒ/g;
-    $string =~ s/ｓ/Ｓ/g;
-    $string =~ s/ｔ/Ｔ/g;
-    $string =~ s/ｕ/Ｕ/g;
-    $string =~ s/ｖ/Ｖ/g;
-    $string =~ s/ｗ/Ｗ/g;
-    $string =~ s/ｘ/Ｘ/g;
-    $string =~ s/Y/Ｙ/g;
-    $string =~ s/Z/Ｚ/g;
-
-    return $string;
-}
-
 1;
