@@ -53,7 +53,7 @@ sub main {
     # HTTPヘッダ出力
     print header(-charset => 'utf-8');
 
-    if ($params->{'URL'}) {
+    if ($params->{'cache'}) {
 	# キャッシュページの出力
 	&print_cached_page($params);
     } else {
