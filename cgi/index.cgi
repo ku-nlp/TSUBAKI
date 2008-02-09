@@ -35,6 +35,7 @@ my $SYNDB_PATH = '/home/skeiji/tmp/SynGraph/syndb/i686';
 my $SYNGRAPH_SF_PATH = '/net2/nlpcf34/disk09/skeiji/sfs_w_syn';
 my $ORDINARY_SF_PATH = '/net2/nlpcf34/disk08/skeiji';
 my $HTML_FILE_PATH = '/net2/nlpcf34/disk08/skeiji';
+my $CACHED_HTML_PATH_TEMPLATE = "/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz";
 
 my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
 my $MAX_LENGTH_OF_TITLE = 60;
@@ -238,15 +239,15 @@ sub print_cached_page {
     my ($params) = @_;
 
     my $color;
-    my $htmldat = '';
-    if (-e $params->{'URL'}) {
-	$htmldat = `$TOOL_HOME/nkf -w $params->{'URL'}`;
-    } else {
-	my $newurl = $params->{'URL'} . ".gz";
-	$htmldat = `gunzip -c  $newurl | $TOOL_HOME/nkf -w`;
+    my $id = $params->{'cache'};
+    my $htmlfile = sprintf($CACHED_HTML_PATH_TEMPLATE, $id / 1000000, $id / 10000, $id);
+    my $htmldat = decode('utf8', `gunzip -c  $htmlfile | $TOOL_HOME/nkf -w`);
+
+    if ($htmldat =~ /(<meta [^>]*content=[" ]*text\/html[; ]*)(charset=([^" >]+))/i) {
+	my $fwd = $1;
+	my $match = $2;
+	$htmldat =~ s/$fwd$match/${fwd}charset=utf\-8/;
     }
-    $htmldat = decode('utf8', $html);
-    $htmldat =~ s/charset=//i;
 
     # KEYごとに色を付ける
     my @KEYS = split(/:/, decode('utf8', $params->{'KEYS'}));
