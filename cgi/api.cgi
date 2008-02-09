@@ -353,11 +353,24 @@ if (defined $field) {
 	$params{'results'} = $hitcount if ($params{'results'} > $hitcount);
 		
 	# 検索サーバから得られた検索結果のマージ
-	my $mg_result = &merge_search_results($results, $size);
+	my ($mg_result, $miss_title, $miss_url) = &merge_search_results($results, $size);
 	$size = (scalar(@{$mg_result}) < $size) ? scalar(@{$mg_result}) : $size;
 
 	# 検索結果の表示
 	&print_search_result(\%params, $mg_result, $query, $params{'start'} - 1, $size, $hitcount);
+
+	# ログの保存
+	my $date = `date +%m%d-%H%M%S`; chomp ($date);
+	open(OUT, ">> /se_tmp/input.log");
+	binmode(OUT, ':utf8');
+	my $param_str;
+	foreach my $k (sort keys %params){
+	    $param_str .= "$k=$params{$k},";
+	}
+	$param_str .= "hitcount=$hitcount,time=$search_time";
+	$param_str .= ",miss_title=$miss_title,miss_url=$miss_url";
+	print OUT "$date $ENV{REMOTE_ADDR} API $param_str\n";
+	close(OUT);
     }
     
 # 	my $until = $params{'start'} + $params{'results'} - 1;
@@ -592,10 +605,12 @@ sub merge_search_results {
     my ($results, $size) = @_;
 
     my $max = 0;
-    my @merged_result;
     my $pos = 0;
+    my @merged_result;
     my %url2pos = ();
     my $prev = undef;
+    my $miss_title = 0;
+    my $miss_url = 0;
     while (scalar(@merged_result) < $size) {
 	my $flag = 0;
 	for (my $i = 0; $i < scalar(@{$results}); $i++) {
@@ -611,9 +626,22 @@ sub merge_search_results {
 
 	my $did = sprintf("%09d", $results->[$max][0]{did});
 	# タイトルの取得
-	my $title = &get_title($did);
+	my $title;
+	if ($results->[$max][0]{title}) {
+	    $title = $results->[$max][0]{title};
+	} else {
+	    $miss_title++;
+	    $title = &get_title($did);
+	}
+
 	# URL の取得
-	my $url = &get_url($did);
+	my $url;
+	if ($results->[$max][0]{url}) {
+	    $url = $results->[$max][0]{url};
+	} else {
+	    $url = &get_url($did);
+	    $miss_url++;
+	}
 	my $url_mod = &get_normalized_url($url);
 
 	$results->[$max][0]{title} = $title;
@@ -645,7 +673,7 @@ sub merge_search_results {
 	untie %{$urldbs{$k}};
     }
 
-    return \@merged_result;
+    return (\@merged_result, $miss_title, $miss_url);
 }
 
 # URLの正規化
