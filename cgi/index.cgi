@@ -60,11 +60,14 @@ sub main {
 	} else {
 	    # クエリが入力された場合は検索
 	    # 検索クエリの構造体を取得
+	    my $start_time = Time::HiRes::time;
 	    my $query = &parse_query($params);
+	    my $query_time = Time::HiRes::time - $start_time; # クエリをパースするのに要した時間を取得
 
 	    # 検索エンジンオブジェクトの初期化
 	    my $se_obj = new SearchEngine($params->{syngraph});
 	    ($params->{syngraph} > 0) ? $se_obj->init($SYNGRAPH_DFDB_PATH) : $se_obj->init($ORDINARY_DFDB_PATH);
+	    my $df_time = Time::HiRes::time - $start_time; # DFDBをひくのに要した時間を取得
 
 	    # 検索
 	    my $start_time = Time::HiRes::time;
@@ -72,7 +75,7 @@ sub main {
 	    my $search_time = Time::HiRes::time - $start_time; # 検索に要した時間を取得
 
 	    # ログの出力
-	    &save_log($params, $hitcount, $search_time);
+	    &save_log($params, $hitcount, $search_time, $df_time, $query_time);
 
 	    # 検索クエリの表示
 	    my $cbuff = &print_query($query->{keywords});
@@ -109,14 +112,14 @@ sub main {
 
 # ログの保存
 sub save_log {
-    my ($params, $hitcount, $search_time) = @_;
+    my ($params, $hitcount, $search_time, $df_time, $query_time) = @_;
     my $date = `date +%m%d-%H%M%S`; chomp ($date);
     open(OUT, ">> $LOG_FILE_PATH");
     my $param_str;
     foreach my $k (sort keys %{$params}) {
 	$param_str .= "$k=$params->{$k},";
     }
-    $param_str .= "hitcount=$hitcount,time=$search_time";
+    $param_str .= "hitcount=$hitcount,time=$search_time,df_time=$df_time,query_time=$query_time";
     print OUT "$date $ENV{REMOTE_ADDR} SEARCH $param_str\n";
     close(OUT);
 }
