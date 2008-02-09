@@ -146,8 +146,10 @@ sub merge_search_results {
     while (scalar(@merged_result) < $size) {
 	my $flag = 0;
 	for (my $i = 0; $i < scalar(@{$results}); $i++) {
-	    next unless (defined $results->[$i][0]{score_total});
+	    next if (scalar(@{$results->[$i]}) < 1 ||
+		     $results->[$i][0]{score_total} eq '');
 	    $flag = 1;
+
 	    if ($results->[$max][0]{score_total} < $results->[$i][0]{score_total}) {
 		$max = $i;
 	    } elsif ($results->[$max][0]{score_total} == $results->[$i][0]{score_total}) {
