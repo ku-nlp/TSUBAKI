@@ -118,7 +118,7 @@ my $timestamp = strftime("%Y-%m-%d %T", localtime(time));
 # # utf8 encoded query
 # my $query = decode('utf8', $cgi->param('query'));
 # my $INPUT = $query;
-my $uri_escaped_query = uri_escape(encode('utf8', $params{'query'})); # uri_escape_utf8($query);
+my $uri_escaped_query = "";
 
 # # number of search results
 # my $result_num = $cgi->param('results');
@@ -319,6 +319,24 @@ if (defined $field) {
     foreach my $qk (@{$query->{keywords}}) {
 	$qk->{force_dpnd} = 1 if ($params{force_dpnd});
 	$qk->{logical_cond_qkw} = 'OR' if ($params{logical_operator} eq 'OR');
+
+	# uri escaped query の生成
+	my $words = $qk->{words};
+	foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$words}) {
+	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @{$reps}) {
+		next if ($rep->{isContentWord} < 1 && $qk->{is_phrasal_search} < 1);
+
+		my $mod_k = $rep->{string};
+		$mod_k =~ s/\/.+$//; # 読みを削除
+		if ($mod_k =~ /s\d+:/) {
+		    $mod_k =~ s/s\d+://g;
+		    $mod_k = "&lt;$mod_k&gt;";
+		}
+
+		$uri_escaped_query .= (uri_escape(encode('utf8', $mod_k) . ":"));
+	    }
+	}
+	$uri_escaped_query =~ s/%3A$//; # 最後の : を削除
     }
 
     # 検索
@@ -358,7 +376,6 @@ if (defined $field) {
 
 	# 検索結果の表示
 	&print_search_result(\%params, $mg_result, $query, $params{'start'} - 1, $size, $hitcount);
-
 
 	# ログの保存
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
