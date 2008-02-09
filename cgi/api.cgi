@@ -27,6 +27,11 @@ use Time::HiRes;
 use utf8;
 use CDB_File;
 use Data::Dumper;
+{
+    package Data::Dumper;
+    sub qquote { return shift}
+}
+$Data::Dumper::Useperl = 1;
 
 use SearchEngine;
 use QueryParser;
@@ -53,6 +58,7 @@ $params{'only_hitcount'} = 0;
 $params{'no_snippets'} = 1;
 $params{'near'} = 0;
 $params{'syngraph'} = 0;
+$params{'sort_by'} = 'score';
 
 ## 指定された検索条件に変更
 $params{'URL'} = $cgi->param('URL') if($cgi->param('URL'));
@@ -65,6 +71,7 @@ $params{'force_dpnd'} = $cgi->param('force_dpnd') if(defined($cgi->param('force_
 $params{'min_size'} = $cgi->param('min_size') if (defined($cgi->param('min_size')));
 $params{'max_size'} = $cgi->param('max_size') if (defined($cgi->param('max_size')));
 $params{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
+$params{'sort_by'} = $cgi->param('sort_by') if (defined($cgi->param('sort_by')));
 
 if(defined($cgi->param('snippets'))) {
     if ($cgi->param('snippets') > 0) {
@@ -319,6 +326,7 @@ if (defined $field) {
     # logical_cond_qk  クエリ間の論理演算
     my $query = $q_parser->parse($params{query}, {logical_cond_qk => $params{logical_operator}, syngraph => $params{syngraph}});
     $query->{results} = $params{results} + $params{start} - 1;
+    $query->{sort_by} = $params{'sort_by'};
     foreach my $qk (@{$query->{keywords}}) {
 	$qk->{force_dpnd} = 1 if ($params{force_dpnd});
 	$qk->{near} = $params{near} if ($params{near} > 0);
@@ -375,7 +383,7 @@ if (defined $field) {
 	$params{'results'} = $hitcount if ($params{'results'} > $hitcount);
 		
 	# 検索サーバから得られた検索結果のマージ
-	my ($mg_result, $miss_title, $miss_url) = &merge_search_results($results, $size);
+	my ($mg_result, $miss_title, $miss_url) = &merge_search_results($results, $size, \%params);
 	$size = (scalar(@{$mg_result}) < $size) ? scalar(@{$mg_result}) : $size;
 
 	# 検索結果の表示
@@ -555,7 +563,8 @@ sub print_search_result {
 		      logicalOperator => $params->{'logical_operator'},
 		      forceDpnd => $params->{'force_dpnd'},
 		      dpnd => $params->{'dpnd'},
-		      filterSimpages => $params->{'filter_simpages'}
+		      filterSimpages => $params->{'filter_simpages'},
+		      sort_by => $params->{'sort_by'}
 	);
 
     for (my $rank = $from; $rank < $end; $rank++) {
@@ -624,24 +633,47 @@ sub print_search_result {
 }
 
 sub merge_search_results {
-    my ($results, $size) = @_;
+    my ($results, $size, $params) = @_;
 
-    my $max = 0;
-    my $pos = 0;
+    my $num_of_merged_docs = 0;
     my @merged_result;
+    my $pos = 0;
     my %url2pos = ();
     my $prev = undef;
     my $miss_title = 0;
     my $miss_url = 0;
+
     while (scalar(@merged_result) < $size) {
+	my $max = -1;
 	my $flag = 0;
-	for (my $i = 0; $i < scalar(@{$results}); $i++) {
-	    next unless (defined $results->[$i][0]{score_total});
-	    $flag = 1;
-	    if ($results->[$max][0]{score_total} < $results->[$i][0]{score_total}) {
-		$max = $i;
-	    } elsif ($results->[$max][0]{score_total} == $results->[$i][0]{score_total}) {
-		$max = $i if ($results->[$max][0]{did} < $results->[$i][0]{did});
+
+	if ($params->{sort_by} eq 'random') {
+	    my @buf = ();
+	    for (my $i = 0; $i < scalar(@{$results}); $i++) {
+		next if (scalar(@{$results->[$i]}) < 1 ||
+			 $results->[$i][0]{score_total} eq '');
+		$flag = 1;
+		
+		push(@buf, $i);
+	    }
+
+	    if ($flag > 0) {
+		my $size = scalar(@buf);
+		$max = int($size * rand());
+	    }
+	} else {
+	    for (my $i = 0; $i < scalar(@{$results}); $i++) {
+		next if (scalar(@{$results->[$i]}) < 1 ||
+			 $results->[$i][0]{score_total} eq '');
+		$flag = 1;
+
+		if ($max < 0) {
+		    $max = $i;
+		} elsif ($results->[$max][0]{score_total} < $results->[$i][0]{score_total}) {
+		    $max = $i;
+		} elsif ($results->[$max][0]{score_total} == $results->[$i][0]{score_total}) {
+		    $max = $i if ($results->[$max][0]{did} < $results->[$i][0]{did});
+		}
 	    }
 	}
 	last if ($flag < 1);
