@@ -13,7 +13,7 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 
 # 環境によってパスを変える
-my $CONFIG_FILE_PATH = "/var/www/cgi-bin/skeiji/SearchEngine/scripts/configure";
+my $CONFIG_FILE_PATH = "configure";
 
 my %titledbs = ();
 my %urldbs = ();
