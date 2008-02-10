@@ -31,6 +31,7 @@ KNP_PATH	/share09/home/skeiji/local/bin
 JUMAN_PATH	/share09/home/skeiji/local/bin
 SYNDB_PATH	/share09/home/skeiji/cvs/SynGraph/syndb/i686
 KNP_OPTIONS	-postprocess,-tab
+SYNGRAPH_PM_PATH	/share09/home/skeiji/public_html/cgi/tsubaki
 
 
 
