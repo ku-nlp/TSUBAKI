@@ -12,11 +12,12 @@ use KNP;
 use Indexer;
 use QueryKeyword;
 
-my $CONFIG = Configure::get_instance();
-use lib "$CONFIG->{SYNGRAPH_PM_PATH}/";
-
 # コンストラクタ
 sub new {
+    my $CONFIG = Configure::get_instance();
+    push(@INC, $CONFIG->{SYNGRAPH_PM_PATH});
+    require SynGraph;
+
     my ($class, $opts) = @_;
     my $this = {
 	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
