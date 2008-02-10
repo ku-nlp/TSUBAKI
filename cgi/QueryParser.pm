@@ -22,6 +22,7 @@ sub new {
     my $this = {
 	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
+		       -Rcfile => $CONFIG->{KNP_RCFILE},
 		       -JumanCommand => "$opts->{JUMAN_PATH}/juman"),
 	SYNGRAPH => new SynGraph($opts->{SYNDB_PATH}),
 	SYNGRAPH_OPTION => {relation => 1, antonym => 1, hypocut_attachnode => 9}
