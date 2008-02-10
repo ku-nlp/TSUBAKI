@@ -31,6 +31,7 @@ KNP_PATH	/home/skeiji/local/bin
 JUMAN_PATH	/home/skeiji/local/bin
 SYNDB_PATH	/home/skeiji/tmp/SynGraph/syndb/i686
 KNP_OPTIONS	-postprocess,-tab
+KNP_RCFILE	/home/skeiji/.knprc
 SYNGRAPH_PM_PATH	/home/skeiji/tmp/SynGraph/perl
 
 
