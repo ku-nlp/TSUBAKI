@@ -10,8 +10,10 @@ use utf8;
 use Unicode::Japanese;
 use KNP;
 use Indexer;
-use SynGraph;
 use QueryKeyword;
+
+my $CONFIG = Configure::get_instance();
+use lib "$CONFIG->{SYNGRAPH_PM_PATH}/";
 
 # コンストラクタ
 sub new {
