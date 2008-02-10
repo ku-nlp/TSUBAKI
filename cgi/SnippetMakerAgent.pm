@@ -10,6 +10,7 @@ use IO::Socket;
 use IO::Select;
 use MIME::Base64;
 use QueryParser;
+use Configure;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -17,138 +18,21 @@ use Data::Dumper;
 }
 $Data::Dumper::Useperl = 1;
 
-# 定数
-my %DID2HOST = ();
-$DID2HOST{'000'} = 'nlpc33';
-$DID2HOST{'016'} = 'nlpc33';
-$DID2HOST{'032'} = 'nlpc33';
-$DID2HOST{'048'} = 'nlpc33';
-$DID2HOST{'064'} = 'nlpc33';
-$DID2HOST{'080'} = 'nlpc33';
-$DID2HOST{'096'} = 'nlpc33';
-$DID2HOST{'001'} = 'nlpc34';
-$DID2HOST{'017'} = 'nlpc34';
-$DID2HOST{'033'} = 'nlpc34';
-$DID2HOST{'049'} = 'nlpc34';
-$DID2HOST{'065'} = 'nlpc34';
-$DID2HOST{'081'} = 'nlpc34';
-$DID2HOST{'097'} = 'nlpc34';
-$DID2HOST{'002'} = 'nlpc35';
-$DID2HOST{'018'} = 'nlpc35';
-$DID2HOST{'034'} = 'nlpc35';
-$DID2HOST{'050'} = 'nlpc35';
-$DID2HOST{'066'} = 'nlpc35';
-$DID2HOST{'082'} = 'nlpc35';
-$DID2HOST{'098'} = 'nlpc35';
-$DID2HOST{'003'} = 'nlpc36';
-$DID2HOST{'019'} = 'nlpc36';
-$DID2HOST{'035'} = 'nlpc36';
-$DID2HOST{'051'} = 'nlpc36';
-$DID2HOST{'067'} = 'nlpc36';
-$DID2HOST{'083'} = 'nlpc36';
-$DID2HOST{'099'} = 'nlpc36';
-$DID2HOST{'004'} = 'nlpc37';
-$DID2HOST{'020'} = 'nlpc37';
-$DID2HOST{'036'} = 'nlpc37';
-$DID2HOST{'052'} = 'nlpc37';
-$DID2HOST{'068'} = 'nlpc37';
-$DID2HOST{'084'} = 'nlpc37';
-$DID2HOST{'100'} = 'nlpc37';
-$DID2HOST{'005'} = 'nlpc38';
-$DID2HOST{'021'} = 'nlpc38';
-$DID2HOST{'037'} = 'nlpc38';
-$DID2HOST{'053'} = 'nlpc38';
-$DID2HOST{'069'} = 'nlpc38';
-$DID2HOST{'085'} = 'nlpc38';
-$DID2HOST{'006'} = 'nlpc39';
-$DID2HOST{'022'} = 'nlpc39';
-$DID2HOST{'038'} = 'nlpc39';
-$DID2HOST{'054'} = 'nlpc39';
-$DID2HOST{'070'} = 'nlpc39';
-$DID2HOST{'086'} = 'nlpc39';
-$DID2HOST{'007'} = 'nlpc40';
-$DID2HOST{'023'} = 'nlpc40';
-$DID2HOST{'039'} = 'nlpc40';
-$DID2HOST{'055'} = 'nlpc40';
-$DID2HOST{'071'} = 'nlpc40';
-$DID2HOST{'087'} = 'nlpc40';
-$DID2HOST{'008'} = 'nlpc41';
-$DID2HOST{'024'} = 'nlpc41';
-$DID2HOST{'040'} = 'nlpc41';
-$DID2HOST{'056'} = 'nlpc41';
-$DID2HOST{'072'} = 'nlpc41';
-$DID2HOST{'088'} = 'nlpc41';
-$DID2HOST{'009'} = 'nlpc42';
-$DID2HOST{'025'} = 'nlpc42';
-$DID2HOST{'041'} = 'nlpc42';
-$DID2HOST{'057'} = 'nlpc42';
-$DID2HOST{'073'} = 'nlpc42';
-$DID2HOST{'089'} = 'nlpc42';
-$DID2HOST{'010'} = 'nlpc43';
-$DID2HOST{'026'} = 'nlpc43';
-$DID2HOST{'042'} = 'nlpc43';
-$DID2HOST{'058'} = 'nlpc43';
-$DID2HOST{'074'} = 'nlpc43';
-$DID2HOST{'090'} = 'nlpc43';
-$DID2HOST{'011'} = 'nlpc44';
-$DID2HOST{'027'} = 'nlpc44';
-$DID2HOST{'043'} = 'nlpc44';
-$DID2HOST{'059'} = 'nlpc44';
-$DID2HOST{'075'} = 'nlpc44';
-$DID2HOST{'091'} = 'nlpc44';
-$DID2HOST{'012'} = 'nlpc45';
-$DID2HOST{'028'} = 'nlpc45';
-$DID2HOST{'044'} = 'nlpc45';
-$DID2HOST{'060'} = 'nlpc45';
-$DID2HOST{'076'} = 'nlpc45';
-$DID2HOST{'092'} = 'nlpc45';
-$DID2HOST{'013'} = 'nlpc46';
-$DID2HOST{'029'} = 'nlpc46';
-$DID2HOST{'045'} = 'nlpc46';
-$DID2HOST{'061'} = 'nlpc46';
-$DID2HOST{'077'} = 'nlpc46';
-$DID2HOST{'093'} = 'nlpc46';
-$DID2HOST{'014'} = 'nlpc47';
-$DID2HOST{'030'} = 'nlpc47';
-$DID2HOST{'046'} = 'nlpc47';
-$DID2HOST{'062'} = 'nlpc47';
-$DID2HOST{'078'} = 'nlpc47';
-$DID2HOST{'094'} = 'nlpc47';
-$DID2HOST{'015'} = 'nlpc48';
-$DID2HOST{'031'} = 'nlpc48';
-$DID2HOST{'047'} = 'nlpc48';
-$DID2HOST{'063'} = 'nlpc48';
-$DID2HOST{'079'} = 'nlpc48';
-$DID2HOST{'095'} = 'nlpc48';
-
-my @HIGHLIGHT_COLOR = ("ffff66", "a0ffff", "99ff99", "ff9999", "ff66ff", "880000", "00aa00", "886800", "004699", "990099");
-my $TOOL_HOME = '/home/skeiji/local/bin';
-
-my $KNP_PATH = $TOOL_HOME;
-my $JUMAN_PATH = $TOOL_HOME;
-my $SYNDB_PATH = '/home/skeiji/tmp/SynGraph/syndb/i686';
-
-my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
-my $SNIPPET_SERVER_PORT = 35000;
+my $CONFIG = Configure::get_instance();
 
 sub new {
     my ($class) = @_;
 
     my $this = {
-	hosts => [],
 	did2snippets => {},
 	query_parser => undef
     };
 
-    for (my $i = 33; $i < 49; $i++) {
-	push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => $SNIPPET_SERVER_PORT});
-    }
-
     $this->{query_parser} = new QueryParser({
-	KNP_PATH => $KNP_PATH,
-	JUMAN_PATH => $JUMAN_PATH,
-	SYNDB_PATH => $SYNDB_PATH,
-	KNP_OPTIONS => ['-postprocess','-tab'] });
+	KNP_PATH => $CONFIG->{KNP_PATH},
+	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
+	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
+	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
     
     bless $this;
 }
@@ -159,17 +43,17 @@ sub create_snippets {
     # 文書IDを標準フォーマットを管理しているホストに割り振る
     my %host2dids = ();
     foreach my $did (@$dids) {
-	push(@{$host2dids{$DID2HOST{sprintf("%03d", $did / 1000000)}}}, $did);
+	push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)}}}, $did);
     }
 
     my $num_of_sockets = 0;
     my $selecter = IO::Select->new();
-    for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
-	next unless (exists $host2dids{$this->{hosts}[$i]{name}});
+    for (my $i = 0; $i < scalar(@{$CONFIG->{SNIPPET_SERVERS}}); $i++) {
+	next unless (exists $host2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{name}});
 
 	my $socket = IO::Socket::INET->new(
-	    PeerAddr => $this->{hosts}[$i]{name},
-	    PeerPort => $this->{hosts}[$i]{port},
+	    PeerAddr => $CONFIG->{SNIPPET_SERVERS}[$i]{name},
+	    PeerPort => $CONFIG->{SNIPPET_SERVERS}[$i]{port},
 	    Proto    => 'tcp' );
 	
 	$selecter->add($socket) or die;
@@ -179,7 +63,7 @@ sub create_snippets {
 	print $socket "EOQ\n";
 
  	# 文書IDの送信
- 	print $socket encode_base64(Storable::freeze($host2dids{$this->{hosts}[$i]{name}}), "") . "\n";
+ 	print $socket encode_base64(Storable::freeze($host2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{name}}), "") . "\n";
 	print $socket "EOD\n";
 
 	# スニペット生成のオプションを送信
@@ -238,7 +122,7 @@ sub select_snippets {
 	$wordcnt += scalar(@{$sentence->{reps}});
 
 	# スニペットが N 単語を超えたら終了
-	last if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET);
+	last if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET});
     }
 
     return \@snippets;
@@ -270,13 +154,13 @@ sub get_snippets_for_each_did {
 		$wordcnt++;
 		
 		# スニペットが N 単語を超えた終了
-		if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET) {
+		if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET}) {
 		    $snippets{$sid} .= " ...";
 		    last;
 		}
 	    }
 	    # ★ 多重 foreach の脱出に label をつかう
-	    last if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET);
+	    last if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET});
 	}
 
 	my $snippet;
@@ -340,13 +224,13 @@ sub get_decorated_snippets_for_each_did {
 		$wordcnt++;
 		
 		# スニペットが N 単語を超えた終了
-		if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET) {
+		if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET}) {
 		    $snippets{$sid} .= " <b>...</b>";
 		    last;
 		}
 	    }
 	    # ★ 多重 foreach の脱出に label をつかう
-	    last if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET);
+	    last if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET});
 	}
 
 	my $snippet;

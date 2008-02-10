@@ -26,6 +26,7 @@ use URI::Escape qw(uri_escape);
 use Time::HiRes;
 use utf8;
 use CDB_File;
+use Configure;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -43,6 +44,8 @@ if($loadave[14] > 3.0){
     my $i = int(rand(10));
 #   sleep(5 + $i);
 }
+
+my $CONFIG = Configure::get_instance();
 
 my $cgi = new CGI;
 my %params = ();
@@ -100,24 +103,6 @@ $params{'near'} = shift(@{$cgi->{'near'}}) if ($cgi->param('near'));
 
 my $date = `date +%m%d-%H%M%S`;
 chomp ($date);
-my $TOOL_HOME='/home/skeiji/local/bin';
-my $ORDINARY_DFDB_PATH = '/var/www/cgi-bin/dbs/dfdbs';
-my $SYNGRAPH_DFDB_PATH = '/home/skeiji/tmp';
-
-my $KNP_PATH = $TOOL_HOME;
-my $JUMAN_PATH = $TOOL_HOME;
-my $SYNDB_PATH = '/home/skeiji/tmp/SynGraph/syndb/i686';
-
-my $CACHE_PROGRAM = 'http://tsubaki.ixnlp.nii.ac.jp/index.cgi';
-my $ORDINARY_SF_PATH = '/net2/nlpcf34/disk08/skeiji';
-my $HTML_FILE_PATH = '/net2/nlpcf34/disk08/skeiji';
-my $CACHED_PAGE_ACCESS_TEMPLATE = "cache=%09d";
-my $CACHED_HTML_PATH_TEMPLATE = "/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html";
-my $SF_PATH_TEMPLATE   = "/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml";
-
-my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
-my $TITLE_DB_PATH = '/work/skeiji/titledb';
-my $URL_DB_PATH = '/work/skeiji/urldb';
 
 my %titledbs = ();
 my %urldbs = ();
@@ -206,10 +191,10 @@ if (defined $field) {
 
     # parse query
     my $q_parser = new QueryParser({
-	KNP_PATH => $KNP_PATH,
-	JUMAN_PATH => $JUMAN_PATH,
-	SYNDB_PATH => $SYNDB_PATH,
-	KNP_OPTIONS => ['-postprocess','-tab'] });
+	KNP_PATH => $CONFIG->{KNP_PATH},
+	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
+	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
+	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
     $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
 
     my $query_obj = $q_parser->parse($query_str, {logical_cond_qk => 'AND', syngraph => 0});
@@ -272,9 +257,9 @@ if (defined $field) {
 
     my $filepath;
     if ($file_type eq 'xml') {
-	$filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $ORDINARY_SF_PATH, $fid / 1000000, $fid / 10000, $fid);
+	$filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $fid / 1000000, $fid / 10000, $fid);
     } elsif ($file_type eq 'html') {
-	$filepath = sprintf("%s/h%03d/h%05d/%09d.html", $HTML_FILE_PATH, $fid / 1000000, $fid / 10000, $fid);
+	$filepath = sprintf("%s/h%03d/h%05d/%09d.html", $CONFIG->{HTML_FILE_PATH}, $fid / 1000000, $fid / 10000, $fid);
     }
     
     my $content = '';
@@ -316,10 +301,10 @@ if (defined $field) {
 
     # parse query
     my $q_parser = new QueryParser({
-	KNP_PATH => $KNP_PATH,
-	JUMAN_PATH => $JUMAN_PATH,
-	SYNDB_PATH => $SYNDB_PATH,
-	KNP_OPTIONS => ['-postprocess','-tab'] });
+	KNP_PATH => $CONFIG->{KNP_PATH},
+	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
+	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
+	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
 
     $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
     
@@ -353,7 +338,7 @@ if (defined $field) {
 
     # 検索
     my $se_obj = new SearchEngine($params{syngraph});
-    $se_obj->init($ORDINARY_DFDB_PATH);
+    $se_obj->init($CONFIG->{ORDINARY_DFDB_PATH});
 
     my $start_time = Time::HiRes::time;
     my ($hitcount, $results) = $se_obj->search($query);
@@ -498,7 +483,7 @@ sub create_snippet {
 # 	}
 # 	$sentences = &SnippetMaker::extractSentencefromSynGraphResult($query->{keywords}, $xmlpath);
     } else {
-	my $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $ORDINARY_SF_PATH, $did / 1000000, $did / 10000, $did);
+	my $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
 	unless (-e $filepath || -e "$filepath.gz") {
 	    $filepath = sprintf("/net2/nlpcf34/disk02/skeiji/xmls/%02d/x%04d/%08d.xml", $did / 1000000, $did / 10000, $did);
 	}
@@ -515,13 +500,13 @@ sub create_snippet {
 	    $wordcnt++;
 
 	    # スニペットが N 単語を超えた終了
-	    if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET) {
+	    if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET}) {
 		$snippets{$sid} .= " ...";
 		last;
 	    }
 	}
 	# ★ 多重 foreach の脱出に label をつかう
-	last if ($wordcnt > $MAX_NUM_OF_WORDS_IN_SNIPPET);
+	last if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET});
     }
 
     my $snippet;
@@ -884,15 +869,15 @@ sub calculateSimilarity {
 sub get_cache_location {
     my ($id, $uri_escaped_query) = @_;
 
-    my $loc = sprintf($CACHED_PAGE_ACCESS_TEMPLATE, $id);
+    my $loc = sprintf($CONFIG->{CACHED_PAGE_ACCESS_TEMPLATE}, $id);
 #    return "${CACHE_PROGRAM}?loc=$loc&query=$uri_escaped_query";
-    return "${CACHE_PROGRAM}?$loc&KEYS=$uri_escaped_query";
+    return "$CONFIG->{INDEX_CGI}?$loc&KEYS=$uri_escaped_query";
 }
 
 sub get_cache_size {
     my ($id) = @_;
 
-    my $st = stat(sprintf($CACHED_HTML_PATH_TEMPLATE, $id / 1000000, $id / 10000, $id) . ".gz");
+    my $st = stat(sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id));
     return '' unless $st;
     return $st->size;
 }
@@ -900,7 +885,7 @@ sub get_cache_size {
 sub get_file_info {
     my ($id) = @_;
 
-    my $filename = sprintf($SF_PATH_TEMPLATE, $id / 1000000, $id / 10000, $id);
+    my $filename = sprintf($CONFIG->{SF_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
     return '' unless -f $filename;
     my $doc = $parser->parsefile($filename);
 
@@ -1028,7 +1013,7 @@ sub get_title {
     my $did_prefix = sprintf("%03d", $did / 1000000);
     my $title = $titledbs{$did_prefix}->{$did};
     unless (defined($title)) {
-	my $titledbfp = "$TITLE_DB_PATH/$did_prefix.title.cdb";
+	my $titledbfp = "$CONFIG->{TITLE_DB_PATH}/$did_prefix.title.cdb";
 	tie my %titledb, 'CDB_File', "$titledbfp" or die "$0: can't tie to $titledbfp $!\n";
 	$titledbs{$did_prefix} = \%titledb;
 	$title = $titledb{$did};
@@ -1048,7 +1033,7 @@ sub get_url {
     my $did_prefix = sprintf("%03d", $did / 1000000);
     my $url = $urldbs{$did_prefix}->{$did};
     unless (defined($url)) {
-	my $urldbfp = "$URL_DB_PATH/$did_prefix.url.cdb";
+	my $urldbfp = "$CONFIG->{URL_DB_PATH}/$did_prefix.url.cdb";
 	tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
 	$urldbs{$did_prefix} = \%urldb;
 	$url = $urldb{$did};

@@ -21,31 +21,15 @@ use SearchEngine;
 use QueryParser;
 use SnippetMakerAgent;
 use SnippetMaker;
+use Configure;
 
-# 定数
-my @HIGHLIGHT_COLOR = ("ffff66", "a0ffff", "99ff99", "ff9999", "ff66ff", "880000", "00aa00", "886800", "004699", "990099");
-my $TOOL_HOME = '/home/skeiji/local/bin';
-my $ORDINARY_DFDB_PATH = '/var/www/cgi-bin/dbs/dfdbs';
-my $SYNGRAPH_DFDB_PATH = '/data/dfdb_syngraph_8600';
-my $LOG_FILE_PATH = '/se_tmp/input.log';
+print header(-charset => 'utf-8');
 
-my $KNP_PATH = $TOOL_HOME;
-my $JUMAN_PATH = $TOOL_HOME;
-my $SYNDB_PATH = '/home/skeiji/tmp/SynGraph/syndb/i686';
 
-my $SYNGRAPH_SF_PATH = '/net2/nlpcf34/disk09/skeiji/sfs_w_syn';
-my $ORDINARY_SF_PATH = '/net2/nlpcf34/disk08/skeiji';
-my $HTML_FILE_PATH = '/net2/nlpcf34/disk08/skeiji';
-my $CACHED_HTML_PATH_TEMPLATE = "/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz";
+my $CONFIG = Configure::get_instance();
 
-my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
-my $MAX_LENGTH_OF_TITLE = 60;
-my $TITLE_DB_PATH = '/work/skeiji/titledb';
-my $URL_DB_PATH = '/work/skeiji/urldb';
-my $SERVICE_STOP_FLAG = 0;
-
-my %titledbs = ();
-my %urldbs = ();
+my %titledbs;
+my %urldbs;
 
 &main();
 
@@ -54,7 +38,7 @@ sub main {
     my $params = &get_cgi_parameters();
 
     # HTTPヘッダ出力
-    print header(-charset => 'utf-8');
+#    print header(-charset => 'utf-8');
 
     if ($params->{'cache'}) {
 	# キャッシュページの出力
@@ -63,7 +47,7 @@ sub main {
 	# TSUBAKI のトップ画面を表示
 	&print_tsubaki_interface($params);
 
-	$params->{query} = undef if ($SERVICE_STOP_FLAG);
+	$params->{query} = undef if ($CONFIG->{SERVICE_STOP_FLAG});
 	unless ($params->{query}) {
 	    # フッターの表示
 	    &print_footer($params, 0, 0);
@@ -77,7 +61,7 @@ sub main {
 	    # 検索エンジンオブジェクトの初期化
 	    my $se_obj = new SearchEngine($params->{syngraph});
 	    my $start_time = Time::HiRes::time;
-	    ($params->{syngraph} > 0) ? $se_obj->init($SYNGRAPH_DFDB_PATH) : $se_obj->init($ORDINARY_DFDB_PATH);
+	    ($params->{syngraph} > 0) ? $se_obj->init($CONFIG->{SYNGRAPH_DFDB_PATH}) : $se_obj->init($CONFIG->{ORDINARY_DFDB_PATH});
 	    my $df_time = Time::HiRes::time - $start_time; # DFDBをひくのに要した時間を取得
 
 	    # 検索
@@ -128,7 +112,7 @@ sub main {
 sub save_log {
     my ($params, $hitcount, $search_time, $df_time, $query_time) = @_;
     my $date = `date +%m%d-%H%M%S`; chomp ($date);
-    open(OUT, ">> $LOG_FILE_PATH");
+    open(OUT, ">> $CONFIG->{LOG_FILE_PATH}");
     my $param_str;
     foreach my $k (sort keys %{$params}) {
 	$param_str .= "$k=$params->{$k},";
@@ -221,10 +205,10 @@ sub get_normalized_url {
 sub parse_query {
     my ($params) = @_;
     my $q_parser = new QueryParser({
-	KNP_PATH => $KNP_PATH,
-	JUMAN_PATH => $JUMAN_PATH,
-	SYNDB_PATH => $SYNDB_PATH,
-	KNP_OPTIONS => ['-postprocess','-tab'] });
+	KNP_PATH => $CONFIG->{KNP_PATH},
+	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
+	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
+	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
     $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
     
     # クエリの解析
@@ -252,8 +236,8 @@ sub print_cached_page {
 
     my $color;
     my $id = $params->{'cache'};
-    my $htmlfile = sprintf($CACHED_HTML_PATH_TEMPLATE, $id / 1000000, $id / 10000, $id);
-    my $htmldat = decode('utf8', `gunzip -c  $htmlfile | $TOOL_HOME/nkf -w`);
+    my $htmlfile = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
+    my $htmldat = decode('utf8', `gunzip -c  $htmlfile | $CONFIG->{TOOL_HOME}/nkf -w`);
 
     if ($htmldat =~ /(<meta [^>]*content=[" ]*text\/html[; ]*)(charset=([^" >]+))/i) {
 	my $fwd = $1;
@@ -267,15 +251,15 @@ sub print_cached_page {
     foreach my $key (@KEYS) {
 	next unless ($key);
 
-	print "<span style=\"background-color:#$HIGHLIGHT_COLOR[$color];\">";
+	print "<span style=\"background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];\">";
 	print encode('utf8', $key) . "</span>&nbsp;";
 	if($color > 4){
 	    # background-color が暗いので foreground-color を白に変更
-	    $htmldat =~ s/$key/<span style="color:white; background-color:#$HIGHLIGHT_COLOR[$color];">$key<\/span>/g;
+	    $htmldat =~ s/$key/<span style="color:white; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$key<\/span>/g;
 	}else{
-	    $htmldat =~ s/$key/<span style="background-color:#$HIGHLIGHT_COLOR[$color];">$key<\/span>/g;
+	    $htmldat =~ s/$key/<span style="background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$key<\/span>/g;
 	}
-	$color = (++$color%scalar(@HIGHLIGHT_COLOR));
+	$color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
     }
     print "</U></DIV>";
     print encode('utf8', $htmldat);
@@ -421,7 +405,7 @@ sub get_title {
     my $did_prefix = sprintf("%03d", $did / 1000000);
     my $title = $titledbs{$did_prefix}->{$did};
     unless (defined($title)) {
-	my $titledbfp = "$TITLE_DB_PATH/$did_prefix.title.cdb";
+	my $titledbfp = "$CONFIG->{TITLE_DB_PATH}/$did_prefix.title.cdb";
 	tie my %titledb, 'CDB_File', "$titledbfp" or die "$0: can't tie to $titledbfp $!\n";
 	$titledbs{$did_prefix} = \%titledb;
 	$title = $titledb{$did};
@@ -431,8 +415,8 @@ sub get_title {
 	return 'no title.';
     } else {
 	# 長い場合は省略
-	if (length($title) > $MAX_LENGTH_OF_TITLE) {
-	    $title =~ s/(.{$MAX_LENGTH_OF_TITLE}).*/\1 <B>\.\.\.<\/B>/
+	if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE}) {
+	    $title =~ s/(.{$CONFIG->{MAX_LENGTH_OF_TITLE}}).*/\1 <B>\.\.\.<\/B>/
 	}
 	return $title;
     }
@@ -445,7 +429,7 @@ sub get_url {
     my $did_prefix = sprintf("%03d", $did / 1000000);
     my $url = $urldbs{$did_prefix}->{$did};
     unless (defined($url)) {
-	my $urldbfp = "$URL_DB_PATH/$did_prefix.url.cdb";
+	my $urldbfp = "$CONFIG->{URL_DB_PATH}/$did_prefix.url.cdb";
 	tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
 	$urldbs{$did_prefix} = \%urldb;
 	$url = $urldb{$did};
@@ -515,7 +499,7 @@ sub print_query {
 		    my $mod_k = $rep->{string};
 		    if ($mod_k =~ /s\d+:/) {
 			unless (defined %syndb) {
-			    tie %syndb, 'CDB_File', "$SYNDB_PATH/syndb.mod.cdb" or die $! . "<br>\n";
+			    tie %syndb, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n";
 			}
 
 			foreach my $synonym (split('\|', $syndb{$mod_k})) {
@@ -536,15 +520,15 @@ sub print_query {
 			printf("<span title=\"$tips\" style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$rep->{string}}->{foreground}, $cbuff{$rep->{string}}->{background});
 		    }else{
 			if($color > 4){
-			    print "<span title=\"$tips\" style=\"color:white;margin:0.1em 0.25em;background-color:#$HIGHLIGHT_COLOR[$color];\">$k_utf8</span>";
+			    print "<span title=\"$tips\" style=\"color:white;margin:0.1em 0.25em;background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];\">$k_utf8</span>";
 			    $cbuff{$rep->{string}}->{foreground} = 'white';
-			    $cbuff{$rep->{string}}->{background} = "#$HIGHLIGHT_COLOR[$color]";
+			    $cbuff{$rep->{string}}->{background} = "#$CONFIG->{HIGHLIGHT_COLOR}[$color]";
 			}else{
-			    print "<span title=\"$tips\" style=\"margin:0.1em 0.25em;background-color:#$HIGHLIGHT_COLOR[$color];\">$k_utf8</span>";
+			    print "<span title=\"$tips\" style=\"margin:0.1em 0.25em;background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];\">$k_utf8</span>";
 			    $cbuff{$rep->{string}}->{foreground} = 'black';
-			    $cbuff{$rep->{string}}->{background} = "#$HIGHLIGHT_COLOR[$color]";
+			    $cbuff{$rep->{string}}->{background} = "#$CONFIG->{HIGHLIGHT_COLOR}[$color]";
 			}
-			$color = (++$color%scalar(@HIGHLIGHT_COLOR));
+			$color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
 		    }
 		}
 	    }
@@ -645,7 +629,7 @@ print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http:
     
     print "</FORM>\n";
 
-#    print ("<FONT color='red'>サーバーメンテナンスのため、TSUBAKI APIをご利用いただけません。</FONT>\n");
-    
+    print ("<FONT color='red'>$CONFIG->{MESSAGE}</FONT>\n") if ($CONFIG->{MESSAGE});
+
     print "</CENTER>";
 }

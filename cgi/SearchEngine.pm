@@ -12,7 +12,7 @@ use IO::Select;
 use MIME::Base64;
 use Time::HiRes;
 use CDB_File;
-
+use Configure;
 use QueryParser;
 
 # コンストラクタ
@@ -21,19 +21,15 @@ sub new {
     my($class, $syngraph) = @_;
     my $this = {hosts => []};
 
+    my $config = Configure::get_instance();
+    my $servers;
     if ($syngraph > 0) {
-	for (my $i = 6; $i < 49; $i++) {
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 50001});
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 50002});
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 50003}) if (32 < $i && $i < 48);
-	}
+	$servers = Configure::get_instance()->{SEARCH_SERVERS_FOR_SYNGRAPH};
     } else {
-	for (my $i = 6; $i < 32; $i++) {
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 40001});
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 40002});
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 40003});
-	    push(@{$this->{hosts}}, {name => sprintf("nlpc%02d", $i), port => 40004}) if ($i < 26);
-	}
+	$servers = Configure::get_instance()->{SEARCH_SERVERS};
+    }
+    foreach my $s (@$servers) {
+	push(@{$this->{hosts}}, {name => $s->{name}, port => $s->{port}});
     }
     
     bless $this;
