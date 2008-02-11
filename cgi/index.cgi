@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 #!/usr/bin/env perl
 
 use strict;
@@ -594,7 +594,7 @@ END_OF_HTML
     # タイトル出力
 print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http://tsubaki-wiki.ixnlp.nii.ac.jp/\">TSUBAKI Wiki はこちら</A><BR></DIV>\n";
     print "<CENTER style='maring:1em; padding:1em;'>";
-    print "<A href='http://tsubaki.ixnlp.nii.ac.jp/index.cgi'><IMG border=0 src=./logo.png></A><P>\n";
+    printf ("<A href=%s><IMG border=0 src=./logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
     # フォーム出力
     print "<FORM name=\"search\" method=\"post\" action=\"\" enctype=\"multipart/form-data\">\n";
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
