@@ -1,3 +1,102 @@
+2008-02-10  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: KNPのrcfileを含めた．
+
+	* cgi/QueryParser.pm: KNPをnewする時、rcfileを指定するように変更．
+
+	* cgi/QueryParser.pm: SynGraph.pmのロード順序を変更．
+
+	* cgi/configure: SynGraph.pmの置き場所を記述．
+
+	* cgi/QueryParser.pm:
+	設定ファイルに記述されたSynGraph.pmをuseするように変更．
+
+	* cgi/configure.nict: SynGraph.pmの置き場所を設定ファイルに記述．
+
+	* cgi/Configure.pm: 設定ファイルのデフォルトパスを変更．
+
+	* cgi/index.cgi, cgi/api.cgi, cgi/SnippetMakerAgent.pm, cgi/SearchEngine.pm:
+	設定ファイルに記述された環境変数を用いるように変更．
+
+2008-02-09  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make-dlength-db.perl: 基本形を計数するバグをフィックス
+
+	* cgi/api.cgi:
+	検索結果のソート方法を指定できるようにした（ランダム、スコア）
+
+	* cgi/api.cgi: 検索結果に含めるファイルのサイズを指定できるように変更．
+
+	* cgi/api.cgi: SYNGRAPH検索、近接検索をapiで指定できるようにした．
+
+	* cgi/api.cgi: 内容語ごとにURIエスケープするように変更．
+
+	* cgi/api.cgi:
+	検索サーバー側でひかれなかったタイトル・URLの数をログに保存するようにした．
+
+	* cgi/api.cgi:
+	キャッシュページを取得する際、utf8化しないオプションno_encodingを追加．
+
+	* cgi/api.cgi:
+	SnippetMakerAgentを使ってスニペットを生成するように変更．
+
+	* cgi/api.cgi: 検索結果に含めるフィールドを指定できるようにした．
+
+	* cgi/api.cgi: 検索結果ページ構造体のメンバ変数名の変更に対応．
+
+	* cgi/api.cgi: 文書情報を個別に取得できる機能の追加．
+
+	* cgi/index.cgi:
+	同義表現検索時に、SynNodeの中身をツールチップで表示するように変更．
+
+	* cgi/index.cgi: print_search_result関数を整理
+
+	* cgi/index.cgi: SnippetMakerAgentを通してスニペットを作るように変更．
+
+	* cgi/index.cgi:
+	検索サーバーから返却されるページ数を調整するパラメータを導入．
+
+	* cgi/index.cgi:
+	類似ページ判定の際、no_titleであるページは考慮しないように変更．
+
+	* cgi/index.cgi:
+	検索結果をマージする際、空の配列にアクセスしないようにした．
+
+	* cgi/index.cgi:
+	検索結果ページのメンバ変数の変更に対応（scoreからscore_totalに変更）．
+
+	* cgi/index.cgi: サービス停止用のフラグを設けた．
+
+	* cgi/index.cgi:
+	IDだけでキャッシュされたページが取得できるように変更（今まではディレクトリパスが丸出しになっていた）
+
+	* cgi/index.cgi:
+	クエリ解析時間、DFDBをひく時間をログとして保存するように変更．
+
+	* cgi/index.cgi: 検索サーバーが返すタイトル・URLを利用するように変更．
+
+	* cgi/SnippetMakerAgent.pm: select_snippetsメソッドの追加．
+
+	* cgi/SnippetMaker.pm: 不要な関数の削除．
+
+	* cgi/SearchEngine.pm: メンバ変数の変更に対応．
+
+	* cgi/SearchEngine.pm: .keymapファイルを読み込まないように変更．
+
+2007-12-28  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm: 並列Pを係り受けDに変換する部分のバグ修正
+
+2007-12-20  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine4OrdinarySearch.pm:
+	インデックスがどの程度文書のスコアに貢献したか返すように変更．係り受け、近接スコアの考慮を制御するフラグオプションの追加．
+
+2007-12-17  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm:
+	bug fixed.(get_minimun_distnaceでポジションが片方しかない場合は-1を返す)
+
 2007-12-16  Tomohide Shibata  <shibata@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngineFactory.pm:
