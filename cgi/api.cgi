@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 
 # REST API for search
 
@@ -47,7 +47,10 @@ if($loadave[14] > 3.0){
 
 my $CONFIG = Configure::get_instance();
 
-my $cgi = new CGI;
+my $method = $ENV{'REQUEST_METHOD'};
+my $cgi;
+$cgi = new CGI if ($method ne 'POST');
+
 my %params = ();
 ## 検索条件の初期化
 $params{'ranking_method'} = 'OKAPI';
@@ -64,27 +67,28 @@ $params{'syngraph'} = 0;
 $params{'sort_by'} = 'score';
 
 ## 指定された検索条件に変更
-$params{'URL'} = $cgi->param('URL') if($cgi->param('URL'));
-$params{'query'} = decode('utf8', $cgi->param('query')) if($cgi->param('query'));
-$params{'start'} = $cgi->param('start') if(defined($cgi->param('start')));
-$params{'logical_operator'} = $cgi->param('logical') if(defined($cgi->param('logical')));
-$params{'results'} = $cgi->param('results') if(defined($cgi->param('results')));
-$params{'only_hitcount'} = $cgi->param('only_hitcount') if(defined($cgi->param('only_hitcount')));
-$params{'force_dpnd'} = $cgi->param('force_dpnd') if(defined($cgi->param('force_dpnd')));
-$params{'min_size'} = $cgi->param('min_size') if (defined($cgi->param('min_size')));
-$params{'max_size'} = $cgi->param('max_size') if (defined($cgi->param('max_size')));
-$params{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
-$params{'sort_by'} = $cgi->param('sort_by') if (defined($cgi->param('sort_by')));
+if ($cgi) {
+    $params{'URL'} = $cgi->param('URL') if($cgi->param('URL'));
+    $params{'query'} = decode('utf8', $cgi->param('query')) if($cgi->param('query'));
+    $params{'start'} = $cgi->param('start') if(defined($cgi->param('start')));
+    $params{'logical_operator'} = $cgi->param('logical') if(defined($cgi->param('logical')));
+    $params{'results'} = $cgi->param('results') if(defined($cgi->param('results')));
+    $params{'only_hitcount'} = $cgi->param('only_hitcount') if(defined($cgi->param('only_hitcount')));
+    $params{'force_dpnd'} = $cgi->param('force_dpnd') if(defined($cgi->param('force_dpnd')));
+    $params{'min_size'} = $cgi->param('min_size') if (defined($cgi->param('min_size')));
+    $params{'max_size'} = $cgi->param('max_size') if (defined($cgi->param('max_size')));
+    $params{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
+    $params{'sort_by'} = $cgi->param('sort_by') if (defined($cgi->param('sort_by')));
 
-if(defined($cgi->param('snippets'))) {
-    if ($cgi->param('snippets') > 0) {
-	$params{'no_snippets'} = 0;
+    if(defined($cgi->param('snippets'))) {
+	if ($cgi->param('snippets') > 0) {
+	    $params{'no_snippets'} = 0;
+	} else {
+	    $params{'no_snippets'} = 1;
+	}
     } else {
 	$params{'no_snippets'} = 1;
     }
-} else {
-    $params{'no_snippets'} = 1;
-}
 
 # if($cgi->param('dpnd') == 0){
 #     $params{'dpnd'} = 0;
@@ -96,10 +100,11 @@ if(defined($cgi->param('snippets'))) {
 #     $params{'filter_simpages'} = 0;
 # }
 
-$params{'query'} =~ s/^(?: | )+//g;
-$params{'query'} =~ s/(?: | )+$//g;
+    $params{'query'} =~ s/^(?: | )+//g;
+    $params{'query'} =~ s/(?: | )+$//g;
 
-$params{'near'} = shift(@{$cgi->{'near'}}) if ($cgi->param('near'));
+    $params{'near'} = shift(@{$cgi->{'near'}}) if ($cgi->param('near'));
+}
 
 my $date = `date +%m%d-%H%M%S`;
 chomp ($date);
@@ -129,9 +134,9 @@ my $uri_escaped_query = "";
 # my $PRINT_THRESHOLD = $result_num + $start_num;
 
 # get an operation
-my $file_type = $cgi->param('format');
+my $file_type = $cgi->param('format') if ($cgi);
 
-my $field = $cgi->param('field');
+my $field = $cgi->param('field') if ($cgi);
 
 # my $LOGICAL_COND = $cgi->param('logical');
 # $LOGICAL_COND = 'AND' unless $LOGICAL_COND; # default number of results
@@ -148,28 +153,106 @@ my $field = $cgi->param('field');
 # my $SIM_PAGES = $cgi->param('filter_simpages');
 # $SIM_PAGES = 0 unless($SIM_PAGES);
 
-unless (defined $cgi->param('result_items')) {
-    $params{Id} = 1;
-    $params{Score} = 1;
-    $params{Rank} = 1;
-    $params{Url} = 1;
-    $params{Snippet} = 0;
-    $params{Cache} = 1;
-    $params{Title} = 1;
-    $params{Snippet} = 1 if ($params{'no_snippets'} < 1);
-} else {
-    foreach my $item_name (split(':', $cgi->param('result_items'))) {
-	$params{$item_name} = 1;
+if ($cgi) {
+    unless (defined $cgi->param('result_items')) {
+	$params{Id} = 1;
+	$params{Score} = 1;
+	$params{Rank} = 1;
+	$params{Url} = 1;
+	$params{Snippet} = 0;
+	$params{Cache} = 1;
+	$params{Title} = 1;
+	$params{Snippet} = 1 if ($params{'no_snippets'} < 1);
+    } else {
+	foreach my $item_name (split(':', $cgi->param('result_items'))) {
+	    $params{$item_name} = 1;
+	}
+	$params{'no_snippets'} = 0 if (exists $params{Snippet});
     }
-
-    $params{'no_snippets'} = 0 if (exists $params{Snippet});
 }
 
 
 # XML DOM Parser for acquiring information of HTML
 my $parser = new XML::DOM::Parser;
+if ($method eq 'POST') {
+    my $length = $ENV{'CONTENT_LENGTH'};
+    my $dat;
+    read(STDIN, $dat, $length);
 
-if (defined $field) {
+    print "Content-type: text/xml","\n\n";
+
+    require XML::LibXML;
+    my $parser = new XML::LibXML;
+    my $xmlreq = $parser->parse_string($dat);
+    my ($query_str, $request_items, $dids) = &parse_request($xmlreq);
+
+    my $q_parser;
+    my $query_obj;
+    if (exists $request_items->{'Snippet'}) {
+	# parse query
+	$q_parser = new QueryParser({
+	    KNP_PATH => $CONFIG->{KNP_PATH},
+	    JUMAN_PATH => $CONFIG->{JUMAN_PATH},
+	    SYNDB_PATH => $CONFIG->{SYNDB_PATH},
+	    KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
+	$q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
+	$query_obj = $q_parser->parse($query_str, {logical_cond_qk => 'AND', syngraph => 0});
+    }
+
+    foreach my $fid (@$dids) {
+	if (exists $request_items->{'Snippet'}) {
+	    my $sni_obj = new SnippetMakerAgent();
+	    $sni_obj->create_snippets($query_obj, [$fid], {discard_title => 0, syngraph => 0, window_size => 5});
+	    my $did2snippets = $sni_obj->get_snippets_for_each_did();
+	    $request_items->{'Snippet'} = $did2snippets->{$fid};
+	}
+
+	if (exists $request_items->{'Title'}) {
+	    $request_items->{'Title'} = &get_title($fid);
+	}
+
+	if (exists $request_items->{'Url'}) {
+	    $request_items->{'Url'} = &get_url($fid);
+	}
+
+	if (exists $request_items->{'Cache'}) {
+	    my $cache = {
+		URL  => &get_cache_location($fid, &get_uri_escaped_query($query_obj)),
+		Size => &get_cache_size($fid) };
+	    $request_items->{'Cache'} = $cache;
+	}
+    }
+
+    my $date = `date +%m%d-%H%M%S`; chomp ($date);
+    $cgi = new CGI;
+    print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
+    my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
+    $writer->xmlDecl('utf-8');
+    $writer->startTag('DocInfo',
+		      time => $date,
+		      result_items => join(':', sort {$b cmp $a} keys %$request_items));
+
+    foreach my $fid (@$dids) {
+	$writer->startTag('Result', Id => sprintf("%09d", $fid));
+	foreach my $ri (sort {$b cmp $a} keys %$request_items) {
+	    $writer->startTag($ri);
+	    if ($ri ne 'Cache') {
+		$writer->characters($request_items->{$ri}. "\n");
+	    } else {
+		$writer->startTag('Url');
+		$writer->characters($request_items->{Cache}->{URL});
+		$writer->endTag('Url');
+		$writer->startTag('Size');
+		$writer->characters($request_items->{Cache}->{Size});
+		$writer->endTag('Size');
+	    }
+	    $writer->endTag($ri);
+	}
+	$writer->endTag('Result');
+    }
+    $writer->endTag('DocInfo');
+}
+elsif (defined $field) {
     my %request_items = ();
     foreach my $ri (split(':', $field)) {
 	$request_items{$ri} = 1;
@@ -468,6 +551,28 @@ if (defined $field) {
 #	$writer->endTag('ResultSet');
 #	$writer->end();
 #    }
+}
+
+sub parse_request {
+    my ($xmlreq) = @_;
+
+    my $docinfo = shift @{$xmlreq->getChildNodes()};
+
+    my @dids = ();
+    my $query = $docinfo->getAttribute('query');
+    my %result_items = ();
+    foreach my $ri (split(':', $docinfo->getAttribute('result_items'))) {
+	$result_items{$ri} = 1;
+    }
+
+    foreach my $doc ($docinfo->getChildNodes) {
+        next if ($doc->nodeName() eq '#text');
+
+        my $did = $doc->getAttribute('Id');
+        push(@dids, $did);
+    }
+
+    return ($query, \%result_items, \@dids);
 }
 
 # 装飾されたスニペットを生成する関数
