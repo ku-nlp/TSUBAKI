@@ -1,0 +1,50 @@
+DIV.similar{
+	padding: 0.5em 3em;
+}
+
+DIV.result{
+	padding: 0.5em 1em;
+}
+
+DIV.meta{
+	color: silver;
+	font-size:small;
+	margin-left:1em;
+}
+
+SPAN.rank{
+	color: black;
+	margin-right:0.5em;
+}
+
+A.title{
+
+}
+
+.snippet{
+	width: 90%;
+	font-size:small;
+	margin: 0.5em 1em;
+	padding: 0px 0px 0px 1em;
+}
+
+.cache, .orig_url{
+	color: green;
+	text-decoration: none;
+	margin: 0.5em 1em;
+	padding: 0px 0px 0px 1em;
+}
+
+DIV.pagenavi{
+	background-color:#f1f4ff;
+	border-top: 1px solid gray;
+	border-bottom: 1px solid gray;
+	padding: 1em 0em;
+	text-align: center;
+}
+
+DIV.footer{
+	padding: 1em 0em;
+	font-weight: 700;
+	text-align: center;
+}
