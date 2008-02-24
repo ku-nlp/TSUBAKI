@@ -1,0 +1,1932 @@
+\documentclass{jsarticle}
+%\documentclass[twocolumn]{jarticle}
+
+\newcommand{\mrow}[1]{%
+  \raisebox{-1.5ex}[0pt][0pt]{#1}}
+
+\usepackage{graphicx}
+\usepackage{multirow}
+
+\title{検索エンジン基盤TSUBAKI}
+
+\author{新里圭司 \quad 黒橋禎夫\\
+\{shinzato, kuro\}@nlp.kuee.kyoto-u.ac.jp}
+
+\date{\today}
+\begin{document}
+\maketitle
+
+\section{はじめに}
+
+本稿では，開放型検索エンジン基盤
+TSUBAKI\footnote{http://tsubaki.ixnlp.nii.ac.jp/index.cgi，科学技術研究
+費特定領域「情報爆発時代に向けた新しいIT基盤技術の研究」(2006-2010; 領域
+代表 喜連川優)において開発・運用中．}について述べる．
+%
+開放型検索エンジン基盤TSUBAKIとは，日本語ウェブページ約1億件
+\footnote{2007年10月現在.}を対象とした，研究用途に主眼をおいた検索エンジ
+ンである．APIを公開しており
+\footnote{http://tsubaki.ixnlp.nii.ac.jp/tsubaki/api.html}，APIを介して
+誰でも自由かつ無制限にその検索結果を取得することが可能である．
+%
+また，ソースコードはオープンソースで公開する予定であり，独自に開発された
+検索エンジンコンポーネント(例えば，検索結果のランキングモジュールやリン
+ク解析技術など)との融合を歓迎している．独自のコンポーネントをTSUBAKIに組
+み込みたい方は別途ご相談頂きたい．
+
+本稿では，TSUBAKIの以下の点について述べる．
+
+\begin{itemize}
+\item 動作環境
+\item 検索対象とする文書集合
+\item インデックス
+\item 検索
+\item APIの利用方法
+\end{itemize}
+
+\section{動作環境}
+
+TSUBAKIは国立情報学研究所 西千葉分館にて運用されている．表\ref{spec_cpu}，
+\ref{spec_fs}に，西千葉分館の計算機環境を示す．ここでは，128あるCPUコア
+全てが検索用に用いられており，一部のCPUコアはインデックス作成用などの処
+理にも併用される．
+
+% ただし，この利用方法は検索対象とする文書数に依存するも
+% のであり，検索対象となる文書数が増えればCPUコアの使用方法も変わってくる．
+
+% 現在の検索対象とする文書数は1億ページであるが，今後は2億ページに増やす予定であり，
+% そうなった際は，128CPUコア全てを検索用途に割り当て，インデックス作
+% 成は同じく科研情報爆発にて運用されているInTriggerプラットホーム\footnote{http://i-explosion.ex.nii.ac.jp/i-explosion/html/S/A02-1/index.html}
+% に移行する予定である．
+
+\begin{table*}[h]
+\footnotesize
+\begin{center}
+\caption{TSUBAKI系計算機環境(計算サーバー)}
+\label{spec_cpu}
+\begin{tabular}{r|r|r|r}
+\hline
+&HP社製ブレードサーバー (32台) & APPRO社製ブレードサーバー (16台)&合計\\ \hline
+CPU& 64CPUコア(2CPUコア×32) & 64CPUコア(4CPUコア×16) & 128CPUコア\\
+メモリ&192GB(6GB×32)&192GB(12GB×16) & 384GB\\
+ローカルディスク& 19.2TB(0.6TB×32) & 16.0TB (1TB×16) & 35.2TB\\ \hline
+\end{tabular}
+\end{center}
+\end{table*}
+
+\begin{table}[h]
+\footnotesize
+\begin{center}
+\caption{TSUBAKI系計算機環境(ファイルサーバー)}
+\label{spec_fs}
+\begin{tabular}{r|r}
+\hline
+ホスト名 & 容量 \\ \hline
+nlpcf.ixnlp.nii.ac.jp & 2.0TB \\
+nlpcf2.ixnlp.nii.ac.jp & 10.5TB \\
+nlpcf3.ixnlp.nii.ac.jp & 53.4TB\\
+nlpcf4.ixnlp.nii.ac.jp & 53.4TB\\ \hline
+合計 & 119.3TB\\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+
+
+\section{検索対象となる文書集合}
+
+TSUBAKIが検索対象としている文書集合は，2007年5月から7月にかけて情報通信
+研究機構 知識処理グループにてクロールされた日本語ページ100,380,002件であ
+る．クロールには，東京大学田浦研究室にて開発が進められている
+Shim-Crawler\footnote{http://www.logos.t.u-tokyo.ac.jp/crawler/}を利用し
+た．
+
+クロールされたウェブページは，日本語ウェブページ判定処理，日本語文区切り
+判定処理が施され，ウェブ標準フォーマット\cite{sf}により管理される．ウェブ標準フォーマットとは，ウェブ
+ページを解析した結果の共有を目的に，我々が提案したXML形式のフォーマットであり，
+ウェブページを対象とした研究を行う上で頻繁に利用される情報，例えば，ウェ
+ブページのタイトル，URL，ページに含まれる日本語文などの情報が埋め込まれる．
+%
+本節ではウェブ標準フォーマット及び，ウェブページから標準フォーマットへの
+変換方法について述べる．
+
+
+\subsection{ウェブ標準フォーマット}
+
+\begin{table*}[t]
+\caption{標準フォーマットに明示されている情報}
+\begin{center}
+\footnotesize
+\label{tagset}
+\begin{tabular}{l|p{0.6\columnwidth}}
+\hline
+タグ名&内容 \\ \hline
+StandardFormat&
+\begin{minipage}{\columnwidth}
+標準フォーマットのルートタグ．
+
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Url:] 元となるウェブページのURL
+\item [OriginalEncoding:] 元となるウェブページの文字コード
+\item [Time:] ページが取得された日時（「yyyy-mm-dd hh:mm:ss」形式）
+\end{description}
+\item [子要素:] Header，Text
+\end{description}
+
+\end{minipage}
+\\ \hline \hline
+
+Header&
+\begin{minipage}{0.8\columnwidth}
+ヘッダー要素を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] Title，InLinks，OutLinks
+\end{description}
+\end{minipage}
+\\ \hline
+
+Title&
+\begin{minipage}{0.8\columnwidth}
+元となるページのタイトルを表すタグ．
+
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Offset:] ファイル先頭からのオフセット
+\item [Length:] タイトルの長さ（バイト長）
+\item [Id:] 文ID
+\end{description}
+\item [子要素:] RawString，Annotation
+\end{description}
+
+\end{minipage}
+\\ \hline
+
+InLinks&
+\begin{minipage}{0.8\columnwidth}
+元となるページへのインリンクの集合を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] InLink
+\end{description}
+\end{minipage}
+\\ \hline
+
+InLink&
+\begin{minipage}{0.8\columnwidth}
+元となるページへのインリンクを表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] RawString，Annotation，DocIDs
+\end{description}
+\end{minipage}
+\\ \hline
+
+OutLinks&
+\begin{minipage}{0.8\columnwidth}
+元となるページからのアウトリンクの集合を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] OutLink
+\end{description}
+\end{minipage}
+\\ \hline
+
+OutLink&
+\begin{minipage}{0.8\columnwidth}
+元となるページからのアウトリンクを表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] RawString，Annotation，DocIDs
+\end{description}
+\end{minipage}
+\\ \hline
+
+DocIDs&
+\begin{minipage}{0.8\columnwidth}
+文書IDの集合を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] DocID
+\end{description}
+\end{minipage}
+\\ \hline
+
+DocID&
+\begin{minipage}{0.8\columnwidth}
+文書IDを表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] 文書IDを表す数字列
+\end{description}
+\end{minipage}
+\\ \hline \hline
+
+Text&
+\begin{minipage}{0.8\columnwidth}
+元となるページの本文の内容を表すタグ．
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Type:] ウェブページのタイプ（通常のページ，ブログのエントリなど）
+\end{description}
+\item [子要素:] S
+\end{description}
+\end{minipage}
+\\ \hline
+
+S&
+\begin{minipage}{0.8\columnwidth}
+ページに含まれる一文を表すタグ．
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Offset:] ファイル先頭からのオフセット
+\item [Length:] タイトルの長さ（バイト長）
+\item [Id:] 文ID
+\end{description}
+\item [子要素:] RawString，Annotation
+\end{description}
+\end{minipage}
+\\ \hline
+
+RawString&
+\begin{minipage}{0.8\columnwidth}
+一文として抽出された文字列を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] 一文として抽出された文字列
+\end{description}
+\end{minipage}
+\\ \hline
+
+Annotation&
+\begin{minipage}{0.8\columnwidth}
+一文として抽出された文字列の解析結果を表すタグ．
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Scheme:] 解析に用いたツール名(e.x., Juman，Knpなど)
+\end{description}
+\item [子要素:] ツールの解析結果
+\end{description}
+\end{minipage}
+\\ \hline
+
+
+\end{tabular}
+\end{center}
+\end{table*}
+
+% \begin{table*}[t]
+% \caption{標準フォーマットに明示されている情報}
+% \begin{center}
+% \footnotesize
+% \label{tagset}
+% \begin{tabular}{l|l|l|p{25zw}}
+% \hline
+% \multicolumn{1}{l|}{種類} &
+% \multicolumn{1}{l|}{情報} &
+% \multicolumn{1}{l|}{XMLタグ／属性} &
+% \multicolumn{1}{l}{備考}\\
+% \hline\hline
+%  \multirow{6}*{メタ情報} & ウェブページのタイトル & \tt Title & 構造を持つため属性ではなくタグで管理．\\ \cline{2-4}
+%  & ウェブページへのインリンク & \tt InLinks & 構造を持つため属性ではなくタグで管理．\\ \cline{2-4}
+%  & ウェブページからのアウトリンク & \tt OutLinks & 構造を持つため属性ではなくタグで管理．\\ \cline{2-4}
+%  & URL & \tt Url &  \\ \cline{2-4}
+%  & エンコーディング & \tt OriginalEncoding &  \\ \cline{2-4}
+%  & ページ取得日時 & \tt Time & 「yyyy-mm-dd hh:mm:ss」形式． \\ \cline{2-4}
+% \hline\hline
+% \multirow{5}*{本文情報} & 著者 & \tt Author & 任意．\\ \cline{2-4}
+%  & 更新日 & \tt Date & 任意．\\ \cline{2-4}
+%  & ブログエントリなどのタイトル & \tt Title & 任意．\\ \cline{2-4}
+%  & 種類 & \tt Type & 通常のWebページかブログ，またはブログのコメント．\\ \cline{2-4}
+% \hline\hline
+% \multirow{6}*{文情報} & 文ID & \tt Id & \\ \cline{2-4}
+%  & バイト長 & \tt Length & \\ \cline{2-4}
+%  & 開始位置 & \tt Offset & ファイル先頭からのバイトオフセット．\\
+%  \cline{2-4}
+%  & 文字列 & \tt RawString & 要素が日本語文であることを意味するタグ．\\ \cline{2-4}
+%  & NLPツールの解析結果 & \tt Annotation & 要素が解析結果であることを意味するタグ．\\ \cline{2-4}
+%  & NLPツールの名称 & \tt Scheme & Juman，Knpなど．\\ \cline{2-4}
+% \hline
+% \end{tabular}
+% \end{center}
+% \end{table*}
+
+ウェブページを共有するための管理方式として，XMLタグによりページの情報を
+埋め込むことのできるウェブ標準フォーマットを設計した．表\ref{tagset}に標
+準フォーマットに埋め込まれる情報を示す．
+%
+表からわかるように，このフォーマットにはウェブページのタイトルやURL，リ
+ンク情報などのメタ情報に加え，ウェブページを扱うシステムで多くの場合利用
+される文情報，さらにオプションとして，文を既存の自然言語処理ツールにより
+解析した結果を埋め込むことが可能である．
+
+%
+%今後，標準フォーマットに埋め込まれる情報は，若干変更される可能性があることに注意されたい．
+%
+% ウェブ文書中に現れる文章の区切りを認識し文を抽出することは，ウェブ文書を処理する上で最も基本となる操作である．
+% しかしながら，ウェブ文書には砕けた表現が頻出し，通常であれば文区切りを意
+% 味する句点等が文区切り以外の意味で用いらることも多々あるため，文区切りを
+% 適切に認識し，ウェブ文書から文を抽出することは簡単ではない．
+%
+% それにも関わらず，文抽出処理，または文区切りの認識処理については，その標準と
+% なるツールは存在しないため，ウェブ文書から抽出された文を共有するこ
+% とは重要であると考えられる．
+
+%
+% そのため，TSUBAKI APIを用いているシステムでは，APIを利用して標準フォー
+% マット化されたウェブ文書を得ることで，ウェブ文書からの文抽出や，抽出され
+% た文の解析などの前処理を行うことなく，即座にシステム特有の処理に移ること
+% が可能である．このことは，例えば検索結果をオンデマンドに分類するクラスタ
+% リングシステムのような動的に検索結果を処理するシステムにおいて重要である．
+
+%なぜ共通のフォーマットが必要か？
+%→一機関が単独で集められるデータの量・解析できるデータの量に限界がある
+%→→ウェブ文書が大量にあるため
+%→→計算機資源は有限
+
+%シームレスに異なる機関で解析された文書を利用可能　→ 機関単独では利用できない量のデータを扱える
+
+% 何をフォーマットに埋め込むか？
+% ウェブ文書を扱う場合は，文区切り，文抽出，文解析が行われる
+% →文区切りを適切に認識することは，文抽出・解析を行ううえで重要
+% →文区切りの認識は新聞記事コーパスのように簡単ではない．句点だけが手がかりではなく，手がかりとならない句点も存在する
+% →→ウェブ文書は新聞記事とは異なり，砕けた表現が頻繁に現れるため
+% 文，解析結果，メタ情報は多くの場合使われる
+% これらのデータを埋め込むことで，即座にシステム特有の処理を行うことができる
+% 
+% ウェブ文書を扱うシステムでは，大量のウェブ文書から文を抽出し，それらを既
+% 存の言語処理ツールを用いて解析することがしばしば行われており，これらの処
+% 理は，システムの開発者または機関が独自に行っているのが現状である．しかし
+% ながら，WWW上には膨大な量のウェブ文書が存在することを考えると，現在のよ
+% うに，機関が単独で，ウェブ文書を管理するよりも，集中的に管理し，その解析
+% 結果を誰でも使えるような形で管理するような大規模なリポジトリを作成した方
+% が望ましい場合が多い．
+
+
+%
+% そこで我々は，大規模なウェブ文書の解析結果を共有するためのフォーマットとして，ウェブ標準フォーマットを提案している．
+% ウェブ標準フォーマットで用いられるタグセットのDTDを表に示す．
+% %ウェブ標準フォーマットとは，図~\ref{dtd}に示したDTDで定義されるフォーマ
+% %ットであり，表~\ref{tagset}に示す情報を含んでいる．
+% ウェブ標準フォーマットには，ウェブ文書を用いた研究を行う上で必要となるで
+% あろう，文書のタイトルやアンカー情報などのメタ情報に加え，ウェブ文書から
+% 抽出された日本語文，さらには，タイトルやアンカーテキスト，抽出された日本
+% 語文の形態素／構文解析結果を埋め込み可能である．
+% 
+% %
+
+図\ref{sample}(a)にオリジナルのウェブページを，同図(b)に標準フォーマット
+に変換された文書（KNP~\cite{knp}の解析結果付き）をそれぞれ示す．標準フォ
+ーマット化されたウェブページは大きく分けると，\texttt{<Header>}タグで囲
+まれるヘッダー部と\texttt{<Text>}タグで囲まれるテキスト部から構成される．
+%
+ヘッダー部は，対応するウェブページのタイトル(\texttt{<Title>})，ウェブペ
+ージへのインリンク情報(\texttt{<InLink>})および，ウェブページからのアウ
+トリンク情報(\texttt{<OutLink>})などのメタ情報を含んでいる\footnote{インリンク，アウトリンクについては現在処理中である．}．
+%
+例えば，図\ref{link}に示したID 300のウェブページを標準フォーマット化すると，
+図\ref{meta}に示すヘッダー部が得られる．
+%
+
+その一方で，テキスト部には，対応するウェブページから抽出された日本語文およ
+び，日本語文を自然言語処理ツールを使って解析した結果が含まれる．テキス
+ト部の例を図\ref{text}に示す．
+%
+\texttt{<S>}タグで囲まれた範囲が，オリジナルのウェブページから抽出された
+日本語文1文に対応しており，その子要素である\texttt{<RawString>}タグによ
+り実際に抽出された日本語文が，\texttt{<Annotation>}タグにより抽出された
+日本語文を自然言語処理ツールで解析した結果がそれぞれ囲まれている．
+%
+また，同一の日本語文を複数の自然言語処理ツールで解析する場合を考慮して，
+\texttt{<Annotation>}タグの\texttt{Scheme}属性の値を異なる値(基本的には
+ツール名)にすることで，複数の解析結果を同一の標準フォーマットに埋め込め
+るようになっている．
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=\columnwidth,clip,angle=-90]{figs/html_sf.eps}
+\caption{標準フォーマット化されたウェブページの例}
+\label{sample}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=0.6\columnwidth,clip,angle=-90]{figs/link.eps}
+\caption{インリンク，アウトリンクの例}
+\label{link}
+\end{center}
+\end{figure}
+
+\begin{figure}[t]
+\footnotesize
+\begin{center}
+\begin{tabular}{|c|}
+\hline
+\begin{minipage}{0.5\columnwidth}
+\begin{verbatim}
+<Header>
+  <Title>
+    <RawString>京都大学ホームページ</RawString>
+  </Title>
+  <OutLinks>
+    <OutLink>
+      <RawString>受験生の方へ</RawString>
+      <DocIDs>
+        <DocID>400</DocID>
+      </DocIDs>
+    </OutLink>
+  </OutLinks>
+  <InLinks>
+    <InLink>
+      <RawString>京大</RawString>
+      <DocIDs>
+        <DocID>300</DocID>
+        <DocID>500</DocID>
+      </DocIDs>
+    </InLink>
+    <InLink>
+      <RawString>トップへ戻る</RawString>
+      <DocIDs>
+        <DocID>300</DocID>
+      </DocIDs>
+    </InLink>
+  </InLinks>
+</Header>
+\end{verbatim}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\caption{ヘッダー部の例}
+\end{center}
+\label{sf-example-2}
+\end{figure}
+
+\begin{figure}[t]
+\footnotesize
+\begin{center}
+\begin{tabular}{|c|}
+\hline
+\begin{minipage}{.8\columnwidth}
+\begin{verbatim}
+<Text Type="default">
+<S Id="1" Length="70" Offset="525">
+  <RawString>小泉総理の好きな格言のひとつに「無信不立(信無くば立たず)」があります．</RawString>
+  <Annotation Scheme="KNP">
+    <![CDATA[* 1D <文頭><サ変><人名><助詞><連体修飾><体言><係:ノ格><区切:0-4><RID:1056>
+小泉 こいずみ 小泉 名詞 6 人名 5 * 0 * 0 NIL <文頭><漢字><かな漢字><名詞相当語><自立><タグ単位始><文節始><固有キー>
+ ...中略...
+ます ます ます 接尾辞 14 動詞性接尾辞 7 動詞性接尾辞ます型 31 基本形 2 NIL <表現文末><かな漢字><ひらがな><活用語><付属><非独立無意味接尾辞>
+． ． ． 特殊 1 句点 1 * 0 * 0 NIL <文末><英記号><記号><付属>
+    EOS]]>
+  </Annotation>
+</S>
+<S Id="2" Length="160" Offset="595">
+  <RawString>論語の下篇「顔淵」の言葉で，弟子の子貢（しこう）が政治について尋ねたところ，孔子は「食料を十分にし軍備を十分にして，人民には信頼を持たせることだ」と答えました．</RawString>
+  <Annotation Scheme="KNP">
+    <![CDATA[* 1D <文頭><助詞><連体修飾><体言><係:ノ格><区切:0-4><RID:1056>
+論 ろん 論 名詞 6 普通名詞 1 * 0 * 0 "漢字読み:音 代表表記:論" <漢字読み:音><代表表記:論><文頭><漢字><かな漢字><名詞相当語><自立><タグ単位始><文節始>
+ ...中略...
+ました ました ます 接尾辞 14 動詞性接尾辞 7 動詞性接尾辞ます型 31 タ形 5 NIL <表現文末><かな漢字><ひらがな><活用語><付属><非独立無意味接尾辞>
+． ． ． 特殊 1 句点 1 * 0 * 0 NIL <文末><英記号><記号><付属>
+EOS]]>
+  </Annotation>
+</S>
+...中略...
+</Text>
+\end{verbatim}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\end{center}
+\caption{テキスト部の例 (KNPによる解析結果有)}
+\label{text}
+\end{figure}
+
+
+\subsection{標準フォーマットへの変換処理}
+
+ウェブページから標準フォーマットデータを生成するためのステップを以下に示す．
+
+\begin{description}
+\setlength{\itemsep}{-2pt}
+\item {Step 1:} 日本語ウェブページかどうかの判定（オプション）
+\item {Step 2:} ウェブページのutf8化
+\item {Step 3:} ウェブページからの日本語文抽出
+\item {Step 4:} 抽出された日本語文の解析（オプション）
+\item {Step 5:} ウェブ標準フォーマット形式に変換
+\end{description}
+
+\noindent
+ここでは各ステップについて述べる．
+
+\paragraph {Step 1: 日本語ウェブページかどうかの判定（オプション）}
+
+文字コードおよび言語情報を手がかりにウェブページが日本語ページかどうかの
+判定を行う．
+
+\begin{description}
+
+\item [(i) 文字コードを用いた日本語ページ判定:]
+ウェブページ中のcharset属性，またはperlの
+\texttt{Encode::guess\_encoding()}関数を用いてページの文字コードを調べる．
+文字コードがeuc-jp，x-euc-jp，iso-2022-jp，shift jis，windows-932，
+x-sjis，shiftjp，utf-8であれば，そのページを日本語ページの候補とする．
+
+
+\item [(ii) 言語情報を用いた日本語ページ判定:]
+
+(i)では，より多くの日本語ページを取得するために，utf8コードでエンコードさ
+れているページも日本語ページとして見なしている．しかし，utf8コードは日本
+語以外の言語でも用いられるため，日本語以外のページが含まれている可能性が
+ある．ここでは言語情報を用いてutf8でエンコードされたページのうち，日本語
+以外のページを排除する．具体的には，日本語の助詞（「が」「を」「に」等）
+に注目し，助詞が一定以上の割合で含まれていないページは日本語ページでない
+と判定する．
+\end{description}
+
+\paragraph {Step 2: ウェブページのutf8化:}
+
+Step 1 (i)の操作によりウェブページの文字コードを調べ，ウェブページの文字コー
+ドをutf8に変換する．この時，ページ中にcharset属性が指定されている場合は，
+charset属性の値をutf8に変更する．
+
+
+\paragraph {Step 3: ウェブページからの日本語文抽出}
+
+日本語文の境界を認識し，ウェブページの本文を文単位に区切る．文境界認識の
+ための手がかりとしてはHTMLタグおよび句点を利用する．文認識のための手かが
+りとして用いるHTMLタグとして，\texttt{<br>}と\texttt{<p>}を利
+用する．また\texttt{<pre>}タグ中の改行は，そのまま改行として扱う．
+
+\paragraph {Step 4: 抽出された日本語文の解析（オプション）}
+
+抽出された日本語文を既存の言語処理ツールを用いて解析する．
+
+\paragraph {Step 5: ウェブ標準フォーマット形式に変換}
+
+抽出された日本語文，日本語文の解析結果（オプション）を標準フォーマット形
+式で保存する．文書取得日時，URLなどウェブページのメタ情報は，クローラよ
+り得られる情報を利用する．
+\\
+
+
+%\subsection{Webページから日本語文の抽出}
+%
+%各Webページを以下のように処理し，日本語文を抽出する．
+%
+%\begin{enumerate}
+% \item エンコーディング情報を用いた日本語ページ候補の抽出
+%
+%       \begin{tabular}{@{}l@{ }p{6.1cm}@{}}
+%	(a) & ページにcharset情報\footnote{HTMLのmetaタグ中に記述されて
+%	      いるcharset属性}が明示されており，それが日本語を表すた
+%	      めに使われるエンコーディング(euc-jp, x-euc-jp,
+%	      iso-2022-jp, shift\_jis, windows-932, x-sjis, shift-jp,
+%	      utf-8)であれば，そのページを選択する．utf-8以外は日本語固
+%	      有のエンコーディングであるが，utf-8はUnicodeのエンコーディ
+%	      ング形式であり他言語も含まれる．utf-8のページはここで選択
+%	      しておき，2の処理で日本語のページのみを選択する．\\
+%	(b) & charset情報が明示されていなければ，perlの
+%	      Encode::guess\_encoding()関数\footnote{perl 5.8以上に同梱
+%	      されているEncodeモジュールに含まれている．}を用いてエンコー
+%	      ディングを推定する．この関数は，各エンコーディングの特徴的
+%	      なバイト列を手がかりにしてエンコーディングを判定している．
+%	      エンコーディングがeuc-jp, shiftjis, 7bit-jis, utf8のいずれ
+%	      かに判定されれば，そのページを選択する．\\
+%       \end{tabular}
+%       \footnotetext[2]{HTMLのmetaタグ中に記述されているcharset属性}
+%%%%%%%%       \footnotetext[3]{perl 5.8以上に同梱されているEncodeモジュールに含まれている．}
+
+% \item 言語情報を用いた日本語ページ判定
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%       1の抽出において，明示されているエンコーディングが誤っている場合や
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       utf-8の場合，明示されていないときのperlによる自動判定が誤っている
+%       場合に，日本語ではないページが抽出される可能性がある．そこで，日
+%       本語の助詞の含有率を用いて日本語のページかどうかをチェックする．
+%       以下に示す助詞の文字を0.5\%以上含むページのみ用いる．
+%
+%       \begin{quote}
+%	が, を, に, は, の, で
+%       \end{quote}
+%
+%       この結果，日本語と判定された約1億ページを得た．
+%
+% \item ページからの文抽出
+%
+%       ページのHTMLをパースし，HTMLタグと句点を利用して文のリストを得る．
+%       HTMLタグとしては，例えばbr, pなどの改行，段落を表すタグを文区切り
+%       と認識する．preタグは，その中のテキストをフォーマットしないことを
+%       示すものなので，その中にある改行は文区切りと認識する．残りの部分
+%       は句点で分割する．
+
+% \item 日本語文の抽出
+%
+%       日本語ページと判定されていても，文ごとに見ると英語の場合もあるの
+%       で，日本語文のみを抽出する必要がある．ひらがな，カタカナ，漢字の
+%       いずれかが60\%以上含まれる文のみを抽出する．
+%
+%       得られた文集合には，ミラーサイトなどから同じ文が抽出されている場
+%       合もあるので，重複している文を除く．
+%\end{enumerate}
+
+%\subsection{既存の言語処理ツールの解析結果の埋め込み}
+
+%\begin{figure*}[t]
+%\begin{center}
+%\includegraphics[width=\textwidth,clip]{sf_sample.eps}
+%\caption{標準フォーマット化されたウェブ文書の例(KNPの解析結果埋め込%み済み)}
+%\label{interface}
+%\end{center}
+%\end{figure*}
+
+ウェブ標準フォーマットへの変換手順を，先述のクロールされた2億ページに対
+して適用し，日本語ウェブページの抽出及び，抽出されたページの標準フォーマ
+ット化(KNPの解析結果付き)を行った．我々が今回用いた標準フォーマット変換
+ツールは以下のアドレスよりダウンロード可能である．
+
+\begin{flushleft}
+http://nlp.kuee.kyoto-u.ac.jp/~{}skeiji/html2sf.tgz
+\end{flushleft}
+
+\noindent
+標準フォーマット変換に用いた計算機環境は，Intel CPU Xeon 3.0GHz×4，メモ
+リ 4GBのスペックを持つ計算機162台であり，GXP2\cite{gxp2}を用いて並列に変
+換処理を行った．
+
+その結果，約1億件の標準フォーマットデータが得られた．標準フォーマットデ
+ータの生成には約2週間かかった．これはつまり，残りの1億ページについては，
+日本語ページとして見なされなかったことを意味している．このウェブ標準フォ
+ーマット化されたデータは，後述するTSUBAKI APIを利用することで，誰でも容
+易に取得することが可能である．また，InTriggerユーザーであれば，これらの
+データはInTrigger(chiba)上にコピー済みであるため，APIを用いなくても直接
+利用可能である．
+
+表~\ref{disk_size}に標準フォーマット化されたデータ（約1億件）および，対応するウェブページの
+ファイルサイズを示す．
+
+\begin{table}[t]
+\begin{center}
+\caption{オリジナルのウェブページと標準フォーマットデータのファイルサイズ~(約1億ページ，gzip圧縮時)}
+\label{disk_size}
+\small
+\begin{tabular}{l|r}
+\hline
+ファイルの種別&サイズ [TB]\\\hline
+オリジナルのウェブページ(utf8変換前)&0.6\\
+標準フォーマット変換済データ&3.1\\\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsection{InTriggerでの標準フォーマットデータの利用方法}
+
+前節で生成した一億件のKNP解析結果付き標準フォーマットデータはInTrigger 
+(chiba)のファイルサーバー上にコピー済みである．そのため，InTrigger(chiba)
+上のクラスタマシンを使って標準フォーマットデータを直接処理することが可能
+である．標準フォーマットデータは，\texttt{/data/[1,2]/skeiji}以下にある．
+
+\begin{flushleft}
+\begin{minipage}{0.8\columnwidth}
+\small
+\begin{verbatim}
+skeiji@chiba100:~$ ls /data/1/skeiji/sfs
+x000  x004  x008  x012  x016  x020  x024  x028  x032  x036  x040  x044  x048
+x001  x005  x009  x013  x017  x021  x025  x029  x033  x037  x041  x045  x049
+x002  x006  x010  x014  x018  x022  x026  x030  x034  x038  x042  x046
+x003  x007  x011  x015  x019  x023  x027  x031  x035  x039  x043  x047
+skeiji@chiba100:~$ ls /data/2/skeiji/sfs
+x050  x054  x058  x062  x066  x070  x074  x078  x082  x086  x090  x094  x098
+x051  x055  x059  x063  x067  x071  x075  x079  x083  x087  x091  x095  x099
+x052  x056  x060  x064  x068  x072  x076  x080  x084  x088  x092  x096  x100
+x053  x057  x061  x065  x069  x073  x077  x081  x085  x089  x093  x097
+skeiji@chiba100:~$ 
+\end{verbatim}
+\end{minipage}
+\end{flushleft}
+
+\noindent
+\texttt{/data/1/skeiji}および\texttt{/data/2/skeiji}上にそれぞれ50個と51
+個のディレクトリがあり，各ディレクトリ内には100個の\texttt{tgz}ファイルが
+置かれている．
+
+\begin{flushleft}
+\begin{minipage}{0.8\columnwidth}
+\small
+\begin{verbatim}
+skeiji@chiba100:~$ 
+skeiji@chiba100:~$ ls /data/1/skeiji/sfs/x000
+x00000.tar.gz  x00017.tar.gz  x00034.tar.gz  x00051.tar.gz  x00068.tar.gz  x00085.tar.gz
+x00001.tar.gz  x00018.tar.gz  x00035.tar.gz  x00052.tar.gz  x00069.tar.gz  x00086.tar.gz
+x00002.tar.gz  x00019.tar.gz  x00036.tar.gz  x00053.tar.gz  x00070.tar.gz  x00087.tar.gz
+... 中略 ...
+x00014.tar.gz  x00031.tar.gz  x00048.tar.gz  x00065.tar.gz  x00082.tar.gz  x00099.tar.gz
+x00015.tar.gz  x00032.tar.gz  x00049.tar.gz  x00066.tar.gz  x00083.tar.gz
+x00016.tar.gz  x00033.tar.gz  x00050.tar.gz  x00067.tar.gz  x00084.tar.gz
+skeiji@chiba100:~$ 
+\end{verbatim}
+\end{minipage}
+\end{flushleft}
+
+\noindent
+各\texttt{tgz}ファイルは，10,000個の標準フォーマットデータを圧縮したものになっている．
+
+\begin{flushleft}
+\begin{minipage}{0.8\columnwidth}
+\small
+\begin{verbatim}
+skeiji@chiba100:~$ cp /data/1/skeiji/sfs/x000/x00000.tar.gz ~/
+skeiji@chiba100:~$ tar xzf x00000.tar.gz 
+skeiji@chiba100:~$ ls x00000
+000000000.xml.gz  000002000.xml.gz  000004000.xml.gz  000006000.xml.gz  000008000.xml.gz
+000000001.xml.gz  000002001.xml.gz  000004001.xml.gz  000006001.xml.gz  000008001.xml.gz
+... 中略 ...
+000001999.xml.gz  000003999.xml.gz  000005999.xml.gz  000007999.xml.gz  000009999.xml.gz
+000001998.xml.gz  000003998.xml.gz  000005998.xml.gz  000007998.xml.gz  000009998.xml.gz
+skeiji@chiba100:~$ 
+\end{verbatim}
+\end{minipage}
+\end{flushleft}
+
+シングルプロセスにて標準フォーマットデータを処理する際は，ファイルサーバ
+ー上のファイルを直接処理しても問題はない．しかしながら，複数台のマシンを
+使ってファイルサーバー上のデータを並列処理しようとする場合は，ファイルサ
+ーバーに対して高負荷がかかるため問題となる．
+%
+そこで，複数台のクラスタを使って並列処理を行えるように，標準フォーマットデ
+ータは\texttt{chiba[100-158]}までの各ローカルディスク上に分散してコピー
+されている．具体的には，各マシンの\texttt{/data/local/skeiji/sfs}以下に3，
+4個ずつ\texttt{tgz}ファイルが置かれている．
+%
+標準フォーマットデータを並列処理する際は，ファイルサーバーへ高負荷を与え
+ないようにするために，\texttt{chiba[100-158]}のローカルディスク上に分散
+されたファイルを，\texttt{scp}などを用いてコピーしてから処理して頂きたい．
+
+
+\section{インデックス}
+
+本節では，TSUBAKIが検索時に利用するインデックスについて述べる．
+
+\subsection{インデックスの単位}
+
+TSUBAKIでは，インデックスの単位として以下のものを採用している．
+
+\begin{itemize}
+\item 単語（自立語，機能語全て）
+\item 自立語同士の係り受け関係
+\item 同義表現（単語，句）
+\item 同義表現同士の係り受け関係
+\end{itemize}
+
+\noindent
+単語および自立語同士の係り受け関係についてはKNPの解析結果から,同
+義表現,同義表現同士の係り受け関係についてはSynGraph~\cite{syngraph}の解析結果か
+ら取得している．これらの解析結果はあらかじめ標準フォーマットに埋め込まれ
+ているものを利用するため，インデックス作成のために新たにウェブページを
+解析することはしない．
+
+以下では各インデックスについて述べる．
+
+\subsubsection{単語インデックス}
+
+TSUBAKIでは，KNPの解析結果から代表表記化された単語およびその読みを単語イ
+ンデックスとして抽出する．「子ども服をせんたくする」という文をKNPで解析
+した結果を図\ref{knp_result}に示す．この結果からは以下の単語がインデック
+スとして抽出される．
+
+\begin{figure}[t]
+\scriptsize
+\begin{center}
+\begin{tabular}{|p{0.83\columnwidth}|}
+\hline \\
+\begin{minipage}{\columnwidth}
+\begin{tabular}{p{0.8\columnwidth}}
+\texttt{*} 1D \texttt{<}BGH:子供/こども+服/ふく\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0-0\texttt{>}\texttt{<}RID:1118\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>} \\
++ 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:子供/こども\texttt{>}\texttt{<}文節内\texttt{>}\texttt{<}係:文節内\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>} \\
+子ども こども 子ども 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:人 {\bf 代表表記:子供/こども}" \texttt{<}カテゴリ:人\texttt{>}\texttt{<}代表表記:子供/こども\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>} \\
++ 2D \texttt{<}BGH:子供/こども+服/ふく\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0-0\texttt{>}\texttt{<}RID:1118\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>} \\
+服 ふく 服 名詞 6 普通名詞 1 * 0 * 0 "漢字読み:音 カテゴリ:人工物-衣類 {\bf 代表表記:服/ふく}" \texttt{<}漢字読み:音\texttt{>}\texttt{<}カテゴリ:人工物-衣類\texttt{>}\texttt{<}代表表記:服/ふく\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}複合←\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節主辞\texttt{>} \\
+を を を 助詞 9 格助詞 1 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>} \\ 
+\texttt{*} -1D \texttt{<}BGH:洗濯/せんたく+する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}サ変\texttt{>}\texttt{<}サ変スル\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>}\texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:112\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>} \\
++ -1D \texttt{<}BGH:洗濯/せんたく+する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}サ変スル\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>}\texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:112\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<}サ変\texttt{>}\texttt{<}主題格:一人称優位\texttt{>} \\ 
+せんたく せんたく せんたく 名詞 6 サ変名詞 2 * 0 * 0 "カテゴリ:抽象物 ドメイン:家庭・暮らし {\bf 代表表記:洗濯/せんたく}" \texttt{<}カテゴリ:抽象物\texttt{>}\texttt{<}ドメイン:家庭・暮らし\texttt{>}\texttt{<}代表表記:洗濯/せんたく\texttt{>}\texttt{<}品曖\texttt{>}\texttt{<}ALT-せんたく-せんたく-せんたく-6-2-0-0-"カテゴリ:抽象物 {\bf 代表表記:選択/せんたく}"\texttt{>}\texttt{<}品曖-サ変名詞\texttt{>}\texttt{<}品曖-その他\texttt{>}\texttt{<}原形曖昧\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}サ変\texttt{>}\texttt{<}サ変動詞\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>} \\
+する する する 動詞 2 * 0 サ変動詞 16 基本形 2 "付属動詞候補（基本） {\bf 代表表記:する/する}" \texttt{<}付属動詞候補（基本）\texttt{>}\texttt{<}代表表記:する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}表現文末\texttt{>}\texttt{<}とタ系連用テ形複合辞\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}連体修飾\texttt{>}\texttt{<}活用語\texttt{>}\texttt{<}付属\texttt{>} \\
+EOS \\
+\end{tabular}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\end{center}
+\caption{「子ども服をせんたくする」をKNPで構文解析した結果}
+\label{knp_result}
+\end{figure}
+
+\begin{figure}[t]
+\begin{center}\includegraphics[height=0.3\columnwidth,clip,angle=-90]{figs/dpnd.eps}
+\end{center}
+\caption{「子ども服をせんたくする」をKNPで解析して得られる係り受け関係（代表表記化済み，下線が引かれている単語は自立語）}
+\label{dpnd}
+\end{figure}
+
+\begin{flushleft}
+子供／こども，服／ふく，を／を，洗濯／せんたく，選択／せんたく，する／する
+\end{flushleft}
+
+\noindent
+KNPの解析結果を用いることで，「子ども」のような表記揺れを持つ単語はその
+語の代表的な表記（例えば，「子供」）に変換される．これにより，検索クエリ
+または文書中に出現する単語の表記揺れに起因した検索漏れを軽減する効果
+が期待できる．
+%
+また，「せんたく」のように複数の代表表記（「洗濯」，「選択」）が考えられ
+る単語については，その全ての表記が文書中に出現したものと見なす．この時，各単語の出現頻度は，
+代表表記候補の個数で割ったものになる．上の例文の場合，「せんたく」は，「洗濯」および「選択」が
+出現したものと見なされ，各単語の出現頻度は0.5とカウントされる．
+
+単語インデックスは，索引語の他に以下の情報を持っている．
+
+\begin{itemize}
+\item 単語自身
+\item 単語の文書頻度
+\item 単語が出現した文書ID
+\item 各文書中での単語の出現頻度
+\item 単語の出現した文ID
+\item 単語の出現した位置
+\end{itemize}
+
+\noindent
+フレーズ検索や，複数の単語が同一文中で共起していることを制約にした検索を実現するため，
+単語の出現位置および単語の出現した文ID（標準フォーマットから抽出可能）をインデックスに登録している．なお，単語の出現位置は文書スコアの計算時にも利用される．
+TSUBAKIでは上記の情報をバイナリ化した独自のフォーマットで管理している．バイナリ化されたインデックスデータの構造を
+図\ref{sample_index}に示す．
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=\columnwidth,clip,angle=-90]{figs/index.eps}
+\end{center}
+\caption{インデックスのフォーマット}
+\label{sample_index}
+\end{figure}
+
+
+\subsubsection{係り受け関係インデックス}
+
+TSUBAKIでは，単語に加え，係り受け関係もインデックスとして抽出する．具体
+的には，自立語同士の係り受け関係を係り受け関係インデックスとして抽出する．
+% \footnote{自立語について書く．}．
+図~\ref{knp_result}に挙げたKNPの解析結果から得られる係り受け関係を図
+\ref{dpnd}に示す．これより，「子ども服をせんたくする」からは，
+
+% 図中の下線が引かれている単語はKNPにより\texttt{<意味有>}タグが付与されたものを意味する．
+
+\begin{flushleft}
+子供／こども→服／ふく，服／ふく→洗濯／せんたく，服／ふく→選択／せんたく
+\end{flushleft}
+
+\noindent
+が係り受けインデックスとして抽出される．単語の場合と同様に，係り先または
+係り元に複数の代表表記候補がある場合は，その全ての組み合わせをインデック
+スとして抽出し，各インデックスの出現頻度は，候補数で割ったものとしている．
+
+係り受けインデックスに含まれる情報は以下の通りである．
+
+\begin{itemize}
+\item 係り受け自身
+\item 係り受けの文書頻度
+\item 係り受けが出現した文書ID
+\item 各文書中での係り受けの出現頻度
+\end{itemize}
+
+\noindent
+単語インデックスとは異なり，出現文に関する情報および出現位置に関する情報
+は含まれないことに注意されたい．
+
+
+% \subsection{インデックスとして登録される情報}
+% 
+% TSUBAKIでは以下の情報をインデックスデータ作成時に各ページから抽出している．
+% 
+% \begin{itemize}
+% \item 索引表現(単語,同義表現,自立語同士の係り受け関係,同義表現間の係り受け関係)
+% \item 索引表現が出現した文書ID
+% \item 索引表現の出現した文ID（単語,自立語同士の係り受け関係のみ）
+% \item 索引表現の出現した位置（単語,自立語同士の係り受け関係のみ）
+% \end{itemize}
+% 
+% 以下では抽出される各データについて述べる．
+% 
+% \subsubsection{索引表現が出現した文書ID}
+% 
+% TSUBAKIでは，各ファイル名が8桁の数字で表現される文書IDとなっているため，
+% 索引表現を抽出したファイル名を索引表現が出現した文書IDとして利用している．
+
+\subsubsection{同義表現インデックス}
+
+TSUBAKIでは，代表表記による表記揺れを吸収した検索に加え，単語または句の
+同義表現についてもインデックスを作成することで，より柔軟な検索を実現している．
+%
+例えば，クエリとして「乳児の虫歯を予防する」が与えられた場合，「乳児」
+が「赤ちゃん」と同義であること，「予防」が「防ぐ」と同義であることを同時
+に考慮した検索が行われる．その結果として，「赤ちゃんの虫歯を防ぐには」
+といったクエリとは異なる表現が含まれる文書であっても検索結果として得ることが可能となる．
+
+
+\begin{figure}[t]
+\scriptsize
+\begin{center}
+\begin{tabular}{|p{0.83\columnwidth}|}
+\hline \\
+\begin{minipage}{\columnwidth}
+\begin{tabular}{p{0.8\columnwidth}}
+\texttt{+} 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:乳児/にゅうじ\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾 \texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1069\texttt{>}\texttt{<}名詞項候補\texttt{>} \texttt{<}先行詞候補\texttt{>}\texttt{<}係チ:非用言格解析||用言\&\&文節内:Ｔ解析格-ヲ\texttt{>}\\
+乳児 にゅうじ 乳児 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:人 ドメイン:健康・医学:家庭・暮らし 代表表記:乳児/にゅうじ" \texttt{<}カテゴリ:人\texttt{>}\texttt{<}ドメイン:健康・医学:家庭・暮らし\texttt{>}\texttt{<}代表表記:乳児/にゅうじ\texttt{>}\texttt{<}文頭\texttt{>} \texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>} \texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
+の の の 助詞 9 接続助詞 3 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
+!! 0 1D \texttt{<}見出し:乳児の\texttt{>}\\
+  ! 0 \texttt{<}SYNID:乳児/にゅうじ\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s121:乳飲み子/ちのみご\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s2894:児童/じどう\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s14116:子\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:16\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s2669:子女/しじょ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s2787:小児/しょうに\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
+\texttt{+} 2D \texttt{<}BGH:虫歯/むしば\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0- 0\texttt{>}\texttt{<}RID:1118\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>} \texttt{<}解析格:ヲ\texttt{>}\\
+虫歯 むしば 虫歯 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:動物-部位 ドメイン:健康・医学代表表記:虫歯/むしば" \texttt{<}カテゴリ:動物-部位\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:虫歯/むしば\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞 \texttt{>}\\
+を を を 助詞 9 格助詞 1 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
+!! 1 2D \texttt{<}見出し:虫歯を\texttt{>}\texttt{<}格解析結果:ヲ格\texttt{>}\\
+  ! 1 \texttt{<}SYNID:虫歯/むしば\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 1 \texttt{<}SYNID:s15141:虫歯/むしば\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 1 \texttt{<}SYNID:s15137:歯/は\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:9\texttt{>}\\
+\texttt{+} -1D \texttt{<}BGH:予防/よぼう+する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}サ変スル\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>} \texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:112\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<} サ変\texttt{>}\texttt{<}格要素-ガ:＃一人称優位\texttt{>}\texttt{<}格要素-ヲ:虫歯\texttt{>}\texttt{<}格要素-ニ:NIL\texttt{>}\texttt{<}格要素-ト: NIL\texttt{>}\texttt{<}格要素-デ:NIL\texttt{>}\texttt{<}格要素-カラ:NIL\texttt{>}\texttt{<}格要素-ヨリ:NIL\texttt{>}\texttt{<}格要素-マデ: NIL\texttt{>}\texttt{<}格要素-時間:NIL\texttt{>}\texttt{<}格要素-外の関係:NIL\texttt{>}\texttt{<}格要素-ノ:NIL\texttt{>}\texttt{<}格要素-ニヨル:NIL\texttt{>}\texttt{<}格要素-ヲツウジル:NIL\texttt{>}\texttt{<}格要素-ニタイスル:NIL\texttt{>}\texttt{<}格要素-トスル:NIL\texttt{>} \texttt{<}格要素-ニカンスル:NIL\texttt{>}\texttt{<}格要素-ニクワエル:NIL\texttt{>}\texttt{<}格要素-ヲハジメル:NIL\texttt{>}\texttt{<}格要素-ニオク:NIL\texttt{>}\texttt{<}格要素-ヲノゾク:NIL\texttt{>}\texttt{<}格フレーム-ガ-主体準\texttt{>}\texttt{<}格フレーム-ガ-主体ｏｒ主体準\texttt{>} \texttt{<}主題格:一人称優位\texttt{>}\texttt{<}格関係1:ヲ:虫歯\texttt{>}\texttt{<}格解析結果:予防/よぼう:動1:ガ/U/-/-/-/-;ヲ/C/虫歯 /1/0/?;ニ/U/-/-/-/-;ト/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ /U/-/-/-/-;時間/U/-/-/-/-;外の関係/U/-/-/-/-;ノ/U/-/-/-/-;ニヨル/U/-/-/-/-;ヲツウジル /U/-/-/-/-;ニタイスル/U/-/-/-/-;トスル/U/-/-/-/-;ニカンスル/U/-/-/-/-;ニクワエル/U/-/-/-/ -;ヲハジメル/U/-/-/-/-;ニオク/U/-/-/-/-;ヲノゾク/U/-/-/-/-\texttt{>}\\
+予防 よぼう 予防 名詞 6 サ変名詞 2 * 0 * 0 "カテゴリ:抽象物 ドメイン:健康・医学 代表表記:予防/よぼう" \texttt{<}カテゴリ:抽象物\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:予防/よぼう\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字 \texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}サ変\texttt{>}\texttt{<}サ変動詞\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始 \texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
+する する する 動詞 2 * 0 サ変動詞 16 基本形 2 "付属動詞候補（基本） 代表表記:する/する" \texttt{<}付属動詞候補（基本）\texttt{>}\texttt{<}代表表記:する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}表現文末\texttt{>}\texttt{<}とタ系連用テ形複合辞 \texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}活用語\texttt{>}\texttt{<}付属\texttt{>}\\
+!! 2 -1D \texttt{<}見出し:予防する\texttt{>}\\
+  ! 2 \texttt{<}SYNID:予防/よぼう\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s17557:予防/よぼう\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s4234:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:3\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s35:回避/かいひ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:3\texttt{>}\\
+EOS\\
+\end{tabular}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\end{center}
+\caption{「乳児の虫歯を予防する」をSynGraphで解析した結果}
+\label{syn_result}
+\end{figure}
+
+\begin{figure}[t]
+\begin{center}\includegraphics[height=0.3\columnwidth,clip,angle=-90]{figs/syn_dpnd.eps}
+\end{center}
+\caption{「乳児の虫歯を予防する」をSynGraph構造に変換した例（赤は基本ノードを，青はSynノードを意味する）}
+\label{syn_dpnd}
+\end{figure}
+
+クエリおよび文書中の単語・句の同義表現を獲得するにあたり，
+SynGraphの解析結果を利用する．SynGraphとは，国語辞典およびウェブページから
+あらかじめ構築しておいた同義表現データベースを利用して，入力文中
+に含まれる単語・句に対して，それらと同義である単語・句を出力するツールで
+ある．
+%
+図\ref{syn_result}に「赤ちゃんの虫歯を予防する」をSynGraphにより解析した
+結果を，図\ref{syn_dpnd}に同義表現間の係り受け関係を示す．TSUBAKIでは，SynGraphの解析結果に含まれる基本ノードおよびSyn
+ノードと呼ばれるデータ\footnote{基本ノードおよびSynノードについては，該当論文\cite{syngraph}を参照されたい．}を，各語・句の同義表現インデックスとして抽出する．
+例えば，図\ref{syn_result}からは，
+
+\begin{flushleft}
+\texttt{<}SYNID:乳児/にゅうじ\texttt{>}, \texttt{<}SYNID:s121:乳飲み子/ちのみご\texttt{>}, 
+\texttt{<}SYNID:虫歯/むしば\texttt{>}, \texttt{<}SYNID:s15141:虫歯/むしば\texttt{>}, \texttt{<}SYNID:s15137:歯/は\texttt{>},
+\texttt{<}SYNID:予防/よぼう\texttt{>}, \texttt{<}SYNID:s17557:予防/よぼう\texttt{>}, \texttt{<}SYNID:s4234:防ぐ/ふせぐ\texttt{>},
+\texttt{<}SYNID:s35:回避/かいひ\texttt{>}
+\end{flushleft}
+
+\noindent
+がインデックスとして抽出される．同義表現インデックスでは，フレーズ検索を
+想定していないため，単語インデックスのように全ての語をインデックスとして
+抽出しない．
+
+また，各同義表現インデックスの出現頻度は，SynGraphにより与えられるスコア
+を利用している．例えば，基本ノード\texttt{<}SYNID:乳児/にゅうじ\texttt{>}
+については1が，Synノード\texttt{<}SYNID:乳児/にゅうじ\texttt{>}について
+は0.99が，同じくSynノード\texttt{<}SYNID:予防/よぼう\texttt{>}については
+0.693がそれぞれ各インデックスの出現頻度として登録される．
+
+
+同義表現インデックスは以下の情報を含んでいる．
+
+\begin{itemize}
+\item 同義表現自身
+\item 同義表現の文書頻度
+\item 同義表現が出現した文書ID
+\item 各文書中での同義表現の出現頻度
+\item 同義表現の出現した位置
+\end{itemize}
+
+\noindent
+これらの情報は，単語・係り受けインデックス同様，バイナリ化され保持される．
+
+
+\subsubsection{同義表現同士の係り受けインデックス}
+
+TSUBAKIでは，同義表現についても，同義表現同士の係り受け関係をインデック
+スとして保持する．具体的には，基本ノード，Synノード間の係り受け関係をイ
+ンデックスとして抽出する．例えば，図\ref{syn_result}に示したSynGraphの解
+析結果からは以下の係り受け関係が抽出される．
+
+\begin{flushleft}
+\texttt{<}SYNID:乳児/にゅうじ\texttt{>}→\texttt{<}SYNID:虫歯/むしば\texttt{>},
+\texttt{<}SYNID:乳児/にゅうじ\texttt{>}→\texttt{<}SYNID:s15141:虫歯/むしば\texttt{>},
+$\dots$中略$\dots$
+\texttt{<}SYNID:s15137:歯/は\texttt{>}→\texttt{<}SYNID:s35:回避/かいひ\texttt{>}
+\end{flushleft}
+
+同義表現インデックス同様，出現頻度は，SynGraphの解析結果より得られるスコ
+アを利用しており，具体的には，係り先と係り元の単語・句に対する同義表現の
+持つスコア同士の積を，係り受けインデックスの出現頻度としている．同義表現
+の係り受けインデックスについては，インデックスデータのサイズを小さくする
+ために，他のインデックスとは異なり，文書頻度が10未満の索引表現については
+インデックスとして登録していない．
+
+最後に，同義表現同士の係り受けインデックスに登録されている情報を以下に示す．
+
+\begin{itemize}
+\item 同義表現の係り受け関係自身
+\item 同義表現の係り受け関係の文書頻度
+\item 同義表現の係り受け関係が出現した文書ID
+\item 各文書中での同義表現の係り受け関係の出現頻度
+\item 同義表現の係り受け関係が出現した位置
+\end{itemize}
+
+% ある単語が同一の文，または近隣の文に出現している文書の検索を可能にするた
+% め，TSUBAKIでは，単語または係り受け関係の出現した文の情報を保持する．具
+% 体的には，標準フォーマットによりウェブページ中の各文についてIDが振られて
+% いるため，TSUBAKIではこの文IDを利用する．なお，この情報は同義表現および
+% 同義表現同士の係り受け関係については抽出しないことに注意されたい．
+% 
+% ある単語が近接している文書の検索を可能にするため，TSUBAKIでは，単語また
+% は係り受け関係の出現した文書中での位置情報を保持する．具体的には，単語単
+% 位で数えた場合，その単語が何単語目にあるかという情報を単語の出現位置情報
+% として抽出する．係り受け関係については，係り元の単語の出現位置を係り受け
+% 関係の出現位置として見なす．なお，この情報は同義表現および同義表現同士の
+% 係り受け関係については抽出しないことに注意されたい．
+
+\subsection{インデックスデータのサイズ}
+
+\begin{table}[t]
+\begin{center}
+\caption{TSUBAKIで用いるインデックスデータ}
+\label{size}
+\footnotesize
+\begin{tabular}{l|c|c|c|c|c||c||r}
+\hline
+インデックスの種別&索引表現自身&文書頻度&出現文書情報&出現文情報&出現位置情報&文書頻度による足切り&サイズ [TB]\\\hline
+単語&○&○&○&○&○&×&1.17\\
+係り受け&○&○&○&×&×&×&0.89\\
+同義表現&○&○&○&×&○&×&1.84\\
+同義表現の係り受け&○&○&○&×&○&○&4.81\\\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+表\ref{size}に各インデックスデータに含まれる情報，足切りの有無，ファイルサイズを示す．表より同義表
+現の係り受けインデックスのファイルサイズが大きいことがわかる．
+また，係り受けインデックスに比べ，単語インデックスの方がファイルサイズが
+大きくなっているが，これは，単語インデックスが全単語の全出現
+位置をインデックスとして登録しているのに対し，係り受け関係インデックスの
+方は，自立語同士の係り受け関係に限定，さらに位置情報を保持していないためである．
+
+\section{検索}
+
+\subsection{指定可能な検索制約}
+
+TSUBAKIでは，入力として与えられた複数個の検索キーワード間に，AND/ORの論
+理条件を適用して検索することが可能である（一般に言われているAND検索・OR
+検索に相当する）が，検索条件に加え，検索キーワードごとに{\bf 制約}を指定することも可
+能である．制約は，検索キーワードの末尾に「\~{}制約を表す文字列」を
+指定して表現する．表\ref{const}にTSUBAKIで指定
+可能な検索キーワード制約を示す．
+
+\begin{table}[t]
+\footnotesize
+\caption{TSUBAKIで指定可能な検索キーワード制約}
+\label{const}
+\begin{tabular}{l|l|p{0.5\columnwidth}|l}
+\hline
+制約名&タグ名&説明&例\\ \hline
+AND制約&\~{}AND& 検索キーワード中の単語（自立語）が全て含まれていなければならない&京都大学\~{}AND\\ \hline
+OR制約&\~{}OR& 検索キーワード中のいずれかの単語（自立語）が含まれている&京都大学\~{}OR\\ \hline
+フレーズ制約&タグなし．`"'で囲む&既存の検索エンジンで使われているフレーズ検索に相当する& "京都大学"\\ \hline
+係り受け制約&\~{}FD& 検索キーワード中の係り受け関係が全て含まれていなくてはならない& 京都大学\~{}FD\\ \hline
+近接制約（文）&\~{}$N$S& 検索キーワード中の単語（自立語）が，キーワード中の出現順で，$N$文以内に現れている& 京都大学\~{}5S\\ \hline
+近接制約（単語）&\~{}$N$W& 検索キーワード中の単語（自立語）が，キーワード中の出現順で，$N$語以内に現れている&京都大学\~{}20W\\ \hline
+\end{tabular}
+\end{table}
+
+
+\subsection{文書のスコアリング}
+
+TSUBAKIでは，ユーザより与えられた検索条件および検索クエリに従って，条件
+に一致する文書を検索する．そして，検索して得られた文書群に対して，検索クエリとの適合度を表すスコアを計算する．検索クエリ$Q$（子どもの体力低下）から抽出さ
+れる単語インデックスを$Q_{\mathit{word}}$（子供，体力，低下），係り受けインデックス
+$Q_{\mathit{dpnd}}$（子供→体力，体力→低下）とした時，検索クエリ$Q$に対する文書$d$のスコア
+$\mathit{score}_{\mathit{rel}}(Q, d)$を以下の式により計算する．
+
+$$
+\mathit{score}_{\mathit{rel}}(Q, d) = \mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, d) + \mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)
+$$
+
+\noindent
+ここで，$\mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, d)$は$Q$の単語インデックスより計算され
+るスコア，$\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)$は$Q$の係り受けインデックスより計
+算されるスコアをそれぞれ意味する．
+%
+TSUBAKIでは，$\mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, d)$および$\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)$に
+対して重み付けを行っていない．これは，単語に比べ係り受け関係の出現頻度が相
+対的に低いことを利用し，出現頻度が低い表現程高いスコアを得られるよう$\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)$
+を設計しているためである．
+%
+そのため，$\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)$に対して特別なボーナスを与えることを
+しなくとも，$Q$中の係り受け関係を含んでいる文書に対して自然な形で高いス
+コアを与えることができている．
+
+$\mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, d)$はOKAPI BM25\cite{okapi_bm25}を基にした以下の式によ
+り求められる．
+
+$$
+\mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, d) = \sum_{q \in Q_{\mathit{word}}} w \times \frac{(k_1 + 1)\mathit{fq}}{K + \mathit{fq}} \times \frac{(k_3 + 1)\mathit{qfq}}{k_3 + \mathit{qfq}}
+$$
+$$
+w = \log \frac{N - n + 0.5}{n + 0.5}, K = k_1((1 - b) + b \frac{l}{l_{ave}})
+$$
+
+\noindent
+ここで，$\mathit{fq}$は表現$q$の文書$d$中での出現頻度，$\mathit{qfq}$ は
+$q$の検索クエリ中での出現頻度，$N$は検索対象としている全文書数(TSUBAKIで
+は$1.0 \times 10^{8}$)，$n$は$q$を含む文書数，$l$は文書$d$の文書長
+(TSUBAKIでは文書中の単語数)，$l_{\mathit{ave}}$は平均文書長を表す．ま
+た，$k_1$,$k_3$,$b$は$\mathit{BM25}$のパラメータであり，TSUBAKIでは，
+$k_1 = 2$, $k_3 = 0$, $b = 0.75$を用いている．
+
+一方，$\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)$は以下の式により求められる．
+
+$$
+\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d) = \sum_{q \in Q_{\mathit{dpnd}}} f(q,d)
+$$
+$$
+\displaystyle
+f(q,d) = \left\{ 
+\begin{array}{ll}
+\displaystyle
+\frac{3 \times \mathit{fq}}{K + \mathit{fq}} \times \log \frac{N - n + 0.5}{n + 0.5} & q がdに含まれている場合\\ \\
+\displaystyle
+\frac{3 \times w(q)}{K + \mathit{fq}} \times \log \frac{N - n + 0.5}{n + 0.5}& otherwise\\
+\end{array} \right.
+$$
+
+\noindent
+ここで$w(q)$は
+
+$$
+w(q) = \left\{ 
+\begin{array}{ll}
+\displaystyle
+\frac{D - \mathrm{min\_dist}(l(q), r(q))}{D} & \mathrm{min\_dist}(l(q), r(q)) < D\\ \\
+\displaystyle
+0 & \mathit{otherwise}\\
+\end{array} \right.
+$$
+
+\noindent
+で表される関数である．$\mathrm{min\_dist}(A, B)$は単語Aから単語Bまでの最小距離を求める関
+数であり，$w(q)$では，係り受けインデックス$q$の係り元($l(q)$)と係り先($r(q)$)に
+対応する単語間の最小距離を求める際に用いている．
+%
+これは，たとえ係り受け関係が文書中に含まれていなくても，係り受け関係を構
+成する単語同士が近くに出現していれば，それは検索クエリと関連する文書であ
+ろうという直感に基づいている．TSUBAKIでは，係り先と係り元の距離が
+$D(=30)$以下の場合，この直感に基づいたボーナスが与えられる．
+
+\subsection{検索の流れ}
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=0.6\columnwidth,clip,angle=-90]{figs/flow.eps}
+\begin{minipage}{\columnwidth}
+\footnotesize
+\begin{enumerate}
+\setlength{\itemsep}{-2pt}
+\item 負荷分散サーバーにクエリ$Q$が与えられる
+\item もっとも負荷の低いマスターサーバーにクエリ$Q$が送信される
+\item クエリ$Q$を解析し，検索条件$C$，単語インデックス$Q_{\mathit{word}}$，係り受けインデックス$Q_{\mathit{dpnd}}$を抽出する
+\item $C$, $Q_{\mathit{word}}$, $Q_{\mathit{dpnd}}$を27台の検索サーバーに送信する
+\item 各検索サーバーで$C$, $Q_{\mathit{word}}$, $Q_{\mathit{dpnd}}$に適合する文書を検索し，クエリとの適合度を表すスコアを計算する
+\item 検索により得られたスコア付き文書の集合をマスターサーバーへ返信する
+\item 各検索サーバーからの返信された検索結果をマージし，スコアに従いソートする
+\item 上位{\it M}件について，タイトル，URLなどをデータベースより獲得し，またファイルサーバーから標準フォーマットを読み込み，スニペッツを生成する
+\item 検索結果をユーザへ提示する
+\end{enumerate}
+\end{minipage}
+\caption{検索の流れ（同義表現を考慮した場合は，検索サーバーの台数が43になる）}
+\label{search_flow}
+\end{center}
+\end{figure}
+
+図~\ref{search_flow}に検索の流れを示す．
+%
+TSUBAKIは大きく，負荷分散サーバー（1台），マスターサーバー（4台），ファ
+イルサーバー(1台)，検索サーバー(43台)から構成されており，検索サーバーの
+台数は同義表現を考慮した検索を行うかどうかにより異なる．具体的には，同義
+表現を考慮しない通常検索の場合27台，同義表現を考慮した検索の場合43台であ
+る．
+
+TSUBAKIでは1億ページを検索対象としているが，インデックスは100万ページ単
+位で管理されており，各インデックスデータは27台（同義表現の場合は43台）の
+検索サーバーに割り振られる．従って，各検索サーバーでは高々400万ページ分
+のインデックス（同義表現の場合は300万ページ分）から，検索クエリに適合す
+るページを検索することになる．
+
+
+% 全検索サーバーから文書IDとスコアの組が返信されると，CGIサーバーではそれ
+% らをマージし，スコアに従って降順にソートする(ステップ5)．そして，スコア
+% の上位$M$件についてスニペッツを生成し，文書のタイトル，文書へのリンクと
+% 共に検索結果として表示する(ステップ6)．TSUBAKIでは，$M=50$としている．
+
+%により計算する．そして検索の結果得れる文書IDとその文書のスコアをCGIサーバへ返信する．このとき，係り受けインデックスはANDやORの条件とならない．{\bf 係り受けインデックスはあくまでも，文書のスコアを計算するときのみ利用される}．
+
+%つまり，上式は検索クエリ中に同じインデックスが含まれないことを仮定した式となっている．
+
+%\mathit{OKAPI}_{\mathit{BM25}(e)} = \sum_{T \in Q} \frac{(k_1 + 1)\mathit{tf}}{K + \mathit{tf}} \times \frac{(k_3 + 1)\mathit{qtf}}{k_3 + \mathit{qtf}} \times \log \frac{N - n + 0.5}{n + 0.5}
+
+%- AND, OR 検索\\
+%- OKAPIスコア\\
+
+\section{システム構成★}
+
+★どういったデータがローカルディスクのどこにどのくらいあるかpdfファイルに追記する
+★URLとIDの対応がどういったプログラムでどのように管理されているかドキュメントを書く
+
+\section{TSUBAKI API}
+
+本節ではTSUBAKIが公開しているAPIについて述べる．
+
+\subsection{検索結果の取得方法}
+
+TSUBAKIではREST\cite{rest}形式で，そのAPIを公開している．APIにアクセスするためのリクエストURLは以下のとおりである．
+
+\begin{flushleft}
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi
+\end{flushleft}
+
+\noindent
+このURLの後ろに，表\ref{api_param}に挙げたリクエストパラメータを付加し，HTTPにて問い合わせることで検索結果が得られる．
+以下にリクエストURLの例を示す．
+
+
+\begin{table}[t]
+\footnotesize
+\begin{center}
+\caption{TSUBAKI APIで利用可能なリクエストパラメータ一覧}
+\label{api_param}
+\begin{tabular}{r|c|p{0.7\columnwidth}}
+\hline
+パラメータ&値&説明 \\ \hline
+query &string &検索クエリ(utf8)をURLエンコードした文字列．検索結果を得る場合は必須．\\ \hline
+start &integer &取得したい検索結果の先頭位置．\\ \hline
+results &integer &取得したい検索結果の数．デフォルトは10．\\ \hline
+logical\_operator &AND\/OR &検索時の論理条件．デフォルトはAND．\\ \hline
+only\_hitcount &0/1 &ヒット件数だけを得たい場合は1，検索結果を得たい場合は0．デフォルトは0．\\ \hline
+force\_dpnd &0/1 &クエリ中の係り受け関係を全て含む文書を得たい場合は1，そうでない場合は0．デフォルトは0．\\ \hline
+snippets &0/1 &スニペッツが必要な場合は1，スニペッツが不要な場合は0．デフォルトは0．\\ \hline
+near &integer &クエリ中の単語と単語が n 語以内に出現するという条件のもと検索を実行する(近接検索)．クエリ中の単語の出現順序は考慮される．\\ \hline
+id &string &個別の文書を取得する際の文書ID．オリジナルのウェブ文書，または標準フォーマット形式の文書を得る際は必須．\\ \hline
+format &html\/xml &オリジナルのウェブ文書，または標準フォーマット形式のウェブ文書のどちらを取得するかを指定．idを指定した際は必須．\\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\paragraph{例1: 「京都の観光名所」について検索した結果の上位20件を取得したい場合}
+
+\begin{flushleft}
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=\%E4\%BA\%AC\%E9\%83\%BD\%E3\%81\%AE\%E8\%A6\\
+\%B3\%E5\%85\%89\%E5\%90\%8D\%E6\%89\%80\&start=1\&results=20\\
+\end{flushleft}
+
+\noindent
+ここで，
+
+\begin{description}
+\item {query:} キーワードをURLエンコーディングした文字列(この例の場合は「京都の観光名所」)
+\item {start:} 検索結果の取得を開始したい検索結果中での順位(オフセット)
+\item {results:} 検索結果を取得したいstartからの文書数
+\end{description}
+
+\noindent
+を意味する．
+
+\paragraph{例2:「京都の観光名所」のヒット件数だけを知りたい場合}
+
+\begin{flushleft}
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=\%E4\%BA\%AC\%E9\%83\%BD\%E3\%81\%AE\%E8\%A6\%B3\\
+\%E5\%85\%89\%E5\%90\%8D\%E6\%89\%80\&only\_hitcount=1
+\end{flushleft}
+
+\noindent
+この時，ヒット件数だけがplain/text形式で返される． 
+\\
+
+図\ref{sample_code}に例1の場合について，perlを使ってTSUBAKI APIにアクセ
+スするためのサンプルコードを示す．実際にこのコードを実行すると検索結果が
+XML形式で出力される（図\ref{api_result}参照）．表\ref{result_tagset}に検索結果で使われているタグおよび属性を示す．
+
+
+\begin{figure}[t]
+\scriptsize
+\begin{center}
+\begin{tabular}{|c|}
+\hline \\
+\begin{minipage}{0.8\columnwidth}
+\begin{verbatim}
+#!/usr/bin/env perl
+
+use LWP::Simple;
+use URI::Escape;
+use Encode;
+use utf8;
+
+my $query = encode('utf8', '京都の観光名所'); # 検索したいキーワード (utf8)
+my $uri_escaped_query = uri_escape($query); # 検索キーワードをURLエンコーディングする
+my $base_url = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi';
+my $results = 20;
+my $start = 1;
+my $req_url = "$base_url?query=$uri_escaped_query&start=$start&results=$results&snippets=1";
+
+# TSUBAKI APIの結果を取得
+my $response = get($req_url);
+print $response;
+
+\end{verbatim}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\end{center}
+\caption{APIにアクセスするためのサンプルコード}
+\label{sample_code}
+\end{figure}
+
+
+\begin{figure}[t]
+\scriptsize
+\begin{center}
+\begin{tabular}{|p{0.83\columnwidth}|}
+\hline \\
+\begin{minipage}{\columnwidth}
+\begin{verbatim}
+
+<ResultSet time="2007-02-21 13:43:58" query="京都の観光名所" totalResultsAvailable="19586"
+ totalResultsReturned="10" firstResultPosition="0" logicalOperator="AND" dpnd="1" filterSimpages="0">
+　<Result Id="24411919" Score="68.67424">
+　　<Title>関西探索</Title>
+　　<Url>http://www.kansaitansaku.com/</Url>
+　　<Snippet>
+　　　このホームページは，京都を中心とした観光名所におとずれ，その感想を述べていくホームページです．こ
+のホームページは，京都を中心とした観光名所におとずれ，その感想を述べていくホームページです．京都，観光
+名所，寺院，関西探索 ...
+　　</Snippet>
+　　<Cache>
+　　　<Url>
+　　　　http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/24/h2441/24411919.html&KEYS=%B5%FE%
+C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA
+　　　</Url>
+　　　<Size>619</Size>
+　　</Cache>
+　</Result>
+　<Result Id="06832429" Score="64.16455">
+　　<Title>京都観光タクシー　京都の名園１</Title>
+　　<Url>http://kyoto-kankou.com/page02.htm</Url>
+　　<Snippet>
+　　　京都旅行はタクシー利用がお勧め，観光タクシーで紅葉観光，観光タクシー京都名所，京都の穴場コース京
+都観光タクシー，タクシー観光，京都，紅葉，京都観光，旅行，情報，桜，庭園，社寺，観光案内［京都庭園コー
+ス］［京都の紅葉］［京都の名所動画］［京都の穴場］［宿プラザ］［スタッフ］［料金表］［お申し込み］所要
+時間約５時間数ある京都観光名所の中でも，最も季節によって景観に変化の有る情緒豊かな場所です．所要時間約 ...
+　　</Snippet>
+　　<Cache>
+　　　<Url>
+　　　　http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/06/h0683/06832429.html&KEYS=%B5%FE%
+C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA
+　　　</Url>
+　　　<Size>2152</Size>
+　　</Cache>
+　</Result>
+
+...中略...
+
+　<Result Id="26054757" Score="60.45654">
+　　<Title>Ｋｙｏｔｏ　Ｓｈｉｎｂｕｎ：京都の観光名所へのタクシー運賃</Title>
+　　<Url>http://www.kyoto-np.co.jp/kp/koto/taxi/unchin.html</Url>
+　　<Snippet>
+　　　ＫｙｏｔｏＳｈｉｎｂｕｎ京都の観光名所へのタクシー運賃ＫｙｏｔｏＳｈｉｎｂｕｎ京都の観光名所への
+タクシー運賃京都の観光名所へのタクシー運賃【ＪＲ京都駅からの概算】週刊京都
+　　</Snippet>
+　　<Cache>
+　　　<Url>
+　　　　http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/26/h2605/26054757.html&KEYS=%B5%FE%
+C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA
+　　　</Url>
+　　　<Size>1209</Size>
+　　</Cache>
+　</Result>
+</ResultSet>
+
+\end{verbatim}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\end{center}
+\caption{APIより得られる検索結果}
+\label{api_result}
+\end{figure}
+
+\begin{table}[t]
+\footnotesize
+\caption{検索結果に含まれるタグおよび属性}
+\label{result_tagset}
+\begin{center}
+\begin{tabular}{r|p{0.8\columnwidth}}
+\hline
+フィールド&説明 \\ \hline
+ResultSet &
+\begin{minipage}{\columnwidth}
+このタグで囲まれた部分が検索結果を表しており，次の属性を持つ．
+\begin{description}
+\item {time:} 検索を実行した日時
+\item {query:} 検索キーワード
+\item {totalResultsAvailable:} 検索キーワードを含む文書数
+\item {totalResultsReturned:} 返された文書数
+\item {firstResultPosition:} 検索時に指定した，文書を取得する際の開始順位(オフセット)
+\item {logicalOperator:} 検索時の論理条件
+\item {dpnd:} 検索が係り受けを考慮して行われたかどうか
+\begin{description}
+\item {0:} 係り受けを考慮せずに検索を実行
+\item {1:} 係り受けを考慮して検索を実行
+\end{description}
+\item {filterSimpages:} 類似ページフィルタが適用されているかどうか
+\begin {description}
+\item {0:} 類似ページフィルタが適用されていない
+\item {1:} 類似ページフィルタが適用されている
+\end{description}
+\end{description}
+\end{minipage}
+\\ \hline
+
+Result &
+\begin{minipage}{\columnwidth}
+このタグで囲まれた部分が検索して得られた１文書の情報で，次の属性を持つ．
+\begin{description}
+\item{ID:} 文書のID
+\item{Score:} 文書のスコア
+\end{description}
+文書IDは，キャッシュされたウェブページおよび標準フォーマット変換済みデータを取得する際に必要になる．
+\end{minipage}
+\\ \hline
+
+\\ \hline
+Title &ページのタイトル\\ \hline
+Url &ページのURL\\ \hline
+Snippet &ページに含まれる検索クエリと関連する重要文\\ \hline
+Cache &キャッシュされたウェブページに関する情報\\ \hline
+Url &キャッシュされたウェブページのURL\\ \hline
+Size &キャッシュされたウェブページのgzip圧縮時のファイルサイズ\\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsection{キャッシュされたウェブページおよび標準フォーマット変換済みデータの取得方法}
+
+キャッシュされているウェブページおよび，その文書を標準フォーマットに変換
+したデータについても以下のアドレスにアクセスすることで取得できる．
+
+\begin{flushleft}
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi
+\end{flushleft}
+
+\noindent
+このアドレスにformatおよびidオプションを付与して，APIにアクセスする．例
+えば，文書ID が07423972番の文書について，キャッシュされたウェブページを
+取得したい場合は，以下のURLを生成し，HTTPにてアクセスする．
+
+\begin{flushleft}
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=html\&id=074239724
+\end{flushleft}
+
+同様に，標準フォーマット変換済みデータが欲しい場合は，formatの値をxmlに
+変更することで取得可能である．
+
+\begin{flushleft}
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=xml\&id=074239724
+\end{flushleft}
+
+\section{配布ツールの使い方★}
+
+\subsection{ウェブページから標準フォーマットへの変換}
+
+\paragraph{クローラの出力からのウェブページの切り出し}
+
+\paragraph{ウェブページを標準フォーマットに変換する}
+
+\begin{itemize}
+\item WWW2sfをcvs coする
+\item tool/scripts/make-standard-format.shのworkspace, toolpath変数の値を変更
+\item tool/scripts/make-standard-format.shを実行
+
+\item sh tool/scripts/make-standard-format.sh 10000ページごとにまとめられたHTMLディレクトリへの絶対パス
+\end{itemize}
+
+\paragraph{文書IDの歯抜けができるのでつめる}
+
+\begin{itemize}
+
+\item tool/scripts/rename-did.shを使ってつめる
+\item tool/scripts/rename-did.shのdistdir, workdirの値を変換
+\item tool/scripts/rename-did.shを実行
+
+\item sh tool/scripts/rename-did.sh 文書ID開始オフセット 標準フォーマットが納められたディレクトリ（複数のディレクトリを指定可）
+
+\item 端数はどこか一箇所に集めて再度文書IDを振りなおす
+
+\end{itemize}
+
+\paragraph{10,000ファイルが納められていることを確認してtar czfする}
+
+
+
+\subsection{インデックスの作成方法}
+
+%\subsubsection{インデックスデータの作成手順}
+%
+%\begin{enumerate}
+%
+%\item SearchEngineをcvs coする
+%
+%\item 標準フォーマットからインデックスを抽出 (a, b)
+%
+%\item インデックスデータのリストを作成する
+%
+%\item インデックスを100万ページ毎にマージする (c)
+%
+%\item インデックスをバイナリ化し、各種データベースを構築する (d)
+%
+%\item 文書頻度データベースを再構築する
+%\end{enumerate}
+
+\paragraph{SearchEngineをcvs coする}
+
+\begin{itemize}
+\item login
+\begin{itemize}
+\item cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs login
+\item パスワード：kuro-language
+\end{itemize}
+\item check out
+\begin{itemize}
+\item cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co SearchEngine
+\end{itemize}
+\end{itemize}
+
+\paragraph{標準フォーマットからインデックスを抽出（並列実行可）}
+
+scripts/make-index.shを利用する.
+6、7行目の変数の値を変更する.
+
+\begin{center}
+\begin{minipage}{\columnwidth}
+\begin{verbatim}
+     1  #!/bin/sh
+     2  
+     3  # 1万ページ毎にtgzされた標準フォーマットの塊からインデックスを抽出するスクリプト
+     4  
+     5  # ★以下の値を変更すること
+     6  workspace=/tmp/mk\_tsubaki\_idx
+     7  scriptdir=\$HOME/cvs/SearchEngine/scripts
+     8  
+\end{verbatim}
+\end{minipage}
+\end{center}
+
+実行例：sh scripts/make-index.sh anywhere/x00000.tgz\\
+x00000.tgz … 標準フォーマットをtgzしたファイル（標準フォーマットはgzipで圧縮してあること）
+
+
+\paragraph{インデックスデータのリストをつくる}
+
+インデックスデータのリスト（どのマシンの、どこにあるか）を作成する((gxp) + findコマンド)
+
+
+\begin{center}
+\begin{minipage}{\columnwidth}
+\begin{verbatim}
+　% cat index.list
+　iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00835.idx.gz
+　iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00864.idx.gz
+　iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i01699.idx.gz
+　iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i02202.idx.gz
+　iccc015.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00164.idx.gz
+　iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03050.idx.gz
+　iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03634.idx.gz
+　iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03689.idx.gz
+　iccc040.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00108.idx.gz
+　iccc015.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00283.idx.gz
+　・・・
+\end{verbatim}
+\end{minipage}
+\end{center}
+
+\paragraph{インデックスをマージする(並列実行可)}
+
+scripts/merge-index.shを利用する.
+6、7行目の変数の値を変更する.
+
+\begin{center}
+\begin{minipage}{\columnwidth}
+\begin{verbatim}
+     1  #!/bin/sh
+     2  
+     3  # 1万件ごとのインデックスデータを100万件単位にマージするスクリプト
+     4  
+     5  # ★以下の値を変更すること
+     6  workspace=/tmp/mg\_tsubaki_idx
+     7  scriptdir=$HOME/cvs/SearchEngine/scripts
+     8 
+\end{verbatim}
+\end{minipage}
+\end{center}
+
+\noindent
+実行例：sh scripts/merge-index.sh 000 anywhere/index.list\\
+index.list … さっき作ったインデックスデータのリスト
+
+\paragraph{インデックスをバイナリ化し、データベースを構築する　(並列実行可)}
+
+scripts/binarize-index.shを利用する
+6、7行目の変数の値を変更する
+
+\begin{center}
+\begin{minipage}{\columnwidth}
+\begin{verbatim}
+     1  #!/bin/sh
+     2  
+     3  # インデックスデータをバイナリ化し、各種データベースを作成するスクリプト
+     4  
+     5  # ★以下の変数の値を変えること
+     6  workspace=/tmp/bin_tsubaki
+     7  scriptdir=$HOME/cvs/SearchEngine/scripts
+     8 
+\end{verbatim}
+\end{minipage}
+\end{center}
+
+\noindent
+実行例：sh scripts/binarize-index.sh anywhere/000.idx.gz\\
+000.idx.gz … 100文書分がマージされたインデックスデータ
+
+\paragraph{作成されるデータ}
+
+\begin{description}
+\item {インデックスデータ:} idx000.word.dat, idx000.dpnd.dat
+\item {オフセットDB:} offset000.word.cdb,offset000.dpnd.cdb,  offset000.word.cdb.1 …
+\item {文書長DB:} 000.doc\_length.bin
+\item {タイトルDB:} 000.title.cdb
+\item {URLDB:} 000.url.cdb
+\end{description}
+
+\paragraph{URL、タイトルデータベースの構築}
+
+WWW2sf内のtool/scripts/extract-url-title.perl を利用.\\
+make\_cdb.perl.\\
+未整理.\\
+
+
+\paragraph{文書頻度データベースの再構築}
+
+文書頻度データベースの再構築が必要.\\
+未整理.\\
+
+\paragraph{インデックスの追加}
+
+文書DB、タイトルDBを以下の場所に置く
+
+\begin{itemize}
+\item iccc001:/data/home/skeiji/dbs/titledb
+\item iccc001:/data/home/skeiji/dbs/urldb
+\end{itemize}
+
+検索サーバーの適当な場所に以下のファイルを置く
+\begin{itemize}
+\item {文書長DB:} ZZZ.doc\_length.bin,
+\item {タイトルDB:} ZZZ.title.cdb,
+\item {URLDB:} ZZZ.url.cdb,
+\item {インデックスデータ:} idxZZZ.word.dat, idxZZZ.dpnd.dat
+\item {オフセットDB:} offsetZZZ.word.cdb, offsetZZZ.dpnd.cdb,  offsetZZZ.word.cdb.1 …
+\end{itemize}
+
+設定ファイルを書き換える．
+
+\paragraph{設定ファイル}
+
+/share10/WISDOM/conf/TSUBAKI.conf\\
+
+インデックスの追加、検索ノードの故障などがあった場合は、上記のファイルを
+編集すれば、TSUBAKIの動作に反映される。
+
+\small
+\begin{verbatim}
+##################################################
+# TSUBAKIの環境変数(★utf8で保存すること)
+# $Id$
+#
+#
+#
+# 主な設定項目
+# * 基本ツールのパス
+# * キャッシュページ／標準フォーマット関係のパス
+# * データベースのパス
+# * 検索サーバー／スニペットサーバー関係（ホスト名、ポート番号等）
+# * その他の設定
+#
+#
+#
+# 書式
+# * KEY\tVALUE
+# * KEY\tVALUE1,VALUE2,...（値が複数の時）
+#   - サーバー関係の設定は特別な書式なので、各項目を参照のこと
+# * 行頭が`#' の行はコメント
+#
+##################################################
+
+
+
+##################################################
+# 基本ツールの設定（★要変更）
+##################################################
+TOOL_HOME	/home/skeiji/local/bin
+KNP_PATH	/home/skeiji/local/bin
+JUMAN_PATH	/home/skeiji/local/bin
+SYNDB_PATH	/home/skeiji/tmp/SynGraph/syndb/i686
+KNP_OPTIONS	-postprocess,-tab
+KNP_RCFILE	/home/skeiji/.knprc
+SYNGRAPH_PM_PATH	/home/skeiji/tmp/SynGraph/perl
+
+
+
+##################################################
+# キャッシュページ／標準フォーマット関係の設定
+##################################################
+
+# キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
+HTML_FILE_PATH		/net2/nlpcf34/disk08/skeiji
+ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
+SYNGRAPH_SF_PATH	/net2/nlpcf34/disk09/skeiji/sfs_w_syn
+
+
+
+
+
+##################################################
+# データベース関係の設定
+##################################################
+
+# TITLEDB/URLDBを納めたディレクトリへのパス（★要変更）
+TITLE_DB_PATH	/work/skeiji/titledb
+URL_DB_PATH	/work/skeiji/urldb
+
+# 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
+ORDINARY_DFDB_PATH	/var/www/cgi-bin/dbs/dfdbs
+SYNGRAPH_DFDB_PATH	/data/dfdb_syngraph_8600
+
+
+
+
+
+##################################################
+# 検索サーバー/スニペットサーバー関係の設定
+##################################################
+
+# 検索用サーバー（★要変更）
+# SEARCH_SERVERS ホスト名 ポート番号1,...
+
+SEARCH_SERVERS	 nlpc06		22001,22002,22003,20006
+SEARCH_SERVERS	 nlpc07		22001,22002,22003,20006
+...
+SEARCH_SERVERS	 nlpc31		22001,22002,22003
+SEARCH_SERVERS	 nlpc32		22001,22002,22003
+
+# SYNGRAPH検索用サーバー（★要変更）
+# SEARCH_SERVERS_FOR_SYNGRAPH ホスト名 ポート番号1,...
+
+SEARCH_SERVERS_FOR_SYNGRAPH	nlpc06	50001,50002
+SEARCH_SERVERS_FOR_SYNGRAPH	nlpc07	50001,50002
+...
+SEARCH_SERVERS_FOR_SYNGRAPH	nlpc47	50001,50002
+SEARCH_SERVERS_FOR_SYNGRAPH	nlpc48	50001,50002
+
+# スニペットサーバーの設定（★要変更）
+# STANDARD_FORMAT_LOCATION ホスト名 ポート番号 ディスクにおいてある標準フォーマットのID1,...
+
+STANDARD_FORMAT_LOCATION	nlpc33	35000	000,016,032,048,064,080,096
+STANDARD_FORMAT_LOCATION	nlpc34	35000	001,017,033,049,065,081,097
+...
+STANDARD_FORMAT_LOCATION	nlpc47	35000	014,030,046,062,078,094
+STANDARD_FORMAT_LOCATION	nlpc48	35000	015,031,047,063,079,095
+
+
+
+
+##################################################
+# その他の設定
+##################################################
+
+# 強調表示に用いる色
+HIGHLIGHT_COLOR		ffff66,a0ffff,99ff99,ff9999,ff66ff,880000,00aa00,886800,004699,990099;
+
+# ログファイル（★要変更）
+LOG_FILE_PATH		/se_tmp/input.log
+
+# マシンの故障等でサービスを停止する場合は1
+SERVICE_STOP_FLAG	0
+
+# 検索画面に表示するメッセージ
+MESSAGE	0
+
+# スニペットの長さ（デフォルトは100単語）
+MAX_NUM_OF_WORDS_IN_SNIPPET	100
+
+# タイトルの長さ（デフォルトは60バイト）
+MAX_LENGTH_OF_TITLE		60
+
+# IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
+CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
+
+# IDから標準フォーマットへのパスを求める際のテンプレート（★要変更）
+SF_PATH_TEMPLATE		/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml.gz
+
+# index.cgiのアドレス（★要変更）
+INDEX_CGI			http://tsubaki.ixnlp.nii.ac.jp/index.cgi
+
+# キャッシュページへのリンクを生成する際に用いるテンプレート
+CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
+\end{verbatim}
+\normalsize
+
+\subsection{検索プログラムの実行}
+
+\paragraph{検索CGIの設置}
+
+\paragraph{TSUBAKIサーバーの起動手順}
+
+\begin{enumerate}
+\item gxpを起動
+
+\item 検索サーバーで使うノードを獲得
+
+\begin{flushleft}
+   edges \texttt{->} iccc01[1,2,3,4,5,6,7,8,9]\\
+   edges \texttt{->} iccc02?\\
+   edges \texttt{->} iccc03[1,2,3,4,5,6]\\
+   explore  \# iccc011 - iccc036 のノードを獲得
+\end{flushleft}
+
+\item プログラムがあるディレクトリに移動
+
+\begin{flushleft}
+   cd /share09/home/skeiji/cvs/SearchEngine/scripts
+\end{flushleft}
+
+\item プログラムで使用できるメモリの上限を解除
+
+\begin{flushleft}
+   e ulimit -Ss unlimited 
+\end{flushleft}
+
+\item 検索サーバプログラムの起動
+
+\begin{flushleft}
+   e perl -I ../cgi -I ~/tmp/SynGraph/perl tsubaki\_server.pl -idxdir /data/home/skeiji/dat★ -dlengthdbdir /dat/home/skeiji/dat★ -port 5000★
+\end{flushleft}
+\end{enumerate}
+
+
+\section{おわりに}
+
+検索エンジン基盤TSUBAKIでは，独自に開発された検索エンジンコンポーネント
+(例えば，検索結果のランキングモジュールやリンク解析技術など)との融合を歓
+迎している．独自のコンポーネントをTSUBAKIに組み込みたい方は別途ご相談頂
+きたい．計算サーバーの提供を検討する．
+
+\bibliographystyle{plain} % 参考文献の並べ方や表示のスタイルの指定．
+\bibliography{skeiji}   % 参考文献データベースファイル mybib.bibを指定．
+
+\end{document}
