@@ -7,10 +7,10 @@
 \usepackage{graphicx}
 \usepackage{multirow}
 
-\title{ŒŸõƒGƒ“ƒWƒ“Šî”ÕTSUBAKI}
+\title{ŒŸõƒGƒ“ƒWƒ“Šî”ÕTSUBAKI\footnote{Text Search Utilities for BAcK up Info-prosion.}}
 
-\author{V—¢Œ\Ži \quad •‹´’õ•v\\
-\{shinzato, kuro\}@nlp.kuee.kyoto-u.ac.jp}
+\author{V—¢Œ\Ži \quad ŽÄ“c’mG \quad •‹´’õ•v\\
+\{shinzato, shibata, kuro\}@nlp.kuee.kyoto-u.ac.jp}
 
 \date{\today}
 \begin{document}
@@ -44,60 +44,14 @@ TSUBAKI\footnote{http://tsubaki.ixnlp.nii.ac.jp/index.cgiC‰ÈŠw‹ZpŒ¤‹†
 \item API‚Ì—˜—p•û–@
 \end{itemize}
 
-\section{“®ìŠÂ‹«}
-
-TSUBAKI‚Í‘—§î•ñŠwŒ¤‹†Š ¼ç—t•ªŠÙ‚É‚Ä‰^—p‚³‚ê‚Ä‚¢‚éD•\\ref{spec_cpu}C
-\ref{spec_fs}‚ÉC¼ç—t•ªŠÙ‚ÌŒvŽZ‹@ŠÂ‹«‚ðŽ¦‚·D‚±‚±‚Å‚ÍC128‚ ‚éCPUƒRƒA
-‘S‚Ä‚ªŒŸõ—p‚É—p‚¢‚ç‚ê‚Ä‚¨‚èCˆê•”‚ÌCPUƒRƒA‚ÍƒCƒ“ƒfƒbƒNƒXì¬—p‚È‚Ç‚Ìˆ
-—‚É‚à•¹—p‚³‚ê‚éD
-
-% ‚½‚¾‚µC‚±‚Ì—˜—p•û–@‚ÍŒŸõ‘ÎÛ‚Æ‚·‚é•¶‘”‚ÉˆË‘¶‚·‚é‚à
-% ‚Ì‚Å‚ ‚èCŒŸõ‘ÎÛ‚Æ‚È‚é•¶‘”‚ª‘‚¦‚ê‚ÎCPUƒRƒA‚ÌŽg—p•û–@‚à•Ï‚í‚Á‚Ä‚­‚éD
-
-% Œ»Ý‚ÌŒŸõ‘ÎÛ‚Æ‚·‚é•¶‘”‚Í1‰­ƒy[ƒW‚Å‚ ‚é‚ªC¡Œã‚Í2‰­ƒy[ƒW‚É‘‚â‚·—\’è‚Å‚ ‚èC
-% ‚»‚¤‚È‚Á‚½Û‚ÍC128CPUƒRƒA‘S‚Ä‚ðŒŸõ—p“r‚ÉŠ„‚è“–‚ÄCƒCƒ“ƒfƒbƒNƒXì
-% ¬‚Í“¯‚¶‚­‰ÈŒ¤î•ñ”š”­‚É‚Ä‰^—p‚³‚ê‚Ä‚¢‚éInTriggerƒvƒ‰ƒbƒgƒz[ƒ€\footnote{http://i-explosion.ex.nii.ac.jp/i-explosion/html/S/A02-1/index.html}
-% ‚ÉˆÚs‚·‚é—\’è‚Å‚ ‚éD
-
-\begin{table*}[h]
-\footnotesize
-\begin{center}
-\caption{TSUBAKIŒnŒvŽZ‹@ŠÂ‹«(ŒvŽZƒT[ƒo[)}
-\label{spec_cpu}
-\begin{tabular}{r|r|r|r}
-\hline
-&HPŽÐ»ƒuƒŒ[ƒhƒT[ƒo[ (32‘ä) & APPROŽÐ»ƒuƒŒ[ƒhƒT[ƒo[ (16‘ä)&‡Œv\\ \hline
-CPU& 64CPUƒRƒA(2CPUƒRƒA~32) & 64CPUƒRƒA(4CPUƒRƒA~16) & 128CPUƒRƒA\\
-ƒƒ‚ƒŠ&192GB(6GB~32)&192GB(12GB~16) & 384GB\\
-ƒ[ƒJƒ‹ƒfƒBƒXƒN& 19.2TB(0.6TB~32) & 16.0TB (1TB~16) & 35.2TB\\ \hline
-\end{tabular}
-\end{center}
-\end{table*}
-
-\begin{table}[h]
-\footnotesize
-\begin{center}
-\caption{TSUBAKIŒnŒvŽZ‹@ŠÂ‹«(ƒtƒ@ƒCƒ‹ƒT[ƒo[)}
-\label{spec_fs}
-\begin{tabular}{r|r}
-\hline
-ƒzƒXƒg–¼ & —e—Ê \\ \hline
-nlpcf.ixnlp.nii.ac.jp & 2.0TB \\
-nlpcf2.ixnlp.nii.ac.jp & 10.5TB \\
-nlpcf3.ixnlp.nii.ac.jp & 53.4TB\\
-nlpcf4.ixnlp.nii.ac.jp & 53.4TB\\ \hline
-‡Œv & 119.3TB\\ \hline
-\end{tabular}
-\end{center}
-\end{table}
 
 
 
 \section{ŒŸõ‘ÎÛ‚Æ‚È‚é•¶‘W‡}
 
 TSUBAKI‚ªŒŸõ‘ÎÛ‚Æ‚µ‚Ä‚¢‚é•¶‘W‡‚ÍC2007”N5ŒŽ‚©‚ç7ŒŽ‚É‚©‚¯‚Äî•ñ’ÊM
-Œ¤‹†‹@\ ’mŽ¯ˆ—ƒOƒ‹[ƒv‚É‚ÄƒNƒ[ƒ‹‚³‚ê‚½“ú–{Œêƒy[ƒW100,380,002Œ‚Å‚ 
-‚éDƒNƒ[ƒ‹‚É‚ÍC“Œ‹ž‘åŠw“c‰YŒ¤‹†Žº‚É‚ÄŠJ”­‚ªi‚ß‚ç‚ê‚Ä‚¢‚é
+Œ¤‹†‹@\ ’mŽ¯ˆ—ƒOƒ‹[ƒv‚É‚ÄƒNƒ[ƒ‹‚³‚ê‚½2‰­XXŒ‚ÌƒEƒFƒuƒy[ƒW‚©‚ç“ú–{Œêƒy[ƒW‚Æ‚µ‚Ä”»’è‚³‚ê‚½100,380,002Œ‚Å‚ 
+‚éDš“ú–{Œêƒy[ƒW‚Ì”»’è•û–@‚É‚Â‚¢‚Ä‚ÍŒãq‚·‚éDƒNƒ[ƒ‹‚É‚ÍC“Œ‹ž‘åŠw“c‰YŒ¤‹†Žº‚É‚ÄŠJ”­‚ªi‚ß‚ç‚ê‚Ä‚¢‚é
 Shim-Crawler\footnote{http://www.logos.t.u-tokyo.ac.jp/crawler/}‚ð—˜—p‚µ
 ‚½D
 
@@ -394,7 +348,7 @@ Annotation&
 }\ref{meta}‚ÉŽ¦‚·ƒwƒbƒ_[•”‚ª“¾‚ç‚ê‚éD
 %
 
-‚»‚Ìˆê•û‚ÅCƒeƒLƒXƒg•”‚É‚ÍC‘Î‰ž‚·‚éƒEƒFƒuƒy[ƒW‚©‚ç’Šo‚³‚ê‚½“ú–{Œê•¶‚¨‚æ
+ƒeƒLƒXƒg•”‚É‚ÍC‘Î‰ž‚·‚éƒEƒFƒuƒy[ƒW‚©‚ç’Šo‚³‚ê‚½“ú–{Œê•¶‚¨‚æ
 ‚ÑC“ú–{Œê•¶‚ðŽ©‘RŒ¾Œêˆ—ƒc[ƒ‹‚ðŽg‚Á‚Ä‰ðÍ‚µ‚½Œ‹‰Ê‚ªŠÜ‚Ü‚ê‚éDƒeƒLƒX
 ƒg•”‚Ì—á‚ð}\ref{text}‚ÉŽ¦‚·D
 %
@@ -520,8 +474,8 @@ EOS]]>
 \item {Step 1:} “ú–{ŒêƒEƒFƒuƒy[ƒW‚©‚Ç‚¤‚©‚Ì”»’èiƒIƒvƒVƒ‡ƒ“j
 \item {Step 2:} ƒEƒFƒuƒy[ƒW‚Ìutf8‰»
 \item {Step 3:} ƒEƒFƒuƒy[ƒW‚©‚ç‚Ì“ú–{Œê•¶’Šo
-\item {Step 4:} ’Šo‚³‚ê‚½“ú–{Œê•¶‚Ì‰ðÍiƒIƒvƒVƒ‡ƒ“j
-\item {Step 5:} ƒEƒFƒu•W€ƒtƒH[ƒ}ƒbƒgŒ`Ž®‚É•ÏŠ·
+% \item {Step 4:} ’Šo‚³‚ê‚½“ú–{Œê•¶‚Ì‰ðÍiƒIƒvƒVƒ‡ƒ“j
+% \item {Step 5:} ƒEƒFƒu•W€ƒtƒH[ƒ}ƒbƒgŒ`Ž®‚É•ÏŠ·
 \end{description}
 
 \noindent
@@ -566,15 +520,15 @@ charset‘®«‚Ì’l‚ðutf8‚É•ÏX‚·‚éD
 ‚è‚Æ‚µ‚Ä—p‚¢‚éHTMLƒ^ƒO‚Æ‚µ‚ÄC\texttt{<br>}‚Æ\texttt{<p>}‚ð—˜
 —p‚·‚éD‚Ü‚½\texttt{<pre>}ƒ^ƒO’†‚Ì‰üs‚ÍC‚»‚Ì‚Ü‚Ü‰üs‚Æ‚µ‚Äˆµ‚¤D
 
-\paragraph {Step 4: ’Šo‚³‚ê‚½“ú–{Œê•¶‚Ì‰ðÍiƒIƒvƒVƒ‡ƒ“j}
+% \paragraph {Step 4: ’Šo‚³‚ê‚½“ú–{Œê•¶‚Ì‰ðÍiƒIƒvƒVƒ‡ƒ“j}
 
-’Šo‚³‚ê‚½“ú–{Œê•¶‚ðŠù‘¶‚ÌŒ¾Œêˆ—ƒc[ƒ‹‚ð—p‚¢‚Ä‰ðÍ‚·‚éD
+% ’Šo‚³‚ê‚½“ú–{Œê•¶‚ðŠù‘¶‚ÌŒ¾Œêˆ—ƒc[ƒ‹‚ð—p‚¢‚Ä‰ðÍ‚·‚éD
 
-\paragraph {Step 5: ƒEƒFƒu•W€ƒtƒH[ƒ}ƒbƒgŒ`Ž®‚É•ÏŠ·}
+% \paragraph {Step 5: ƒEƒFƒu•W€ƒtƒH[ƒ}ƒbƒgŒ`Ž®‚É•ÏŠ·}
 
-’Šo‚³‚ê‚½“ú–{Œê•¶C“ú–{Œê•¶‚Ì‰ðÍŒ‹‰ÊiƒIƒvƒVƒ‡ƒ“j‚ð•W€ƒtƒH[ƒ}ƒbƒgŒ`
-Ž®‚Å•Û‘¶‚·‚éD•¶‘Žæ“¾“úŽžCURL‚È‚ÇƒEƒFƒuƒy[ƒW‚Ìƒƒ^î•ñ‚ÍCƒNƒ[ƒ‰‚æ
-‚è“¾‚ç‚ê‚éî•ñ‚ð—˜—p‚·‚éD
+% ’Šo‚³‚ê‚½“ú–{Œê•¶C“ú–{Œê•¶‚Ì‰ðÍŒ‹‰ÊiƒIƒvƒVƒ‡ƒ“j‚ð•W€ƒtƒH[ƒ}ƒbƒgŒ`
+% Ž®‚Å•Û‘¶‚·‚éD•¶‘Žæ“¾“úŽžCURL‚È‚ÇƒEƒFƒuƒy[ƒW‚Ìƒƒ^î•ñ‚ÍCƒNƒ[ƒ‰‚æ
+% ‚è“¾‚ç‚ê‚éî•ñ‚ð—˜—p‚·‚éD
 \\
 
 
@@ -662,12 +616,13 @@ http://nlp.kuee.kyoto-u.ac.jp/~{}skeiji/html2sf.tgz
 Š·ˆ—‚ðs‚Á‚½D
 
 ‚»‚ÌŒ‹‰ÊC–ñ1‰­Œ‚Ì•W€ƒtƒH[ƒ}ƒbƒgƒf[ƒ^‚ª“¾‚ç‚ê‚½D•W€ƒtƒH[ƒ}ƒbƒgƒf
-[ƒ^‚Ì¶¬‚É‚Í–ñ2TŠÔ‚©‚©‚Á‚½D‚±‚ê‚Í‚Â‚Ü‚èCŽc‚è‚Ì1‰­ƒy[ƒW‚É‚Â‚¢‚Ä‚ÍC
-“ú–{Œêƒy[ƒW‚Æ‚µ‚ÄŒ©‚È‚³‚ê‚È‚©‚Á‚½‚±‚Æ‚ðˆÓ–¡‚µ‚Ä‚¢‚éD‚±‚ÌƒEƒFƒu•W€ƒtƒH
-[ƒ}ƒbƒg‰»‚³‚ê‚½ƒf[ƒ^‚ÍCŒãq‚·‚éTSUBAKI API‚ð—˜—p‚·‚é‚±‚Æ‚ÅC’N‚Å‚à—e
-ˆÕ‚ÉŽæ“¾‚·‚é‚±‚Æ‚ª‰Â”\‚Å‚ ‚éD‚Ü‚½CInTriggerƒ†[ƒU[‚Å‚ ‚ê‚ÎC‚±‚ê‚ç‚Ì
-ƒf[ƒ^‚ÍInTrigger(chiba)ã‚ÉƒRƒs[Ï‚Ý‚Å‚ ‚é‚½‚ßCAPI‚ð—p‚¢‚È‚­‚Ä‚à’¼Ú
-—˜—p‰Â”\‚Å‚ ‚éD
+[ƒ^‚Ì¶¬‚É‚Í–ñ2TŠÔ‚©‚©‚Á‚½DŽc‚è‚Ì1‰­ƒy[ƒW‚É‚Â‚¢‚Ä‚ÍC
+“ú–{Œêƒy[ƒW‚Æ‚µ‚ÄŒ©‚È‚³‚ê‚È‚©‚Á‚½‚±‚Æ‚ðˆÓ–¡‚µ‚Ä‚¢‚éD
+
+ƒEƒFƒu•W€ƒtƒH[ƒ}ƒbƒg‰»‚³‚ê‚½ƒf[ƒ^‚ÍCŒãq‚·‚éTSUBAKI API‚ð—˜—p‚·‚é‚±
+‚Æ‚ÅC’N‚Å‚à—eˆÕ‚ÉŽæ“¾‚·‚é‚±‚Æ‚ª‰Â”\‚Å‚ ‚éD‚Ü‚½CInTriggerƒ†[ƒU[‚Å‚ 
+‚ê‚ÎC‚±‚ê‚ç‚Ìƒf[ƒ^‚ÍInTrigger(chiba)ã‚ÉƒRƒs[Ï‚Ý‚Å‚ ‚é‚½‚ßCAPI‚ð—p
+‚¢‚È‚­‚Ä‚à’¼Ú—˜—p‰Â”\‚Å‚ ‚éD
 
 •\~\ref{disk_size}‚É•W€ƒtƒH[ƒ}ƒbƒg‰»‚³‚ê‚½ƒf[ƒ^i–ñ1‰­Œj‚¨‚æ‚ÑC‘Î‰ž‚·‚éƒEƒFƒuƒy[ƒW‚Ì
 ƒtƒ@ƒCƒ‹ƒTƒCƒY‚ðŽ¦‚·D
@@ -788,9 +743,7 @@ TSUBAKI‚Å‚ÍCƒCƒ“ƒfƒbƒNƒX‚Ì’PˆÊ‚Æ‚µ‚ÄˆÈ‰º‚Ì‚à‚Ì‚ðÌ—p‚µ‚Ä‚¢‚éD
 \noindent
 ’PŒê‚¨‚æ‚ÑŽ©—§Œê“¯Žm‚ÌŒW‚èŽó‚¯ŠÖŒW‚É‚Â‚¢‚Ä‚ÍKNP‚Ì‰ðÍŒ‹‰Ê‚©‚ç,“¯
 ‹`•\Œ»,“¯‹`•\Œ»“¯Žm‚ÌŒW‚èŽó‚¯ŠÖŒW‚É‚Â‚¢‚Ä‚ÍSynGraph~\cite{syngraph}‚Ì‰ðÍŒ‹‰Ê‚©
-‚çŽæ“¾‚µ‚Ä‚¢‚éD‚±‚ê‚ç‚Ì‰ðÍŒ‹‰Ê‚Í‚ ‚ç‚©‚¶‚ß•W€ƒtƒH[ƒ}ƒbƒg‚É–„‚ßž‚Ü‚ê
-‚Ä‚¢‚é‚à‚Ì‚ð—˜—p‚·‚é‚½‚ßCƒCƒ“ƒfƒbƒNƒXì¬‚Ì‚½‚ß‚ÉV‚½‚ÉƒEƒFƒuƒy[ƒW‚ð
-‰ðÍ‚·‚é‚±‚Æ‚Í‚µ‚È‚¢D
+‚çŽæ“¾‚µ‚Ä‚¢‚éD
 
 ˆÈ‰º‚Å‚ÍŠeƒCƒ“ƒfƒbƒNƒX‚É‚Â‚¢‚Äq‚×‚éD
 
@@ -864,8 +817,7 @@ KNP‚Ì‰ðÍŒ‹‰Ê‚ð—p‚¢‚é‚±‚Æ‚ÅCuŽq‚Ç‚àv‚Ì‚æ‚¤‚È•\‹L—h‚ê‚ðŽ‚Â’PŒê‚Í‚»‚Ì
 \noindent
 ƒtƒŒ[ƒYŒŸõ‚âC•¡”‚Ì’PŒê‚ª“¯ˆê•¶’†‚Å‹¤‹N‚µ‚Ä‚¢‚é‚±‚Æ‚ð§–ñ‚É‚µ‚½ŒŸõ‚ðŽÀŒ»‚·‚é‚½‚ßC
 ’PŒê‚ÌoŒ»ˆÊ’u‚¨‚æ‚Ñ’PŒê‚ÌoŒ»‚µ‚½•¶IDi•W€ƒtƒH[ƒ}ƒbƒg‚©‚ç’Šo‰Â”\j‚ðƒCƒ“ƒfƒbƒNƒX‚É“o˜^‚µ‚Ä‚¢‚éD‚È‚¨C’PŒê‚ÌoŒ»ˆÊ’u‚Í•¶‘ƒXƒRƒA‚ÌŒvŽZŽž‚É‚à—˜—p‚³‚ê‚éD
-TSUBAKI‚Å‚Íã‹L‚Ìî•ñ‚ðƒoƒCƒiƒŠ‰»‚µ‚½“ÆŽ©‚ÌƒtƒH[ƒ}ƒbƒg‚ÅŠÇ—‚µ‚Ä‚¢‚éDƒoƒCƒiƒŠ‰»‚³‚ê‚½ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚Ì\‘¢‚ð
-}\ref{sample_index}‚ÉŽ¦‚·D
+TSUBAKI‚Å‚Íã‹L‚Ìî•ñ‚ðƒoƒCƒiƒŠ‰»‚µ‚½“ÆŽ©‚ÌƒtƒH[ƒ}ƒbƒg‚ÅŠÇ—‚µ‚Ä‚¢‚é(}\ref{sample_index}D)
 
 \begin{figure}[t]
 \begin{center}
@@ -878,8 +830,7 @@ TSUBAKI‚Å‚Íã‹L‚Ìî•ñ‚ðƒoƒCƒiƒŠ‰»‚µ‚½“ÆŽ©‚ÌƒtƒH[ƒ}ƒbƒg‚ÅŠÇ—‚µ‚Ä‚¢‚éDƒoƒCƒiƒŠ‰
 
 \subsubsection{ŒW‚èŽó‚¯ŠÖŒWƒCƒ“ƒfƒbƒNƒX}
 
-TSUBAKI‚Å‚ÍC’PŒê‚É‰Á‚¦CŒW‚èŽó‚¯ŠÖŒW‚àƒCƒ“ƒfƒbƒNƒX‚Æ‚µ‚Ä’Šo‚·‚éD‹ï‘Ì
-“I‚É‚ÍCŽ©—§Œê“¯Žm‚ÌŒW‚èŽó‚¯ŠÖŒW‚ðŒW‚èŽó‚¯ŠÖŒWƒCƒ“ƒfƒbƒNƒX‚Æ‚µ‚Ä’Šo‚·‚éD
+Ž©—§Œê“¯Žm‚ÌŒW‚èŽó‚¯ŠÖŒW‚ðŒW‚èŽó‚¯ŠÖŒWƒCƒ“ƒfƒbƒNƒX‚Æ‚µ‚Ä’Šo‚·‚éD
 % \footnote{Ž©—§Œê‚É‚Â‚¢‚Ä‘‚­D}D
 }~\ref{knp_result}‚É‹“‚°‚½KNP‚Ì‰ðÍŒ‹‰Ê‚©‚ç“¾‚ç‚ê‚éŒW‚èŽó‚¯ŠÖŒW‚ð}
 \ref{dpnd}‚ÉŽ¦‚·D‚±‚ê‚æ‚èCuŽq‚Ç‚à•ž‚ð‚¹‚ñ‚½‚­‚·‚év‚©‚ç‚ÍC
@@ -1093,7 +1044,7 @@ $\dots$’†—ª$\dots$
 \end{center}
 \end{table}
 
-•\\ref{size}‚ÉŠeƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ÉŠÜ‚Ü‚ê‚éî•ñC‘«Ø‚è‚Ì—L–³Cƒtƒ@ƒCƒ‹ƒTƒCƒY‚ðŽ¦‚·D•\‚æ‚è“¯‹`•\
+•\\ref{size}‚ÉŠeƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ÉŠÜ‚Ü‚ê‚éî•ñC‘«Ø‚è‚Ì—L–³C‘S‘Ì‚Ìƒtƒ@ƒCƒ‹ƒTƒCƒY‚ðŽ¦‚·D•\‚æ‚è“¯‹`•\
 Œ»‚ÌŒW‚èŽó‚¯ƒCƒ“ƒfƒbƒNƒX‚Ìƒtƒ@ƒCƒ‹ƒTƒCƒY‚ª‘å‚«‚¢‚±‚Æ‚ª‚í‚©‚éD
 ‚Ü‚½CŒW‚èŽó‚¯ƒCƒ“ƒfƒbƒNƒX‚É”ä‚×C’PŒêƒCƒ“ƒfƒbƒNƒX‚Ì•û‚ªƒtƒ@ƒCƒ‹ƒTƒCƒY‚ª
 ‘å‚«‚­‚È‚Á‚Ä‚¢‚é‚ªC‚±‚ê‚ÍC’PŒêƒCƒ“ƒfƒbƒNƒX‚ª‘S’PŒê‚Ì‘SoŒ»
@@ -1105,8 +1056,8 @@ $\dots$’†—ª$\dots$
 \subsection{Žw’è‰Â”\‚ÈŒŸõ§–ñ}
 
 TSUBAKI‚Å‚ÍC“ü—Í‚Æ‚µ‚Ä—^‚¦‚ç‚ê‚½•¡”ŒÂ‚ÌŒŸõƒL[ƒ[ƒhŠÔ‚ÉCAND/OR‚Ì˜_
-—ðŒ‚ð“K—p‚µ‚ÄŒŸõ‚·‚é‚±‚Æ‚ª‰Â”\‚Å‚ ‚éiˆê”Ê‚ÉŒ¾‚í‚ê‚Ä‚¢‚éANDŒŸõEOR
-ŒŸõ‚É‘Š“–‚·‚éj‚ªCŒŸõðŒ‚É‰Á‚¦CŒŸõƒL[ƒ[ƒh‚²‚Æ‚É{\bf §–ñ}‚ðŽw’è‚·‚é‚±‚Æ‚à‰Â
+—ðŒ‚ð“K—p‚µ‚ÄŒŸõ‚·‚é‚±‚Æ‚ª‰Â”\‚Å‚ ‚é‚ªiˆê”Ê‚ÉŒ¾‚í‚ê‚Ä‚¢‚éANDŒŸõEOR
+ŒŸõ‚É‘Š“–‚·‚éjCŒŸõðŒ‚É‰Á‚¦CŒŸõƒL[ƒ[ƒh‚²‚Æ‚É{\bf §–ñ}‚ðŽw’è‚·‚é‚±‚Æ‚à‰Â
 ”\‚Å‚ ‚éD§–ñ‚ÍCŒŸõƒL[ƒ[ƒh‚Ì––”ö‚Éu\~{}§–ñ‚ð•\‚·•¶Žš—ñv‚ð
 Žw’è‚µ‚Ä•\Œ»‚·‚éD•\\ref{const}‚ÉTSUBAKI‚ÅŽw’è
 ‰Â”\‚ÈŒŸõƒL[ƒ[ƒh§–ñ‚ðŽ¦‚·D
@@ -1918,6 +1869,53 @@ CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
 \end{flushleft}
 \end{enumerate}
 
+
+\section{“®ìŠÂ‹«}
+
+TSUBAKI‚Í‘—§î•ñŠwŒ¤‹†Š ¼ç—t•ªŠÙ‚É‚Ä‰^—p‚³‚ê‚Ä‚¢‚éD•\\ref{spec_cpu}C
+\ref{spec_fs}‚ÉC¼ç—t•ªŠÙ‚ÌŒvŽZ‹@ŠÂ‹«‚ðŽ¦‚·D‚±‚±‚Å‚ÍC128‚ ‚éCPUƒRƒA
+‘S‚Ä‚ªŒŸõ—p‚É—p‚¢‚ç‚ê‚Ä‚¨‚èCˆê•”‚ÌCPUƒRƒA‚ÍƒCƒ“ƒfƒbƒNƒXì¬—p‚È‚Ç‚Ìˆ
+—‚É‚à•¹—p‚³‚ê‚éD
+
+% ‚½‚¾‚µC‚±‚Ì—˜—p•û–@‚ÍŒŸõ‘ÎÛ‚Æ‚·‚é•¶‘”‚ÉˆË‘¶‚·‚é‚à
+% ‚Ì‚Å‚ ‚èCŒŸõ‘ÎÛ‚Æ‚È‚é•¶‘”‚ª‘‚¦‚ê‚ÎCPUƒRƒA‚ÌŽg—p•û–@‚à•Ï‚í‚Á‚Ä‚­‚éD
+
+% Œ»Ý‚ÌŒŸõ‘ÎÛ‚Æ‚·‚é•¶‘”‚Í1‰­ƒy[ƒW‚Å‚ ‚é‚ªC¡Œã‚Í2‰­ƒy[ƒW‚É‘‚â‚·—\’è‚Å‚ ‚èC
+% ‚»‚¤‚È‚Á‚½Û‚ÍC128CPUƒRƒA‘S‚Ä‚ðŒŸõ—p“r‚ÉŠ„‚è“–‚ÄCƒCƒ“ƒfƒbƒNƒXì
+% ¬‚Í“¯‚¶‚­‰ÈŒ¤î•ñ”š”­‚É‚Ä‰^—p‚³‚ê‚Ä‚¢‚éInTriggerƒvƒ‰ƒbƒgƒz[ƒ€\footnote{http://i-explosion.ex.nii.ac.jp/i-explosion/html/S/A02-1/index.html}
+% ‚ÉˆÚs‚·‚é—\’è‚Å‚ ‚éD
+
+\begin{table*}[h]
+\footnotesize
+\begin{center}
+\caption{TSUBAKIŒnŒvŽZ‹@ŠÂ‹«(ŒvŽZƒT[ƒo[)}
+\label{spec_cpu}
+\begin{tabular}{r|r|r|r}
+\hline
+&HPŽÐ»ƒuƒŒ[ƒhƒT[ƒo[ (32‘ä) & APPROŽÐ»ƒuƒŒ[ƒhƒT[ƒo[ (16‘ä)&‡Œv\\ \hline
+CPU& 64CPUƒRƒA(2CPUƒRƒA~32) & 64CPUƒRƒA(4CPUƒRƒA~16) & 128CPUƒRƒA\\
+ƒƒ‚ƒŠ&192GB(6GB~32)&192GB(12GB~16) & 384GB\\
+ƒ[ƒJƒ‹ƒfƒBƒXƒN& 19.2TB(0.6TB~32) & 16.0TB (1TB~16) & 35.2TB\\ \hline
+\end{tabular}
+\end{center}
+\end{table*}
+
+\begin{table}[h]
+\footnotesize
+\begin{center}
+\caption{TSUBAKIŒnŒvŽZ‹@ŠÂ‹«(ƒtƒ@ƒCƒ‹ƒT[ƒo[)}
+\label{spec_fs}
+\begin{tabular}{r|r}
+\hline
+ƒzƒXƒg–¼ & —e—Ê \\ \hline
+nlpcf.ixnlp.nii.ac.jp & 2.0TB \\
+nlpcf2.ixnlp.nii.ac.jp & 10.5TB \\
+nlpcf3.ixnlp.nii.ac.jp & 53.4TB\\
+nlpcf4.ixnlp.nii.ac.jp & 53.4TB\\ \hline
+‡Œv & 119.3TB\\ \hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \section{‚¨‚í‚è‚É}
 
