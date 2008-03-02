@@ -529,7 +529,6 @@ charset属性の値をutf8に変更する．
 % 抽出された日本語文，日本語文の解析結果（オプション）を標準フォーマット形
 % 式で保存する．文書取得日時，URLなどウェブページのメタ情報は，クローラよ
 % り得られる情報を利用する．
-\\
 
 
 %\subsection{Webページから日本語文の抽出}
@@ -724,35 +723,60 @@ skeiji@chiba100:~$
 ないようにするために，\texttt{chiba[100-158]}のローカルディスク上に分散
 されたファイルを，\texttt{scp}などを用いてコピーしてから処理して頂きたい．
 
+\section{言語解析}
 
-\section{インデックス}
+Webページから抽出した文に対して、言語解析を行ない、その結果を標準フォー
+マットに埋めこむことができる。この節では、形態素解析器JUMAN、構文解析KNP、
+同義表現を効率的に扱うことのできるSYNGRAPHによる解析について述べる。
 
-本節では，TSUBAKIが検索時に利用するインデックスについて述べる．
 
-\subsection{インデックスの単位}
+\subsection{形態素解析}
 
-TSUBAKIでは，インデックスの単位として以下のものを採用している．
+形態素解析器JUMANを例にして説明する。
 
-\begin{itemize}
-\item 単語（自立語，機能語全て）
-\item 自立語同士の係り受け関係
-\item 同義表現（単語，句）
-\item 同義表現同士の係り受け関係
-\end{itemize}
+解析結果の各行は以下の情報からなる。
 
-\noindent
-単語および自立語同士の係り受け関係についてはKNPの解析結果から,同
-義表現,同義表現同士の係り受け関係についてはSynGraph~\cite{syngraph}の解析結果か
-ら取得している．
+\begin{quote}
+表記 読み 原形 品詞 品詞細分類 活用型 活用形 意味情報
+\end{quote}
 
-以下では各インデックスについて述べる．
+また、「@」から始まる行は曖昧性のある形態素を表す。
 
-\subsubsection{単語インデックス}
+\subsubsection{代表表記}
 
-TSUBAKIでは，KNPの解析結果から代表表記化された単語およびその読みを単語イ
-ンデックスとして抽出する．「子ども服をせんたくする」という文をKNPで解析
-した結果を図\ref{knp_result}に示す．この結果からは以下の単語がインデック
-スとして抽出される．
+この節では、JUMANが出力する代表表記について述べる。代表表記とは、表記の
+揺れを吸収するために各形態素に与えられるものである。
+
+代表表記は、表記と読みを「/」で連結したものであり、例えば、「子供」「こ
+ども」「子ども」には代表表記「子供/こども」、「大根」「ダイコン」「だい
+こん」には代表表記「大根/だいこん」、「表す」、「表わす」、「あらわす」
+には代表表記「表す/あらわす」が与えられる。
+
+また、例えば、「せんたく」の場合、曖昧性を表わす「@」行を見ることにより、
+代表表記が「選択/せんたく」と「洗濯/せんたく」の二種類があり、曖昧性があ
+ることがわかる。
+
+\begin{verbatim}
+せんたく せんたく せんたく 名詞 6 サ変名詞 2 * 0 * 0 "カテゴリ:抽象物 ドメイン:家庭・暮らし 代表表記:洗濯/せんたく"
+@ せんたく せんたく せんたく 名詞 6 サ変名詞 2 * 0 * 0 "カテゴリ:抽象物 代表表記:選択/せんたく"
+EOS
+\end{verbatim}
+
+★疑似代表表記
+
+% \begin{itemize}
+%  \item 表す 表わす あらわす → 表す/あらわす
+%  \item 大根 ダイコン だいこん → 大根/だいこん
+% \end{itemize}
+
+\subsection{構文解析}
+
+構文解析器KNP
+
+「子ども服をせんたくする」という文をKNPで解析した結果を図
+\ref{knp_result}に示す．
+
+★例をSYNGRAPHとそろえる。
 
 \begin{figure}[t]
 \scriptsize
@@ -780,6 +804,147 @@ EOS \\
 \caption{「子ども服をせんたくする」をKNPで構文解析した結果}
 \label{knp_result}
 \end{figure}
+
+
+「\#」から始まる行はコメント、「*」から始まる行は文節、「+」から始まる行
+は基本句(\ref{subsubsec:basic_phrase}節で後述)、それ以外の行は形態素の情
+報を示す。
+
+文節、基本句の行は、係り先の文節/基本句のIDとタイプ(D,P,I,A)、Feature列
+からなる。
+
+\subsubsection{基本句・内容語}
+\label{subsubsec:basic_phrase}
+
+\paragraph{基本句}
+
+基本句とは格・省略解析などにおける処理の基本単位である。基本句は内容語1 
+つを核とする形態素列である。ただし、人名の場合のみ、1基本句に内容語が複
+数存在する場合がある。
+
+例: 河野洋平、ジョン・Ｆ・ケネディ
+
+\paragraph{内容語}
+
+内容語・準内容語とはキーワードとして用いるべき形態素に付与される素性であ
+る。準内容語は基本句として独立しないが、何かしらの意味を保持する接尾辞で
+ある。
+
+\subsection{SYNGRAPH}
+
+TSUBAKIでは，代表表記による表記揺れを吸収した検索に加え，単語または句の
+同義表現についてもインデックスを作成することで，より柔軟な検索を実現して
+いる．例えば，クエリとして「乳児の虫歯を予防する」が与えられた場合，「乳
+児」が「赤ちゃん」と同義であること，「予防」が「防ぐ」と同義であることを
+同時に考慮した検索が行われる．その結果として，「赤ちゃんの虫歯を防ぐには」
+といったクエリとは異なる表現が含まれる文書であっても検索結果として得るこ
+とが可能となる．
+
+SYNGRAPHとは，柔軟マッチングを実現するための、入力文における語・句の同義・
+上位下位関係を効率的に扱うためのデータ構造である\cite{syngraph}。同義・
+上位下位関係は、国語辞典とウェブコーパスから自動に獲得したものを用いてい
+る。
+
+\begin{figure}[t]
+\scriptsize
+\begin{center}
+\begin{tabular}{|p{0.83\columnwidth}|}
+\hline \\
+\begin{minipage}{\columnwidth}
+\begin{tabular}{p{0.8\columnwidth}}
+\texttt{+} 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:乳児/にゅうじ\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾 \texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1069\texttt{>}\texttt{<}名詞項候補\texttt{>} \texttt{<}先行詞候補\texttt{>}\texttt{<}係チ:非用言格解析||用言\&\&文節内:Ｔ解析格-ヲ\texttt{>}\\
+乳児 にゅうじ 乳児 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:人 ドメイン:健康・医学:家庭・暮らし 代表表記:乳児/にゅうじ" \texttt{<}カテゴリ:人\texttt{>}\texttt{<}ドメイン:健康・医学:家庭・暮らし\texttt{>}\texttt{<}代表表記:乳児/にゅうじ\texttt{>}\texttt{<}文頭\texttt{>} \texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>} \texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
+の の の 助詞 9 接続助詞 3 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
+!! 0 1D \texttt{<}見出し:乳児の\texttt{>}\\
+  ! 0 \texttt{<}SYNID:乳児/にゅうじ\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s121:乳飲み子/ちのみご\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s2894:児童/じどう\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s14116:子\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:16\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s2669:子女/しじょ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s2787:小児/しょうに\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
+\texttt{+} 2D \texttt{<}BGH:虫歯/むしば\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0- 0\texttt{>}\texttt{<}RID:1118\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>} \texttt{<}解析格:ヲ\texttt{>}\\
+虫歯 むしば 虫歯 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:動物-部位 ドメイン:健康・医学代表表記:虫歯/むしば" \texttt{<}カテゴリ:動物-部位\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:虫歯/むしば\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞 \texttt{>}\\
+を を を 助詞 9 格助詞 1 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
+!! 1 2D \texttt{<}見出し:虫歯を\texttt{>}\texttt{<}格解析結果:ヲ格\texttt{>}\\
+  ! 1 \texttt{<}SYNID:虫歯/むしば\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 1 \texttt{<}SYNID:s15141:虫歯/むしば\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 1 \texttt{<}SYNID:s15137:歯/は\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:9\texttt{>}\\
+\texttt{+} -1D \texttt{<}BGH:予防/よぼう+する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}サ変スル\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>} \texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:112\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<} サ変\texttt{>}\texttt{<}格要素-ガ:＃一人称優位\texttt{>}\texttt{<}格要素-ヲ:虫歯\texttt{>}\texttt{<}格要素-ニ:NIL\texttt{>}\texttt{<}格要素-ト: NIL\texttt{>}\texttt{<}格要素-デ:NIL\texttt{>}\texttt{<}格要素-カラ:NIL\texttt{>}\texttt{<}格要素-ヨリ:NIL\texttt{>}\texttt{<}格要素-マデ: NIL\texttt{>}\texttt{<}格要素-時間:NIL\texttt{>}\texttt{<}格要素-外の関係:NIL\texttt{>}\texttt{<}格要素-ノ:NIL\texttt{>}\texttt{<}格要素-ニヨル:NIL\texttt{>}\texttt{<}格要素-ヲツウジル:NIL\texttt{>}\texttt{<}格要素-ニタイスル:NIL\texttt{>}\texttt{<}格要素-トスル:NIL\texttt{>} \texttt{<}格要素-ニカンスル:NIL\texttt{>}\texttt{<}格要素-ニクワエル:NIL\texttt{>}\texttt{<}格要素-ヲハジメル:NIL\texttt{>}\texttt{<}格要素-ニオク:NIL\texttt{>}\texttt{<}格要素-ヲノゾク:NIL\texttt{>}\texttt{<}格フレーム-ガ-主体準\texttt{>}\texttt{<}格フレーム-ガ-主体ｏｒ主体準\texttt{>} \texttt{<}主題格:一人称優位\texttt{>}\texttt{<}格関係1:ヲ:虫歯\texttt{>}\texttt{<}格解析結果:予防/よぼう:動1:ガ/U/-/-/-/-;ヲ/C/虫歯 /1/0/?;ニ/U/-/-/-/-;ト/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ /U/-/-/-/-;時間/U/-/-/-/-;外の関係/U/-/-/-/-;ノ/U/-/-/-/-;ニヨル/U/-/-/-/-;ヲツウジル /U/-/-/-/-;ニタイスル/U/-/-/-/-;トスル/U/-/-/-/-;ニカンスル/U/-/-/-/-;ニクワエル/U/-/-/-/ -;ヲハジメル/U/-/-/-/-;ニオク/U/-/-/-/-;ヲノゾク/U/-/-/-/-\texttt{>}\\
+予防 よぼう 予防 名詞 6 サ変名詞 2 * 0 * 0 "カテゴリ:抽象物 ドメイン:健康・医学 代表表記:予防/よぼう" \texttt{<}カテゴリ:抽象物\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:予防/よぼう\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字 \texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}サ変\texttt{>}\texttt{<}サ変動詞\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始 \texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
+する する する 動詞 2 * 0 サ変動詞 16 基本形 2 "付属動詞候補（基本） 代表表記:する/する" \texttt{<}付属動詞候補（基本）\texttt{>}\texttt{<}代表表記:する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}表現文末\texttt{>}\texttt{<}とタ系連用テ形複合辞 \texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}活用語\texttt{>}\texttt{<}付属\texttt{>}\\
+!! 2 -1D \texttt{<}見出し:予防する\texttt{>}\\
+  ! 2 \texttt{<}SYNID:予防/よぼう\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s17557:予防/よぼう\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s4234:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:3\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s35:回避/かいひ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:3\texttt{>}\\
+EOS\\
+\end{tabular}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\end{center}
+\caption{「乳児の虫歯を予防する」をSynGraphで解析した結果}
+\label{syn_result}
+\end{figure}
+
+\begin{figure}[t]
+\begin{center}\includegraphics[height=0.3\columnwidth,clip,angle=-90]{figs/syn_dpnd.eps}
+\end{center}
+\caption{「乳児の虫歯を予防する」をSynGraph構造に変換した例（赤は基本ノードを，青はSynノードを意味する）}
+\label{syn_dpnd}
+\end{figure}
+
+図\ref{syn_result}に「赤ちゃんの虫歯を予防する」をSynGraphにより解析した
+結果を、図\ref{syn_dpnd}に同義表現間の係り受け関係を示す．ノードはKNPの
+基本句を単位として生成される。また、複数の基本句に対して一つのSynノード
+が付与される場合がある。例えば、「一番 近い」という2つの基本句に対して
+\verb|<|最寄り\verb|>|というSynノードが付与される。
+
+「!!」で始まる行はその基本句に付与されるSynノード群に共通の素性を表わす。
+そして、「!」で始まる行は基本ノードまたはSynノードの情報を表す。
+
+\begin{quote}
+!! (対応する基本句のID) 係り先の基本句のIDと係りタイプ feature列
+\end{quote}
+
+\begin{quote}
+! (対応する基本句のID) (feature列)
+\end{quote}
+
+付与される素性としては、\verb|<|否定\verb|>|、\verb|<|可能\verb|>|などが
+ある。
+
+★スコアの説明
+
+\section{インデックス}
+
+本節では，TSUBAKIが検索時に利用するインデックスについて述べる．
+
+\subsection{インデックスの単位}
+
+TSUBAKIでは，インデックスの単位として以下のものを採用している．
+
+\begin{itemize}
+\item 単語（自立語，機能語全て）
+\item 自立語同士の係り受け関係
+\item 同義表現（単語，句）
+\item 同義表現同士の係り受け関係
+\end{itemize}
+
+\noindent
+単語および自立語同士の係り受け関係についてはKNPの解析結果から,同
+義表現,同義表現同士の係り受け関係についてはSynGraph~\cite{syngraph}の解析結果か
+ら取得している．
+
+以下では各インデックスについて述べる．
+
+\subsubsection{単語インデックス}
+
+TSUBAKIでは，KNPの解析結果から代表表記化された単語およびその読みを単語イ
+ンデックスとして抽出する．図\ref{knp_result}に示した「子ども服をせんたく
+する」という文をKNPで解析した結果からは以下の単語がインデックスとして抽
+出される．
+
 
 \begin{figure}[t]
 \begin{center}\includegraphics[height=0.3\columnwidth,clip,angle=-90]{figs/dpnd.eps}
@@ -880,72 +1045,11 @@ TSUBAKIでは上記の情報をバイナリ化した独自のフォーマットで管理している(図\ref{sam
 
 \subsubsection{同義表現インデックス}
 
-TSUBAKIでは，代表表記による表記揺れを吸収した検索に加え，単語または句の
-同義表現についてもインデックスを作成することで，より柔軟な検索を実現している．
+
+クエリおよび文書中の単語・句の同義表現を獲得するにあたり，SynGraphの解析
+結果を利用する．
 %
-例えば，クエリとして「乳児の虫歯を予防する」が与えられた場合，「乳児」
-が「赤ちゃん」と同義であること，「予防」が「防ぐ」と同義であることを同時
-に考慮した検索が行われる．その結果として，「赤ちゃんの虫歯を防ぐには」
-といったクエリとは異なる表現が含まれる文書であっても検索結果として得ることが可能となる．
-
-
-\begin{figure}[t]
-\scriptsize
-\begin{center}
-\begin{tabular}{|p{0.83\columnwidth}|}
-\hline \\
-\begin{minipage}{\columnwidth}
-\begin{tabular}{p{0.8\columnwidth}}
-\texttt{+} 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:乳児/にゅうじ\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾 \texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1069\texttt{>}\texttt{<}名詞項候補\texttt{>} \texttt{<}先行詞候補\texttt{>}\texttt{<}係チ:非用言格解析||用言\&\&文節内:Ｔ解析格-ヲ\texttt{>}\\
-乳児 にゅうじ 乳児 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:人 ドメイン:健康・医学:家庭・暮らし 代表表記:乳児/にゅうじ" \texttt{<}カテゴリ:人\texttt{>}\texttt{<}ドメイン:健康・医学:家庭・暮らし\texttt{>}\texttt{<}代表表記:乳児/にゅうじ\texttt{>}\texttt{<}文頭\texttt{>} \texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>} \texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
-の の の 助詞 9 接続助詞 3 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
-!! 0 1D \texttt{<}見出し:乳児の\texttt{>}\\
-  ! 0 \texttt{<}SYNID:乳児/にゅうじ\texttt{>}\texttt{<}スコア:1\texttt{>}\\
-  ! 0 \texttt{<}SYNID:s121:乳飲み子/ちのみご\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
-  ! 0 \texttt{<}SYNID:s2894:児童/じどう\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
-  ! 0 \texttt{<}SYNID:s14116:子\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:16\texttt{>}\\
-  ! 0 \texttt{<}SYNID:s2669:子女/しじょ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
-  ! 0 \texttt{<}SYNID:s2787:小児/しょうに\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
-\texttt{+} 2D \texttt{<}BGH:虫歯/むしば\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0- 0\texttt{>}\texttt{<}RID:1118\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>} \texttt{<}解析格:ヲ\texttt{>}\\
-虫歯 むしば 虫歯 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:動物-部位 ドメイン:健康・医学代表表記:虫歯/むしば" \texttt{<}カテゴリ:動物-部位\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:虫歯/むしば\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞 \texttt{>}\\
-を を を 助詞 9 格助詞 1 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
-!! 1 2D \texttt{<}見出し:虫歯を\texttt{>}\texttt{<}格解析結果:ヲ格\texttt{>}\\
-  ! 1 \texttt{<}SYNID:虫歯/むしば\texttt{>}\texttt{<}スコア:1\texttt{>}\\
-  ! 1 \texttt{<}SYNID:s15141:虫歯/むしば\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
-  ! 1 \texttt{<}SYNID:s15137:歯/は\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:9\texttt{>}\\
-\texttt{+} -1D \texttt{<}BGH:予防/よぼう+する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}サ変スル\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>} \texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:112\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<} サ変\texttt{>}\texttt{<}格要素-ガ:＃一人称優位\texttt{>}\texttt{<}格要素-ヲ:虫歯\texttt{>}\texttt{<}格要素-ニ:NIL\texttt{>}\texttt{<}格要素-ト: NIL\texttt{>}\texttt{<}格要素-デ:NIL\texttt{>}\texttt{<}格要素-カラ:NIL\texttt{>}\texttt{<}格要素-ヨリ:NIL\texttt{>}\texttt{<}格要素-マデ: NIL\texttt{>}\texttt{<}格要素-時間:NIL\texttt{>}\texttt{<}格要素-外の関係:NIL\texttt{>}\texttt{<}格要素-ノ:NIL\texttt{>}\texttt{<}格要素-ニヨル:NIL\texttt{>}\texttt{<}格要素-ヲツウジル:NIL\texttt{>}\texttt{<}格要素-ニタイスル:NIL\texttt{>}\texttt{<}格要素-トスル:NIL\texttt{>} \texttt{<}格要素-ニカンスル:NIL\texttt{>}\texttt{<}格要素-ニクワエル:NIL\texttt{>}\texttt{<}格要素-ヲハジメル:NIL\texttt{>}\texttt{<}格要素-ニオク:NIL\texttt{>}\texttt{<}格要素-ヲノゾク:NIL\texttt{>}\texttt{<}格フレーム-ガ-主体準\texttt{>}\texttt{<}格フレーム-ガ-主体ｏｒ主体準\texttt{>} \texttt{<}主題格:一人称優位\texttt{>}\texttt{<}格関係1:ヲ:虫歯\texttt{>}\texttt{<}格解析結果:予防/よぼう:動1:ガ/U/-/-/-/-;ヲ/C/虫歯 /1/0/?;ニ/U/-/-/-/-;ト/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ /U/-/-/-/-;時間/U/-/-/-/-;外の関係/U/-/-/-/-;ノ/U/-/-/-/-;ニヨル/U/-/-/-/-;ヲツウジル /U/-/-/-/-;ニタイスル/U/-/-/-/-;トスル/U/-/-/-/-;ニカンスル/U/-/-/-/-;ニクワエル/U/-/-/-/ -;ヲハジメル/U/-/-/-/-;ニオク/U/-/-/-/-;ヲノゾク/U/-/-/-/-\texttt{>}\\
-予防 よぼう 予防 名詞 6 サ変名詞 2 * 0 * 0 "カテゴリ:抽象物 ドメイン:健康・医学 代表表記:予防/よぼう" \texttt{<}カテゴリ:抽象物\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:予防/よぼう\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字 \texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}サ変\texttt{>}\texttt{<}サ変動詞\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始 \texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
-する する する 動詞 2 * 0 サ変動詞 16 基本形 2 "付属動詞候補（基本） 代表表記:する/する" \texttt{<}付属動詞候補（基本）\texttt{>}\texttt{<}代表表記:する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}表現文末\texttt{>}\texttt{<}とタ系連用テ形複合辞 \texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}活用語\texttt{>}\texttt{<}付属\texttt{>}\\
-!! 2 -1D \texttt{<}見出し:予防する\texttt{>}\\
-  ! 2 \texttt{<}SYNID:予防/よぼう\texttt{>}\texttt{<}スコア:1\texttt{>}\\
-  ! 2 \texttt{<}SYNID:s17557:予防/よぼう\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
-  ! 2 \texttt{<}SYNID:s4234:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:3\texttt{>}\\
-  ! 2 \texttt{<}SYNID:s35:回避/かいひ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:3\texttt{>}\\
-EOS\\
-\end{tabular}
-\end{minipage}
-\\ \hline
-\end{tabular}
-\end{center}
-\caption{「乳児の虫歯を予防する」をSynGraphで解析した結果}
-\label{syn_result}
-\end{figure}
-
-\begin{figure}[t]
-\begin{center}\includegraphics[height=0.3\columnwidth,clip,angle=-90]{figs/syn_dpnd.eps}
-\end{center}
-\caption{「乳児の虫歯を予防する」をSynGraph構造に変換した例（赤は基本ノードを，青はSynノードを意味する）}
-\label{syn_dpnd}
-\end{figure}
-
-クエリおよび文書中の単語・句の同義表現を獲得するにあたり，
-SynGraphの解析結果を利用する．SynGraphとは，国語辞典およびウェブページから
-あらかじめ構築しておいた同義表現データベースを利用して，入力文中
-に含まれる単語・句に対して，それらと同義である単語・句を出力するツールで
-ある．
-%
-図\ref{syn_result}に「赤ちゃんの虫歯を予防する」をSynGraphにより解析した
-結果を，図\ref{syn_dpnd}に同義表現間の係り受け関係を示す．TSUBAKIでは，SynGraphの解析結果に含まれる基本ノードおよびSyn
+TSUBAKIでは，SynGraphの解析結果に含まれる基本ノードおよびSyn
 ノードと呼ばれるデータ\footnote{基本ノードおよびSynノードについては，該当論文\cite{syngraph}を参照されたい．}を，各語・句の同義表現インデックスとして抽出する．
 例えば，図\ref{syn_result}からは，
 
