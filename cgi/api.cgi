@@ -199,27 +199,31 @@ if ($method eq 'POST') {
 	$query_obj = $q_parser->parse($query_str, {logical_cond_qk => 'AND', syngraph => 0});
     }
 
+    my $did2snippets;
+    if (exists $request_items->{'Snippet'}) {
+	my $sni_obj = new SnippetMakerAgent();
+	$sni_obj->create_snippets($query_obj, $dids, {discard_title => 0, syngraph => 0, window_size => 5});
+	$did2snippets = $sni_obj->get_snippets_for_each_did();
+    }
+
     foreach my $fid (@$dids) {
 	if (exists $request_items->{'Snippet'}) {
-	    my $sni_obj = new SnippetMakerAgent();
-	    $sni_obj->create_snippets($query_obj, [$fid], {discard_title => 0, syngraph => 0, window_size => 5});
-	    my $did2snippets = $sni_obj->get_snippets_for_each_did();
-	    $request_items->{'Snippet'} = $did2snippets->{$fid};
+	    $request_items->{$fid}{'Snippet'} = $did2snippets->{$fid};
 	}
 
 	if (exists $request_items->{'Title'}) {
-	    $request_items->{'Title'} = &get_title($fid);
+	    $request_items->{$fid}{'Title'} = &get_title($fid);
 	}
 
 	if (exists $request_items->{'Url'}) {
-	    $request_items->{'Url'} = &get_url($fid);
+	    $request_items->{$fid}{'Url'} = &get_url($fid);
 	}
 
 	if (exists $request_items->{'Cache'}) {
 	    my $cache = {
 		URL  => &get_cache_location($fid, &get_uri_escaped_query($query_obj)),
 		Size => &get_cache_size($fid) };
-	    $request_items->{'Cache'} = $cache;
+	    $request_items->{$fid}{'Cache'} = $cache;
 	}
     }
 
@@ -234,16 +238,16 @@ if ($method eq 'POST') {
 
     foreach my $fid (@$dids) {
 	$writer->startTag('Result', Id => sprintf("%09d", $fid));
-	foreach my $ri (sort {$b cmp $a} keys %$request_items) {
+	foreach my $ri (sort {$b cmp $a} keys %{$request_items->{$fid}}) {
 	    $writer->startTag($ri);
 	    if ($ri ne 'Cache') {
-		$writer->characters($request_items->{$ri}. "\n");
+		$writer->characters($request_items->{$fid}{$ri}. "\n");
 	    } else {
 		$writer->startTag('Url');
-		$writer->characters($request_items->{Cache}->{URL});
+		$writer->characters($request_items->{$fid}{Cache}{URL});
 		$writer->endTag('Url');
 		$writer->startTag('Size');
-		$writer->characters($request_items->{Cache}->{Size});
+		$writer->characters($request_items->{$fid}{Cache}{Size});
 		$writer->endTag('Size');
 	    }
 	    $writer->endTag($ri);
@@ -350,7 +354,7 @@ elsif (defined $field) {
 	if ($cgi->param('no_encoding')) {
 	    $content = `cat $filepath`;
 	} else {
-	    $content = `cat $filepath | /home/skeiji/local/bin/nkf --utf8`;
+	    $content = `cat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
 	}
     } else {
 	$filepath .= ".gz";
@@ -358,7 +362,7 @@ elsif (defined $field) {
 	    if ($cgi->param('no_encoding')) {
 		$content = `zcat $filepath`;
 	    } else {
-		$content = `zcat $filepath | /home/skeiji/local/bin/nkf --utf8`;
+		$content = `zcat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
 	    }
 	}
     }
