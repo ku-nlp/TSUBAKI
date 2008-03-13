@@ -1,3 +1,8 @@
+2008-03-13  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	SynGraphを必要時にだけnewするように変更.
+
 2008-02-10  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/configure, cgi/configure.nict: KNPのrcfileを含めた．
