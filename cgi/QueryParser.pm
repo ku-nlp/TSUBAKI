@@ -15,18 +15,14 @@ use QueryKeyword;
 # コンストラクタ
 sub new {
     my $CONFIG = Configure::get_instance();
-    push(@INC, $CONFIG->{SYNGRAPH_PM_PATH});
-    require SynGraph;
 
     my ($class, $opts) = @_;
     my $this = {
 	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
 		       -Rcfile => $CONFIG->{KNP_RCFILE},
-		       -JumanCommand => "$opts->{JUMAN_PATH}/juman"),
-	SYNGRAPH => new SynGraph($opts->{SYNDB_PATH}),
-	SYNGRAPH_OPTION => {relation => 1, antonym => 1, hypocut_attachnode => 9}
-    };
+		       -JumanCommand => "$opts->{JUMAN_PATH}/juman")
+	};
 
     # ストップワードの処理
     unless ($opts->{STOP_WORDS}) {
@@ -61,6 +57,17 @@ sub parse {
     my @qks = ();
     my %wbuff = ();
     my %dbuff = ();
+
+    # 必要であればSynGraphをnewし、メンバ変数として保持する
+    if ($opt->{syngraph}) {
+	my $CONFIG = Configure::get_instance();
+	push(@INC, $CONFIG->{SYNGRAPH_PM_PATH});
+	require SynGraph;
+
+	$this->{SYNGRAPH} = new SynGraph($CONFIG->{SYNDB_PATH});
+	$this->{SYNGRAPH_OPTION} = {relation => 1, antonym => 1, hypocut_attachnode => 9};
+    }
+
 
     ## 空白で区切る
     foreach my $q_str (split(/(?: |　)+/, $qks_str)) {
@@ -159,7 +166,7 @@ sub parse {
 	    }
 	}
     }
-	
+
     # 検索クエリを表す構造体
     my $ret = {
 	keywords => \@qks,
