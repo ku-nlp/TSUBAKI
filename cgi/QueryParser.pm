@@ -11,6 +11,7 @@ use Unicode::Japanese;
 use KNP;
 use Indexer;
 use QueryKeyword;
+use Configure;
 
 # コンストラクタ
 sub new {
