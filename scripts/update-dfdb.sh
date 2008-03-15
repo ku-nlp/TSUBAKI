@@ -13,6 +13,7 @@
 
 # ★以下のスクリプトのディレクトリを要変更
 toolhome=$HOME/cvs/SearchEngine/scripts
+utilhome=$HOME/cvs/Utils/perl
 
 
 
@@ -29,12 +30,12 @@ do
 done
 
 # 既存のデータと新データをマージ
-echo perl $toolhome/merge_files.perl -n 0 $dfdbdir/*.$dftype.*.txt $newfile > df.$dftype.tmp.$$
-perl $toolhome/merge_files.perl -n 0 $dfdbdir/*.$dftype.*.txt $newfile > df.$dftype.tmp.$$
+echo perl $utilhome/../scripts/merge_files.perl -n 0 $dfdbdir/*.$dftype.*.txt $newfile > df.$dftype.tmp.$$
+perl $utilhome/../scripts/merge_files.perl -n 0 $dfdbdir/*.$dftype.*.txt $newfile > df.$dftype.tmp.$$
 
 # テキストデータをCDB化
-echo perl $toolhome/make-df-db.perl < df.$dftype.tmp.$$
-perl $toolhome/make-df-db.perl < df.$dftype.tmp.$$
+echo perl -I $utilhome $toolhome/make-df-db.perl < df.$dftype.tmp.$$
+perl -I $utilhome $toolhome/make-df-db.perl < df.$dftype.tmp.$$
 
 # 後処理
 rm $dfdbdir/*.txt
