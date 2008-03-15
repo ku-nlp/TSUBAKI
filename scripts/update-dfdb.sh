@@ -8,9 +8,6 @@
 # dfdbdir ... 現在のDFDBがおいてあるディレクトリ
 # dftype  ... DFDBの種類（word or dpnd）
 # newfile ... 新たに追加したいDFデータ
-#
-# 出力ファイル
-# df.$dftype.cdb.new ... 新しく作成されたDFDB
 
 
 
@@ -36,11 +33,10 @@ echo perl $toolhome/merge_files.perl -n 0 $dfdbdir/*.$dftype.*.txt $newfile > df
 perl $toolhome/merge_files.perl -n 0 $dfdbdir/*.$dftype.*.txt $newfile > df.$dftype.tmp.$$
 
 # テキストデータをCDB化
-echo perl $toolhome/make-cdb.perl df.$dftype.tmp.$$
-perl $toolhome/make-cdb.pl df.$dftype.tmp.$$
+echo perl $toolhome/make-df-db.perl < df.$dftype.tmp.$$
+perl $toolhome/make-df-db.perl < df.$dftype.tmp.$$
 
 # 後処理
 rm $dfdbdir/*.txt
 rm df.$dftype.tmp.$$
 
-mv df.$dftype.tmp.$$.cdb df.$dftype.cdb.new
