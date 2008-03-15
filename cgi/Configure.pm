@@ -5,6 +5,7 @@ package Configure;
 
 use strict;
 use utf8;
+use File::Basename;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -13,7 +14,7 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 
 # 環境によってパスを変える
-my $CONFIG_FILE_PATH = "configure";
+my $CONFIG_FILE_PATH = dirname($INC{'Configure.pm'}) . "/configure";
 
 my %titledbs = ();
 my %urldbs = ();
