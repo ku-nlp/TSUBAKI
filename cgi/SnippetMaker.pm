@@ -18,6 +18,7 @@ my $SF_DIR_PREFFIX1 = "/data/sfs";
 my $SF_DIR_PREFFIX2 = "/data/sfs_w_syn";
 my $SF_DIR_PREFFIX3 = "/net2/nlpcf34/disk09/skeiji/sfs_w_syn";
 my $SF_DIR_PREFFIX4 = "/net2/nlpcf34/disk03/skeiji/sfs_w_syn";
+my $SF_DIR_PREFFIX5 = "/net2/nlpcf34/disk08/skeiji";
 
 sub extract_sentences_from_ID {
     my($query, $id, $opt) = @_;
@@ -31,6 +32,7 @@ sub extract_sentences_from_ID {
     } else {
 	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX1, $id / 1000000, $id / 10000, $id);
 	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX2, $id / 1000000, $id / 10000, $id) unless (-e $xmlfile);
+	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX5, $id / 1000000, $id / 10000, $id) unless (-e $xmlfile);
     }
 
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
@@ -39,13 +41,25 @@ sub extract_sentences_from_ID {
 sub extract_sentences_from_standard_format {
     my($query, $xmlfile, $opt) = @_;
 
-    open(READER,"zcat $xmlfile |") or die "$!";
-
     if ($opt->{verbose}) {
 	print "extract from $xmlfile.\n";
 	print "option:\n";
 	print Dumper($opt) . "\n";
     }
+
+    my $content;
+    open(READER,"zcat $xmlfile |") or die "$!";
+    binmode(READER, ':utf8');
+    while (<READER>) {
+	$content .= $_;
+    }
+    close(READER);
+
+    return &extract_sentences_from_content($query, $content, $opt);
+}
+    
+sub extract_sentences_from_content {
+    my($query, $content, $opt) = @_;
 
     my $annotation;
     my $indexer = new Indexer();
@@ -53,23 +67,21 @@ sub extract_sentences_from_standard_format {
     my %sbuff = ();
     my $sid = 0;
     my $in_title = 0;
-    while (<READER>) {
+    foreach my $line (split(/\n/, $content)) {
+	$line .= "\n";
 	if ($opt->{discard_title}) {
 	    # タイトルはスニッペッツの対象としない
-	    if ($_ =~ /<Title [^>]+>/) {
+	    if ($line =~ /<Title [^>]+>/) {
 		$in_title = 1;
-	    } elsif ($_ =~ /<\/Title>/ || $_ =~ /<\/Header>/) {
+	    } elsif ($line =~ /<\/Title>/ || $line =~ /<\/Header>/) {
 		$in_title = 0;
 	    }
 	}
 	next if ($in_title > 0);
-	next if ($_ =~ /^!/ && !$opt->{syngraph});
+	next if ($line =~ /^!/ && !$opt->{syngraph});
 
-	$annotation .= $_;
-	if ($_ =~ m!</Annotation>!) {
-#	    print encode('euc-jp', decode('utf8', $annotation));
-
-	    $annotation = decode('utf8', $annotation);
+	$annotation .= $line;
+	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
 		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result) : $indexer->makeIndexfromKnpResult($result);
@@ -118,7 +130,6 @@ sub extract_sentences_from_standard_format {
 	    $annotation = '';
 	}
     }
-    close(READER);
 
     my $window_size = $opt->{window_size};
     my $size = scalar(@sentences);
