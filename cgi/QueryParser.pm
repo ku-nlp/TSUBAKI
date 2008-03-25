@@ -550,19 +550,21 @@ sub load_DFDBs {
     my @DF_WORD_DBs = ();
     my @DF_DPND_DBs = ();
 
-    opendir(DIR, $dbdir) or die "$! ($dbdir)\n";
-    foreach my $cdbf (readdir(DIR)) {
-	next unless ($cdbf =~ /cdb.\d+/);
-	
-	my $fp = "$dbdir/$cdbf";
-	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-	if (index($cdbf, 'dpnd') > 0) {
-	    push(@DF_DPND_DBs, \%dfdb);
-	} elsif (index($cdbf, 'word') > 0) {
-	    push(@DF_WORD_DBs, \%dfdb);
+    if (defined $dbdir) {
+	opendir(DIR, $dbdir) or die "$! ($dbdir)\n";
+	foreach my $cdbf (readdir(DIR)) {
+	    next unless ($cdbf =~ /cdb.\d+/);
+
+	    my $fp = "$dbdir/$cdbf";
+	    tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	    if (index($cdbf, 'dpnd') > 0) {
+		push(@DF_DPND_DBs, \%dfdb);
+	    } elsif (index($cdbf, 'word') > 0) {
+		push(@DF_WORD_DBs, \%dfdb);
+	    }
 	}
+	closedir(DIR);
     }
-    closedir(DIR);
 
     return (\@DF_WORD_DBs, \@DF_DPND_DBs);
 }
