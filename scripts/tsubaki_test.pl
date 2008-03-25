@@ -9,6 +9,11 @@ use Getopt::Long;
 use QueryParser;
 use TsubakiEngineFactory;
 use Time::HiRes;
+use Data::Dumper;
+use CDB_File;
+
+binmode(STDOUT, ':encoding(euc-jp)');
+binmode(STDERR, ':encoding(euc-jp)');
 
 my (%opt);
 GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed');
@@ -27,9 +32,9 @@ sub init {
     opendir(DIR, $opt{dfdbdir}) or die;
     foreach my $cdbf (readdir(DIR)) {
 	next unless ($cdbf =~ /cdb.\d+/);
-	
+
 	my $fp = "$opt{dfdbdir}/$cdbf";
-	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	tie my %dfdb, 'CDB_File', $fp or die "$!: can't tie to $fp $!\n";
 	if (index($cdbf, 'dpnd') > -1) {
 	    push(@DF_DPND_DBs, \%dfdb);
 	} elsif (index($cdbf, 'word') > -1) {
@@ -49,42 +54,44 @@ sub init {
 sub main {
     &init();
 
-    my $syngraph_option = { relation => 1, antonym => 1};
+    my $syngraph_option = {relation => 1, antonym => 1};
     $syngraph_option->{hypocut_attachnode} = $opt{hypocut} ? $opt{hypocut} : 9;
 
     my $q_parser = new QueryParser({
-	KNP_PATH => "$ENV{HOME}/local/bin",
-	JUMAN_PATH => "$ENV{HOME}/local/bin",
+	KNP_PATH => "/usr/local/bin",
+	JUMAN_PATH => "/usr/local/bin",
+	KNP_RCFILE => "$ENV{HOME}/novel/tools/080215/etc/knprc",
 	SYNDB_PATH => "$ENV{HOME}/cvs/SynGraph/syndb/i686",
 	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'],
 	SYNGRAPH_OPTION => $syngraph_option,
+	DFDB_DIR => $opt{dfdbdir},
 	SHOW_SPEED => $opt{show_speed}
     });
-    
+
     # logical_cond_qk : クエリ間の論理演算
     my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
-    
+
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
-	print encode('euc-jp', $qk->to_string()) . "\n";
+	print $qk->to_string() . "\n";
 	print "*************\n";
-    }
-
-    my %qid2df = ();
-    foreach my $qid (keys %{$query->{qid2rep}}) {
-	my $df = &get_DF($query->{qid2rep}{$qid});
-	$qid2df{$qid} = $df;
-	print "qid=$qid ", encode('euc-jp', $query->{qid2rep}{$qid}), " $df\n" if ($opt{verbose});
     }
 
     my $factory = new TsubakiEngineFactory(\%opt);
     my $tsubaki = $factory->get_instance();
 
-    my $docs = $tsubaki->search($query, \%qid2df);
+    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, DIST => 30, verbose => $opt{verbose}});
+
     my $hitcount = scalar(@{$docs});
 
     for (my $rank = 0; $rank < scalar(@{$docs}); $rank++) {
-	printf("rank=%d did=%09d score=%f\n", $rank + 1, $docs->[$rank]{did}, $docs->[$rank]{score_total});
+	my $did = sprintf("%09d", $docs->[$rank]{did});
+	my $score = $docs->[$rank]{score_total};
+	my $score_w = $docs->[$rank]{score_word};
+	my $score_d = $docs->[$rank]{score_dpnd};
+	my $score_n = $docs->[$rank]{score_dist};
+
+	printf("rank=%d did=%s score=%.3f (w=%.3f d=%.3f n=%.3f)\n", $rank + 1, $did, $score, $score_w, $score_d, $score_n);
     }
     print "hitcount=$hitcount\n";
 }
