@@ -61,7 +61,7 @@ sub main {
 	    # 検索エンジンオブジェクトの初期化
 	    my $se_obj = new SearchEngine($params->{syngraph});
 	    my $start_time = Time::HiRes::time;
-	    ($params->{syngraph} > 0) ? $se_obj->init($CONFIG->{SYNGRAPH_DFDB_PATH}) : $se_obj->init($CONFIG->{ORDINARY_DFDB_PATH});
+	    # ($params->{syngraph} > 0) ? $se_obj->init($CONFIG->{SYNGRAPH_DFDB_PATH}) : $se_obj->init($CONFIG->{ORDINARY_DFDB_PATH});
 	    my $df_time = Time::HiRes::time - $start_time; # DFDBをひくのに要した時間を取得
 
 	    # 検索
@@ -204,11 +204,14 @@ sub get_normalized_url {
 # 検索クエリを解析する
 sub parse_query {
     my ($params) = @_;
+
+    my $DFDB_DIR = ($params->{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
     my $q_parser = new QueryParser({
 	KNP_PATH => $CONFIG->{KNP_PATH},
 	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
 	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
-	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
+	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS},
+	DFDB_DIR => $DFDB_DIR });
     $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
     
     # クエリの解析

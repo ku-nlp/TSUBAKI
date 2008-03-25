@@ -82,13 +82,6 @@ sub get_DF {
 sub broadcastSearch {
     my($this, $query) = @_;
 
-    my %qid2df = ();
-    foreach my $qid (keys %{$query->{qid2rep}}) {
-	my $df = $this->get_DF($query->{qid2rep}{$qid});
-	$qid2df{$qid} = $df;
-#	print "qid=$qid $query->{qid2rep}{$qid} $df\n" if ($opt{debug});
-    }
-
     # 検索クエリの送信
     my $selecter = IO::Select->new();
     for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
@@ -104,7 +97,7 @@ sub broadcastSearch {
 	print $socket "EOQ\n";
 	
 	# qid2dfの送信
- 	print $socket encode_base64(Storable::freeze(\%qid2df), "") . "\n";
+ 	print $socket encode_base64(Storable::freeze($query->{qid2df}), "") . "\n";
 	print $socket "END\n";
 	
 	$socket->flush();
