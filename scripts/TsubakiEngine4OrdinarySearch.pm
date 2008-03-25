@@ -7,6 +7,11 @@ package TsubakiEngine4OrdinarySearch;
 use strict;
 use Retrieve;
 use utf8;
+use Data::Dumper;
+{
+    package Data::Dumper;
+    sub qquote { return shift; }
+}
 
 # TsubakiEngine を継承する
 use TsubakiEngine;
@@ -22,12 +27,13 @@ sub new {
 
     # DAT ファイルから係り受けを含む文書を検索する retriever オブジェクトをセットする
     $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed});
+#   $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
 
     bless $obj;
 }
 
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -79,17 +85,20 @@ sub merge_docs {
 			}
 		    }
 
+		    next if ($dlength < $MIN_DLENGTH);
+
+		    my $weight = $gid2weight->{$qid2gid->{$qid}};
 		    # 関数化するよりも高速
-		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+		    my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
 		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 		    my $score = $tff * $idf;
 		    $qid2poslist{$qid} = $this->{word_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums});
 
-		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
+		    print "* did=$did qid=$qid tf=$tf df=$df qtf=$qtf tff=$tff length=$dlength score=$score\n" if ($this->{verbose});
 
-		    $merged_docs[$i]->{word_score} += $score * $qtf;
-		    $q2scores[$i]->{word}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
-		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score * $qtf} if $this->{store_verbose};
+		    $merged_docs[$i]->{word_score} += $score * $qtf * $weight;
+		    $q2scores[$i]->{word}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf * $weight, weight => $weight};
+		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
 		}
 
 		foreach my $qid (keys %$dpnd_map) {
@@ -99,11 +108,10 @@ sub merge_docs {
 			my $dlength = $d_length_buff{$did};
 
 			my $dist = $this->get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
-			next if $dist == -1;
-			if ($dist > 30) {
+			if ($dist > $DIST) {
 			    $merged_docs[$i]->{near_score}{$dpnd_qid} = 0;
 			} else {
-			    my $tf = (30 - $dist) / 30;
+			    my $tf = ($DIST - $dist) / $DIST;
 			    my $df = $qid2df->{$dpnd_qid};
 			    my $qtf = $qid2qtf->{$dpnd_qid};
 
@@ -115,10 +123,10 @@ sub merge_docs {
 			    else {
 				my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 				my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-				$score = $qtf * $tff * $idf;
+				$score = $qtf;# * $tff * $idf;
 			    }
 
-			    $q2scores[$i]->{near}{$qid} = {dist => $dist, qtf => $qtf, df => $df, dlength => $dlength, score => $score, kakarisaki_qid => $kakarisaki_qid};
+			    $q2scores[$i]->{near}{$qid} = {dist => $dist, qtf => $qtf, df => $df, dlength => $dlength, score => $score, kakarisaki_qid => $kakarisaki_qid, DIST => $DIST};
 			    $merged_docs[$i]->{near_score}{$dpnd_qid} = $score;
 			}
 		    }
@@ -154,7 +162,8 @@ sub merge_docs {
 			$score = 0;
 		    }
 		    else {
-			my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+			# my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+			my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
 			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 			$score = $tff * $idf;
 			$score *= $this->{WEIGHT_DPND_SCORE};
