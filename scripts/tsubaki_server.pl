@@ -13,8 +13,17 @@ use Storable;
 use QueryParser;
 use TsubakiEngineFactory;
 use CDB_File;
+use Data::Dumper;
+{
+    package Data::Dumper;
+    sub qquote { return shift; }
+}
+$Data::Dumper::Useperl = 1;
+binmode(STDOUT, ':encoding(euc-jp)');
 
-my $MAX_RANK_FOR_SETTING_URL_AND_TITLE = 0;
+
+
+my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 0.1;
 
 my (%opt);
 GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug');
@@ -62,7 +71,7 @@ foreach my $file (readdir(DIR)) {
 }
 closedir(DIR);
 
-
+my $hostname = `hostname` ; chop($hostname);
 &main();
 
 untie %TITLE_DBs;
@@ -118,7 +127,11 @@ sub main {
 	    my $factory = new TsubakiEngineFactory(\%opt);
 	    my $tsubaki = $factory->get_instance();
 
-	    my $docs = $tsubaki->search($query, $qid2df);
+	    my $docs = $tsubaki->search($query, $qid2df, {
+		flag_of_dpnd_use => $query->{flag_of_dpnd_use},
+		flag_of_dist_use => $query->{flag_of_dist_use},
+		DIST => $query->{DISTANCE},
+		MIN_DLENGTH => $query->{MIN_DLENGTH}});
 
 	    my $hitcount = scalar(@{$docs});
 	    # 検索結果の送信
@@ -127,31 +140,37 @@ sub main {
 		print $new_socket "END_OF_HITCOUNT\n";
 	    } else {
 		my $ret = [];
-		if ($hitcount < $query->{results}) {
-		    $ret = $docs;
-		} else {
-		    my $docs_size = $hitcount;
-		    my $results = ($query->{accuracy}) ? $query->{results} * $query->{accuracy} : $query->{results};
-		    $results += $query->{start};
-		    $results = $docs_size if ($docs_size < $results);
-		    for (my $rank = 0; $rank < $results; $rank++) {
-			if ($rank < $MAX_RANK_FOR_SETTING_URL_AND_TITLE) {
-			    my $did = sprintf("%09d", $docs->[$rank]{did});
-			    $docs->[$rank]{url} = $URL_DBs{$did};
-			    $docs->[$rank]{title} = $TITLE_DBs{$did};
-			    $docs->[$rank]{title} = 'no title.' unless ($docs->[$rank]{title});
-			}
-			push(@{$ret}, $docs->[$rank]);
+		my $docs_size = $hitcount;
+		my $results = ($query->{accuracy}) ? $query->{results} * $query->{accuracy} : $query->{results};
+		$results += $query->{start};
+		$results = $docs_size if ($docs_size < $results);
+		my $max_rank_of_getting_title_and_url = $results * $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE;
+		print $query->{results} . "=ret " . $query->{accuracy} . "=acc " . $results . " * " . $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE . " = " . $max_rank_of_getting_title_and_url . "*\n" if ($opt{verbose});
+
+		for (my $rank = 0; $rank < $results; $rank++) {
+		    if ($rank < $max_rank_of_getting_title_and_url) {
+			my $did = sprintf("%09d", $docs->[$rank]{did});
+			$docs->[$rank]{url} = $URL_DBs{$did};
+			$docs->[$rank]{title} = $TITLE_DBs{$did};
+			$docs->[$rank]{title} = 'no title.' unless ($docs->[$rank]{title});
+
+			print decode('utf8', $docs->[$rank]{title} . "=title, " . $docs->[$rank]{url} . "=url\n") if ($opt{verbose});
 		    }
+		    $docs->[$rank]{host} = $hostname;
+		    push(@{$ret}, $docs->[$rank]);
 		}
 
 		print $new_socket encode_base64($hitcount, "") , "\n";
 		print $new_socket "END_OF_HITCOUNT\n";
 
+		if ($opt{verbose}) {
+		    print Dumper($ret) . "\n";
+		    print "-----\n";
+		}
+
 		print $new_socket encode_base64(Storable::freeze($ret), "") , "\n";
 		print $new_socket "END\n";
 	    }
-
 	    $new_socket->close();
 	    exit;
 	}
