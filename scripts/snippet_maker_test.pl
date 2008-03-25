@@ -10,10 +10,12 @@ use Encode;
 my $TOOL_HOME = "$ENV{HOME}/local/bin";
 my $KNP_PATH = $TOOL_HOME;
 my $JUMAN_PATH = $TOOL_HOME;
-my $SYNDB_PATH = "$ENV{HOME}/tmp/SynGraph/syndb/i686";
+my $SYNDB_PATH = "$ENV{HOME}/cvs/SynGraph/syndb/i686";
 
 my (%opt);
-GetOptions(\%opt, 'query=s', 'z', 'syngraph', 'debug', 'encoding=s', 'discard_title');
+GetOptions(\%opt, 'query=s', 'z', 'syngraph', 'debug', 'encoding=s', 'discard_title', 'syndb=s');
+
+$SYNDB_PATH = $opt{syndb} if($opt{syndb});
 
 require SynGraph if ($opt{syngraph});
 $opt{encoding} = 'euc-jp' unless ($opt{encoding});
@@ -46,11 +48,11 @@ sub main {
 	}
     }
 
-    foreach my $id (@ARGV) {
-#	my $sentences = &SnippetMaker::extract_sentences_from_standard_format($query->{keywords}, $file, \%opt);
-	my $sentences = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $id, \%opt);
+    foreach my $file (@ARGV) {
+	my $sentences = &SnippetMaker::extract_sentences_from_standard_format($query->{keywords}, $file, \%opt);
+#	my $sentences = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $id, \%opt);
 	foreach my $s (@$sentences) {
-	    print $id . " ";
+	    print $file . " ";
 	    print "sid " . $s->{sid} . " ";
 	    print "score " . $s->{score} . " ";
 	    print "smoothed " . $s->{smoothed_score} . " ";
