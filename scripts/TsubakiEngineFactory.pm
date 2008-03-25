@@ -27,11 +27,12 @@ sub new {
 	    dlengthdbdir => $opts->{dlengthdbdir},
 	    skip_pos => $opts->{skippos},
 	    verbose => $opts->{verbose},
-	    store_verbose => $opts->{store_verbose},
-	    average_doc_length => defined $opts->{average_doc_length} ? $opts->{average_doc_length} : $AVE_DOC_LENGTH,
+	    average_doc_length => $AVE_DOC_LENGTH,
 	    doc_length_dbs => &load_doc_length_dbs($opts->{dlengthdbdir}, $opts->{dlengthdb_hash}),
 	    total_number_of_docs => $N,
 	    weight_dpnd_score => $opts->{weight_dpnd_score},
+	    dpnd_on => $opts->{dpnd_on},
+	    dist_on => $opts->{dist_on},
 	    show_speed => $opts->{show_speed}});
     } else {
 	# 通常検索用 TsubakiEngine を返す
@@ -42,12 +43,13 @@ sub new {
 	    dlengthdbdir => $opts->{dlengthdbdir},
 	    skip_pos => $opts->{skippos},
 	    verbose => $opts->{verbose},
-	    store_verbose => $opts->{store_verbose},
-	    average_doc_length => defined $opts->{average_doc_length} ? $opts->{average_doc_length} : $AVE_DOC_LENGTH,
+	    average_doc_length => $AVE_DOC_LENGTH,
 	    doc_length_dbs => &load_doc_length_dbs($opts->{dlengthdbdir}, $opts->{dlengthdb_hash}),
 	    total_number_of_docs => $N,
 	    weight_dpnd_score => $opts->{weight_dpnd_score},
-	    show_speed => $opts->{show_speed}});
+	    show_speed => $opts->{show_speed},
+	    dpnd_on => $opts->{dpnd_on},
+	    dist_on => $opts->{dist_on}});
     }
 
     bless $this;
@@ -72,7 +74,7 @@ sub load_doc_length_dbs {
 	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
 	}
 	else {
-	    $dlength_db = retrieve($fp) or die;
+	    $dlength_db = retrieve($fp) or die "$!: $fp\n";
 	}
 	push(@DOC_LENGTH_DBs, $dlength_db);
     }
