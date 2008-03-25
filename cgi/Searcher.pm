@@ -1,4 +1,4 @@
-package SearchEngine;
+package Searcher;
 
 # $Id$
 
@@ -6,6 +6,7 @@ use strict;
 use utf8;
 use Encode;
 use Time::HiRes;
+use SearchEngine;
 use Configure;
 
 our $CONFIG = Configure::get_instance();
@@ -36,7 +37,7 @@ sub DESTROY {
 }
 
 sub search {
-    my ($query, $items4log, $opt) = @_;
+    my ($this, $query, $items4log, $opt) = @_;
 
     # 検索
     my $se_obj = new SearchEngine($opt->{syngraph});
@@ -52,7 +53,7 @@ sub search {
     $opt->{'results'} = $hitcount if ($opt->{'results'} > $hitcount);
 
     # 検索サーバから得られた検索結果のマージ
-    my ($mg_result, $miss_title, $miss_url, $total_docs) = &merge_search_results($results, $size, $opt);
+    my ($mg_result, $miss_title, $miss_url, $total_docs) = $this->merge_search_results($results, $size, $opt);
     $size = (scalar(@{$mg_result}) < $size) ? scalar(@{$mg_result}) : $size;
 
     $items4log->{miss_title} = $miss_title;
@@ -61,7 +62,7 @@ sub search {
 
     if ($opt->{snippet}) {
 	# 検索結果（表示分）についてスニペットを生成
-	&print_search_result($opt, $mg_result, $query, $opt->{'start'}, $size, $hitcount);
+	$this->get_snippets($opt, $mg_result, $query, $opt->{'start'}, $size, $hitcount);
     }
 
     return ($hitcount, $mg_result);
@@ -69,7 +70,7 @@ sub search {
 
 # 検索サーバから得られた検索結果のマージ
 sub merge_search_results {
-    my ($results, $size, $opt) = @_;
+    my ($this, $results, $size, $opt) = @_;
 
     my $num_of_merged_docs = 0;
     my @merged_result;
@@ -126,7 +127,7 @@ sub merge_search_results {
 	    if ($results->[$max][0]{url}) {
 		$url = $results->[$max][0]{url};
 	    } else {
-		$url = &get_url($did);
+		$url = $this->get_url($did);
 		$results->[$max][0]{url} = $url;
 		$miss_url++;
 	    }
@@ -139,14 +140,14 @@ sub merge_search_results {
 		my $title = '';
 		if ($prev->{score} - $results->[$max][0]{score_total} < 0.05) {
 		    if ($prev->{title} eq '') {
-			$prev->{title} = &get_title($prev->{did});
+			$prev->{title} = $this->get_title($prev->{did});
 			$miss_title++;
 		    }
 		    # タイトルの取得
 		    if ($results->[$max][0]{title}) {
 			$title = $results->[$max][0]{title};
 		    } else {
-			$title = &get_title($did);
+			$title = $this->get_title($did);
 			$results->[$max][0]{title} = $title;
 			$miss_title++;
 		    }
