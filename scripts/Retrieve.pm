@@ -45,11 +45,12 @@ sub new {
     for my $d (sort readdir(DIR)) {
 	# idx*.datというファイルを読み込む
 	next unless($d =~ /idx(.+?).$type.dat$/);
+	next if ($d =~ /^a_/);
 	my $NAME = $1;
 
 	## OFFSET(offset*.dat)を読み込み専用でtie
 	my $offset_fp = "$dir/offset$NAME.$type.cdb";
-	print STDERR "$host> loading offset database ($offset_fp)...\n" if ($this->{VERBOSE});
+	print STDERR "$host> loading offset database ($offset_fp)...\n" if ($this->{verbose});
 	tie %{$this->{OFFSET}[$fcnt][0]}, 'CDB_File', $offset_fp or die "$0: can't tie to $offset_fp $!\n";
 	my $suffix = 1;
 	while (-e "$offset_fp.$suffix") {
@@ -147,8 +148,8 @@ sub search_syngraph_test_for_new_format {
 		my %soeji2pos = ();
 		for (my $j = 0; $j < $ldf; $j++) {
 		    read($this->{IN}[$f_num], $buf, 4);
-		    my $did = unpack('L', $buf);
 		    $total_byte += 4;
+		    my $did = unpack('L', $buf);
 
 		    # 先の索引で検索された文書であれば登録（AND検索時）
 		    if (exists $already_retrieved_docs->{$did} || $add_flag > 0) {
@@ -158,6 +159,14 @@ sub search_syngraph_test_for_new_format {
 			$pos++;
 		    }
 		}
+
+#		seek($this->{IN}[$f_num], $ldf * 4, 1);
+#		$total_byte += ($ldf * 4);
+#  		for (my $j = 0; $j < $ldf; $j++) {
+#  		    read($this->{IN}[$f_num], $buf, 4);
+#  		    my $freq = unpack('f', $buf);
+#  		    print $freq . "=freq\n";
+#  		}
 
 		# 場所情報フィールドの長さ（バイト数）を取得
 		read($this->{IN}[$f_num], $buf, 4);
@@ -172,12 +181,12 @@ sub search_syngraph_test_for_new_format {
 		# 出現頻度の読み込み
 		my $soeji = 0;
 		# 場所情報フィールドの終了位置（バイト）を取得
-		my $end = $total_byte + $poss_size;
-		for (my $i = 0; $total_byte < $end; $i++) {
+		for (my $b = 0; $b < $poss_size;) {
 		    # 出現回数を読み込み
 		    read($this->{IN}[$f_num], $buf, 4);
 		    my $num_of_poss = unpack('L', $buf);
 		    $total_byte += 4;
+		    $b += 4;
 
 		    # AND検索によってはじかれた文書かどうかのチェック
 		    my $pos = $soeji2pos{$soeji};
@@ -190,33 +199,52 @@ sub search_syngraph_test_for_new_format {
 			$docs[$offset_j + $pos]->[3] = $total_byte;
 		    }
 		    # スキップ
-		    seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
-		    $total_byte += ($num_of_poss * 4);
+		    seek($this->{IN}[$f_num], $total_byte, 0);
+		    for (my $j = 0; $j < $num_of_poss; $j++) {
+			read($this->{IN}[$f_num], $buf, 4);
+			my $pp = unpack('L', $buf);
+			print "$total_byte $b / $poss_size " . $docs[$offset_j + $pos]->[0] . " $j / $num_of_poss: $pp\n" if ($this->{verbose});
+			$b += 4;
+			$total_byte += 4;
+		    }
+		    print "-----\n" if ($this->{verbose});
+
+# 		    seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
+# 		    $total_byte += ($num_of_poss * 4);
+# 		    $b += ($num_of_poss * 4);
 		    $soeji++;
 		}
 
 		$soeji = 0;
 		# 索引のスコアを取得
 		# スコア情報フィールドの終了位置（バイト）を取得
-		$end = $total_byte + $scores_size;
-		for (my $i = 0; $total_byte < $end; $i++) {
+		for (my $b = 0; $b < $scores_size;) {
 		    # 出現回数を読み込み
 		    read($this->{IN}[$f_num], $buf, 4);
 		    my $num_of_scores = unpack('L', $buf);
 		    $total_byte += 4;
+		    $b += 4;
+
 		    # AND検索によってはじかれた文書かどうかのチェック
 		    my $pos = $soeji2pos{$soeji};
-
 		    unless (defined $pos) {
 			# nothing to do.
 		    } else {
 			# スコア情報のオフセットを保存
 			$docs[$offset_j + $pos]->[4] = $total_byte;
 		    }
-		    # スキップ
-		    seek($this->{IN}[$f_num], $num_of_scores * 2, 1);
 
+		    # スキップ
+ 		    for (my $j = 0; $j < $num_of_scores; $j++) {
+ 			read($this->{IN}[$f_num], $buf, 2);
+ 			my $pp = unpack('S', $buf);
+ 			print "$total_byte $b / $scores_size " . $docs[$offset_j + $pos]->[0] . " $j / $num_of_scores: $pp\n" if ($this->{verbose});
+ 		    }
+ 		    print "=====\n" if ($this->{verbose});
+
+#		    seek($this->{IN}[$f_num], $num_of_scores * 2, 1);
 		    $total_byte += ($num_of_scores * 2);
+		    $b += ($num_of_scores * 2);
 		    $soeji++;
 		}
 
@@ -506,7 +534,7 @@ sub search_syngraph_with_position_dpnd {
 }   
 
 sub load_position {
-    my ($this, $f_num, $offset, $size_poss) = @_;
+    my ($this, $f_num, $offset, $size_poss, $opt) = @_;
 
     seek($this->{IN}[$f_num], $offset, 0);
     my $buf;
@@ -514,6 +542,7 @@ sub load_position {
     for (my $k = 0; $k < $size_poss; $k++) {
 	read($this->{IN}[$f_num], $buf, 4);
 	my $pos = unpack('L', $buf);
+	print $offset . "=offset " . $pos . "=pos\n" if ($opt->{verbose});
 	push(@pos_list, $pos);
     }
 
@@ -529,7 +558,7 @@ sub load_score {
     for (my $k = 0; $k < $size_poss; $k++) {
 	read($this->{IN}[$f_num], $buf, 2);
 	my $score = unpack('S', $buf);
-	push(@score_list, $score / 1000);
+	push(@score_list, $score);
     }
 
     return \@score_list;
@@ -607,7 +636,7 @@ sub search {
 		# 文書IDの読み込み
 		my $pos = 0;
 		my %soeji2pos = ();
-		# print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n";# if ($this->{VERBOSE});
+		# print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n";# if ($this->{verbose});
 		for (my $j = 0; $j < $ldf; $j++) {
 		    $total_byte += 4;
 		    read($this->{IN}[$f_num], $buf, 4);
@@ -802,7 +831,7 @@ sub search4syngraph2 {
 		    }
 
 		    my $did_idx = 0;
-		    # print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n";# if ($this->{VERBOSE});
+		    # print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n";# if ($this->{verbose});
 		    for (my $j = 0; $j < $ldf; $j++) {
 			read($this->{IN}[$f_num], $buf, 4);
 			my $did = unpack('L', $buf);
