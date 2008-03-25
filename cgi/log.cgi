@@ -9,38 +9,42 @@ use CGI::Carp qw(fatalsToBrowser);
 my @OPTs = ('query', 'start', 'results', 'logical_operator', 'dpnd', 'filter_simpages', 'only_hitcount', 'id', 'format');
 
 my $logfp = '/se_tmp/input.log';
-open(LOG, "tac $logfp | head -100 |");
-
+open(LOG, "tac $logfp | head -300 |");
+binmode(LOG, ':utf8');
 print header(-charset => 'utf-8');
 
 my $hostname = `hostname` ; chop($hostname);
 print "<H3>LOG on $hostname </H3>";
 print "<HR>";
 
-print "<TABLE style='border: 1px solid black;'>";
+print "<TABLE style='border: 1px solid black;' width=*>";
 my @ATTRS = ('dpnd', 'filter_simpages', 'force_dpnd', 'logical_operator', 'near', 'only_hitcount', 'query', 'results', 'start', 'syngraph', 'hitcount', 'time');
 
 print "<TR>";
 print "<TD style='border: 1px solid black;'>date</TD>";
-print "<TD style='border: 1px solid black;'>host</TD>";
 print "<TD style='border: 1px solid black;'>method</TD>";
 foreach my $attr (@ATTRS) {
-    print "<TD style='border: 1px solid black;'>$attr</TD>";
+    $attr =~ s/_/ /g;
+    if ($attr eq 'query') {
+	print "<TD style='border: 1px solid black;' width=50>$attr</TD>";
+    } else {
+	print "<TD style='border: 1px solid black;' width=5>$attr</TD>";
+    }
 }
 print "</TR>\n";
 
 while (<LOG>) {
-      my($date,$host,$method,$options) = split(/ /, $_);
+      my($date,$host,$method,@options) = split(/ /, $_);
 
       print "<TR>";
       print "<TD style='border: 1px solid black;'>$date</TD>";
-      print "<TD style='border: 1px solid black;'>$host</TD>";
       print "<TD style='border: 1px solid black;'>$method</TD>";
       my %opts = ();
-      foreach my $opt (split(/,/, $options)) {
+      foreach my $opt (split(/,/, join('　', @options))) {
 	  next if ($opt =~ /KEYS/);
 
 	  my($k, $v) = split(/=/, $opt);
+	  $v = sprintf ("%.3f", $v) if ($k eq 'time');
 	  $opts{$k} = $v;
       }
       foreach my $k (@ATTRS) {
