@@ -1,3 +1,99 @@
+2008-03-25  Keiji Shinzato  <shinzato@reed.kuee.kyoto-u.ac.jp>
+
+	* doc/manual.tex: updated.
+
+	* scripts/make_idx.pl:
+	オプションの追加(-ignore_yomi, -genkei)
+	Indexer.pmの変更に対応
+	$midashiを$midasiに変更
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	merge_docs()メソッドを修正
+
+	* scripts/TsubakiEngine4OrdinarySearch.pm:
+	dpnd_on, dist_on, MIN_DLENGTHオプションの追加
+	OKAPIのパラメタを変更
+	クエリの重みをスコア付けに利用
+	q2scoreにより各索引のスコアをログに保存
+
+	* scripts/TsubakiEngine.pm:
+	requisiteフラグに対応
+	係り受け、近接の利用をオプション化
+	近接制約を語順に依存しないようにした
+
+	* scripts/Retrieve.pm:
+	SynGraphインデックスのフォーマット変更に対応(search_syngraph_test_new_format())
+
+	* scripts/Indexer.pm:
+	読み削除(ignore_yomi)，原形抽出(genkei)のオプションを追加
+	KNP::Resultから索引を抽出するようにした
+	連体形の正規化メソッドの追加(normalize_rentai)
+	indexing4syngraph中で係り受けPの扱いを誤るバグ修正
+
+	* scripts/snippet_maker_test.pl:
+	実行時の引数としてファイルパスを取るように変更
+
+	* scripts/tsubaki_test.pl:
+	検索結果の表示フォーマットを変更
+
+	* scripts/seek_test_syn.pl:
+	SynGraphインデックスのフォーマット変更に対応
+
+	* scripts/indexer-test.pl:
+	Indexer.pmの変更に対応
+
+	* scripts/TsubakiEngineFactory.pm:
+	dpnd_on, dist_onオプションに対応
+
+	* cgi/QueryParser.pm:
+	索引語の重み付け，削除を行うオプションの追加(trimming)
+	メンバ変数を追加(qid2df, gid2qids)
+	gdfdbを引くように変更
+	SynNodeのgdfを基本ノードのgdfにする
+
+	* cgi/QueryKeyword.pm:
+	KNP::Resultを使ってクエリを処理するように変更
+	to_string()メソッドのフォーマット変更
+	クエリを前処理するオプションの追加(trimming)
+	メンバ変数の追加(weight,NE,question_type,isBasicNode,fstring)
+
+	* scripts/tsubaki_server.pl:
+	タイトル, URLをローカルでひくようにした
+	係り受け，近接の利用をオプション化
+
+2008-03-24  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	extract_sentences_from_content()メソッドの追加．
+
+2008-03-15  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: add use Configure.
+
+	* scripts/update-dfdb.sh: small changes.
+
+	* scripts/merge_files.perl: move to Utils/scripts
+
+	* scripts/update-dfdb.sh: make-df-db.perlを使うように変更.
+
+	* scripts/merge_files.perl, scripts/cdb2txt.perl, scripts/update-dfdb.sh:
+	added.
+
+2008-03-15  Tomohide Shibata  <shibata@reed.kuee.kyoto-u.ac.jp>
+
+	* cgi/Configure.pm:
+	$CONFIG_FILE_PATHを自分と同じディレクトリ以下にあるものを指すように変更
+
+2008-03-13  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure: Change default values.
+
+	* cgi/query-parser-test.perl: added.
+
+	* ChangeLog: updated.
+
+	* cgi/QueryParser.pm: SynGraphを必要時にだけnewするように変更.
+
 2008-03-13  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/QueryParser.pm:
