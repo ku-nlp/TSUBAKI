@@ -11,6 +11,7 @@ use TsubakiEngineFactory;
 use Time::HiRes;
 use Data::Dumper;
 use CDB_File;
+use Configure;
 
 binmode(STDOUT, ':encoding(euc-jp)');
 binmode(STDERR, ':encoding(euc-jp)');
@@ -28,6 +29,7 @@ my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
 
 sub init {
+    print STDERR "loading dfdb files... " if ($opt{verbose});
     my $start_time = Time::HiRes::time;
     opendir(DIR, $opt{dfdbdir}) or die;
     foreach my $cdbf (readdir(DIR)) {
@@ -47,26 +49,26 @@ sub init {
     if ($opt{show_speed}) {
 	printf ("@@@ %.4f sec. dfdb loading.\n", $conduct_time);
     }
+    print STDERR "done.\n" if ($opt{verbose});
 }
+
+my $CONFIG = Configure::get_instance();
 
 &main();
 
 sub main {
-    &init();
+    # &init();
 
-    my $syngraph_option = {relation => 1, antonym => 1};
-    $syngraph_option->{hypocut_attachnode} = $opt{hypocut} ? $opt{hypocut} : 9;
-
+    my $DFDB_DIR = ($opt{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
     my $q_parser = new QueryParser({
-	KNP_PATH => "/usr/local/bin",
-	JUMAN_PATH => "/usr/local/bin",
-	KNP_RCFILE => "$ENV{HOME}/novel/tools/080215/etc/knprc",
-	SYNDB_PATH => "$ENV{HOME}/cvs/SynGraph/syndb/i686",
-	KNP_OPTIONS => ['-dpnd','-postprocess','-tab'],
-	SYNGRAPH_OPTION => $syngraph_option,
-	DFDB_DIR => $opt{dfdbdir},
-	SHOW_SPEED => $opt{show_speed}
-    });
+	KNP_PATH => $CONFIG->{KNP_PATH},
+	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
+	KNP_RCFILE => $CONFIG->{KNP_RCFILE},
+	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
+	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS},
+	DFDB_DIR => $DFDB_DIR,
+	SHOW_SPEED => $opt{show_speed},
+	verbose => $opt{verbose} });
 
     # logical_cond_qk : クエリ間の論理演算
     my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
