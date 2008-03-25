@@ -350,7 +350,7 @@ sub print_search_result {
     }
 
     my $sni_obj = new SnippetMakerAgent();
-    $sni_obj->create_snippets($query, $query->{dids}, {discard_title => 0, syngraph => $params->{'syngraph'}, window_size => 5});
+    $sni_obj->create_snippets($query, $query->{dids}, {discard_title => 1, syngraph => $params->{'syngraph'}, window_size => 5});
     my $did2snippets = $sni_obj->get_decorated_snippets_for_each_did($query, $query->{color});
 
     for (my $rank = $from; $rank < $end; $rank++) {
