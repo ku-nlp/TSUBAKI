@@ -11,6 +11,7 @@ use utf8;
 use Encode;
 use Getopt::Long;
 use Indexer;
+use KNP::Result;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -18,9 +19,12 @@ use Data::Dumper;
 }
 $Data::Dumper::Useperl = 1;
 
+binmode(STDOUT, ":encoding(euc-jp)");
+binmode(STDERR, ":encoding(euc-jp)");
+
 
 my (%opt);
-GetOptions(\%opt, 'in=s', 'out=s', 'jmn', 'knp', 'syn', 'position', 'z', 'compress', 'file=s', 'verbose', 'help');
+GetOptions(\%opt, 'in=s', 'out=s', 'jmn', 'knp', 'syn', 'position', 'z', 'compress', 'file=s', 'ignore_yomi', 'genkei', 'verbose', 'help');
 
 my $TAG_NAME = "Juman";
 $TAG_NAME = "Knp" if ($opt{knp});
@@ -38,7 +42,10 @@ sub main {
 	&usage();
     }
     die "Not found! $opt{in}\n" unless (-e $opt{in} || -e $opt{file});
-    die "Not found! $opt{out}\n" unless (-e $opt{out});
+    unless (-e $opt{out}) {
+	print STDERR "Create directory: $opt{out}\n";
+	mkdir $opt{out};
+    }
     
     if ($opt{file}) {
 	die "Not xml file.\n" if ($opt{file} !~ /([^\/]+)\.xml/);
@@ -101,19 +108,22 @@ sub extract_indice {
     my $flag = 0;
     my $result;
     my %indice = ();
-    my $indexer = new Indexer();
+    my $indexer = new Indexer({ignore_yomi => $opt{ignore_yomi},
+			      without_using_repname => $opt{genkei}
+			      });
     while (<$READER>) {
 	if (/\<(?:S|Title).*? Id="(\d+)"/) {
 	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if ($opt{verbose});
 	    $sid = $1;
 	}
-	    
+
 	if (/^\]\]\><\/Annotation>/) {
 	    if ($opt{syn}) {
 		$indice{$sid} = $indexer->makeIndexfromSynGraph4Indexing($result);
 	    }
 	    elsif ($opt{knp}) {
-		$indice{$sid} = $indexer->makeIndexfromKnpResult($result);
+		my $knpresult = new KNP::Result($result);
+		$indice{$sid} = $indexer->makeIndexFromKNPResult($knpresult, \%opt);
 	    }
 	    else {
 		$indice{$sid} = $indexer->makeIndexfromJumanResult($result);
@@ -132,14 +142,14 @@ sub extract_indice {
     my %ret;
     foreach my $sid (sort {$a <=> $b} keys %indice) {
 	foreach my $index (@{$indice{$sid}}) {
-	    my $midashi = $index->{midashi};
-	    $ret{$midashi}->{sids}{$sid} = 1;
+	    my $midasi = $index->{midasi};
+	    $ret{$midasi}->{sids}{$sid} = 1;
 	    if ($opt{syn}) {
-		push(@{$ret{$midashi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
-		$ret{$midashi}->{score} += $index->{score};
+		push(@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
+		$ret{$midasi}->{score} += $index->{score};
 	    } else {
-		push(@{$ret{$midashi}->{poss}}, @{$index->{absolute_pos}});
-		$ret{$midashi}->{freq} += $index->{freq};
+		push(@{$ret{$midasi}->{poss}}, @{$index->{absolute_pos}});
+		$ret{$midasi}->{freq} += $index->{freq};
 	    }
 	}
     }
@@ -150,9 +160,9 @@ sub extract_indice {
 sub output_syngraph_indice_wo_position {
     my ($fh, $did, $indice) = @_;
 
-    foreach my $midashi (sort {$a cmp $b} keys %$indice) {
-	my $score = &round($indice->{$midashi}{score});
-	printf $fh ("%s %d:%s\n", $midashi, $did, $score);
+    foreach my $midasi (sort {$a cmp $b} keys %$indice) {
+	my $score = &round($indice->{$midasi}{score});
+	printf $fh ("%s %d:%s\n", $midasi, $did, $score);
     }
 }
 
@@ -160,36 +170,36 @@ sub output_syngraph_indice_wo_position {
 sub output_syngraph_indice_with_position {
     my ($fh, $did, $indice) = @_;
 
-    foreach my $midashi (sort {$a cmp $b} keys %$indice) {
-	my $score = &round($indice->{$midashi}{score});
-	my $sids_str = join(',', sort {$a <=> $b} keys %{$indice->{$midashi}{sids}});
+    foreach my $midasi (sort {$a cmp $b} keys %$indice) {
+	my $score = &round($indice->{$midasi}{score});
+	my $sids_str = join(',', sort {$a <=> $b} keys %{$indice->{$midasi}{sids}});
 	my $pos_scr_str;
-	foreach my $pos_score (sort {$a->{pos} <=> $b->{pos}} @{$indice->{$midashi}{pos_score}}) {
+	foreach my $pos_score (sort {$a->{pos} <=> $b->{pos}} @{$indice->{$midasi}{pos_score}}) {
 	    my $pos = $pos_score->{pos};
 	    my $scr = &round($pos_score->{score});
 	    $pos_scr_str .= $pos . "&" . $scr . ",";
 	}
 	chop($pos_scr_str);
 
-	printf $fh ("%s %d:%s@%s#%s\n", $midashi, $did, $score, $sids_str, $pos_scr_str);
+	printf $fh ("%s %d:%s@%s#%s\n", $midasi, $did, $score, $sids_str, $pos_scr_str);
     }
 }
 
 sub output_with_position {
     my ($fh, $did, $indice) = @_;
 
-    foreach my $midashi (sort {$a cmp $b} keys %{$indice}) {
-	my $freq = $indice->{$midashi}{freq};
-	my $sid_str = join(',', sort {$a <=> $b} keys %{$indice->{$midashi}{sids}});
-	my $pos_str = join(',', @{$indice->{$midashi}{poss}});
+    foreach my $midasi (sort {$a cmp $b} keys %{$indice}) {
+	my $freq = $indice->{$midasi}{freq};
+	my $sid_str = join(',', sort {$a <=> $b} keys %{$indice->{$midasi}{sids}});
+	my $pos_str = join(',', @{$indice->{$midasi}{poss}});
 
 	if ($freq == int($freq)) {
-	    printf $fh ("%s %d:%s@%s#%s\n", $midashi, $did, $freq, $sid_str, $pos_str);
+	    printf $fh ("%s %d:%s@%s#%s\n", $midasi, $did, $freq, $sid_str, $pos_str);
 	} else {
 	    if ($freq =~ /\.\d{4,}$/) {
-		printf $fh ("%s %d:%.4f@%s#%s\n", $midashi, $did, $freq, $sid_str, $pos_str);
+		printf $fh ("%s %d:%.4f@%s#%s\n", $midasi, $did, $freq, $sid_str, $pos_str);
 	    } else {
-		printf $fh ("%s %d:%s@%s#%s\n", $midashi, $did, $freq, $sid_str, $pos_str);
+		printf $fh ("%s %d:%s@%s#%s\n", $midasi, $did, $freq, $sid_str, $pos_str);
 	    }
 	}
     }
@@ -198,16 +208,16 @@ sub output_with_position {
 sub output_wo_position {
     my ($fh, $did, $indice) = @_;
 
-    foreach my $midashi (sort {$a cmp $b} keys %{$indice}) {
-	my $freq = $indice->{$midashi}{freq};
+    foreach my $midasi (sort {$a cmp $b} keys %{$indice}) {
+	my $freq = $indice->{$midasi}{freq};
 
 	if ($freq == int($freq)) {
-	    printf $fh ("%s %d:%s\n", $midashi, $did, $freq);
+	    printf $fh ("%s %d:%s\n", $midasi, $did, $freq);
 	} else {
 	    if ($freq =~ /\.\d{4,}$/) {
-		printf $fh ("%s %d:%.4f\n", $midashi, $did, $freq);
+		printf $fh ("%s %d:%.4f\n", $midasi, $did, $freq);
 	    } else {
-		printf $fh ("%s %d:%s\n", $midashi, $did, $freq);
+		printf $fh ("%s %d:%s\n", $midasi, $did, $freq);
 	    }
 	}
     }
