@@ -16,12 +16,12 @@ use Encode qw(from_to encode decode);
 use utf8;
 use OKAPI;
 use Devel::Size qw/size total_size/;
-# use Data::Dumper;
-# {
-#     package Data::Dumper;
-#     sub qquote { return shift; }
-# }
-# $Data::Dumper::Useperl = 1;
+use Data::Dumper;
+{
+    package Data::Dumper;
+     sub qquote { return shift; }
+}
+$Data::Dumper::Useperl = 1;
 
 
 ##################################################################
@@ -82,7 +82,7 @@ sub DESTROY {
 
 # 検索を行うメソッド
 sub search {
-    my ($this, $query, $qid2df) = @_;
+    my ($this, $query, $qid2df, $opt) = @_;
 
     my $start_time = Time::HiRes::time;
     # 検索
@@ -96,7 +96,7 @@ sub search {
     }
 
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $qid2df);
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight});
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
@@ -179,28 +179,72 @@ sub retrieve_documents {
 
     my $alldocs_word = [];
     my $alldocs_dpnd = [];
+    my $requisite_docs = undef;
     my $doc_buff = {};
-    my $add_flag = 1;
+    # requisiteである単語を含む文書の検索
+    foreach my $keyword (@{$query->{keywords}}) {
+	my $docs_word = [];
+	my $j = 0;
+	my $add_flag = 1;
+	my $requisite_flag = 0;
+
+	# 文書頻度の低い単語から検索する
+#	print encode('euc-jp', Dumper($keyword->{dpnds}));
+	next unless (defined $keyword->{dpnds});
+	foreach my $reps_of_word (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{dpnds}}) {
+	    my %idx2qid = ();
+	    my @results = ();
+	    for (my $i = 0; $i < scalar(@{$reps_of_word}); $i++) {
+		# rep は構造体
+		# rep = {qid, string}
+		my $rep = $reps_of_word->[$i];
+		next unless ($rep->{requisite});
+
+		$requisite_flag = 1;
+		# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
+		$results[$j] = $this->{dpnd_retriever}->search($rep, $doc_buff, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+
+		$idx2qid{$j++} = $rep->{qid};
+		$add_flag = 0;
+
+		my $docs = $this->merge_search_result(\@results, \%idx2qid);
+
+		# 各語について検索された結果を納めた配列に push
+		push(@{$docs_word}, $docs);
+	    }
+	}
+
+	if ($requisite_flag > 0) {
+	    $docs_word = &intersect($docs_word);
+	    $requisite_docs = &serialize($docs_word);
+	}
+    }
+
+    ##########
+    # 通常検索
+    ##########
+
     foreach my $keyword (@{$query->{keywords}}) {
 	my $docs_word = [];
 	my $docs_dpnd = [];
 
 	# keyword中の単語を含む文書の検索
 	# 文書頻度の低い単語から検索する
+ 	my $add_flag = 1;
 	foreach my $reps_of_word (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{words}}) {
 	    if ($this->{verbose}) {
 		foreach my $rep_of_word (@{$reps_of_word}) {
 		    foreach my $k (keys %{$rep_of_word}) {
-			print $k . " " . encode('euc-jp', $rep_of_word->{$k}) . "\n";
+			print $k . " " . $rep_of_word->{$k} . "\n";
 		    }
 		}
 	    }
 
 	    # バイナリファイルから文書の取得
  	    my $docs = $this->retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+
  	    print $add_flag . "=aflag\n" if ($this->{verbose}) ;
  	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
-
  	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
 
  	    # 各語について検索された結果を納めた配列に push
@@ -213,13 +257,14 @@ sub retrieve_documents {
 	    if ($this->{verbose}) {
 		foreach my $rep_of_dpnd (@{$reps_of_dpnd}) {
 		    foreach my $k (keys %{$rep_of_dpnd}) {
-			print $k . " " . encode('euc-jp', $rep_of_dpnd->{$k}) ."\n";
+			print $k . " " . $rep_of_dpnd->{$k} ."\n";
 		    }
 		}
 	    }
 
 	    # バイナリファイルから文書の取得
 	    my $docs = $this->retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, 1, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
+
 #	    print $add_flag . "=aflag\n" if ($this->{verbose});
 #	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
 
@@ -237,7 +282,7 @@ sub retrieve_documents {
 	} else {
 	    # 検索キーワード中の単語間のANDをとる
 	    $docs_word = &intersect($docs_word);
-	    $docs_dpnd = &intersect($docs_dpnd); # ★★★★★ intersect
+	    # $docs_dpnd = &intersect($docs_dpnd); # ★★★★★ intersect
 	    # ★ 整理する
 	    
 	    # 係り受け制約の適用
@@ -246,12 +291,37 @@ sub retrieve_documents {
 	    }
 	    
 	    # 近接制約の適用
-	    $docs_word = &filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
+	    if ($keyword->{near} > 0) {
+		if ($keyword->{syngraph}) {
+		    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
+		} else {
+		    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
+		}
+	    }
 
 	    # 検索キーワードについて収集された文書をマージ
 	    push(@{$alldocs_word}, &serialize($docs_word));
 	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
 	}
+    }
+
+    if (defined $requisite_docs) {
+	my %dids = ();
+	foreach my $e (@$requisite_docs) {
+	    $dids{$e->{did}} = 1;
+	}
+
+	my @new_alldocs_word = ();
+	foreach my $docs (@$alldocs_word) {
+	    push(@new_alldocs_word, []);
+	    foreach my $d (@$docs) {
+		next unless (exists $dids{$d->{did}});
+
+		push(@{$new_alldocs_word[-1]}, $d);
+	    }
+	}
+
+	$alldocs_word =  \@new_alldocs_word;
     }
 
     # 論理条件にしたがい検索語ごとに収集された文書のマージ
@@ -353,8 +423,8 @@ sub intersect {
 }
 
 # 近接条件の適用
-sub filter_by_NEAR_constraint {
-    my ($docs, $near, $sentence_flag) = @_;
+sub filter_by_NEAR_constraint_strict {
+    my ($this, $docs, $near, $sentence_flag) = @_;
 
     return $docs if ($near < 0);
 
@@ -378,19 +448,41 @@ sub filter_by_NEAR_constraint {
 	# クエリ中の単語の出現位置リストを作成
 	for (my $q = 0; $q < scalar(@{$docs}); $q++) {
 	    my $qid_freq_size = scalar(@{$docs->[$q][$d]->{qid_freq}});
+
 	    if ($qid_freq_size < 2) {
-		foreach my $p (@{$docs->[$q][$d]->{qid_freq}[0]{pos}}) {
-		    push(@{$poslist[$q]}, $p);
+		my $fnum = $docs->[$q][$d]->{qid_freq}[0]{fnum};
+		my $nums = $docs->[$q][$d]->{qid_freq}[0]{nums};
+		my $offset = $docs->[$q][$d]->{qid_freq}[0]{offset};
+		unless (defined $offset) {
+		    $poslist[$q] = [];
+		} else {
+		    my $poss = $this->{word_retriever}->load_position($fnum, $offset, $nums);
+		    foreach my $p (@$poss) {
+			push(@{$poslist[$q]}, $p);
+		    }
 		}
-	    } else {
+	    }
+	    # 代表表記化により複数個にわかれたものの出現位置 or 出現文IDのマージ
+	    else {
 		my %buff = ();
 		for (my $j = 0; $j < $qid_freq_size; $j++) {
-		    foreach my $p (@{$docs->[$q][$d]->{qid_freq}[$j]{pos}}) {
+		    my $fnum = $docs->[$q][$d]->{qid_freq}[$j]{fnum};
+		    my $nums = $docs->[$q][$d]->{qid_freq}[$j]{nums};
+		    my $offset = $docs->[$q][$d]->{qid_freq}[$j]{offset};
+		    next unless (defined $offset);
+
+		    my $poss = $this->{word_retriever}->load_position($fnum, $offset, $nums);
+		    foreach my $p (@$poss) {
 			$buff{$p} = 1;
 		    }
 		}
-		foreach my $p (keys %buff) {
-		    push(@{$poslist[$q]}, $p);
+
+		if (scalar(keys %buff) > 0) {
+		    foreach my $p (sort {$a <=> $b} keys %buff) {
+			push(@{$poslist[$q]}, $p);
+		    }
+		} else {
+		    $poslist[$q] = [];
 		}
 	    }
 	}
@@ -452,7 +544,129 @@ sub filter_by_NEAR_constraint {
     return \@results;
 }
 
-# 係り受け条件の適用
+# 近接条件の適用
+sub filter_by_NEAR_constraint {
+    my ($this, $docs, $near, $sentence_flag) = @_;
+
+    return $docs if ($near < 0);
+
+    # 初期化 & 空リストのチェック
+    my @results = ();
+    my $flag = 0;
+    for (my $i = 0; $i < scalar(@{$docs}); $i++) {
+	$flag = 1 unless (defined($docs->[$i]));
+	$flag = 2 if (scalar(@{$docs->[$i]}) < 1);
+
+	$results[$i] = [];
+    }
+    return \@results if ($flag > 0 || scalar(@{$docs}) < 1);
+
+    # 単語の（クエリ中での）出現順序でソート
+    @{$docs} = sort{$a->[0]{qid_freq}[0]->{qid} <=> $b->[0]{qid_freq}[0]->{qid}} @{$docs};
+
+    for (my $d = 0; $d < scalar(@{$docs->[0]}); $d++) {
+	my $did = $docs->[0][$d]->{did};
+	my @poslist = ();
+	# クエリ中の単語の出現位置リストを作成
+	for (my $q = 0; $q < scalar(@{$docs}); $q++) {
+	    my $qid_freq_size = scalar(@{$docs->[$q][$d]->{qid_freq}});
+
+	    if ($qid_freq_size < 2) {
+		my $fnum = $docs->[$q][$d]->{qid_freq}[0]{fnum};
+		my $nums = $docs->[$q][$d]->{qid_freq}[0]{nums};
+		my $offset = $docs->[$q][$d]->{qid_freq}[0]{offset};
+		unless (defined $offset) {
+		    $poslist[$q] = [];
+		} else {
+		    my $poss = $this->{word_retriever}->load_position($fnum, $offset, $nums);
+		    foreach my $p (@$poss) {
+			push(@{$poslist[$q]}, $p);
+		    }
+		}
+	    }
+	    # 代表表記化により複数個にわかれたものの出現位置 or 出現文IDのマージ
+	    else {
+		my %buff = ();
+		for (my $j = 0; $j < $qid_freq_size; $j++) {
+		    my $fnum = $docs->[$q][$d]->{qid_freq}[$j]{fnum};
+		    my $nums = $docs->[$q][$d]->{qid_freq}[$j]{nums};
+		    my $offset = $docs->[$q][$d]->{qid_freq}[$j]{offset};
+		    next unless (defined $offset);
+
+		    my $poss = $this->{word_retriever}->load_position($fnum, $offset, $nums);
+		    foreach my $p (@$poss) {
+			$buff{$p} = 1;
+		    }
+		}
+
+		if (scalar(keys %buff) > 0) {
+		    foreach my $p (sort {$a <=> $b} keys %buff) {
+			push(@{$poslist[$q]}, $p);
+		    }
+		} else {
+		    $poslist[$q] = [];
+		}
+	    }
+	}
+
+	my $q_num = scalar(@poslist);
+	my @serialized_poslist = ();
+
+	#####################################################
+	# クエリ中の単語の語順にフリーな近接制約の適用
+	#  1. 各単語の出現位置をマージ
+	#  2. 各単語が$near語以内に現れているかどうかチェック
+	#####################################################
+
+	# 1. 各単語の出現位置をマージ
+	while (1) {
+	    my $min_qk = 0;
+	    my $flag = -1;
+	    for (my $q = 0; $q < $q_num; $q++) {
+		next if (!defined scalar(@{$poslist[$q]}) || scalar(@{$poslist[$q]}) < 1);
+		if ($flag < 0) {
+		    $min_qk = $q;
+		    $flag = 1;
+		} else {
+		    $min_qk = $q if ($poslist[$q][0] < $poslist[$min_qk][0]);
+		}
+	    }
+	    last if ($flag < 0);
+
+	    my $pos = shift(@{$poslist[$min_qk]});
+	    push(@serialized_poslist, {pos => $pos, qk => $min_qk});
+	}
+
+	#  2. 各単語が$near語以内に現れているかどうかチェック
+	my $flag = -1;
+	for (my $i = 0; $i < scalar(@serialized_poslist); $i++) {
+	    my %qk_buf = ();
+	    my $pos = $serialized_poslist[$i]->{pos};
+	    for (my $j = $i + 1; $j < scalar(@serialized_poslist); $j++) {
+		if ($serialized_poslist[$j]->{pos} - $pos < $near) {
+		    $qk_buf{$serialized_poslist[$i]->{qk}}++;
+		    $qk_buf{$serialized_poslist[$j]->{qk}}++;
+		} else {
+		    last;
+		}
+	    }
+	    if (scalar(keys %qk_buf) > $q_num - 1) {
+		$flag = 1;
+		last;
+	    }
+	}
+
+	#  $flag > 0 ならば$near語以内にクエリ内の語が出現
+	if ($flag > 0) {
+	    for (my $q = 0; $q < scalar(@{$docs}); $q++) {
+		push(@{$results[$q]}, $docs->[$q][$d]);
+	    }
+	}
+    }
+
+    return \@results;
+}
+
 sub filter_by_force_dpnd_constraint {
     my ($this, $docs_word, $docs_dpnd) = @_;
 
