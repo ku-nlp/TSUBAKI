@@ -1,6 +1,11 @@
-2008-03-25  Keiji Shinzato  <shinzato@reed.kuee.kyoto-u.ac.jp>
+2008-03-25  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
 
-	* doc/manual.tex: updated.
+	* cgi/index.cgi:
+	スニペット生成時にタイトルを含めないように変更.
+	dfのロードをQueryParser.pmに移行．
+
+	* cgi/SearchEngine.pm:
+	dfのロードをQueryParser.pmに移行．
 
 	* scripts/make_idx.pl:
 	オプションの追加(-ignore_yomi, -genkei)
@@ -35,6 +40,7 @@
 
 	* scripts/tsubaki_test.pl:
 	検索結果の表示フォーマットを変更
+	QueryParserをnewする際の引数をConfigure.pmから取得するように変更．
 
 	* scripts/seek_test_syn.pl:
 	SynGraphインデックスのフォーマット変更に対応
