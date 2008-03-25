@@ -10,8 +10,17 @@ use MIME::Base64;
 use IO::Socket;
 use Storable;
 use SnippetMaker;
+use Data::Dumper;
+{
+    package Data::Dumper;
+    sub qquote { return shift; }
+}
+$Data::Dumper::Useperl = 1;
+
+binmode(STDOUT, ":encoding(euc-jp)");
 
 my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
+my $HOSTNAME = `hostname` ; chop($HOSTNAME);
 
 my (%opt);
 GetOptions(\%opt, 'help', 'port=s', 'verbose');
@@ -29,6 +38,7 @@ sub main {
 	LocalPort => $opt{port},
 	Listen    => SOMAXCONN,
 	Proto     => 'tcp',
+	Timeout   => 300,
 	Reuse     => 1);
 
     unless ($listening_socket) {
@@ -87,11 +97,13 @@ sub main {
 	    print "begin with snippet creation\n" if ($opt{verbose});
 	    foreach my $did (@{$dids}) {
 		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
+		# print Dumper($result{$did}) . "\n" if ($HOSTNAME =~ /nlpc33/);
 	    }
-	    print "finish of snippet creation\n" if ($opt{verbose});
+	    print "finish of snippet creation @ $HOSTNAME\n" if ($opt{verbose});
 
 	    # スニペッツの送信
 	    print $new_socket encode_base64(Storable::freeze(\%result), "") , "\n";
+	    print $new_socket "HOSTNAME $HOSTNAME\n";
 	    print $new_socket "END\n";
 	    
 	    $new_socket->close();
