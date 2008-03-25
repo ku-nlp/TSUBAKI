@@ -16,7 +16,9 @@ use Configure;
 # コンストラクタ
 sub new {
     my ($class, $opts) = @_;
+    print STDERR "constructing QueryParser object... " if ($opts->{verbose});
     my $this = {
+	DFDB_DIR => $opts->{DFDB_DIR},
 	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
 		       -Rcfile => "$opts->{KNP_RCFILE}",
@@ -57,6 +59,7 @@ sub new {
 	$this->{INDEXER} = new Indexer({ STOP_WORDS => \%stop_words });
     }
 
+    print STDERR "done.\n" if ($opts->{verbose});
     bless $this;
 }
 
@@ -137,9 +140,9 @@ sub parse {
 
 	my $q;
 	if ($opt->{syngraph} > 0) {
-	    $q= new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, verbose => $opt->{verbose}});
 	} else {
-	    $q= new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, verbose => $opt->{verbose}});
 	}
 
 	push(@qks, $q);
@@ -557,9 +560,9 @@ sub load_DFDBs {
 
 	    my $fp = "$dbdir/$cdbf";
 	    tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-	    if (index($cdbf, 'dpnd') > 0) {
+	    if (index($cdbf, 'dpnd') > -1) {
 		push(@DF_DPND_DBs, \%dfdb);
-	    } elsif (index($cdbf, 'word') > 0) {
+	    } elsif (index($cdbf, 'word') > -1) {
 		push(@DF_WORD_DBs, \%dfdb);
 	    }
 	}
