@@ -50,6 +50,7 @@
 	メンバ変数を追加(qid2df, gid2qids)
 	gdfdbを引くように変更
 	SynNodeのgdfを基本ノードのgdfにする
+	DFDB_DIRが指定されていない場合は空の配列ポインタを返すように変更
 
 	* cgi/QueryKeyword.pm:
 	KNP::Resultを使ってクエリを処理するように変更
