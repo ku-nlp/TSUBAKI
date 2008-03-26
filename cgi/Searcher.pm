@@ -37,16 +37,30 @@ sub DESTROY {
 }
 
 sub search {
-    my ($this, $query, $items4log, $opt) = @_;
+    my ($this, $query, $logger, $opt) = @_;
 
-    # 検索
+    ####################################
+    # 検索スレーブサーバーへの問い合わせ
+    ####################################
+
+    # 時間の測定開始
+    $logger->clearTimer();
+
     my $se_obj = new SearchEngine($opt->{syngraph});
-    my $start_time = Time::HiRes::time;
     my ($hitcount, $results) = $se_obj->search($query);
-    $items4log->{hitcount} = $hitcount;
-    $items4log->{search_time} = Time::HiRes::time - $start_time; # 検索に要した時間を取得
+
+    # 検索に要した時間をロギング
+    $logger->setTimeAs('search', '%.3f');
+    # ヒット件数をロギング
+    $logger->setParameterAs('hitcount', $hitcount);
 
     return (0, undef) if ($hitcount < 1);
+
+
+
+    ################################################
+    # 検索スレーブサーバから得られた検索結果のマージ
+    ################################################
 
     my $size = $opt->{'start'} + $opt->{'results'};
     $size = $hitcount if ($hitcount < $size);
@@ -56,16 +70,29 @@ sub search {
     my ($mg_result, $miss_title, $miss_url, $total_docs) = $this->merge_search_results($results, $size, $opt);
     $size = (scalar(@{$mg_result}) < $size) ? scalar(@{$mg_result}) : $size;
 
-    $items4log->{miss_title} = $miss_title;
-    $items4log->{miss_url} = $miss_url;
-    $items4log->{total_docs} = $total_docs;
+    # マージに要した時間をロギング
+    $logger->setTimeAs('merge', '%.3f');
+
+    # DBの参照回数，検索結果生成に要した文書数をロギング
+    $logger->setParameterAs('miss_title', $miss_title);
+    $logger->setParameterAs('miss_url', $miss_url);
+    $logger->setParameterAs('total_docs', $total_docs);
+
+
+
+    ############################
+    # 必要ならばスニペットを生成
+    ############################
 
     if ($opt->{snippet}) {
 	# 検索結果（表示分）についてスニペットを生成
 	$this->get_snippets($opt, $mg_result, $query, $opt->{'start'}, $size, $hitcount);
+
+	# スニペット生成に要した時間をロギング
+	$logger->setTimeAs('snippet_creation', '%.3f');
     }
 
-    return ($hitcount, $mg_result);
+    return ($hitcount, $mg_result, $size);
 }
 
 # 検索サーバから得られた検索結果のマージ
