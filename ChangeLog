@@ -1,3 +1,11 @@
+2008-03-26  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+
+	* cgi/Searcher.pm:
+	Logger.pmを使ってログをとるように変更．
+
+	* cgi/index.cgi:
+	api.cgiと共通する処理を他のモジュール(RequestParser.pm, Searcher.pm, Logger.pm, Renderer.pm)に委譲．
+
 2008-03-25  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
 
 	* cgi/index.cgi:
