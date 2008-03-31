@@ -1,6 +1,6 @@
 package QueryParser;
 
-#$id$
+# $id:$
 
 # 検索クエリを内部形式に変換するクラス
 
@@ -13,15 +13,26 @@ use Indexer;
 use QueryKeyword;
 use Configure;
 
+
+
 # コンストラクタ
 sub new {
     my ($class, $opts) = @_;
+
     print STDERR "constructing QueryParser object... " if ($opts->{verbose});
+
+    my $CONFIG = Configure::get_instance();
+    # パラメータが指定されていなければデフォルト値としてCONFIGから値を取得
+    $opts->{KNP_PATH} = $CONFIG->{KNP_PATH} unless ($opts->{KNP_PATH});
+    $opts->{JUMAN_PATH} = $CONFIG->{JUMAN_PATH} unless ($opts->{JUMAN_PATH});
+    $opts->{KNP_RCFILE} = $CONFIG->{KNP_RCFILE} unless ($opts->{KNP_RCFILE});
+    $opts->{KNP_OPTIONS} = $CONFIG->{KNP_OPTIONS} unless ($opts->{KNP_OPTIONS});
+    $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
+
     my $this = {
-	DFDB_DIR => $opts->{DFDB_DIR},
 	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
-		       -Rcfile => "$opts->{KNP_RCFILE}",
+		       -Rcfile => $opts->{KNP_RCFILE},
 		       -JumanCommand => "$opts->{JUMAN_PATH}/juman"),
 	OPTIONS => {trimming => $opts->{QUERY_TRIMMING},
 		    jyushi => (),
