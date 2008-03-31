@@ -1,6 +1,8 @@
 #!/share09/home/skeiji/local/bin/perl
 #!/usr/bin/env perl
 
+# $id:$
+
 use strict;
 use utf8;
 use Encode;
@@ -75,24 +77,21 @@ sub parse_query {
     my ($params) = @_;
 
     my $DFDB_DIR = ($params->{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
-    my $q_parser = new QueryParser({
-	KNP_PATH => $CONFIG->{KNP_PATH},
-	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
-	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
-	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS},
-	DFDB_DIR => $DFDB_DIR });
-    $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
-    
+    my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR });
+
     # クエリの解析
     # logical_cond_qk: クエリ間の論理演算
     my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}});
+
     # 取得ページ数のセット
     $query->{results} = $params->{results};
+
     # 取得ページの精度をセット
     $query->{accuracy} = $params->{accuracy};
+
     # start をセット
     $query->{start} = $params->{start};
-    
+
     # 検索語にインターフェースより得られる検索制約を追加
     foreach my $qk (@{$query->{keywords}}) {
 	$qk->{force_dpnd} = 1 if ($params->{force_dpnd});
