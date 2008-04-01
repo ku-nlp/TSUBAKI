@@ -4,6 +4,7 @@ use strict;
 use Encode qw(encode decode from_to);
 use utf8;
 
+use KNP;
 use Indexer;
 use Data::Dumper;
 {
@@ -14,6 +15,7 @@ $Data::Dumper::Useperl = 1;
 
 
 
+my $SF_DIR_PREFFIX1 = "/data/xmls";
 my $SF_DIR_PREFFIX1 = "/data/sfs";
 my $SF_DIR_PREFFIX2 = "/data/sfs_w_syn";
 my $SF_DIR_PREFFIX3 = "/net2/nlpcf34/disk09/skeiji/sfs_w_syn";
@@ -84,7 +86,7 @@ sub extract_sentences_from_content {
 	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
-		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result) : $indexer->makeIndexFromKNPResult($result);
+		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result) : $indexer->makeIndexFromKNPResult(new KNP::Result($result));
 		my ($num_of_queries, $num_of_types) = &calculate_score($query, $indice, $opt);
 
 		my $sentence = {
