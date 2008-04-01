@@ -27,13 +27,16 @@ sub DESTROY {}
 
 # ログの保存
 sub close {
-    my ($this) = @_;
+    my ($this, $file) = @_;
     my @keys = keys %{$this->{log}};
     if (scalar(@keys) > 0) {
-	my $CONFIG = Configure::get_instance();
+	unless ($file) {
+	    my $CONFIG = Configure::get_instance();
+	    $file = $CONFIG->{LOG_FILE_PATH};
+	}
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
 
-	open(LOG, ">> $CONFIG->{LOG_FILE_PATH}");
+	open(LOG, ">> $file") or die;
 	my $param_str;
 	foreach my $k (sort @keys) {
 	    # $param_str .= "$k=$params->{$k},";
