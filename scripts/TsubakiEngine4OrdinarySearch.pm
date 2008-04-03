@@ -26,8 +26,8 @@ sub new {
     $obj->{word_retriever} = new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed});
 
     # DAT ファイルから係り受けを含む文書を検索する retriever オブジェクトをセットする
-    $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed});
-#   $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
+    # $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed});
+    $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
 
     bless $obj;
 }
@@ -47,6 +47,7 @@ sub merge_docs {
 	foreach my $doc (@{$docs_word}) {
 	    my $i;
 	    my $did = $doc->{did};
+
 	    if (exists($did2pos{$did})) {
 		$i = $did2pos{$did};
 	    } else {
@@ -57,7 +58,7 @@ sub merge_docs {
 	    }
 
 	    my %qid2poslist = ();
-	    if (defined($cal_method)) {
+	    if ($cal_method) {
 		foreach my $qid_freq (@{$doc->{qid_freq}}) {
 		    my $tf = $qid_freq->{freq};
 		    my $qid = $qid_freq->{qid};
@@ -84,7 +85,6 @@ sub merge_docs {
 			    }
 			}
 		    }
-
 		    next if ($dlength < $MIN_DLENGTH);
 
 		    my $weight = $gid2weight->{$qid2gid->{$qid}};

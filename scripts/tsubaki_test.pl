@@ -60,22 +60,14 @@ sub main {
     # &init();
 
     my $DFDB_DIR = ($opt{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
-    my $q_parser = new QueryParser({
-	KNP_PATH => $CONFIG->{KNP_PATH},
-	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
-	KNP_RCFILE => $CONFIG->{KNP_RCFILE},
-	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
-	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS},
-	DFDB_DIR => $DFDB_DIR,
-	SHOW_SPEED => $opt{show_speed},
-	verbose => $opt{verbose} });
+    my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR, verbose => $opt{verbose} });
 
     # logical_cond_qk : クエリ間の論理演算
     my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
 
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
-	print $qk->to_string() . "\n";
+	print $qk->to_string_verbose() . "\n";
 	print "*************\n";
     }
 
