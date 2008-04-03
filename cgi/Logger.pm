@@ -50,6 +50,12 @@ sub close {
     }
 }
 
+sub getParameter {
+    my ($this, $key) = @_;
+
+    return $this->{log}{$key};
+}
+
 # キーと値のペアをログに登録
 sub setParameterAs {
     my ($this, $key, $val) = @_;
