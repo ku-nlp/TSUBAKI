@@ -8,6 +8,9 @@ use Encode;
 use Time::HiRes;
 use SearchEngine;
 use Configure;
+use URI::Escape qw(uri_escape);
+use SnippetMakerAgent;
+
 
 our $CONFIG = Configure::get_instance();
 
@@ -86,13 +89,15 @@ sub search {
 
     if ($opt->{snippet}) {
 	# 検索結果（表示分）についてスニペットを生成
-	$this->get_snippets($opt, $mg_result, $query, $opt->{'start'}, $size, $hitcount);
+	my $from = $opt->{'start'};
+	my $end = ($from + $CONFIG->{NUM_OF_RESULTS_PER_PAGE} > $size) ? $size : $from + $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
+	$this->get_snippets($opt, $mg_result, $query, $from, $end, $hitcount);
 
 	# スニペット生成に要した時間をロギング
 	$logger->setTimeAs('snippet_creation', '%.3f');
     }
 
-    return ($hitcount, $mg_result, $size);
+    return ($mg_result, $size);
 }
 
 # 検索サーバから得られた検索結果のマージ
@@ -162,10 +167,14 @@ sub merge_search_results {
 
 	    my $p = $url2pos{$url_mod};
 	    if (defined $p) {
+		unless ($results->[$max][0]{title}) {
+		    $results->[$max][0]{title} = $this->get_title($did);
+		    $miss_title++;
+		}
 		push(@{$merged_result[$p]->{similar_pages}}, shift(@{$results->[$max]}));
 	    } else {
 		my $title = '';
-		if ($prev->{score} - $results->[$max][0]{score_total} < 0.05) {
+		if (defined $prev && $prev->{score} - $results->[$max][0]{score_total} < 0.05) {
 		    if ($prev->{title} eq '') {
 			$prev->{title} = $this->get_title($prev->{did});
 			$miss_title++;
@@ -187,7 +196,12 @@ sub merge_search_results {
 			next;
 		    }
 		} else {
-		    $title = $results->[$max][0]{title} if ($results->[$max][0]{title});
+		    if ($results->[$max][0]{title}) {
+			$title = $results->[$max][0]{title};
+		    } else {
+			$title = $this->get_title($did);
+			$miss_title++;
+		    }
 		}
 
 		$results->[$max][0]{title} = $title;
@@ -225,11 +239,11 @@ sub get_snippets {
     chop($search_k);
     my $uri_escaped_search_keys = &uri_escape(encode('utf8', $search_k));
 
+
     # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $result->[$rank]{did});
 	push(@{$query->{dids}}, $did);
-
 	unless ($this->{called_from_API}) {
 	    foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
 		my $did = sprintf("%09d", $sim_page->{did});
@@ -240,11 +254,12 @@ sub get_snippets {
 
     my $sni_obj = new SnippetMakerAgent();
     $sni_obj->create_snippets($query, $query->{dids}, {discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5});
+
     # 装飾されたスニペッツを取得
-    my $did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did($query) : $sni_obj->get_decorated_snippets_for_each_did($query, $query->{color});
+    my $did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $query->{color});
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $result->[$rank]{did});
-	$result->[$rank]{snippet} = $did2snippets->{$did};
+	$result->[$rank]{snippets} = $did2snippets->{$did};
     }
     $this->{snippet_maker} = $sni_obj;
 }
