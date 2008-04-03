@@ -40,7 +40,7 @@ sub main {
 	$params->{query} = undef if ($CONFIG->{SERVICE_STOP_FLAG});
 	unless ($params->{query}) {
 	    # フッターの表示
-	    $renderer->print_footer($params, 0, 0);
+	    $renderer->printFooter($params, 0, 0);
 	}
 	# クエリが入力された場合は検索
 	else {
@@ -55,14 +55,14 @@ sub main {
 
 	    # 検索スレーブサーバーへの問い合わせ
 	    my $searcher = new Searcher(0);
-	    my ($hitcount, $result, $size) = $searcher->search($query, $logger, $params);
+	    my ($results, $size) = $searcher->search($query, $logger, $params);
 
 
 	    # 検索結果の表示
-	    $renderer->printSearchResultForBrowserAccess($params, $result, $query, $params->{'start'}, $size, $hitcount);
+	    $renderer->printSearchResultForBrowserAccess($params, $results, $query, $logger);
 
 	    # フッターの表示
-	    $renderer->print_footer($params, $hitcount, $params->{'start'});
+	    $renderer->printFooter($params, $logger->getParameter('hitcount'), $params->{'start'}, scalar(@$results));
 	    $logger->setTimeAs('print_result', '%.3f');
 
 	    # LOGGERの終了
@@ -89,8 +89,24 @@ sub parse_query {
     # 取得ページの精度をセット
     $query->{accuracy} = $params->{accuracy};
 
+
+    # 実際に検索スレーブサーバーに要求する件数を求める
+
+    # 検索サーバーの台数を取得
+    my $N = ($query->{syngraph}) ? scalar(@{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}}) : scalar(@{$CONFIG->{SEARCH_SERVERS}});
+    if ($params->{filter_simpages}) {
+	# 類似ページフィルタで圧縮されるので多めに見積もる
+	$query->{results} *= 2;
+    }
+    # 栂池関数に置き換え
+    $query->{results} = ($query->{results} / $N) + $params->{accuracy} * $query->{results};
+    $params->{results} = $query->{results};
+
     # start をセット
     $query->{start} = $params->{start};
+
+    # distance をセット
+    $query->{DISTANCE} = $params->{distance};
 
     # 検索語にインターフェースより得られる検索制約を追加
     foreach my $qk (@{$query->{keywords}}) {
