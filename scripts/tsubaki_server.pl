@@ -141,7 +141,8 @@ sub main {
 	    } else {
 		my $ret = [];
 		my $docs_size = $hitcount;
-		my $results = ($query->{accuracy}) ? $query->{results} * $query->{accuracy} : $query->{results};
+		my $results = $query->{results};
+		# my $results = ($query->{accuracy}) ? $query->{results} * $query->{accuracy} : $query->{results};
 		$results += $query->{start};
 		$results = $docs_size if ($docs_size < $results);
 		my $max_rank_of_getting_title_and_url = $results * $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE;
