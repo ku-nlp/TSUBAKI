@@ -577,17 +577,14 @@ sub search {
 	my $offset;
 	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
 	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
-#	    print $offset . "=offset\n";
 	    last if (defined $offset);
 	}
-
 
 	# オフセットがあるかどうかのチェック
 	unless (defined($offset)) {
 	    @docs = () unless (defined(@docs));
 	    next;
 	}
-	# print STDERR $offset . "=offset\n";
 	
 	my $first_seek_time = Time::HiRes::time;
 	$total_byte = $offset;
@@ -623,7 +620,7 @@ sub search {
 		$time_buff = Time::HiRes::time;
 		read($this->{IN}[$f_num], $buf, 4);
 		my $ldf = unpack('L', $buf);
-		# print "$f_num $this->{TYPE} $ldf=ldf\n";
+		print "fnum=$f_num type=$this->{TYPE} ldf=$ldf\n" if ($this->{verbose});
 
 		$total_byte += 4;
 
@@ -636,12 +633,12 @@ sub search {
 		# 文書IDの読み込み
 		my $pos = 0;
 		my %soeji2pos = ();
-		# print STDERR "$host> keyword=", encode('euc-jp', $keyword->{string}) . ",ldf=$ldf\n";# if ($this->{verbose});
+		print STDERR "$host> keyword=", $keyword->{string} . ",ldf=$ldf\n" if ($this->{verbose});
 		for (my $j = 0; $j < $ldf; $j++) {
 		    $total_byte += 4;
 		    read($this->{IN}[$f_num], $buf, 4);
 		    my $did = unpack('L', $buf);
-#		    print STDERR $did . "=did\n";
+		    # print STDERR $did . "=did\n";
 		    # 先の索引で検索された文書であれば登録（AND検索時）
 		    if (exists $already_retrieved_docs->{$did} || $add_flag > 0) {
 			$already_retrieved_docs->{$did} = 1;
@@ -660,7 +657,7 @@ sub search {
 
 		    my $freq = unpack('f', $buf);
 		    $docs[$offset_j + $pos]->[1] = $freq;
-#		    print STDERR $freq . "=freq\n";
+		    print STDERR $freq . "=freq\n" if ($this->{verbose});
 		}
 
 		# 出現位置情報の読み込み
@@ -693,12 +690,12 @@ sub search {
 				    $docs[$offset_j + $pos]->[3] = $total_byte;
 				    $docs[$offset_j + $pos]->[4] = $num_of_sids;
 				    seek($this->{IN}[$f_num], $num_of_sids * 4, 1);
-# 					for (my $j = 0; $j < $num_of_sids; $j++) {
-# 					    # 文IDを読み込み
-#  					    read($this->{IN}[$f_num], $buf, 4);
-#  					    my $sid = unpack('L', $buf);
-#  					    push(@{$docs[$offset_j + $pos]->[2]}, $sid);
-#  					}
+# 				    for (my $j = 0; $j < $num_of_sids; $j++) {
+#  					# 文IDを読み込み
+#  					read($this->{IN}[$f_num], $buf, 4);
+#  					my $sid = unpack('L', $buf);
+#  					push(@{$docs[$offset_j + $pos]->[2]}, $sid);
+#  				    }
 				}
 				$total_byte += ($num_of_sids * 4);
 				$soeji++;
@@ -708,6 +705,8 @@ sub search {
 			else {
 			    # 位置情報までスキップ
 			    seek($this->{IN}[$f_num], $sids_size, 1);
+			    print "total=$total_byte sid=$sids_size pos=$poss_size\n" if ($this->{verbose});
+
 			    $total_byte += $sids_size;
 
 			    my $end = $total_byte + $poss_size;
@@ -715,10 +714,8 @@ sub search {
 				$total_byte += 4;
 				read($this->{IN}[$f_num], $buf, 4);
 				my $num_of_poss = unpack('L', $buf);
-
 				my $pos = $soeji2pos{$soeji};
 				unless (defined $pos) {
-				    # スキップ
 				    seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
 				} else {
 				    $docs[$offset_j + $pos]->[2] = $f_num;
