@@ -203,3 +203,9 @@ INDEX_CGI			http://tsubaki.ixnlp.nii.ac.jp/index.cgi
 
 # キャッシュページへのリンクを生成する際に用いるテンプレート
 CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
+
+# 検索の正確さ（0 ~ 1, 大きいほど正確に検索結果を求める）
+SEARCH_ACCURACY			0.2
+
+# 1ページに含まれる検索結果の数
+NUM_OF_RESULTS_PER_PAGE		50
