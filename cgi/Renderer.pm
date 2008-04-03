@@ -22,41 +22,51 @@ sub DESTROY {}
 sub print_search_time {
     my ($this, $search_time, $hitcount, $params, $size, $keywords) = @_;
 
-    $this->print_query($keywords);
+    $this->{q2color} = $this->print_query($keywords);
 
     if ($hitcount < 1) {
 	print ") を含む文書は見つかりませんでした。</DIV>";
     } else {
 	# ヒット件数の表示
-	print ") を含む文書が ${hitcount} 件見つかりました。</DIV>\n"; 
-
-	# 検索にかかった時間を表示 (★cssに変更)
-	printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f [%s]</div>\n", encode('utf8', '検索時間'), $search_time, encode('utf8', '秒'));
-
-	if ($hitcount > $params->{'results'}) {
-	    print "スコアの上位" . ($params->{'start'} + 1) . "件目から" . $size . "件目までを表示しています。<BR></DIV>";
+	print ") を含む文書が ${hitcount} 件見つかりました。\n"; 
+	if ($size > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
+	    my $end = $params->{'start'} + $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
+	    $end = $size if ($end > $size);
+	    printf("スコアの上位%d件目から%d件目までを表示しています。<BR></DIV>", $params->{'start'} + 1, $end);
 	} else {
 	    print "</DIV>";
 	}
+	# 検索にかかった時間を表示 (★cssに変更)
+	printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f [%s]</div>\n", encode('utf8', '検索時間'), $search_time, encode('utf8', '秒'));
     }
 }
 
-sub print_footer {
-    my ($this, $params, $hitcount, $from) = @_;
-    if ($hitcount > $params->{'results'}) {
+sub printFooter {
+    my ($this, $params, $hitcount, $current_page, $size) = @_;
+
+    my $last_page_flag = 0;
+    if ($hitcount >= $params->{'results'}) {
 	print "<DIV class='pagenavi'>検索結果ページ：";
-	for (my $i = 0; $i < 10; $i++) {
-	    my $offset = $i * $params->{'results'};
-	    last if ($hitcount < $offset);
+	for (my $i = 0; $i < $CONFIG->{'NUM_OF_SEARCH_RESULTS'} / $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}; $i++) {
+	    my $offset = $i * $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
+	    if ($size < $offset) {
+		last;
+	    } else {
+		$last_page_flag = 0;
+	    }
 	    
-	    if ($offset == $from) {
+	    if ($offset == $current_page) {
 		print "<font color=\"brown\">" . ($i + 1) . "</font>&nbsp;";
+		$last_page_flag = 1;
 	    } else {
 		print "<a href=\"javascript:submit('$offset')\">" . ($i + 1) . "</a>&nbsp;";
 	    }
 	}
 	print "</DIV>";
     }
+
+    printf("<DIV class=\"bottom_message\">上の%d件と類似したページは除外されています。</DIV>\n", $size) if ($last_page_flag && $size < $hitcount && $size < $CONFIG->{'NUM_OF_SEARCH_RESULTS'});
+
 
     # フッタ出力
     print << "END_OF_HTML";
@@ -175,7 +185,7 @@ sub print_tsubaki_interface {
 	<head>
 	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="http://nlpc06.ixnlp.nii.ac.jp/se.css">
+	<link rel="stylesheet" type="text/css" href="./se.css">
 	<script language="JavaScript">
 
 function toggle_simpage_view (id, obj, open_label, close_label) {
@@ -260,24 +270,29 @@ sub get_uri_escaped_query {
 }
 
 sub printSearchResultForBrowserAccess {
-    my ($this, $params, $result, $query, $from, $end, $hitcount, $color) = @_;
+    my ($this, $params, $results, $query, $logger, $color) = @_;
 
-    $this->print_search_time(0, $hitcount, $params, 10, $query->{keywords});
+    my $size = scalar(@$results);
+    my $start = $params->{start};
+    my $end = $params->{start} + $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
+    $end = $size if ($end > $size);
+    
+    $this->print_search_time($logger->getParameter('search'), $logger->getParameter('hitcount'), $params, $size, $query->{keywords});
 
     my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
 
-    for (my $rank = $from; $rank < $end; $rank++) {
-	my $did = sprintf("%09d", $result->[$rank]{did});
-	my $score = $result->[$rank]{score_total};
-	my $snippet = $result->[$rank]{snippets};
+    for (my $rank = $start; $rank < $end; $rank++) {
+	my $did = sprintf("%09d", $results->[$rank]{did});
+	my $score = $results->[$rank]{score_total};
+	my $snippet = $results->[$rank]{snippets};
 
 	my $output = "<DIV class=\"result\">";
 	$score = sprintf("%.4f", $score);
 	$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
 	$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
-	$output .= $result->[$rank]{title} . "</a>";
+	$output .= $results->[$rank]{title} . "</a>";
 	my $num_of_sim_pages = 0;
-	$num_of_sim_pages = scalar(@{$result->[$rank]{similar_pages}}) if (defined $result->[$rank]{similar_pages});
+	$num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
 	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
 	    my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
 	    my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
@@ -286,16 +301,16 @@ sub printSearchResultForBrowserAccess {
 	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
 	}
 	$output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
-	$output .= "<A class=\"cache\" href=\"$result->[$rank]{url}\" target=\"_blank\">$result->[$rank]{url}</A>\n";
+	$output .= "<A class=\"cache\" href=\"$results->[$rank]{url}\" target=\"_blank\">$results->[$rank]{url}</A>\n";
 	$output .= "</DIV>";
 
 	$output .= "<DIV id=\"simpages_$rank\" style=\"display: none;\">";
-	foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
+	foreach my $sim_page (@{$results->[$rank]{similar_pages}}) {
 	    my $did = sprintf("%09d", $sim_page->{did});
  	    my $score = $sim_page->{score_total};
 
  	    # 装飾されたスニペッツの取得
-	    my $snippet = $result->[$rank]{snippets};
+	    my $snippet = $results->[$rank]{snippets};
  	    $score = sprintf("%.4f", $score);
 
  	    $output .= "<DIV class=\"similar\">";
