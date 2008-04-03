@@ -48,3 +48,9 @@ DIV.footer{
 	font-weight: 700;
 	text-align: center;
 }
+
+DIV.bottom_message{
+	padding: 1em 0em;
+	text-align: center;
+	color: red;
+}
