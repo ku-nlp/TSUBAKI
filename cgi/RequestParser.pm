@@ -9,6 +9,10 @@ package RequestParser;
 use strict;
 use utf8;
 use Encode;
+use Configure;
+
+
+my $CONFIG = Configure::get_instance();
 
 sub getDefaultValues {
     my %params = ();
@@ -16,13 +20,16 @@ sub getDefaultValues {
     $params{start} = 0;
     $params{logical_operator} = 'WORD_AND';
     $params{dpnd} = 1;
-    $params{results} = 50;
+    $params{results} =  $CONFIG->{NUM_OF_SEARCH_RESULTS};
     $params{force_dpnd} = 0;
     $params{filter_simpages} = 1;
     $params{near} = 0;
     $params{syngraph} = 0;
-    $params{accuracy} = 0.2;
+    $params{accuracy} = $CONFIG->{SEARCH_ACCURACY};
+    $params{num_of_results_per_page} = $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
     $params{only_hitcount} = 0;
+    $params{distance} = 30;
+    $params{snippet} = 1;
 
     return \%params;
 }
