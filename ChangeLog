@@ -1,3 +1,40 @@
+2008-04-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl: 検索結果数の調整をindex.cgiに委譲.
+
+	* scripts/TsubakiEngine.pm: remove OKAPI module.
+
+	* scripts/Retrieve.pm: added new verbose messages.
+
+	* cgi/index.cgi:
+	コード整理, 検索結果取得件数を算出する際にサーバー台数Nを考慮
+
+	* cgi/Searcher.pm:
+	コード整理, merge_search_results内でタイトルDBの引き漏れがあったので修正.
+
+	* cgi/RequestParser.pm: added new default parameters.
+
+	* cgi/Renderer.pm: コード整理.
+
+	* cgi/Logger.pm: added getParameter method.
+
+	* cgi/configure, cgi/configure.nict:
+	パラメータの追加（SEARCH_ACCURACY, NUM_OF_RESULTS_PER_PAGE）
+
+2008-04-01  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+
+	* cgi/Logger.pm: closeの引数にファイル名を指定できるようにした．
+
+	* cgi/SnippetMaker.pm:
+	Indexer.pmの変更に対応（makeIndexFromKNPResultを使うようにした）．
+
+2008-03-31  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+
+	* cgi/index.cgi: QueryParserの変更に対応．
+
+	* cgi/QueryParser.pm:
+	デフォルトでパラメータをconfigureからロードするように変更．
+
 2008-03-31  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/index.cgi: QueryParserの変更に対応．
