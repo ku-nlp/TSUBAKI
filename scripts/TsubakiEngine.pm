@@ -14,7 +14,6 @@ use strict;
 use Retrieve;
 use Encode qw(from_to encode decode);
 use utf8;
-use OKAPI;
 use Devel::Size qw/size total_size/;
 use Data::Dumper;
 {
@@ -86,13 +85,12 @@ sub search {
 
     my $start_time = Time::HiRes::time;
     # 検索
+    # 文書のスコアリング
     my ($alldocs_word, $alldocs_dpnd) = $this->retrieve_documents($query, $qid2df);
     
-    my $cal_method;
+    my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
 	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない
-    } else {
-	$cal_method = new OKAPI($this->{AVERAGE_DOC_LENGTH}, $this->{TOTAL_NUMBUER_OF_DOCS}, $this->{verbose});
     }
 
     # 文書のスコアリング
@@ -223,7 +221,6 @@ sub retrieve_documents {
     ##########
     # 通常検索
     ##########
-
     foreach my $keyword (@{$query->{keywords}}) {
 	my $docs_word = [];
 	my $docs_dpnd = [];
@@ -249,6 +246,7 @@ sub retrieve_documents {
 
  	    # 各語について検索された結果を納めた配列に push
  	    push(@{$docs_word}, $docs);
+	    print "-----\n" if ($this->{verbose});
 	}
 
 	$add_flag = 1;
