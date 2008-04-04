@@ -60,7 +60,7 @@ TITLE_DB_PATH	/data/home/skeiji/dbs/titledb
 URL_DB_PATH	/data/home/skeiji/dbs/urldb
 
 # 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
-ORDINARY_DFDB_PATH	/share09/home/skeiji/public_html/cgi-bin/tsubaki2/dfdbs
+ORDINARY_DFDB_PATH	/share09/home/skeiji/public_html/cgi-bin/tsubaki/dfdbs
 SYNGRAPH_DFDB_PATH	/share09/home/skeiji/tmp
 
 
