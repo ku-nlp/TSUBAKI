@@ -96,6 +96,7 @@ sub main {
 	    my %result = ();
 	    print "begin with snippet creation\n" if ($opt{verbose});
 	    foreach my $did (@{$dids}) {
+		print $did . "\n" if ($opt{verbose});
 		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
 		# print Dumper($result{$did}) . "\n" if ($HOSTNAME =~ /nlpc33/);
 	    }
