@@ -409,24 +409,25 @@ sub printSearchResultForAPICall {
 	);
 
     for (my $rank = $from; $rank < $end; $rank++) {
-	my $did = sprintf("%09d", $result->[$rank]{did});
-	my $url = $result->[$rank]{url};
-	my $score = $result->[$rank]{score_total};
-	my $title = $result->[$rank]{title};
-	my $cache_location = $result->[$rank]{cache_location};
-	my $cache_size = $result->[$rank]{cache_size};
+	my $page = $result->[$rank - 1];
+	my $did = sprintf("%09d", $page->{did});
+	my $url = $page->{url};
+	my $score = $page->{score_total};
+	my $title = $page->{title};
+	my $cache_location = $page->{cache_location};
+	my $cache_size = $page->{cache_size};
 
 	if ($params->{Score} > 0) {
 	    if ($params->{Id} > 0) {
-		$writer->startTag('Result', Rank => $rank + 1, Id => $did, Score => sprintf("%.5f", $score));
+		$writer->startTag('Result', Rank => $rank, Id => $did, Score => sprintf("%.5f", $score));
 	    } else {
-		$writer->startTag('Result', Rank => $rank + 1, Score => sprintf("%.5f", $score));
+		$writer->startTag('Result', Rank => $rank, Score => sprintf("%.5f", $score));
 	    }
 	} else {
 	    if ($params->{Id} > 0) {
-		$writer->startTag('Result', Rank => $rank + 1, Id => $did);
+		$writer->startTag('Result', Rank => $rank, Id => $did);
 	    } else {
-		$writer->startTag('Result', Rank => $rank + 1);
+		$writer->startTag('Result', Rank => $rank);
 	    }
 	}
 
