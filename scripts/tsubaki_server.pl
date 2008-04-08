@@ -23,7 +23,7 @@ binmode(STDOUT, ':encoding(euc-jp)');
 
 
 
-my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 0.1;
+my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 1;
 
 my (%opt);
 GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug');
