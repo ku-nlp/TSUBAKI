@@ -30,7 +30,6 @@ sub getDefaultValues {
     $params{num_of_results_per_page} = $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
     $params{only_hitcount} = 0;
     $params{distance} = 30;
-    $params{snippet} = 1;
     $params{sort_by} = 'score';
     $params{no_snippets} = ($call_from_API) ? 1 : 0;
     $params{query_verbose} = 0;
@@ -188,7 +187,7 @@ sub parseQuery {
     # 検索サーバーの台数を取得
     my $N = ($query->{syngraph}) ? scalar(@{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}}) : scalar(@{$CONFIG->{SEARCH_SERVERS}});
     my $alpha = 30 * ($query->{results}**(-0.34));
-    $query->{results} = ($query->{results} / $N) * $alpha;
+    $query->{results} = int(1 + ($query->{results} / $N) * $alpha);
     $logger->setParameterAs('request_results_for_slave_server', $query->{results});
 
     # 係り受けと近接のスコアを考慮するようにする

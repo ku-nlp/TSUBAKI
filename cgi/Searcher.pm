@@ -58,7 +58,7 @@ sub search {
     # ヒット件数をロギング
     $logger->setParameterAs('hitcount', $hitcount);
 
-    return (0, undef) if ($hitcount < 1);
+    return ([], 0) if ($hitcount < 1);
 
 
 
@@ -88,15 +88,14 @@ sub search {
     # 必要ならばスニペットを生成
     ############################
 
-    if ($opt->{snippet}) {
+    unless ($opt->{no_snippets}) {
 	# 検索結果（表示分）についてスニペットを生成
 	my $from = $opt->{'start'};
 	my $end = ($from + $CONFIG->{NUM_OF_RESULTS_PER_PAGE} > $size) ? $size : $from + $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
 	$this->get_snippets($opt, $mg_result, $query, $from, $end, $hitcount);
-
-	# スニペット生成に要した時間をロギング
-	$logger->setTimeAs('snippet_creation', '%.3f');
     }
+    # スニペット生成に要した時間をロギング
+    $logger->setTimeAs('snippet_creation', '%.3f');
 
     return ($mg_result, $size);
 }
