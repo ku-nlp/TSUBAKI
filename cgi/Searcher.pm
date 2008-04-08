@@ -52,9 +52,6 @@ sub search {
     $logger->setTimeAs('create_se_obj', '%.3f');
     my ($hitcount, $results) = $se_obj->search($query, $logger);
 
-
-    # 検索に要した時間をロギング
-    # $logger->setTimeAs('search', '%.3f');
     # ヒット件数をロギング
     $logger->setParameterAs('hitcount', $hitcount);
 
