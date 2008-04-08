@@ -49,8 +49,7 @@ sub main {
 
 
 	    # 検索クエリの構造体を取得
-	    my $query = &parse_query($params);
-	    $logger->setTimeAs('parse_query', '%.3f');
+	    my $query = RequestParser::parseQuery($params, $logger);
 
 
 	    # 検索スレーブサーバーへの問い合わせ
@@ -71,51 +70,6 @@ sub main {
     }
 }
 
-
-# 検索クエリを解析する
-sub parse_query {
-    my ($params) = @_;
-
-    my $DFDB_DIR = ($params->{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
-    my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR });
-
-    # クエリの解析
-    # logical_cond_qk: クエリ間の論理演算
-    my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}});
-
-    # 取得ページ数のセット
-    $query->{results} = $params->{results};
-
-    # 取得ページの精度をセット
-    $query->{accuracy} = $params->{accuracy};
-
-
-    # 実際に検索スレーブサーバーに要求する件数を求める
-
-    # 検索サーバーの台数を取得
-    my $N = ($query->{syngraph}) ? scalar(@{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}}) : scalar(@{$CONFIG->{SEARCH_SERVERS}});
-    if ($params->{filter_simpages}) {
-	# 類似ページフィルタで圧縮されるので多めに見積もる
-	$query->{results} *= 2;
-    }
-    # 栂池関数に置き換え
-    $query->{results} = ($query->{results} / $N) + $params->{accuracy} * $query->{results};
-    $params->{results} = $query->{results};
-
-    # start をセット
-    $query->{start} = $params->{start};
-
-    # distance をセット
-    $query->{DISTANCE} = $params->{distance};
-
-    # 検索語にインターフェースより得られる検索制約を追加
-    foreach my $qk (@{$query->{keywords}}) {
-	$qk->{force_dpnd} = 1 if ($params->{force_dpnd});
-	$qk->{logical_cond_qkw} = 'OR' if ($params->{logical_operator} eq 'OR');
-    }
-
-    return $query;
-}
 
 # キャッシュされたページを表示
 sub print_cached_page {
