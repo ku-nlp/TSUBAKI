@@ -1,10 +1,49 @@
+2008-04-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/api.cgi:
+	APIで行っていた処理を整理（Searcher.pm,RequestParser.pm,Renderer.pm,Logger.pmを使用）
+
+	* cgi/RequestParser.pm:
+	API呼び出しのパラメータを解析する関数の追加.
+
+	* cgi/Searcher.pm:
+	コード整理
+
+	* cgi/QueryKeyword.pm:
+	to_string()メソッドの簡易版(to_string_simple)を追加.
+
+	* cgi/Renderer.pm:
+	API用の出力メソッドを追加．(printSearchResultForAPICall,printResult,printRequestResult)
+
+	* cgi/SearchEngine.pm:
+	ログを出力するように変更.
+
+	* cgi/index.cgi:
+	リクエスト解析処理をRequestParser.pmに移行.
+
+	* scripts/tsubaki_server.pl:
+	検索結果すべてについてデータベースを引くように変更.
+
+
+2008-04-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet_make_server.pl:
+	added new verbose messages.
+
+
 2008-04-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
-	* scripts/tsubaki_server.pl: 検索結果数の調整をindex.cgiに委譲.
+	* scripts/tsubaki_server.pl:
+	検索結果数の調整をindex.cgiに委譲.
 
-	* scripts/TsubakiEngine.pm: remove OKAPI module.
+	* scripts/TsubakiEngine.pm:
+	remove OKAPI module.
 
-	* scripts/Retrieve.pm: added new verbose messages.
+	* scripts/Retrieve.pm:
+	added new verbose messages.
+
+	* cgi/configure, cgi/configure.nict:
+	added new parameters.
 
 	* cgi/index.cgi:
 	コード整理, 検索結果取得件数を算出する際にサーバー台数Nを考慮
@@ -12,28 +51,25 @@
 	* cgi/Searcher.pm:
 	コード整理, merge_search_results内でタイトルDBの引き漏れがあったので修正.
 
-	* cgi/RequestParser.pm: added new default parameters.
+	* cgi/RequestParser.pm:
+	added new default parameters.
 
-	* cgi/Renderer.pm: コード整理.
+	* cgi/Renderer.pm:
+	コード整理.
 
-	* cgi/Logger.pm: added getParameter method.
+	* cgi/Logger.pm:
+	added getParameter method.
 
 	* cgi/configure, cgi/configure.nict:
 	パラメータの追加（SEARCH_ACCURACY, NUM_OF_RESULTS_PER_PAGE）
 
-2008-04-01  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+2008-04-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
-	* cgi/Logger.pm: closeの引数にファイル名を指定できるようにした．
+	* cgi/Logger.pm:
+	closeの引数にファイル名を指定できるようにした．
 
 	* cgi/SnippetMaker.pm:
 	Indexer.pmの変更に対応（makeIndexFromKNPResultを使うようにした）．
-
-2008-03-31  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
-
-	* cgi/index.cgi: QueryParserの変更に対応．
-
-	* cgi/QueryParser.pm:
-	デフォルトでパラメータをconfigureからロードするように変更．
 
 2008-03-31  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
@@ -42,7 +78,15 @@
 	* cgi/QueryParser.pm:
 	デフォルトでパラメータをconfigureからロードするように変更．
 
-2008-03-26  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+2008-03-31  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/index.cgi:
+	QueryParserの変更に対応．
+
+	* cgi/QueryParser.pm:
+	デフォルトでパラメータをconfigureからロードするように変更．
+
+2008-03-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Searcher.pm:
 	Logger.pmを使ってログをとるように変更．
@@ -50,7 +94,7 @@
 	* cgi/index.cgi:
 	api.cgiと共通する処理を他のモジュール(RequestParser.pm, Searcher.pm, Logger.pm, Renderer.pm)に委譲．
 
-2008-03-25  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+2008-03-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/index.cgi:
 	スニペット生成時にタイトルを含めないように変更.
@@ -120,12 +164,12 @@
 	タイトル, URLをローカルでひくようにした
 	係り受け，近接の利用をオプション化
 
-2008-03-24  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+2008-03-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/SnippetMaker.pm:
 	extract_sentences_from_content()メソッドの追加．
 
-2008-03-15  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+2008-03-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/QueryParser.pm: add use Configure.
 
@@ -143,7 +187,7 @@
 	* cgi/Configure.pm:
 	$CONFIG_FILE_PATHを自分と同じディレクトリ以下にあるものを指すように変更
 
-2008-03-13  Keiji Shinzato  <skeiji@reed.kuee.kyoto-u.ac.jp>
+2008-03-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/configure: Change default values.
 
