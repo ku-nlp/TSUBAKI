@@ -29,10 +29,7 @@ TSUBAKI\footnote{http://tsubaki.ixnlp.nii.ac.jp/index.cgi，科学技術研究
 \footnote{http://tsubaki.ixnlp.nii.ac.jp/tsubaki/api.html}，APIを介して
 誰でも自由かつ無制限にその検索結果を取得することが可能である．
 %
-また，ソースコードはオープンソースで公開する予定であり，独自に開発された
-検索エンジンコンポーネント(例えば，検索結果のランキングモジュールやリン
-ク解析技術など)との融合を歓迎している．独自のコンポーネントをTSUBAKIに組
-み込みたい方は別途ご相談頂きたい．
+また，ソースコードについてもオープンソースで公開している．
 
 本マニュアルでは，TSUBAKIの以下の点について述べる．
 
@@ -105,21 +102,15 @@ x-sjis，shiftjp，utf-8であれば，そのページを日本語ページの候補とする．\\
 
 \noindent
 {\bf (ii) 言語情報を用いた日本語ページ判定:}~
-(i)で収集されたページのうち，以下の理由から言語情報を用いて日本語を含
-まないページを排除する．
+%
+(i)で収集されたページのうち，言語情報を用いて日本語を含まないページを排
+除する．これは，(i)ではより多くの日本語ページを取得するために，utf8コー
+ドでエンコードされているページも日本語ページとして見なしているが，utf8
+コードは日本語以外の言語でも用いられるため，日本語以外のページが含まれ
+ている可能性があるためである．
 
-\begin{itemize}
-\item (i)ではより多くの日本語ページを取得するために，utf8コードでエンコー
-  ドされているページも日本語ページとして見なしているが，utf8コードは日
-  本語以外の言語でも用いられるため，日本語以外のページが含まれている可
-  能性がある
-\item 文字エンコードは日本語でも，日本語を含まないページが存在する
-\end{itemize}
-
-\noindent
-言語情報としては，日本語の助詞（「が」，「を」，「に」，「は」，「の」，
-「で」）の含有率を利用し，助詞が一定以上の割合で含まれていないページは
-日本語ページでないと判定する．
+日本語の助詞（「が」，「を」，「に」，「は」，「の」，「で」）の含有率
+が0.5\%以下のページは日本語ページでないと判定する．
 
 \subsubsection {ウェブページのutf8化}
 
@@ -1813,184 +1804,221 @@ make\_cdb.perl.\\
 
 /share10/WISDOM/conf/TSUBAKI.conf\\
 
-インデックスの追加、検索ノードの故障などがあった場合は、上記のファイルを
-編集すれば、TSUBAKIの動作に反映される。
+%% インデックスの追加、検索ノードの故障などがあった場合は、上記のファイルを
+%% 編集すれば、TSUBAKIの動作に反映される。
 
-\small
-\begin{verbatim}
-##################################################
-# TSUBAKIの環境変数(★utf8で保存すること)
-# $Id$
-#
-#
-#
-# 主な設定項目
-# * 基本ツールのパス
-# * キャッシュページ／標準フォーマット関係のパス
-# * データベースのパス
-# * 検索サーバー／スニペットサーバー関係（ホスト名、ポート番号等）
-# * その他の設定
-#
-#
-#
-# 書式
-# * KEY\tVALUE
-# * KEY\tVALUE1,VALUE2,...（値が複数の時）
-#   - サーバー関係の設定は特別な書式なので、各項目を参照のこと
-# * 行頭が`#' の行はコメント
-#
-##################################################
-
-
-
-##################################################
-# 基本ツールの設定（★要変更）
-##################################################
-TOOL_HOME	/home/skeiji/local/bin
-KNP_PATH	/home/skeiji/local/bin
-JUMAN_PATH	/home/skeiji/local/bin
-SYNDB_PATH	/home/skeiji/tmp/SynGraph/syndb/i686
-KNP_OPTIONS	-postprocess,-tab
-KNP_RCFILE	/home/skeiji/.knprc
-SYNGRAPH_PM_PATH	/home/skeiji/tmp/SynGraph/perl
+%% \small
+%% \begin{verbatim}
+%% ##################################################
+%% # TSUBAKIの環境変数(★utf8で保存すること)
+%% # $Id$
+%% #
+%% #
+%% #
+%% # 主な設定項目
+%% # * 基本ツールのパス
+%% # * キャッシュページ／標準フォーマット関係のパス
+%% # * データベースのパス
+%% # * 検索サーバー／スニペットサーバー関係（ホスト名、ポート番号等）
+%% # * その他の設定
+%% #
+%% #
+%% #
+%% # 書式
+%% # * KEY\tVALUE
+%% # * KEY\tVALUE1,VALUE2,...（値が複数の時）
+%% #   - サーバー関係の設定は特別な書式なので、各項目を参照のこと
+%% # * 行頭が`#' の行はコメント
+%% #
+%% ##################################################
 
 
 
-##################################################
-# キャッシュページ／標準フォーマット関係の設定
-##################################################
+%% ##################################################
+%% # 基本ツールの設定（★要変更）
+%% ##################################################
+%% TOOL_HOME	/home/skeiji/local/bin
+%% KNP_PATH	/home/skeiji/local/bin
+%% JUMAN_PATH	/home/skeiji/local/bin
+%% SYNDB_PATH	/home/skeiji/tmp/SynGraph/syndb/i686
+%% KNP_OPTIONS	-postprocess,-tab
+%% KNP_RCFILE	/home/skeiji/.knprc
+%% SYNGRAPH_PM_PATH	/home/skeiji/tmp/SynGraph/perl
 
-# キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
-HTML_FILE_PATH		/net2/nlpcf34/disk08/skeiji
-ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
-SYNGRAPH_SF_PATH	/net2/nlpcf34/disk09/skeiji/sfs_w_syn
 
 
+%% ##################################################
+%% # キャッシュページ／標準フォーマット関係の設定
+%% ##################################################
 
-
-
-##################################################
-# データベース関係の設定
-##################################################
-
-# TITLEDB/URLDBを納めたディレクトリへのパス（★要変更）
-TITLE_DB_PATH	/work/skeiji/titledb
-URL_DB_PATH	/work/skeiji/urldb
-
-# 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
-ORDINARY_DFDB_PATH	/var/www/cgi-bin/dbs/dfdbs
-SYNGRAPH_DFDB_PATH	/data/dfdb_syngraph_8600
+%% # キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
+%% HTML_FILE_PATH		/net2/nlpcf34/disk08/skeiji
+%% ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
+%% SYNGRAPH_SF_PATH	/net2/nlpcf34/disk09/skeiji/sfs_w_syn
 
 
 
 
 
-##################################################
-# 検索サーバー/スニペットサーバー関係の設定
-##################################################
+%% ##################################################
+%% # データベース関係の設定
+%% ##################################################
 
-# 検索用サーバー（★要変更）
-# SEARCH_SERVERS ホスト名 ポート番号1,...
+%% # TITLEDB/URLDBを納めたディレクトリへのパス（★要変更）
+%% TITLE_DB_PATH	/work/skeiji/titledb
+%% URL_DB_PATH	/work/skeiji/urldb
 
-SEARCH_SERVERS	 nlpc06		22001,22002,22003,20006
-SEARCH_SERVERS	 nlpc07		22001,22002,22003,20006
-...
-SEARCH_SERVERS	 nlpc31		22001,22002,22003
-SEARCH_SERVERS	 nlpc32		22001,22002,22003
-
-# SYNGRAPH検索用サーバー（★要変更）
-# SEARCH_SERVERS_FOR_SYNGRAPH ホスト名 ポート番号1,...
-
-SEARCH_SERVERS_FOR_SYNGRAPH	nlpc06	50001,50002
-SEARCH_SERVERS_FOR_SYNGRAPH	nlpc07	50001,50002
-...
-SEARCH_SERVERS_FOR_SYNGRAPH	nlpc47	50001,50002
-SEARCH_SERVERS_FOR_SYNGRAPH	nlpc48	50001,50002
-
-# スニペットサーバーの設定（★要変更）
-# STANDARD_FORMAT_LOCATION ホスト名 ポート番号 ディスクにおいてある標準フォーマットのID1,...
-
-STANDARD_FORMAT_LOCATION	nlpc33	35000	000,016,032,048,064,080,096
-STANDARD_FORMAT_LOCATION	nlpc34	35000	001,017,033,049,065,081,097
-...
-STANDARD_FORMAT_LOCATION	nlpc47	35000	014,030,046,062,078,094
-STANDARD_FORMAT_LOCATION	nlpc48	35000	015,031,047,063,079,095
+%% # 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
+%% ORDINARY_DFDB_PATH	/var/www/cgi-bin/dbs/dfdbs
+%% SYNGRAPH_DFDB_PATH	/data/dfdb_syngraph_8600
 
 
 
 
-##################################################
-# その他の設定
-##################################################
 
-# 強調表示に用いる色
-HIGHLIGHT_COLOR		ffff66,a0ffff,99ff99,ff9999,ff66ff,880000,00aa00,886800,004699,990099;
+%% ##################################################
+%% # 検索サーバー/スニペットサーバー関係の設定
+%% ##################################################
 
-# ログファイル（★要変更）
-LOG_FILE_PATH		/se_tmp/input.log
+%% # 検索用サーバー（★要変更）
+%% # SEARCH_SERVERS ホスト名 ポート番号1,...
 
-# マシンの故障等でサービスを停止する場合は1
-SERVICE_STOP_FLAG	0
+%% SEARCH_SERVERS	 nlpc06		22001,22002,22003,20006
+%% SEARCH_SERVERS	 nlpc07		22001,22002,22003,20006
+%% ...
+%% SEARCH_SERVERS	 nlpc31		22001,22002,22003
+%% SEARCH_SERVERS	 nlpc32		22001,22002,22003
 
-# 検索画面に表示するメッセージ
-MESSAGE	0
+%% # SYNGRAPH検索用サーバー（★要変更）
+%% # SEARCH_SERVERS_FOR_SYNGRAPH ホスト名 ポート番号1,...
 
-# スニペットの長さ（デフォルトは100単語）
-MAX_NUM_OF_WORDS_IN_SNIPPET	100
+%% SEARCH_SERVERS_FOR_SYNGRAPH	nlpc06	50001,50002
+%% SEARCH_SERVERS_FOR_SYNGRAPH	nlpc07	50001,50002
+%% ...
+%% SEARCH_SERVERS_FOR_SYNGRAPH	nlpc47	50001,50002
+%% SEARCH_SERVERS_FOR_SYNGRAPH	nlpc48	50001,50002
 
-# タイトルの長さ（デフォルトは60バイト）
-MAX_LENGTH_OF_TITLE		60
+%% # スニペットサーバーの設定（★要変更）
+%% # STANDARD_FORMAT_LOCATION ホスト名 ポート番号 ディスクにおいてある標準フォーマットのID1,...
 
-# IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
-CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
+%% STANDARD_FORMAT_LOCATION	nlpc33	35000	000,016,032,048,064,080,096
+%% STANDARD_FORMAT_LOCATION	nlpc34	35000	001,017,033,049,065,081,097
+%% ...
+%% STANDARD_FORMAT_LOCATION	nlpc47	35000	014,030,046,062,078,094
+%% STANDARD_FORMAT_LOCATION	nlpc48	35000	015,031,047,063,079,095
 
-# IDから標準フォーマットへのパスを求める際のテンプレート（★要変更）
-SF_PATH_TEMPLATE		/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml.gz
 
-# index.cgiのアドレス（★要変更）
-INDEX_CGI			http://tsubaki.ixnlp.nii.ac.jp/index.cgi
 
-# キャッシュページへのリンクを生成する際に用いるテンプレート
-CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
-\end{verbatim}
-\normalsize
 
-\subsection{検索プログラムの実行}
+%% ##################################################
+%% # その他の設定
+%% ##################################################
 
-\paragraph{検索CGIの設置}
+%% # 強調表示に用いる色
+%% HIGHLIGHT_COLOR		ffff66,a0ffff,99ff99,ff9999,ff66ff,880000,00aa00,886800,004699,990099;
 
-\paragraph{TSUBAKIサーバーの起動手順}
+%% # ログファイル（★要変更）
+%% LOG_FILE_PATH		/se_tmp/input.log
+
+%% # マシンの故障等でサービスを停止する場合は1
+%% SERVICE_STOP_FLAG	0
+
+%% # 検索画面に表示するメッセージ
+%% MESSAGE	0
+
+%% # スニペットの長さ（デフォルトは100単語）
+%% MAX_NUM_OF_WORDS_IN_SNIPPET	100
+
+%% # タイトルの長さ（デフォルトは60バイト）
+%% MAX_LENGTH_OF_TITLE		60
+
+%% # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
+%% CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
+
+%% # IDから標準フォーマットへのパスを求める際のテンプレート（★要変更）
+%% SF_PATH_TEMPLATE		/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml.gz
+
+%% # index.cgiのアドレス（★要変更）
+%% INDEX_CGI			http://tsubaki.ixnlp.nii.ac.jp/index.cgi
+
+%% # キャッシュページへのリンクを生成する際に用いるテンプレート
+%% CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
+%% \end{verbatim}
+%% \normalsize
+
+\subsection{TSUBAKIの設置方法}
+
+以下にTSUBAKIの設置方法を示す。
 
 \begin{enumerate}
-\item gxpを起動
 
-\item 検索サーバーで使うノードを獲得
+\item プログラムをcvs check outする。
 
-\begin{flushleft}
-   edges \texttt{->} iccc01[1,2,3,4,5,6,7,8,9]\\
-   edges \texttt{->} iccc02?\\
-   edges \texttt{->} iccc03[1,2,3,4,5,6]\\
-   explore  \# iccc011 - iccc036 のノードを獲得
-\end{flushleft}
+- cvs co SearchEngine
 
-\item プログラムがあるディレクトリに移動
+\item scripts/Indexer.pmをcgi以下にコピー（シンボリックリンクも可）
 
-\begin{flushleft}
-   cd /share09/home/skeiji/cvs/SearchEngine/scripts
-\end{flushleft}
+\item cgiファイル、ディレクトリのパーミッションを755に変更
 
-\item プログラムで使用できるメモリの上限を解除
+\item ここでトップページが表示されるかチェック
 
-\begin{flushleft}
-   e ulimit -Ss unlimited 
-\end{flushleft}
+\item configure の「★要変更」部分を環境に合わせて修正
 
-\item 検索サーバプログラムの起動
+\item cgi/Configure.pmの17行目で指定されている設定ファイルのパスを必要であれば変更する（デフォルトではcgi/configureが読み込まれる）
 
-\begin{flushleft}
-   e perl -I ../cgi -I ~/tmp/SynGraph/perl tsubaki\_server.pl -idxdir /data/home/skeiji/dat★ -dlengthdbdir /dat/home/skeiji/dat★ -port 5000★
-\end{flushleft}
+\# 環境によってパスを変える                                                                                     
+
+\texttt{my \$CONFIG\_FILE\_PATH = dirname(\$INC{'Configure.pm'}) . "/configure";}
+
+\item 検索スレーブサーバー(tsubaki\_server.pl)の実行
+
+
+\begin{enumerate}
+\item 以下のコマンドによりプログラムで使用できるメモリの上限を解除する
+
+  ulimit -Ss unlimited 
+
+\item 以下のコマンドでサーバープログラムを起動する
+
+- perl -I ../cgi tsubaki\_server.pl -idxdir インデックスデータがあるディレクトリ -dlengthdbdir 文書長データベースがあるディレクトリ -port ポート番号
+
+- 一台の計算機で複数サーバーを起動するときは、ポート番号を変更すること
 \end{enumerate}
+
+\item スニペット生成サーバー(snippet\_make\_server.pl)の実行
+
+- perl -I ../cgi snippet\_make\_server.pl -port ポート番号
+
+\end{enumerate}
+
+
+検索スレーブサーバー、スニペット生成サーバーの起動にはgxpを利用すると容易に複数台の計算機でサーバープログラムを起動することが可能である。
+
+%% \begin{flushleft}
+%%    gxp\\
+%%    edges \texttt{->} iccc01[1,2,3,4,5,6,7,8,9]\\
+%%    edges \texttt{->} iccc02?\\
+%%    edges \texttt{->} iccc03[1,2,3,4,5,6]\\
+%%    explore  \# iccc011 - iccc036 のノードを獲得
+%% \end{flushleft}
+
+
+%% \begin{itemize}
+%% \item 基本ツールの設定（juman,knpのパス、knprcの場所）
+%% \item キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス
+%% \item TITLEDB/URLDBを納めたディレクトリへのパス
+%% \item 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス
+%% \item 検索用サーバーのホスト名、ポート番号
+%% \item SYNGRAPH検索用サーバーのホスト名、ポート番号
+%% \item スニペットサーバーのホスト名、ポート番号
+%% \item ログファイルの置き場所
+%% \item IDからキャッシュページへのパスを求める際のテンプレート
+%% \item IDから標準フォーマットへのパスを求める際のテンプレート
+%% \item index.cgiのアドレス
+%% \end{itemize}
+
+
+
 
 
 \section{おわりに}
