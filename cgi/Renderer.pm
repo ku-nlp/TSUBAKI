@@ -6,6 +6,7 @@ use strict;
 use utf8;
 use Encode;
 use Configure;
+use POSIX qw(strftime);
 use URI::Escape;
 
 our $CONFIG = Configure::get_instance();
@@ -326,6 +327,149 @@ sub printSearchResultForBrowserAccess {
 	# 1 ページ分の結果を表示
 	print $output;
     }
+}
+
+sub printRequestResult {
+    my ($this, $dids, $requestItems) = @_;
+    # 出力
+    my $date = `date +%m%d-%H%M%S`; chomp ($date);
+    my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
+    $writer->xmlDecl('utf-8');
+    $writer->startTag('DocInfo',
+		      time => $date,
+		      result_items => join(':', sort {$b cmp $a} keys %$requestItems));
+    foreach my $did (@$dids) {
+	&printResult($writer, $did, $requestItems->{$did});
+    }
+    $writer->endTag('DocInfo');
+}
+
+# 検索結果に含まれる１文書を出力
+sub printResult {
+    my ($writer, $did, $request_items) = @_;
+
+    $writer->startTag('Result', Id => sprintf("%09d", $did));
+    foreach my $itemName (sort {$b cmp $a} keys %$request_items) {
+	$writer->startTag($itemName);
+	if ($itemName ne 'Cache') {
+	    $writer->characters($request_items->{$itemName}. "\n");
+	} else {
+	    $writer->startTag('Url');
+	    $writer->characters($request_items->{Cache}{URL});
+	    $writer->endTag('Url');
+	    $writer->startTag('Size');
+	    $writer->characters($request_items->{Cache}{Size});
+	    $writer->endTag('Size');
+	}
+	$writer->endTag($itemName);
+    }
+    $writer->endTag('Result');
+}
+
+
+sub printSearchResultForAPICall {
+    my ($this, $params, $result, $query, $from, $end, $hitcount) = @_;
+
+    my $did2snippets = {};
+    if ($params->{no_snippets} < 1 || $params->{Snippet} > 0) {
+	my @dids = ();
+	for (my $rank = $from; $rank < $end; $rank++) {
+	    push(@dids, sprintf("%09d", $result->[$rank]{did}));
+	}
+	my $sni_obj = new SnippetMakerAgent();
+	$sni_obj->create_snippets($query, \@dids, {discard_title => 0, syngraph => $params->{'syngraph'}, window_size => 5});
+	$did2snippets = $sni_obj->get_snippets_for_each_did();
+    }
+
+    my $queryString;
+    if ($params->{query_verbose}) {
+	foreach my $qk (@{$query->{keywords}}) {
+	    $queryString .= $qk->to_string_simple();
+	}
+    } else {
+ 	$queryString = $params->{'query'};
+    }
+
+    # current time
+    my $timestamp = strftime("%Y-%m-%d %T", localtime(time));
+
+    require XML::Writer;
+
+    my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
+    $writer->xmlDecl('utf-8');
+    $writer->startTag('ResultSet', time => $timestamp, query => $queryString,
+		      totalResultsAvailable => $hitcount, 
+		      totalResultsReturned => $end - $from, 
+		      firstResultPosition => $params->{'start'},
+		      logicalOperator => $params->{'logical_operator'},
+		      forceDpnd => $params->{'force_dpnd'},
+		      dpnd => $params->{'dpnd'},
+		      filterSimpages => $params->{'filter_simpages'},
+		      sort_by => $params->{'sort_by'}
+	);
+
+    for (my $rank = $from; $rank < $end; $rank++) {
+	my $did = sprintf("%09d", $result->[$rank]{did});
+	my $url = $result->[$rank]{url};
+	my $score = $result->[$rank]{score_total};
+	my $title = $result->[$rank]{title};
+	my $cache_location = $result->[$rank]{cache_location};
+	my $cache_size = $result->[$rank]{cache_size};
+
+	if ($params->{Score} > 0) {
+	    if ($params->{Id} > 0) {
+		$writer->startTag('Result', Rank => $rank + 1, Id => $did, Score => sprintf("%.5f", $score));
+	    } else {
+		$writer->startTag('Result', Rank => $rank + 1, Score => sprintf("%.5f", $score));
+	    }
+	} else {
+	    if ($params->{Id} > 0) {
+		$writer->startTag('Result', Rank => $rank + 1, Id => $did);
+	    } else {
+		$writer->startTag('Result', Rank => $rank + 1);
+	    }
+	}
+
+	if ($params->{Title} > 0) {
+	    $writer->startTag('Title');
+
+	    $title =~ s/\x09//g;
+	    $title =~ s/\x0a//g;
+	    $title =~ s/\x0b//g;
+	    $title =~ s/\x0c//g;
+	    $title =~ s/\x0d//g;
+
+	    $writer->characters($title);
+	    $writer->endTag('Title');
+	}
+
+	if ($params->{Url} > 0) {
+	    $writer->startTag('Url');
+	    $writer->characters($url);
+	    $writer->endTag('Url');
+	}
+
+	if ($params->{Snippet} > 0) {
+	    $writer->startTag('Snippet');
+	    $writer->characters($did2snippets->{$did});
+	    $writer->endTag('Snippet');
+	}
+
+	if ($params->{Cache} > 0) {
+	    $writer->startTag('Cache');
+	    $writer->startTag('Url');
+	    $writer->characters($cache_location);
+	    $writer->endTag('Url');
+	    $writer->startTag('Size');
+	    $writer->characters($cache_size);
+	    $writer->endTag('Size');
+	    $writer->endTag('Cache');
+	}
+
+	$writer->endTag('Result');
+    }
+    $writer->endTag('ResultSet');
+    $writer->end();
 }
 
 1;
