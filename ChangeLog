@@ -1,5 +1,11 @@
 2008-04-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
+	* cgi/SearchEngine.pm:
+	検索に要した時間のログを取得するように変更.
+
+	* cgi/Searcher.pm:
+	検索に要する時間のログをSearchEngine.pmでとるように変更.
+
 	* cgi/api.cgi:
 	APIで行っていた処理を整理（Searcher.pm,RequestParser.pm,Renderer.pm,Logger.pmを使用）
 
@@ -24,12 +30,10 @@
 	* scripts/tsubaki_server.pl:
 	検索結果すべてについてデータベースを引くように変更.
 
-
 2008-04-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/snippet_make_server.pl:
 	added new verbose messages.
-
 
 2008-04-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
