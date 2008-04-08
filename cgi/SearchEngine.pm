@@ -142,6 +142,9 @@ sub broadcastSearch {
 	}
     }
     $logger->setTimeAs('get_result_from_server', '%.3f');
+    
+    # 検索に要した時間をロギング
+    $logger->setParameterAs('search', $logger->getParameter('send_query_to_server') + $logger->getParameter('get_result_from_server'));
 
     # 受信した結果を揃える
     @results = sort {$b->[0]{score_total} <=> $a->[0]{score_total}} @results;
