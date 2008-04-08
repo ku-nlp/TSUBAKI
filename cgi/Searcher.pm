@@ -47,13 +47,14 @@ sub search {
     ####################################
 
     # 時間の測定開始
-    $logger->clearTimer();
 
     my $se_obj = new SearchEngine($opt->{syngraph});
-    my ($hitcount, $results) = $se_obj->search($query);
+    $logger->setTimeAs('create_se_obj', '%.3f');
+    my ($hitcount, $results) = $se_obj->search($query, $logger);
+
 
     # 検索に要した時間をロギング
-    $logger->setTimeAs('search', '%.3f');
+    # $logger->setTimeAs('search', '%.3f');
     # ヒット件数をロギング
     $logger->setParameterAs('hitcount', $hitcount);
 
@@ -149,73 +150,86 @@ sub merge_search_results {
 	}
 	last if ($flag < 1);
 
-	my $did = sprintf("%09d", $results->[$max][0]{did});
-
+	my $page = shift(@{$results->[$max]});
+	my $did = sprintf("%09d", $page->{did});
 	unless ($opt->{'filter_simpages'}) {
-	    push (@merged_result, shift(@{$results->[$max]}));
+	    $this->add_list(\@merged_result, $page, $did, \$miss_title, \$miss_url);
 	} else {
 	    # URL の取得
-	    my $url;
-	    if ($results->[$max][0]{url}) {
-		$url = $results->[$max][0]{url};
-	    } else {
-		$url = $this->get_url($did);
-		$results->[$max][0]{url} = $url;
+	    unless ($page->{url}) {
+		$page->{url} = $this->get_url($did);
 		$miss_url++;
 	    }
-	    my $url_mod = &get_normalized_url($url);
+	    my $url_mod = &get_normalized_url($page->{url});
 
 	    my $p = $url2pos{$url_mod};
 	    if (defined $p) {
-		unless ($results->[$max][0]{title}) {
-		    $results->[$max][0]{title} = $this->get_title($did);
-		    $miss_title++;
-		}
-		push(@{$merged_result[$p]->{similar_pages}}, shift(@{$results->[$max]}));
+		$merged_result[$p]->{similar_pages} = [] unless (defined $merged_result[$p]->{similar_pages});
+		$this->add_list($merged_result[$p]->{similar_pages}, $page, $did, \$miss_title, \$miss_url);
 	    } else {
 		my $title = '';
-		if (defined $prev && $prev->{score} - $results->[$max][0]{score_total} < 0.05) {
+		if (defined $prev && $prev->{score} - $page->{score_total} < 0.05) {
 		    if ($prev->{title} eq '') {
 			$prev->{title} = $this->get_title($prev->{did});
 			$miss_title++;
 		    }
+
 		    # タイトルの取得
-		    if ($results->[$max][0]{title}) {
-			$title = $results->[$max][0]{title};
+		    if (defined $page->{title} && $page->{title} ne '') {
+			$title = $page->{title};
 		    } else {
 			$title = $this->get_title($did);
-			$results->[$max][0]{title} = $title;
+			$page->{title} = $title;
 			$miss_title++;
 		    }
 
 		    # タイトルが等しくスコアが近ければ類似ページと判定
 		    if (defined $prev && $prev->{title} eq $title) {# && $title ne 'no title.') {
 			$url2pos{$url_mod} = $pos - 1;
-			$prev->{score} = $results->[$max][0]{score_total};
-			push(@{$merged_result[$pos - 1]->{similar_pages}}, shift(@{$results->[$max]}));
+			$prev->{score} = $page->{score_total};
+
+			$merged_result[$pos - 1]->{similar_pages} = [] unless (defined $merged_result[$pos - 1]->{similar_pages});
+			$this->add_list($merged_result[$pos - 1]->{similar_pages}, $page, $did, \$miss_title, \$miss_url);
 			next;
 		    }
 		} else {
-		    if ($results->[$max][0]{title}) {
-			$title = $results->[$max][0]{title};
+		    if (defined $page->{title} && $page->{title} ne '') {
+			$title = $page->{title};
 		    } else {
 			$title = $this->get_title($did);
 			$miss_title++;
 		    }
 		}
 
-		$results->[$max][0]{title} = $title;
+		$page->{title} = $title;
 
 		$prev->{did} = $did;
 		$prev->{title} = $title;
-		$prev->{score} = $results->[$max][0]{score_total};
-		$merged_result[$pos] = shift(@{$results->[$max]});
+		$prev->{score} = $page->{score_total};
+		$this->add_list(\@merged_result, $page, $did, \$miss_title, \$miss_url);
+
 		$url2pos{$url_mod} = $pos++;
 	    }
 	}
     }
 
     return (\@merged_result, $miss_title, $miss_url, $total_docs);
+}
+
+sub add_list {
+    my ($this, $mg_result, $p, $did, $miss_title, $miss_url) = @_;
+
+    unless ($p->{title}) {
+	$p->{title} = $this->get_title($did);
+	$$miss_title++;
+    }
+
+    unless ($p->{url}) {
+	$p->{url} = $this->get_url($did);
+	$$miss_url++;
+    }
+
+    push(@$mg_result, $p);    
 }
 
 sub get_snippets {
