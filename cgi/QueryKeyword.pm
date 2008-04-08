@@ -284,4 +284,31 @@ sub to_string_verbose {
     return $ret;
 }
 
+sub to_string_simple {
+    my ($this) = @_;
+
+    my @ret;
+    foreach my $ws (@{$this->{words}}) {
+	my $reps = "(";
+	foreach my $w (@{$ws}) {
+	    $reps .= "$w->{string},";
+	}
+	chop($reps);
+	$reps .= ")";
+	push(@ret, $reps);
+    }
+
+    foreach my $ds (@{$this->{dpnds}}) {
+	my $reps = "(";
+	foreach my $d (@{$ds}) {
+	    $reps .= "$d->{string},";
+	}
+	chop($reps);
+	$reps .= ")";
+	push(@ret, $reps);
+    }
+
+    return join(':', @ret);
+}
+
 1;
