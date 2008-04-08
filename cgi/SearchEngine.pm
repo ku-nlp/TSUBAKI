@@ -15,18 +15,20 @@ use CDB_File;
 use Configure;
 use QueryParser;
 
+
 # コンストラクタ
 # 接続先ホスト、ポート番号
 sub new {
     my($class, $syngraph) = @_;
     my $this = {hosts => []};
 
-    my $config = Configure::get_instance();
+    my $CONFIG = Configure::get_instance();
+
     my $servers;
     if ($syngraph > 0) {
-	$servers = Configure::get_instance()->{SEARCH_SERVERS_FOR_SYNGRAPH};
+	$servers = $CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH};
     } else {
-	$servers = Configure::get_instance()->{SEARCH_SERVERS};
+	$servers = $CONFIG->{SEARCH_SERVERS};
     }
     foreach my $s (@$servers) {
 	push(@{$this->{hosts}}, {name => $s->{name}, port => $s->{port}});
@@ -58,10 +60,10 @@ sub DESTROY {}
 
 ## 呼出用検索インターフェイス
 sub search {
-    my ($this, $query) = @_;
+    my ($this, $query, $logger) = @_;
     
     ## 検索サーバーに対してクエリを投げる
-    return $this->broadcastSearch($query);
+    return $this->broadcastSearch($query, $logger);
 }
 
 sub get_DF {
@@ -80,7 +82,9 @@ sub get_DF {
 
 # 実際に検索を行うメソッド
 sub broadcastSearch {
-    my($this, $query) = @_;
+    my($this, $query, $logger) = @_;
+
+    # $logger->clearTimer();
 
     # 検索クエリの送信
     my $selecter = IO::Select->new();
@@ -102,7 +106,9 @@ sub broadcastSearch {
 	
 	$socket->flush();
     }
-    
+    $logger->setTimeAs('send_query_to_server', '%.3f');    
+
+
     # 検索結果の受信
     my @results = ();
     my $total_hitcount = 0;
@@ -135,6 +141,8 @@ sub broadcastSearch {
 	    $num_of_sockets--;
 	}
     }
+    $logger->setTimeAs('get_result_from_server', '%.3f');
+
     # 受信した結果を揃える
     @results = sort {$b->[0]{score_total} <=> $a->[0]{score_total}} @results;
     return ($total_hitcount, \@results);
