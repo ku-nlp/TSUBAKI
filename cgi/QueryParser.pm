@@ -95,7 +95,7 @@ sub parse {
     }
 
     ## 空白で区切る
-    $qks_str =~ s/ /　/g;
+    # $qks_str =~ s/ /　/g;
     foreach my $q_str (split(/(?: )+/, $qks_str)) {
 	my $near = -1;
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
