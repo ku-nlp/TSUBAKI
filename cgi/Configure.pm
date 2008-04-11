@@ -14,7 +14,7 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 
 # 環境によってパスを変える
-my $CONFIG_FILE_PATH = dirname($INC{'Configure.pm'}) . "/configure.nict";
+my $CONFIG_FILE_PATH = dirname($INC{'Configure.pm'}) . "/configure";
 
 my %titledbs = ();
 my %urldbs = ();
