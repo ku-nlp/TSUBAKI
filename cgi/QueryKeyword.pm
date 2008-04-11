@@ -28,6 +28,7 @@ sub new {
     my $knpresult = $opt->{knp}->parse($string);
 
     if ($opt->{trimming}) {
+	require QueryTrimmer;
 	my $trimmer = new QueryTrimmer();
 	$trimmer->trim($knpresult);
     }
@@ -44,6 +45,8 @@ sub new {
 	# SynGraph 結果から索引語を抽出
  	$knpresult->set_id(0);
  	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option});
+	$this->{syn_result} = $synresult;
+
 	my @content_words = ();
 	foreach my $tag ($knpresult->tag) {
 	    foreach my $mrph ($tag->mrph) {
@@ -109,8 +112,63 @@ sub new {
     bless $this;
 }
 
+sub print_for_web {
+    my ($this) = @_;
+
+    print qq(<H4>KNP解析結果(TREE)</H4>\n);
+    print qq(<PRE class="knp_tree">\n);
+    $this->{knp_result}->draw_tag_tree(<STDOUT>);
+    print qq(</PRE>\n\n);
+
+    print qq(<H4>KNP解析結果(TAB)</H4>\n);
+    print qq(<PRE class="knp_tab">\n);
+    print $this->{knp_result}->all_dynamic . "\n";
+    print qq(</PRE>\n\n);
+
+    if ($this->{syn_result}) {
+	print qq(<H4>SYNGRAPH解析結果</H4>\n);
+	my $ret = $this->{syn_result};
+	$ret =~ s/</&lt;/g;
+	print qq(<PRE class="syn">\n);
+	print $ret . "\n";
+	print qq(</PRE>\n\n);
+    }
+}
+
+
+sub print_for_XML {
+    my ($this) = @_;
+
+    print qq(<TOOL_OUTPUT>\n);
+    print qq(<KNP format="tree">\n);
+    print "<![CDATA[\n";
+    $this->{knp_result}->draw_tag_tree(<STDOUT>);
+    print "]]>\n";
+    print qq(</KNP>\n);
+
+    print qq(<KNP format="tab">\n);
+    print "<![CDATA[\n";
+    print $this->{knp_result}->all_dynamic . "\n";
+    print "]]>\n";
+    print qq(</KNP>\n);
+
+    if ($this->{syn_result}) {
+	my $ret = $this->{syn_result};
+	# $ret =~ s/</&lt;/g;
+
+	print qq(<SynGraph format="tab">\n);
+	print "<![CDATA[\n";
+	print $ret . "\n";
+	print "]]>\n";
+	print qq(</SynGraph>\n);
+    }
+    print qq(</TOOL_OUTPUT>\n);
+}
+
+
 # デストラクタ
 sub DESTROY {}
+
 
 # 文字列表現を返すメソッド
 sub to_string {
@@ -282,6 +340,85 @@ sub to_string_verbose {
 #     $ret .= "FORCE_DPND: $this->{force_dpnd}";
 
     return $ret;
+}
+
+sub to_string_verbose_XML {
+    my ($this) = @_;
+
+    my $reps;
+    $reps .= "<INDEX>\n";
+    $reps .= "<WORD_INDEX>\n";
+    foreach my $ws (@{$this->{words}}) {
+ 	$ws->[0]{NE} =~ s/^<//;
+ 	$ws->[0]{NE} =~ s/>$//;
+ 	$ws->[0]{question_type} =~ s/^<//;
+ 	$ws->[0]{question_type} =~ s/>$//;
+
+	my $repbufs;
+	my %reasons = ();
+	foreach my $w (@{$ws}) {
+	    foreach my $r (split(/ /, $w->{reason})) {
+		$reasons{$r} = 1;
+	    }
+	    my $string = $w->{string};
+	    $string =~ s/</＜/g;
+	    $string =~ s/>/＞/g;
+
+ 	    $repbufs .= sprintf(qq(<WORD string="%s" qid="%d" freq="%.3f" df="%.2f" isBasicNode="%s" isSynNodeOfNE="%s" />\n),
+				$string,
+				$w->{qid},
+				$w->{freq},
+				$w->{df},
+				($w->{isBasicNode}) ? 'yes' : 'no',
+				($w->{fstring} =~ /<削除::NEのSYNノード>/) ? 'yes' : 'no');
+	}
+
+ 	$reps .= sprintf(qq(<WORDS gid="%d" weight="%.3f" isContentWord="%s" isNE="%s" questionType="%s" isHead="%s" isRequisite="%s" reason="%s">\n),
+			 $ws->[0]{gid},
+			 $ws->[0]{weight},
+			 ($ws->[0]{isContentWord}) ? 'yes' : 'no',
+			 ($ws->[0]{NE}) ? $ws->[0]{NE} : 'no',
+			 ($ws->[0]{question_type}) ? $ws->[0]{question_type} : 'no',
+			 ($ws->[0]{lexical_head}) ? 'yes' : 'no',
+			 ($ws->[0]{requisite}) ? 'yes' : 'no',
+			 (scalar(keys (%reasons))) ? join(',', keys (%reasons)) : 'no');
+	$reps .= $repbufs;
+	$reps .= "</WORDS>\n";
+    }
+    $reps .= "</WORD_INDEX>\n";
+
+    $reps .= "<DEPENDENCY_INDEX>\n";
+    foreach my $ds (@{$this->{dpnds}}) {
+	my $repbufs;
+	my %reasons = ();
+	foreach my $d (@{$ds}) {
+	    foreach my $r (split(/ /, $d->{reason})) {
+		$reasons{$r} = 1;
+	    }
+
+	    my $string = $d->{string};
+	    $string =~ s/</＜/g;
+	    $string =~ s/>/＞/g;
+
+ 	    $repbufs .= sprintf(qq(<DPND string="%s" qid="%d" freq="%.3f" df="%.2f" isBasicNode="%s" />\n),
+				$string,
+				$d->{qid},
+				$d->{freq},
+				$d->{df},
+				($d->{isBasicNode}) ? 'yes' : 'no');
+	}
+
+ 	$reps .= sprintf(qq(<DPNDS gid="%d" weight="%.3f" reason="%s">\n),
+			 $ds->[0]{gid},
+			 $ds->[0]{weight},
+			 (scalar(keys (%reasons))) ? join(',', keys (%reasons)) : 'no');
+	$reps .= $repbufs;
+	$reps .= "</DPNDS>\n";
+    }
+    $reps .= "</DEPENDENCY_INDEX>\n";
+    $reps .= "</INDEX>\n";
+
+    return $reps;
 }
 
 sub to_string_simple {

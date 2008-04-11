@@ -8,6 +8,7 @@ use Encode;
 use Configure;
 use POSIX qw(strftime);
 use URI::Escape;
+use XML::Writer;
 
 our $CONFIG = Configure::get_instance();
 
@@ -330,7 +331,7 @@ sub printSearchResultForBrowserAccess {
 }
 
 sub printRequestResult {
-    my ($this, $dids, $requestItems) = @_;
+    my ($this, $dids, $results, $requestItems) = @_;
     # 出力
     my $date = `date +%m%d-%H%M%S`; chomp ($date);
     my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
@@ -339,26 +340,26 @@ sub printRequestResult {
 		      time => $date,
 		      result_items => join(':', sort {$b cmp $a} keys %$requestItems));
     foreach my $did (@$dids) {
-	&printResult($writer, $did, $requestItems->{$did});
+	&printResult($writer, $did, $results->{$did});
     }
     $writer->endTag('DocInfo');
 }
 
 # 検索結果に含まれる１文書を出力
 sub printResult {
-    my ($writer, $did, $request_items) = @_;
+    my ($writer, $did, $results) = @_;
 
     $writer->startTag('Result', Id => sprintf("%09d", $did));
-    foreach my $itemName (sort {$b cmp $a} keys %$request_items) {
+    foreach my $itemName (sort {$b cmp $a} keys %$results) {
 	$writer->startTag($itemName);
 	if ($itemName ne 'Cache') {
-	    $writer->characters($request_items->{$itemName}. "\n");
+	    $writer->characters($results->{$itemName}. "\n");
 	} else {
 	    $writer->startTag('Url');
-	    $writer->characters($request_items->{Cache}{URL});
+	    $writer->characters($results->{Cache}{URL});
 	    $writer->endTag('Url');
 	    $writer->startTag('Size');
-	    $writer->characters($request_items->{Cache}{Size});
+	    $writer->characters($results->{Cache}{Size});
 	    $writer->endTag('Size');
 	}
 	$writer->endTag($itemName);

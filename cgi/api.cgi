@@ -20,6 +20,7 @@ use strict;
 use utf8;
 use CGI qw/:standard/;
 use CGI::Carp qw(fatalsToBrowser);
+use File::stat;
 
 # 以下TSUBAKIオリジナルクラス
 use Configure;
@@ -46,13 +47,13 @@ sub main {
 	# 入力をパース
 	my ($queryString, $requestItems, $dids) = RequestParser::parsePostRequest($dat);
 
-	my $requestItems = &getRequestItems($queryString, $requestItems, $dids);
+	my $results = &getRequestItems($queryString, $requestItems, $dids);
 
 	# 遅延コンストラクタ呼び出し（$ENVの値を書き換えるため）
 	my $cgi = new CGI();
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 	my $renderer = new Renderer();
-	$renderer->printRequestResult($dids, $requestItems);
+	$renderer->printRequestResult($dids, $results);
     }
     # GET呼び出し
     else {
@@ -69,7 +70,7 @@ sub main {
 
 	# 1. 一文書に対する情報取得
 	if (defined $field) {
-	    &provideDocumentInfo($cgi);
+	    &provideDocumentInfo($cgi, $field);
 	}
 	# 2. 標準フォーマット、オリジナルページ取得
 	elsif ($fileType) {
@@ -86,6 +87,7 @@ sub getRequestItems {
     my ($queryString, $requestItems, $dids) = @_;
 
     # スニペットが指定されている場合は取得する
+    my $results;
     my $did2snippets;
     my $query_obj = undef;
     if (exists $requestItems->{'Snippet'}) {
@@ -100,21 +102,49 @@ sub getRequestItems {
 	$did2snippets = $sni_obj->get_snippets_for_each_did();
     }
 
+    my $searcher = new Searcher();
+    my $renderer = new Renderer();
     # 返り値をセットする
     foreach my $fid (@$dids) {
-	$requestItems->{$fid}{'Snippet'} = $did2snippets->{$fid} if (exists $requestItems->{'Snippet'});
-	$requestItems->{$fid}{'Title'} = &get_title($fid) if (exists $requestItems->{'Title'});
-	$requestItems->{$fid}{'Url'} = &get_url($fid) if (exists $requestItems->{'Url'});
+	$results->{$fid}{'Snippet'} = $did2snippets->{$fid} if (exists $requestItems->{'Snippet'});
+	if (exists $requestItems->{'Title'}) {
+	    $results->{$fid}{'Title'} = $searcher->get_title($fid);
+	}
+	if (exists $requestItems->{'Url'}) {
+	    $results->{$fid}{'Url'} = $searcher->get_url($fid);
+	}
 
 	if (exists $requestItems->{'Cache'}) {
+	    unless ($query_obj) {
+		# parse query
+		my $q_parser = new QueryParser();
+		$query_obj = $q_parser->parse($queryString, {logical_cond_qk => 'AND', syngraph => 0});
+	    }
+
 	    my $cache = {
-		URL  => &get_cache_location($fid, &get_uri_escaped_query($query_obj)),
+		URL  => &get_cache_location($fid, $renderer->get_uri_escaped_query($query_obj)),
 		Size => &get_cache_size($fid) };
-	    $requestItems->{$fid}{'Cache'} = $cache;
+	    $results->{$fid}{'Cache'} = $cache;
 	}
     }
+
+    return $results;
 }
 
+sub get_cache_location {
+    my ($fid, $uri_escaped_query) = @_;
+
+    my $loc = sprintf($CONFIG->{CACHED_PAGE_ACCESS_TEMPLATE}, $fid);
+    return ($uri_escaped_query eq '') ? "$CONFIG->{INDEX_CGI}?$loc" : "$CONFIG->{INDEX_CGI}?$loc&KEYS=$uri_escaped_query";
+}
+
+sub get_cache_size {
+    my ($fid) = @_;
+
+    my $st = stat(sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $fid / 1000000, $fid / 10000, $fid));
+    return '' unless $st;
+    return $st->size;
+}
 
 sub provideDocumentInfo {
     my ($cgi, $field) = @_;
@@ -132,17 +162,20 @@ sub provideDocumentInfo {
     }
 
     my $queryString = $cgi->param('query');
-    if ($queryString eq '') {
-	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
-	print "パラメータqueryの値が必要です。\n";
-	exit(1);
+    if (exists $requestItems{'Snippet'}) {
+	print $field . "\n";
+	if ($queryString eq '') {
+	    print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
+	    print "パラメータqueryの値が必要です。\n";
+	    exit(1);
+	}
     }
 
-    my $requestItems = &getRequestItems($queryString, \%requestItems);
+    my $results = &getRequestItems($queryString, \%requestItems, [$did]);
 
     print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
     my $renderer = new Renderer();
-    $renderer->printRequestResult([$did], $requestItems);
+    $renderer->printRequestResult([$did], $results, \%requestItems);
 }
 
 

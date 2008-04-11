@@ -11,7 +11,7 @@ use Data::Dumper;
     sub qquote { return shift; }
 }
 $Data::Dumper::Useperl = 1;
-use CalcSimilarityByCF;
+# use CalcSimilarityByCF;
 
 
 sub new {
@@ -39,8 +39,8 @@ sub trim {
     $this->set_discard_feature_by_KANJI($result);
 
     my $option = { debug => 0, usewordsimcache => 1, method => 'SimpsonJaccard' };
-    my $cscf = new CalcSimilarityByCF($option);
-    $cscf->TieMIDBfile("/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi");
+    my $cscf; # = new CalcSimilarityByCF($option);
+    # $cscf->TieMIDBfile("/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi");
 
     my @kihonku = $result->tag;
 #   $this->set_discard_feature_by_TELIC($kihonku[-1], undef, $cscf, $option, 0.3, {verbose => 0});

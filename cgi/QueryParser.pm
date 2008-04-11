@@ -95,7 +95,8 @@ sub parse {
     }
 
     ## 空白で区切る
-    foreach my $q_str (split(/(?: |　)+/, $qks_str)) {
+    $qks_str =~ s/ /　/g;
+    foreach my $q_str (split(/(?: )+/, $qks_str)) {
 	my $near = -1;
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
 	my $force_dpnd = -1;
@@ -151,9 +152,9 @@ sub parse {
 
 	my $q;
 	if ($opt->{syngraph} > 0) {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
 	} else {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
 	}
 
 	push(@qks, $q);
