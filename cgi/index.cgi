@@ -1,7 +1,6 @@
-#!/share09/home/skeiji/local/bin/perl
 #!/usr/bin/env perl
 
-# $id:$
+# $Id$
 
 use strict;
 use utf8;
