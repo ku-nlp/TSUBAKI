@@ -112,7 +112,7 @@ sub parseAPIRequest {
 	$params->{Url} = 1;
 	$params->{Cache} = 1;
 	$params->{Title} = 1;
-	$params->{Snippet} = ($params->{'no_snippets'} < 1) ? 1 : 0;
+	$params->{Snippet} = ($params->{'snippets'} == 1 || $params->{'no_snippets'} < 1) ? 1 : 0;
     }
 
     # 指定された検索条件に変更
@@ -131,6 +131,7 @@ sub parseAPIRequest {
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;
+	$params->{'Snippet'} = 1;
     } else {
 	$params->{'no_snippets'} = 1;
     }
@@ -138,7 +139,7 @@ sub parseAPIRequest {
     &normalize_logical_operator($params);
 
     # 取得する検索件数の設定
-    $params->{'start'} = $cgi->param('start') if (defined($cgi->param('start')));
+    $params->{start} = $cgi->param('start') - 1 if (defined($cgi->param('start')));
     $params->{'results'} = $cgi->param('results') if (defined($cgi->param('results')));
 
     return $params;
@@ -186,8 +187,9 @@ sub parseQuery {
 
     # 検索サーバーの台数を取得
     my $N = ($query->{syngraph}) ? scalar(@{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}}) : scalar(@{$CONFIG->{SEARCH_SERVERS}});
-    my $alpha = 30 * ($query->{results}**(-0.34));
-    $query->{results} = int(1 + ($query->{results} / $N) * $alpha);
+    my $alpha = ($query->{results} > 5000) ? 1.5 : 30 * ($query->{results}**(-0.34));
+    my $M = $query->{results} / $N;
+    $query->{results} = int(1 + $M * $alpha);
     $logger->setParameterAs('request_results_for_slave_server', $query->{results});
 
     # 係り受けと近接のスコアを考慮するようにする
