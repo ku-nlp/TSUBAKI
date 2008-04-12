@@ -1,3 +1,22 @@
+2008-04-12  skeiji  <skeiji@nlpc.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm:
+	スニペットが表示されない不具合を修正.
+	検索結果取得件数Nが5000件を超える場合は、1.5 * N / サーバー台数 分返すようにした.
+
+	* cgi/configure, cgi/configure.nict:
+	SYNGRAPH検索を停止するオプションを追加.
+
+	* cgi/Renderer.pm:
+	SYNGRAPH検索がOFFの際は、表示がグレーアウトするようにした.
+
+	* cgi/index.cgi:
+	先頭にあるperlのパスを変更.
+
+	* scripts/TsubakiEngine.pm:
+	bug fixed.(係り受け強制制約適用時、文書IDチェックの終了条件を修正).
+	verbose時に出力されるコメントを追加.
+
 2008-04-11  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Configure.pm
