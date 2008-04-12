@@ -87,7 +87,7 @@ sub search {
     # 検索
     # 文書のスコアリング
     my ($alldocs_word, $alldocs_dpnd) = $this->retrieve_documents($query, $qid2df);
-    
+
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
 	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない
@@ -668,6 +668,8 @@ sub filter_by_NEAR_constraint {
 sub filter_by_force_dpnd_constraint {
     my ($this, $docs_word, $docs_dpnd) = @_;
 
+    print "running force_dpnd_filter.\n" if ($this->{verbose});
+
     # 初期化 & 空リストのチェック
     my @results = ();
     my $flag = 0;
@@ -708,20 +710,20 @@ sub filter_by_force_dpnd_constraint {
 	    for (my $j = 1; $j < $variation; $j++) {
 		$flag = 1; 
 		if ($this->{verbose}) {
+		    $idxmap{0} = $i;
 		    for (my $k = 0; $k < scalar(@sorted_docs); $k++) {
-			print "loop $i idx $k size " . scalar(@{$sorted_docs[$k]}) ."\n";
-			foreach my $ddd (@{$sorted_docs[$k]}) {
-			    print $ddd->{did} . " ";
+			print "-----\n";
+			print "loop=$i idx=$k size=" . scalar(@{$sorted_docs[$k]}) ."\n";
+			for (my $m = $idxmap{$k}; $m < scalar(@{$sorted_docs[$k]}); $m++) {
+			    print " " . $sorted_docs[$k][$m]->{did};
 			}
 			print "\n";
 		    }
-		    print "-----\n";
 		}
 
-		while (defined($sorted_docs[$j]->[0])) {
+		while ($idxmap{$j} < scalar(@{$sorted_docs[$j]})) {
 		    if ($sorted_docs[$j]->[$idxmap{$j}]->{did} < $sorted_docs[0]->[$i]->{did}) {
 			$idxmap{$j}++;
-#			shift(@{$sorted_docs[$j]});
 		    } elsif ($sorted_docs[$j]->[$idxmap{$j}]->{did} == $sorted_docs[0]->[$i]->{did}) {
 			$flag = 0;
 			last;
@@ -732,7 +734,13 @@ sub filter_by_force_dpnd_constraint {
 		last if ($flag > 0);
 	    }
 
-	    $dids{$sorted_docs[0]->[$i]->{did}} = 1 if ($flag < 1);
+	    if ($flag < 1) {
+		$dids{$sorted_docs[0]->[$i]->{did}} = 1;
+		if ($this->{verbose}) {
+		    print $sorted_docs[0]->[$i]->{did} . " -> OK.\n";
+		    print "-----\n";
+		}
+	    }
 	}
     }
 
