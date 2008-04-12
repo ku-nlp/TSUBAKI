@@ -235,11 +235,16 @@ print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http:
     }
     print "</TR>";
 
-    if ($params->{syngraph}) {
-	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+    if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
+	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=lightGray>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
     } else {
-	print "<TR><TD>オプション</TD><TD colspan=3 DIV style=\"text-align:left;\"><INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL></DIV></TD></TR>\n";
+	if ($params->{syngraph}) {
+	    print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+	} else {
+	    print "<TR><TD>オプション</TD><TD colspan=3 DIV style=\"text-align:left;\"><INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL></DIV></TD></TR>\n";
+	}
     }
+
     print "</TABLE>\n";
     
     print "</FORM>\n";
@@ -401,7 +406,7 @@ sub printSearchResultForAPICall {
     $writer->startTag('ResultSet', time => $timestamp, query => $queryString,
 		      totalResultsAvailable => $hitcount, 
 		      totalResultsReturned => $end - $from, 
-		      firstResultPosition => $params->{'start'},
+		      firstResultPosition => $params->{'start'} + 1,
 		      logicalOperator => $params->{'logical_operator'},
 		      forceDpnd => $params->{'force_dpnd'},
 		      dpnd => $params->{'dpnd'},
@@ -410,7 +415,7 @@ sub printSearchResultForAPICall {
 	);
 
     for (my $rank = $from; $rank < $end; $rank++) {
-	my $page = $result->[$rank - 1];
+	my $page = $result->[$rank];
 	my $did = sprintf("%09d", $page->{did});
 	my $url = $page->{url};
 	my $score = $page->{score_total};
@@ -420,15 +425,15 @@ sub printSearchResultForAPICall {
 
 	if ($params->{Score} > 0) {
 	    if ($params->{Id} > 0) {
-		$writer->startTag('Result', Rank => $rank, Id => $did, Score => sprintf("%.5f", $score));
+		$writer->startTag('Result', Rank => $rank + 1, Id => $did, Score => sprintf("%.5f", $score));
 	    } else {
-		$writer->startTag('Result', Rank => $rank, Score => sprintf("%.5f", $score));
+		$writer->startTag('Result', Rank => $rank + 1, Score => sprintf("%.5f", $score));
 	    }
 	} else {
 	    if ($params->{Id} > 0) {
-		$writer->startTag('Result', Rank => $rank, Id => $did);
+		$writer->startTag('Result', Rank => $rank + 1, Id => $did);
 	    } else {
-		$writer->startTag('Result', Rank => $rank);
+		$writer->startTag('Result', Rank => $rank + 1);
 	    }
 	}
 
