@@ -17,7 +17,7 @@ my $CONFIG = Configure::get_instance();
 
 my $servers = $CONFIG->{SEARCH_SERVERS};
 $servers = $CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH} if ($opt{syngraph});
-$servers = $CONFIG->{STANDARD_FORMAT_LOCATION} if ($opt{snippet});
+$servers = $CONFIG->{SNIPPET_SERVERS} if ($opt{snippet});
 
 my $selecter = IO::Select->new();
 my $num_of_sockets = 0;
