@@ -24,6 +24,7 @@ binmode(STDOUT, ':encoding(euc-jp)');
 
 
 my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 1;
+my $HOSTNAME = `hostname` ; chop($HOSTNAME);
 
 my (%opt);
 GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug');
@@ -111,6 +112,14 @@ sub main {
 	    # 検索クエリの受信
 	    my $buff;
 	    while (<$new_socket>) {
+		if ($_ eq "IS_ALIVE\n") {
+		    print "hogehoge\n";
+		    print $new_socket "$HOSTNAME returns ACK.\n";
+		    $new_socket->close();
+		    exit;
+		}
+
+		print $_;
 		last if ($_ eq "EOQ\n");
 		$buff .= $_;
 	    }

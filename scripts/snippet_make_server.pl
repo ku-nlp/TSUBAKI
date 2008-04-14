@@ -69,6 +69,14 @@ sub main {
 	    # クエリの受信
 	    my $buff;
 	    while (<$new_socket>) {
+		# サーバーがダウンしていないかどうかのチェックモード
+		if ($_ eq 'IS_ALIVE\n') {
+		    print $new_socket "$HOSTNAME returns ACK.\n";
+		    $new_socket->close();
+		    exit;
+		}
+
+		# 通常モード
 		last if ($_ eq "EOQ\n");
 		$buff .= $_;
 	    }
