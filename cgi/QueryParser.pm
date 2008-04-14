@@ -1,6 +1,6 @@
 package QueryParser;
 
-# $id:$
+# $Id$
 
 # 検索クエリを内部形式に変換するクラス
 
@@ -12,7 +12,7 @@ use KNP;
 use Indexer;
 use QueryKeyword;
 use Configure;
-
+use CDB_File;
 
 
 # コンストラクタ
