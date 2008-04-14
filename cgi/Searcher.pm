@@ -162,6 +162,9 @@ sub merge_search_results {
 	    if (defined $p) {
 		$merged_result[$p]->{similar_pages} = [] unless (defined $merged_result[$p]->{similar_pages});
 		$this->add_list($merged_result[$p]->{similar_pages}, $page, $did, \$miss_title, \$miss_url);
+		$prev->{title} = $page->{title};
+		$prev->{url} = $page->{url};
+		$prev->{score} = $page->{score_total};
 	    } else {
 		my $title = '';
 		if (defined $prev && $prev->{score} - $page->{score_total} < 0.05) {
@@ -225,7 +228,7 @@ sub add_list {
 	$$miss_url++;
     }
 
-    push(@$mg_result, $p);    
+    push(@$mg_result, $p);
 }
 
 sub get_snippets {
