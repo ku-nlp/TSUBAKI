@@ -113,13 +113,11 @@ sub main {
 	    my $buff;
 	    while (<$new_socket>) {
 		if ($_ eq "IS_ALIVE\n") {
-		    print "hogehoge\n";
-		    print $new_socket "$HOSTNAME returns ACK.\n";
+		    print $new_socket "$HOSTNAME:$opt{port} returns ACK.\n";
 		    $new_socket->close();
 		    exit;
 		}
 
-		print $_;
 		last if ($_ eq "EOQ\n");
 		$buff .= $_;
 	    }
