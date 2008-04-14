@@ -1,3 +1,4 @@
+#!/home/skeiji/local/bin/perl
 #!/share09/home/skeiji/local/bin/perl
 
 # $Id$
@@ -74,7 +75,7 @@ sub main {
 	}
 	# 2. 標準フォーマット、オリジナルページ取得
 	elsif ($fileType) {
-	    &provideDocumentData($cgi);
+	    &provideDocumentData($cgi, $fileType);
 	}
 	# 3. 検索結果取得
 	else {
@@ -163,7 +164,6 @@ sub provideDocumentInfo {
 
     my $queryString = $cgi->param('query');
     if (exists $requestItems{'Snippet'}) {
-	print $field . "\n";
 	if ($queryString eq '') {
 	    print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
 	    print "パラメータqueryの値が必要です。\n";
@@ -190,22 +190,25 @@ sub provideDocumentData {
 	exit(1);
     }
 
-    if ($cgi->param('no_encoding') && $fileType ne 'xml') {
-	print $cgi->header(-type => "text/$fileType");
+    if ($cgi->param('no_encoding') && $fileType eq 'html') {
+	print $cgi->header(-type => "text/html");
     } else {
-	print $cgi->header(-type => "text/$fileType", -charset => 'utf-8');
+	if ($fileType eq 'html') {
+	    print $cgi->header(-type => "text/html", -charset => 'utf-8');
+	} else {
+	    print $cgi->header(-type => "text/xml", -charset => 'utf-8');
+	}
     }
 
     # ファイルタイプに応じたファイルパスを取得
-    my $dir;
+    my $filepath;
     if ($fileType eq 'xml_w_anchor') {
-	$dir = $CONFIG->{ORDINARY_SF_W_ANCHOR_PATH};
+	$filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_W_ANCHOR_PATH}, $did / 1000000, $did / 10000, $did);
     } elsif ($fileType eq 'xml') {
-	$dir = $CONFIG->{ORDINARY_SF_PATH};
+	$filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
     } elsif ($fileType eq 'html') {
-	$dir = $CONFIG->{HTML_FILE_PATH};
+	$filepath = sprintf("%s/h%03d/h%05d/%09d.html", $CONFIG->{HTML_FILE_PATH}, $did / 1000000, $did / 10000, $did);
     }
-    my $filepath = sprintf("%s/h%03d/h%05d/%09d.html", $dir, $did / 1000000, $did / 10000, $did);
 
 
     my $content = '';
