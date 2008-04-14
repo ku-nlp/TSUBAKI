@@ -118,6 +118,13 @@ sub main {
 		    exit;
 		}
 
+		if ($_ eq "GET_UPTIME\n") {
+		    my $uptime = `uptime` ; chop $uptime;
+		    print $new_socket "$HOSTNAME:$opt{port} $uptime\n";
+		    $new_socket->close();
+		    exit;
+		}
+
 		last if ($_ eq "EOQ\n");
 		$buff .= $_;
 	    }
