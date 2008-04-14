@@ -1,0 +1,405 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
+<HTML lang="ja">
+<HEAD>
+	<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<META http-equiv="Content-Style-Type" content="text/css">
+	<LINK rel="stylesheet" type="text/css" href="./api.css">
+	<TITLE>検索エンジン基盤TSUBAKI APIマニュアル</TITLE>
+</HEAD>
+<BODY>
+
+<DIV class="lastupdate">最終更新日&nbsp;2007年10月2日</DIV>
+
+<H2>
+  <SPAN class="tsubaki">TSUBAKI</SPAN> APIマニュアル
+</H2>
+
+<UL class="menu">
+<LI><A href="#sect1">はじめに</A></LI>
+<LI><A href="#sect2">検索結果の取得方法</A></LI>
+<LI><A href="#sect3">レスポンスフィールド</A></LI>
+<LI><A href="#sect4">キャッシュ/解析済みデータの取得方法</A></LI>
+<LI><A href="#sect5">標準フォーマット変換ツール</A></LI>
+</UL>
+
+<H3><A name="sect1">はじめに</A></H3>
+
+<P>
+ここでは、科学技術研究費特定領域
+「<A href="http://i-explosion.ex.nii.ac.jp/i-explosion/index.php">情報爆発時代に
+向けた新しいIT基盤技術の研究</A>」(2006-2010; 領域代表 喜連川優)において開発中
+の<A href="http://tsubaki.ixnlp.nii.ac.jp/se/index.cgi">開放型検索エンジン基盤
+TSUBAKI</A>のAPI利用方法について説明します。本APIに関するご意見・ご要望は以下のア
+ドレスでお待ちしております。
+
+<ADDRESS>
+tsubaki&nbsp;あっと&nbsp;nlp.kuee.kyoto-u.ac.jp
+</ADDRESS>
+</P>
+
+<H3><A name="sect2">検索結果の取得方法</A></H3>
+
+<P>TSUBAKI APIのリクエストURL以下のとおりです。</P>
+<ADDRESS>http://tsubaki.ixnlp.nii.ac.jp/api.cgi</ADDRESS>
+<P>
+このURLの後ろに、以下の表に挙げたリクエストパラメータを付加して問
+い合わせることで検索結果が得られます。
+</P>
+
+<TABLE style="border: 1px solid darkgray;padding:0em;margin:1em;">
+<CAPTION>TSUBAKI APIで利用可能なリクエストパラメータ一覧</CAPTION>
+<TR bgcolor=#f1fff4>
+  <TD>パラメータ</TD><TD>値</TD><TD>説明</TD></TR>
+</TR>
+<TR>
+  <TD>query</TD>
+  <TD><I>string</I></TD>
+  <TD>検索クエリ(utf8)をURLエンコードした文字列．検索結果を得る場合は必須．</TD>
+</TR>
+<TR bgcolor=#f1fff4>
+  <TD>start</TD>
+  <TD><I>integer</I></TD>
+  <TD>取得したい検索結果の先頭位置．</TD>
+</TR>
+<TR>
+  <TD>results</TD>
+  <TD><I>integer</I></TD>
+  <TD>取得したい検索結果の数．デフォルトは10．</TD>
+</TR>
+<TR bgcolor=#f1fff4>
+  <TD>logical_operator</TD>
+  <TD>AND/OR</TD>
+  <TD>検索時の論理条件．デフォルトはAND．</TD>
+</TR>
+<!--
+<TR>
+  <TD>dpnd</TD>
+  <TD>0/1</TD>
+  <TD>係り受けを考慮した検索を行うかどうかの指定．1の時に係り受けを考慮して検索する．デフォルトは1．</TD>
+</TR>
+<TR bgcolor=#f1fff4>
+  <TD>filter_simpages</TD>
+  <TD>0/1</TD>
+  <TD>類似したページを取得したくない場合は1，類似したページも取得したい場合は0．デフォルトは0．</TD>
+</TR>
+-->
+<TR>
+  <TD>only_hitcount</TD>
+  <TD>0/1</TD>
+  <TD>ヒット件数だけを得たい場合は1，検索結果を得たい場合は0．デフォルトは0．</TD>
+</TR>
+<TR bgcolor=#f1fff4>
+  <TD>force_dpnd</TD>
+  <TD>0/1</TD>
+  <TD>クエリ中の係り受け関係を全て含む文書を得たい場合は1，そうでない場合は0．デフォルトは0．</TD>
+</TR>
+<TR>
+  <TD>snippets</TD>
+  <TD>0/1</TD>
+  <TD>スニペッツが必要な場合は1，スニペッツが不要な場合は0．デフォルトは0．</TD>
+</TR>
+<TR bgcolor=#f1fff4>
+  <TD>near</TD>
+  <TD><I>integer</I></TD>
+  <TD>クエリ中の単語と単語が n 語以内に出現するという条件のもと検索を実行する(近接検索)．クエリ中の単語の出現順序は考慮される．</TD>
+</TR>
+<TR>
+  <TD>result_items</TD>
+  <TD>Id/Title/Score/Snippet/Url/Cache</I></TD>
+  <TD>希望するデータフィールドだけを取得する．例えば、<DIV style="padding:0.5em 1em;">result_items=Title:Snippet</DIV>とするとタイトル，スニペットだけが含まれる検索結果を取得可能．特に指定がない場合は，全てのフィールドが含まれる．</TD>
+</TR>
+
+<TR bgcolor=#f1fff4>
+  <TD>id</TD>
+  <TD><I>string</I></TD>
+  <TD>個別の文書を取得する際の文書ID．オリジナルのウェブ文書，または標準フォーマット形式の文書を得る際は必須．</TD>
+</TR>
+<TR>
+  <TD>format</TD>
+  <TD>html/xml</TD>
+  <TD>オリジナルのウェブ文書，または標準フォーマット形式のウェブ文書のどちらを取得するかを指定．idを指定した際は必須．</TD>
+</TR>
+</TABLE>
+
+
+
+<P>以下にリクエストURLの例を示します。</P>
+
+<BLOCKQUOTE>
+<B>例1:</B>「京都の観光名所」について検索した結果の上位20件を取得したい場合
+
+<ADDRESS>
+<A href="http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=%E4%BA%AC%E9%83%BD%E3%81%AE%E8%A6%B3%E5%85%89%E5%90%8D%E6%89%80&start=1&results=20">
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=%E4%BA%AC%E9%83%BD%E3%81%AE%E8%A6%B3%E5%85%89%E5%90%8D%E6%89%80&start=1&results=20
+</A>
+</ADDRESS>
+
+ここで、
+
+<UL>
+<li>query=の後に続く文字列%E4%BA%AC%E9%83%BD%E3%81%AE%E8%A6%B3%E5%85%89%E5%90%8D%E6%89%80は、検索キーワードをURLエンコーディングしたもの(この例の場合は「京都の観光名所」)</li>
+<li>startは取得を開始したい文書の検索結果中での順位(オフセット)</li>
+<li>resultsは取得したい文書数</li>
+</UL>
+
+です。
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+<B>例2:</B>「京都の観光名所」のヒット件数だけを知りたい場合
+<ADDRESS>
+<A href="http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=%E4%BA%AC%E9%83%BD%E3%81%AE%E8%A6%B3%E5%85%89%E5%90%8D%E6%89%80&only_hitcount=1">
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=%E4%BA%AC%E9%83%BD%E3%81%AE%E8%A6%B3%E5%85%89%E5%90%8D%E6%89%80&only_hitcount=1
+</A>
+</ADDRESS>
+
+この時、ヒット件数だけがplain/text形式で返ってきます。
+</BLOCKQUOTE>
+
+<P>例1の場合について、perlを使ってTSUBAKI APIにアクセスするためのサンプルコードを以下に示します。</P>
+
+<DIV class="code">
+#!/usr/bin/env perl<BR>
+<BR>
+use LWP::UserAgent;<BR>
+use URI::Escape;<BR>
+use Encode;<BR>
+use utf8;<BR>
+use strict;<BR>
+<BR>
+# 検索したいキーワード (utf8)をURIエンコードする<BR>
+my $query = encode('utf8', '京都の観光名所');<BR>
+# 検索キーワードをURLエンコーディングする<BR>
+my $uri_escaped_query = uri_escape($query);<BR>
+<BR>
+# リクエストURLを作成<BR>
+my $base_url = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi';<BR>
+my $results = 20;<BR>
+my $start = 1;<BR>
+my $req_url = "$base_url?query=$uri_escaped_query&results=$results&start=$start";<BR>
+<BR>
+# UserAgent の作成<BR>
+my $ua = new LWP::UserAgent();<BR>
+# タイムアウトの設定<BR>
+$ua->timeout(3600);<BR>
+<BR>
+# リクエストの送信<BR>
+my $req = HTTP::Request->new(GET => $req_url);<BR>
+$req->header('Accept' => 'text/xml');<BR>
+my $response = $ua->request($req);<BR>
+<BR>
+# TSUBAKI APIの結果を取得<BR>
+if ($response->is_success()) {<BR>
+    print $response->content();<BR>
+} else {<BR>
+    print STDERR "Failed to call the TSUBAKI API.\n";<BR>
+}<BR>
+
+</DIV>
+</P>
+
+<H3><A name="sect3">レスポンスフィールド</A></H3>
+
+<P>上記のプログラムを実行すると次のXML文書が出力されます。</P>
+
+<DIV class="code">
+&lt;ResultSet time="2007-02-21 13:43:58" query="京都の観光名所" totalResultsAvailable="19586" totalResultsReturned="10" firstResultPosition="0" logicalOperator="AND" dpnd="1" filterSimpages="0"&gt;<BR>
+　&lt;Result Id="24411919" Score="68.67424"&gt;<BR>
+　　&lt;Title&gt;関西探索&lt;/Title&gt;<BR>
+　　&lt;Url&gt;http://www.kansaitansaku.com/&lt;/Url&gt;<BR>
+　　&lt;Snippet&gt;<BR>
+　　　このホームページは、京都を中心とした観光名所におとずれ、その感想を述べていくホームページです。このホームページは、京都を中心とした観光名所におとずれ、その感想を述べていくホームページです。京都，観光名所，寺院，関西探索<BR>
+　　&lt;/Snippet&gt;<BR>
+　　&lt;Cache&gt;<BR>
+　　　&lt;Url&gt;<BR>
+　　　　http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL=INDEX_NTCIR2/24/h2441/24411919.html&KEYS=%B5%FE%C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA<BR>
+　　　&lt;/Url&gt;<BR>
+　　　&lt;Size&gt;619&lt;/Size&gt;<BR>
+　　&lt;/Cache&gt;<BR>
+　&lt;/Result&gt;<BR>
+
+　&lt;Result Id="06832429" Score="64.16455"&gt;<BR>
+　　&lt;Title&gt;京都観光タクシー　京都の名園１&lt;/Title&gt;<BR>
+　　&lt;Url&gt;http://kyoto-kankou.com/page02.htm&lt;/Url&gt;<BR>
+　　&lt;Snippet&gt;<BR>
+　　　京都旅行はタクシー利用がお勧め、観光タクシーで紅葉観光、観光タクシー京都名所、京都の穴場コース京都観光タクシー，タクシー観光，京都，紅葉，京都観光，旅行，情報，桜，庭園，社寺，観光案内［京都庭園コース］［京都の紅葉］［京都の名所動画］［京都の穴場］［宿プラザ］［スタッフ］［料金表］［お申し込み］所要時間約５時間数ある京都観光名所の中でも、最も季節によって景観に変化の有る情緒豊かな場所です。所要時間約 ...<BR>
+　　&lt;/Snippet&gt;<BR>
+　　&lt;Cache&gt;<BR>
+　　　&lt;Url&gt;<BR>
+　　　　http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL=INDEX_NTCIR2/06/h0683/06832429.html&KEYS=%B5%FE%C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA<BR>
+　　　&lt;/Url&gt;<BR>
+　　　&lt;Size&gt;2152&lt;/Size&gt;<BR>
+　　&lt;/Cache&gt;<BR>
+　&lt;/Result&gt;<BR>
+<BR>
+...中略...<BR>
+<BR>
+　&lt;Result Id="26054757" Score="60.45654"&gt;<BR>
+　　&lt;Title&gt;Ｋｙｏｔｏ　Ｓｈｉｎｂｕｎ：京都の観光名所へのタクシー運賃&lt;/Title&gt;<BR>
+　　&lt;Url&gt;http://www.kyoto-np.co.jp/kp/koto/taxi/unchin.html&lt;/Url&gt;<BR>
+　　&lt;Snippet&gt;<BR>
+　　　ＫｙｏｔｏＳｈｉｎｂｕｎ京都の観光名所へのタクシー運賃ＫｙｏｔｏＳｈｉｎｂｕｎ京都の観光名所へのタクシー運賃京都の観光名所へのタクシー運賃【ＪＲ京都駅からの概算】週刊京都<BR>
+　　&lt;/Snippet&gt;<BR>
+　　&lt;Cache&gt;<BR>
+　　　&lt;Url&gt;<BR>
+　　　　http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL=INDEX_NTCIR2/26/h2605/26054757.html&KEYS=%B5%FE%C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA<BR>
+　　　&lt;/Url&gt;<BR>
+　　　&lt;Size&gt;1209&lt;/Size&gt;<BR>
+　　&lt;/Cache&gt;<BR>
+　&lt;/Result&gt;<BR>
+&lt;/ResultSet&gt;<BR>
+</DIV>
+
+<P>タグおよび属性の意味は以下の通りです。</P>
+
+<TABLE style="border: 1px solid darkgray;padding:0em;margin:1em;">
+<CAPTION>TSUBAKI APIで利用可能なリクエストパラメータ一覧</CAPTION>
+<TR bgcolor=#f1fff4>
+  <TD>フィールド</TD><TD>説明</TD>
+</TR>
+<TR>
+  <TD>ResultSet</TD>
+  <TD>
+    このタグで囲まれた部分が検索結果で、次の属性を持ちます。
+    <UL>
+      <LI>time: 検索を実行した日時</LI>
+      <LI>query: 検索キーワード</LI>
+      <LI>totalResultsAvailable: 検索キーワードを含む文書数</LI>
+      <LI>totalResultsReturned: 返された文書数</LI>
+      <LI>firstResultPosition: 検索時に指定した、文書を取得する際の開始順位(オフセット)</LI>
+      <LI>logicalOperator: 検索時の論理条件</LI>
+      <LI>dpnd: 検索が係り受けを考慮して行われたかどうか
+	<UL>
+	  <LI>0: 係り受けを考慮せずに検索を実行</LI>
+	  <LI>1: 係り受けを考慮して検索を実行</LI>
+	</UL>
+      </LI>
+
+      <LI>filterSimpages: 類似ページフィルタが適用されているかどうか
+	<UL>
+	  <LI>0: 類似ページフィルタが適用されていない</LI>
+	  <LI>1: 類似ページフィルタが適用されている</LI>
+	</UL>
+      </LI>
+    </UL>
+  </TD>
+</TR>
+
+<TR bgcolor=#f1fff4>
+  <TD>Result</TD>
+  <TD>このタグで囲まれた部分が検索して得られた１文書の情報で、次の属性を持ちます。
+    <ul>
+      <li>IDが文書のID</li>
+      <li>Scoreが文書のスコア</li>
+    </ul>
+    文書IDは、キャッシュされたHTML文書および標準フォーマット変換済みデータを取得する際に必要です。
+  </TD>
+</TR>
+
+<TR>
+  <TD>Title</TD>
+  <TD>ページのタイトル</TD>
+</TR>
+
+<TR bgcolor=#f1fff4>
+  <TD>Url</TD>
+  <TD>ページのURL</TD>
+</TR>
+
+<TR>
+  <TD>Snippet</TD>
+  <TD>ページに含まれる検索クエリと関連する重要文</TD>
+</TR>
+
+<TR bgcolor=#f1fff4>
+  <TD>Cache</TD>
+  <TD>このタグで囲まれた部分にキャッシュされたHTML文書に関する情報が含まれています。</TD>
+</TR>
+
+<TR>
+  <TD>Url</TD>
+  <TD>キャッシュされたHTML文書のURL</TD>
+</TR>
+
+<TR bgcolor=#f1fff4>
+  <TD>Size</TD>
+  <TD>キャッシュされたHTML文書のgzip圧縮時のファイルサイズ</TD>
+</TR>
+</TABLE>
+<!--
+ここで、&lt;ResultSet&gt;から&lt;/ResultSet&gt;までが検索結果の情報で、
+
+<ul>
+<li>timeは検索を実行した日時</li>
+<li>queryは検索キーワード</li>
+<li>totalResultsAvailableは検索キーワードを含む文書数</li>
+<li>totalResultsReturnedは返された文書数</li>
+<li>firstResultPositionは、検索時に指定した、文書を取得する際の開始順位(オフセット)</li>
+</ul>
+
+です。またXML文書中の&lt;Result&gt;から&lt;/Result&gt;までが、検索して得られた1文書に対応しており、
+
+<ul>
+<li>IDが文書のID</li>
+<li>Scoreが文書のスコア</li>
+</ul>
+
+となっています。文書IDは、オリジナルのHTML文書および、標準フォーマット変換済みデータを取得する際に必要です。
+
+&lt;Url&gt;タグで囲まれているURLにアクセスすると、検索キーワードがハイライトされたHTML文書を得ることが出来ます。また、&lt;Size&gt;タグで囲まれた数字は、その文書のファイルサイズです。
+-->
+</DIV>
+
+<H3><A name="sect4">キャッシュされたHTML文書および標準フォーマット変換済みデータの取得方法</A></H3>
+<P>
+キャッシュされているHTML文書および、その文書を標準フォーマット
+に変換したデータについても以下のアドレスにアクセスすることで取得できます。
+</P>
+
+<ADDRESS>
+http://tsubaki.ixnlp.nii.ac.jp/api.cgi
+</ADDRESS>
+
+<P>具体的には、<EM>format</EM>およ
+び<EM>id</EM>オプションを使用して、APIにアクセスします。例えば、文書ID
+が07423972番の文書について、キャッシュされたHTML文書が欲しい場合は以下
+のURLによりAPIにアクセスします。</P>
+
+<ADDRESS>
+<A href="http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=html&id=07423972">
+  http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=html&id=074239724
+</A>
+</ADDRESS>
+
+<P>同様に、標準フォーマット変換済みデータが欲しい場合は、<EM>format</EM>を<EM>xml</EM>にします。</P>
+
+<ADDRESS>
+<A href="http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=xml&id=07423972">
+  http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=xml&id=074239724
+</A>
+</ADDRESS>
+</div>
+
+
+<H3><A name="sect5">標準フォーマット変換ツール</A></H3>
+<P>
+標準フォーマット変換ツールはこちらです。
+<ADDRESS>
+<A href="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/html2sf.tgz"> 標準フォーマット変換ツール（暫定版） html2sf.tgz (43K)</A>
+</ADDRESS>
+</P>
+
+
+<!--end of contents-->
+
+</div><!-- end of main-->
+<!-- END -->
+<!--  Navi START -->
+<script language="JavaScript">menu();</script><br class="Clear">
+<!--  Footer START -->
+<HR>
+<DIV class="footer">&copy;2007 黒橋研究室</DIV>
+</div>
+<!-- END -->
+</body>
+</html>

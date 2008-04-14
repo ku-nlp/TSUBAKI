@@ -1,0 +1,101 @@
+BODY{
+	margin: 1em 3em;
+}
+
+SPAN.tsubaki {
+	     color: red;
+}
+
+H3 {
+   background-color: #f1fff4;
+   color: green;
+   border-top: 2px solid green;
+   border-bottom: 2px solid green;
+   padding: 0.25em 0.5em;
+}
+
+UL.menu {
+	padding: 0em;
+	margin: 0em;
+}
+
+UL.menu LI {
+	display: inline;
+	color: green;
+	padding: 0em 0.125em;
+}
+
+UL.menu LI A {
+	text-decoration: none;
+}
+
+P, DIV.content {
+  padding: 0.5em 0em 0.5em 0.5em;
+  margin: 0.5em 0em 0.5em 0.5em;
+}
+
+ADDRESS {
+	padding:1em 0em 1em 2em;
+}
+
+DIV.lastupdate{
+	padding: 0em;
+	text-align: right;
+	font-size: small;
+}
+
+DIV.code{
+	display:block;
+	border: 1px solid green;
+	background-color:#f1fff4;
+	margin:1em; padding:0.5em;
+	overflow-x: scrooll;
+}
+
+CAPTION {
+	margin-top: 2em;
+	margin-bottom: 0.5em;
+}
+
+DIV.meta{
+	color: silver;
+	font-size:small;
+	margin-left:1em;
+}
+
+SPAN.rank{
+	color: black;
+	margin-right:0.5em;
+}
+
+A.title{
+
+}
+
+.snippet{
+	width: 90%;
+	font-size:small;
+	margin: 0.5em 1em;
+	padding: 0px 0px 0px 1em;
+}
+
+.cache, .orig_url{
+	color: green;
+	text-decoration: none;
+	margin: 0.5em 1em;
+	padding: 0px 0px 0px 1em;
+}
+
+DIV.pagenavi{
+	background-color:#f1f4ff;
+	border-top: 1px solid gray;
+	border-bottom: 1px solid gray;
+	padding: 1em 0em;
+	text-align: center;
+}
+
+DIV.footer{
+	padding: 1em 0em;
+	font-weight: 700;
+	text-align: center;
+}
