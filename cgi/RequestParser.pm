@@ -136,8 +136,6 @@ sub parseAPIRequest {
 	$params->{'no_snippets'} = 1;
     }
 
-    &normalize_logical_operator($params);
-
     # 取得する検索件数の設定
     if (defined($cgi->param('start'))) {
 	$params->{start} = $cgi->param('start') - 1;
