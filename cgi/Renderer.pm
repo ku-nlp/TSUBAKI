@@ -479,4 +479,12 @@ sub printSearchResultForAPICall {
     $writer->end();
 }
 
+# クラスメソッド
+sub printErrorMessage {
+    my ($cgi, $msg) = @_;
+
+    print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
+    print $msg . "\n";
+}
+
 1;
