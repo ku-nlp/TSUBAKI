@@ -139,8 +139,23 @@ sub parseAPIRequest {
     &normalize_logical_operator($params);
 
     # 取得する検索件数の設定
-    $params->{start} = $cgi->param('start') - 1 if (defined($cgi->param('start')));
-    $params->{'results'} = $cgi->param('results') if (defined($cgi->param('results')));
+    if (defined($cgi->param('start'))) {
+	$params->{start} = $cgi->param('start') - 1;
+	if ($params->{start} < 0) {
+	    require Renderer;
+	    Renderer::printErrorMessage($cgi, 'startの値は1以上を指定して下さい.');
+	    exit(1);
+	}
+    }
+
+    if (defined($cgi->param('results'))) {
+	$params->{results} = $cgi->param('results');
+	if ($params->{results} < 1) {
+	    require Renderer;
+	    Renderer::printErrorMessage($cgi, 'resultsの値は1以上を指定して下さい.');
+	    exit(1);
+	}
+    }
 
     return $params;
 }
