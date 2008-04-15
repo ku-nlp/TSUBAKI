@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -32,14 +32,12 @@ sub main {
 	# キャッシュページの出力
 	&print_cached_page($params);
     } else {
-	my $renderer = new Renderer();
-	# TSUBAKI のトップ画面を表示
-	$renderer->print_tsubaki_interface($params);
+	my $renderer = new Renderer(0);
 
 	$params->{query} = undef if ($CONFIG->{SERVICE_STOP_FLAG});
 	unless ($params->{query}) {
-	    # フッターの表示
-	    $renderer->printFooter($params, 0, 0);
+	    # TSUBAKI のトップ画面を表示
+	    $renderer->print_tsubaki_interface_init($params);
 	}
 	# クエリが入力された場合は検索
 	else {
@@ -59,9 +57,6 @@ sub main {
 	    # 検索結果の表示
 	    $renderer->printSearchResultForBrowserAccess($params, $results, $query, $logger);
 
-	    # フッターの表示
-	    $renderer->printFooter($params, $logger->getParameter('hitcount'), $params->{'start'}, scalar(@$results));
-	    $logger->setTimeAs('print_result', '%.3f');
 
 	    # LOGGERの終了
 	    $logger->close();
