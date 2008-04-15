@@ -13,8 +13,10 @@ use XML::Writer;
 our $CONFIG = Configure::get_instance();
 
 sub new {
-    my($class) = @_;
-    my $this = {};
+    my($class, $called_from_API) = @_;
+    my $this = {
+	called_from_API => $called_from_API
+    };
 
     bless $this;
 }
@@ -131,7 +133,7 @@ sub print_query {
 		    }
 
 		    my $k_utf8 = encode('utf8', $mod_k);
-		    if(exists($cbuff{$rep})){
+		    if(exists($cbuff{$rep->{string}})){
 			printf("<span title=\"$tips\" style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$rep->{string}}->{foreground}, $cbuff{$rep->{string}}->{background});
 		    }else{
 			if($color > 4){
@@ -208,6 +210,84 @@ END_OF_HTML
 
     # タイトル出力
 print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http://tsubaki-wiki.ixnlp.nii.ac.jp/\">TSUBAKI Wiki はこちら</A><BR></DIV>\n";
+    print "<TABLE><TR><TD valign=top>\n";
+    printf ("<A href=%s><IMG border=0 src=./logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
+    print "</TD><TD>";
+
+    # フォーム出力
+    print "<FORM name=\"search\" method=\"post\" action=\"\" enctype=\"multipart/form-data\">\n";
+    print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
+    print "<INPUT type=\"text\" name=\"INPUT\" value=\'$params->{'query'}\'/ size=\"90\">\n";
+    print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
+    print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.INPUT.value=''\"/>\n";
+
+    print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
+    if($params->{'logical_operator'} eq "OR"){
+	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
+	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/>全ての語を含む</LABEL></TD>\n";
+	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む</LABEL></TD>\n";
+    }elsif($params->{'logical_operator'} eq "AND"){
+	if($params->{'force_dpnd'} > 0){
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\" checked/>全ての係り受けを含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/> 全ての語を含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
+	}else{
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\" checked/> 全ての語を含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
+	}
+    }
+    print "</TR>";
+
+    if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
+	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+    } else {
+	if ($params->{syngraph}) {
+	    print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+	} else {
+	    print "<TR><TD>オプション</TD><TD colspan=3 DIV style=\"text-align:left;\"><INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL></DIV></TD></TR>\n";
+	}
+    }
+
+    print "</TABLE>\n";
+    
+    print "</FORM>\n";
+
+    print "</TD></TR></TABLE>\n";
+
+    print "<CENTER>\n";
+    print ("<FONT color='red'>$CONFIG->{MESSAGE}</FONT>\n") if ($CONFIG->{MESSAGE});
+    print "</CENTER>\n";
+}
+
+sub print_tsubaki_interface_init {
+    my ($this, $params) = @_;
+    print << "END_OF_HTML";
+    <html>
+	<head>
+	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<link rel="stylesheet" type="text/css" href="./se.css">
+	<script language="JavaScript">
+
+function toggle_simpage_view (id, obj, open_label, close_label) {
+    var disp = document.getElementById(id).style.display;
+    if (disp == "block") {
+        document.getElementById(id).style.display = "none";
+        obj.innerHTML = open_label;
+    } else {
+        document.getElementById(id).style.display = "block";
+        obj.innerHTML = close_label;
+    }
+}
+
+</script>
+	</head>
+	<body style="margin:0em;">
+END_OF_HTML
+
+    # タイトル出力
+print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http://tsubaki-wiki.ixnlp.nii.ac.jp/\">TSUBAKI Wiki はこちら</A><BR></DIV>\n";
     print "<CENTER style='maring:1em; padding:1em;'>";
     printf ("<A href=%s><IMG border=0 src=./logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
     # フォーム出力
@@ -252,6 +332,9 @@ print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http:
     print ("<FONT color='red'>$CONFIG->{MESSAGE}</FONT>\n") if ($CONFIG->{MESSAGE});
 
     print "</CENTER>";
+
+    # フッターの表示
+    $this->printFooter($params, 0, 0, 0);
 }
 
 sub get_uri_escaped_query {
@@ -276,18 +359,88 @@ sub get_uri_escaped_query {
     return $uri_escaped_search_keys;
 }
 
+sub get_snippets {
+    my ($this, $opt, $result, $query, $from, $end) = @_;
+
+    # キャッシュページで索引語をハイライトさせるため、索引語をuri_escapeした文字列を生成する
+    my $search_k;
+    foreach my $qk (@{$query->{keywords}}) {
+	my $words = $qk->{words};
+	foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @$words) {
+	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @$reps) {
+		next if ($rep->{isContentWord} < 1 && $rep->{is_phrasal_search} < 1);
+		my $string = $rep->{string};
+
+		$string =~ s/s\d+://; # SynID の削除
+		$string =~ s/\/.+$//; # 読みがなの削除
+		$search_k .= "$string:";
+	    }
+	}
+    }
+    chop($search_k);
+    my $uri_escaped_search_keys = &uri_escape(encode('utf8', $search_k));
+
+
+    # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
+    for (my $rank = $from; $rank < $end; $rank++) {
+	my $did = sprintf("%09d", $result->[$rank]{did});
+	push(@{$query->{dids}}, $did);
+	unless ($this->{called_from_API}) {
+	    foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
+		my $did = sprintf("%09d", $sim_page->{did});
+		push(@{$query->{dids}}, $did);
+	    }
+	}
+    }
+
+    my $sni_obj = new SnippetMakerAgent();
+    $sni_obj->create_snippets($query, $query->{dids}, {discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5});
+
+    # 装飾されたスニペッツを取得
+    my $did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $this->{q2color});
+    for (my $rank = $from; $rank < $end; $rank++) {
+	my $did = sprintf("%09d", $result->[$rank]{did});
+	$result->[$rank]{snippets} = $did2snippets->{$did};
+    }
+}
+
 sub printSearchResultForBrowserAccess {
     my ($this, $params, $results, $query, $logger, $color) = @_;
 
+    ##########################
+    # ロゴ、検索フォームの表示
+    ##########################
+    $this->print_tsubaki_interface($params);
+
+
     my $size = scalar(@$results);
     my $start = $params->{start};
-    my $end = $params->{start} + $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
-    $end = $size if ($end > $size);
-    
+    my $end = ($start + $CONFIG->{NUM_OF_RESULTS_PER_PAGE} > $size) ? $size : $start + $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
+
+
+    ############################
+    # 検索クエリ、検索時間の表示
+    ############################
     $this->print_search_time($logger->getParameter('search'), $logger->getParameter('hitcount'), $params, $size, $query->{keywords});
 
-    my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
 
+
+    ############################
+    # 必要ならばスニペットを生成
+    ############################
+    unless ($params->{no_snippets}) {
+	# 検索結果（表示分）についてスニペットを生成
+	$this->get_snippets($params, $results, $query, $start, $end);
+    }
+    # スニペット生成に要した時間をロギング
+    $logger->setTimeAs('snippet_creation', '%.3f');
+
+
+
+    ################
+    # 検索結果を表示
+    ################
+    my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
     for (my $rank = $start; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $results->[$rank]{did});
 	my $score = $results->[$rank]{score_total};
@@ -333,6 +486,12 @@ sub printSearchResultForBrowserAccess {
 	# 1 ページ分の結果を表示
 	print $output;
     }
+
+    # フッターの表示
+    $this->printFooter($params, $logger->getParameter('hitcount'), $start, $size);
+
+    # 表示に要した時間のロギング
+    $logger->setTimeAs('print_result', '%.3f');
 }
 
 sub printRequestResult {
