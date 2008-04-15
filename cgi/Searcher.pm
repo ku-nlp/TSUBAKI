@@ -80,20 +80,6 @@ sub search {
     $logger->setParameterAs('total_docs', $total_docs);
 
 
-
-    ############################
-    # 必要ならばスニペットを生成
-    ############################
-
-    unless ($opt->{no_snippets}) {
-	# 検索結果（表示分）についてスニペットを生成
-	my $from = $opt->{'start'};
-	my $end = ($from + $CONFIG->{NUM_OF_RESULTS_PER_PAGE} > $size) ? $size : $from + $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
-	$this->get_snippets($opt, $mg_result, $query, $from, $end, $hitcount);
-    }
-    # スニペット生成に要した時間をロギング
-    $logger->setTimeAs('snippet_creation', '%.3f');
-
     return ($mg_result, $size);
 }
 
@@ -230,53 +216,6 @@ sub add_list {
 
     push(@$mg_result, $p);
 }
-
-sub get_snippets {
-    my ($this, $opt, $result, $query, $from, $end, $hitcount) = @_;
-
-    # キャッシュページで索引語をハイライトさせるため、索引語をuri_escapeした文字列を生成する
-    my $search_k;
-    foreach my $qk (@{$query->{keywords}}) {
-	my $words = $qk->{words};
-	foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @$words) {
-	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @$reps) {
-		next if ($rep->{isContentWord} < 1 && $rep->{is_phrasal_search} < 1);
-		my $string = $rep->{string};
-
-		$string =~ s/s\d+://; # SynID の削除
-		$string =~ s/\/.+$//; # 読みがなの削除
-		$search_k .= "$string:";
-	    }
-	}
-    }
-    chop($search_k);
-    my $uri_escaped_search_keys = &uri_escape(encode('utf8', $search_k));
-
-
-    # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
-    for (my $rank = $from; $rank < $end; $rank++) {
-	my $did = sprintf("%09d", $result->[$rank]{did});
-	push(@{$query->{dids}}, $did);
-	unless ($this->{called_from_API}) {
-	    foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
-		my $did = sprintf("%09d", $sim_page->{did});
-		push(@{$query->{dids}}, $did);
-	    }
-	}
-    }
-
-    my $sni_obj = new SnippetMakerAgent();
-    $sni_obj->create_snippets($query, $query->{dids}, {discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5});
-
-    # 装飾されたスニペッツを取得
-    my $did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $query->{color});
-    for (my $rank = $from; $rank < $end; $rank++) {
-	my $did = sprintf("%09d", $result->[$rank]{did});
-	$result->[$rank]{snippets} = $did2snippets->{$did};
-    }
-    $this->{snippet_maker} = $sni_obj;
-}
-
 
 sub get_title {
     my ($this, $did) = @_;
