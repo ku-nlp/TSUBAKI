@@ -30,7 +30,7 @@ TOOL_HOME	/home/skeiji/local/bin
 KNP_COMMAND	/home/skeiji/local/bin/knp
 JUMAN_COMMAND	/home/skeiji/local/bin/juman
 SYNDB_PATH	/home/skeiji/cvs/SynGraph/syndb/i686
-KNP_OPTIONS	-postprocess,-tab
+KNP_OPTIONS	-postprocess,-tab,-dpnd
 KNP_RCFILE	/home/skeiji/.knprc
 SYNGRAPH_PM_PATH	/home/skeiji/cvs/SynGraph/perl
 
@@ -207,7 +207,7 @@ CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
 # 検索の正確さ（0 ~ 1, 大きいほど正確に検索結果を求める）
 SEARCH_ACCURACY			0.2
 
-a# 1ページに含まれる検索結果の数
+# 1ページに含まれる検索結果の数
 NUM_OF_RESULTS_PER_PAGE	50
 
 # 通常検索で検索するページ数

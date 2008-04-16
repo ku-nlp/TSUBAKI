@@ -30,7 +30,7 @@ TOOL_HOME	/share09/home/skeiji/local/bin
 KNP_COMMAND	/share09/home/skeiji/local/bin/knp
 JUMAN_COMMAND	/share09/home/skeiji/local/bin/juman
 SYNDB_PATH	/share09/home/skeiji/cvs/SynGraph/syndb/i686
-KNP_OPTIONS	-postprocess,-tab
+KNP_OPTIONS	-postprocess,-tab,-dpnd
 KNP_RCFILE	/share09/home/skeiji/.knprc
 SYNGRAPH_PM_PATH	/share09/home/skeiji/cvs/SynGraph/perl
 
