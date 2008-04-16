@@ -187,7 +187,6 @@ sub retrieve_documents {
 	my $requisite_flag = 0;
 
 	# 文書頻度の低い単語から検索する
-#	print encode('euc-jp', Dumper($keyword->{dpnds}));
 	next unless (defined $keyword->{dpnds});
 	foreach my $reps_of_word (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{dpnds}}) {
 	    my %idx2qid = ();
@@ -232,7 +231,9 @@ sub retrieve_documents {
 	    if ($this->{verbose}) {
 		foreach my $rep_of_word (@{$reps_of_word}) {
 		    foreach my $k (keys %{$rep_of_word}) {
-			print $k . " " . $rep_of_word->{$k} . "\n";
+			my $v = $rep_of_word->{$k};
+			$v = decode('utf8', $v) unless (utf8::is_utf8($v));
+			print $k . " " . $v . "\n";
 		    }
 		}
 	    }
@@ -366,7 +367,7 @@ sub serialize {
 
 # 配列の配列を受け取り、各配列間の共通要素をとる
 sub intersect {
-    my ($docs) = @_;
+    my ($docs, $opt) = @_;
 
     # 初期化 & 空リストのチェック
     my @results = ();
@@ -388,6 +389,19 @@ sub intersect {
     } else {
 	# 入力リストをサイズ順にソート (一番短い配列を先頭にするため)
 	my @sorted_docs = sort {scalar(@{$a}) <=> scalar(@{$b})} @{$docs};
+
+	if ($opt->{verbose}) {
+	    print "--------\n";
+	    print "start with AND filtering.\n";
+	    foreach my $ret (@sorted_docs) {
+		print "qid=" . $ret->[0]->{qid_freq}[0]{qid} . ": ";
+		foreach my $d (@$ret) {
+		    print $d->{did} . " ";
+		}
+		print "\n";
+	    }
+	}
+
 	# 一番短かい配列に含まれる文書が、他の配列に含まれるかを調べる
 	for (my $i = 0; $i < scalar(@{$sorted_docs[0]}); $i++) {
 	    # 対象の文書を含まない配列があった場合 $flagが 1 のままループを終了する
@@ -414,6 +428,18 @@ sub intersect {
 		    push(@{$results[$j]}, $sorted_docs[$j]->[0]);
 		}
 	    }
+	}
+	if ($opt->{verbose}) {
+	    print "-----\n";
+	    foreach my $ret (@results) {
+		print "qid=" . $ret->[0]->{qid_freq}[0]{qid} . ": ";
+		foreach my $d (@$ret) {
+		    print $d->{did} . " ";
+		}
+		print "\n";
+	    }
+	    print "end with AND filtering.\n";
+	    print "-----\n";
 	}
     }
 
