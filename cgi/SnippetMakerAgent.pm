@@ -118,6 +118,7 @@ sub select_snippets {
 
 	next if ($num_of_whitespaces / $length > 0.2);
 
+	$sentence = decode('utf8', $sentence) unless (utf8::is_utf8($sentence));
 	push(@snippets, $sentence);
 	$wordcnt += scalar(@{$sentence->{reps}});
 
@@ -174,7 +175,6 @@ sub get_snippets_for_each_did {
 	}
 
 	$snippet =~ s/S\-ID:\d+//g;
-	$snippet = encode('utf8', $snippet) if (utf8::is_utf8($snippet));
 	$did2snippets{$did} = $snippet;
     }
 
@@ -250,7 +250,6 @@ sub get_decorated_snippets_for_each_did {
 	}
 	
 	$snippet =~ s/S\-ID:\d+//g;
-	$snippet = encode('utf8', $snippet) if (utf8::is_utf8($snippet));
 	$did2snippets{$did} = $snippet;
     }
 

@@ -36,7 +36,6 @@ sub close {
 	}
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
 
-	open(LOG, ">> $file") or die;
 	my $param_str;
 	foreach my $k (sort @keys) {
 	    # $param_str .= "$k=$params->{$k},";
@@ -45,6 +44,9 @@ sub close {
 
 	my $total_time = sprintf("%.3f", Time::HiRes::time - $this->{start});
 	$param_str .= "total=$total_time";
+
+	open(LOG, ">> $file") or die;
+	binmode(LOG, ':utf8');
 	print LOG "$date $ENV{REMOTE_ADDR} $this->{owner} $param_str\n";
 	close(LOG);
     }
