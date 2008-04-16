@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -16,6 +16,9 @@ use Logger;
 use QueryParser;
 use RequestParser;
 
+
+binmode(STDOUT, ':utf8');
+binmode(STDERR, ':utf8');
 
 my $CONFIG = Configure::get_instance();
 

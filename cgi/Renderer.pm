@@ -41,7 +41,7 @@ sub print_search_time {
 	    print "</DIV>";
 	}
 	# 検索にかかった時間を表示 (★cssに変更)
-	printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f [%s]</div>\n", encode('utf8', '検索時間'), $search_time, encode('utf8', '秒'));
+	printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f [%s]</div>\n", "検索時間", $search_time, "秒");
     }
 }
 
@@ -132,7 +132,7 @@ sub print_query {
 			$mod_k = "&lt;$mod_k&gt;";
 		    }
 
-		    my $k_utf8 = encode('utf8', $mod_k);
+		    my $k_utf8 = $mod_k;
 		    if(exists($cbuff{$rep->{string}})){
 			printf("<span title=\"$tips\" style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$rep->{string}}->{foreground}, $cbuff{$rep->{string}}->{background});
 		    }else{
@@ -456,7 +456,7 @@ sub printSearchResultForBrowserAccess {
 	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
 	    my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
 	    my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
-	    $output .= encode('utf8', "<DIV class=\"meta\">id=$did, score=$score, <A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n");
+	    $output .= "<DIV class=\"meta\">id=$did, score=$score, <A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n";
 	} else {
 	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
 	}
