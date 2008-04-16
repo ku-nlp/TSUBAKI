@@ -214,6 +214,9 @@ sub add_list {
 	$$miss_url++;
     }
 
+    $p->{title} = decode('utf8', $p->{title}) unless (utf8::is_utf8($p->{title}));
+    $p->{url} = decode('utf8', $p->{url}) unless (utf8::is_utf8($p->{url}));
+
     push(@$mg_result, $p);
 }
 
@@ -222,12 +225,12 @@ sub get_title {
 
     # タイトルの取得
     my $did_prefix = sprintf("%03d", $did / 1000000);
-    my $title = $this->{titledbs}{$did_prefix}->{$did};
+    my $title = decode('utf8', $this->{titledbs}{$did_prefix}->{$did});
     unless (defined($title)) {
 	my $titledbfp = "$CONFIG->{TITLE_DB_PATH}/$did_prefix.title.cdb";
 	tie my %titledb, 'CDB_File', "$titledbfp" or die "$0: can't tie to $titledbfp $!\n";
 	$this->{titledbs}{$did_prefix} = \%titledb;
-	$title = $titledb{$did};
+	$title = decode('utf8', $titledb{sprintf("%09d", $did)});
     }
 
     if ($title eq '') {
@@ -251,7 +254,7 @@ sub get_url {
 	my $urldbfp = "$CONFIG->{URL_DB_PATH}/$did_prefix.url.cdb";
 	tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
 	$this->{urldbs}{$did_prefix} = \%urldb;
-	$url = $urldb{$did};
+	$url = $urldb{sprintf("%09d", $did)};
     }
 
     return $url;
