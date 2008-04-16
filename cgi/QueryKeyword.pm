@@ -39,7 +39,7 @@ sub new {
     my %buff;
     unless ($opt->{syngraph}) {
 	# KNP 結果から索引語を抽出
-	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult);
+	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult->all, {string_mode => 1});
 	# $indice = $opt->{indexer}->make_index_from_KNP_result_object($knpresult);
     } else {
 	# SynGraph 結果から索引語を抽出

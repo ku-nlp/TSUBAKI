@@ -87,7 +87,7 @@ sub extract_sentences_from_content {
 	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
-		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result) : $indexer->makeIndexFromKNPResult(new KNP::Result($result));
+		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result) : $indexer->makeIndexFromKNPResult($result, $opt);
 		my ($num_of_queries, $num_of_types) = &calculate_score($query, $indice, $opt);
 
 		my $sentence = {
