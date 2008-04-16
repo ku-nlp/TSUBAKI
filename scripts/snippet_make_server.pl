@@ -38,7 +38,6 @@ sub main {
 	LocalPort => $opt{port},
 	Listen    => SOMAXCONN,
 	Proto     => 'tcp',
-	Timeout   => 300,
 	Reuse     => 1);
 
     unless ($listening_socket) {
@@ -49,11 +48,13 @@ sub main {
 
     # 問い合わせを待つ
     while (1) {
+	my $new_socket;
+	my $client_hostname;
+
 	my $new_socket = $listening_socket->accept();
 	my $client_sockaddr = $new_socket->peername();
 	my($client_port,$client_iaddr) = unpack_sockaddr_in($client_sockaddr);
 	my $client_hostname = gethostbyaddr($client_iaddr, AF_INET);
-	my $client_ip = inet_ntoa($client_iaddr);
 	
 	select($new_socket); $|=1; select(STDOUT);
 	
@@ -62,7 +63,7 @@ sub main {
 	    $new_socket->close();
 	    wait;
 	} else {
-	    print "cactch query\n" if ($opt{verbose});
+	    print "cactch query from $client_hostname.\n" if ($opt{verbose});
 
 	    select($new_socket); $|=1; select(STDOUT);
 
@@ -81,7 +82,7 @@ sub main {
 		$buff .= $_;
 	    }
 	    my $query = Storable::thaw(decode_base64($buff));
-	    print "restore query\n" if ($opt{verbose});
+	    print "restore query $client_hostname.\n" if ($opt{verbose});
 
 	    # スニペッツを生成する文書IDの取得
 	    $buff = undef;
@@ -90,7 +91,7 @@ sub main {
 		$buff .= $_;
 	    }
 	    my $dids = Storable::thaw(decode_base64($buff));
-	    print "restore dids\n" if ($opt{verbose});
+	    print "restore dids $client_hostname.\n" if ($opt{verbose});
 
 	    # スニペッツ生成のオプションを取得
 	    $buff = undef;
@@ -102,13 +103,13 @@ sub main {
 
 	    # スニペッツの生成
 	    my %result = ();
-	    print "begin with snippet creation\n" if ($opt{verbose});
+	    print "begin with snippet creation $client_hostname.\n" if ($opt{verbose});
 	    foreach my $did (@{$dids}) {
 		print $did . "\n" if ($opt{verbose});
 		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
 		# print Dumper($result{$did}) . "\n" if ($HOSTNAME =~ /nlpc33/);
 	    }
-	    print "finish of snippet creation @ $HOSTNAME\n" if ($opt{verbose});
+	    print "finish of snippet creation for $client_hostname @ $HOSTNAME\n" if ($opt{verbose});
 
 	    # スニペッツの送信
 	    print $new_socket encode_base64(Storable::freeze(\%result), "") , "\n";
