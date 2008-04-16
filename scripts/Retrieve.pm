@@ -34,7 +34,7 @@ sub new {
 	TYPE => $type,
 	INDEX_DIR => $dir,
 	SKIPPOS => $skippos,
-	VERBOSE => $verbose,
+	verbose => $verbose,
 	dpnd => $dpnd,
 	SHOW_SPEED => $show_speed
     };
@@ -55,6 +55,7 @@ sub new {
 	my $suffix = 1;
 	while (-e "$offset_fp.$suffix") {
 	    tie %{$this->{OFFSET}[$fcnt][$suffix]}, 'CDB_File', "$offset_fp.$suffix" or die "$0: can't tie to $offset_fp.$suffix $!\n";
+	    print STDERR "$host> loading offset database ($offset_fp.$suffix)...\n" if ($this->{verbose});
 	    $suffix++;
 	}
 
@@ -638,7 +639,7 @@ sub search {
 		    $total_byte += 4;
 		    read($this->{IN}[$f_num], $buf, 4);
 		    my $did = unpack('L', $buf);
-		    # print STDERR $did . "=did\n";
+		    print STDERR $did . "=did\n" if ($this->{verbose});
 		    # 先の索引で検索された文書であれば登録（AND検索時）
 		    if (exists $already_retrieved_docs->{$did} || $add_flag > 0) {
 			$already_retrieved_docs->{$did} = 1;
