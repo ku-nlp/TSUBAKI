@@ -23,17 +23,17 @@ sub new {
 
     my $CONFIG = Configure::get_instance();
     # パラメータが指定されていなければデフォルト値としてCONFIGから値を取得
-    $opts->{KNP_PATH} = $CONFIG->{KNP_PATH} unless ($opts->{KNP_PATH});
-    $opts->{JUMAN_PATH} = $CONFIG->{JUMAN_PATH} unless ($opts->{JUMAN_PATH});
+    $opts->{KNP_COMMAND} = $CONFIG->{KNP_COMMAND} unless ($opts->{KNP_COMMAND});
+    $opts->{JUMAN_COMMAND} = $CONFIG->{JUMAN_COMMAND} unless ($opts->{JUMAN_COMMAND});
     $opts->{KNP_RCFILE} = $CONFIG->{KNP_RCFILE} unless ($opts->{KNP_RCFILE});
     $opts->{KNP_OPTIONS} = $CONFIG->{KNP_OPTIONS} unless ($opts->{KNP_OPTIONS});
     $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
 
     my $this = {
-	KNP => new KNP(-Command => "$opts->{KNP_PATH}/knp",
+	KNP => new KNP(-Command => $opts->{KNP_COMMAND},
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
 		       -Rcfile => $opts->{KNP_RCFILE},
-		       -JumanCommand => "$opts->{JUMAN_PATH}/juman"),
+		       -JumanCommand => $opts->{JUMAN_COMMAND}),
 	OPTIONS => {trimming => $opts->{QUERY_TRIMMING},
 		    jyushi => (),
 		    keishi => (),

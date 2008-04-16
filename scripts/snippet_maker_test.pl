@@ -26,8 +26,6 @@ binmode(STDOUT, ':encoding(euc-jp)');
 
 sub init_query_parser {
     my $q_parser = new QueryParser({
-	KNP_PATH => $KNP_PATH,
-	JUMAN_PATH => $JUMAN_PATH,
 	SYNDB_PATH => $SYNDB_PATH,
 	KNP_OPTIONS => ['-postprocess','-tab'] });
     $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;

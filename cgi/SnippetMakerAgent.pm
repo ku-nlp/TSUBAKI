@@ -29,8 +29,8 @@ sub new {
     };
 
     $this->{query_parser} = new QueryParser({
-	KNP_PATH => $CONFIG->{KNP_PATH},
-	JUMAN_PATH => $CONFIG->{JUMAN_PATH},
+	KNP_COMMAND => $CONFIG->{KNP_COMMAND},
+	JUMAN_COMMAND => $CONFIG->{JUMAN_COMMAND},
 	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
 	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
     
