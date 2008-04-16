@@ -178,6 +178,228 @@ sub makeIndexfromSynGraph {
 
 sub makeIndexFromKNPResult {
     my ($this, $result, $option) = @_;
+
+    if ($option->{string_mode}) {
+	return $this->makeIndexFromKNPResultString($result, $option);
+    } else {
+	require KNP::Result;
+	return $this->makeIndexFromKNPResultObject(new KNP::Result($result), $option);
+    }
+}
+
+
+## KNPの解析結果から索引語と索引付け対象となる係り受け関係を抽出する
+sub makeIndexFromKNPResultString {
+    my($this,$knp_result,$option) = @_;
+
+    my @freq;
+    my %word2idx;
+    foreach my $sent (split(/EOS\n/, $knp_result)){
+#	$this->{absolute_pos}++;
+
+	my $local_pos = -1;
+	my $kakariSaki = -1;
+	my $kakariType = undef;
+	my @words = ();
+	my @bps = ();
+	foreach my $line (split(/\n/,$sent)){
+	    next if ($line =~ /^\* \-?\d/);
+	    next if ($line =~ /^!/);
+	    next if ($line =~ /^S\-ID/);
+
+ 	    if($line =~ /^\+ (\-?\d+)([a-zA-Z])/){
+		$kakariSaki = $1;
+		$kakariType = $2;
+		push(@bps, {kakarisaki => $kakariSaki,
+			    kakaritype => $kakariType,
+			    words => []
+		     });
+	    }else{
+		next if ($line =~ /^(\<|\@|EOS)/);
+		next if ($line =~ /^\# /);
+
+		my @m = split(/\s+/, $line);
+
+		$local_pos++;
+		$this->{absolute_pos}++;
+
+		my $surf = $m[0];
+		my $midasi = "$m[2]/$m[1]";
+#		my $midasi = "$m[2]";
+		my %reps = ();
+		## 代表表記の取得
+		if ($line =~ /\<代表表記:([^>]+)[a-z]?\>/) {
+		    $midasi = $1;
+#		    $midasi =~ s/\/.+//g;
+		}
+
+		next if (defined $this->{STOP_WORDS}{$midasi});
+
+		$reps{&toUpperCase_utf8($midasi)} = 1;
+
+		## 代表表記に曖昧性がある場合は全部保持する
+		## ただし表記・読みが同一の代表表記は区別しない
+		## ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
+		while ($line =~ /\<ALT(.+?)\>/) {
+		    $line = "$'";
+		    my $alt_cont = $1;
+		    if ($alt_cont =~ /代表表記:(.+?)(?: |\")[a-z]?/) {
+			my $midasi = $1;
+			$reps{&toUpperCase_utf8($midasi)} = 1;
+		    } elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
+			my $midasi = "$3/$2";
+			$reps{&toUpperCase_utf8($midasi)} = 1;
+		    }
+		}
+
+		my @reps_array = sort keys %reps;
+		my $word = {
+		    surf => $surf,
+		    reps => \@reps_array,
+		    local_pos => $local_pos,
+		    global_pos => $this->{absolute_pos},
+		    isContentWord => 0
+		};
+
+		push(@words, $word);
+
+		if($line =~ /\<意味有\>/){
+		    next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
+		    next if (&containsSymbols($m[2]) > 0); ## <記号>タグがついてない記号を削除
+
+		    $word->{isContentWord} = 1;
+		    push(@{$bps[-1]->{words}}, $word);
+		}
+	    } # end of else
+	} # end of foreach my $line (split(/\n/,$sent))
+
+	# 並列句において、係り元の係り先を、係り先の係り先に変更する
+	# スプーンとフォークで食べる
+	# スプーン->食べる、フォーク->食べる
+	for(my $pos = scalar(@bps); $pos > 0; $pos--){
+	    if($bps[$pos-1]->{kakaritype} eq 'P'){
+		my $kakariSaki = $bps[$pos-1]->{kakarisaki};
+		if($bps[$kakariSaki]->{kakarisaki} ne '-1'){
+		    $bps[$pos-1]->{kakarisaki} = $bps[$kakariSaki]->{kakarisaki};
+		}
+	    }
+	}
+
+	my $idx = 0;
+	## 代表表記が複数個ある場合は代表表記の個数で割ってカウントする
+	for (my $pos = 0; $pos < scalar(@words); $pos++) {
+	    my $surf = $words[$pos]->{surf};
+	    my $reps = $words[$pos]->{reps};
+	    my $size = scalar(@{$reps});
+	    for (my $j = 0; $j < $size; $j++) {
+		$word2idx{$reps->[$j]} = $idx++;
+
+		push(@freq, {midasi => $reps->[$j]});
+		$freq[-1]->{freq} += (1 / $size);
+		push(@{$freq[-1]->{pos}}, $words[$pos]->{local_pos});
+		push(@{$freq[-1]->{absolute_pos}}, $words[$pos]->{global_pos});
+		$freq[-1]->{group_id} = $words[$pos]->{local_pos};
+		$freq[-1]->{rawstring} = $reps->[$j];
+		$freq[-1]->{surf} = $surf;
+		$freq[-1]->{isContentWord} = $words[$pos]->{isContentWord};
+	    }
+	}
+
+	## KNPの解析結果から単語インデックスのみを抽出したい場合
+	return \@freq if $option->{no_dpnd};
+
+	## <意味有>が付いている形態素間の係り受け関係を索引付け
+	## 係り先・係り元に代表表記が複数個ある場合は、係り先・元の代表表記の個数の積で割ってカウントする
+	for(my $pos = 0; $pos < scalar(@bps); $pos++){
+	    my $kakariSaki = $bps[$pos]->{kakarisaki};
+	    my $kakariMoto = $bps[$pos]->{words};
+	    ## 基本句($bps[$pos])が文末(-1)なら
+	    if($kakariSaki < 0){
+		## <意味有>タグが付いている形態素が1つ
+		if(scalar(@{$bps[$pos]->{words}}) < 2){
+		    next;
+		}else{
+		    ## 基本句に複数の<意味有>タグ付きの形態素がある場合は分解する
+		    ## ex)
+		    ## 河野洋平
+		    ## 河野->洋平
+
+		    for(my $i = 0; $i < scalar(@{$bps[$pos]->{words}}); $i++){
+			my $word = $bps[$pos]->{words}->[$i];
+			my $reps = $word->{reps};
+			my $num_daihyou_moto = scalar(@{$reps});
+			for(my $j = 0; $j < $num_daihyou_moto; $j++){
+			    my $kakariSakiDaihyou;
+			    if($i + 1 < scalar(@{$bps[$pos]->{words}})){
+				## 隣りの形態素に係る
+				$kakariSakiDaihyou = $bps[$pos]->{words}->[$i + 1]->{reps};
+			    }else{
+				## 末尾の基本句なので終了(係り先なし)
+				next;
+			    }
+			    next unless(defined($kakariSakiDaihyou)); ## 係り先基本句に<意味有>タグが付いた形態素が無ければ
+
+			    my $num_daihyou_saki = scalar(@{$kakariSakiDaihyou});
+			    for(my $k = 0; $k < $num_daihyou_saki; $k++){
+				my $midasi = $reps->[$j] . "->" . $kakariSakiDaihyou->[$k];
+				push(@freq, {midasi => $midasi});
+				$freq[-1]->{freq} += (1 / ($num_daihyou_saki * $num_daihyou_moto));
+				push(@{$freq[-1]->{pos}}, @{$freq[$word2idx{$reps->[$j]}]->{pos}});
+				push(@{$freq[-1]->{absolute_pos}}, @{$freq[$word2idx{$reps->[$j]}]->{absolute_pos}});
+				$freq[-1]->{group_id} = "$freq[$word2idx{$reps->[$j]}]->{group_id}:$freq[$word2idx{$kakariSakiDaihyou->[$k]}]->{group_id}";
+				$freq[-1]->{rawstring} = $midasi;
+				$freq[-1]->{isContentWord} = 1;
+			    }
+			}
+		    }
+		}
+		next;
+	    }
+
+	    next unless(defined($bps[$pos]->{words}->[0]->{reps})); ## <意味有>タグが付いている形態素が基本句に無いなら
+
+	    ## $pos番目の基本句に含まれる形態素と、その係り先の基本句(曖昧性がある場合は全て)
+	    ## との組を索引語として抽出
+	    for(my $i = 0; $i < scalar(@{$bps[$pos]->{words}}); $i++){
+		my $daihyou = $bps[$pos]->{words}->[$i]->{reps};
+		my $num_daihyou_moto = scalar(@{$daihyou});
+
+		for(my $j = 0; $j < $num_daihyou_moto; $j++){
+		    my $kakariSakiDaihyou;
+		    ## 基本句に複数の<意味有>タグ付きの形態素がある場合は分解する
+		    ## ex)
+		    ## 河野洋平と/行った。
+		    ## 河野->洋平 洋平->行く
+		    if($i + 1 < scalar(@{$bps[$pos]->{words}})){
+			## 隣りの形態素に係る
+			$kakariSakiDaihyou = $bps[$pos]->{words}->[$i + 1]->{reps};
+		    }else{
+			## 基本句全体で係っていた基本句に係る
+			$kakariSakiDaihyou = $bps[$kakariSaki]->{words}->[0]->{reps};
+		    }
+
+		    next unless(defined($kakariSakiDaihyou)); ## 係り先基本句に<意味有>タグが付いた形態素が無ければ
+
+		    my $num_daihyou_saki = scalar(@{$kakariSakiDaihyou});
+		    for(my $k = 0; $k < $num_daihyou_saki; $k++){
+			my $midasi = $daihyou->[$j] . "->" . $kakariSakiDaihyou->[$k];
+			push(@freq, {midasi => $midasi});
+			$freq[-1]->{freq} += (1 / ($num_daihyou_saki * $num_daihyou_moto));
+			push(@{$freq[-1]->{pos}}, @{$freq[$word2idx{$daihyou->[$j]}]->{pos}});
+			push(@{$freq[-1]->{absolute_pos}}, @{$freq[$word2idx{$daihyou->[$j]}]->{absolute_pos}});
+			$freq[-1]->{group_id} = "$freq[$word2idx{$daihyou->[$j]}]->{group_id}:$freq[$word2idx{$kakariSakiDaihyou->[$k]}]->{group_id}";
+			$freq[-1]->{rawstring} = $midasi;
+			$freq[-1]->{isContentWord} = 1;
+		    }
+		}
+	    }
+	}
+    }
+    return \@freq;
+}
+
+sub makeIndexFromKNPResultObject {
+    my ($this, $result, $option) = @_;
     my $pos = $this->{absolute_pos};
     my $gid = 0;
     my @idx = ();
