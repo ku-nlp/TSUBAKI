@@ -27,11 +27,11 @@
 # 基本ツールの設定（★要変更）
 ##################################################
 TOOL_HOME	/share09/home/skeiji/local/bin
-KNP_PATH	/share09/home/skeiji/local/080216/bin
-JUMAN_PATH	/share09/home/skeiji/local/080216/bin
-SYNDB_PATH	/share09/home/skeiji/work/nlp2008/SynGraph/syndb/x86_64
-KNP_OPTIONS	-postprocess,-tab,-dpnd
-KNP_RCFILE	/share09/home/skeiji/.knprc.novel
+KNP_COMMAND	/share09/home/skeiji/local/bin/knp
+JUMAN_COMMAND	/share09/home/skeiji/local/bin/juman
+SYNDB_PATH	/share09/home/skeiji/cvs/SynGraph/syndb/i686
+KNP_OPTIONS	-postprocess,-tab
+KNP_RCFILE	/share09/home/skeiji/.knprc
 SYNGRAPH_PM_PATH	/share09/home/skeiji/cvs/SynGraph/perl
 
 

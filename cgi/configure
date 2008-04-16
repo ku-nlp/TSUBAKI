@@ -27,8 +27,8 @@
 # 基本ツールの設定（★要変更）
 ##################################################
 TOOL_HOME	/home/skeiji/local/bin
-KNP_PATH	/home/skeiji/local/bin
-JUMAN_PATH	/home/skeiji/local/bin
+KNP_COMMAND	/home/skeiji/local/bin/knp
+JUMAN_COMMAND	/home/skeiji/local/bin/juman
 SYNDB_PATH	/home/skeiji/cvs/SynGraph/syndb/i686
 KNP_OPTIONS	-postprocess,-tab
 KNP_RCFILE	/home/skeiji/.knprc
