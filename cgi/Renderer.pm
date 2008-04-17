@@ -86,7 +86,7 @@ sub printFooter {
 
     <DIV style="text-align:center;padding:1em;">
     TSUBAKI利用時の良かった点、問題点などご意見を頂けると幸いです。<br>
-    ご意見は tsubaki あっと nlp.kyoto-u.ac.jp までお願い致します。
+    ご意見は tsubaki あっと nlp.kuee.kyoto-u.ac.jp までお願い致します。
     <P>
     <DIV><B>&copy;2006 - 2008 黒橋研究室</B></DIV> 
     </DIV>
@@ -316,7 +316,7 @@ print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http:
     print "</TR>";
 
     if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=lightGray>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
     } else {
 	if ($params->{syngraph}) {
 	    print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
