@@ -292,9 +292,9 @@ sub retrieve_documents {
 	    # 近接制約の適用
 	    if ($keyword->{near} > 0) {
 		if ($keyword->{syngraph}) {
-		    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
+		    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
 		} else {
-		    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag});
+		    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
 		}
 	    }
 
