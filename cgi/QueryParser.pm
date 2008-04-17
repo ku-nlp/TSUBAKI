@@ -97,8 +97,9 @@ sub parse {
     ## 空白で区切る
     # $qks_str =~ s/ /　/g;
     foreach my $q_str (split(/(?: )+/, $qks_str)) {
-	my $near = -1;
+	my $near = $opt->{near};
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
+	my $keep_order = 1;
 	my $force_dpnd = -1;
 	my $sentence_flag = -1;
 	my $phrasal_flag = -1;
@@ -132,11 +133,12 @@ sub parse {
 	    $q_str = $1;
 	    # 検索制約の取得
 	    my $constraint_tag = $2;
-	    if ($constraint_tag =~ /^(\d+)(W|S)$/) {
+	    if ($constraint_tag =~ /^(\d+)(W|S)$/i) {
 		# 近接制約
 		$logical_cond_qkw = 'AND';
 		$near = $1;
-		$sentence_flag = 1 if ($2 eq 'S');
+		$sentence_flag = 1 if ($2 =~ /S/i);
+		$keep_order = 0 if ($2 eq 's' || $2 eq 'w');
 	    } elsif ($constraint_tag =~ /(AND|OR)/) {
 		# 論理条件制約
 		$logical_cond_qkw = $1;
@@ -152,9 +154,9 @@ sub parse {
 
 	my $q;
 	if ($opt->{syngraph} > 0) {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
 	} else {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
 	}
 
 	push(@qks, $q);
