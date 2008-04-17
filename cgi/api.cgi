@@ -1,5 +1,5 @@
-#!/share09/home/skeiji/local/bin/perl
 #!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -30,9 +30,6 @@ use Renderer;
 use Logger;
 use RequestParser;
 
-
-binmode(STDOUT, ':utf8');
-binmode(STDERR, ':utf8');
 
 my $CONFIG = Configure::get_instance();
 
@@ -74,6 +71,9 @@ sub main {
 
 	# 1. 一文書に対する情報取得
 	if (defined $field) {
+	    binmode(STDOUT, ':utf8');
+	    binmode(STDERR, ':utf8');
+
 	    &provideDocumentInfo($cgi, $field);
 	}
 	# 2. 標準フォーマット、オリジナルページ取得
@@ -82,6 +82,9 @@ sub main {
 	}
 	# 3. 検索結果取得
 	else {
+	    binmode(STDOUT, ':utf8');
+	    binmode(STDERR, ':utf8');
+
 	    &provideSearchResult($cgi);
 	}
     }
