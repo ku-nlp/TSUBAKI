@@ -161,7 +161,7 @@ sub calculate_score {
     my %matched_queries = ();
     my %buf;
     foreach my $idx (@$indice) {
-	$buf{$idx->{midashi}}++;
+	$buf{$idx->{midasi}}++;
     }
 
     for (my $q = 0; $q < scalar(@{$query}); $q++) {
@@ -212,7 +212,7 @@ sub make_word_list {
 	    if ($line =~ /\<代表表記:([^>]+)\>/) {
 		$midashi = $1;
 	    }
-	    
+
 	    $reps{&toUpperCase_utf8($midashi)} = 1;
 	    
 	    ## 代表表記に曖昧性がある場合は全部保持する
