@@ -1,4 +1,4 @@
-#!/share09/home/skeiji/local/bin/perl
+#!/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -17,9 +17,6 @@ use QueryParser;
 use RequestParser;
 
 
-binmode(STDOUT, ':utf8');
-binmode(STDERR, ':utf8');
-
 my $CONFIG = Configure::get_instance();
 
 &main();
@@ -29,6 +26,7 @@ sub main {
     my $params = RequestParser::parseCGIRequest(new CGI());
 
     # HTTPヘッダ出力
+    # print header(-type => 'text/plain', -charset => 'utf-8');
     print header(-charset => 'utf-8');
 
     if ($params->{'cache'}) {
@@ -44,6 +42,9 @@ sub main {
 	}
 	# クエリが入力された場合は検索
 	else {
+	    binmode(STDOUT, ':utf8');
+	    binmode(STDERR, ':utf8');
+
 	    # LOGGERの起動
 	    my $logger = new Logger(0);
 
