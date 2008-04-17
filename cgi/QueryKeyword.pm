@@ -11,13 +11,14 @@ use Data::Dumper;
 
 # コンストラクタ
 sub new {
-    my ($class, $string, $sentence_flag, $is_phrasal_search, $near, $force_dpnd, $logical_cond_qkw, $syngraph, $opt) = @_;
+    my ($class, $string, $sentence_flag, $is_phrasal_search, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $syngraph, $opt) = @_;
     my $this = {
 	words => [],
 	dpnds => [],
 	sentence_flag => $sentence_flag,
 	is_phrasal_search => $is_phrasal_search,
 	near => $near,
+	keep_order => $keep_order,
 	force_dpnd => $force_dpnd,
 	logical_cond_qkw => $logical_cond_qkw,
 	rawstring => $string,
