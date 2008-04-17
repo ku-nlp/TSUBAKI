@@ -570,7 +570,7 @@ sub filter_by_NEAR_constraint_strict {
 
 # 近接条件の適用
 sub filter_by_NEAR_constraint {
-    my ($this, $docs, $near, $sentence_flag) = @_;
+    my ($this, $docs, $near, $sentence_flag, $keep_order) = @_;
 
     return $docs if ($near < 0);
 
@@ -644,37 +644,51 @@ sub filter_by_NEAR_constraint {
 
 	# 1. 各単語の出現位置をマージ
 	while (1) {
-	    my $min_qk = 0;
+	    my $min_qid = 0;
 	    my $flag = -1;
 	    for (my $q = 0; $q < $q_num; $q++) {
 		next if (!defined scalar(@{$poslist[$q]}) || scalar(@{$poslist[$q]}) < 1);
 		if ($flag < 0) {
-		    $min_qk = $q;
+		    $min_qid = $q;
 		    $flag = 1;
 		} else {
-		    $min_qk = $q if ($poslist[$q][0] < $poslist[$min_qk][0]);
+		    $min_qid = $q if ($poslist[$q][0] < $poslist[$min_qid][0]);
 		}
 	    }
 	    last if ($flag < 0);
 
-	    my $pos = shift(@{$poslist[$min_qk]});
-	    push(@serialized_poslist, {pos => $pos, qk => $min_qk});
+	    my $pos = shift(@{$poslist[$min_qid]});
+	    push(@serialized_poslist, {pos => $pos, qid => $min_qid});
 	}
 
 	#  2. 各単語が$near語以内に現れているかどうかチェック
 	my $flag = -1;
 	for (my $i = 0; $i < scalar(@serialized_poslist); $i++) {
-	    my %qk_buf = ();
+	    my %qid_buf = ();
 	    my $pos = $serialized_poslist[$i]->{pos};
+	    my $qid = $serialized_poslist[$i]->{qid};
+	    next if ($qid != 0 && $keep_order);
+
+	    my $prev_qid = $qid;
+	    $qid_buf{$serialized_poslist[$i]->{qid}}++;
 	    for (my $j = $i + 1; $j < scalar(@serialized_poslist); $j++) {
 		if ($serialized_poslist[$j]->{pos} - $pos < $near) {
-		    $qk_buf{$serialized_poslist[$i]->{qk}}++;
-		    $qk_buf{$serialized_poslist[$j]->{qk}}++;
+		    if ($keep_order) {
+			# 隣あう索引語かどうかのチェック
+			if ($serialized_poslist[$j]->{qid} - $prev_qid > 1) {
+			    last;
+			} else {
+			    $prev_qid = $serialized_poslist[$j]->{qid};
+			}
+		    }
+		    $qid_buf{$serialized_poslist[$i]->{qid}}++;
+		    $qid_buf{$serialized_poslist[$j]->{qid}}++;
 		} else {
+		    # 指定された近接の範囲を超えた
 		    last;
 		}
 	    }
-	    if (scalar(keys %qk_buf) > $q_num - 1) {
+	    if (scalar(keys %qid_buf) > $q_num - 1) {
 		$flag = 1;
 		last;
 	    }
