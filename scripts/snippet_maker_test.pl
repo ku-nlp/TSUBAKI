@@ -13,7 +13,7 @@ my $JUMAN_PATH = $TOOL_HOME;
 my $SYNDB_PATH = "$ENV{HOME}/cvs/SynGraph/syndb/i686";
 
 my (%opt);
-GetOptions(\%opt, 'query=s', 'z', 'syngraph', 'debug', 'encoding=s', 'discard_title', 'syndb=s');
+GetOptions(\%opt, 'query=s', 'z', 'syngraph', 'debug', 'encoding=s', 'discard_title', 'syndb=s', 'string_mode', 'window_size=s');
 
 $SYNDB_PATH = $opt{syndb} if($opt{syndb});
 
@@ -27,7 +27,7 @@ binmode(STDOUT, ':encoding(euc-jp)');
 sub init_query_parser {
     my $q_parser = new QueryParser({
 	SYNDB_PATH => $SYNDB_PATH,
-	KNP_OPTIONS => ['-postprocess','-tab'] });
+	KNP_OPTIONS => ['-postprocess','-tab','-dpnd'] });
     $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
 
     return $q_parser;
