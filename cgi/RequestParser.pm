@@ -19,12 +19,12 @@ sub getDefaultValues {
     my %params = ();
 
     $params{start} = 0;
-    $params{logical_operator} = 'WORD_AND';
+    $params{logical_operator} = 'AND';
     $params{dpnd} = 1;
     $params{results} = ($call_from_API) ? 10 : $CONFIG->{NUM_OF_SEARCH_RESULTS};
     $params{force_dpnd} = 0;
     $params{filter_simpages} = 1;
-    $params{near} = 0;
+    $params{near} = -1;
     $params{syngraph} = 0;
     $params{accuracy} = $CONFIG->{SEARCH_ACCURACY};
     $params{num_of_results_per_page} = $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
@@ -125,7 +125,7 @@ sub parseAPIRequest {
     $params->{'force_dpnd'} = $cgi->param('force_dpnd') if (defined($cgi->param('force_dpnd')));
     $params->{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
     $params->{'sort_by'} = $cgi->param('sort_by') if (defined($cgi->param('sort_by')));
-    $params->{'near'} = shift(@{$cgi->{'near'}}) if ($cgi->param('near'));
+    $params->{'near'} = $cgi->param('near') if (defined $cgi->param('near'));
     # $params->{'filter_simpages'} = 0 if (defined $cgi->param('filter_simpages') &&  $cgi->param('filter_simpages') eq '0');
     $params->{query_verbose} = $cgi->param('query_verbose') if (defined($cgi->param('query_verbose')));
 
@@ -187,7 +187,7 @@ sub parseQuery {
 
     # クエリの解析
     # logical_cond_qk: クエリ間の論理演算
-    my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}});
+    my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}, near => $params->{near}});
 
     # 取得ページ数のセット
     $query->{results} = $params->{results};
