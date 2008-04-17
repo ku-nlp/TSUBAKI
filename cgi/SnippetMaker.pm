@@ -169,6 +169,7 @@ sub calculate_score {
 	foreach my $reps (@{$qk->{words}}) {
 	    foreach my $rep (@{$reps}) {
 		my $k = $rep->{string};
+		$k =~ s/(a|v)$//;
 		if (exists($buf{$k})) {
 		    $num_of_queries += $buf{$k};
 		    $matched_queries{$k}++;
@@ -179,6 +180,7 @@ sub calculate_score {
 	foreach my $reps (@{$qk->{dpnds}}) {
 	    foreach my $rep (@{$reps}) {
 		my $k = $rep->{string};
+		$k =~ s/(a|v)//g;
 		if (exists($buf{$k})) {
 		    $num_of_queries += $buf{$k};
 		    $matched_queries{$k}++;
