@@ -260,7 +260,7 @@ sub make_word_list {
 
 	    push(@words, $word);
 
-	    if($line =~ /\<意味有\>/){
+	    if ($line =~ /(<意味有>|<内容語>)/) {
 		next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
 		$word->{isContentWord} = 1;
 	    }
@@ -297,7 +297,7 @@ sub make_word_list_syngraph {
 		reps => [],
 		isContentWord => 0
 	    };
-	    $word->{isContentWord} = 1 if (index($line, '<意味有>') > 0);
+	    $word->{isContentWord} = 1 if ($line =~ /(<意味有>|<内容語>)/);
 
 	    $words[$wordcnt] = $word;
 	    push(@{$bnst2pos{$bnstcnt}}, $wordcnt);
