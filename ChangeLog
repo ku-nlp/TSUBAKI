@@ -1,4 +1,131 @@
-2008-04-12  skeiji  <skeiji@nlpc.kuee.kyoto-u.ac.jp>
+2008-04-18  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm, cgi/QueryTrimmer.pm:
+	<内容語>を追加.
+
+	* cgi/SnippetMaker.pm:
+	<内容語>を見るようにした.
+
+	* cgi/SnippetMaker.pm:
+	debug出力の追加, -string_mode指定時にスコアが下がるバグを修正, 文IDを標準フォーマットから抽出するようにした.
+
+	* scripts/snippet_maker_test.pl:
+	-debugオプションの追加.
+
+2008-04-17  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	変数名を修正(midashi -> midasi)
+
+	* scripts/snippet_maker_test.pl:
+	added new options (-string_mode, window_size)
+
+	* cgi/api.cgi:
+	binmodeを実行するタイミングを変更.
+
+	* cgi/index.cgi:
+	binmodeの実行を検索結果表示の場合のみに変更.
+
+	* scripts/TsubakiEngine.pm:
+	語順を考慮するかどうかのフラグを指定してfilter_by_NEAR_constraintメソッドを呼ぶように変更.
+
+	* cgi/QueryKeyword.pm:
+	近接検索時に語順を考慮するかどうかの条件を保持するメンバ変数の追加.
+
+	* cgi/QueryParser.pm:
+	近接制約において、語順を考慮するかを指定できるようにした. nearで指定された値を受け取るようにした.
+
+	* cgi/RequestParser.pm:
+	デフォルト値の変更. nearで指定された値をQueryParserに渡すようにした.
+
+	* scripts/TsubakiEngine.pm:
+	近接制約適用時に、語順を考慮するかどうかのオプションを追加化.
+
+2008-04-16  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet_make_server.pl:
+	西千葉標準フォーマットから重要文を抽出するオプションを追加.
+
+	* scripts/Indexer.pm:
+	containsSymbolsメソッドをコメントアウト.
+
+	* cgi/SnippetMaker.pm:
+	Indexer.pmの仕様変更に対応.
+
+	* scripts/Indexer.pm:
+	KNPの解析結果(文字列)から検索に用いる表現を抽出するメソッドの追加.
+
+	* cgi/QueryKeyword.pm:
+	Indexer.pmの仕様変更に対応.
+
+	* cgi/configure, cgi/configure.nict:
+	KNPのオプションに-dpndを追加.
+
+	* scripts/snippet_maker_test.pl, cgi/QueryParser.pm, cgi/SnippetMakerAgent.pm, cgi/query-parser-test.perl:
+	configureファイルの変更に対応.
+
+	* cgi/configure, cgi/configure.nict:
+	JUMAN_PATH, KNP_PATHをJUMAN_COMMAND, KNP_COMMANDに変更.
+
+	* cgi/Searcher.pm, cgi/Logger.pm, cgi/SnippetMakerAgent.pm, cgi/api.cgi:
+	Wide character in print がログファイルに出力されないようにした.
+
+	* cgi/Renderer.pm, cgi/index.cgi:
+	Wide character ein print がログファイルに出力されないようにした.
+
+	* scripts/snippet_make_server.pl:
+	タイムアウトを削除, verboseのコメントを修正.
+
+	* scripts/TsubakiEngine.pm:
+	added verbose messages, intersectメソッドの引数にオプションを追加
+
+	* scripts/Retrieve.pm:
+	added verbose messages.
+
+	* scripts/seek_test.pl:
+	Retrieve.pm, Dumperを使うように変更.
+
+2008-04-15  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/index.cgi:
+	Renderer.pm, Searcher.pmの変更に対応.
+
+	* cgi/Renderer.pm:
+	スニペット生成を行うようにした, 検索結果後の画面レイアウトを変更
+
+	* cgi/Searcher.pm:
+	スニペット生成部分をRenderer.pmに移動.
+
+	* cgi/configure.nict:
+	defalut値の変更.
+
+2008-04-14  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl:
+	負荷を返す機能を追加.
+
+	* scripts/tsubaki_server.pl:
+	起動しているかどうかの確認時に、ポート番号も返すように変更. 不要コードの削除.
+
+	* cgi/QueryParser.pm:
+	CDB_Fileをuseするように変更.
+
+	* scripts/snippet_make_server.pl:
+	起動しているかどうかの確認時に、ポート番号も返すように変更. 不要コードの削除.
+
+	* scripts/snippet_make_server.pl, scripts/tsubaki_server.pl:
+	サーバーが起動しているかどうかチェックする問い合わせを受け付けるようにした.
+
+	* cgi/api.cgi:
+	bug fixed. (標準フォーマットが取得されないバグを修正)
+
+	* cgi/RequestParser.pm:
+	start, resultsの値が不適切な場合はエラーを出力するようにした．
+
+	* cgi/Renderer.pm:
+	エラー表示用クラスメソッドの追加.
+
+2008-04-12  Keiji Shinzato  <skeiji@nlpc.kuee.kyoto-u.ac.jp>
 
 	* cgi/RequestParser.pm:
 	スニペットが表示されない不具合を修正.
