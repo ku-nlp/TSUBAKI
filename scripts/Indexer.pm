@@ -263,7 +263,7 @@ sub makeIndexFromKNPResultString {
 
 		push(@words, $word);
 
-		if($line =~ /\<意味有\>/){
+		if ($line =~ /(<内容語|意味有>)/) {
 		    next if ($line =~ /\<記号\>/); ## <意味有>タグがついてても<記号>タグがついていれば削除
 		    # next if (&containsSymbols($m[2]) > 0); ## <記号>タグがついてない記号を削除
 

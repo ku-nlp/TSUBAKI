@@ -188,7 +188,7 @@ sub set_discard_feature_by_TELIC {
 
     my @children = $kihonku->child;
     foreach my $mrph ($kihonku->mrph) {
-	if ($mrph->hinsi eq '動詞' && $mrph->fstring =~ /<意味有>/) {
+	if ($mrph->hinsi eq '動詞' && $mrph->fstring =~ /<内容語|意味有>/) {
 	    my $kakari_saki;
 	    my $kakari_moto;
 #	    my ($repname) = ($mrph->fstring =~ /<正規化代表表記.?:([^>]+)>/);
