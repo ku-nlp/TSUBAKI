@@ -84,6 +84,10 @@ sub extract_sentences_from_content {
 	next if ($line =~ /^!/ && !$opt->{syngraph});
 
 	$annotation .= $line;
+
+	$sid = $1 if ($line =~ m!<S .+ Id="(\d+)"!);
+	$sid = 0 if ($line =~ m!<Title !);
+
 	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
@@ -129,7 +133,6 @@ sub extract_sentences_from_content {
 		push(@sentences, $sentence);
 #		print encode('euc-jp', $sentence->{rawstring}) . " (" . $num_of_whitespace_cdot_comma . ") is SKIPPED.\n";
 	    }
-	    $sid++;
 	    $annotation = '';
 	}
     }
@@ -164,15 +167,25 @@ sub calculate_score {
 	$buf{$idx->{midasi}}++;
     }
 
+    if ($opt->{debug}) {
+	print "index terms in a sentence\n";
+	print Dumper (\%buf) . "\n";
+	print "-----\n";
+    }
+
     for (my $q = 0; $q < scalar(@{$query}); $q++) {
 	my $qk = $query->[$q];
 	foreach my $reps (@{$qk->{words}}) {
 	    foreach my $rep (@{$reps}) {
 		my $k = $rep->{string};
-		$k =~ s/(a|v)$//;
+		$k =~ s/(a|v)$// unless ($opt->{string_mode});
+		print $k . " is exists? -> " if ($opt->{debug});
 		if (exists($buf{$k})) {
+		    print "true.\n" if ($opt->{debug});
 		    $num_of_queries += $buf{$k};
 		    $matched_queries{$k}++;
+		} else {
+		    print "false.\n" if ($opt->{debug});
 		}
 	    }
 	}
@@ -180,15 +193,19 @@ sub calculate_score {
 	foreach my $reps (@{$qk->{dpnds}}) {
 	    foreach my $rep (@{$reps}) {
 		my $k = $rep->{string};
-		$k =~ s/(a|v)//g;
+		$k =~ s/(a|v)//g unless ($opt->{string_mode});
+		print $k . " is exists? -> " if ($opt->{debug});
 		if (exists($buf{$k})) {
+		    print "true.\n" if ($opt->{debug});
 		    $num_of_queries += $buf{$k};
 		    $matched_queries{$k}++;
+		} else {
+		    print "false.\n" if ($opt->{debug});
 		}
 	    }
 	}
     }
-
+    print "=====\n" if ($opt->{debug});
     return ($num_of_queries, scalar(keys %matched_queries));
 }
 
