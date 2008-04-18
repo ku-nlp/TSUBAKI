@@ -33,7 +33,7 @@ sub new {
 }
 
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight, $query) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -47,6 +47,12 @@ sub merge_docs {
 	foreach my $doc (@{$docs_word}) {
 	    my $i;
 	    my $did = $doc->{did};
+	    if ($did =~ /25526608/) {
+		$this->{verbose} = 1;
+		print $DIST . "=DIST\n";
+	    }
+
+	    $this->{verbose} = 0 unless ($did =~ /25526608/);
 
 	    if (exists($did2pos{$did})) {
 		$i = $did2pos{$did};
@@ -89,7 +95,8 @@ sub merge_docs {
 
 		    my $weight = $gid2weight->{$qid2gid->{$qid}};
 		    # 関数化するよりも高速
-		    my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+		    # my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
 		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 		    my $score = $tff * $idf;
 		    $qid2poslist{$qid} = $this->{word_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums});
@@ -108,7 +115,7 @@ sub merge_docs {
 			my $dlength = $d_length_buff{$did};
 
 			my $dist = $this->get_minimum_distance($qid2poslist{$qid}, $qid2poslist{$kakarisaki_qid}, $dlength);
-			if ($dist > $DIST) {
+			if ($dist > $DIST || $dist < 0) {
 			    $merged_docs[$i]->{near_score}{$dpnd_qid} = 0;
 			} else {
 			    my $tf = ($DIST - $dist) / $DIST;
@@ -122,8 +129,11 @@ sub merge_docs {
 			    }
 			    else {
 				my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+				# my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 				my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-				$score = $qtf;# * $tff * $idf;
+				# $score = $qtf;
+				$score = $qtf * $tff * $idf;
+				print "* qid=$dpnd_qid dist=$dist rate=$tf df=$df qtf=$qtf score=$score\n"  if ($this->{verbose});
 			    }
 
 			    $q2scores[$i]->{near}{$qid} = {dist => $dist, qtf => $qtf, df => $df, dlength => $dlength, score => $score, kakarisaki_qid => $kakarisaki_qid, DIST => $DIST};
@@ -162,8 +172,8 @@ sub merge_docs {
 			$score = 0;
 		    }
 		    else {
-			# my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
-			my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+			my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
+			# my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
 			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 			$score = $tff * $idf;
 			$score *= $this->{WEIGHT_DPND_SCORE};
@@ -201,6 +211,10 @@ sub merge_docs {
 	    printf ("did=%09d qid=%02d w=%.3f d=%.3f n=%.3f total=%.3f\n", $e->{did}, $qid, $e->{word_score}, $e->{dpnd_score}{$qid}, $score_of_qid, $score) if ($this->{verbose});
 	}
 	print "-----\n" if ($this->{verbose});
+
+	if ($e->{did} =~ /25526608/) {
+	    print "$e->{did} $score $e->{word_score} $dpnd_score $dist_score\n";
+	}
 
 	push(@result, {did => $e->{did},
 		       score_total => $score,
