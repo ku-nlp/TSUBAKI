@@ -200,19 +200,19 @@ sub search_syngraph_test_for_new_format {
 			$docs[$offset_j + $pos]->[3] = $total_byte;
 		    }
 		    # スキップ
-		    seek($this->{IN}[$f_num], $total_byte, 0);
-		    for (my $j = 0; $j < $num_of_poss; $j++) {
-			read($this->{IN}[$f_num], $buf, 4);
-			my $pp = unpack('L', $buf);
-			print "$total_byte $b / $poss_size " . $docs[$offset_j + $pos]->[0] . " $j / $num_of_poss: $pp\n" if ($this->{verbose});
-			$b += 4;
-			$total_byte += 4;
-		    }
-		    print "-----\n" if ($this->{verbose});
+# 		    seek($this->{IN}[$f_num], $total_byte, 1);
+# 		    for (my $j = 0; $j < $num_of_poss; $j++) {
+# 			read($this->{IN}[$f_num], $buf, 4);
+# 			my $pp = unpack('L', $buf);
+# 			print "$total_byte $b / $poss_size " . $docs[$offset_j + $pos]->[0] . " $j / $num_of_poss: $pp\n" if ($this->{verbose});
+# 			$b += 4;
+# 			$total_byte += 4;
+# 		    }
+# 		    print "-----\n" if ($this->{verbose});
 
-# 		    seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
-# 		    $total_byte += ($num_of_poss * 4);
-# 		    $b += ($num_of_poss * 4);
+ 		    seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
+ 		    $total_byte += ($num_of_poss * 4);
+ 		    $b += ($num_of_poss * 4);
 		    $soeji++;
 		}
 
@@ -236,17 +236,18 @@ sub search_syngraph_test_for_new_format {
 		    }
 
 		    # スキップ
- 		    for (my $j = 0; $j < $num_of_scores; $j++) {
- 			read($this->{IN}[$f_num], $buf, 2);
- 			my $pp = unpack('S', $buf);
- 			print "$total_byte $b / $scores_size " . $docs[$offset_j + $pos]->[0] . " $j / $num_of_scores: $pp\n" if ($this->{verbose});
- 		    }
- 		    print "=====\n" if ($this->{verbose});
+#   		    for (my $j = 0; $j < $num_of_scores; $j++) {
+#   			read($this->{IN}[$f_num], $buf, 2);
+#   			my $pp = unpack('S', $buf);
+# 			print $pp . "=score\n";
+#   			print "$total_byte $b / $scores_size " . $docs[$offset_j + $pos]->[0] . " $j / $num_of_scores: $pp\n" if ($this->{verbose});
+#   		    }
+#  		    print "=====\n" if ($this->{verbose});
 
-#		    seek($this->{IN}[$f_num], $num_of_scores * 2, 1);
-		    $total_byte += ($num_of_scores * 2);
-		    $b += ($num_of_scores * 2);
-		    $soeji++;
+ 		    seek($this->{IN}[$f_num], $num_of_scores * 2, 1);
+ 		    $total_byte += ($num_of_scores * 2);
+ 		    $b += ($num_of_scores * 2);
+ 		    $soeji++;
 		}
 
 		$offset_j += (scalar keys %soeji2pos);
@@ -543,7 +544,7 @@ sub load_position {
     for (my $k = 0; $k < $size_poss; $k++) {
 	read($this->{IN}[$f_num], $buf, 4);
 	my $pos = unpack('L', $buf);
-	print $offset . "=offset " . $pos . "=pos\n" if ($opt->{verbose});
+	print STDERR $offset . "=offset " . $pos . "=pos\n" if ($opt->{verbose});
 	push(@pos_list, $pos);
     }
 
@@ -559,7 +560,7 @@ sub load_score {
     for (my $k = 0; $k < $size_poss; $k++) {
 	read($this->{IN}[$f_num], $buf, 2);
 	my $score = unpack('S', $buf);
-	push(@score_list, $score);
+	push(@score_list, $score / 1000);
     }
 
     return \@score_list;
@@ -567,6 +568,10 @@ sub load_score {
 
 sub search {
     my($this, $keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search) = @_;
+
+    if ($syngraph_search) {
+	return $this->search_syngraph_test_for_new_format($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search);
+    }
 
     my $start_time = Time::HiRes::time;
 
@@ -621,7 +626,7 @@ sub search {
 		$time_buff = Time::HiRes::time;
 		read($this->{IN}[$f_num], $buf, 4);
 		my $ldf = unpack('L', $buf);
-		print "fnum=$f_num type=$this->{TYPE} ldf=$ldf\n" if ($this->{verbose});
+		print STDERR "fnum=$f_num type=$this->{TYPE} ldf=$ldf\n" if ($this->{verbose});
 
 		$total_byte += 4;
 
@@ -706,7 +711,7 @@ sub search {
 			else {
 			    # 位置情報までスキップ
 			    seek($this->{IN}[$f_num], $sids_size, 1);
-			    print "total=$total_byte sid=$sids_size pos=$poss_size\n" if ($this->{verbose});
+			    print STDERR "total=$total_byte sid=$sids_size pos=$poss_size\n" if ($this->{verbose});
 
 			    $total_byte += $sids_size;
 
@@ -715,6 +720,8 @@ sub search {
 				$total_byte += 4;
 				read($this->{IN}[$f_num], $buf, 4);
 				my $num_of_poss = unpack('L', $buf);
+				# print $num_of_poss . "=num_of_poss\n";
+
 				my $pos = $soeji2pos{$soeji};
 				unless (defined $pos) {
 				    seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
