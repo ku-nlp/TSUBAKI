@@ -176,10 +176,10 @@ sub merge_docs {
 		    my $gid = $qid2gid->{$dpnd_qid};
 
 		    # print "did=$did qid=$dpnd_qid dist=$dist\n";
- 		    if ($dist > 30) {
+ 		    if ($dist > $DIST || $dist < 0) {
 			$gid2near_score{$did}->{$gid} = 0 unless (defined $gid2near_score{$gid});
  		    } else {
- 			my $d = (30 - $dist) / 30;
+ 			my $d = ($DIST - $dist) / $DIST;
  			my $qtf = $qid2qtf->{$dpnd_qid};
 
 # 			my $tff = (3 * $d) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $d);
@@ -209,7 +209,7 @@ sub merge_docs {
 
 	my $okapi_score;
 	foreach my $gid (keys %scores) {
-	    my $score = $scores{$gid} / 1000;
+	    my $score = $scores{$gid};
 	    my $df = $gid2df{$gid};
 	    my $weight = $gid2weight->{$gid};
 	    my $dlength = $d_length_buff{$did};
