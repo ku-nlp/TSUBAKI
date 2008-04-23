@@ -27,7 +27,7 @@ my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 1;
 my $HOSTNAME = `hostname` ; chop($HOSTNAME);
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug', 'syngraph');
 
 if (!$opt{idxdir} || !$opt{port} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
