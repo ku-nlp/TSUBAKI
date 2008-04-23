@@ -37,7 +37,11 @@ sub new {
 sub DESTROY {}
 
 sub makeIndexfromSynGraph {
-    my($this, $syngraph, $kihonkus) = @_;
+    my($this, $syngraph, $kihonkus, $opt) = @_;
+
+    if ($opt->{string_mode}) {
+	return $this->makeIndexfromSynGraph4Indexing($syngraph, $opt);
+    }
 
     my %dpndInfo = ();
     my %synNodes = ();
@@ -69,8 +73,25 @@ sub makeIndexfromSynGraph {
 
 		# 読みの削除
 		$sid = $1 if ($sid =~ m!^([^/]+)/!);
-		$features = "$`$'" if ($features =~ /\<上位語\>/); # <上位語>を削除
-		$features =~ s/<下位語数:\d+>//; # <下位語数:(数字)>を削除
+
+		# 文法素性の削除
+		$features =~ s/<可能>//;
+		$features =~ s/<尊敬>//;
+		$features =~ s/<受身>//;
+		$features =~ s/<使役>//;
+		$features =~ s/<反義語>//;
+
+		# 上位語を利用するかどうか
+		if ($features =~ /<上位語>/) {
+		    if ($opt->{use_of_hypernyms}) {
+			# $features =~ s/<上位語>//g;
+		    } else {
+			next;
+		    }
+		}
+
+		# <下位語数:(数字)>を削除
+		$features =~ s/<下位語数:\d+>//;
 
 		my $midasi = $sid . $features;
 		my $syn_node = {midasi => $midasi,
@@ -151,6 +172,10 @@ sub makeIndexfromSynGraph {
 	    foreach my $kakariSakiID (@{$kakariSakis}){
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
 		foreach my $kakariSakiNode (@{$kakariSakiNodes}){
+		    # SYNノードがらみの係り受けを使わない場合は next
+		    next if (!$opt->{use_of_syngraph_dependency} &&
+			     ($kakariSakiNode->{midasi} =~ /s\d+/ || $synNode->{midasi} =~ /s\d+/));
+
 		    my $s = $score * $kakariSakiNode->{score};
 		    push(@freq, {midasi => "$synNode->{midasi}->$kakariSakiNode->{midasi}"});
 		    $freq[-1]->{freq} = $s;
