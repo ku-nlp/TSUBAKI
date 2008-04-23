@@ -27,7 +27,7 @@ sub new {
     $opts->{JUMAN_COMMAND} = $CONFIG->{JUMAN_COMMAND} unless ($opts->{JUMAN_COMMAND});
     $opts->{KNP_RCFILE} = $CONFIG->{KNP_RCFILE} unless ($opts->{KNP_RCFILE});
     $opts->{KNP_OPTIONS} = $CONFIG->{KNP_OPTIONS} unless ($opts->{KNP_OPTIONS});
-    # $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
+    $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
 
     my $this = {
 	KNP => new KNP(-Command => $opts->{KNP_COMMAND},
@@ -39,6 +39,7 @@ sub new {
 		    keishi => (),
 		    syngraph => undef}
     };
+
     $this->{OPTIONS}{jyushi} = $opts->{JYUSHI} if ($opts->{JYUSHI});
     $this->{OPTIONS}{keishi} = $opts->{KEISHI} if ($opts->{KEISHI});
 
@@ -135,7 +136,6 @@ sub parse {
 	    if ($constraint_tag =~ /^(\d+)(W|S)$/i) {
 		# 近接制約
 		$logical_cond_qkw = 'AND';
-		# W, wの際は後で形態素数を考慮する
 		$near = $1;
 		$sentence_flag = 1 if ($2 =~ /S/i);
 		$keep_order = 0 if ($2 eq 's' || $2 eq 'w');
@@ -158,6 +158,7 @@ sub parse {
 	} else {
 	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
 	}
+
 	push(@qks, $q);
     }
 
@@ -226,7 +227,7 @@ sub parse {
 	    my $df_of_basic_node = $gid2df{$gid};
 	    $df_of_basic_node = 0 unless (defined $df_of_basic_node);
 	    $qid2df{$qid} = $df_of_basic_node;
-	    print "qid=$qid gid=$gid df=$df_of_basic_node<br>\n" if ($opt->{verbose});
+	    print "qid=$qid gid=$gid df=$df_of_basic_node\n" if ($opt->{verbose});
 	}
     }
 

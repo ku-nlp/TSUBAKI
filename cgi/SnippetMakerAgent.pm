@@ -200,7 +200,12 @@ sub get_decorated_snippets_for_each_did {
 	    my $length = $sentence->{length};
 	    my $num_of_whitespaces = $sentence->{num_of_whitespaces};
 
-	    next if ($num_of_whitespaces / $length > 0.2);
+	    if ($num_of_whitespaces / $length > 0.2) {
+# 		print $num_of_whitespaces . " ";
+# 		print $length . " ";
+# 		print $sentence->{rawstring} . "<br>\n";
+		next;
+	    }
 
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		my $highlighted = -1;
@@ -208,10 +213,8 @@ sub get_decorated_snippets_for_each_did {
 		foreach my $rep (@{$sentence->{reps}[$i]}) {
 		    if (exists($color->{$rep})) {
 			# 代表表記レベルでマッチしたらハイライト
-			$snippets{$sid} .= sprintf("<span style=\"color:%s;margin:0.1em 0.25em;background-color:%s;\">%s<\/span>",
-						   $color->{$rep}->{foreground},
-						   $color->{$rep}->{background},
-						   $surf);
+
+			$snippets{$sid} .= sprintf("<span style=\"color:%s;margin:0.1em 0.25em;background-color:%s;\">%s<\/span>", $color->{$rep}->{foreground}, $color->{$rep}->{background}, $surf);
 			$highlighted = 1;
 		    }
 		    last if ($highlighted > 0);
