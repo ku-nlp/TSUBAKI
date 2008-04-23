@@ -27,8 +27,8 @@ sub extract_sentences_from_ID {
 
     my $xmlfile;
     if ($opt->{syngraph}) {
-	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX2, $id / 1000000, $id / 10000, $id);
-	$xmlfile = sprintf("%s/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX3, $id / 10000, $id) unless (-e $xmlfile);
+	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX3, $id / 1000000, $id / 10000, $id);
+	$xmlfile = sprintf("%s/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX2, $id / 10000, $id) unless (-e $xmlfile);
 	$xmlfile = sprintf("%s/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX4, $id / 10000, $id) unless (-e $xmlfile);
 	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX1, $id / 1000000, $id / 10000, $id) unless (-e $xmlfile);
     } else {
@@ -91,7 +91,7 @@ sub extract_sentences_from_content {
 	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
-		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result) : $indexer->makeIndexFromKNPResult($result, $opt);
+		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result, undef, $opt) : $indexer->makeIndexFromKNPResult($result, $opt);
 		my ($num_of_queries, $num_of_types) = &calculate_score($query, $indice, $opt);
 
 		my $sentence = {
@@ -309,8 +309,17 @@ sub make_word_list_syngraph {
 		$sid = $1 if ($sid =~ m!^([^/]+)/!);
 		
 		my $features = $3;
-		$features = "$`$'" if ($features =~ /\<上位語\>/); # <上位語>を削除
-		$features =~ s/<下位語数:\d+>//; # <下位語数:(数字)>を削除
+
+		# 文法素性の削除
+		$features =~ s/<可能>//;
+		$features =~ s/<尊敬>//;
+		$features =~ s/<受身>//;
+		$features =~ s/<使役>//;
+		$features =~ s/<反義語>//;
+		$features =~ s/<上位語>//;
+
+		# <下位語数:(数字)>を削除
+		$features =~ s/<下位語数:\d+>//;
 
 		foreach my $bid (split(/,/, $bnstId)) {
 		    foreach my $pos (@{$bnst2pos{$bid}}) {
