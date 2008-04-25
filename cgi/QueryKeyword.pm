@@ -8,6 +8,9 @@ use strict;
 use utf8;
 use Encode;
 use Data::Dumper;
+use Configure;
+
+my $CONFIG = Configure::get_instance();
 
 # コンストラクタ
 sub new {
@@ -58,7 +61,11 @@ sub new {
 	    }
 	}
 
-	$indice = $opt->{indexer}->makeIndexfromSynGraph($synresult, \@content_words);
+	$indice = $opt->{indexer}->makeIndexfromSynGraph($synresult, \@content_words,
+ 							 { use_of_syngraph_dependency => $CONFIG->{USE_OF_SYNGRAPH_DEPENDENCY},
+ 							   use_of_hypernym => $CONFIG->{USE_OF_HYPERNYM},
+ 							   use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM}
+ 							 });
     }
 
     # Indexer.pm より返される索引語を同じ代表表記ごとにまとめる
@@ -105,6 +112,11 @@ sub new {
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
     }
+
+#     文レベルでの近接制約でない場合は、キーワード内の形態素数を考慮する
+#     if ($this->{near} > -1 && $this->{sentence_flag} < 0) {
+# 	$this->{near} += scalar(@{$this->{words}});
+#     }
 
     if ($is_phrasal_search > 0) {
 	$this->{near} = scalar(@{$this->{words}});
