@@ -74,21 +74,26 @@ sub makeIndexfromSynGraph {
 		# 読みの削除
 		$sid = $1 if ($sid =~ m!^([^/]+)/!);
 
-		# 文法素性の削除
-		$features =~ s/<可能>//;
-		$features =~ s/<尊敬>//;
-		$features =~ s/<受身>//;
-		$features =~ s/<使役>//;
-		$features =~ s/<反義語>//;
-
-		# 上位語を利用するかどうか
+		# <上位語>を利用するかどうか
 		if ($features =~ /<上位語>/) {
-		    if ($opt->{use_of_hypernyms}) {
+		    if ($opt->{use_of_hypernym}) {
 			# $features =~ s/<上位語>//g;
 		    } else {
 			next;
 		    }
 		}
+
+		# <反義語><否定>を利用するかどうか
+		if ($features =~ /<反義語>/ && $features =~ /<否定>/) {
+		    next unless ($opt->{use_of_negation_and_antonym});
+		}
+
+
+		# 文法素性の削除
+		$features =~ s/<可能>//;
+		$features =~ s/<尊敬>//;
+		$features =~ s/<受身>//;
+		$features =~ s/<使役>//;
 
 		# <下位語数:(数字)>を削除
 		$features =~ s/<下位語数:\d+>//;
@@ -683,7 +688,6 @@ sub makeIndexfromSynGraph4Indexing {
 		$features =~ s/<尊敬>//;
 		$features =~ s/<受身>//;
 		$features =~ s/<使役>//;
-		$features =~ s/<反義語>//;
 		$features =~ s/<上位語>//;
 
 		# <下位語数:(数字)>を削除
