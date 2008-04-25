@@ -35,7 +35,7 @@ sub init_query_parser {
 
 sub main {
     # クエリの解析
-    my $q_parser = &init_query_parser();
+    my $q_parser = new QueryParser();
     my $query = $q_parser->parse(decode($opt{encoding}, $opt{query}), {logical_cond_qk => 'AND', syngraph => $opt{syngraph}});
 
     if ($opt{debug}) {
