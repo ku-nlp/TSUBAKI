@@ -309,8 +309,16 @@ sub make_word_list_syngraph {
 		$sid = $1 if ($sid =~ m!^([^/]+)/!);
 		
 		my $features = $3;
-		$features = "$`$'" if ($features =~ /\<上位語\>/); # <上位語>を削除
-		$features =~ s/<下位語数:\d+>//; # <下位語数:(数字)>を削除
+
+		# 文法素性の削除
+		$features =~ s/<可能>//;
+		$features =~ s/<尊敬>//;
+		$features =~ s/<受身>//;
+		$features =~ s/<使役>//;
+		$features =~ s/<上位語>//;
+
+		# <下位語数:(数字)>を削除
+		$features =~ s/<下位語数:\d+>//;
 
 		foreach my $bid (split(/,/, $bnstId)) {
 		    foreach my $pos (@{$bnst2pos{$bid}}) {
