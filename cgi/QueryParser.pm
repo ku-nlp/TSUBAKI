@@ -27,7 +27,7 @@ sub new {
     $opts->{JUMAN_COMMAND} = $CONFIG->{JUMAN_COMMAND} unless ($opts->{JUMAN_COMMAND});
     $opts->{KNP_RCFILE} = $CONFIG->{KNP_RCFILE} unless ($opts->{KNP_RCFILE});
     $opts->{KNP_OPTIONS} = $CONFIG->{KNP_OPTIONS} unless ($opts->{KNP_OPTIONS});
-    $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
+    # $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
 
     my $this = {
 	KNP => new KNP(-Command => $opts->{KNP_COMMAND},
