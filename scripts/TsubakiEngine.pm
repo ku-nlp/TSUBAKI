@@ -49,9 +49,6 @@ sub new {
     my $this = {
 	word_retriever => undef,
 	dpnd_retriever => undef,
-	word_retriever4anchor => undef,
-	dpnd_retriever4anchor => undef,
-	anchor => $opts->{anchor},
 	DOC_LENGTH_DBs => $opts->{doc_length_dbs},
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
@@ -89,7 +86,7 @@ sub search {
     my $start_time = Time::HiRes::time;
     # 検索
     # 文書のスコアリング
-    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor) = $this->retrieve_documents($query, $qid2df);
+    my ($alldocs_word, $alldocs_dpnd) = $this->retrieve_documents($query, $qid2df);
 
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
@@ -97,7 +94,7 @@ sub search {
     }
 
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight});
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight});
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
@@ -125,13 +122,6 @@ sub retrieve_from_dat {
 	# $retriever->search($rep, $doc_buff, $add_flag, $position);
 	# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
 	$results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
-
-
-# 	if ($syngraph_flag) {
-# 	    $results[$i] = $retriever->search_syngraph_test_for_new_format($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
-# 	} else {
-# 	    $results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
-# 	}
 
 	$idx2qid{$i} = $rep->{qid};
     }
@@ -180,42 +170,6 @@ sub calculate_score {
     return $tf * $idf;
 }
 
-sub retrieveFromBinaryData {
-    my ($this, $retriever, $query, $qid2df, $keyword, $type, $alwaysAppend) = @_;
-
-    my @results = ();
-    my $add_flag = 1;
-    my $docbuf = {};
-    # keyword中の単語を含む文書の検索
-    # 文書頻度の低い単語から検索する
-    foreach my $reps (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{$type}}) {
-	if ($this->{verbose}) {
-	    foreach my $rep (@$reps) {
-		foreach my $k (keys %$rep) {
-		    my $v = $rep->{$k};
-		    $v = decode('utf8', $v) unless (utf8::is_utf8($v));
-		    print $k . " " . $v . "\n";
-		}
-	    }
-	}
-
-	# バイナリファイルから文書の取得
-	my $docs = $this->retrieve_from_dat($retriever, $reps, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
-
-	unless ($alwaysAppend) {
-	    print $add_flag . "=aflag\n" if ($this->{verbose});
-	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
-	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
-	}
-
-	# 各語について検索された結果を納めた配列に push
-	push(@results, $docs);
-	print "-----\n" if ($this->{verbose});
-    }
-
-    return \@results;
-}
-
 sub retrieve_documents {
     my ($this, $query, $qid2df) = @_;
 
@@ -223,8 +177,6 @@ sub retrieve_documents {
 
     my $alldocs_word = [];
     my $alldocs_dpnd = [];
-    my $alldocs_word_anchor = [];
-    my $alldocs_dpnd_anchor = [];
     my $requisite_docs = undef;
     my $doc_buff = {};
     # requisiteである単語を含む文書の検索
@@ -269,37 +221,87 @@ sub retrieve_documents {
     # 通常検索
     ##########
     foreach my $keyword (@{$query->{keywords}}) {
-	my $docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 0);
-	my $docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 1);
-	my $docs_word_anchor = [];
-	my $docs_dpnd_anchor = [];
- 	if ($this->{anchor}) {
-	    $docs_word_anchor = $this->retrieveFromBinaryData($this->{word_retriever4anchor}, $query, $qid2df, $keyword, 'words', 1);
-	    $docs_dpnd_anchor = $this->retrieveFromBinaryData($this->{dpnd_retriever4anchor}, $query, $qid2df, $keyword, 'dpnds', 1);
- 	}
+	my $docs_word = [];
+	my $docs_dpnd = [];
 
+	# keyword中の単語を含む文書の検索
+	# 文書頻度の低い単語から検索する
+ 	my $add_flag = 1;
+	foreach my $reps_of_word (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{words}}) {
+	    if ($this->{verbose}) {
+		foreach my $rep_of_word (@{$reps_of_word}) {
+		    foreach my $k (keys %{$rep_of_word}) {
+			my $v = $rep_of_word->{$k};
+			$v = decode('utf8', $v) unless (utf8::is_utf8($v));
+			print $k . " " . $v . "\n";
+		    }
+		}
+	    }
+
+	    # バイナリファイルから文書の取得
+ 	    my $docs = $this->retrieve_from_dat($this->{word_retriever}, $reps_of_word, $doc_buff, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+
+ 	    print $add_flag . "=aflag\n" if ($this->{verbose}) ;
+ 	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
+ 	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
+
+ 	    # 各語について検索された結果を納めた配列に push
+ 	    push(@{$docs_word}, $docs);
+	    print "-----\n" if ($this->{verbose});
+	}
+
+	$add_flag = 1;
+	# keyword中の係り受けを含む文書の検索
+	foreach my $reps_of_dpnd (@{$keyword->{dpnds}}) {
+	    if ($this->{verbose}) {
+		foreach my $rep_of_dpnd (@{$reps_of_dpnd}) {
+		    foreach my $k (keys %{$rep_of_dpnd}) {
+			print $k . " " . $rep_of_dpnd->{$k} ."\n";
+		    }
+		}
+	    }
+
+	    # バイナリファイルから文書の取得
+	    my $docs = $this->retrieve_from_dat($this->{dpnd_retriever}, $reps_of_dpnd, $doc_buff, 1, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{syngraph});
+
+#	    print $add_flag . "=aflag\n" if ($this->{verbose});
+#	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
+
+	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
+
+	    # 各係受けについて検索された結果を納めた配列に push
+	    push(@{$docs_dpnd}, $docs);
+	}
+	
 	# 検索キーワードごとに検索された文書の配列へpush
-	if ($keyword->{logical_cond_qkw} eq 'AND') {
+	if ($keyword->{logical_cond_qkw} eq 'OR') {
+	    # 検索語について収集された文書をマージ
+	    push(@{$alldocs_word}, &serialize($docs_word));
+	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
+	} else {
 	    # 検索キーワード中の単語間のANDをとる
 	    $docs_word = &intersect($docs_word);
+	    # $docs_dpnd = &intersect($docs_dpnd); # ★★★★★ intersect
+	    # ★ 整理する
 	    
 	    # 係り受け制約の適用
 	    if (scalar(@{$keyword->{dpnds}}) > 0 && $keyword->{force_dpnd} > 0) {
 		$docs_word = $this->filter_by_force_dpnd_constraint($docs_word, $docs_dpnd);
 	    }
 	    
-
 	    # 近接制約の適用
 	    if ($keyword->{near} > 0) {
-		$docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
+		if ($keyword->{syngraph}) {
+		    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
+		} else {
+		    $docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
+		}
 	    }
-	}
 
-	# 検索語について収集された文書をマージ
-	push(@{$alldocs_word}, &serialize($docs_word));
-	push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
-	push(@{$alldocs_word_anchor}, &serialize($docs_word_anchor));
-	push(@{$alldocs_dpnd_anchor}, &serialize($docs_dpnd_anchor));
+	    # 検索キーワードについて収集された文書をマージ
+	    push(@{$alldocs_word}, &serialize($docs_word));
+	    push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
+	}
     }
 
     if (defined $requisite_docs) {
@@ -334,7 +336,7 @@ sub retrieve_documents {
 	printf ("@@@ %.4f sec. doclist retrieving.\n", $conduct_time);
     }
 
-    return ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor);
+    return ($alldocs_word, $alldocs_dpnd);
 }
 
 # 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
