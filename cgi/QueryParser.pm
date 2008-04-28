@@ -592,8 +592,6 @@ sub get_DF {
     my $gdf = 0;
     my $DFDBs = (index($k, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
     foreach my $dfdb (@{$DFDBs}) {
-	next unless ($dfdb =~ /.cdb(.\d+)?/);
-
 	my $val = $dfdb->{$k_utf8};
 	if (defined $val) {
 	    $gdf += $val;
