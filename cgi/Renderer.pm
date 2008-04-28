@@ -128,6 +128,7 @@ sub print_query {
 			}
 			chop($tips);
 
+			$tips = decode('utf8', $tips);
 			$mod_k =~ s/s\d+://g;
 			$mod_k = "&lt;$mod_k&gt;";
 		    }
@@ -209,7 +210,11 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 END_OF_HTML
 
     # タイトル出力
-print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http://tsubaki-wiki.ixnlp.nii.ac.jp/\">TSUBAKI Wiki はこちら</A><BR></DIV>\n";
+    print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
+    print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
+    print qq(<A href="http://tsubaki-wiki.ixnlp.nii.ac.jp/">TSUBAKI Wiki はこちら</A>\n);
+    print qq(</DIV>\n);
+
     print "<TABLE><TR><TD valign=top>\n";
     printf ("<A href=%s><IMG border=0 src=./logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
     print "</TD><TD>";
@@ -287,9 +292,13 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 END_OF_HTML
 
     # タイトル出力
-print "<DIV style=\"text-align:right;margin:0.5em 1em 0em 0em;\"><A href=\"http://tsubaki-wiki.ixnlp.nii.ac.jp/\">TSUBAKI Wiki はこちら</A><BR></DIV>\n";
-    print "<CENTER style='maring:1em; padding:1em;'>";
-    printf ("<A href=%s><IMG border=0 src=./logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
+    print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
+    print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
+    print qq(<A href="http://tsubaki-wiki.ixnlp.nii.ac.jp/">TSUBAKI Wiki はこちら</A>\n);
+    print qq(</DIV>\n);
+
+    print qq(<CENTER style="maring:1em; padding:1em;">\n);
+    printf ("<A href=\"%s\"><IMG border=\"0\" src=\"./logo.png\"></A><P>\n", $CONFIG->{INDEX_CGI});
     # フォーム出力
     print "<FORM name=\"search\" method=\"post\" action=\"\" enctype=\"multipart/form-data\">\n";
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
