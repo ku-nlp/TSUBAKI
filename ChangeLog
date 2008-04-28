@@ -1,4 +1,58 @@
+2008-04-28  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: info-plosionロゴを表示するようにした.
+
+	* utils/api_req.pl: 標準フォーマット取得オプションの追加.
+
+2008-04-25  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	<反義語><否定>の利用をオプション化した. <反義語>を削除しないようにした.
+
+	* cgi/QueryKeyword.pm:
+	configure内のSYNGRAPH検索オプションを使うようにした.
+
+	* cgi/SnippetMaker.pm:
+	文法素性を削除するようにした.
+
+	* cgi/configure:
+	SYNGRAPH検索のオプション（係り受けの利用、<上位語>の利用、<反義語><否定>の利用）を設定ファイルに移行.
+
+2008-04-23  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/SnippetMaker.pm, cgi/SnippetMakerAgent.pm, cgi/configure:
+	誤ってcommitしたものを前のバージョンに戻した.
+
+	* cgi/index.cgi: 誤ってcommitしたのを戻した.
+
+	* cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/SnippetMaker.pm, cgi/SnippetMakerAgent.pm, cgi/configure, cgi/index.cgi:
+	SnippetMaker.pm
+
+	* scripts/Indexer.pm:
+	文法素性を削除，上位語の利用，係り受け関係の利用をオプション化.
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	インデックスからロードしたスコアを割らないようにした（Retrieve.pm側でスコアを割るようにしたため）, bug fixed(get_minimun_distanceの戻り値が-1の時は、近接ボーナスを与えない)
+
+	* scripts/tsubaki_server.pl:
+	-syngraphオプションの追加.
+
+2008-04-21  Tomohide Shibata   <shibata@nlp.kuee.kyoto-u.ac.jp>
+
+	* doc/manual.tex: 言語解析部分をupdate
+
+2008-04-20  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Retrieve.pm:
+	searchメソッドからSYNGRAPH検索に分岐するようにした. load_scoreメソッドにおいて1000で割るようにした. コード整理.
+
+	* scripts/seek_test.pl, scripts/seek_test_syn.pl:
+	SYNGRAPH検索に対応(seek_test_syn.plの廃止). QueryParserを使うようにした.
+
 2008-04-18  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine4OrdinarySearch.pm:
+	OKAPIのパラメータをBM25に戻した. bug fixed(get_minimun_distanceの戻り値が-1の時は、近接ボーナスを与えない)
 
 	* scripts/Indexer.pm, cgi/QueryTrimmer.pm:
 	<内容語>を追加.
