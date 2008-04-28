@@ -26,14 +26,19 @@ sub new {
     $obj->{word_retriever} = new Retrieve($opts->{idxdir}, 'word', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed});
 
     # DAT ファイルから係り受けを含む文書を検索する retriever オブジェクトをセットする
-    # $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, $opts->{show_speed});
     $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
+
+    # 検索にアンカーテキストを考慮する
+    if ($opts->{anchor}) {
+	$obj->{word_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'word', 1, $opts->{verbose}, $opts->{show_speed});
+	$obj->{dpnd_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
+    }
 
     bless $obj;
 }
 
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight, $query) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $alldocs_words_anchor, $alldocs_dpnds_anchor, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -47,12 +52,6 @@ sub merge_docs {
 	foreach my $doc (@{$docs_word}) {
 	    my $i;
 	    my $did = $doc->{did};
-	    if ($did =~ /25526608/) {
-		$this->{verbose} = 1;
-		print $DIST . "=DIST\n";
-	    }
-
-	    $this->{verbose} = 0 unless ($did =~ /25526608/);
 
 	    if (exists($did2pos{$did})) {
 		$i = $did2pos{$did};
@@ -189,10 +188,89 @@ sub merge_docs {
 	}
     }
 
+    foreach my $docs_word (@{$alldocs_words_anchor}) {
+	foreach my $doc (@{$docs_word}) {
+	    my $did = $doc->{did};
+	    # $this->{verbose} = 1 if ($did =~ /78922624/);
+	    $this->{verbose} = 1 if ($did =~ /29939252/);
+
+	    if (exists($did2pos{$did})) {
+		my $i = $did2pos{$did};
+		foreach my $qid_freq (@{$doc->{qid_freq}}) {
+		    my $tf = $qid_freq->{freq};
+		    my $qid = $qid_freq->{qid};
+		    my $df = $qid2df->{$qid};
+		    my $qtf = $qid2qtf->{$qid};
+		    my $dlength = $d_length_buff{$did};
+
+		    my $score;
+		    # 検索クエリに含まれる係り受けが、ドキュメント集合に一度も出てこない場合
+		    if ($df == -1) {
+			$score = 0;
+		    }
+		    else {
+			my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+			$score = $tff * $idf;
+		    }
+
+		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n"; # if ($this->{verbose});
+		    $q2scores[$i]->{word_anchor}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
+		    $merged_docs[$i]->{word_anchor}{$qid} = $score * $qtf;
+		}
+	    }
+	    $this->{verbose} = 0;
+	}
+    }
+
+    foreach my $docs_dpnd (@{$alldocs_dpnds_anchor}) {
+	foreach my $doc (@{$docs_dpnd}) {
+	    my $did = $doc->{did};
+
+	    $this->{verbose} = 1 if ($did =~ /29939252/);
+	    if (exists($did2pos{$did})) {
+		my $i = $did2pos{$did};
+		foreach my $qid_freq (@{$doc->{qid_freq}}) {
+		    my $tf = $qid_freq->{freq};
+		    my $qid = $qid_freq->{qid};
+		    my $df = $qid2df->{$qid};
+		    my $qtf = $qid2qtf->{$qid};
+		    my $dlength = $d_length_buff{$did};
+
+		    my $score;
+		    # 検索クエリに含まれる係り受けが、ドキュメント集合に一度も出てこない場合
+		    if ($df == -1) {
+			$score = 0;
+		    }
+		    else {
+			my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+			$score = $tff * $idf;
+		    }
+
+		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
+		    $q2scores[$i]->{dpnd_anchor}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
+		    $merged_docs[$i]->{dpnd_anchor}{$qid} = $score * $qtf;
+		}
+	    }
+	    $this->{verbose} = 0;
+	}
+    }
+
     my @result;
     for (my $i = 0; $i < @merged_docs; $i++) {
 	my $e = $merged_docs[$i];
-	my $score = $e->{word_score};
+	my $word_anchor_score;
+	while (my ($qid, $score) = each (%{$e->{word_anchor}})) {
+	    $word_anchor_score += $score;
+	}
+
+	my $dpnd_anchor_score;
+	while (my ($qid, $score) = each (%{$e->{dpnd_anchor}})) {
+	    $dpnd_anchor_score += $score;
+	}
+
+	my $score = $e->{word_score} + $word_anchor_score + $dpnd_anchor_score;
 	my $dpnd_score = 0;
 	my $dist_score = 0;
 	while (my ($qid, $score_of_qid) = each(%{$e->{near_score}})) {
@@ -208,7 +286,7 @@ sub merge_docs {
 		}
 	    }
 
-	    printf ("did=%09d qid=%02d w=%.3f d=%.3f n=%.3f total=%.3f\n", $e->{did}, $qid, $e->{word_score}, $e->{dpnd_score}{$qid}, $score_of_qid, $score) if ($this->{verbose});
+	    printf ("did=%09d qid=%02d w=%.3f d=%.3f n=%.3f anchor_w=%.3f anchor_d=%.3f total=%.3f\n", $e->{did}, $qid, $e->{word_score}, $e->{dpnd_score}{$qid}, $score_of_qid, $word_anchor_score, $dpnd_anchor_score, $score) if ($this->{verbose});
 	}
 	print "-----\n" if ($this->{verbose});
 
@@ -221,6 +299,8 @@ sub merge_docs {
 		       score_word => $e->{word_score},
 		       score_dpnd => $dpnd_score,
 		       score_dist => $dist_score,
+		       score_word_anchor => $word_anchor_score,
+		       score_dpnd_anchor => $dpnd_anchor_score,
 		       q2score => $q2scores[$i]
 	     });
 
