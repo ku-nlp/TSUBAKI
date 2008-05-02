@@ -24,16 +24,31 @@ binmode(STDERR, ":encoding(euc-jp)");
 
 
 my (%opt);
-GetOptions(\%opt, 'in=s', 'out=s', 'jmn', 'knp', 'syn', 'position', 'z', 'compress', 'file=s', 'ignore_yomi', 'genkei', 'verbose', 'help');
+GetOptions(\%opt,
+	   'in=s',
+	   'out=s',
+	   'jmn',
+	   'knp',
+	   'syn',
+	   'position',
+	   'z',
+	   'compress',
+	   'file=s',
+	   'ignore_yomi',
+	   'genkei',
+	   'scheme=s',
+	   'extract_from_only_inlink',
+	   'verbose',
+	   'help');
 
-my $TAG_NAME = "Juman";
-$TAG_NAME = "Knp" if ($opt{knp});
-$TAG_NAME = "SynGraph" if ($opt{syn});
+$opt{scheme} = "Knp" unless ($opt{scheme});
+$opt{extract_from} = "(?:Title|Description|Keywords|S)";
+$opt{extract_from} = "InLink" if ($opt{extract_from_only_inlink});
 
 &main();
 
 sub usage {
-    print "Usage perl $0 -in xmldir -out idxdir [-jmn|-knp|-syn] [-position] [-z] [-compress] [-file] [-verbose]\n";
+    print "Usage perl $0 -in xmldir -out idxdir [-jmn|-knp|-syn] [-position] [-z] [-compress] [-file] [-scheme [Juman|Knp|SynGraph]] [-extract_from_only_inlink] [-verbose]\n";
     exit;
 }
 
@@ -104,36 +119,57 @@ sub extract_indice_from_single_file {
 sub extract_indice {	
     my ($READER, $fid) = @_;
 
-    my $sid = 0;
-    my $flag = 0;
+    my $sid = -10000;
+    my $contentFlag = 0;
+    my $annotationFlag = 0;
     my $result;
     my %indice = ();
     my $indexer = new Indexer({ignore_yomi => $opt{ignore_yomi},
 			      without_using_repname => $opt{genkei}
 			      });
     while (<$READER>) {
-	if (/\<(?:S|Title).*? Id="(\d+)"/) {
+	if (/\<$opt{extract_from}( |\>)/) {
+	    $contentFlag = 1;
+	}
+	elsif (/\<\/$opt{extract_from}\>/) {
+	    $contentFlag = 0;
+	}
+
+	if (/\<S.*? Id="(\d+)"/) {
 	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if ($opt{verbose});
 	    $sid = $1;
 	}
+	elsif (/\<(?:Title|InLink|OutLink|Description|Keywords)/) {
+	    $sid++;
+	    print STDERR "\rdir=$opt{in},file=$fid (Id=$sid)" if ($opt{verbose});
+	}
+
 
 	if (/^\]\]\><\/Annotation>/) {
-	    if ($opt{syn}) {
-		$indice{$sid} = $indexer->makeIndexfromSynGraph4Indexing($result);
+	    unless ($result =~ /^\n*$/) {
+		if ($opt{syn}) {
+		    $indice{$sid} = $indexer->makeIndexfromSynGraph4Indexing($result);
+		}
+		elsif ($opt{knp}) {
+		    $indice{$sid} = $indexer->makeIndexFromKNPResult($result, \%opt);
+		}
+		else {
+		    $indice{$sid} = $indexer->makeIndexfromJumanResult($result);
+		}
 	    }
-	    elsif ($opt{knp}) {
-		my $knpresult = new KNP::Result($result);
-		$indice{$sid} = $indexer->makeIndexFromKNPResult($knpresult, \%opt);
-	    }
-	    else {
-		$indice{$sid} = $indexer->makeIndexfromJumanResult($result);
-	    }
+
 	    $result = undef;
-	    $flag = 0;
-	} elsif (/.*\<Annotation Scheme=\"$TAG_NAME\"\>\<\!\[CDATA\[/) {
-	    $result = "$'";
-	    $flag = 1;
-	} elsif($flag > 0) {
+	    $annotationFlag = 0;
+	} elsif (/.*\<Annotation Scheme=\"$opt{scheme}\"\>\<\!\[CDATA\[/) {
+	    my $line = "$'";
+	    $result = $line unless ($line =~ /^#/);
+	    $annotationFlag = 1;
+	} elsif ($annotationFlag && $contentFlag) {
+	    next if ($_ =~ /^\#/);
+	    # 標準フォーマット内の解析結果が SynGraph かつ $opt{knp} ならば `!' ではじまる行はスキップ
+	    if ($opt{scheme} eq 'SynGraph' && $opt{knp}) {
+		next if ($_ =~ /^!/);
+	    }
 	    $result .= $_;
 	}
     }
