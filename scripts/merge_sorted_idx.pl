@@ -47,15 +47,14 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
     }
 
     # 各ファイルの1行目を読み込み、ソートする前の初期@INDEX(@tmpINDEX)を作成する
-    if ($_ = $FH[$FILE_NUM]->getline) {
+    while ($_ = $FH[$FILE_NUM]->getline) {
 	chop;
-#	/^(\S+) (.*)/;
-	if($_ =~ /^([^ ]+) (.+)/){
+	if ($_ =~ /^([^ ]+) (.+)/) {
 	    push(@tmp_INDEX, {midasi => $1, data => $2, file_num => $FILE_NUM});
-	}else{
+	    last;
+	} else {
 	    print STDERR "Format error!!\n";
 	    print STDERR encode('utf8', $_) . "\n";
-#	    exit(1);
 	}
     }
     $FILE_NUM++;  
@@ -84,13 +83,12 @@ while (@INDEX) {
     }
 
     # 先ほど取り出したファイル番号について，新しい行を取り出し，@INDEXの適当な位置に挿入
-    if (($_ = $FH[$index->{file_num}]->getline)) {
+    while (($_ = $FH[$index->{file_num}]->getline)) {
 	chop($_);
-        unless($_ =~ /^([^ ]+) (.+)/){
+        unless ($_ =~ /^([^ ]+) (.+)/) {
 	    print STDERR "Format error!!\n";
 	    print STDERR encode('utf8', $_) . "\n";
-#	    exit(1);
-	}else{
+	} else {
 	    $index->{midasi} = $1;
 	    $index->{data} = $2;
 	    
@@ -103,7 +101,8 @@ while (@INDEX) {
 	    }
 	    if ($i == -1) {
 		splice(@INDEX, 0, 0, $index);
-	    }	   
+	    }
+	    last;
 	}
     }
 }
