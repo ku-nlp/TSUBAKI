@@ -1,64 +1,64 @@
 #!/home/skeiji/local/bin/perl
 
+# $Id$
+
 use strict;
 use utf8;
 use CGI qw/:standard/;
 use CGI::Carp qw(fatalsToBrowser);
 
+use Configure;
+my $CONFIG = Configure::get_instance();
 
 my @OPTs = ('query', 'start', 'results', 'logical_operator', 'dpnd', 'filter_simpages', 'only_hitcount', 'id', 'format');
 
-my $logfp = '/se_tmp/input.log';
-open(LOG, "tac $logfp | head -300 |");
+open(LOG, "tac $CONFIG->{LOG_FILE_PATH} | head -300 |");
 binmode(LOG, ':utf8');
 print header(-charset => 'utf-8');
 
+my $buf;
+my $flag = 1;
+my @attrs = ();
+
+push(@attrs, 'DATE');
+push(@attrs, 'HOST');
+push(@attrs, 'ACCESS');
+
+while (<LOG>) {
+      my ($date, $host, $access, $options) = split(/ /, $_);
+
+      $buf .= sprintf "<TR>";
+      $buf .= sprintf "<TD style='border: 1px solid black;'>$date</TD>";
+      $buf .= sprintf "<TD style='border: 1px solid black;'>$host</TD>";
+      $buf .= sprintf "<TD style='border: 1px solid black;'>$access</TD>";
+      foreach my $opt (split(/,/, $options)) {
+	  my($k, $v) = split(/=/, $opt);
+	  $buf .= sprintf "<TD style='border: 1px solid black;'>$v</TD>";
+	  if ($flag) {
+	      push(@attrs, $k);
+	  }
+      }
+      $flag = 0;
+      $buf .= sprintf "</TR>\n";
+}
+close(LOG);
+
 my $hostname = `hostname` ; chop($hostname);
-print "<H3>LOG on $hostname </H3>";
+print "<H3>LOG on $hostname</H3>";
 print "<HR>";
 
 print "<TABLE style='border: 1px solid black;' width=*>";
-my @ATTRS = ('dpnd', 'filter_simpages', 'force_dpnd', 'logical_operator', 'near', 'only_hitcount', 'query', 'results', 'start', 'syngraph', 'hitcount', 'time');
-
 print "<TR>";
-print "<TD style='border: 1px solid black;'>date</TD>";
-print "<TD style='border: 1px solid black;'>method</TD>";
-foreach my $attr (@ATTRS) {
-    $attr =~ s/_/ /g;
-    if ($attr eq 'query') {
-	print "<TD style='border: 1px solid black;' width=50>$attr</TD>";
-    } else {
-	print "<TD style='border: 1px solid black;' width=5>$attr</TD>";
-    }
+foreach my $attr (@attrs) {
+    print "<TD style='border: 1px solid black;'>$attr</TD>";
 }
 print "</TR>\n";
-
-while (<LOG>) {
-      my($date,$host,$method,@options) = split(/ /, $_);
-
-      print "<TR>";
-      print "<TD style='border: 1px solid black;'>$date</TD>";
-      print "<TD style='border: 1px solid black;'>$method</TD>";
-      my %opts = ();
-      foreach my $opt (split(/,/, join('　', @options))) {
-	  next if ($opt =~ /KEYS/);
-
-	  my($k, $v) = split(/=/, $opt);
-	  $v = sprintf ("%.3f", $v) if ($k eq 'time');
-	  $opts{$k} = $v;
-      }
-      foreach my $k (@ATTRS) {
-	  my $v = (exists $opts{$k}) ? $opts{$k} : 'null';
-	  print "<TD style='border: 1px solid black;'>$v</TD>";
-      }
-      print "</TR>\n";
-}
-close(LOG);
-print "</TABLE>";
+print $buf;
+print "</TABLE>\n";
 
 my @dates = ();
 my %access = ();
-open(LOG, "tac $logfp | head -3000 |");
+open(LOG, "tac $CONFIG->{LOG_FILE_PATH} | head -3000 |");
 while (<LOG>) {
     my($day,@etc) = split(/\-/, $_);
     next unless ($day =~ /^\d+$/);
@@ -71,6 +71,7 @@ while (<LOG>) {
 }
 close(LOG);
 
+print "<P>\n";
 print "<TABLE>";
 foreach my $day (@dates) {
     my $freq = 1 + $access{$day}/5;
