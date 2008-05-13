@@ -33,6 +33,9 @@ sub getDefaultValues {
     $params{sort_by} = 'score';
     $params{no_snippets} = ($call_from_API) ? 1 : 0;
     $params{query_verbose} = 0;
+    $params{flag_of_dpnd_use} = 1;
+    $params{flag_of_dist_use} = 1;
+    $params{flag_of_anchor_use} = ($call_from_API) ? 0 : 1;
 
     return \%params;
 }
@@ -126,8 +129,9 @@ sub parseAPIRequest {
     $params->{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
     $params->{'sort_by'} = $cgi->param('sort_by') if (defined($cgi->param('sort_by')));
     $params->{'near'} = $cgi->param('near') if (defined $cgi->param('near'));
-    # $params->{'filter_simpages'} = 0 if (defined $cgi->param('filter_simpages') &&  $cgi->param('filter_simpages') eq '0');
+    $params->{'filter_simpages'} = 0 if (defined $cgi->param('filter_simpages') &&  $cgi->param('filter_simpages') eq '0');
     $params->{query_verbose} = $cgi->param('query_verbose') if (defined($cgi->param('query_verbose')));
+    $params->{flag_of_anchor_use} = $cgi->param('anchor') if (defined($cgi->param('anchor')));
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;
@@ -206,8 +210,9 @@ sub parseQuery {
     $logger->setParameterAs('request_results_for_slave_server', $query->{results});
 
     # 係り受けと近接のスコアを考慮するようにする
-    $query->{flag_of_dpnd_use} = 1;
-    $query->{flag_of_dist_use} = 1;
+    $query->{flag_of_dpnd_use} = $params->{flag_of_dpnd_use};
+    $query->{flag_of_dist_use} = $params->{flag_of_dist_use};
+    $query->{flag_of_anchor_use} = $params->{flag_of_anchor_use};
 
     # start をセット
     $query->{start} = $params->{start};
