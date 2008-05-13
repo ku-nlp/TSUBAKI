@@ -1,4 +1,38 @@
-2008-04-28  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-05-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/log.cgi:
+	新しいログフォーマットに対応.
+
+2008-05-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/merge_sorted_idx.pl:
+	Format error発生時に次の行を読みにいくようにした.
+
+2008-05-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	-schemeオプションで、標準フォーマット内の解析結果の種類を指定できるようにした.
+	標準フォーマットに新しく追加されたタグに対応（InLink/OutLink/Description/Keywords）
+
+2008-04-28  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4OrdinarySearch.pm:
+	アンカーテキスト検索に対応.
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4OrdinarySearch.pm, scripts/TsubakiEngine4SynGraphSearch.pm:
+	誤commitを元に戻した.
+
+	* scripts/TsubakiEngineFactory.pm:
+	通常検索でアンカーテキストを考慮するオプションを追加.
+
+	* scripts/tsubaki_server.pl, scripts/tsubaki_test.pl:
+	アンカーテキストオプションの追加.
+
+	* cgi/QueryParser.pm:
+	load_DFDBs内で、cdbファイル以外をロードしないようにした.
+
+	* cgi/QueryParser.pm:
+	newの時、DFDB_DIRに初期値を代入するのをやめた.
 
 	* cgi/Renderer.pm: info-plosionロゴを表示するようにした.
 
