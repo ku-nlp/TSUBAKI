@@ -51,7 +51,6 @@ sub new {
 	dpnd_retriever => undef,
 	word_retriever4anchor => undef,
 	dpnd_retriever4anchor => undef,
-	anchor => $opts->{anchor},
 	DOC_LENGTH_DBs => $opts->{doc_length_dbs},
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
@@ -89,7 +88,7 @@ sub search {
     my $start_time = Time::HiRes::time;
     # 検索
     # 文書のスコアリング
-    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor) = $this->retrieve_documents($query, $qid2df);
+    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use});
 
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
@@ -217,7 +216,7 @@ sub retrieveFromBinaryData {
 }
 
 sub retrieve_documents {
-    my ($this, $query, $qid2df) = @_;
+    my ($this, $query, $qid2df, $flag_of_anchor_use) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -273,7 +272,7 @@ sub retrieve_documents {
 	my $docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 1);
 	my $docs_word_anchor = [];
 	my $docs_dpnd_anchor = [];
- 	if ($this->{anchor}) {
+ 	if ($flag_of_anchor_use) {
 	    $docs_word_anchor = $this->retrieveFromBinaryData($this->{word_retriever4anchor}, $query, $qid2df, $keyword, 'words', 1);
 	    $docs_dpnd_anchor = $this->retrieveFromBinaryData($this->{dpnd_retriever4anchor}, $query, $qid2df, $keyword, 'dpnds', 1);
  	}
