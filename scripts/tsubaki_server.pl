@@ -27,7 +27,7 @@ my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 1;
 my $HOSTNAME = `hostname` ; chop($HOSTNAME);
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug', 'syngraph', 'anchor', 'idxdir4anchor=s');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug', 'syngraph', 'idxdir4anchor=s');
 
 if (!$opt{idxdir} || !$opt{port} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -144,6 +144,7 @@ sub main {
 	    my $docs = $tsubaki->search($query, $qid2df, {
 		flag_of_dpnd_use => $query->{flag_of_dpnd_use},
 		flag_of_dist_use => $query->{flag_of_dist_use},
+		flag_of_anchor_use => $query->{flag_of_anchor_use},
 		DIST => $query->{DISTANCE},
 		MIN_DLENGTH => $query->{MIN_DLENGTH}});
 
