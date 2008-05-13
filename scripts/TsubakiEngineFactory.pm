@@ -46,7 +46,6 @@ sub new {
 	    total_number_of_docs => $N,
 	    weight_dpnd_score => $opts->{weight_dpnd_score},
 	    show_speed => $opts->{show_speed},
-	    anchor => $opts->{anchor},
 	    idxdir4anchor => $opts->{idxdir4anchor},
 	    dpnd_on => $opts->{dpnd_on},
 	    dist_on => $opts->{dist_on}});
