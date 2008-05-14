@@ -9,6 +9,7 @@ use Configure;
 use POSIX qw(strftime);
 use URI::Escape;
 use XML::Writer;
+use SnippetMakerAgent;
 
 our $CONFIG = Configure::get_instance();
 
@@ -300,7 +301,7 @@ END_OF_HTML
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
     printf ("<A href=\"%s\"><IMG border=\"0\" src=\"./logo.png\"></A><P>\n", $CONFIG->{INDEX_CGI});
     # フォーム出力
-    print "<FORM name=\"search\" method=\"post\" action=\"\" enctype=\"multipart/form-data\">\n";
+    print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
     print "<INPUT type=\"text\" name=\"INPUT\" value=\'$params->{'query'}\'/ size=\"90\">\n";
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
@@ -403,10 +404,16 @@ sub get_snippets {
     }
 
     my $sni_obj = new SnippetMakerAgent();
-    $sni_obj->create_snippets($query, $query->{dids}, {discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5});
+    $sni_obj->create_snippets($query, $query->{dids}, {kwic => $opt->{kwic}, discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5});
 
     # 装飾されたスニペッツを取得
-    my $did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $this->{q2color});
+    my $did2snippets;
+    if ($opt->{kwic}) {
+	$did2snippets = $sni_obj->get_kwic_snippets_for_each_did($query, {kwic_window_size => 20});
+    } else {
+	$did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $this->{q2color});
+    }
+
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $result->[$rank]{did});
 	$result->[$rank]{snippets} = $did2snippets->{$did};
@@ -578,6 +585,7 @@ sub printSearchResultForAPICall {
 		      logicalOperator => $params->{'logical_operator'},
 		      forceDpnd => $params->{'force_dpnd'},
 		      dpnd => $params->{'dpnd'},
+		      anchor => $params->{flag_of_anchor_use},
 		      filterSimpages => $params->{'filter_simpages'},
 		      sort_by => $params->{'sort_by'}
 	);
