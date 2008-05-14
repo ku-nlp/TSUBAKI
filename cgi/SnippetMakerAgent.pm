@@ -1,6 +1,6 @@
 package SnippetMakerAgent;
 
-# $id: $
+# $Id$
 
 use strict;
 use Encode;
@@ -127,6 +127,46 @@ sub select_snippets {
     }
 
     return \@snippets;
+}
+
+sub get_kwic_snippets_for_each_did {
+    my ($this, $query, $opt) = @_;
+
+    my %did2snippets = ();
+    foreach my $did (keys %{$this->{did2snippets}}) {
+	my $sentences = $this->{did2snippets}{$did};
+
+	# スコアの高い順に処理
+	my %sbuf = ();
+	my $snippet = "<TABLE>\n";
+	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
+	    next if (exists($sbuf{$sentence->{rawstring}}));
+	    $sbuf{$sentence->{rawstring}} = 1;
+
+	    my $sid = $sentence->{sid};
+	    my $keyword = $query->{keywords}[0]{rawstring};
+	    my $size = scalar(@{$query->{keywords}[0]{words}});
+ 	    my $pos = $sentence->{firstPositionOfHeadWords};
+ 	    my $start = ($pos - $opt->{kwic_window_size} - $size> 0) ? $pos - $opt->{kwic_window_size} - $size : 0;
+ 	    my $end = ($pos + $opt->{kwic_window_size} < scalar(@{$sentence->{surfs}})) ? $pos + $opt->{kwic_window_size} : scalar(@{$sentence->{surfs}});
+
+ 	    my $fwd;
+ 	    my $bck;
+	    my $kwd;
+ 	    for (my $i = $start; $i < $pos; $i++) {
+ 		$fwd .= $sentence->{surfs}[$i];
+ 	    }
+ 	    for (my $i = $pos + 1; $i < $end; $i++) {
+ 		$bck .= $sentence->{surfs}[$i];
+ 	    }
+	    $kwd = $sentence->{surfs}[$pos];
+	    $snippet .= qq(<TR><TD style="text-align: right; width: 30em;">$fwd</TD><TD><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left;">$bck</TD></TR>\n);
+	}
+	$snippet .= "</TABLE>\n";
+	$did2snippets{$did} = $snippet;
+    }
+
+    return \%did2snippets;
 }
 
 sub get_snippets_for_each_did {
