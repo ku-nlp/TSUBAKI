@@ -87,6 +87,7 @@ sub parseCGIRequest {
     $params->{query} = decode('utf8', $cgi->param('INPUT')) if ($cgi->param('INPUT'));
     $params->{start} = $cgi->param('start') if (defined($cgi->param('start')));
     $params->{logical_operator} = $cgi->param('logical') if (defined($cgi->param('logical')));
+    $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
 
     &normalize_logical_operator($params);
 
