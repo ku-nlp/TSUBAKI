@@ -92,7 +92,7 @@ sub extract_sentences_from_content {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
 		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result) : $indexer->makeIndexFromKNPResult($result, $opt);
-		my ($num_of_queries, $num_of_types) = &calculate_score($query, $indice, $opt);
+		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
 
 		my $sentence = {
 		    rawstring => undef,
@@ -104,12 +104,13 @@ sub extract_sentences_from_content {
 		    reps => [],
 		    sid => $sid,
 		    number_of_included_queries => $num_of_queries,
-		    number_of_included_query_types => $num_of_types
+		    number_of_included_query_types => $num_of_types,
+		    including_all_indices => $including_all_indices
 		};
 
 		$sentence->{result} = $result if ($opt->{keep_result});
 
-		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result):  &make_word_list($result);
+		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result);
 
 		my $num_of_whitespace_cdot_comma = 0;
 		foreach my $w (@{$word_list}) {
@@ -154,7 +155,34 @@ sub extract_sentences_from_content {
 	}
     }
 
-    return \@sentences;
+    if ($opt->{kwic}) {
+	my @buf;
+	my $headNode = $query->[0]{words}[-1];
+	my %headNodeStrings;
+	foreach my $node (@$headNode) {
+	    $headNodeStrings{$node->{string}} = 1;
+	}
+
+	foreach my $s (@sentences) {
+	    next unless ($s->{including_all_indices});
+
+	    my $pos = 0;
+	  OUT:
+	    foreach my $reps (@{$s->{reps}}) {
+ 		foreach my $rep (@{$reps}) {
+		    if (exists $headNodeStrings{$rep}) {
+			last OUT;
+		    }
+ 		}
+		$pos++;
+	    }
+	    $s->{firstPositionOfHeadWords} = $pos;
+	    push(@buf, $s);
+	}
+	return \@buf;
+    } else {
+	return \@sentences;
+    }
 }
 
 sub calculate_score {
@@ -173,9 +201,11 @@ sub calculate_score {
 	print "-----\n";
     }
 
+    my $including_all_indices = 1;
     for (my $q = 0; $q < scalar(@{$query}); $q++) {
 	my $qk = $query->[$q];
 	foreach my $reps (@{$qk->{words}}) {
+	    my $flag = 0;
 	    foreach my $rep (@{$reps}) {
 		my $k = $rep->{string};
 		$k =~ s/(a|v)$// unless ($opt->{string_mode});
@@ -184,13 +214,17 @@ sub calculate_score {
 		    print "true.\n" if ($opt->{debug});
 		    $num_of_queries += $buf{$k};
 		    $matched_queries{$k}++;
+		    $flag = 1;
 		} else {
 		    print "false.\n" if ($opt->{debug});
 		}
 	    }
+
+	    $including_all_indices = 0 unless ($flag);
 	}
 
 	foreach my $reps (@{$qk->{dpnds}}) {
+	    my $flag = 0;
 	    foreach my $rep (@{$reps}) {
 		my $k = $rep->{string};
 		$k =~ s/(a|v)//g unless ($opt->{string_mode});
@@ -199,14 +233,17 @@ sub calculate_score {
 		    print "true.\n" if ($opt->{debug});
 		    $num_of_queries += $buf{$k};
 		    $matched_queries{$k}++;
+		    $flag = 1;
 		} else {
 		    print "false.\n" if ($opt->{debug});
 		}
 	    }
+
+	    $including_all_indices = 0 unless ($flag);
 	}
     }
     print "=====\n" if ($opt->{debug});
-    return ($num_of_queries, scalar(keys %matched_queries));
+    return ($num_of_queries, scalar(keys %matched_queries), $including_all_indices);
 }
 
 sub make_word_list {
