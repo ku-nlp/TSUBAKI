@@ -223,7 +223,7 @@ END_OF_HTML
     # フォーム出力
     print "<FORM name=\"search\" method=\"post\" action=\"\" enctype=\"multipart/form-data\">\n";
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
-    print "<INPUT type=\"text\" name=\"INPUT\" value=\'$params->{'query'}\'/ size=\"90\">\n";
+    print "<INPUT type=\"text\" name=\"q\" value=\'$params->{'query'}\'/ size=\"90\">\n";
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
     print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.INPUT.value=''\"/>\n";
 
@@ -305,7 +305,7 @@ END_OF_HTML
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
     print "<INPUT type=\"text\" name=\"q\" value=\'$params->{'query'}\'/ size=\"90\">\n";
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
-    print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.INPUT.value=''\"/>\n";
+    print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.q.value=''\"/>\n";
 
     print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
     if($params->{'logical_operator'} eq "OR"){
