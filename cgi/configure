@@ -189,8 +189,8 @@ MESSAGE	0
 # スニペットの長さ（デフォルトは100単語）
 MAX_NUM_OF_WORDS_IN_SNIPPET	100
 
-# タイトルの長さ（デフォルトは60バイト）
-MAX_LENGTH_OF_TITLE		60
+# タイトルの長さ（デフォルトは20文字）
+MAX_LENGTH_OF_TITLE		20
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
 CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
@@ -232,3 +232,9 @@ USE_OF_HYPERNYM	0
 # 朝ごはんに対する<s230:ディナー><反義語><否定>
 
 USE_OF_NEGATION_AND_ANTONYM	0
+
+# KWIC表示のON(0)/OFF(1)
+
+DISABLE_KWIC_DISPLAY	0
+
+KWIC_WINDOW_SIZE	25
