@@ -157,26 +157,35 @@ sub extract_sentences_from_content {
 
     if ($opt->{kwic}) {
 	my @buf;
-	my $headNode = $query->[0]{words}[-1];
-	my %headNodeStrings;
-	foreach my $node (@$headNode) {
-	    $headNodeStrings{$node->{string}} = 1;
-	}
-
+	my $keyword = $query->[0]{words};
 	foreach my $s (@sentences) {
 	    next unless ($s->{including_all_indices});
 
 	    my $pos = 0;
-	  OUT:
-	    foreach my $reps (@{$s->{reps}}) {
- 		foreach my $rep (@{$reps}) {
-		    if (exists $headNodeStrings{$rep}) {
-			last OUT;
+	    my $reps = $s->{reps};
+	    for (my $j = 0; $j < scalar(@{$reps}); $j++) {
+		my $match = -1;
+		for (my $i = 0; $i < scalar(@{$keyword}); $i++) {
+
+		  OUT_OF_MATCHING_LOOP:
+		    foreach my $srep (@{$reps->[$j + $i]}) {
+			foreach my $krep (@{$keyword->[$i]}) {
+			    if ($krep->{string} eq $srep) {
+				$match = $i + $j;
+				last OUT_OF_MATCHING_LOOP;
+			    }
+			}
 		    }
- 		}
-		$pos++;
+
+		    last if ($match < 0);
+		}
+
+		if ($match > -1) {
+		    $s->{startOfKeyword} = $j;
+		    $s->{endOfKeyword} = $match;
+		    last;
+		}
 	    }
-	    $s->{firstPositionOfHeadWords} = $pos;
 	    push(@buf, $s);
 	}
 	return \@buf;
