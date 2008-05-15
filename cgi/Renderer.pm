@@ -509,18 +509,19 @@ sub printSearchResultForBrowserAccess {
 	    }
 
 	    if ($output eq '') {
-		$output .= "<TABLE>\n";
-		$output .= qq(<TR><TD style="vertical-align: top;">);
-		$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
-		$output .= "</TD>";
+# 		$output .= "<TABLE>\n";
+# 		$output .= qq(<TR><TD style="vertical-align: top;">);
+# 		$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
+# 		$output .= "</TD>";
 
-		$output .= sprintf qq(<TD style="width: %dem; vertical-align: top;">), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
-		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
-		$output .=  $title . "</a>";
-		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
-		$output .= "</TD>";
+# 		$output .= sprintf qq(<TD style="width: %dem; vertical-align: top;">), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
+# 		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+# 		$output .=  $title . "</a>";
+# 		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
+# 		$output .= "</TD>";
+	    } else {
+		$output .= "</TABLE>\n";
 	    }
-	    $output .= "</TABLE>\n";
 	}
 	# 通常版の検索結果
 	else {
