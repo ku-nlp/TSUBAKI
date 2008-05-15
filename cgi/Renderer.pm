@@ -221,7 +221,7 @@ END_OF_HTML
     print "</TD><TD>";
 
     # フォーム出力
-    print "<FORM name=\"search\" method=\"post\" action=\"\" enctype=\"multipart/form-data\">\n";
+    print "<FORM name=\"search\" method=\"GET\" action=\"\" enctype=\"multipart/form-data\">\n";
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
     print "<INPUT type=\"text\" name=\"q\" value=\'$params->{'query'}\'/ size=\"90\">\n";
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
@@ -245,17 +245,27 @@ END_OF_HTML
     }
     print "</TR>";
 
+    print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
     if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+	print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL>";
     } else {
 	if ($params->{syngraph}) {
-	    print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+	    print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL>";
 	} else {
-	    print "<TR><TD>オプション</TD><TD colspan=3 DIV style=\"text-align:left;\"><INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL></DIV></TD></TR>\n";
+	    print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+	}
+    }
+    if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
+	print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
+    } else {
+	if ($params->{kwic}) {
+	    print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	} else {
+	    print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
 	}
     }
 
-    print "</TABLE>\n";
+    print "</TD></TR></TABLE>\n";
     
     print "</FORM>\n";
 
@@ -325,17 +335,28 @@ END_OF_HTML
     }
     print "</TR>";
 
+    print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
     if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+	print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL>";
     } else {
 	if ($params->{syngraph}) {
-	    print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\"><LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL></TD></TR>\n";
+	    print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL>";
 	} else {
-	    print "<TR><TD>オプション</TD><TD colspan=3 DIV style=\"text-align:left;\"><INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL></DIV></TD></TR>\n";
+	    print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
 	}
     }
 
-    print "</TABLE>\n";
+    if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
+	print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
+    } else {
+	if ($params->{kwic}) {
+	    print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	} else {
+	    print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	}
+    }
+
+    print "</TD></TR></TABLE>\n";
     
     print "</FORM>\n";
 
@@ -409,7 +430,7 @@ sub get_snippets {
     # 装飾されたスニペッツを取得
     my $did2snippets;
     if ($opt->{kwic}) {
-	$did2snippets = $sni_obj->get_kwic_snippets_for_each_did($query, {kwic_window_size => 20});
+	$did2snippets = $sni_obj->get_kwic_snippets_for_each_did($query, {kwic_window_size => $CONFIG->{KWIC_WINDOW_SIZE}});
     } else {
 	$did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $this->{q2color});
     }
@@ -461,43 +482,85 @@ sub printSearchResultForBrowserAccess {
 	my $did = sprintf("%09d", $results->[$rank]{did});
 	my $score = $results->[$rank]{score_total};
 	my $snippet = $results->[$rank]{snippets};
+	my $title = $results->[$rank]{title};
 
-	my $output = "<DIV class=\"result\">";
+	my $output;
 	$score = sprintf("%.4f", $score);
-	$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
-	$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
-	$output .= $results->[$rank]{title} . "</a>";
-	my $num_of_sim_pages = 0;
-	$num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
-	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
-	    my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
-	    my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
-	    $output .= "<DIV class=\"meta\">id=$did, score=$score, <A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n";
-	} else {
-	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
+
+	if ($params->{kwic}) {
+	    $title = substr($title, 0, $CONFIG->{MAX_LENGTH_OF_TITLE}) . "..." if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE});
+
+	    foreach my $line (split(/\t/, $snippet)) {
+		if ($output eq '') {
+		    $output .= "<TABLE>\n";
+		}
+
+		$output .= qq(<TR><TD style="vertical-align: top;">);
+		$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
+		$output .= "</TD>";
+
+		$output .= sprintf qq(<TD style="width: %dem; vertical-align: top;">), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
+		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+		$output .=  $title . "</a>";
+		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
+		$output .= "</TD>";
+
+		$output .= "<TD>$line</TD></TR>";
+	    }
+
+	    if ($output eq '') {
+		$output .= "<TABLE>\n";
+		$output .= qq(<TR><TD style="vertical-align: top;">);
+		$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
+		$output .= "</TD>";
+
+		$output .= sprintf qq(<TD style="width: %dem; vertical-align: top;">), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
+		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+		$output .=  $title . "</a>";
+		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
+		$output .= "</TD>";
+	    }
+	    $output .= "</TABLE>\n";
 	}
-	$output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
-	$output .= "<A class=\"cache\" href=\"$results->[$rank]{url}\" target=\"_blank\">$results->[$rank]{url}</A>\n";
-	$output .= "</DIV>";
+	# 通常版の検索結果
+	else {
+	    $output = "<DIV class=\"result\">";
+	    $output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
+	    $output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+	    $output .= $title . "</a>";
 
-	$output .= "<DIV id=\"simpages_$rank\" style=\"display: none;\">";
-	foreach my $sim_page (@{$results->[$rank]{similar_pages}}) {
-	    my $did = sprintf("%09d", $sim_page->{did});
- 	    my $score = $sim_page->{score_total};
+	    my $num_of_sim_pages = 0;
+	    $num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
+	    if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
+		my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
+		my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
+		$output .= "<DIV class=\"meta\">id=$did, score=$score, <A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n";
+	    } else {
+		$output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
+	    }
+	    $output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
+	    $output .= "<A class=\"cache\" href=\"$results->[$rank]{url}\" target=\"_blank\">$results->[$rank]{url}</A>\n";
+	    $output .= "</DIV>";
 
- 	    # 装飾されたスニペッツの取得
-	    my $snippet = $results->[$rank]{snippets};
- 	    $score = sprintf("%.4f", $score);
+	    $output .= "<DIV id=\"simpages_$rank\" style=\"display: none;\">";
+	    foreach my $sim_page (@{$results->[$rank]{similar_pages}}) {
+		my $did = sprintf("%09d", $sim_page->{did});
+		my $score = $sim_page->{score_total};
 
- 	    $output .= "<DIV class=\"similar\">";
- 	    $output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
- 	    $output .= $sim_page->{title} . "</a>";
- 	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
- 	    $output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
- 	    $output .= "<A class=\"cache\" href=\"$sim_page->{url}\">$sim_page->{url}</A>\n";
- 	    $output .= "</DIV>";
+		# 装飾されたスニペッツの取得
+		my $snippet = $results->[$rank]{snippets};
+		$score = sprintf("%.4f", $score);
+
+		$output .= "<DIV class=\"similar\">";
+		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+		$output .= $sim_page->{title} . "</a>";
+		$output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
+		$output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
+		$output .= "<A class=\"cache\" href=\"$sim_page->{url}\">$sim_page->{url}</A>\n";
+		$output .= "</DIV>";
+	    }
+	    $output .= "</DIV>\n";
 	}
-	$output .= "</DIV>\n";
 
 	# 1 ページ分の結果を表示
 	print $output;
