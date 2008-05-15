@@ -138,7 +138,7 @@ sub get_kwic_snippets_for_each_did {
 
 	# スコアの高い順に処理
 	my %sbuf = ();
-	my $snippet = "<TABLE>\n";
+	my $snippet;
 	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
 	    next if (exists($sbuf{$sentence->{rawstring}}));
 	    $sbuf{$sentence->{rawstring}} = 1;
@@ -168,9 +168,8 @@ sub get_kwic_snippets_for_each_did {
 		$fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
 		$bck = substr($bck, 0, $opt->{kwic_window_size});
 	    }
-	    $snippet .= qq(<TR><TD style="text-align: right; width: $opt->{kwic_window_size}em;">$fwd</TD><TD style="width: ${length}em;"><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left;">$bck</TD></TR>\n);
+	    $snippet .= qq(<TD style="text-align: right; width: $opt->{kwic_window_size}em;">$fwd</TD><TD style="width: ${length}em;"><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left;">$bck</TD>\t);
 	}
-	$snippet .= "</TABLE>\n";
 	$did2snippets{$did} = $snippet;
     }
 
