@@ -59,17 +59,16 @@ sub main {
 	    printf("whitespace %.2f ", $s->{num_of_whitespaces} / $s->{length});
 
 	    if ($opt{kwic}) {
-		my $p = $s->{firstPositionOfHeadWords};
-		my $start = ($p - $opt{kwic_window_size} > 0) ? $p - $opt{kwic_window_size}: 0;
-		my $end = ($p + $opt{kwic_window_size} < scalar(@{$s->{surfs}})) ? $p + $opt{kwic_window_size} : scalar(@{$s->{surfs}}) - 1;
+		my $head = $s->{startOfKeyword};
+		my $tail = $s->{endOfKeyword};
+		my $start = ($head - $opt{kwic_window_size} > 0) ? $head - $opt{kwic_window_size}: 0;
+		my $end = ($tail + $opt{kwic_window_size} < scalar(@{$s->{surfs}})) ? $tail + $opt{kwic_window_size} : scalar(@{$s->{surfs}}) - 1;
 		for (my $i = $start; $i < $end; $i++) {
-		    if ($i == $p) {
-			print " [" . $s->{surfs}[$i] . "] ";
-		    } else {
-			print $s->{surfs}[$i];
-		    }
+		    print " [" if ($i == $head);
+		    print $s->{surfs}[$i];
+		    print "] " if ($i == $tail);
 		}
-		print " " . $start . " $p " . $end if ($opt{debug});
+		print " " . $start . " " . $head . " " . $tail . " " .  $end if ($opt{debug});
 		print "\n";
 	    } else {
 		print $s->{rawstring} . "\n";
