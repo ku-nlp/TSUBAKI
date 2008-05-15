@@ -145,6 +145,7 @@ sub get_kwic_snippets_for_each_did {
 
 	    my $sid = $sentence->{sid};
 	    my $keyword = $query->{keywords}[0]{rawstring};
+	    my $length = length($keyword);
 	    my $size = scalar(@{$query->{keywords}[0]{words}});
  	    my $pos = $sentence->{firstPositionOfHeadWords};
  	    my $start = ($pos - $opt->{kwic_window_size} - $size> 0) ? $pos - $opt->{kwic_window_size} - $size : 0;
@@ -153,14 +154,21 @@ sub get_kwic_snippets_for_each_did {
  	    my $fwd;
  	    my $bck;
 	    my $kwd;
- 	    for (my $i = $start; $i < $pos; $i++) {
- 		$fwd .= $sentence->{surfs}[$i];
- 	    }
- 	    for (my $i = $pos + 1; $i < $end; $i++) {
- 		$bck .= $sentence->{surfs}[$i];
- 	    }
-	    $kwd = $sentence->{surfs}[$pos];
-	    $snippet .= qq(<TR><TD style="text-align: right; width: 30em;">$fwd</TD><TD><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left;">$bck</TD></TR>\n);
+#  	    for (my $i = $start; $i < $pos; $i++) {
+#  		$fwd .= $sentence->{surfs}[$i];
+#  	    }
+#  	    for (my $i = $pos + 1; $i < $end; $i++) {
+#  		$bck .= $sentence->{surfs}[$i];
+#  	    }
+#	    $kwd = $sentence->{surfs}[$pos];
+	    $kwd = $keyword;
+	    if ($sentence->{rawstring} =~ /$keyword/) {
+		$fwd = "$`";
+		$bck = "$'";
+		$fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
+		$bck = substr($bck, 0, $opt->{kwic_window_size});
+	    }
+	    $snippet .= qq(<TR><TD style="text-align: right; width: $opt->{kwic_window_size}em;">$fwd</TD><TD style="width: ${length}em;"><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left;">$bck</TD></TR>\n);
 	}
 	$snippet .= "</TABLE>\n";
 	$did2snippets{$did} = $snippet;
