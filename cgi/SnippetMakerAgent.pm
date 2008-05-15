@@ -151,33 +151,31 @@ sub get_kwic_snippets_for_each_did {
  	    my $start = $sentence->{startOfKeyword};
  	    my $end = $sentence->{endOfKeyword};
 
-#  	    my $start = ($pos - $opt->{kwic_window_size} - $size> 0) ? $pos - $opt->{kwic_window_size} - $size : 0;
-#  	    my $end = ($pos + $opt->{kwic_window_size} < scalar(@{$sentence->{surfs}})) ? $pos + $opt->{kwic_window_size} : scalar(@{$sentence->{surfs}});
-
  	    my $fwd;
  	    my $bck;
 	    my $kwd;
- 	    for (my $i = 0; $i < $start; $i++) {
- 		$fwd .= $sentence->{surfs}[$i];
- 	    }
- 	    for (my $i = $end + 1; $i < scalar(@{$sentence->{surfs}}); $i++) {
- 		$bck .= $sentence->{surfs}[$i];
- 	    }
- 	    for (my $i = $start; $i < $end + 1; $i++) {
- 		$kwd .= $sentence->{surfs}[$i];
- 	    }
+#  	    for (my $i = 0; $i < $start; $i++) {
+#  		$fwd .= $sentence->{surfs}[$i];
+#  	    }
+#  	    for (my $i = $end + 1; $i < scalar(@{$sentence->{surfs}}); $i++) {
+#  		$bck .= $sentence->{surfs}[$i];
+#  	    }
+#  	    for (my $i = $start; $i < $end + 1; $i++) {
+#  		$kwd .= $sentence->{surfs}[$i];
+#  	    }
 
-	    $fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
-	    $bck = substr($bck, 0, $opt->{kwic_window_size});
+# 	    $fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
+# 	    $bck = substr($bck, 0, $opt->{kwic_window_size});
 
-# 	    $kwd = $keyword;
-# 	    if ($sentence->{rawstring} =~ /$keyword/) {
-# 		$fwd = "$`";
-# 		$bck = "$'";
-# 		$fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
-# 		$bck = substr($bck, 0, $opt->{kwic_window_size});
-# 	    }
-	    $snippet .= qq(<TD style="text-align: right; width: $opt->{kwic_window_size}em;">$fwd</TD><TD style="width: ${length}em;"><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left;">$bck</TD>\t);
+	    
+	    $kwd = $keyword;
+	    if ($sentence->{rawstring} =~ /$keyword/) {
+		$fwd = "$`";
+		$bck = "$'";
+		$fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
+		$bck = substr($bck, 0, $opt->{kwic_window_size});
+		$snippet .= qq(<TD style="text-align: right; width: $opt->{kwic_window_size}em;">$fwd</TD><TD style="width: ${length}em;"><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left;">$bck</TD>\t);
+	    }
 	}
 	$did2snippets{$did} = $snippet;
     }
