@@ -196,8 +196,8 @@ MESSAGE	0
 # スニペットの長さ（デフォルトは100単語）
 MAX_NUM_OF_WORDS_IN_SNIPPET	100
 
-# タイトルの長さ（デフォルトは20文字）
-MAX_LENGTH_OF_TITLE		20
+# タイトルの長さ（デフォルトは15文字）
+MAX_LENGTH_OF_TITLE		15
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
 CACHED_HTML_PATH_TEMPLATE	/share18/work/skeiji/htmls/h%03d/h%05d/%09d.html.gz
@@ -231,4 +231,4 @@ DISABLE_SYNGRAPH_SEARCH	1
 
 DISABLE_KWIC_DISPLAY	0
 
-KWIC_WINDOW_SIZE	25
+KWIC_WINDOW_SIZE	20
