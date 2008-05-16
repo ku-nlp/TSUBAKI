@@ -16,8 +16,8 @@ $Data::Dumper::Useperl = 1;
 
 
 my $SF_DIR_PREFFIX1 = "/data/xmls";
-my $SF_DIR_PREFFIX2 = "/data/sfs";
-my $SF_DIR_PREFFIX3 = "/data/sfs_w_syn";
+my $SF_DIR_PREFFIX2 = "/data/sfs_w_syn";
+my $SF_DIR_PREFFIX3 = "/data/sfs";
 my $SF_DIR_PREFFIX4 = "/net2/nlpcf34/disk09/skeiji/sfs_w_syn";
 my $SF_DIR_PREFFIX5 = "/net2/nlpcf34/disk03/skeiji/sfs_w_syn";
 my $SF_DIR_PREFFIX6 = "/net2/nlpcf34/disk08/skeiji";
@@ -30,9 +30,9 @@ sub extract_sentences_from_ID {
 	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX2, $id / 1000000, $id / 10000, $id);
 	$xmlfile = sprintf("%s/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX3, $id / 10000, $id) unless (-e $xmlfile);
 	$xmlfile = sprintf("%s/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX4, $id / 10000, $id) unless (-e $xmlfile);
-	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX1, $id / 1000000, $id / 10000, $id) unless (-e $xmlfile);
+	# $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX1, $id / 1000000, $id / 10000, $id) unless (-e $xmlfile);
     } else {
-	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX1, $id / 1000000, $id / 10000, $id);
+	# $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX1, $id / 1000000, $id / 10000, $id);
 	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX2, $id / 1000000, $id / 10000, $id) unless (-e $xmlfile);
 	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX3, $id / 1000000, $id / 10000, $id) unless (-e $xmlfile);
 	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $SF_DIR_PREFFIX6, $id / 1000000, $id / 10000, $id) unless (-e $xmlfile);
@@ -91,7 +91,7 @@ sub extract_sentences_from_content {
 	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
-		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result) : $indexer->makeIndexFromKNPResult($result, $opt);
+		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result, undef, $opt) : $indexer->makeIndexFromKNPResult($result, $opt);
 		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
 
 		my $sentence = {
@@ -352,9 +352,8 @@ sub make_word_list_syngraph {
 	    my ($dumy, $bnstId, $syn_node_str) = split(/ /, $line);
 	    if ($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>((<[^>]+>)*)$!) {
 		my $sid = $1;
-		$sid = $1 if ($sid =~ m!^([^/]+)/!);
-		
 		my $features = $3;
+		$sid = $1 if ($sid =~ m!^([^/]+)/!);
 
 		# 文法素性の削除
 		$features =~ s/<可能>//;
