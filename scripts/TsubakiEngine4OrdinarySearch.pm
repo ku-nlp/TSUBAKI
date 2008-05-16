@@ -28,10 +28,6 @@ sub new {
     # DAT ファイルから係り受けを含む文書を検索する retriever オブジェクトをセットする
     $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
 
-    # 検索にアンカーテキストを考慮する
-    $obj->{word_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'word', 1, $opts->{verbose}, $opts->{show_speed});
-    $obj->{dpnd_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
-
     bless $obj;
 }
 
