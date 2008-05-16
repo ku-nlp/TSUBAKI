@@ -49,12 +49,11 @@ sub new {
     my $this = {
 	word_retriever => undef,
 	dpnd_retriever => undef,
-	word_retriever4anchor => undef,
-	dpnd_retriever4anchor => undef,
 	DOC_LENGTH_DBs => $opts->{doc_length_dbs},
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
 	verbose => $opts->{verbose},
+	idxdir4anchor => $opts->{idxdir4anchor},
 	store_verbose => $opts->{store_verbose},
 	dlengthdb_hash => $opts->{dlengthdb_hash},
 	WEIGHT_DPND_SCORE => defined $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1,
@@ -273,6 +272,10 @@ sub retrieve_documents {
 	my $docs_word_anchor = [];
 	my $docs_dpnd_anchor = [];
  	if ($flag_of_anchor_use) {
+	    # 検索にアンカーテキストを考慮する
+	    $this->{word_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'word', 1, $this->{verbose}, $this->{show_speed});
+	    $this->{dpnd_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'dpnd', 1, $this->{verbose}, $this->{show_speed});
+
 	    $docs_word_anchor = $this->retrieveFromBinaryData($this->{word_retriever4anchor}, $query, $qid2df, $keyword, 'words', 1);
 	    $docs_dpnd_anchor = $this->retrieveFromBinaryData($this->{dpnd_retriever4anchor}, $query, $qid2df, $keyword, 'dpnds', 1);
  	}
