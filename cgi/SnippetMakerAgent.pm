@@ -177,6 +177,7 @@ sub get_kwic_snippets_for_each_did {
 		$snippet .= qq(<TD style="text-align: right; width: $opt->{kwic_window_size}em;" nowrap>$fwd</TD><TD style="width: ${length}em;" nowrap><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left; width: $opt->{kwic_window_size}em;" nowrap>$bck</TD>\t);
 	    }
 	}
+	$snippet =~ s/S\-ID:\d+//g;
 	$did2snippets{$did} = $snippet;
     }
 
