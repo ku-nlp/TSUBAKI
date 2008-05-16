@@ -495,17 +495,17 @@ sub printSearchResultForBrowserAccess {
 		    $output .= "<TABLE>\n";
 		}
 
-		$output .= qq(<TR><TD style="vertical-align: top;">);
-		$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
+		$output .= qq(<TR><TD style="vertical-align: top; width: 2em;" nowrap>);
+		$output .= sprintf "<SPAN class=\"rank\">%3d</SPAN>", ($rank + 1);
 		$output .= "</TD>";
 
-		$output .= sprintf qq(<TD style="width: %dem; vertical-align: top;">), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
+		$output .= sprintf qq(<TD style="width: %dem; vertical-align: top;" nowrap>), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
 		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
 		$output .=  $title . "</a>";
 		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
 		$output .= "</TD>";
 
-		$output .= "<TD>$line</TD></TR>";
+		$output .= "$line</TR>";
 	    }
 
 	    if ($output eq '') {

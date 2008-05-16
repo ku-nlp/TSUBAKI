@@ -174,7 +174,7 @@ sub get_kwic_snippets_for_each_did {
 		$bck = "$'";
 		$fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
 		$bck = substr($bck, 0, $opt->{kwic_window_size});
-		$snippet .= qq(<TD style="text-align: right; width: $opt->{kwic_window_size}em;">$fwd</TD><TD style="width: ${length}em;"><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left;">$bck</TD>\t);
+		$snippet .= qq(<TD style="text-align: right; width: $opt->{kwic_window_size}em;" nowrap>$fwd</TD><TD style="width: ${length}em;" nowrap><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left; width: $opt->{kwic_window_size}em;" nowrap>$bck</TD>\t);
 	    }
 	}
 	$did2snippets{$did} = $snippet;
