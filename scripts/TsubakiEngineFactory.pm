@@ -30,6 +30,7 @@ sub new {
 	    doc_length_dbs => &load_doc_length_dbs($opts->{dlengthdbdir}, $opts->{dlengthdb_hash}),
 	    total_number_of_docs => $N,
 	    weight_dpnd_score => $opts->{weight_dpnd_score},
+	    idxdir4anchor => $opts->{idxdir4anchor},
 	    dpnd_on => $opts->{dpnd_on},
 	    dist_on => $opts->{dist_on},
 	    show_speed => $opts->{show_speed}});
