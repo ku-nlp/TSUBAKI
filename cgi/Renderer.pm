@@ -223,7 +223,7 @@ END_OF_HTML
     # フォーム出力
     print "<FORM name=\"search\" method=\"GET\" action=\"\" enctype=\"multipart/form-data\">\n";
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
-    print "<INPUT type=\"text\" name=\"q\" value=\'$params->{'query'}\'/ size=\"90\">\n";
+    print "<INPUT type=\"text\" name=\"q\" value=\'$params->{'query'}\' size=\"90\">\n";
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
     print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.INPUT.value=''\"/>\n";
 
