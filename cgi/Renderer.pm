@@ -25,7 +25,7 @@ sub new {
 sub DESTROY {}
 
 sub print_search_time {
-    my ($this, $search_time, $hitcount, $params, $size, $keywords) = @_;
+    my ($this, $search_time, $hitcount, $params, $size, $keywords, $is_cached_data) = @_;
 
     $this->{q2color} = $this->print_query($keywords);
 
@@ -42,7 +42,11 @@ sub print_search_time {
 	    print "</DIV>";
 	}
 	# 検索にかかった時間を表示 (★cssに変更)
-	printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f [%s]</div>\n", "検索時間", $search_time, "秒");
+	if ($is_cached_data) {
+	    printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f (%s)</div>\n", "検索時間", $search_time, "秒");
+	} else {
+	    printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f [%s]</div>\n", "検索時間", $search_time, "秒");
+	}
     }
 }
 
@@ -313,7 +317,7 @@ END_OF_HTML
     # フォーム出力
     print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
-    print "<INPUT type=\"text\" name=\"q\" value=\'$params->{'query'}\'/ size=\"90\">\n";
+    print "<INPUT type=\"text\" name=\"q\" value=\'$params->{'query'}\' size=\"90\">\n";
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
     print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.q.value=''\"/>\n";
 
@@ -455,7 +459,7 @@ sub printSearchResultForBrowserAccess {
     ############################
     # 検索クエリ、検索時間の表示
     ############################
-    $this->print_search_time($logger->getParameter('search'), $logger->getParameter('hitcount'), $params, $size, $query->{keywords});
+    $this->print_search_time($logger->getParameter('search') + $logger->getParameter('parse_query'), $logger->getParameter('hitcount'), $params, $size, $query->{keywords}, $logger->getParameter('IS_CACHE'));
 
 
 
