@@ -13,6 +13,7 @@ use Indexer;
 use QueryKeyword;
 use Configure;
 use CDB_File;
+use Query;
 
 
 # コンストラクタ
@@ -232,17 +233,16 @@ sub parse {
     }
 
     # 検索クエリを表す構造体
-    my $ret = {
-	keywords => \@qks,
-	logical_cond_qk => $opt->{logical_cond_qk},
-	only_hitcount => $opt->{only_hitcount},
-	qid2rep => \%qid2rep,
-	qid2qtf => \%qid2qtf,
-	qid2gid => \%qid2gid,
-	qid2df => \%qid2df,
-	gid2qids => \%gid2qids,
-	dpnd_map => \%dpnd_map
-    };
+    my $ret = new Query({ keywords => \@qks,
+			  logical_cond_qk => $opt->{logical_cond_qk},
+			  only_hitcount => $opt->{only_hitcount},
+			  qid2rep => \%qid2rep,
+			  qid2qtf => \%qid2qtf,
+			  qid2gid => \%qid2gid,
+			  qid2df => \%qid2df,
+			  gid2qids => \%gid2qids,
+			  dpnd_map => \%dpnd_map
+			});
 
 
 
@@ -266,7 +266,6 @@ sub parse {
  	$this->set_requisite_flag_for_dpnds_in_NE(\@qks);
   	$this->change_weight_keishi(\@qks, $this->{OPTIONS}{keishi});
   	$this->change_weight_jyushi(\@qks, $this->{OPTIONS}{jyushi});
-#	$ret = $this->create_new_query_from_NE(\@qks);
 
 	$this->set_discarded_flag_to_bunmatsu_only(\@qks);
 
