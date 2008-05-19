@@ -461,4 +461,19 @@ sub to_string_simple {
     return join(':', @ret);
 }
 
+sub normalize {
+    my ($this) = @_;
+
+    my @buf;
+    foreach my $memberName (sort {$a cmp $b} keys %$this) {
+	next if ($memberName eq 'words');
+	next if ($memberName eq 'dpnds');
+	next if ($memberName eq 'knp_result');
+
+	push(@buf, $memberName . '=' . $this->{$memberName});
+    }
+
+    return join(',', @buf);
+}
+
 1;
