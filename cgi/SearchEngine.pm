@@ -14,6 +14,7 @@ use Time::HiRes;
 use CDB_File;
 use Configure;
 use QueryParser;
+use Cache;
 
 
 # コンストラクタ
@@ -58,12 +59,23 @@ sub init {
 # デストラクタ
 sub DESTROY {}
 
-## 呼出用検索インターフェイス
+# 呼出用検索インターフェイス
 sub search {
     my ($this, $query, $logger) = @_;
-    
-    ## 検索サーバーに対してクエリを投げる
-    return $this->broadcastSearch($query, $logger);
+
+    my $cache = new Cache();
+    my $result = $cache->load($query);
+    if ($result) {
+	$logger->setTimeAs('search', '%.3f');
+	$logger->setParameterAs('IS_CACHE', 1);
+    } else {
+	# 検索サーバーに対してクエリを投げる
+	$result = $this->broadcastSearch($query, $logger);
+	$cache->save($query, $result);
+	$logger->setParameterAs('IS_CACHE', 0);
+    }
+
+    return ($result->{hitcount}, $result->{hitpages});
 }
 
 sub get_DF {
@@ -148,7 +160,7 @@ sub broadcastSearch {
 
     # 受信した結果を揃える
     @results = sort {$b->[0]{score_total} <=> $a->[0]{score_total}} @results;
-    return ($total_hitcount, \@results);
+    return {hitcount => $total_hitcount, hitpages => \@results};
 }
 
 sub decodeResult {
