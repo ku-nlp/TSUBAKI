@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -17,28 +17,49 @@ binmode(LOG, ':utf8');
 print header(-charset => 'utf-8');
 
 my $buf;
-my $flag = 1;
 my @attrs = ();
 
 push(@attrs, 'DATE');
 push(@attrs, 'HOST');
 push(@attrs, 'ACCESS');
+push(@attrs, 'IS_CACHE');
+push(@attrs, 'create_se_obj');
+push(@attrs, 'hitcount');
+push(@attrs, 'merge');
+push(@attrs, 'miss_title');
+push(@attrs, 'miss_url');
+push(@attrs, 'parse_query');
+push(@attrs, 'print_result');
+push(@attrs, 'query');
+push(@attrs, 'request_results_for_slave_server');
+push(@attrs, 'search');
+push(@attrs, 'snippet_creation');
+push(@attrs, 'total_docs');
+push(@attrs, 'total');
 
 while (<LOG>) {
-      my ($date, $host, $access, $options) = split(/ /, $_);
+      my ($date, $host, $access, @options) = split(/ /, $_);
+
+      my %vals = ();
+      foreach my $opt (split(/,/, join(' ', @options))) {
+	  my($k, $v) = split(/=/, $opt);
+	  $vals{$k} = $v;
+      }
 
       $buf .= sprintf "<TR>";
       $buf .= sprintf "<TD style='border: 1px solid black;'>$date</TD>";
       $buf .= sprintf "<TD style='border: 1px solid black;'>$host</TD>";
       $buf .= sprintf "<TD style='border: 1px solid black;'>$access</TD>";
-      foreach my $opt (split(/,/, $options)) {
-	  my($k, $v) = split(/=/, $opt);
-	  $buf .= sprintf "<TD style='border: 1px solid black;'>$v</TD>";
-	  if ($flag) {
-	      push(@attrs, $k);
+
+      foreach my $k (@attrs) {
+	  next if ($k eq 'DATE' || $k eq 'ACCESS' || $k eq 'HOST');
+
+	  if (exists $vals{$k}) {
+	      $buf .= sprintf "<TD style='border: 1px solid black;' nowrap>$vals{$k}</TD>";
+	  } else {
+	      $buf .= sprintf "<TD style='border: 1px solid black;' nowrap>none.</TD>";
 	  }
       }
-      $flag = 0;
       $buf .= sprintf "</TR>\n";
 }
 close(LOG);
