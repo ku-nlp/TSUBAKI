@@ -435,10 +435,7 @@ sub get_snippets {
 	$did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $this->{q2color});
     }
 
-    for (my $rank = $from; $rank < $end; $rank++) {
-	my $did = sprintf("%09d", $result->[$rank]{did});
-	$result->[$rank]{snippets} = $did2snippets->{$did};
-    }
+    return $did2snippets;
 }
 
 sub printSearchResultForBrowserAccess {
@@ -465,9 +462,10 @@ sub printSearchResultForBrowserAccess {
     ############################
     # 必要ならばスニペットを生成
     ############################
+    my $did2snippets;
     unless ($params->{no_snippets}) {
 	# 検索結果（表示分）についてスニペットを生成
-	$this->get_snippets($params, $results, $query, $start, $end);
+	$did2snippets = $this->get_snippets($params, $results, $query, $start, $end);
     }
     # スニペット生成に要した時間をロギング
     $logger->setTimeAs('snippet_creation', '%.3f');
@@ -481,7 +479,7 @@ sub printSearchResultForBrowserAccess {
     for (my $rank = $start; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $results->[$rank]{did});
 	my $score = $results->[$rank]{score_total};
-	my $snippet = $results->[$rank]{snippets};
+	my $snippet = $did2snippets->{$did};
 	my $title = $results->[$rank]{title};
 
 	my $output;
@@ -549,7 +547,7 @@ sub printSearchResultForBrowserAccess {
 		my $score = $sim_page->{score_total};
 
 		# 装飾されたスニペッツの取得
-		my $snippet = $results->[$rank]{snippets};
+		my $snippet = $did2snippets->{$did};
 		$score = sprintf("%.4f", $score);
 
 		$output .= "<DIV class=\"similar\">";
