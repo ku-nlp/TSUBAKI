@@ -1,3 +1,109 @@
+2008-05-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* utils/api_req.pl:
+	formatオプションにて取得するデータのタイプを指定できるようにした.
+
+	* cgi/SnippetMaker.pm, cgi/configure, cgi/configure.nict:
+	スニペットサーバー上にある標準フォーマットへのパスを，設定ファイルから読み込むようにした.
+
+2008-05-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	クエリ解析にかかる時間を検索時間として考慮するようにした. キャッシュの場合の表示を変更.
+
+	* cgi/configure, cgi/configure.nict:
+	キャッシュ用のパラメータを追加.
+
+	* cgi/SearchEngine.pm:
+	検索結果をキャッシュするようにした.
+
+	* cgi/QueryKeyword.pm:
+	キーワードを正規化するメソッドを追加.
+
+	* cgi/QueryParser.pm: クエリの内部表現を構造体からクラスに変更.
+
+	* cgi/log.cgi:
+	表示に用いるログデータの属性を列挙した.
+
+	* cgi/Renderer.pm:
+	ブラウザ検索において、類似ページのスニペットが全て同じになっているバグを修正.
+
+2008-05-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngineFactory.pm:
+	TsubakiEngine4SynGraphSearchをnewする際、idxdir4anchorをメンバ変数として持たせるようにした
+
+	* cgi/SnippetMaker.pm:
+	文法素性が考慮されないバグを修正. makeIndexfromSynGraphを呼ぶ際にオプションを渡すようにした.
+
+	* cgi/SnippetMakerAgent.pm:
+	文頭のS-IDを削除するようにした.
+
+	* cgi/configure.nict, cgi/configure:
+	KWIC表示に関するデフォルト値を変更.
+
+	* cgi/Renderer.pm, cgi/SnippetMakerAgent.pm:
+	KWIC表示の際、左右のコンテキストが折り返されないようにした.
+
+	* scripts/TsubakiEngine4OrdinarySearch.pm:
+	TsubakiEngine.pmの変更に対応.
+
+	* scripts/TsubakiEngine.pm:
+	アンカーテキスト検索用Retrieveを必要時にnewするように変更.
+
+2008-05-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMakerAgent.pm:
+	キーワードのハイライトを正規表現マッチに変更.
+
+	* scripts/snippet_maker_test.pl:
+	SnippetMaker.pmの変更に対応.
+
+	* cgi/SnippetMaker.pm, cgi/SnippetMakerAgent.pm:
+	KWIC表示において、代表表記を考慮してハイライトするように変更.
+
+	* cgi/configure, cgi/configure.nict: KWIC表示に関するオプションの追加.
+
+	* cgi/SnippetMakerAgent.pm:
+	KWIC表示の仕様に合わせた.
+
+	* cgi/Renderer.pm:
+	KWIC表示の仕様を変更. KWIC表示の切り替えをブラウザで出来るようにした.
+
+	* cgi/SnippetMakerAgent.pm:
+	KWIC表示の際、クエリ全体がハイライトされるように変更.
+
+2008-05-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm:
+	フォームのパラメータ名を変更.
+
+	* cgi/SnippetMakerAgent.pm:
+	kwic作成用メソッドの追加.
+
+	* scripts/snippet_maker_test.pl:
+	kwicオプションの追加.
+
+	* cgi/Renderer.pm:
+	kwicオプションに対応，フォームの送信方法をPOSTからGETに変更，APIが出力する検索結果にanchorオプションの値を表示するようにした.
+
+	* cgi/RequestParser.pm:
+	kwicオプションをとるように変更.
+
+	* cgi/SnippetMaker.pm:
+	kwicオプションが指定されている時には、全ての係り受けを含む文だけを重要文として抽出するように変更.
+
+2008-05-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm:
+	アンカーテキストのオン/オフをオプションで指定できるようにした.
+
+	* scripts/TsubakiEngine.pm:
+	アンカーテキストを考慮するかどうかのフラグを、メンバ変数からメソッドの引数に変更.
+
+	* scripts/tsubaki_server.pl:
+	アンカーテキストを考慮するかどうかのフラグを検索クエリから取得するように変更.
+
 2008-05-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/log.cgi:
