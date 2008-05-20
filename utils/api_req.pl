@@ -13,9 +13,10 @@ use Getopt::Long;
 use strict;
 
 my (%opt);
-GetOptions(\%opt, 'query=s', 'start=i', 'results=i', 'download=s', 'proxy', 'proxy_server=s', 'verbose');
+GetOptions(\%opt, 'query=s', 'start=i', 'results=i', 'download=s', 'proxy', 'proxy_server=s', 'format=s', 'verbose');
 
 $opt{proxy_server} = 'http://proxy.kuins.net:8080' if ($opt{proxy} && !$opt{proxy_server});
+$opt{format} = 'xml' unless ($opt{format});
 
 &main();
 
@@ -72,7 +73,7 @@ sub main {
 	    my $rank = $1;
 	    my $did = $2;
 
-	    my $requestURL = "$base_url?id=$did&format=xml";
+	    my $requestURL = "$base_url?id=$did&format=$opt{format}";
 
 	    # リクエストの送信
 	    my $req = HTTP::Request->new(GET => $requestURL);
@@ -80,7 +81,7 @@ sub main {
 	    my $response = $ua->request($req);
 
 	    if ($response->is_success()) {
-		open(WRITER, sprintf("> %s/%04d.xml", $opt{download}, $rank)) or die;
+		open(WRITER, sprintf("> %s/%04d.$opt{format}", $opt{download}, $rank)) or die;
 		print WRITER $response->content();
 		close(WRITER);
 
