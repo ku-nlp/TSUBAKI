@@ -46,6 +46,9 @@ ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
 SYNGRAPH_SF_PATH	/net2/nlpcf34/disk09/skeiji/sfs_w_syn
 ORDINARY_SF_W_ANCHOR_PATH	/net2/nlpcf34/disk11/skeiji/sfs_w_anchor
 
+# スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス
+DIR_PREFIX_FOR_SFS	/work/sfs
+DIR_PREFIX_FOR_SFS_W_SYNGRAPH	/work/sfs_w_syn
 
 
 

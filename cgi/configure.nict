@@ -47,7 +47,9 @@ HTML_FILE_PATH		/share18/work/skeiji/htmls
 ORDINARY_SF_PATH	/share16/work/skeiji/xmls
 SYNGRAPH_SF_PATH	/net2/nlpcf34/disk09/skeiji/sfs_w_syn
 
-
+# スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス
+DIR_PREFIX_FOR_SFS	/data/xmls
+DIR_PREFIX_FOR_SFS_W_SYNGRAPH	/data/xmls
 
 
 
