@@ -200,7 +200,19 @@ sub get_snippets_for_each_did {
 }
 
 sub get_decorated_snippets_for_each_did {
-    my ($this, $query, $color) = @_;
+    my ($this, $query) = @_;
+
+    my %rep2style;
+    foreach my $qk (@{$query->{keywords}}) {
+	next if ($qk->{is_phrasal_search} > 0);
+
+	foreach my $reps (@{$qk->{words}}) {
+	    foreach my $rep (@$reps) {
+		$rep2style{$rep->{string}} = $rep->{stylesheet};
+	    }
+	}
+    }
+
 
     my %did2snippets = ();
     foreach my $did (keys %{$this->{did2snippets}}) {
@@ -229,10 +241,10 @@ sub get_decorated_snippets_for_each_did {
 		my $highlighted = -1;
 		my $surf = $sentence->{surfs}[$i];
 		foreach my $rep (@{$sentence->{reps}[$i]}) {
-		    if (exists($color->{$rep})) {
+		    if (exists $rep2style{$rep}) {
 			# 代表表記レベルでマッチしたらハイライト
 
-			$snippets{$sid} .= sprintf("<span style=\"color:%s;margin:0.1em 0.25em;background-color:%s;\">%s<\/span>", $color->{$rep}->{foreground}, $color->{$rep}->{background}, $surf);
+			$snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{$rep}, $surf;
 			$highlighted = 1;
 		    }
 		    last if ($highlighted > 0);
