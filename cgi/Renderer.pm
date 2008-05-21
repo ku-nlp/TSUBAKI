@@ -505,6 +505,7 @@ sub printKwicView {
 
 	my $did = $kwics->[$i]{did};
 	my $title = $kwics->[$i]{title};
+	my $keyword = $kwics->[$i]{keyword};
 	my $contextR = $kwics->[$i]{contextR};
 	my $contextL = $kwics->[$i]{contextL};
 
@@ -520,7 +521,7 @@ sub printKwicView {
 	$output .= "</TD>";
 
 	$output .= "<TD align=right nowrap>$contextL</TD>";
-	$output .= qq(<TD style="background-color: yellow;" nowrap>$query->{keywords}[0]{rawstring}</TD>);
+	$output .= qq(<TD style="background-color: yellow;" nowrap>$keyword</TD>);
 	$output .= "<TD nowrap>$contextR</TD></TR>\n";
     }
     $output .= qq(<TR><TD colspan="4"><HR style="border-top: 1px solid black;"></TD></TR>\n);
