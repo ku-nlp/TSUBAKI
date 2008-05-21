@@ -18,6 +18,10 @@ sub getDefaultValues {
     my ($call_from_API) = @_;
     my %params = ();
 
+    # 環境変数のセット
+    $params{URI} = sprintf ("http://%s%s", $ENV{HTTP_X_FORWARDED_HOST}, $ENV{REQUEST_URI});
+    $params{num_of_pages_for_kwic_view} = 200;
+
     $params{start} = 0;
     $params{logical_operator} = 'AND';
     $params{dpnd} = 1;
@@ -88,6 +92,8 @@ sub parseCGIRequest {
     $params->{start} = $cgi->param('start') if (defined($cgi->param('start')));
     $params->{logical_operator} = $cgi->param('logical') if (defined($cgi->param('logical')));
     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
+    $params->{sort_by_CR} = $cgi->param('sort_by_CR') if (defined($cgi->param('sort_by_CR')));
+    $params->{num_of_pages_for_kwic_view} = $cgi->param('num_of_pages_for_kwic_view') if (defined($cgi->param('num_of_pages_for_kwic_view')));
 
     &normalize_logical_operator($params);
 
