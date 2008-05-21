@@ -129,59 +129,22 @@ sub select_snippets {
     return \@snippets;
 }
 
-sub get_kwic_snippets_for_each_did {
-    my ($this, $query, $opt) = @_;
+sub make_kwic_for_each_did {
+    my ($this, $opt) = @_;
 
-    my %did2snippets = ();
-    foreach my $did (keys %{$this->{did2snippets}}) {
-	my $sentences = $this->{did2snippets}{$did};
-
-	# スコアの高い順に処理
-	my %sbuf = ();
-	my $snippet;
-	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
-	    next if (exists($sbuf{$sentence->{rawstring}}));
-	    $sbuf{$sentence->{rawstring}} = 1;
-
-	    my $sid = $sentence->{sid};
-	    my $keyword = $query->{keywords}[0]{rawstring};
-	    my $length = length($keyword);
-	    my $size = scalar(@{$query->{keywords}[0]{words}});
-
- 	    my $start = $sentence->{startOfKeyword};
- 	    my $end = $sentence->{endOfKeyword};
-
- 	    my $fwd;
- 	    my $bck;
-	    my $kwd;
-#  	    for (my $i = 0; $i < $start; $i++) {
-#  		$fwd .= $sentence->{surfs}[$i];
-#  	    }
-#  	    for (my $i = $end + 1; $i < scalar(@{$sentence->{surfs}}); $i++) {
-#  		$bck .= $sentence->{surfs}[$i];
-#  	    }
-#  	    for (my $i = $start; $i < $end + 1; $i++) {
-#  		$kwd .= $sentence->{surfs}[$i];
-#  	    }
-
-# 	    $fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
-# 	    $bck = substr($bck, 0, $opt->{kwic_window_size});
-
-	    
-	    $kwd = $keyword;
-	    if ($sentence->{rawstring} =~ /$keyword/) {
-		$fwd = "$`";
-		$bck = "$'";
-		$fwd = substr($fwd, (length($fwd) - $opt->{kwic_window_size} > 0) ? length($fwd) - $opt->{kwic_window_size} : 0);
-		$bck = substr($bck, 0, $opt->{kwic_window_size});
-		$snippet .= qq(<TD style="text-align: right; width: $opt->{kwic_window_size}em;" nowrap>$fwd</TD><TD style="width: ${length}em;" nowrap><SPAN style="background-color:yellow; font-weight: bold:">$kwd</SPAN></TD><TD style="text-align: left; width: $opt->{kwic_window_size}em;" nowrap>$bck</TD>\t);
-	    }
+    my @buf;
+    while (my ($did, $kwic) = each %{$this->{did2snippets}}) {
+	foreach my $e (@$kwic) {
+	    $e->{did} = $did;
+	    push(@buf, $e);
 	}
-	$snippet =~ s/S\-ID:\d+//g;
-	$did2snippets{$did} = $snippet;
     }
 
-    return \%did2snippets;
+    my @kwics = ($opt->{sort_by_contextR}) ?
+	sort {$a->{contextR} cmp $b->{contextR} || $a->{InvertedContextL} cmp $b->{InvertedContextL}} @buf:
+	sort {$a->{InvertedContextL} cmp $b->{InvertedContextL} || $a->{contextR} cmp $b->{contextR}} @buf;
+
+    return \@kwics;
 }
 
 sub get_snippets_for_each_did {
