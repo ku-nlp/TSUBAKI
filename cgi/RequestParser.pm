@@ -40,6 +40,7 @@ sub getDefaultValues {
     $params{flag_of_dpnd_use} = 1;
     $params{flag_of_dist_use} = 1;
     $params{flag_of_anchor_use} = ($call_from_API) ? 0 : 1;
+    $params{highlight} = ($call_from_API) ? 0 : 1;
 
     return \%params;
 }
@@ -94,6 +95,7 @@ sub parseCGIRequest {
     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
     $params->{sort_by_CR} = $cgi->param('sort_by_CR') if (defined($cgi->param('sort_by_CR')));
     $params->{num_of_pages_for_kwic_view} = $cgi->param('num_of_pages_for_kwic_view') if (defined($cgi->param('num_of_pages_for_kwic_view')));
+    $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
 
     &normalize_logical_operator($params);
 
@@ -139,6 +141,7 @@ sub parseAPIRequest {
     $params->{'filter_simpages'} = 0 if (defined $cgi->param('filter_simpages') &&  $cgi->param('filter_simpages') eq '0');
     $params->{query_verbose} = $cgi->param('query_verbose') if (defined($cgi->param('query_verbose')));
     $params->{flag_of_anchor_use} = $cgi->param('anchor') if (defined($cgi->param('anchor')));
+    $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;
