@@ -429,9 +429,8 @@ sub get_snippets {
 	# KWICを取得
 	return $sni_obj->make_kwic_for_each_did({sort_by_contextR => $opt->{sort_by_CR}});
     } else {
-	# 装飾されたスニペッツを取得
-	my $highlight = ($this->{called_from_API}) ? 0 : 1;
-	my $did2snippets =  $sni_obj->get_snippets_for_each_did($query, {highlight => $highlight});
+	# スニペッツを取得
+	my $did2snippets =  $sni_obj->get_snippets_for_each_did($query, {highlight => $opt->{highlight}});
 	return $did2snippets;
     }
 }
@@ -643,7 +642,7 @@ sub printSearchResultForAPICall {
 	}
 	my $sni_obj = new SnippetMakerAgent();
 	$sni_obj->create_snippets($query, \@dids, {discard_title => 0, syngraph => $params->{'syngraph'}, window_size => 5});
-	$did2snippets = $sni_obj->get_snippets_for_each_did();
+	$did2snippets = $sni_obj->get_snippets_for_each_did($query, {highlight => $params->{highlight}});
     }
 
     my $queryString;
