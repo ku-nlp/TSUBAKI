@@ -54,7 +54,7 @@ sub isMatch {
     my ($listQ, $listS) = @_;
 
     use Data::Dumper;
-#    print Dumper($listQ) . "\n";
+    # print Dumper($listQ) . "\n";
 
     my $end = -1;
     my $matchQ = 0;
@@ -177,6 +177,8 @@ sub make_repname_list {
 
 	my @m = split(/\s+/, $line);
 	my $surf = $m[0];
+	my $katsuyou = $m[9];
+	my $hinshi = $m[3];
 	my $midashi = "$m[2]/$m[1]";
 	my %reps = ();
 	# 代表表記の取得
@@ -201,7 +203,15 @@ sub make_repname_list {
 	    }
 	}
 	$line = $lnbuf;
-	    
+
+	if ($hinshi eq '動詞') {
+	    my %new_reps;
+	    foreach my $k (keys %reps) {
+		$new_reps{$k . ":$katsuyou"} = $reps{$k};
+	    }
+	    %reps = %new_reps;
+	}
+
 	push(@repnameList, \%reps);
 	push(@surfList, $surf);
     } # end of foreach my $line (split(/\n/,$sent))
