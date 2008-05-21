@@ -52,11 +52,8 @@ sub main {
 #	my $sentences = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $id, \%opt);
 	foreach my $s (@$sentences) {
 	    if ($opt{kwic}) {
-		print $s->{InvertedContextL} . "\n";
-		next;
-
 		print $s->{contextL} . " ";
-		print $query->{keywords}[0]{rawstring} . " ";
+		print "[" . $s->{keyword} . "] ";
 		print $s->{contextR} . "\n";
 	    } else {
 		print $s->{including_all_indices} . " ";
