@@ -51,30 +51,33 @@ sub print_search_time {
 }
 
 sub printFooter {
-    my ($this, $params, $hitcount, $current_page, $size) = @_;
+    my ($this, $params, $hitcount, $current_page, $size, $opt) = @_;
 
-    my $last_page_flag = 0;
-    if ($hitcount >= $params->{'results'}) {
-	print "<DIV class='pagenavi'>検索結果ページ：";
-	for (my $i = 0; $i < $CONFIG->{'NUM_OF_SEARCH_RESULTS'} / $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}; $i++) {
-	    my $offset = $i * $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
-	    if ($size < $offset) {
-		last;
-	    } else {
-		$last_page_flag = 0;
-	    }
+    if ($opt->{kwic}) {
+	print "<P>\n";
+    } else {
+	my $last_page_flag = 0;
+	if ($hitcount >= $params->{'results'}) {
+	    print "<DIV class='pagenavi'>検索結果ページ：";
+	    for (my $i = 0; $i < $CONFIG->{'NUM_OF_SEARCH_RESULTS'} / $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}; $i++) {
+		my $offset = $i * $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
+		if ($size < $offset) {
+		    last;
+		} else {
+		    $last_page_flag = 0;
+		}
 	    
-	    if ($offset == $current_page) {
-		print "<font color=\"brown\">" . ($i + 1) . "</font>&nbsp;";
-		$last_page_flag = 1;
-	    } else {
-		print "<a href=\"javascript:submit('$offset')\">" . ($i + 1) . "</a>&nbsp;";
+		if ($offset == $current_page) {
+		    print "<font color=\"brown\">" . ($i + 1) . "</font>&nbsp;";
+		    $last_page_flag = 1;
+		} else {
+		    print "<a href=\"javascript:submit('$offset')\">" . ($i + 1) . "</a>&nbsp;";
+		}
 	    }
+	    print "</DIV>";
 	}
-	print "</DIV>";
+	printf("<DIV class=\"bottom_message\">上の%d件と類似したページは除外されています。</DIV>\n", $size) if ($last_page_flag && $size < $hitcount && $size < $CONFIG->{'NUM_OF_SEARCH_RESULTS'});
     }
-
-    printf("<DIV class=\"bottom_message\">上の%d件と類似したページは除外されています。</DIV>\n", $size) if ($last_page_flag && $size < $hitcount && $size < $CONFIG->{'NUM_OF_SEARCH_RESULTS'});
 
 
     # フッタ出力
@@ -429,17 +432,16 @@ sub get_snippets {
     }
 
     my $sni_obj = new SnippetMakerAgent();
-    $sni_obj->create_snippets($query, $query->{dids}, {kwic => $opt->{kwic}, discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5});
+    $sni_obj->create_snippets($query, $query->{dids}, {kwic => $opt->{kwic}, discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5, kwic_window_size => $CONFIG->{KWIC_WINDOW_SIZE}});
 
-    # 装飾されたスニペッツを取得
-    my $did2snippets;
     if ($opt->{kwic}) {
-	$did2snippets = $sni_obj->get_kwic_snippets_for_each_did($query, {kwic_window_size => $CONFIG->{KWIC_WINDOW_SIZE}});
+	# KWICを取得
+	return $sni_obj->make_kwic_for_each_did({sort_by_contextR => $opt->{sort_by_CR}});
     } else {
-	$did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $this->{q2color});
+	# 装飾されたスニペッツを取得
+	my $did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $this->{q2color});
+	return $did2snippets;
     }
-
-    return $did2snippets;
 }
 
 sub printSearchResultForBrowserAccess {
@@ -462,6 +464,70 @@ sub printSearchResultForBrowserAccess {
     $this->print_search_time($logger->getParameter('search') + $logger->getParameter('parse_query'), $logger->getParameter('hitcount'), $params, $size, $query->{keywords}, $logger->getParameter('IS_CACHE'));
 
 
+    ##################################
+    # KWICまたは通常版の検索結果を表示
+    ##################################
+    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $color, $start, $end);
+
+
+    ################
+    # フッターの表示
+    ################
+    $this->printFooter($params, $logger->getParameter('hitcount'), $start, $size, $params);
+
+
+    ############################
+    # 表示に要した時間のロギング
+    ############################
+    $logger->setTimeAs('print_result', '%.3f');
+}
+
+
+sub printKwicView {
+    my ($this, $params, $results, $query) = @_;
+
+    my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
+    my $kwics = $this->get_snippets($params, $results, $query, 0, $params->{num_of_pages_for_kwic_view});
+
+    my %buf;
+    my $output = "<CENTER><TABLE border=0>\n";
+
+    my $url = $params->{URI};
+    $url =~ s/\&?sort_by_CR=\d//;
+    my $link4contextL = $url . '&sort_by_CR=0';
+    my $link4contextR = $url . '&sort_by_CR=1';
+
+    $output .= sprintf qq(<TR><TD>&nbsp;</TD><TD align="center"><A href="%s">コンテキストの左側でソートする</A></TD><TD>&nbsp;</TD><TD align="center"><A href="%s">コンテキストの右側でソートする</A></TD></TR>\n), $link4contextL,  $link4contextR;
+    $output .= qq(<TR><TD colspan="4"><HR style="border-top: 1px solid black;"></TD></TR>\n);
+    for (my $i = 0; $i < scalar(@$kwics); $i++) {
+	next if (exists $buf{$kwics->[$i]{rawstring}});
+	$buf{$kwics->[$i]{rawstring}} = 1;
+
+	my $did = $kwics->[$i]{did};
+	my $title = $kwics->[$i]{title};
+	my $contextR = $kwics->[$i]{contextR};
+	my $contextL = $kwics->[$i]{contextL};
+
+	$title = substr($title, 0, $CONFIG->{MAX_LENGTH_OF_TITLE}) . "..." if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE});
+
+	$output .= sprintf qq(<TR><TD style="width: %dem; vertical-align: top;" nowrap>), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
+	$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+	$output .=  $title . "</a>";
+	$output .= "</TD>";
+
+	$output .= "<TD align=right nowrap>$contextL</TD>";
+	$output .= qq(<TD style="background-color: yellow;" nowrap>$query->{keywords}[0]{rawstring}</TD>);
+	$output .= "<TD nowrap>$contextR</TD></TR>\n";
+    }
+    $output .= qq(<TR><TD colspan="4"><HR style="border-top: 1px solid black;"></TD></TR>\n);
+    $output .= "</TABLE></CENTER>";
+
+    print $output;
+}
+
+
+sub printOrdinarySearchResult {
+    my ($this, $logger, $params, $results, $query, $color, $start, $end) = @_;
 
     ############################
     # 必要ならばスニペットを生成
@@ -486,95 +552,50 @@ sub printSearchResultForBrowserAccess {
 	my $snippet = $did2snippets->{$did};
 	my $title = $results->[$rank]{title};
 
-	my $output;
 	$score = sprintf("%.4f", $score);
 
-	if ($params->{kwic}) {
-	    $title = substr($title, 0, $CONFIG->{MAX_LENGTH_OF_TITLE}) . "..." if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE});
+	my $output = "<DIV class=\"result\">";
+	$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
+	$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+	$output .= $title . "</a>";
 
-	    foreach my $line (split(/\t/, $snippet)) {
-		if ($output eq '') {
-		    $output .= "<TABLE>\n";
-		}
-
-		$output .= qq(<TR><TD style="vertical-align: top; width: 2em;" nowrap>);
-		$output .= sprintf "<SPAN class=\"rank\">%3d</SPAN>", ($rank + 1);
-		$output .= "</TD>";
-
-		$output .= sprintf qq(<TD style="width: %dem; vertical-align: top;" nowrap>), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
-		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
-		$output .=  $title . "</a>";
-		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
-		$output .= "</TD>";
-
-		$output .= "$line</TR>";
-	    }
-
-	    if ($output eq '') {
-# 		$output .= "<TABLE>\n";
-# 		$output .= qq(<TR><TD style="vertical-align: top;">);
-# 		$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
-# 		$output .= "</TD>";
-
-# 		$output .= sprintf qq(<TD style="width: %dem; vertical-align: top;">), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
-# 		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
-# 		$output .=  $title . "</a>";
-# 		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
-# 		$output .= "</TD>";
-	    } else {
-		$output .= "</TABLE>\n";
-	    }
+	my $num_of_sim_pages = 0;
+	$num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
+	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
+	    my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
+	    my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
+	    $output .= "<DIV class=\"meta\">id=$did, score=$score, <A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n";
+	} else {
+	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
 	}
-	# 通常版の検索結果
-	else {
-	    $output = "<DIV class=\"result\">";
-	    $output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
+	$output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
+	$output .= "<A class=\"cache\" href=\"$results->[$rank]{url}\" target=\"_blank\">$results->[$rank]{url}</A>\n";
+	$output .= "</DIV>";
+
+	$output .= "<DIV id=\"simpages_$rank\" style=\"display: none;\">";
+	foreach my $sim_page (@{$results->[$rank]{similar_pages}}) {
+	    my $did = sprintf("%09d", $sim_page->{did});
+	    my $score = $sim_page->{score_total};
+
+	    # 装飾されたスニペッツの取得
+	    my $snippet = $did2snippets->{$did};
+	    $score = sprintf("%.4f", $score);
+
+	    $output .= "<DIV class=\"similar\">";
 	    $output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
-	    $output .= $title . "</a>";
-
-	    my $num_of_sim_pages = 0;
-	    $num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
-	    if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
-		my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
-		my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
-		$output .= "<DIV class=\"meta\">id=$did, score=$score, <A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n";
-	    } else {
-		$output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
-	    }
+	    $output .= $sim_page->{title} . "</a>";
+	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
 	    $output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
-	    $output .= "<A class=\"cache\" href=\"$results->[$rank]{url}\" target=\"_blank\">$results->[$rank]{url}</A>\n";
+	    $output .= "<A class=\"cache\" href=\"$sim_page->{url}\">$sim_page->{url}</A>\n";
 	    $output .= "</DIV>";
-
-	    $output .= "<DIV id=\"simpages_$rank\" style=\"display: none;\">";
-	    foreach my $sim_page (@{$results->[$rank]{similar_pages}}) {
-		my $did = sprintf("%09d", $sim_page->{did});
-		my $score = $sim_page->{score_total};
-
-		# 装飾されたスニペッツの取得
-		my $snippet = $did2snippets->{$did};
-		$score = sprintf("%.4f", $score);
-
-		$output .= "<DIV class=\"similar\">";
-		$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
-		$output .= $sim_page->{title} . "</a>";
-		$output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
-		$output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
-		$output .= "<A class=\"cache\" href=\"$sim_page->{url}\">$sim_page->{url}</A>\n";
-		$output .= "</DIV>";
-	    }
-	    $output .= "</DIV>\n";
 	}
+	$output .= "</DIV>\n";
 
 	# 1 ページ分の結果を表示
 	print $output;
     }
-
-    # フッターの表示
-    $this->printFooter($params, $logger->getParameter('hitcount'), $start, $size);
-
-    # 表示に要した時間のロギング
-    $logger->setTimeAs('print_result', '%.3f');
 }
+
 
 sub printRequestResult {
     my ($this, $dids, $results, $requestItems) = @_;
