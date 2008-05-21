@@ -1,5 +1,6 @@
-#!/home/skeiji/local/bin/perl
 #!/share09/home/skeiji/local/bin/perl
+#!/usr/local/bin/perl
+#!/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -46,9 +47,9 @@ sub main {
 	read(STDIN, $dat, $length);
 
 	# 入力をパース
-	my ($queryString, $requestItems, $dids) = RequestParser::parsePostRequest($dat);
+	my ($queryString, $requestItems, $dids, $opt) = RequestParser::parsePostRequest($dat);
 
-	my $results = &getRequestItems($queryString, $requestItems, $dids);
+	my $results = &getRequestItems($queryString, $requestItems, $dids, $opt);
 
 	# 遅延コンストラクタ呼び出し（$ENVの値を書き換えるため）
 	my $cgi = new CGI();
@@ -71,10 +72,11 @@ sub main {
 
 	# 1. 一文書に対する情報取得
 	if (defined $field) {
-	    binmode(STDOUT, ':utf8');
-	    binmode(STDERR, ':utf8');
+	    # binmode(STDOUT, ':utf8');
+	    # binmode(STDERR, ':utf8');
 
-	    &provideDocumentInfo($cgi, $field);
+	    my $highlight = $cgi->param('highlight');
+	    &provideDocumentInfo($cgi, $field, {highlight => $highlight});
 	}
 	# 2. 標準フォーマット、オリジナルページ取得
 	elsif ($fileType) {
@@ -91,7 +93,7 @@ sub main {
 }
 
 sub getRequestItems {
-    my ($queryString, $requestItems, $dids) = @_;
+    my ($queryString, $requestItems, $dids, $opt) = @_;
 
     # スニペットが指定されている場合は取得する
     my $results;
@@ -106,7 +108,7 @@ sub getRequestItems {
 
 	my $sni_obj = new SnippetMakerAgent();
 	$sni_obj->create_snippets($query_obj, $dids, {discard_title => 0, syngraph => 0, window_size => 5});
-	$did2snippets = $sni_obj->get_snippets_for_each_did();
+	$did2snippets = $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}});
     }
 
     my $searcher = new Searcher();
@@ -154,7 +156,7 @@ sub get_cache_size {
 }
 
 sub provideDocumentInfo {
-    my ($cgi, $field) = @_;
+    my ($cgi, $field, $opt) = @_;
 
     my %requestItems = ();
     foreach my $ri (split(':', $field)) {
@@ -177,7 +179,7 @@ sub provideDocumentInfo {
 	}
     }
 
-    my $results = &getRequestItems($queryString, \%requestItems, [$did]);
+    my $results = &getRequestItems($queryString, \%requestItems, [$did], $opt);
 
     print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
     my $renderer = new Renderer();
