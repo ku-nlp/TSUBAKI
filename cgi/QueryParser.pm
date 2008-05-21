@@ -15,6 +15,7 @@ use Configure;
 use CDB_File;
 use Query;
 
+my $CONFIG = Configure::get_instance();
 
 # コンストラクタ
 sub new {
@@ -22,7 +23,6 @@ sub new {
 
     print STDERR "constructing QueryParser object... " if ($opts->{verbose});
 
-    my $CONFIG = Configure::get_instance();
     # パラメータが指定されていなければデフォルト値としてCONFIGから値を取得
     $opts->{KNP_COMMAND} = $CONFIG->{KNP_COMMAND} unless ($opts->{KNP_COMMAND});
     $opts->{JUMAN_COMMAND} = $CONFIG->{JUMAN_COMMAND} unless ($opts->{JUMAN_COMMAND});
@@ -97,7 +97,7 @@ sub parse {
 
     ## 空白で区切る
     # $qks_str =~ s/ /　/g;
-    foreach my $q_str (split(/(?: )+/, $qks_str)) {
+    foreach my $q_str (split(/(?: |　)+/, $qks_str)) {
 	my $near = $opt->{near};
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
 	my $keep_order = 1;
@@ -172,6 +172,10 @@ sub parse {
     my %dpnd_map = ();
     my %gid2df = ();
     my %qid2qtf = ();
+
+    my %styleBuf;
+    my $count = 0;
+
     # 検索語中の各索引語にIDをふる
     foreach my $qk (@qks) {
 	foreach my $reps (@{$qk->{words}}) {
@@ -191,6 +195,20 @@ sub parse {
 		}
 		$qid++;
 		print $rep->{string} . " " . $rep->{qid} . " " . $rep->{gid} . " " . $rep->{df} . "\n" if ($opt->{verbose});
+
+		# スニペットでハイライト表示する際のスタイルを設定
+
+		next if ($qk->{is_phrasal_search} > 0);
+
+		if (exists $styleBuf{$rep->{string}}) {
+		    $rep->{stylesheet} = $styleBuf{$rep->{string}};
+		} else {
+		    my $foreground = ($count > 4) ? 'white' : 'black';
+		    my $background = $CONFIG->{HIGHLIGHT_COLOR}[$count];
+		    $count = (++$count % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
+		    $rep->{stylesheet} = sprintf "background-color: %s; color: %s; margin:0.1em 0.25em;", $background, $foreground;
+		    $styleBuf{$rep->{string}} = $rep->{stylesheet};
+		}
 	    }
 	}
 
