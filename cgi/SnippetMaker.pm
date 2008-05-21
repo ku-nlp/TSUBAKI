@@ -49,38 +49,164 @@ sub extract_sentences_from_standard_format {
 	return &extract_sentences_from_content($query, $content, $opt);
     }	
 }
+
+sub isMatch {
+    my ($listQ, $listS) = @_;
+
+    use Data::Dumper;
+#    print Dumper($listQ) . "\n";
+
+    my $end = -1;
+    my $matchQ = 0;
+    for (my $i = 0; $i < scalar(@$listS); $i++) {
+	for (my $j = 0; $j < scalar(@$listQ); $j++) {
+	    # クエリレベルで代表表記がマッチしたか
+	    $matchQ = 0;
+	    # 単語レベルで代表表記がマッチしたか
+	    my $matchW = 0;
+	    foreach my $rep (keys %{$listS->[$i + $j]}) {
+#		print $rep . " ";
+		if (exists $listQ->[$j]{$rep}) {
+		    $end = $i + $j;
+		    $matchW = 1;
+#		    print "*";
+		    last;
+		}
+	    }
+#	    print "\n";
+	    # マッチしなければ（文の方の）次の単語へ
+	    unless ($matchW) {
+		$end = -1;
+		last;
+	    }
+	    $matchQ = 1;
+	}
+
+	if ($matchQ) {
+	    return (1, $i, $end + 1);
+	}
+    }
+
+    return (0, -1, -1);
+}
     
 sub extract_sentences_from_content_for_kwic {
-    my($query, $content, $opt) = @_;
+    my ($query, $content, $opt) = @_;
 
     my $sfdat = new StandardFormatData(\$content, $opt);
     my @sbuf;
     my $title = $sfdat->getTitle();
     my $queryString = $query->[0]{rawstring};
 
+    my ($repnameList_q, $surfList_q) = &make_repname_list($query->[0]{knp_result}->all());
     foreach my $s (@{$sfdat->getSentences()}) {
-	if ($s->{rawstring} =~ /$queryString/) {
-	    my $contextL = "$`";
-	    my $contextR = "$'";
+	my ($repnameList_s, $surfList_s) = &make_repname_list($s->{annotation});
+
+	my ($flag, $from, $end) = &isMatch($repnameList_q, $repnameList_s);
+	if ($flag) {
+	    my $keyword;
+	    my $contextL;
+	    my $contextR;
+	    for (my $i = 0; $i < scalar(@$surfList_s); $i++) {
+		if ($i < $from) {
+		    $contextL .= $surfList_s->[$i];
+		}
+		elsif ($i > $end - 1) {
+		    $contextR .= $surfList_s->[$i];
+		}
+		else {
+		    $keyword .=  $surfList_s->[$i];
+		}
+	    }
+	    # 左右のコンテキストがない場合は取得しない
 	    next if ($contextL eq '' && $contextR eq '');
 
+
+	    # 左右のコンテキストを指定された幅に縮める
 	    $contextR = substr($contextR, 0, $opt->{kwic_window_size});
 
 	    my $offset = length($contextL) - $opt->{kwic_window_size};
 	    $offset = 0 if ($offset < 0);
 	    $contextL = substr($contextL, $offset, $opt->{kwic_window_size});
 
+	    # ソート用に逆右コンテキストを取得する
 	    my $InvertedContextL = reverse($contextL);
 	    push(@sbuf, {title => $title->{rawstring},
 			 rawstring => $s->{rawstring},
 			 contextR => $contextR,
 			 contextL => $contextL,
+			 keyword => $keyword,
 			 InvertedContextL => $InvertedContextL
 		 });
 	}
+# 	if (my ($s->{rawstring} =~ /$queryString/) {
+# 	    my $contextL = "$`";
+# 	    my $contextR = "$'";
+# 	    next if ($contextL eq '' && $contextR eq '');
+
+# 	    $contextR = substr($contextR, 0, $opt->{kwic_window_size});
+
+# 	    my $offset = length($contextL) - $opt->{kwic_window_size};
+# 	    $offset = 0 if ($offset < 0);
+# 	    $contextL = substr($contextL, $offset, $opt->{kwic_window_size});
+
+# 	    my $InvertedContextL = reverse($contextL);
+# 	    push(@sbuf, {title => $title->{rawstring},
+# 			 rawstring => $s->{rawstring},
+# 			 contextR => $contextR,
+# 			 contextL => $contextL,
+# 			 InvertedContextL => $InvertedContextL
+# 		 });
+# 	}
     }
 
     return \@sbuf;
+}
+
+sub make_repname_list {
+    my ($knpresult) = @_;
+
+    my @repnameList;
+    my @surfList;
+    foreach my $line (split(/\n/,$knpresult)){
+	next if ($line =~ /^\*/);
+	next if ($line =~ /^\+/);
+	next if ($line =~ /^!/);
+	next if ($line =~ /^EOS/);
+	next if ($line =~ /^\# /);
+
+	my @m = split(/\s+/, $line);
+	my $surf = $m[0];
+	my $midashi = "$m[2]/$m[1]";
+	my %reps = ();
+	# 代表表記の取得
+	if ($line =~ /\<代表表記:([^>]+)\>/) {
+	    $midashi = $1;
+	}
+	$reps{&toUpperCase_utf8($midashi)} = 1;
+
+	# 代表表記に曖昧性がある場合は全部保持する
+	# ただし表記・読みが同一の代表表記は区別しない
+	# ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
+	my $lnbuf = $line;
+	while ($line =~ /\<ALT(.+?)\>/) {
+	    $line = "$'";
+	    my $alt_cont = $1;
+	    if ($alt_cont =~ /代表表記:(.+?)(?: |\")/) {
+		my $midashi = $1;
+		$reps{&toUpperCase_utf8($midashi)} = 1;
+	    } elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
+		my $midashi = "$3/$2";
+		$reps{&toUpperCase_utf8($midashi)} = 1;
+	    }
+	}
+	$line = $lnbuf;
+	    
+	push(@repnameList, \%reps);
+	push(@surfList, $surf);
+    } # end of foreach my $line (split(/\n/,$sent))
+
+    return (\@repnameList, \@surfList);
 }
 
 sub extract_sentences_from_content {
