@@ -148,67 +148,17 @@ sub make_kwic_for_each_did {
 }
 
 sub get_snippets_for_each_did {
-    my ($this) = @_;
-
-    my %did2snippets = ();
-    foreach my $did (keys %{$this->{did2snippets}}) {
-	my $wordcnt = 0;
-	my %snippets = ();
-	my $sentences = $this->{did2snippets}{$did};
-
-	# スコアの高い順に処理
-	my %sbuf = ();
-	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
-	    next if (exists($sbuf{$sentence->{rawstring}}));
-	    $sbuf{$sentence->{rawstring}} = 1;
-
-	    my $sid = $sentence->{sid};
-	    my $length = $sentence->{length};
-	    my $num_of_whitespaces = $sentence->{num_of_whitespaces};
-
-	    next if ($num_of_whitespaces / $length > 0.2);
-
-	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
-		$snippets{$sid} .= $sentence->{surfs}[$i];
-		$wordcnt++;
-		
-		# スニペットが N 単語を超えた終了
-		if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET}) {
-		    $snippets{$sid} .= " ...";
-		    last;
-		}
-	    }
-	    # ★ 多重 foreach の脱出に label をつかう
-	    last if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET});
-	}
-
-	my $snippet;
-	my $prev_sid = -1;
-	foreach my $sid (sort {$a <=> $b} keys %snippets) {
-	    if ($sid - $prev_sid > 1 && $prev_sid > -1) {
-		$snippet .= " ... " unless ($snippet =~ /\.\.\.$/);
-	    }
-	    $snippet .= $snippets{$sid};
-	    $prev_sid = $sid;
-	}
-
-	$snippet =~ s/S\-ID:\d+//g;
-	$did2snippets{$did} = $snippet;
-    }
-
-    return \%did2snippets;
-}
-
-sub get_decorated_snippets_for_each_did {
-    my ($this, $query) = @_;
+    my ($this, $query, $opt) = @_;
 
     my %rep2style;
-    foreach my $qk (@{$query->{keywords}}) {
-	next if ($qk->{is_phrasal_search} > 0);
+    if ($opt->{highlight}) {
+	foreach my $qk (@{$query->{keywords}}) {
+	    next if ($qk->{is_phrasal_search} > 0);
 
-	foreach my $reps (@{$qk->{words}}) {
-	    foreach my $rep (@$reps) {
-		$rep2style{$rep->{string}} = $rep->{stylesheet};
+	    foreach my $reps (@{$qk->{words}}) {
+		foreach my $rep (@$reps) {
+		    $rep2style{$rep->{string}} = $rep->{stylesheet};
+		}
 	    }
 	}
     }
@@ -240,16 +190,18 @@ sub get_decorated_snippets_for_each_did {
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		my $highlighted = -1;
 		my $surf = $sentence->{surfs}[$i];
-		foreach my $rep (@{$sentence->{reps}[$i]}) {
-		    if (exists $rep2style{$rep}) {
-			# 代表表記レベルでマッチしたらハイライト
+		if ($opt->{highlight}) {
+		    foreach my $rep (@{$sentence->{reps}[$i]}) {
+			if (exists $rep2style{$rep}) {
+			    # 代表表記レベルでマッチしたらハイライト
 
-			$snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{$rep}, $surf;
-			$highlighted = 1;
+			    $snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{$rep}, $surf;
+			    $highlighted = 1;
+			}
+			last if ($highlighted > 0);
 		    }
-		    last if ($highlighted > 0);
 		}
-		# ハイライトされなかった場合
+		# ハイライトされなかった場合 or ハイライトオプションがオフの場合
 		$snippets{$sid} .= $surf if ($highlighted < 0);
 		$wordcnt++;
 		
@@ -263,20 +215,26 @@ sub get_decorated_snippets_for_each_did {
 	    last if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET});
 	}
 
-	my $snippet;
-	my $prev_sid = -1;
+ 	my $snippet;
+ 	my $prev_sid = -1;
 	foreach my $sid (sort {$a <=> $b} keys %snippets) {
 	    if ($sid - $prev_sid > 1 && $prev_sid > -1) {
-		$snippet .= " <b>...</b> " unless ($snippet =~ /<b>\.\.\.<\/b>$/);
+		if ($opt->{highlight}) {
+		    $snippet .= " <b>...</b> " unless ($snippet =~ /<b>\.\.\.<\/b>$/);
+		} else {
+		    $snippet .= " ... " unless ($snippet =~ /\.\.\.$/);
+		}
 	    }
 	    $snippet .= $snippets{$sid};
 	    $prev_sid = $sid;
 	}
 	
 	# フレーズの強調表示
-	foreach my $qk (@{$query->{keywords}}){
-	    next if ($qk->{is_phrasal_search} < 0);
-	    $snippet =~ s!$qk->{rawstring}!<b>$qk->{rawstring}</b>!g;
+	if ($opt->{highlight}) {
+	    foreach my $qk (@{$query->{keywords}}){
+		next if ($qk->{is_phrasal_search} < 0);
+		$snippet =~ s!$qk->{rawstring}!<b>$qk->{rawstring}</b>!g;
+	    }
 	}
 	
 	$snippet =~ s/S\-ID:\d+//g;
