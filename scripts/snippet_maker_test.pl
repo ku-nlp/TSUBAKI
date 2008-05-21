@@ -51,27 +51,21 @@ sub main {
 	my $sentences = &SnippetMaker::extract_sentences_from_standard_format($query->{keywords}, $file, \%opt);
 #	my $sentences = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $id, \%opt);
 	foreach my $s (@$sentences) {
-	    print $s->{including_all_indices} . " ";
-	    print $file . " ";
-	    print "sid " . $s->{sid} . " ";
-	    print "score " . $s->{score} . " ";
-	    print "smoothed " . $s->{smoothed_score} . " ";
-	    printf("whitespace %.2f ", $s->{num_of_whitespaces} / $s->{length});
-
 	    if ($opt{kwic}) {
-		my $head = $s->{startOfKeyword};
-		my $tail = $s->{endOfKeyword};
-		my $start = ($head - $opt{kwic_window_size} > 0) ? $head - $opt{kwic_window_size}: 0;
-		my $end = ($tail + $opt{kwic_window_size} < scalar(@{$s->{surfs}})) ? $tail + $opt{kwic_window_size} : scalar(@{$s->{surfs}}) - 1;
-		for (my $i = $start; $i < $end; $i++) {
-		    print " [" if ($i == $head);
-		    print $s->{surfs}[$i];
-		    print "] " if ($i == $tail);
-		}
-		print " " . $start . " " . $head . " " . $tail . " " .  $end if ($opt{debug});
-		print "\n";
+		print $s->{InvertedContextL} . "\n";
+		next;
+
+		print $s->{contextL} . " ";
+		print $query->{keywords}[0]{rawstring} . " ";
+		print $s->{contextR} . "\n";
 	    } else {
-		print $s->{rawstring} . "\n";
+		print $s->{including_all_indices} . " ";
+		print $file . " ";
+		print "sid " . $s->{sid} . " ";
+		print "score " . $s->{score} . " ";
+		print "smoothed " . $s->{smoothed_score} . " ";
+		printf("whitespace %.2f ", $s->{num_of_whitespaces} / $s->{length});
+		print " $s->{rawstring}\n";
 	    }
 	}
     }
