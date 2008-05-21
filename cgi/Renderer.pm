@@ -22,7 +22,13 @@ sub new {
     bless $this;
 }
 
-sub DESTROY {}
+sub DESTROY {
+    my ($this) = @_;
+
+    if (defined $this->{SNYONYM_DB}) {
+	untie %$this->{SNYONYM_DB};
+    }
+}
 
 sub print_search_time {
     my ($this, $search_time, $hitcount, $params, $size, $keywords, $is_cached_data) = @_;
@@ -103,63 +109,54 @@ sub printFooter {
 END_OF_HTML
 }
 
+sub makeToolTip {
+    my ($this, $hyouki) = @_;
+
+    my $tip;
+    unless (defined $this->{SYNONYM_DB}) {
+	tie %$this->{SYNONYM_DB}, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n";
+    }
+
+    foreach my $synonym (split('\|', $this->{SYNONYM_DB}{$hyouki})) {
+	if ($synonym =~ m!^([^/]+)/!) {
+	    $synonym = $1;
+	}
+	$synonym =~ s/<[^>]+>//g;
+	$tip .= ($synonym . ",");
+    }
+    chop($tip);
+
+    return decode('utf8', $tip);
+}
+
+
 sub print_query {
     my($this, $keywords) = @_;
 
-    my %cbuff = ();
-    my $color = 0;
-    print "<DIV style=\"padding: 0.25em 1em; background-color:#f1f4ff;border-top: 1px solid gray;border-bottom: 1px solid gray;mergin-left:0px;\">検索キーワード (";
+    print qq(<DIV style="padding: 0.25em 1em; background-color:#f1f4ff;border-top: 1px solid gray;border-bottom: 1px solid gray;mergin-left:0px;">検索キーワード \();
 
-    my %syndb;
     foreach my $qk (@{$keywords}){
 	if ($qk->{is_phrasal_search} > 0 && $qk->{sentence_flag} < 0) {
 	    printf("<b style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$qk->{rawstring}</b>");
 	} else {
 	    my $words = $qk->{words};
-	    foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$words}){
-		foreach my $rep (sort {$b->{string} cmp $a->{string}} @{$reps}){
+	    foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @$words) {
+		foreach my $rep (sort {$b->{string} cmp $a->{string}} @$reps) {
 		    next if ($rep->{isContentWord} < 1 && $qk->{is_phrasal_search} < 1);
 
-		    my $tips;
-		    my $mod_k = $rep->{string};
-		    if ($mod_k =~ /s\d+:/) {
-			unless (defined %syndb) {
-			    tie %syndb, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n";
-			}
+		    my $tip;
+		    my $hyouki = $rep->{string};
+		    if ($hyouki =~ /s\d+:/) {
+			$tip = $this->makeToolTip($hyouki);
 
-			foreach my $synonym (split('\|', $syndb{$mod_k})) {
-			    if($synonym =~ m!^([^/]+)/!){
-				$synonym = $1;
-			    }
-			    $synonym =~ s/<[^>]+>//g;
-			    $tips .= ($synonym . ",");
-			}
-			chop($tips);
-
-			$tips = decode('utf8', $tips);
-			$mod_k =~ s/s\d+://g;
-			$mod_k = "&lt;$mod_k&gt;";
+			$hyouki =~ s/s\d+://g;
+			$hyouki = "&lt;$hyouki&gt;";
 		    }
-
-		    my $k_utf8 = $mod_k;
-		    if(exists($cbuff{$rep->{string}})){
-			printf("<span title=\"$tips\" style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$rep->{string}}->{foreground}, $cbuff{$rep->{string}}->{background});
-		    }else{
-			if($color > 4){
-			    print "<span title=\"$tips\" style=\"color:white;margin:0.1em 0.25em;background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];\">$k_utf8</span>";
-			    $cbuff{$rep->{string}}->{foreground} = 'white';
-			    $cbuff{$rep->{string}}->{background} = "#$CONFIG->{HIGHLIGHT_COLOR}[$color]";
-			}else{
-			    print "<span title=\"$tips\" style=\"margin:0.1em 0.25em;background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];\">$k_utf8</span>";
-			    $cbuff{$rep->{string}}->{foreground} = 'black';
-			    $cbuff{$rep->{string}}->{background} = "#$CONFIG->{HIGHLIGHT_COLOR}[$color]";
-			}
-			$color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
-		    }
+		    printf qq(<span title="%s" style="%s">$hyouki</span>), $tip, $rep->{stylesheet};
 		}
 	    }
 	    
-	    my $dpnds = $qk->{dpnds};
+#	    my $dpnds = $qk->{dpnds};
 # 	    foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$dpnds}){
 # 		foreach my $rep (@{$reps}){
 # 		    my $k_tmp  = $rep->{string};
@@ -183,12 +180,6 @@ sub print_query {
 # 	    }
 	}
     }
-
-    if (defined %syndb) {
-	untie %syndb;
-    }
-
-    return \%cbuff;
 }
 
 sub print_tsubaki_interface {
