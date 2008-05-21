@@ -430,7 +430,8 @@ sub get_snippets {
 	return $sni_obj->make_kwic_for_each_did({sort_by_contextR => $opt->{sort_by_CR}});
     } else {
 	# 装飾されたスニペッツを取得
-	my $did2snippets = ($this->{called_from_API}) ? $sni_obj->get_snippets_for_each_did() : $sni_obj->get_decorated_snippets_for_each_did($query, $this->{q2color});
+	my $highlight = ($this->{called_from_API}) ? 0 : 1;
+	my $did2snippets =  $sni_obj->get_snippets_for_each_did($query, {highlight => $highlight});
 	return $did2snippets;
     }
 }
