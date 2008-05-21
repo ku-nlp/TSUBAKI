@@ -521,7 +521,7 @@ sub printKwicView {
 	$output .= "</TD>";
 
 	$output .= "<TD align=right nowrap>$contextL</TD>";
-	$output .= qq(<TD style="background-color: yellow;" nowrap>$keyword</TD>);
+	$output .= qq(<TD align=center style="background-color: yellow;" nowrap>$keyword</TD>);
 	$output .= "<TD nowrap>$contextR</TD></TR>\n";
     }
     $output .= qq(<TR><TD colspan="4"><HR style="border-top: 1px solid black;"></TD></TR>\n);
