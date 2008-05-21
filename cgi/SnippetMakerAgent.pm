@@ -207,7 +207,7 @@ sub get_snippets_for_each_did {
 		
 		# スニペットが N 単語を超えた終了
 		if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET}) {
-		    $snippets{$sid} .= " <b>...</b>";
+		    $snippets{$sid} .= ($opt->{highlight}) ? " <b>...</b>" : "...";
 		    last;
 		}
 	    }
