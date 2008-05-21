@@ -7,6 +7,7 @@ use utf8;
 use KNP;
 use Indexer;
 use Configure;
+use StandardFormatData;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -42,9 +43,46 @@ sub extract_sentences_from_standard_format {
     }
     close(READER);
 
-    return &extract_sentences_from_content($query, $content, $opt);
+    if ($opt->{kwic}) {
+	return &extract_sentences_from_content_for_kwic($query, $content, $opt);
+    } else {
+	return &extract_sentences_from_content($query, $content, $opt);
+    }	
 }
     
+sub extract_sentences_from_content_for_kwic {
+    my($query, $content, $opt) = @_;
+
+    my $sfdat = new StandardFormatData(\$content, $opt);
+    my @sbuf;
+    my $title = $sfdat->getTitle();
+    my $queryString = $query->[0]{rawstring};
+
+    foreach my $s (@{$sfdat->getSentences()}) {
+	if ($s->{rawstring} =~ /$queryString/) {
+	    my $contextL = "$`";
+	    my $contextR = "$'";
+	    next if ($contextL eq '' && $contextR eq '');
+
+	    $contextR = substr($contextR, 0, $opt->{kwic_window_size});
+
+	    my $offset = length($contextL) - $opt->{kwic_window_size};
+	    $offset = 0 if ($offset < 0);
+	    $contextL = substr($contextL, $offset, $opt->{kwic_window_size});
+
+	    my $InvertedContextL = reverse($contextL);
+	    push(@sbuf, {title => $title->{rawstring},
+			 rawstring => $s->{rawstring},
+			 contextR => $contextR,
+			 contextL => $contextL,
+			 InvertedContextL => $InvertedContextL
+		 });
+	}
+    }
+
+    return \@sbuf;
+}
+
 sub extract_sentences_from_content {
     my($query, $content, $opt) = @_;
 
@@ -139,43 +177,7 @@ sub extract_sentences_from_content {
 	}
     }
 
-    if ($opt->{kwic}) {
-	my @buf;
-	my $keyword = $query->[0]{words};
-	foreach my $s (@sentences) {
-	    next unless ($s->{including_all_indices});
-
-	    my $pos = 0;
-	    my $reps = $s->{reps};
-	    for (my $j = 0; $j < scalar(@{$reps}); $j++) {
-		my $match = -1;
-		for (my $i = 0; $i < scalar(@{$keyword}); $i++) {
-
-		  OUT_OF_MATCHING_LOOP:
-		    foreach my $srep (@{$reps->[$j + $i]}) {
-			foreach my $krep (@{$keyword->[$i]}) {
-			    if ($krep->{string} eq $srep) {
-				$match = $i + $j;
-				last OUT_OF_MATCHING_LOOP;
-			    }
-			}
-		    }
-
-		    last if ($match < 0);
-		}
-
-		if ($match > -1) {
-		    $s->{startOfKeyword} = $j;
-		    $s->{endOfKeyword} = $match;
-		    last;
-		}
-	    }
-	    push(@buf, $s);
-	}
-	return \@buf;
-    } else {
-	return \@sentences;
-    }
+    return \@sentences;
 }
 
 sub calculate_score {
