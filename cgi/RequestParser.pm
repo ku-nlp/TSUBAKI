@@ -57,6 +57,7 @@ sub parsePostRequest {
 
     my @dids = ();
     my $query = $docinfo->getAttribute('query');
+    my $highlight = $docinfo->getAttribute('highlight');
     my %result_items = ();
     foreach my $ri (split(':', $docinfo->getAttribute('result_items'))) {
 	$result_items{$ri} = 1;
@@ -69,7 +70,7 @@ sub parsePostRequest {
         push(@dids, $did);
     }
 
-    return ($query, \%result_items, \@dids);
+    return ($query, \%result_items, \@dids, {highlight => $highlight});
 }
 
 # cgiパラメタを取得
