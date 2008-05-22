@@ -156,7 +156,7 @@ sub extract_sentences_from_content_for_kwic {
 		
 		# $opt->{kwic_window_size} に満たない場合は、前方の文を取得する
 		my $j = $i - 1;
-		while ($j > 0) {
+		while ($j > -1) {
 		    my $beforeS = $sentences->[$j]->{rawstring};
 		    $j--;
 
@@ -225,30 +225,31 @@ sub make_repname_list {
 	my $surf = $m[0];
 	my $katsuyou = $m[9];
 	my $hinshi = $m[3];
-	my $midashi = "$m[2]/$m[1]";
+#	my $midashi = "$m[2]/$m[1]";
+	my $midashi = $surf;
 	my %reps = ();
 	# 代表表記の取得
-	if ($line =~ /\<代表表記:([^>]+)\>/) {
-	    $midashi = $1;
-	}
+# 	if ($line =~ /\<代表表記:([^>]+)\>/) {
+# 	    $midashi = $1;
+# 	}
 	$reps{&toUpperCase_utf8($midashi)} = 1;
 
 	# 代表表記に曖昧性がある場合は全部保持する
 	# ただし表記・読みが同一の代表表記は区別しない
 	# ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
-	my $lnbuf = $line;
-	while ($line =~ /\<ALT(.+?)\>/) {
-	    $line = "$'";
-	    my $alt_cont = $1;
-	    if ($alt_cont =~ /代表表記:(.+?)(?: |\")/) {
-		my $midashi = $1;
-		$reps{&toUpperCase_utf8($midashi)} = 1;
-	    } elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
-		my $midashi = "$3/$2";
-		$reps{&toUpperCase_utf8($midashi)} = 1;
-	    }
-	}
-	$line = $lnbuf;
+# 	my $lnbuf = $line;
+# 	while ($line =~ /\<ALT(.+?)\>/) {
+# 	    $line = "$'";
+# 	    my $alt_cont = $1;
+# 	    if ($alt_cont =~ /代表表記:(.+?)(?: |\")/) {
+# 		my $midashi = $1;
+# 		$reps{&toUpperCase_utf8($midashi)} = 1;
+# 	    } elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
+# 		my $midashi = "$3/$2";
+# 		$reps{&toUpperCase_utf8($midashi)} = 1;
+# 	    }
+# 	}
+# 	$line = $lnbuf;
 
 	if ($hinshi eq '動詞') {
 	    my %new_reps;
