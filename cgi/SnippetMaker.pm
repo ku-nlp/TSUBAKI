@@ -65,15 +65,15 @@ sub isMatch {
 	    # 単語レベルで代表表記がマッチしたか
 	    my $matchW = 0;
 	    foreach my $rep (keys %{$listS->[$i + $j]}) {
-#		print $rep . " ";
+		# print $rep . " ";
 		if (exists $listQ->[$j]{$rep}) {
 		    $end = $i + $j;
 		    $matchW = 1;
-#		    print "*";
+		    # print "*";
 		    last;
 		}
 	    }
-#	    print "\n";
+	    # print "\n";
 	    # マッチしなければ（文の方の）次の単語へ
 	    unless ($matchW) {
 		$end = -1;
@@ -99,42 +99,88 @@ sub extract_sentences_from_content_for_kwic {
     my $queryString = $query->[0]{rawstring};
 
     my ($repnameList_q, $surfList_q) = &make_repname_list($query->[0]{knp_result}->all());
-    foreach my $s (@{$sfdat->getSentences()}) {
+    my $sentences = $sfdat->getSentences();
+    for (my $i = 0; $i < scalar(@$sentences); $i++) {
+	my $s = $sentences->[$i];
 	my ($repnameList_s, $surfList_s) = &make_repname_list($s->{annotation});
-
 	my ($flag, $from, $end) = &isMatch($repnameList_q, $repnameList_s);
 	if ($flag) {
 	    my $keyword;
 	    my $contextL;
 	    my $contextR;
-	    for (my $i = 0; $i < scalar(@$surfList_s); $i++) {
-		if ($i < $from) {
-		    $contextL .= $surfList_s->[$i];
+	    for (my $j = 0; $j < scalar(@$surfList_s); $j++) {
+		if ($j < $from) {
+		    $contextL .= $surfList_s->[$j];
 		}
-		elsif ($i > $end - 1) {
-		    $contextR .= $surfList_s->[$i];
+		elsif ($j > $end - 1) {
+		    $contextR .= $surfList_s->[$j];
 		}
 		else {
-		    $keyword .=  $surfList_s->[$i];
+		    $keyword .=  $surfList_s->[$j];
 		}
 	    }
-	    # 左右のコンテキストがない場合は取得しない
-	    next if ($contextL eq '' && $contextR eq '');
-
 
 	    # 左右のコンテキストを指定された幅に縮める
-	    $contextR = substr($contextR, 0, $opt->{kwic_window_size});
 
-	    my $offset = length($contextL) - $opt->{kwic_window_size};
-	    $offset = 0 if ($offset < 0);
-	    $contextL = substr($contextL, $offset, $opt->{kwic_window_size});
+	    my @contextsR;
+	    my $lengthR = length($contextR);
+	    if ($lengthR > $opt->{kwic_window_size}) {
+		push(@contextsR, substr($contextR, 0, $opt->{kwic_window_size}));
+	    } else {
+		push(@contextsR, $contextR);
+
+		# $opt->{kwic_window_size} に満たない場合は、後続の文を取得する
+		my $j = $i + 1;
+		while ($j < scalar(@$sentences)) {
+		    my $afterS = $sentences->[$j++]->{rawstring};
+		    my $length = length($afterS);
+		    if ($length + $lengthR > $opt->{kwic_window_size}) {
+			my $diff = $opt->{kwic_window_size} - $lengthR;
+			push(@contextsR, substr($afterS, 0, $diff));
+			last;
+		    } else {
+			$lengthR += $length;
+			push(@contextsR, $afterS);
+		    }
+		}
+	    }
+
+	    my @contextsL;
+	    my $lengthL = length($contextL);
+	    if ($lengthL > $opt->{kwic_window_size}) {
+		my $offset = length($contextL) - $opt->{kwic_window_size};
+		$offset = 0 if ($offset < 0);
+		push(@contextsL, substr($contextL, $offset, $opt->{kwic_window_size}));
+	    } else {
+		push(@contextsL, $contextL);
+		
+		# $opt->{kwic_window_size} に満たない場合は、前方の文を取得する
+		my $j = $i - 1;
+		while ($j > 0) {
+		    my $beforeS = $sentences->[$j]->{rawstring};
+		    $j--;
+
+		    my $length = length($beforeS);
+		    if ($length + $lengthL > $opt->{kwic_window_size}) {
+			my $diff = $opt->{kwic_window_size} - $lengthL;
+			my $offset = $length - $diff;
+			unshift(@contextsL, substr($beforeS, $offset, $diff));
+			last;
+		    } else {
+			$lengthL += $length;
+			unshift(@contextsL, $beforeS);
+		    }
+		}
+	    }
 
 	    # ソート用に逆右コンテキストを取得する
-	    my $InvertedContextL = reverse($contextL);
+	    my $InvertedContextL = reverse(join("", @contextsL));
 	    push(@sbuf, {title => $title->{rawstring},
 			 rawstring => $s->{rawstring},
-			 contextR => $contextR,
-			 contextL => $contextL,
+			 contextR => join('', @contextsR),
+			 contextL => join('', @contextsL),
+			 contextsR => \@contextsR,
+			 contextsL => \@contextsL,
 			 keyword => $keyword,
 			 InvertedContextL => $InvertedContextL
 		 });
