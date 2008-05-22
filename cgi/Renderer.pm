@@ -10,6 +10,7 @@ use POSIX qw(strftime);
 use URI::Escape;
 use XML::Writer;
 use SnippetMakerAgent;
+use CDB_File;
 
 our $CONFIG = Configure::get_instance();
 
@@ -114,7 +115,7 @@ sub makeToolTip {
 
     my $tip;
     unless (defined $this->{SYNONYM_DB}) {
-	tie %$this->{SYNONYM_DB}, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n";
+	tie %{$this->{SYNONYM_DB}}, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n";
     }
 
     foreach my $synonym (split('\|', $this->{SYNONYM_DB}{$hyouki})) {
