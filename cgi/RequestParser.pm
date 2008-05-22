@@ -19,7 +19,7 @@ sub getDefaultValues {
     my %params = ();
 
     # 環境変数のセット
-    $params{URI} = sprintf ("http://%s%s", $ENV{HTTP_X_FORWARDED_HOST}, $ENV{REQUEST_URI});
+    $params{URI} = sprintf ("%s", $ENV{REQUEST_URI});
     $params{num_of_pages_for_kwic_view} = 200;
 
     $params{start} = 0;
@@ -39,7 +39,7 @@ sub getDefaultValues {
     $params{query_verbose} = 0;
     $params{flag_of_dpnd_use} = 1;
     $params{flag_of_dist_use} = 1;
-    $params{flag_of_anchor_use} = ($call_from_API) ? 0 : 1;
+    $params{flag_of_anchor_use} = ($call_from_API) ? 1 : 1;
     $params{highlight} = ($call_from_API) ? 0 : 1;
 
     return \%params;
