@@ -126,7 +126,7 @@ sub parseText {
     my ($this, $text) = @_;
 
     my @sentences;
-    while ($text =~ m!<S[^>]+?Id="(\d+)">((.|\n)+?)</S>!g) {
+    while ($text =~ m!<S[^>]+?Id="(\d+)".*?>((.|\n)+?)</S>!g) {
 	my $sid = $1;
 	my $sentence = $2;
 	my ($rawstring) = ($sentence =~ m!<RawString>(.+?)</RawString>!);
