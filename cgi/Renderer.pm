@@ -497,8 +497,8 @@ sub printKwicView {
 	my $did = $kwics->[$i]{did};
 	my $title = $kwics->[$i]{title};
 	my $keyword = $kwics->[$i]{keyword};
-	my $contextR = $kwics->[$i]{contextR};
-	my $contextL = $kwics->[$i]{contextL};
+	my $contextR = join("<FONT color=red>|</FONT>", @{$kwics->[$i]{contextsR}});
+	my $contextL = join("<FONT color=red>|</FONT>", @{$kwics->[$i]{contextsL}});
 
 	if ($title eq '') {
 	    $title = 'no_title.';
