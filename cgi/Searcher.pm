@@ -133,6 +133,7 @@ sub merge_search_results {
 	last if ($flag < 1);
 
 	my $page = shift(@{$results->[$max]});
+	$page->{title} = decode('utf8', $page->{title}) unless (utf8::is_utf8($page->{title}));
 	my $did = sprintf("%09d", $page->{did});
 	unless ($opt->{'filter_simpages'}) {
 	    $this->add_list(\@merged_result, $page, $did, \$miss_title, \$miss_url);
@@ -169,7 +170,7 @@ sub merge_search_results {
 		    }
 
 		    # タイトルが等しくスコアが近ければ類似ページと判定
-		    if (defined $prev && $prev->{title} eq $title) {# && $title ne 'no title.') {
+		    if (defined $prev && $prev->{title} eq $title) {
 			$url2pos{$url_mod} = $pos - 1;
 			$prev->{score} = $page->{score_total};
 
@@ -223,7 +224,7 @@ sub add_list {
 sub get_title {
     my ($this, $did) = @_;
 
-    # タイトルの取得
+   # タイトルの取得
     my $did_prefix = sprintf("%03d", $did / 1000000);
     my $title = decode('utf8', $this->{titledbs}{$did_prefix}->{$did});
     unless (defined($title)) {
