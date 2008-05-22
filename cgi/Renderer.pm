@@ -488,8 +488,10 @@ sub printKwicView {
     my $link4contextL = $url . '&sort_by_CR=0';
     my $link4contextR = $url . '&sort_by_CR=1';
 
-    $output .= sprintf qq(<TR><TD>&nbsp;</TD><TD align="center"><A href="%s">コンテキストの左側でソートする</A></TD><TD>&nbsp;</TD><TD align="center"><A href="%s">コンテキストの右側でソートする</A></TD></TR>\n), $link4contextL,  $link4contextR;
-    $output .= qq(<TR><TD colspan="4"><HR style="border-top: 1px solid black;"></TD></TR>\n);
+    $output .= ($params->{sort_by_CR}) ?
+	sprintf qq(<TR><TD>&nbsp;</TD><TD align="center"><A href="%s">コンテキストの左側でソートする</A></TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n), $link4contextL :
+	sprintf qq(<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD align="center"><A href="%s">コンテキストの右側でソートする</A></TD></TR>\n), $link4contextR;
+
     for (my $i = 0; $i < scalar(@$kwics); $i++) {
 	next if (exists $buf{$kwics->[$i]{rawstring}});
 	$buf{$kwics->[$i]{rawstring}} = 1;
