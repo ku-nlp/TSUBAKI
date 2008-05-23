@@ -97,7 +97,7 @@ sub merge_docs {
 		    print "* did=$did qid=$qid tf=$tf df=$df qtf=$qtf tff=$tff length=$dlength score=$score\n" if ($this->{verbose});
 
 		    $merged_docs[$i]->{word_score} += $score * $qtf * $weight;
-		    $q2scores[$i]->{word}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf * $weight, weight => $weight};
+		    $q2scores[$i]->{word}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf * $weight, weight => $weight} if $this->{logging_query_score};
 		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if $this->{store_verbose};
 		}
 
@@ -129,7 +129,7 @@ sub merge_docs {
 				print "* qid=$dpnd_qid dist=$dist rate=$tf df=$df qtf=$qtf score=$score\n"  if ($this->{verbose});
 			    }
 
-			    $q2scores[$i]->{near}{$qid} = {dist => $dist, qtf => $qtf, df => $df, dlength => $dlength, score => $score, kakarisaki_qid => $kakarisaki_qid, DIST => $DIST};
+			    $q2scores[$i]->{near}{$qid} = {dist => $dist, qtf => $qtf, df => $df, dlength => $dlength, score => $score, kakarisaki_qid => $kakarisaki_qid, DIST => $DIST} if $this->{logging_query_score};
 			    $merged_docs[$i]->{near_score}{$dpnd_qid} = $score;
 			}
 		    }
@@ -173,7 +173,7 @@ sub merge_docs {
 		    }
 
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
-		    $q2scores[$i]->{dpnd}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
+		    $q2scores[$i]->{dpnd}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf} if $this->{logging_query_score};
 
 		    $merged_docs[$i]->{dpnd_score}{$qid} = $score * $qtf;
 		    push @{$merged_docs[$i]->{verbose}}, { qid => $qid, tf => $tf, df => $df, length => $dlength, score => $score} if ($this->{store_verbose});
@@ -208,8 +208,8 @@ sub merge_docs {
 			$score = $tff * $idf;
 		    }
 
-		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n"; # if ($this->{verbose});
-		    $q2scores[$i]->{word_anchor}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
+		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
+		    $q2scores[$i]->{word_anchor}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf} if $this->{logging_query_score};
 		    $merged_docs[$i]->{word_anchor}{$qid} = $score * $qtf;
 		}
 	    }
@@ -243,7 +243,7 @@ sub merge_docs {
 		    }
 
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
-		    $q2scores[$i]->{dpnd_anchor}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf};
+		    $q2scores[$i]->{dpnd_anchor}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf} if $this->{logging_query_score};
 		    $merged_docs[$i]->{dpnd_anchor}{$qid} = $score * $qtf;
 		}
 	    }
@@ -294,9 +294,9 @@ sub merge_docs {
 		       score_dpnd => $dpnd_score,
 		       score_dist => $dist_score,
 		       score_word_anchor => $word_anchor_score,
-		       score_dpnd_anchor => $dpnd_anchor_score,
-		       q2score => $q2scores[$i]
+		       score_dpnd_anchor => $dpnd_anchor_score
 	     });
+	$result[-1]->{q2score} = $q2scores[$i] if $this->{logging_query_score};
 
 	$result[-1]{verbose} = $e->{verbose} if $this->{store_verbose};
     }

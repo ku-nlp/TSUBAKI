@@ -56,6 +56,7 @@ sub new {
 	idxdir4anchor => $opts->{idxdir4anchor},
 	store_verbose => $opts->{store_verbose},
 	dlengthdb_hash => $opts->{dlengthdb_hash},
+	logging_query_score => $opts->{logging_query_score},
 	WEIGHT_DPND_SCORE => defined $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1,
 	show_speed => $opts->{show_speed}
     };
