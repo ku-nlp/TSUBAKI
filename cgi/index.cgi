@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -35,6 +35,9 @@ sub main {
     } else {
 	my $renderer = new Renderer(0);
 
+	binmode(STDOUT, ':utf8');
+	binmode(STDERR, ':utf8');
+
 	$params->{query} = undef if ($CONFIG->{SERVICE_STOP_FLAG});
 	unless ($params->{query}) {
 	    # TSUBAKI のトップ画面を表示
@@ -42,9 +45,6 @@ sub main {
 	}
 	# クエリが入力された場合は検索
 	else {
-	    binmode(STDOUT, ':utf8');
-	    binmode(STDERR, ':utf8');
-
 	    # LOGGERの起動
 	    my $logger = new Logger(0);
 
