@@ -206,18 +206,13 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 
 </script>
 	</head>
-	<body style="margin:0em;">
+	<body style="margin:0em 0em 0em 0em;">
 END_OF_HTML
 
     # タイトル出力
-    print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
-    print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki-wiki.ixnlp.nii.ac.jp/">TSUBAKI Wiki はこちら</A>\n);
-    print qq(</DIV>\n);
-
-    print "<TABLE><TR><TD valign=top>\n";
-    printf ("<A href=%s><IMG border=0 src=./logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
-    print "</TD><TD>";
+    print qq(<TABLE width="100%" border="0"><TR><TD valign="top" style="padding-top: 1em;">\n);
+    printf ("<A href=%s><IMG border=0 src=./logo.png></A>\n", $CONFIG->{INDEX_CGI});
+    print qq(</TD><TD valign="top" style="padding-top: 1em;">\n);
 
     # フォーム出力
     print "<FORM name=\"search\" method=\"GET\" action=\"\" enctype=\"multipart/form-data\">\n";
@@ -265,8 +260,17 @@ END_OF_HTML
     }
 
     print "</TD></TR></TABLE>\n";
-    
+   
     print "</FORM>\n";
+
+    print "</TD>\n";
+
+
+    print "<TD width=* valign=top align=right>\n";
+    print qq(<DIV style="padding-right:0.5em;">\n);
+    print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
+    print qq(</DIV>\n);
 
     print "</TD></TR></TABLE>\n";
 
@@ -304,11 +308,13 @@ END_OF_HTML
     # タイトル出力
     print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
     print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki-wiki.ixnlp.nii.ac.jp/">TSUBAKI Wiki はこちら</A>\n);
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
     print qq(</DIV>\n);
 
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
-    printf ("<A href=\"%s\"><IMG border=\"0\" src=\"./logo.png\"></A><P>\n", $CONFIG->{INDEX_CGI});
+    printf ("<A href=%s><IMG border=0 src=./logo.png></A>\n", $CONFIG->{INDEX_CGI});
+    print qq(<A href="http://tsubaki-wiki.ixnlp.nii.ac.jp/" style="font-size:smaller;">WIKIはこちら</A><P>\n);
+
     # フォーム出力
     print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
