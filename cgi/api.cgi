@@ -285,7 +285,7 @@ sub provideSearchResult {
 	printf ("%d\n", $logger->getParameter('hitcount'));
     } else {
 	# 検索結果の表示
-	my $renderer = new Renderer();
+	my $renderer = new Renderer(1);
 	if ($params->{Cache}) {
 	    foreach my $ret (@$result) {
 		$ret->{cache_location} = &get_cache_location($ret->{did}, $renderer->get_uri_escaped_query($query));
