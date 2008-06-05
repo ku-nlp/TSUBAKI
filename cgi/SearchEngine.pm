@@ -15,7 +15,7 @@ use CDB_File;
 use Configure;
 use QueryParser;
 use Cache;
-
+use State;
 
 # コンストラクタ
 # 接続先ホスト、ポート番号
@@ -65,17 +65,27 @@ sub search {
 
     my $cache = new Cache();
     my $result = $cache->load($query);
+    my $status;
     if ($result) {
 	$logger->setTimeAs('search', '%.3f');
 	$logger->setParameterAs('IS_CACHE', 1);
+	$status = 'cache';
     } else {
-	# 検索サーバーに対してクエリを投げる
-	$result = $this->broadcastSearch($query, $logger);
-	$cache->save($query, $result);
-	$logger->setParameterAs('IS_CACHE', 0);
+	# 混雑していなければ検索サーバーに対してクエリを投げる
+	my $state = new State();
+	if ($state->checkIn()) {
+	    $result = $this->broadcastSearch($query, $logger);
+	    $cache->save($query, $result);
+	    $logger->setParameterAs('IS_CACHE', 0);
+	    $state->checkOut();
+	    $status = 'search';
+	} else {
+	    # 混雑していて検索できなかった
+	    $status = 'busy';
+	}
     }
 
-    return ($result->{hitcount}, $result->{hitpages});
+    return ($result->{hitcount}, $result->{hitpages}, $status);
 }
 
 sub get_DF {
