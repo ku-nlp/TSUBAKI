@@ -109,6 +109,8 @@ sub getSentences {
 sub trim {
     my ($this, $annotation) = @_;
 
+    $annotation =~ s/S\-ID:\d+//g;
+
     my @buf = split("\n", $annotation);
     if ($this->{is_old_version}) {
 	my $line = shift @buf;
@@ -126,13 +128,24 @@ sub parseText {
     my ($this, $text) = @_;
 
     my @sentences;
-    while ($text =~ m!<S[^>]+?Id="(\d+)".*?>((.|\n)+?)</S>!g) {
-	my $sid = $1;
-	my $sentence = $2;
-	my ($rawstring) = ($sentence =~ m!<RawString>(.+?)</RawString>!);
-	my ($annotation) = ($sentence =~ m!<Annotation[^>]+>((.|\n)+?)</Annotation>!);
+    if ($this->{is_old_version}) {
+	while ($text =~ m!<S[^>]+?Id="(\d+)".*?>((.|\n)+?</Annotation>)!g) {
+	    my $sid = $1;
+	    my $sentence = $2;
+	    my ($rawstring) = ($sentence =~ m!<RawString>(.+?)</RawString>!);
+	    my ($annotation) = ($sentence =~ m!<Annotation[^>]+>((.|\n)+?)</Annotation>!);
 
-	push(@sentences, { id => $sid, rawstring => $rawstring, annotation => $this->trim($annotation) });
+	    push(@sentences, { id => $sid, rawstring => $rawstring, annotation => $this->trim($annotation) });
+	}
+    } else {
+	while ($text =~ m!<S[^>]+?Id="(\d+)".*?>((.|\n)+?)</S>!g) {
+	    my $sid = $1;
+	    my $sentence = $2;
+	    my ($rawstring) = ($sentence =~ m!<RawString>(.+?)</RawString>!);
+	    my ($annotation) = ($sentence =~ m!<Annotation[^>]+>((.|\n)+?)</Annotation>!);
+
+	    push(@sentences, { id => $sid, rawstring => $rawstring, annotation => $this->trim($annotation) });
+	}
     }
 
     return \@sentences;
@@ -142,9 +155,15 @@ sub parseMetaInfo {
     my ($this, $header, $tagname) = @_;
 
     my $item;
-    if ($header =~ m!<$tagname[^>]*?>((.|\n)+?)</$tagname>!) {
-	my $element = $1;
+    my $element;
+    if ($header =~ m!<$tagname[^>]*?>((.|\n)+?)</<$tagname>!) {
+	$element = $1;
+    }
+    elsif ($header =~ m!<$tagname[^>]*?>((.|\n)+)! && $this->{is_old_version}) {
+	$element = $1;
+    }
 
+    if ($element) {
 	my ($rawstring) = ($element =~ m!<RawString>(.+?)</RawString>!);
 	my ($annotation) = ($element =~ m!<Annotation[^>]+>((.|\n)+?)</Annotation>!);
 
