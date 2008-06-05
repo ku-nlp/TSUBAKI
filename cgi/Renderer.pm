@@ -400,43 +400,27 @@ sub get_uri_escaped_query {
 sub get_snippets {
     my ($this, $opt, $result, $query, $from, $end) = @_;
 
-    # キャッシュページで索引語をハイライトさせるため、索引語をuri_escapeした文字列を生成する
-    my $search_k;
-    foreach my $qk (@{$query->{keywords}}) {
-	my $words = $qk->{words};
-	foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @$words) {
-	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @$reps) {
-		next if ($rep->{isContentWord} < 1 && $rep->{is_phrasal_search} < 1);
-		my $string = $rep->{string};
-
-		$string =~ s/s\d+://; # SynID の削除
-		$string =~ s/\/.+$//; # 読みがなの削除
-		$search_k .= "$string:";
-	    }
-	}
-    }
-    chop($search_k);
-    my $uri_escaped_search_keys = &uri_escape(encode('utf8', $search_k));
-
-
+    my @dids = ();
     # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
     for (my $rank = $from; $rank < $end; $rank++) {
-	my $did = sprintf("%09d", $result->[$rank]{did});
-	push(@{$query->{dids}}, $did);
+	push(@dids, sprintf("%09d", $result->[$rank]{did}));
 	unless ($this->{called_from_API}) {
 	    foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
-		my $did = sprintf("%09d", $sim_page->{did});
-		push(@{$query->{dids}}, $did);
+		push(@dids, sprintf("%09d", $sim_page->{did}));
 	    }
 	}
     }
 
     my $sni_obj = new SnippetMakerAgent();
-    $sni_obj->create_snippets($query, $query->{dids}, {kwic => $opt->{kwic}, discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5, kwic_window_size => $CONFIG->{KWIC_WINDOW_SIZE}});
+    $sni_obj->create_snippets($query, \@dids, {kwic => $opt->{kwic}, discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5, kwic_window_size => $CONFIG->{KWIC_WINDOW_SIZE}});
 
     if ($opt->{kwic}) {
 	# KWICを取得
-	return $sni_obj->make_kwic_for_each_did({sort_by_contextR => $opt->{sort_by_CR}});
+	if ($this->{called_from_API}) {
+	    return $sni_obj->makeKWICForAPICall();
+	} else {
+	    return $sni_obj->makeKWICForBrowserAccess({sort_by_contextR => $opt->{sort_by_CR}});
+	}
     } else {
 	# スニペッツを取得
 	my $did2snippets =  $sni_obj->get_snippets_for_each_did($query, {highlight => $opt->{highlight}});
@@ -445,7 +429,7 @@ sub get_snippets {
 }
 
 sub printSearchResultForBrowserAccess {
-    my ($this, $params, $results, $query, $logger, $color) = @_;
+    my ($this, $params, $results, $query, $logger) = @_;
 
     ##########################
     # ロゴ、検索フォームの表示
@@ -467,7 +451,7 @@ sub printSearchResultForBrowserAccess {
     ##################################
     # KWICまたは通常版の検索結果を表示
     ##################################
-    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $color, $start, $end);
+    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end);
 
 
     ################
@@ -502,8 +486,9 @@ sub printKwicView {
 	sprintf qq(<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD align="center"><A href="%s">コンテキストの右側でソートする</A></TD></TR>\n), $link4contextR;
 
     for (my $i = 0; $i < scalar(@$kwics); $i++) {
-	next if (exists $buf{$kwics->[$i]{rawstring}});
-	$buf{$kwics->[$i]{rawstring}} = 1;
+	my $key = $kwics->[$i]{contextL} . ":" . $kwics->[$i]{rawstring} . ":" . $kwics->[$i]{contextR};
+	next if (exists $buf{$key});
+	$buf{$key} = 1;
 
 	my $did = $kwics->[$i]{did};
 	my $title = $kwics->[$i]{title};
@@ -534,7 +519,7 @@ sub printKwicView {
 
 
 sub printOrdinarySearchResult {
-    my ($this, $logger, $params, $results, $query, $color, $start, $end) = @_;
+    my ($this, $logger, $params, $results, $query, $start, $end) = @_;
 
     ############################
     # 必要ならばスニペットを生成
@@ -619,6 +604,7 @@ sub printRequestResult {
     $writer->endTag('DocInfo');
 }
 
+
 # 検索結果に含まれる１文書を出力
 sub printResult {
     my ($writer, $did, $results) = @_;
@@ -647,13 +633,7 @@ sub printSearchResultForAPICall {
 
     my $did2snippets = {};
     if ($params->{no_snippets} < 1 || $params->{Snippet} > 0) {
-	my @dids = ();
-	for (my $rank = $from; $rank < $end; $rank++) {
-	    push(@dids, sprintf("%09d", $result->[$rank]{did}));
-	}
-	my $sni_obj = new SnippetMakerAgent();
-	$sni_obj->create_snippets($query, \@dids, {discard_title => 0, syngraph => $params->{'syngraph'}, window_size => 5});
-	$did2snippets = $sni_obj->get_snippets_for_each_did($query, {highlight => $params->{highlight}});
+	$did2snippets = $this->get_snippets($params, $result, $query, $from, $end);
     }
 
     my $queryString;
@@ -727,9 +707,29 @@ sub printSearchResultForAPICall {
 	}
 
 	if ($params->{Snippet} > 0) {
-	    $writer->startTag('Snippet');
-	    $writer->characters($did2snippets->{$did});
-	    $writer->endTag('Snippet');
+	    if ($params->{kwic}) {
+		foreach my $kwic (@{$did2snippets->{$did}}) {
+		    $writer->startTag('KWIC');
+
+		    $writer->startTag('Keyword');
+		    $writer->characters($kwic->{keyword});
+		    $writer->endTag('Keyword');
+
+		    $writer->startTag('LeftContext');
+		    $writer->characters($kwic->{contextL});
+		    $writer->endTag('LeftContext');
+
+		    $writer->startTag('RightContext');
+		    $writer->characters($kwic->{contextR});
+		    $writer->endTag('RightContext');
+
+		    $writer->endTag('KWIC');
+		}
+	    } else {
+		$writer->startTag('Snippet');
+		$writer->characters($did2snippets->{$did});
+		$writer->endTag('Snippet');
+	    }
 	}
 
 	if ($params->{Cache} > 0) {
