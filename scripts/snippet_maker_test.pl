@@ -13,7 +13,7 @@ my $JUMAN_PATH = $TOOL_HOME;
 my $SYNDB_PATH = "$ENV{HOME}/cvs/SynGraph/syndb/i686";
 
 my (%opt);
-GetOptions(\%opt, 'query=s', 'z', 'syngraph', 'debug', 'encoding=s', 'discard_title', 'syndb=s', 'string_mode', 'window_size=s', 'debug', 'kwic', 'kwic_window_size=s');
+GetOptions(\%opt, 'query=s', 'z', 'syngraph', 'debug', 'encoding=s', 'discard_title', 'syndb=s', 'string_mode', 'window_size=s', 'debug', 'kwic', 'is_old_version', 'kwic_window_size=s');
 
 $SYNDB_PATH = $opt{syndb} if ($opt{syndb});
 $opt{kwic_window_size} = 5 unless ($opt{kwic_window_size});
