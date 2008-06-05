@@ -32,7 +32,12 @@ sub DESTROY {
 }
 
 sub print_search_time {
-    my ($this, $search_time, $hitcount, $params, $size, $keywords, $is_cached_data) = @_;
+    my ($this, $search_time, $hitcount, $params, $size, $keywords, $is_cached_data, $status) = @_;
+
+    if ($status eq 'busy') {
+	printf qq(<DIV style="text-align: center; color: red;">ただいま検索サーバーが混雑しています。時間をおいてから再検索して下さい。</DIV>);
+	return;
+    }
 
     $this->{q2color} = $this->print_query($keywords);
 
@@ -429,7 +434,7 @@ sub get_snippets {
 }
 
 sub printSearchResultForBrowserAccess {
-    my ($this, $params, $results, $query, $logger) = @_;
+    my ($this, $params, $results, $query, $logger, $status) = @_;
 
     ##########################
     # ロゴ、検索フォームの表示
@@ -445,7 +450,7 @@ sub printSearchResultForBrowserAccess {
     ############################
     # 検索クエリ、検索時間の表示
     ############################
-    $this->print_search_time($logger->getParameter('search') + $logger->getParameter('parse_query'), $logger->getParameter('hitcount'), $params, $size, $query->{keywords}, $logger->getParameter('IS_CACHE'));
+    $this->print_search_time($logger->getParameter('search') + $logger->getParameter('parse_query'), $logger->getParameter('hitcount'), $params, $size, $query->{keywords}, $logger->getParameter('IS_CACHE'), $status);
 
 
     ##################################
