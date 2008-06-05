@@ -1,4 +1,4 @@
-#!/share09/home/skeiji/local/bin/perl
+#!/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -55,11 +55,11 @@ sub main {
 
 	    # 検索スレーブサーバーへの問い合わせ
 	    my $searcher = new Searcher(0);
-	    my ($results, $size) = $searcher->search($query, $logger, $params);
+	    my ($results, $size, $status) = $searcher->search($query, $logger, $params);
 
 
 	    # 検索結果の表示
-	    $renderer->printSearchResultForBrowserAccess($params, $results, $query, $logger);
+	    $renderer->printSearchResultForBrowserAccess($params, $results, $query, $logger, $status);
 
 
 	    # LOGGERの終了
