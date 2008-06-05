@@ -129,7 +129,13 @@ sub select_snippets {
     return \@snippets;
 }
 
-sub make_kwic_for_each_did {
+sub makeKWICForAPICall {
+    my ($this, $opt) = @_;
+
+    return $this->{did2snippets};
+}
+
+sub makeKWICForBrowserAccess {
     my ($this, $opt) = @_;
 
     my @buf;
