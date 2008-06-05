@@ -143,6 +143,7 @@ sub parseAPIRequest {
     $params->{query_verbose} = $cgi->param('query_verbose') if (defined($cgi->param('query_verbose')));
     $params->{flag_of_anchor_use} = $cgi->param('anchor') if (defined($cgi->param('anchor')));
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
+    $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;
