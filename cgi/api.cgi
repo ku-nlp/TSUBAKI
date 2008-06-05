@@ -1,4 +1,4 @@
-#!/share09/home/skeiji/local/bin/perl
+#!/home/skeiji/local/bin/perl
 #!/usr/local/bin/perl
 #!/home/skeiji/local/bin/perl
 
@@ -286,6 +286,12 @@ sub provideSearchResult {
     } else {
 	# 検索結果の表示
 	my $renderer = new Renderer();
+	if ($params->{Cache}) {
+	    foreach my $ret (@$result) {
+		$ret->{cache_location} = &get_cache_location($ret->{did}, $renderer->get_uri_escaped_query($query));
+		$ret->{cache_size} = &get_cache_size($ret->{did});
+	    }
+	}
 	$renderer->printSearchResultForAPICall($params, $result, $query, $params->{'start'}, $size, $logger->getParameter('hitcount'));
     }
 
