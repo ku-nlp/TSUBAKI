@@ -237,3 +237,6 @@ KWIC_WINDOW_SIZE	20
 
 CACHE_DIR		/share09/home/skeiji/public_html/cgi-bin/SearchEngine-develop/cache
 
+DUMY_LOCK_FILE		/tmp/lockfile.out
+
+LOCK_FILE		/tmp/lockfile.in
