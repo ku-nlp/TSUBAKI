@@ -50,12 +50,15 @@ sub search {
 
     my $se_obj = new SearchEngine($opt->{syngraph});
     $logger->setTimeAs('create_se_obj', '%.3f');
-    my ($hitcount, $results) = $se_obj->search($query, $logger);
+    my ($hitcount, $results, $status) = $se_obj->search($query, $logger);
 
     # ヒット件数をロギング
     $logger->setParameterAs('hitcount', $hitcount);
 
-    return ([], 0) if ($hitcount < 1);
+    # 検索時のステータスをロギング
+    $logger->setParameterAs('status', $status);
+
+    return ([], 0, $status) if ($hitcount < 1);
 
 
 
@@ -80,7 +83,7 @@ sub search {
     $logger->setParameterAs('total_docs', $total_docs);
 
 
-    return ($mg_result, $size);
+    return ($mg_result, $size, $status);
 }
 
 # 検索サーバから得られた検索結果のマージ
