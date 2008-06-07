@@ -59,6 +59,7 @@ sub main {
 
 
 	    # 検索結果の表示
+	    $params->{query} =~ s/~100W$//g;
 	    $renderer->printSearchResultForBrowserAccess($params, $results, $query, $logger, $status);
 
 

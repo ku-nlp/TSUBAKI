@@ -102,6 +102,11 @@ sub parseCGIRequest {
 
     $params->{syngraph} = 1 if ($cgi->param('syngraph'));
 
+    # クエリに制約が指定されていなければ~100Wをつける
+    if ($params->{query} !~ /~/ && $params->{query} ne '') {
+	$params->{query} .= '~100W'
+    }
+
     return $params;
 }
 
