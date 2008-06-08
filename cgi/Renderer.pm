@@ -32,7 +32,7 @@ sub DESTROY {
 }
 
 sub print_search_time {
-    my ($this, $search_time, $hitcount, $params, $size, $keywords, $is_cached_data, $status) = @_;
+    my ($this, $logger, $params, $size, $keywords, $status) = @_;
 
     if ($status eq 'busy') {
 	printf qq(<DIV style="text-align: center; color: red;">ただいま検索サーバーが混雑しています。時間をおいてから再検索して下さい。</DIV>);
@@ -41,11 +41,11 @@ sub print_search_time {
 
     $this->{q2color} = $this->print_query($keywords);
 
-    if ($hitcount < 1) {
+    if ($logger->getParameter('hitcount') < 1) {
 	print ") を含む文書は見つかりませんでした。</DIV>";
     } else {
 	# ヒット件数の表示
-	print ") を含む文書が ${hitcount} 件見つかりました。\n"; 
+	print ") を含む文書が " . $logger->getParameter('hitcount') . " 件見つかりました。\n"; 
 	if ($size > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
 	    my $end = $params->{'start'} + $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
 	    $end = $size if ($end > $size);
@@ -53,12 +53,17 @@ sub print_search_time {
 	} else {
 	    print "</DIV>";
 	}
+
+	my $search_time = $logger->getParameter('search') + $logger->getParameter('parse_query') +  $logger->getParameter('snippet_creation');
 	# 検索にかかった時間を表示 (★cssに変更)
-	if ($is_cached_data) {
-	    printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f (%s)</div>\n", "検索時間", $search_time, "秒");
+	print qq(<DIV style="text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;">\n);
+	printf qq(<SPAN style="color: white;">(QP: %3.1f, DR: %3.1f, SC: %3.1f)</SPAN>\n), $logger->getParameter('parse_query'), $logger->getParameter('search'), $logger->getParameter('snippet_creation');
+	if ($logger->getParameter('IS_CACHE')) {
+	    printf("%s: %3.1f (%s)\n", "検索時間", $search_time, "秒");
 	} else {
-	    printf("<div style=\"text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;\">%s: %3.1f [%s]</div>\n", "検索時間", $search_time, "秒");
+	    printf("%s: %3.1f [%s]\n", "検索時間", $search_time, "秒");
 	}
+	print "</DIV>\n";
     }
 }
 
@@ -448,15 +453,27 @@ sub printSearchResultForBrowserAccess {
 
 
     ############################
+    # 必要ならばスニペットを生成
+    ############################
+    my $did2snippets;
+    if (!$params->{no_snippets} && !$params->{kwic}) {
+	# 検索結果（表示分）についてスニペットを生成
+	$did2snippets = $this->get_snippets($params, $results, $query, $start, $end);
+    }
+    # スニペット生成に要した時間をロギング
+    $logger->setTimeAs('snippet_creation', '%.3f');
+
+
+    ############################
     # 検索クエリ、検索時間の表示
     ############################
-    $this->print_search_time($logger->getParameter('search') + $logger->getParameter('parse_query'), $logger->getParameter('hitcount'), $params, $size, $query->{keywords}, $logger->getParameter('IS_CACHE'), $status);
+    $this->print_search_time($logger, $params, $size, $query->{keywords}, $status);
 
 
     ##################################
     # KWICまたは通常版の検索結果を表示
     ##################################
-    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end);
+    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end, $did2snippets);
 
 
     ################
@@ -524,20 +541,7 @@ sub printKwicView {
 
 
 sub printOrdinarySearchResult {
-    my ($this, $logger, $params, $results, $query, $start, $end) = @_;
-
-    ############################
-    # 必要ならばスニペットを生成
-    ############################
-    my $did2snippets;
-    unless ($params->{no_snippets}) {
-	# 検索結果（表示分）についてスニペットを生成
-	$did2snippets = $this->get_snippets($params, $results, $query, $start, $end);
-    }
-    # スニペット生成に要した時間をロギング
-    $logger->setTimeAs('snippet_creation', '%.3f');
-
-
+    my ($this, $logger, $params, $results, $query, $start, $end, $did2snippets) = @_;
 
     ################
     # 検索結果を表示
