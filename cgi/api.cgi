@@ -261,12 +261,6 @@ sub provideSearchResult {
 
     my $THIS_IS_API_CALL = 1;
 
-    # HTTPヘッダの出力
-    my $type_value = ($params->{'only_hitcount'}) ? 'text/plain' : 'text/xml';
-    print $cgi->header(-type => $type_value, -charset => 'utf-8');
-    # print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
-
-
     # LOGGERの起動
     my $logger = new Logger($THIS_IS_API_CALL);
 
@@ -277,7 +271,22 @@ sub provideSearchResult {
 
     # 検索スレーブサーバーへの問い合わせ
     my $searcher = new Searcher($THIS_IS_API_CALL);
-    my ($result, $size) = $searcher->search($query, $logger, $params);
+    my ($result, $size, $status) = $searcher->search($query, $logger, $params);
+
+
+    # 検索スレーブサーバーが込んでいた場合
+    if ($status eq 'busy') {
+	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
+	printf qq(ただいま検索サーバーが混雑しています。時間をおいてから再検索して下さい。\n);
+	exit;
+    }
+
+
+
+    # HTTPヘッダの出力
+    my $type_value = ($params->{'only_hitcount'}) ? 'text/plain' : 'text/xml';
+    print $cgi->header(-type => $type_value, -charset => 'utf-8');
+    # print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
 
 
     if ($params->{'only_hitcount'}) {
