@@ -31,7 +31,7 @@ sub DESTROY {
     }
 }
 
-sub print_search_time {
+sub printQuery {
     my ($this, $logger, $params, $size, $keywords, $status) = @_;
 
     if ($status eq 'busy') {
@@ -53,18 +53,26 @@ sub print_search_time {
 	} else {
 	    print "</DIV>";
 	}
-
-	my $search_time = $logger->getParameter('search') + $logger->getParameter('parse_query') +  $logger->getParameter('snippet_creation');
-	# 検索にかかった時間を表示 (★cssに変更)
-	print qq(<DIV style="text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;">\n);
-	printf qq(<SPAN style="color: white;">(QP: %3.1f, DR: %3.1f, SC: %3.1f)</SPAN>\n), $logger->getParameter('parse_query'), $logger->getParameter('search'), $logger->getParameter('snippet_creation');
-	if ($logger->getParameter('IS_CACHE')) {
-	    printf("%s: %3.1f (%s)\n", "検索時間", $search_time, "秒");
-	} else {
-	    printf("%s: %3.1f [%s]\n", "検索時間", $search_time, "秒");
-	}
-	print "</DIV>\n";
     }
+}
+
+sub printSearchTime {
+    my ($this, $logger, $params, $size, $keywords, $status) = @_;
+
+    return if ($status eq 'busy');
+
+
+    my $search_time = $logger->getParameter('search') + $logger->getParameter('parse_query') +  $logger->getParameter('snippet_creation');
+    # 検索にかかった時間を表示 (★cssに変更)
+    print qq(<DIV style="text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;">\n);
+    printf qq(<SPAN style="color: white;">(QP: %3.1f, DR: %3.1f, SC: %3.1f)</SPAN>\n), $logger->getParameter('parse_query'), $logger->getParameter('search'), $logger->getParameter('snippet_creation');
+
+    if ($logger->getParameter('IS_CACHE')) {
+	printf("%s: %3.1f (%s)\n", "検索時間", $search_time, "秒");
+    } else {
+	printf("%s: %3.1f [%s]\n", "検索時間", $search_time, "秒");
+    }
+    print "</DIV>\n";
 }
 
 sub printFooter {
@@ -124,6 +132,7 @@ sub makeToolTip {
     my ($this, $hyouki) = @_;
 
     my $tip;
+    my %buf;
     unless (defined $this->{SYNONYM_DB}) {
 	tie %{$this->{SYNONYM_DB}}, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n";
     }
@@ -133,11 +142,10 @@ sub makeToolTip {
 	    $synonym = $1;
 	}
 	$synonym =~ s/<[^>]+>//g;
-	$tip .= ($synonym . ",");
+	$buf{$synonym}++;
     }
-    chop($tip);
 
-    return decode('utf8', $tip);
+    return decode('utf8', join(',', sort {$a cmp $b} keys %buf));
 }
 
 
@@ -146,11 +154,41 @@ sub print_query {
 
     print qq(<DIV style="padding: 0.25em 1em; background-color:#f1f4ff;border-top: 1px solid gray;border-bottom: 1px solid gray;mergin-left:0px;">検索キーワード \();
 
+    my $synonyms;
     foreach my $qk (@{$keywords}){
 	if ($qk->{is_phrasal_search} > 0 && $qk->{sentence_flag} < 0) {
 	    printf("<b style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$qk->{rawstring}</b>");
 	} else {
 	    my $words = $qk->{words};
+
+	    my %pallette;
+	    foreach my $reps (@$words) {
+		foreach my $rep (@$reps) {
+		    next if ($rep->{isContentWord} < 1 && $qk->{is_phrasal_search} < 1);
+
+		    my $hyouki = $rep->{string};
+		    if ($hyouki =~ /s\d+:/) {
+			tie %$synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n" unless (defined $synonyms);
+
+			# print $hyouki . "<br>\n";
+			foreach my $synonym (split('\|', $synonyms->{$hyouki})) {
+			    $synonym = decode('utf8', $synonym);
+
+			    # 読みの削除
+			    $synonym = $1 if ($synonym =~ m!^([^/]+)/!);
+
+			    # 文法素性の削除
+			    $synonym =~ s/<[^>]+>//g;
+
+			    # print "$synonym $rep->{stylesheet}<br>\n";
+			    $pallette{$synonym} = $rep->{stylesheet};
+			}
+			# print "<HR>\n";
+		    }
+		}
+	    }
+
+	    my %buf;
 	    foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @$words) {
 		foreach my $rep (sort {$b->{string} cmp $a->{string}} @$reps) {
 		    next if ($rep->{isContentWord} < 1 && $qk->{is_phrasal_search} < 1);
@@ -163,7 +201,16 @@ sub print_query {
 			$hyouki =~ s/s\d+://g;
 			$hyouki = "&lt;$hyouki&gt;";
 		    }
-		    printf qq(<span title="%s" style="%s">$hyouki</span>), $tip, $rep->{stylesheet};
+
+		    if (!exists $buf{$hyouki} || $hyouki =~ /&lt;/) {
+			if (exists $pallette{$hyouki}) {
+			    $rep->{stylesheet} = $pallette{$hyouki};
+			} else {
+			    printf qq(<span title="%s" style="%s">$hyouki</span>), $tip, $rep->{stylesheet};
+			}
+
+			$buf{$hyouki} = 1;
+		    }
 		}
 	    }
 	    
@@ -191,6 +238,8 @@ sub print_query {
 # 	    }
 	}
     }
+
+    untie %$synonyms if (defined $synonyms);
 }
 
 sub print_tsubaki_interface {
@@ -452,6 +501,12 @@ sub printSearchResultForBrowserAccess {
     my $end = ($start + $CONFIG->{NUM_OF_RESULTS_PER_PAGE} > $size) ? $size : $start + $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
 
 
+    ##################
+    # 検索クエリの表示
+    ##################
+    $this->printQuery($logger, $params, $size, $query->{keywords}, $status);
+
+
     ############################
     # 必要ならばスニペットを生成
     ############################
@@ -464,10 +519,10 @@ sub printSearchResultForBrowserAccess {
     $logger->setTimeAs('snippet_creation', '%.3f');
 
 
-    ############################
-    # 検索クエリ、検索時間の表示
-    ############################
-    $this->print_search_time($logger, $params, $size, $query->{keywords}, $status);
+    ################
+    # 検索時間の表示
+    ################
+    $this->printSearchTime($logger, $params, $size, $query->{keywords}, $status);
 
 
     ##################################
