@@ -88,7 +88,7 @@ sub search {
     my $start_time = Time::HiRes::time;
     # 検索
     # 文書のスコアリング
-    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use});
+    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use}, $opt->{LOGGER});
 
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
@@ -96,7 +96,8 @@ sub search {
     }
 
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight});
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight}, $opt->{results});
+    $opt->{LOGGER}->setTimeAs('document_scoring', '%.3f');
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
@@ -216,7 +217,7 @@ sub retrieveFromBinaryData {
 }
 
 sub retrieve_documents {
-    my ($this, $query, $qid2df, $flag_of_anchor_use) = @_;
+    my ($this, $query, $qid2df, $flag_of_anchor_use, $logger) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -226,6 +227,8 @@ sub retrieve_documents {
     my $alldocs_dpnd_anchor = [];
     my $requisite_docs = undef;
     my $doc_buff = {};
+
+    $logger->clearTimer();
     # requisiteである単語を含む文書の検索
     foreach my $keyword (@{$query->{keywords}}) {
 	my $docs_word = [];
@@ -263,6 +266,7 @@ sub retrieve_documents {
 	    $requisite_docs = &serialize($docs_word);
 	}
     }
+    $logger->setTimeAs('requisite_query_search', '%.3f');
 
     ##########
     # 通常検索
@@ -270,6 +274,8 @@ sub retrieve_documents {
     foreach my $keyword (@{$query->{keywords}}) {
 	my $docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 0);
 	my $docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 1);
+	$logger->setTimeAs('normal_search', '%.3f');
+
 	my $docs_word_anchor = [];
 	my $docs_dpnd_anchor = [];
  	if ($flag_of_anchor_use) {
@@ -280,29 +286,35 @@ sub retrieve_documents {
 	    $docs_word_anchor = $this->retrieveFromBinaryData($this->{word_retriever4anchor}, $query, $qid2df, $keyword, 'words', 1);
 	    $docs_dpnd_anchor = $this->retrieveFromBinaryData($this->{dpnd_retriever4anchor}, $query, $qid2df, $keyword, 'dpnds', 1);
  	}
+	$logger->setTimeAs('anchor_search', '%.3f');
 
 	# 検索キーワードごとに検索された文書の配列へpush
 	if ($keyword->{logical_cond_qkw} eq 'AND') {
 	    # 検索キーワード中の単語間のANDをとる
 	    $docs_word = &intersect($docs_word);
+	    $logger->setTimeAs('keyword_level_and_condition', '%.3f');
 	    
 	    # 係り受け制約の適用
 	    if (scalar(@{$keyword->{dpnds}}) > 0 && $keyword->{force_dpnd} > 0) {
 		$docs_word = $this->filter_by_force_dpnd_constraint($docs_word, $docs_dpnd);
 	    }
-	    
+	    $logger->setTimeAs('force_dpnd_condition', '%.3f');
+
 
 	    # 近接制約の適用
 	    if ($keyword->{near} > 0) {
 		$docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
 	    }
+	    $logger->setTimeAs('near_condition', '%.3f');
 	}
+
 
 	# 検索語について収集された文書をマージ
 	push(@{$alldocs_word}, &serialize($docs_word));
 	push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
 	push(@{$alldocs_word_anchor}, &serialize($docs_word_anchor));
 	push(@{$alldocs_dpnd_anchor}, &serialize($docs_dpnd_anchor));
+	$logger->setTimeAs('merge_dids', '%.3f');
     }
 
     if (defined $requisite_docs) {
@@ -323,6 +335,7 @@ sub retrieve_documents {
 
 	$alldocs_word =  \@new_alldocs_word;
     }
+    $logger->setTimeAs('requisite_condition', '%.3f');
 
     # 論理条件にしたがい検索語ごとに収集された文書のマージ
     if ($query->{logical_cond_qk} eq 'AND') {
@@ -330,6 +343,7 @@ sub retrieve_documents {
     } else {
 	# 何もしなければ OR
     }
+    $logger->setTimeAs('logical_condition', '%.3f');
 
     if ($this->{show_speed}) {
 	my $finish_time = Time::HiRes::time;

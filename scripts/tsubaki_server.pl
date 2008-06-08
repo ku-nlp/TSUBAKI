@@ -20,7 +20,7 @@ use Data::Dumper;
 }
 $Data::Dumper::Useperl = 1;
 binmode(STDOUT, ':encoding(euc-jp)');
-
+use Logger;
 
 
 my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 1;
@@ -43,7 +43,6 @@ foreach my $dbf (readdir(DIR)) {
     my $fp = "$opt{dlengthdbdir}/$dbf";
     
     my $dlength_db;
-    # 小規模なテスト用にdlengthのDBをハッシュでもつオプション
     if ($opt{dlengthdb_hash}) {
 	require CDB_File;
 	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
@@ -56,7 +55,6 @@ foreach my $dbf (readdir(DIR)) {
     push(@DOC_LENGTH_DBs, $dlength_db);
 }
 closedir(DIR);
-
 
 my %TITLE_DBs = ();
 my %URL_DBs = ();
@@ -92,7 +90,6 @@ sub main {
 	exit;
     }
 
-    # 検索クエリを待つ
     while (1) {
 	my $new_socket = $listening_socket->accept();
 	my $client_sockaddr = $new_socket->peername();
@@ -109,7 +106,6 @@ sub main {
 	} else {
 	    select($new_socket); $|=1; select(STDOUT);
 
-	    # 検索クエリの受信
 	    my $buff;
 	    while (<$new_socket>) {
 		if ($_ eq "IS_ALIVE\n") {
@@ -130,7 +126,6 @@ sub main {
 	    }
 	    my $query = Storable::thaw(decode_base64($buff));
 
-	    # qid2dfの受信
 	    $buff = undef;
 	    while (<$new_socket>) {
 		last if ($_ eq "END\n");
@@ -141,15 +136,21 @@ sub main {
 	    my $factory = new TsubakiEngineFactory(\%opt);
 	    my $tsubaki = $factory->get_instance();
 
+
+	    my $logger = new Logger();
 	    my $docs = $tsubaki->search($query, $qid2df, {
 		flag_of_dpnd_use => $query->{flag_of_dpnd_use},
 		flag_of_dist_use => $query->{flag_of_dist_use},
 		flag_of_anchor_use => $query->{flag_of_anchor_use},
 		DIST => $query->{DISTANCE},
-		MIN_DLENGTH => $query->{MIN_DLENGTH}});
+		MIN_DLENGTH => $query->{MIN_DLENGTH},
+		LOGGER => $logger });
+
+	    # sending log data in a search slave server.
+	    print $new_socket encode_base64(Storable::freeze($logger), "") , "\n";
+	    print $new_socket "END_OF_LOGGER\n";
 
 	    my $hitcount = scalar(@{$docs});
-	    # 検索結果の送信
 	    if ($query->{only_hitcount}) {
 		print $new_socket encode_base64($hitcount, "") , "\n";
 		print $new_socket "END_OF_HITCOUNT\n";
