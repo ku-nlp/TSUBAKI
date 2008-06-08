@@ -469,6 +469,7 @@ sub normalize {
 	next if ($memberName eq 'words');
 	next if ($memberName eq 'dpnds');
 	next if ($memberName eq 'knp_result');
+	next if ($memberName eq 'syn_result');
 
 	push(@buf, $memberName . '=' . $this->{$memberName});
     }
