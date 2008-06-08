@@ -16,6 +16,7 @@ use Configure;
 use QueryParser;
 use Cache;
 use State;
+use Logger;
 
 # コンストラクタ
 # 接続先ホスト、ポート番号
@@ -135,10 +136,35 @@ sub broadcastSearch {
     my @results = ();
     my $total_hitcount = 0;
     my $num_of_sockets = scalar(@{$this->{hosts}});
+    my %logbuf;
     while ($num_of_sockets > 0) {
 	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
 	foreach my $socket (@{$readable_sockets}) {
 	    my $buff = undef;
+	    while (<$socket>) {
+		last if ($_ eq "END_OF_LOGGER\n");
+		$buff .= $_;
+	    }
+
+	    my $slave_logger = Storable::thaw(decode_base64($buff));
+	    foreach my $k ($slave_logger->keys()) {
+		my $v = $slave_logger->getParameter($k);
+		$logbuf{$k} += $v;
+
+		if (exists $logbuf{"max_$k"}) {
+		    $logbuf{"max_$k"} = $v if ($logbuf{"max_$k"} < $v);
+		} else {
+		    $logbuf{"max_$k"} = $v;
+		}
+
+		if (exists $logbuf{"min_$k"}) {
+		    $logbuf{"min_$k"} = $v if ($logbuf{"mix_$k"} > $v);
+		} else {
+		    $logbuf{"min_$k"} = $v;
+		}
+	    }
+
+	    $buff = undef; 
 	    while (<$socket>) {
 		last if ($_ eq "END_OF_HITCOUNT\n");
 		$buff .= $_;
@@ -164,6 +190,16 @@ sub broadcastSearch {
 	}
     }
     $logger->setTimeAs('get_result_from_server', '%.3f');
+
+    # 検索スレーブサーバー側でのログをセット
+    my $size = scalar(@results);
+    foreach my $k (keys %logbuf) {
+	if ($k =~ /^(max|min)/) {
+	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf{$k}));
+	} else {
+	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf{$k} / $size));
+	}
+    }
     
     # 検索に要した時間をロギング
     $logger->setParameterAs('search', $logger->getParameter('send_query_to_server') + $logger->getParameter('get_result_from_server'));

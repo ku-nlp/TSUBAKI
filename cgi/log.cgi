@@ -1,4 +1,4 @@
-#!/share09/home/skeiji/local/bin/perl
+#!/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -33,6 +33,16 @@ push(@attrs, 'print_result');
 push(@attrs, 'query');
 push(@attrs, 'request_results_for_slave_server');
 push(@attrs, 'search');
+push(@attrs, 'send_query_to_server');
+push(@attrs, 'get_result_from_server');
+push(@attrs, 'normal_search');
+push(@attrs, 'anchor_search');
+push(@attrs, 'keyword_level_and_condition');
+push(@attrs, 'force_dpnd_condition');
+push(@attrs, 'near_condition');
+push(@attrs, 'merge_dids');
+push(@attrs, 'logical_condition');
+push(@attrs, 'document_scoring');
 push(@attrs, 'snippet_creation');
 push(@attrs, 'total_docs');
 push(@attrs, 'total');
@@ -55,7 +65,15 @@ while (<LOG>) {
 	  next if ($k eq 'DATE' || $k eq 'ACCESS' || $k eq 'HOST');
 
 	  if (exists $vals{$k}) {
-	      $buf .= sprintf "<TD style='border: 1px solid black;' nowrap>$vals{$k}</TD>";
+	      $buf .= "<TD style='border: 1px solid black;' nowrap>$vals{$k}&nbsp;";
+	      if (exists $vals{"max_$k"}) {
+		  $buf .= qq(<SPAN style="color: red;">) . $vals{"max_$k"} . "</SPAN>\n";
+	      }
+
+	      if (exists $vals{"min_$k"}) {
+		  $buf .= qq(<SPAN style="color: blue;">) . $vals{"min_$k"} . "</SPAN>\n";
+	      }
+	      $buf .= "</TD>\n";
 	  } else {
 	      $buf .= sprintf "<TD style='border: 1px solid black;' nowrap>none.</TD>";
 	  }
