@@ -1,5 +1,7 @@
 package SnippetMaker;
 
+# $Id$
+
 use strict;
 use Encode qw(encode decode from_to);
 use utf8;
@@ -96,7 +98,10 @@ sub extract_sentences_from_content_for_kwic {
     my $sfdat = new StandardFormatData(\$content, $opt);
     my @sbuf;
     my $title = $sfdat->getTitle();
-    my $queryString = $query->[0]{rawstring};
+    my $queryString = $query->[$opt->{kwic_keyword_index}]{rawstring}; # kwic_keyword_index番目のqueryをkeywordとして用いる  (定義されていない場合は0番目、つまり初期クエリになる)
+
+    my ($repnameList_q, $surfList_q) = &make_repname_list($query->[$opt->{kwic_keyword_index}]{knp_result}->all());
+
 
     my ($repnameList_q, $surfList_q) = &make_repname_list($query->[0]{knp_result}->all());
     my $sentences = $sfdat->getSentences();
