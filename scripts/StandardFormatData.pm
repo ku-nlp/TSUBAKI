@@ -156,7 +156,7 @@ sub parseMetaInfo {
 
     my $item;
     my $element;
-    if ($header =~ m!<$tagname[^>]*?>((.|\n)+?)</<$tagname>!) {
+    if ($header =~ m!<$tagname[^>]*?>((.|\n)+?)</$tagname>!) {
 	$element = $1;
     }
     elsif ($header =~ m!<$tagname[^>]*?>((.|\n)+)! && $this->{is_old_version}) {
