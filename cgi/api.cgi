@@ -55,7 +55,7 @@ sub main {
 	my $cgi = new CGI();
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 	my $renderer = new Renderer();
-	$renderer->printRequestResult($dids, $results);
+	$renderer->printRequestResult($dids, $results, $requestItems, $opt);
     }
     # GET呼び出し
     else {
@@ -107,8 +107,8 @@ sub getRequestItems {
 	}
 
 	my $sni_obj = new SnippetMakerAgent();
-	$sni_obj->create_snippets($query_obj, $dids, {discard_title => 0, syngraph => 0, window_size => 5});
-	$did2snippets = $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}});
+	$sni_obj->create_snippets($query_obj, $dids, {discard_title => 1, syngraph => 0, window_size => 5, kwic => $opt->{kwic}, kwic_window_size => $opt->{kwic_window_size}});
+	$did2snippets = ($opt->{kwic}) ? $sni_obj->makeKWICForAPICall() : $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}});
     }
 
     my $searcher = new Searcher();
@@ -183,7 +183,7 @@ sub provideDocumentInfo {
 
     print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
     my $renderer = new Renderer();
-    $renderer->printRequestResult([$did], $results, \%requestItems);
+    $renderer->printRequestResult([$did], $results, \%requestItems, $opt);
 }
 
 

@@ -11,6 +11,7 @@ use URI::Escape;
 use XML::Writer;
 use SnippetMakerAgent;
 use CDB_File;
+use Data::Dumper;
 
 our $CONFIG = Configure::get_instance();
 
@@ -654,7 +655,7 @@ sub printOrdinarySearchResult {
 
 
 sub printRequestResult {
-    my ($this, $dids, $results, $requestItems) = @_;
+    my ($this, $dids, $results, $requestItems, $opt) = @_;
     # 出力
     my $date = `date +%m%d-%H%M%S`; chomp ($date);
     my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
@@ -663,7 +664,7 @@ sub printRequestResult {
 		      time => $date,
 		      result_items => join(':', sort {$b cmp $a} keys %$requestItems));
     foreach my $did (@$dids) {
-	&printResult($writer, $did, $results->{$did});
+	&printResult($writer, $did, $results->{$did}, $opt);
     }
     $writer->endTag('DocInfo');
 }
@@ -671,22 +672,46 @@ sub printRequestResult {
 
 # 検索結果に含まれる１文書を出力
 sub printResult {
-    my ($writer, $did, $results) = @_;
+    my ($writer, $did, $results, $opt) = @_;
 
     $writer->startTag('Result', Id => sprintf("%09d", $did));
     foreach my $itemName (sort {$b cmp $a} keys %$results) {
-	$writer->startTag($itemName);
 	if ($itemName ne 'Cache') {
-	    $writer->characters($results->{$itemName}. "\n");
+	    if ($itemName eq 'Snippet' && $opt->{kwic}) {
+		my $kwics = $results->{$itemName};
+
+		foreach my $kwic (@$kwics) {
+		    $writer->startTag('KWIC');
+
+		    $writer->startTag('Keyword');
+		    $writer->characters($kwic->{keyword});
+		    $writer->endTag('Keyword');
+
+		    $writer->startTag('LeftContext');
+		    $writer->characters($kwic->{contextL});
+		    $writer->endTag('LeftContext');
+
+		    $writer->startTag('RightContext');
+		    $writer->characters($kwic->{contextR});
+		    $writer->endTag('RightContext');
+
+		    $writer->endTag('KWIC');
+		}
+	    } else {
+		$writer->startTag($itemName);
+		$writer->characters($results->{$itemName}. "\n");
+		$writer->endTag($itemName);
+	    }
 	} else {
+	    $writer->startTag($itemName);
 	    $writer->startTag('Url');
 	    $writer->characters($results->{Cache}{URL});
 	    $writer->endTag('Url');
 	    $writer->startTag('Size');
 	    $writer->characters($results->{Cache}{Size});
 	    $writer->endTag('Size');
+	    $writer->endTag($itemName);
 	}
-	$writer->endTag($itemName);
     }
     $writer->endTag('Result');
 }

@@ -58,6 +58,9 @@ sub parsePostRequest {
     my @dids = ();
     my $query = $docinfo->getAttribute('query');
     my $highlight = $docinfo->getAttribute('highlight');
+    my $kwic = $docinfo->getAttribute('kwic');
+    my $kwic_window_size = ($docinfo->getAttribute('kwic_window_size')) ? $docinfo->getAttribute('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
+    
     my %result_items = ();
     foreach my $ri (split(':', $docinfo->getAttribute('result_items'))) {
 	$result_items{$ri} = 1;
@@ -70,7 +73,7 @@ sub parsePostRequest {
         push(@dids, $did);
     }
 
-    return ($query, \%result_items, \@dids, {highlight => $highlight});
+    return ($query, \%result_items, \@dids, {highlight => $highlight, kwic => $kwic, kwic_window_size => $kwic_window_size});
 }
 
 # cgiパラメタを取得
