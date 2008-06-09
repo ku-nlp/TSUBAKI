@@ -102,8 +102,6 @@ sub extract_sentences_from_content_for_kwic {
 
     my ($repnameList_q, $surfList_q) = &make_repname_list($query->[$opt->{kwic_keyword_index}]{knp_result}->all());
 
-
-    my ($repnameList_q, $surfList_q) = &make_repname_list($query->[0]{knp_result}->all());
     my $sentences = $sfdat->getSentences();
     for (my $i = 0; $i < scalar(@$sentences); $i++) {
 	my $s = $sentences->[$i];
