@@ -152,6 +152,7 @@ sub parseAPIRequest {
     $params->{flag_of_anchor_use} = $cgi->param('anchor') if (defined($cgi->param('anchor')));
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
+    $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;

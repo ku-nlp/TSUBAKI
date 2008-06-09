@@ -472,7 +472,7 @@ sub get_snippets {
     }
 
     my $sni_obj = new SnippetMakerAgent();
-    $sni_obj->create_snippets($query, \@dids, {kwic => $opt->{kwic}, discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5, kwic_window_size => $CONFIG->{KWIC_WINDOW_SIZE}});
+    $sni_obj->create_snippets($query, \@dids, {kwic => $opt->{kwic}, discard_title => 1, syngraph => $opt->{'syngraph'}, window_size => 5, kwic_window_size => $opt->{kwic_window_size}});
 
     if ($opt->{kwic}) {
 	# KWICを取得
