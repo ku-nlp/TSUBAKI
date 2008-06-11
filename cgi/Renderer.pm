@@ -43,17 +43,16 @@ sub printQuery {
     $this->{q2color} = $this->print_query($keywords);
 
     if ($logger->getParameter('hitcount') < 1) {
-	print ") を含む文書は見つかりませんでした。</DIV>";
+	print " を含む文書は見つかりませんでした。\n";
     } else {
 	# ヒット件数の表示
-	print ") を含む文書が " . $logger->getParameter('hitcount') . " 件見つかりました。\n"; 
+	print " を含む文書 " . $logger->getParameter('hitcount') . " 件\n"; 
 	if ($size > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
 	    my $end = $params->{'start'} + $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
 	    $end = $size if ($end > $size);
-	    printf("スコアの上位%d件目から%d件目までを表示しています。<BR></DIV>", $params->{'start'} + 1, $end);
-	} else {
-	    print "</DIV>";
+	    printf("のうち %d 件目から %d 件目\n", $params->{'start'} + 1, $end);
 	}
+	print "</TD>\n";
     }
 }
 
@@ -62,18 +61,18 @@ sub printSearchTime {
 
     return if ($status eq 'busy');
 
-
     my $search_time = $logger->getParameter('search') + $logger->getParameter('parse_query') +  $logger->getParameter('snippet_creation');
     # 検索にかかった時間を表示 (★cssに変更)
-    print qq(<DIV style="text-align:right;background-color:white;border-bottom: 0px solid gray;mergin-bottom:2em;">\n);
-    printf qq(<SPAN style="color: white;">(QP: %3.1f, DR: %3.1f, SC: %3.1f)</SPAN>\n), $logger->getParameter('parse_query'), $logger->getParameter('search'), $logger->getParameter('snippet_creation');
+    print qq(<TD width="400" style="text-align: right; font-size: small; background-color:#f1f4ff; mergin-left:0px;">\n);
+    printf qq(<SPAN style="padding: 0.25em 0em; color: #f1f4ff;">(QP: %3.1f, DR: %3.1f, SC: %3.1f)</SPAN>\n), $logger->getParameter('parse_query'), $logger->getParameter('search'), $logger->getParameter('snippet_creation');
 
     if ($logger->getParameter('IS_CACHE')) {
 	printf("%s: %3.1f (%s)\n", "検索時間", $search_time, "秒");
     } else {
 	printf("%s: %3.1f [%s]\n", "検索時間", $search_time, "秒");
     }
-    print "</DIV>\n";
+#    print "</DIV>\n";
+    print "</TD></TR></TABLE>\n";
 }
 
 sub printFooter {
@@ -149,8 +148,18 @@ sub makeToolTip {
     return decode('utf8', join(',', sort {$a cmp $b} keys %buf));
 }
 
-
 sub print_query {
+    my($this, $keywords) = @_;
+
+    print qq(<TABLE width="100%" border="0" style="background-color:#f1f4ff;padding: 0.1em 0em; mergin: 0.15em 0em;"><TR><TD width="*" style="font-size: small; padding: 0.25em 1em; background-color:#f1f4ff;">\n);
+    my @buf;
+    foreach my $kwd (@$keywords) {
+	push(@buf, sprintf ("<B>%s</B>", $kwd->{rawstring}));
+    }
+    print join('&nbsp;', @buf);
+}
+
+sub print_query_verbose {
     my($this, $keywords) = @_;
 
     print qq(<DIV style="padding: 0.25em 1em; background-color:#f1f4ff;border-top: 1px solid gray;border-bottom: 1px solid gray;mergin-left:0px;">検索キーワード \();

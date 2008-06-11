@@ -23,7 +23,7 @@ A.title{
 
 .snippet{
 	width: 90%;
-	font-size:small;
+	font-size: small;
 	margin: 0.5em 1em;
 	padding: 0px 0px 0px 1em;
 }
@@ -37,10 +37,9 @@ A.title{
 
 DIV.pagenavi{
 	background-color:#f1f4ff;
-	border-top: 1px solid gray;
-	border-bottom: 1px solid gray;
 	padding: 1em 0em;
 	text-align: center;
+	font-size: small
 }
 
 DIV.footer{
