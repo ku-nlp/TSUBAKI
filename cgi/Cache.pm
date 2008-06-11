@@ -46,6 +46,14 @@ sub save {
     close(WRITER);
 }
 
+sub exists {
+    my ($this, $query) = @_;
+
+    my $normalizedQuery = $query->normalize();
+
+    return exists $this->{cachedData}{$normalizedQuery};
+}
+
 sub load {
     my ($this, $query) = @_;
 
