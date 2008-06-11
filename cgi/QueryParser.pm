@@ -205,11 +205,11 @@ sub parse {
 		} else {
 		    my $foreground = ($count > 4) ? 'white' : 'black';
 		    my $background = $CONFIG->{HIGHLIGHT_COLOR}[$count];
-		    $count = (++$count % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
 		    $rep->{stylesheet} = sprintf "background-color: %s; color: %s; margin:0.1em 0.25em;", $background, $foreground;
 		    $styleBuf{$rep->{string}} = $rep->{stylesheet};
 		}
 	    }
+	    $count = (++$count % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
 	}
 
 	foreach my $reps (@{$qk->{dpnds}}) {
