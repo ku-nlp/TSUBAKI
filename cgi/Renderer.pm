@@ -46,7 +46,10 @@ sub printQuery {
 	print " を含む文書は見つかりませんでした。\n";
     } else {
 	# ヒット件数の表示
-	print " を含む文書 " . $logger->getParameter('hitcount') . " 件\n"; 
+	my $hitcount = $logger->getParameter('hitcount');
+	while ($hitcount =~ s/(.*\d)(\d\d\d)/$1,$2/){};
+
+	print " を含む文書 $hitcount 件\n"; 
 	if ($size > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
 	    my $end = $params->{'start'} + $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
 	    $end = $size if ($end > $size);
