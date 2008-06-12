@@ -1,4 +1,6 @@
 # 1行1ポート, 「#」から始まる行は無視される
-/work/skeiji/dat/1 /work/skeiji/dat/dat1a 35001
-/work/skeiji/dat/2 /work/skeiji/dat/dat2a 35002
+/data/skeiji/idx_syn/dat1 /data/skeiji/idx_syn/dat1a 50015
+/data/skeiji/idx_syn/dat2 /data/skeiji/idx_syn/dat2a 50016
+/data/skeiji/idx_syn/dat3 /data/skeiji/idx_syn/dat3a 50017
+/data/skeiji/idx_syn/dat4 /data/skeiji/idx_syn/dat4a 50018
 
