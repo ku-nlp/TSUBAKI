@@ -87,7 +87,8 @@ sub printFooter {
 	my $last_page_flag = 0;
 	if ($hitcount >= $params->{'results'}) {
 	    print "<DIV class='pagenavi'>検索結果ページ：";
-	    for (my $i = 0; $i < $CONFIG->{'NUM_OF_SEARCH_RESULTS'} / $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}; $i++) {
+	    my $num_of_search_results = ($CONFIG->{'NUM_OF_SEARCH_RESULTS'} > $CONFIG->{'NUM_OF_PROVIDE_SEARCH_RESULTS'}) ? $CONFIG->{'NUM_OF_PROVIDE_SEARCH_RESULTS'} : $CONFIG->{'NUM_OF_SEARCH_RESULTS'};
+	    for (my $i = 0; $i < $num_of_search_results / $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}; $i++) {
 		my $offset = $i * $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
 		if ($size < $offset) {
 		    last;
