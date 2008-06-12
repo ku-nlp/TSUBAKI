@@ -1,0 +1,4 @@
+# 1行1ポート, 「#」から始まる行は無視される
+/work/skeiji/dat/1 /work/skeiji/dat/dat1a 35001
+/work/skeiji/dat/2 /work/skeiji/dat/dat2a 35002
+
