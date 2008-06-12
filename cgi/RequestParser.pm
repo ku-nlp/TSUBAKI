@@ -213,7 +213,7 @@ sub parseQuery {
 
     # クエリの解析
     # logical_cond_qk: クエリ間の論理演算
-    my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}, near => $params->{near}});
+    my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}, near => $params->{near}, trimming => 1 });
 
     # 取得ページ数のセット
     $query->{results} = $params->{results};

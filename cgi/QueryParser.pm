@@ -268,6 +268,10 @@ sub parse {
     # 以下はクエリ処理（削除、重み付け）
     ###########################################
 
+    $this->set_discarded_flag_to_bunmatsu_only(\@qks);
+    $this->query_trim(\@qks);
+
+
     my %gid2weight = ();
     unless ($this->{OPTIONS}{trimming}) {
 	foreach my $qk (@qks) {
@@ -671,9 +675,9 @@ sub trim {
 
 
 sub query_trim {
-    my ($this, $query) = @_;
+    my ($this, $keywords) = @_;
 
-    foreach my $qk (@{$query->{keywords}}) {
+    foreach my $qk (@$keywords) {
 	my @new_words = ();
 	foreach my $reps (@{$qk->{words}}) {
 	    my $flag = 1;
