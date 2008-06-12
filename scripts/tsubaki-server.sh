@@ -6,34 +6,39 @@ HOSTS_PREFIX=
 HOSTS_START=
 HOSTS_END=
 
+SUFFIX=
+
 # NICT
 if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    HOSTS_PREFIX=iccc
-    HOSTS_START=011
-    HOSTS_END=036
+    HOSTS_PREFIX=iccc0
+    HOSTS_START=11
+    HOSTS_END=36
+    TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine-develop
+    SUFFIX=.NICT
 else
     HOSTS_PREFIX=nlpc
     HOSTS_START=33
     HOSTS_END=59
+    TSUBAKI_DIR=$HOME/tsubaki-develop/SearchEngine
 fi
 
-TSUBAKI_DIR=$HOME/tsubaki-develop/SearchEngine
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 CGI_DIR=$TSUBAKI_DIR/cgi
 COMMAND=tsubaki_server.pl
 NICE=-4
-PERL=/home/skeiji/local/bin/perl
+PERL=$HOME/local/bin/perl
 
 # SYNGRAPH検索かどうかのチェック
 if [ $1 = "-syn" ];
 then
-    PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN
+    PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN$SUFFIX
     USE_OF_SYNGRAPH="-syngraph"
     shift
 else
-    PORTSFILE=$TSUBAKI_DIR/data/PORTS.ORD
+    PORTSFILE=$TSUBAKI_DIR/data/PORTS.ORD$SUFFIX
     USE_OF_SYNGRAPH=
 fi
+
 
 
 start() {
