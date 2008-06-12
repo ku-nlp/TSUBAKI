@@ -165,7 +165,7 @@ sub broadcastSearch {
 		    }
 		}
 	    } else {
-		print "<EM>検索スレーブ側のログデータを受信できませんでした。<EM><BR>\n";
+		print "<EM>検索スレーブ側のログデータを受信できませんでした。</EM><BR>\n";
 	    }
 
 	    $buff = undef; 
