@@ -100,6 +100,7 @@ sub parseCGIRequest {
     $params->{sort_by_CR} = $cgi->param('sort_by_CR') if (defined($cgi->param('sort_by_CR')));
     $params->{num_of_pages_for_kwic_view} = $cgi->param('num_of_pages_for_kwic_view') if (defined($cgi->param('num_of_pages_for_kwic_view')));
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
+    $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
 
     &normalize_logical_operator($params);
 
