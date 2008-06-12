@@ -146,22 +146,26 @@ sub broadcastSearch {
 		$buff .= $_;
 	    }
 
-	    my $slave_logger = Storable::thaw(decode_base64($buff));
-	    foreach my $k ($slave_logger->keys()) {
-		my $v = $slave_logger->getParameter($k);
-		$logbuf{$k} += $v;
+	    if (defined $buff) {
+		my $slave_logger = Storable::thaw(decode_base64($buff));
+		foreach my $k ($slave_logger->keys()) {
+		    my $v = $slave_logger->getParameter($k);
+		    $logbuf{$k} += $v;
 
-		if (exists $logbuf{"max_$k"}) {
-		    $logbuf{"max_$k"} = $v if ($logbuf{"max_$k"} < $v);
-		} else {
-		    $logbuf{"max_$k"} = $v;
-		}
+		    if (exists $logbuf{"max_$k"}) {
+			$logbuf{"max_$k"} = $v if ($logbuf{"max_$k"} < $v);
+		    } else {
+			$logbuf{"max_$k"} = $v;
+		    }
 
-		if (exists $logbuf{"min_$k"}) {
-		    $logbuf{"min_$k"} = $v if ($logbuf{"mix_$k"} > $v);
-		} else {
-		    $logbuf{"min_$k"} = $v;
+		    if (exists $logbuf{"min_$k"}) {
+			$logbuf{"min_$k"} = $v if ($logbuf{"mix_$k"} > $v);
+		    } else {
+			$logbuf{"min_$k"} = $v;
+		    }
 		}
+	    } else {
+		print "<EM>検索スレーブ側のログデータを受信できませんでした。<EM><BR>\n";
 	    }
 
 	    $buff = undef; 
