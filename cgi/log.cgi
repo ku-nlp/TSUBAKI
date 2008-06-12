@@ -26,8 +26,8 @@ push(@attrs, 'IS_CACHE');
 push(@attrs, 'create_se_obj');
 push(@attrs, 'hitcount');
 push(@attrs, 'merge');
-push(@attrs, 'miss_title');
-push(@attrs, 'miss_url');
+# push(@attrs, 'miss_title');
+# push(@attrs, 'miss_url');
 push(@attrs, 'parse_query');
 push(@attrs, 'print_result');
 push(@attrs, 'query');
@@ -89,6 +89,7 @@ print "<HR>";
 print "<TABLE style='border: 1px solid black;' width=*>";
 print "<TR>";
 foreach my $attr (@attrs) {
+    $attr =~ s/_/ /g;
     print "<TD style='border: 1px solid black;'>$attr</TD>";
 }
 print "</TR>\n";
