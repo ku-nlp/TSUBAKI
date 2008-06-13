@@ -12,18 +12,22 @@ use Time::HiRes;
 use Data::Dumper;
 use CDB_File;
 use Configure;
+use RequestParser;
+use Logger;
 
 binmode(STDOUT, ':encoding(euc-jp)');
 binmode(STDERR, ':encoding(euc-jp)');
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s');
 
 if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
     print "$0 -idxdir idxdir_path -dfdbdir dfdbdir_path -dlengthdbdir doc_lengthdb_dir_path -query QUERY\n";
     exit;
 }
+
+$opt{results} = 10000 unless ($opt{results});
 
 my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
@@ -59,33 +63,42 @@ my $CONFIG = Configure::get_instance();
 sub main {
     # &init();
 
-    my $DFDB_DIR = ($opt{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
-    my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR, verbose => $opt{verbose} });
+    my $logger = new Logger();
+    my $params = RequestParser::getDefaultValues(0);
+
+    $params->{query} = decode('euc-jp', $opt{query});
+    $params->{syngraph} = $opt{syngraph};
+    $params->{verbose} = $opt{verbose};
 
     # logical_cond_qk : クエリ間の論理演算
-    my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
+    # my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
+    my $query = RequestParser::parseQuery($params, $logger);
 
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
+	# print Dumper($qk) . "\n";
 	print $qk->to_string_verbose() . "\n";
 	print "*************\n";
     }
 
     my $factory = new TsubakiEngineFactory(\%opt);
     my $tsubaki = $factory->get_instance();
-
-    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, DIST => 30, verbose => $opt{verbose}});
+    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, flag_of_anchor_use => 1, DIST => 30, verbose => $opt{verbose}, results => $opt{results}, LOGGER => $logger});
 
     my $hitcount = scalar(@{$docs});
 
-    for (my $rank = 0; $rank < scalar(@{$docs}); $rank++) {
+    $opt{results} = ($hitcount < $opt{results}) ? $hitcount :$opt{results};
+    print $opt{results} . "\n";
+    for (my $rank = 0; $rank < $opt{results}; $rank++) {
 	my $did = sprintf("%09d", $docs->[$rank]{did});
 	my $score = $docs->[$rank]{score_total};
 	my $score_w = $docs->[$rank]{score_word};
 	my $score_d = $docs->[$rank]{score_dpnd};
 	my $score_n = $docs->[$rank]{score_dist};
+	my $score_aw = $docs->[$rank]{score_word_anchor};
+	my $score_ad = $docs->[$rank]{score_dpnd_anchor};
 
-	printf("rank=%d did=%s score=%.3f (w=%.3f d=%.3f n=%.3f)\n", $rank + 1, $did, $score, $score_w, $score_d, $score_n);
+	printf("rank=%d did=%s score=%.3f (w=%.3f d=%.3f n=%.3f aw=%.3f ad=%.3f)\n", $rank + 1, $did, $score, $score_w, $score_d, $score_n, $score_aw, $score_ad);
     }
     print "hitcount=$hitcount\n";
 }
