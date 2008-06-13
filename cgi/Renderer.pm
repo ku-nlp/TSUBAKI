@@ -53,7 +53,7 @@ sub printQuery {
 	if ($size > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
 	    my $end = $params->{'start'} + $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
 	    $end = $size if ($end > $size);
-	    printf("のうち %d 件目から %d 件目\n", $params->{'start'} + 1, $end);
+	    printf("のうち %d - %d 件目\n", $params->{'start'} + 1, $end);
 	}
 	print "</TD>\n";
     }
@@ -285,7 +285,7 @@ END_OF_HTML
     print qq(<DIV style="width: 100%; text-align: right; padding:0.5em 0.5em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A>\n);
+    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A>\n);
     print qq(</DIV>\n);
 
 
@@ -380,7 +380,7 @@ END_OF_HTML
     print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
+    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
     print qq(</DIV>\n);
 
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
