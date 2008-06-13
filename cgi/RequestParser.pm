@@ -206,7 +206,7 @@ sub parseQuery {
     my ($params, $logger) = @_;
 
     # クエリのログをとる
-    $logger->setParameterAs('query', $params->{query});
+    $logger->setParameterAs('query', $params->{query}) if ($logger);
 
     my $DFDB_DIR = ($params->{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
     my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR });
@@ -229,7 +229,7 @@ sub parseQuery {
     my $alpha = ($query->{results} > 5000) ? 1.5 : 30 * ($query->{results}**(-0.34));
     my $M = $query->{results} / $N;
     $query->{results} = int(1 + $M * $alpha);
-    $logger->setParameterAs('request_results_for_slave_server', $query->{results});
+    $logger->setParameterAs('request_results_for_slave_server', $query->{results}) if ($logger);
 
     # 係り受けと近接のスコアを考慮するようにする
     $query->{flag_of_dpnd_use} = $params->{flag_of_dpnd_use};
@@ -249,7 +249,7 @@ sub parseQuery {
     }
 
     # クエリ解析時間のログをとる
-    $logger->setTimeAs('parse_query', '%.3f');
+    $logger->setTimeAs('parse_query', '%.3f') if ($logger);
 
     return $query;
 }
