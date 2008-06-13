@@ -123,13 +123,13 @@ sub parse {
 	# 近接検索かどうかの判定
 	if ($q_str =~ /^(.+)?~(.+)$/){
 	    # 同義表現を考慮した場合は近接制約を指定できない
-	    if ($opt->{syngraph} > 0) {
-		print "<center>同義表現を考慮した近接検索は実行できません。</center></DIV>\n";
-		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
-		print "</body>\n";
-		print "</html>\n";
-		exit;
-	    }
+# 	    if ($opt->{syngraph} > 0) {
+# 		print "<center>同義表現を考慮した近接検索は実行できません。</center></DIV>\n";
+# 		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
+# 		print "</body>\n";
+# 		print "</html>\n";
+# 		exit;
+# 	    }
 
 	    $q_str = $1;
 	    # 検索制約の取得
