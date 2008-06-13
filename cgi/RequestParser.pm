@@ -101,6 +101,7 @@ sub parseCGIRequest {
     $params->{num_of_pages_for_kwic_view} = $cgi->param('num_of_pages_for_kwic_view') if (defined($cgi->param('num_of_pages_for_kwic_view')));
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
+    $params->{from_portal} = $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
 
     &normalize_logical_operator($params);
 

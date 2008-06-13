@@ -282,11 +282,11 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 	<body style="padding: 0em; margin:0em;">
 END_OF_HTML
 
-    print qq(<DIV style="width: 100%; text-align: right; padding:0.5em 0.5em 0em 0em;">\n);
+    # print qq(<DIV style="width: 100%; text-align: right; padding:0.5em 0.5em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A>\n);
-    print qq(</DIV>\n);
+    # print qq(</DIV>\n);
 
 
     # タイトル出力
@@ -377,11 +377,11 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 END_OF_HTML
 
     # タイトル出力
-    print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
+    # print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
-    print qq(</DIV>\n);
+    # print qq(</DIV>\n);
 
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
     printf ("<A href=%s><IMG border=0 src=./logo.png></A>\n", $CONFIG->{INDEX_CGI});
@@ -621,31 +621,39 @@ sub printOrdinarySearchResult {
 
 	$score = sprintf("%.4f", $score);
 
-	my $output = "<DIV class=\"result\">";
-	$output .= "<SPAN class=\"rank\">" . ($rank + 1) . "</SPAN>";
-	$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+	my $output = qq(<DIV class="result">);
+
+	$output .= qq(<TABLE cellpadding="0" border="0"><TR><TD>\n);
+	$output .= qq(<SPAN class="rank">) . ($rank + 1) . "</SPAN>";
+	$output .= qq(</TD>\n);
+
+	$output .= qq(<TD>\n);
+	$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq( target="_blank" class="ex">);
 	$output .= $title . "</a>";
 
 	if ($params->{from_portal}) {
-	    $output .= qq(<SPAN class="meta">id=$did, score=$score</DIV>\n);
+	    $output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN>\n);
 	}
+	$output .= qq(</TD></TR>\n);
 
+	$output .= qq(<TR><TD></TD>\n);
 
+	$output .= qq(<TD>\n);
 	my $num_of_sim_pages = 0;
 	$num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
 	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
 	    my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
 	    my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
 	    if ($params->{from_portal}) {
-		$output .= "<DIV class=\"meta\"><A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n";
+		$output .= qq(<DIV class="meta"><A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');">$open_label</A> </DIV>\n);
 	    } else {
-		$output .= "<DIV class=\"meta\">id=$did, score=$score, <A href=\"javascript:void(0);\" onclick=\"toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');\">$open_label</A> </DIV>\n";
+		$output .= qq(<DIV class="meta">id=$did, score=$score, <A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');">$open_label</A></DIV>\n);
 	    }
 	} else {
-	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n"  unless ($params->{from_portal});
+	    $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n) unless ($params->{from_portal});
 	}
-	$output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
-	$output .= "<A class=\"cache\" href=\"$results->[$rank]{url}\" target=\"_blank\">$results->[$rank]{url}</A>\n";
+	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
+	$output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
 	$output .= "</DIV>";
 
 	$output .= "<DIV id=\"simpages_$rank\" style=\"display: none;\">";
@@ -660,11 +668,16 @@ sub printOrdinarySearchResult {
 	    $output .= "<DIV class=\"similar\">";
 	    $output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
 	    $output .= $sim_page->{title} . "</a>";
-	    $output .= "<DIV class=\"meta\">id=$did, score=$score</DIV>\n";
-	    $output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
+	    if ($params->{from_portal}) {
+		$output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN><BR>\n);
+	    } else {
+		$output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
+	    }
+	    # $output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
 	    $output .= "<A class=\"cache\" href=\"$sim_page->{url}\">$sim_page->{url}</A>\n";
 	    $output .= "</DIV>";
 	}
+	$output .= qq(</TD></TR></TABLE>\n);
 	$output .= "</DIV>\n";
 
 	# 1 ページ分の結果を表示
