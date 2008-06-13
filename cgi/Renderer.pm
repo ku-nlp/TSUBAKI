@@ -66,7 +66,7 @@ sub printSearchTime {
 
     my $search_time = $logger->getParameter('search') + $logger->getParameter('parse_query') +  $logger->getParameter('snippet_creation');
     # 検索にかかった時間を表示 (★cssに変更)
-    print qq(<TD width="400" style="text-align: right; font-size: small; background-color:#f1f4ff; mergin-left:0px;">\n);
+    print qq(<TD width="400" style="text-align: right; background-color:#f1f4ff; mergin-left:0px;">\n);
     printf qq(<SPAN style="padding: 0.25em 0em; color: #f1f4ff;">(QP: %3.1f, DR: %3.1f, SC: %3.1f)</SPAN>\n), $logger->getParameter('parse_query'), $logger->getParameter('search'), $logger->getParameter('snippet_creation');
 
     if ($logger->getParameter('IS_CACHE')) {
@@ -155,7 +155,7 @@ sub makeToolTip {
 sub print_query {
     my($this, $keywords) = @_;
 
-    print qq(<TABLE width="100%" border="0" style="background-color:#f1f4ff;padding: 0.1em 0em; mergin: 0.15em 0em;"><TR><TD width="*" style="font-size: small; padding: 0.25em 1em; background-color:#f1f4ff;">\n);
+    print qq(<TABLE width="100%" border="0" class="querynavi"><TR><TD width="*" style="padding: 0.25em 1em; background-color:#f1f4ff;">\n);
     my @buf;
     foreach my $kwd (@$keywords) {
 	push(@buf, sprintf ("<B>%s</B>", $kwd->{rawstring}));
@@ -263,9 +263,16 @@ sub print_tsubaki_interface {
 	<head>
 	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="./se.css">
+	<link rel="stylesheet" type="text/css" href="./tsubaki.common.css">
 	<script language="JavaScript">
-
+	var regexp = new RegExp("Gecko");
+    if (navigator.userAgent.match(regexp)) {
+	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.gecko.css'>");
+    } else {
+	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.ie.css'>");
+    }
+	</script>
+	<script language="JavaScript">
 function toggle_simpage_view (id, obj, open_label, close_label) {
     var disp = document.getElementById(id).style.display;
     if (disp == "block") {
@@ -357,9 +364,16 @@ sub print_tsubaki_interface_init {
 	<head>
 	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="./se.css">
+	<link rel="stylesheet" type="text/css" href="./tsubaki.common.css">
 	<script language="JavaScript">
-
+	var regexp = new RegExp("Gecko");
+    if (navigator.userAgent.match(regexp)) {
+	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.gecko.css'>");
+    } else {
+	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.ie.css'>");
+    }
+	</script>
+	<script language="JavaScript">
 function toggle_simpage_view (id, obj, open_label, close_label) {
     var disp = document.getElementById(id).style.display;
     if (disp == "block") {
