@@ -32,6 +32,11 @@ sub new {
     # DAT ファイルから係り受けを含む文書を検索する retriever オブジェクトをセットする
     $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, 1, $opts->{show_speed});
 
+    # 検索にアンカーテキストを考慮する
+    print $opts->{idxdir4anchor} . "\n";
+    $obj->{word_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'word', 1, $opts->{verbose}, $opts->{show_speed});
+    $obj->{dpnd_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
+
     bless $obj;
 }
 
@@ -39,7 +44,7 @@ sub new {
 sub DESTROY {}
 
 # インデックスファイルから単語を含む文書の検索
-sub retrieve_from_dat {
+sub retrieve_from_dat2 {
     my ($this, $retriever, $reps, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag, $opt) = @_;
 
     my $start_time = Time::HiRes::time;
@@ -58,11 +63,19 @@ sub retrieve_from_dat {
 	$results[$i] = $retriever->search_syngraph_test_for_new_format($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
 	print scalar(@{$results[$i]}) . " " . $rep->{string} . " OR\n" if ($opt->{verbose});
 
+	if ($this->{verbose}) {
+	    print "qid=" . $rep->{qid} . " ";
+	    foreach my $d (@{$results[$i]}) {
+		print $d->[0] . " ";
+	    }
+	    print "\n";
+	}
+
 	$idx2qid{$i} = $rep->{qid};
     }
 
     my $ret = $this->merge_search_result(\@results, \%idx2qid);
-
+    
     print scalar(@$ret) . " merged.\n"  if ($opt->{verbose});
     print "----------\n"  if ($opt->{verbose});
 
@@ -77,7 +90,7 @@ sub retrieve_from_dat {
 
 # 文書のスコアリング
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -579,11 +592,13 @@ sub merge_search_result {
 	    my $offset_pos = $d->[3];
 	    my $offset_score = $d->[4];
 
-# 	    print $size . "\n";
-# 	    print $fnum . "\n";
-# 	    print $offset_pos . "\n";
-# 	    print $offset_score . "\n";
-# 	    print "-----\n";
+	    if ($this->{verbose}) {
+		print "num_of_positions = $size\n";
+		print "index_file_ID    = $fnum\n";
+		print "offset_of_offset = $offset_pos\n";
+		print "offset_of_score  = $offset_score\n";
+		print "-----\n";
+	    }
 
 	    if (exists($did2pos{$did})) {
 		my $j = $did2pos{$did};
@@ -596,6 +611,8 @@ sub merge_search_result {
 	    }
 	}
     }
+    # ★このソートは無駄★
+    # 上の処理でpushする際に適切な位置に挿入できればよい
     @{$serialized_docs} = sort {$a->{did} <=> $b->{did}} @{$serialized_docs};
 
     my $finish_time = Time::HiRes::time;
