@@ -1,0 +1,33 @@
+DIV.similar{
+	margin: 0.25em 1.5em;
+}
+
+DIV.result{
+	margin: 0.5em 1em;
+}
+
+SPAN.rank{
+	color: black;
+	margin-right:0.25em;
+}
+
+A.title{
+
+}
+
+.cache, .orig_url{
+	color: green;
+	text-decoration: none;
+}
+
+DIV.footer{
+	padding: 1em 0em;
+	font-weight: 700;
+	text-align: center;
+}
+
+DIV.bottom_message{
+	padding: 1em 0em;
+	text-align: center;
+	color: red;
+}

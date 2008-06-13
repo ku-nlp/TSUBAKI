@@ -1,0 +1,24 @@
+.snippet{
+	width: 90%;
+	font-size: x-small;
+	margin: 0.25em 0em 0.25em 0em;
+}
+
+DIV.meta{
+	color: silver;
+	font-size: x-small;
+}
+
+
+DIV.pagenavi{
+	background-color:#f1f4ff;
+	padding: 1em 0em;
+	text-align: center;
+	font-size: x-small
+}
+
+TABLE.querynavi {
+	font-size: x-small;
+	background-color:#f1f4ff;padding: 0.1em 0em;
+	margin: 0.15em 0em;
+}
