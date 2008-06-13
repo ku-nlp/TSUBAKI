@@ -126,16 +126,16 @@ sub retrieve_from_dat {
 	# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
 	$results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
 
-
-# 	if ($syngraph_flag) {
-# 	    $results[$i] = $retriever->search_syngraph_test_for_new_format($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
-# 	} else {
-# 	    $results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
-# 	}
+	if ($this->{verbose}) {
+	    print $rep->{qid} . " ";
+	    foreach my $d (@{$results[$i]}) {
+		print $d->[0] . " ";
+	    }
+	    print "\n";
+	}
 
 	$idx2qid{$i} = $rep->{qid};
     }
-
     my $ret = $this->merge_search_result(\@results, \%idx2qid);
 
     if ($this->{show_speed}) {
@@ -189,6 +189,7 @@ sub retrieveFromBinaryData {
     # keyword中の単語を含む文書の検索
     # 文書頻度の低い単語から検索する
     foreach my $reps (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{$type}}) {
+	$this->{verbose} = 0;
 	if ($this->{verbose}) {
 	    foreach my $rep (@$reps) {
 		foreach my $k (keys %$rep) {
@@ -204,7 +205,8 @@ sub retrieveFromBinaryData {
 
 	unless ($alwaysAppend) {
 	    print $add_flag . "=aflag\n" if ($this->{verbose});
-	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
+	    # $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
+	    $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR'));
 	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
 	}
 
@@ -290,8 +292,27 @@ sub retrieve_documents {
 
 	# 検索キーワードごとに検索された文書の配列へpush
 	if ($keyword->{logical_cond_qkw} eq 'AND') {
+	    if ($this->{verbose}) {
+		foreach my $docs (@$docs_word) {
+		    foreach my $doc (@$docs) {
+			print $doc->{did} . " ";
+		    }
+		    print "\n-----\n";
+		}
+	    }
+
 	    # 検索キーワード中の単語間のANDをとる
+	    # ★ already_appned_bufを使っているので、最後に検索した検索語の持つ文書IDがANDをとった結果
 	    $docs_word = &intersect($docs_word);
+
+	    if ($this->{verbose}) {
+		foreach my $docs (@$docs_word) {
+		    foreach my $doc (@$docs) {
+			print $doc->{did} . " ";
+		    }
+		    print "\n-----\n";
+		}
+	    }
 	    $logger->setTimeAs('keyword_level_and_condition', '%.3f');
 	    
 	    # 係り受け制約の適用
@@ -302,7 +323,7 @@ sub retrieve_documents {
 
 
 	    # 近接制約の適用
-	    if ($keyword->{near} > 0) {
+	    if ($keyword->{near}) {
 		$docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
 	    }
 	    $logger->setTimeAs('near_condition', '%.3f');
@@ -405,6 +426,7 @@ sub intersect {
 	# 入力リストをサイズ順にソート (一番短い配列を先頭にするため)
 	my @sorted_docs = sort {scalar(@{$a}) <=> scalar(@{$b})} @{$docs};
 
+	$opt->{verbose} = 0;
 	if ($opt->{verbose}) {
 	    print "--------\n";
 	    print "start with AND filtering.\n";
@@ -553,7 +575,7 @@ sub filter_by_NEAR_constraint_strict {
 			    last;
 			}
 		    } else {
-#			print "$pos < $poslist[$q]->[0] && $poslist[$q]->[0] < ", ($pos + $near - $distance_history) . "\n";
+			# print "$pos < $poslist[$q]->[0] && $poslist[$q]->[0] < ", ($pos + $near - $distance_history) . "\n";
 			if ($pos < $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near - $distance_history) {
 			    $distance_history += ($poslist[$q]->[0] - $pos);
 			    $flag = 0;
@@ -608,8 +630,9 @@ sub filter_by_NEAR_constraint {
 	my @poslist = ();
 	# クエリ中の単語の出現位置リストを作成
 	for (my $q = 0; $q < scalar(@{$docs}); $q++) {
-	    my $qid_freq_size = scalar(@{$docs->[$q][$d]->{qid_freq}});
 
+	    # 文書$dに含まれている検索語$qの同義表現（または曖昧性のある代表表記）の数
+	    my $qid_freq_size = scalar(@{$docs->[$q][$d]->{qid_freq}});
 	    if ($qid_freq_size < 2) {
 		my $fnum = $docs->[$q][$d]->{qid_freq}[0]{fnum};
 		my $nums = $docs->[$q][$d]->{qid_freq}[0]{nums};
@@ -652,7 +675,7 @@ sub filter_by_NEAR_constraint {
 	my @serialized_poslist = ();
 
 	#####################################################
-	# クエリ中の単語の語順にフリーな近接制約の適用
+	# (クエリ中の単語の語順にフリーな)近接制約の適用
 	#  1. 各単語の出現位置をマージ
 	#  2. 各単語が$near語以内に現れているかどうかチェック
 	#####################################################
@@ -682,17 +705,22 @@ sub filter_by_NEAR_constraint {
 	    my %qid_buf = ();
 	    my $pos = $serialized_poslist[$i]->{pos};
 	    my $qid = $serialized_poslist[$i]->{qid};
+
+	    # 語順を考慮する場合は、常にqid=0からチェックしなければならない
 	    next if ($qid != 0 && $keep_order);
 
 	    my $prev_qid = $qid;
 	    $qid_buf{$serialized_poslist[$i]->{qid}}++;
 	    for (my $j = $i + 1; $j < scalar(@serialized_poslist); $j++) {
 		if ($serialized_poslist[$j]->{pos} - $pos < $near) {
+
+		    # 語順を考慮する場合は、隣接しているかどうかチェック
 		    if ($keep_order) {
 			# 隣あう索引語かどうかのチェック
 			if ($serialized_poslist[$j]->{qid} - $prev_qid > 1) {
 			    last;
 			} else {
+			    # print $serialized_poslist[$j]->{qid} . " - " . $prev_qid . "\n";
 			    $prev_qid = $serialized_poslist[$j]->{qid};
 			}
 		    }
@@ -709,7 +737,7 @@ sub filter_by_NEAR_constraint {
 	    }
 	}
 
-	#  $flag > 0 ならば$near語以内にクエリ内の語が出現
+	# $flag > 0 ならば$near語以内にクエリ内の語が出現
 	if ($flag > 0) {
 	    for (my $q = 0; $q < scalar(@{$docs}); $q++) {
 		push(@{$results[$q]}, $docs->[$q][$d]);
