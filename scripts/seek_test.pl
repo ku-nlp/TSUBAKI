@@ -16,17 +16,18 @@ use Data::Dumper;
 use QueryParser;
 
 my (%opt);
-GetOptions(\%opt, 'type=s', 'id=s', 'query=s', 'idxdir=s', 'dfdbdir=s', 'skippos', 'syngraph');
+GetOptions(\%opt, 'type=s', 'id=s', 'query=s', 'idxdir=s', 'dfdbdir=s', 'skippos', 'syngraph', 'ignore_yomi');
 
 binmode(STDOUT, ":encoding(euc-jp)");
 binmode(STDERR, ":encoding(euc-jp)");
 
-my $q_parser = new QueryParser({ DFDB_DIR => $opt{dfdbdir} });
+my $q_parser = new QueryParser({ DFDB_DIR => $opt{dfdbdir}, ignore_yomi => $opt{ignore_yomi} });
 my $query = $q_parser->parse(decode('euc-jp', $opt{query}),
 			     { logical_cond_qk => 'AND',
 			       syngraph => $opt{syngraph} });
 my $ret = new Retrieve($opt{idxdir}, $opt{type}, $opt{skippos}, 1, 0, 0);
 
+# print Dumper($query->{keywords}[0]) . "\n";
 foreach my $group (@{$query->{keywords}[0]{"$opt{type}s"}}) {
     foreach my $e (@$group) {
 	print STDERR "################\n";
