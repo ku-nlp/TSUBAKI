@@ -10,8 +10,10 @@ use strict;
 use utf8;
 use Encode;
 use Getopt::Long;
+use File::stat;
 use Indexer;
 use KNP::Result;
+use StandardFormatData;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -35,20 +37,47 @@ GetOptions(\%opt,
 	   'compress',
 	   'file=s',
 	   'ignore_yomi',
+	   'ignore_syn_dpnd',
+	   'skip_large_file=s',
+	   'max_num_of_indices=s',
 	   'genkei',
 	   'scheme=s',
-	   'extract_from_only_inlink',
+	   'title',
+	   'keywords',
+	   'description',
+	   'inlinks',
+	   'sentences',
+	   'use_pm',
 	   'verbose',
 	   'help');
 
-$opt{scheme} = "Knp" unless ($opt{scheme});
-$opt{extract_from} = "(?:Title|Description|Keywords|S)";
-$opt{extract_from} = "InLink" if ($opt{extract_from_only_inlink});
+
+# デフォルト値の設定
+
+# 指定がない場合は、標準フォーマットにSYNGRAPHの解析結果が埋め込まれていると見なす
+$opt{scheme} = "SynGraph" unless ($opt{scheme});
+
+if (!$opt{title} && !$opt{keywords} && !$opt{description} && !$opt{inlinks} && !$opt{sentences}) {
+    # インデックス抽出対象が指定されていない場合は title, keywords, description, sentences を対象とする
+    $opt{title} = 1;
+    $opt{keywords} = 1;
+    $opt{description} = 1;
+    $opt{sentences} = 1;
+}
+
+
+if (!$opt{title} && !$opt{keywords} && !$opt{description} && $opt{inlinks} && !$opt{sentences}) {
+    $opt{only_inlinks} = 1;
+}
+
+
+# 一文から抽出される索引表現数の上限
+$opt{max_num_of_indices} = 10000 unless ($opt{max_num_of_indices});
 
 &main();
 
 sub usage {
-    print "Usage perl $0 -in xmldir -out idxdir [-jmn|-knp|-syn] [-position] [-z] [-compress] [-file] [-scheme [Juman|Knp|SynGraph]] [-extract_from_only_inlink] [-verbose]\n";
+    print "Usage perl $0 -in xmldir -out idxdir [-jmn|-knp|-syn] [-position] [-z] [-compress] [-file] [-scheme [Juman|Knp|SynGraph]] [-title] [-keywords] [-description] [-inlinks] [-sentences] [-verbose] [-help]\n";
     exit;
 }
 
@@ -57,6 +86,16 @@ sub main {
 	&usage();
     }
     die "Not found! $opt{in}\n" unless (-e $opt{in} || -e $opt{file});
+
+    if (!$opt{jmn} && !$opt{knp} && !$opt{syn}) {
+	die "-jmn, -knp, -syn のいずれかを指定して下さい.\n";
+    }
+
+    if ($opt{jmn} + $opt{knp} + $opt{syn} > 1) {
+	die "-jmn, -knp, -syn のうち一つを指定して下さい.\n";
+    }
+
+
     unless (-e $opt{out}) {
 	print STDERR "Create directory: $opt{out}\n";
 	mkdir $opt{out};
@@ -77,19 +116,169 @@ sub main {
     }
 }
 
+sub extract_indices_wo_pm {
+    my ($file, $fid, $my_opt) = @_;
+  
+    my $indexer = new Indexer({ignore_yomi => $opt{ignore_yomi},
+			       without_using_repname => $opt{genkei}
+  			      });
+
+    if ($my_opt->{z}) {
+	open(READER, "zcat $file |");
+    } else {
+	open(READER, $file);
+    }
+    binmode(READER, ':utf8');
+
+
+    my @buf;
+    push(@buf, 'Title') if ($opt{title});
+    push(@buf, 'Keywords') if ($opt{keywords});
+    push(@buf, 'Description') if ($opt{description});
+    push(@buf, 'InLink') if ($opt{inlinks});
+    push(@buf, 'S') if ($opt{sentences});
+    my $pattern = join("|", @buf);
+
+
+    # Title, Keywords, Description, Inlink には文IDがないため、-100000からカウントする
+    my $sid = -100000;
+    my $isIndexingTarget = 0;
+    my $tagName;
+    my $content;
+    my %indices = ();
+    while (<READER>) {
+	last if ($_ =~ /<Text / && $opt{only_inlinks});
+
+	if (/(<($pattern)( |\>).*\n)/o) {
+	    $isIndexingTarget = 1;
+	    $content = $1;
+	    $tagName = $2;
+
+	    # 文IDの取得
+	    if (/\<S.*? Id="(\d+)"/) {
+		print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if ($opt{verbose});
+		$sid = $1;
+	    }
+	    elsif (/\<(?:Title|InLink|Description|Keywords)/) {
+		$sid += 2;
+		print STDERR "\rdir=$opt{in},file=$fid (Id=$sid)" if ($opt{verbose});
+	    }
+ 	}
+ 	elsif (/(.*\<\/($pattern)\>)/o) {
+	    $content .= $1;
+	    my $terms = &extractIndices($content, $indexer, $file);
+
+	    # インリンクの場合は披リンク数分を考慮する
+	    if ($tagName eq 'InLink') {
+		my $num_of_linked_pages = 0;
+		while ($content =~ m!<DocID[^>]+>\d+</DocID>!go) {
+		    $num_of_linked_pages++;
+		}
+
+		foreach my $term (@$terms) {
+		    $term->{score} *= $num_of_linked_pages;
+		    $term->{freq} *= $num_of_linked_pages;
+		}
+	    }
+	    $indices{$sid} = $terms if (defined $terms);
+
+	    $isIndexingTarget = 0;
+	    $tagName = '';
+	    $content = '';
+ 	}
+	else {
+	    $content .= $_ if ($isIndexingTarget);
+	}
+    }
+    close(READER);
+
+
+    # 索引のマージ
+    return &merge_indices(\%indices);
+}
+
+	
+
+sub extractIndices {
+    my ($content, $indexer, $file) = @_;
+
+    my ($annotation) = ($content =~ /<Annotation[^>]+?>\<\!\[CDATA\[((.|\n)+)\]\]\><\/Annotation>/);
+
+    return if ($annotation eq '');
+
+    my $knp_result;
+    if ($opt{scheme} eq 'SynGraph') {
+	foreach my $line (split("\n", $annotation)) {
+	    # `!' or '#' ではじまる行はスキップ
+	    next if ($line =~ /^!/ || $line =~ /^#/);
+	    next if ($line eq '');
+
+	    $knp_result .= $line . "\n";
+	}
+    } else {
+	$knp_result = $annotation;
+    }
+
+    my $terms;
+    if ($opt{syn}) {
+	require KNP;
+
+	my @content_words = ();
+	my $flag = 1;
+	my $knp_result_obj = new KNP::Result($knp_result);
+	foreach my $tag ($knp_result_obj->tag) {
+	    my @mrphs = $tag->mrph;
+	    my $m = $mrphs[-1];
+	    foreach my $mrph (@mrphs) {
+		if ($mrph->fstring =~ /<意味有|内容語>/) {
+		    $m = $mrph;
+		    last;
+		}
+	    }
+	    push(@content_words, $m);
+	}
+	$terms = $indexer->makeIndexfromSynGraph($annotation, \@content_words, {use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
+										max_num_of_indices => $opt{max_num_of_indices},
+										verbose => $opt{verbose}} );
+	unless (defined $terms) {
+	    my ($rawstring) = ($content =~ m!<RawString>(.+?)</RawString>!);
+	    print STDERR "[SKIP] A large number of indices are extracted from [$rawstring]: $file (limit=" . $opt{max_num_of_indices} . ")\n";
+	}
+    }
+    elsif ($opt{knp}) {
+	$terms = $indexer->makeIndexFromKNPResult($knp_result, \%opt);
+    }
+    else {
+	$terms = $indexer->makeIndexfromJumanResult($annotation);
+    }
+
+    return $terms;
+}
+
 sub extract_indice_from_single_file {
     my ($file, $fid) = @_;
 
-    if ($opt{z}) {
-	open(READER, "zcat $file |") || die ("No such file $file\n");
-	binmode(READER, ':utf8');
-    } else {
-	open(READER, '<:utf8', "$file") || die ("No such file $file\n");
+    # ファイルサイズのチェック
+    if ($opt{skip_large_file}) {
+	my $st = stat($file);
+	return unless $st;
+
+	if ($st->size > $opt{skip_large_file}) {
+	    print STDERR "Too large file: $file (" . $st->size . " bytes > limit=$opt{skip_large_file} bytes)\n";
+	    return;
+	}
     }
 
+    # 索引表現の抽出
+    my $indice;
+    if ($opt{use_pm}) {
+	my $sfdat = new StandardFormatData($file, {gzipped => $opt{z}, is_old_version => 1});
+	$indice = &extract_indices($sfdat, $fid);
+    } else {
+	$indice = &extract_indices_wo_pm($file, $fid, {gzipped => $opt{z}, is_old_version => 1});
+    }
 
-    my $indice = &extract_indice(*READER, $fid);
-    close(READER);
+    # 出力
 
     if ($opt{compress}) {
 	open(WRITER, "| gzip > $opt{out}/$fid.idx.gz");
@@ -116,69 +305,61 @@ sub extract_indice_from_single_file {
 }
 
 # Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
-sub extract_indice {	
-    my ($READER, $fid) = @_;
+sub extract_indices {	
+    my ($sfdat, $fid) = @_;
 
     my $sid = -10000;
     my $contentFlag = 0;
     my $annotationFlag = 0;
     my $result;
-    my %indice = ();
     my $indexer = new Indexer({ignore_yomi => $opt{ignore_yomi},
-			      without_using_repname => $opt{genkei}
+			       without_using_repname => $opt{genkei}
 			      });
-    while (<$READER>) {
-	if (/\<$opt{extract_from}( |\>)/) {
-	    $contentFlag = 1;
-	}
-	elsif (/\<\/$opt{extract_from}\>/) {
-	    $contentFlag = 0;
-	}
 
-	if (/\<S.*? Id="(\d+)"/) {
-	    print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if ($opt{verbose});
-	    $sid = $1;
-	}
-	elsif (/\<(?:Title|InLink|OutLink|Description|Keywords)/) {
-	    $sid++;
-	    print STDERR "\rdir=$opt{in},file=$fid (Id=$sid)" if ($opt{verbose});
-	}
+    # オプションにしたがって各データフィールドから索引表現を抽出
 
+    # Title, Keywords, Description, Inlink には文IDがないため、-100000からカウントする
+    my $sid = -100000;
 
-	if (/^\]\]\><\/Annotation>/) {
-	    unless ($result =~ /^\n*$/) {
-		if ($opt{syn}) {
-		    $indice{$sid} = $indexer->makeIndexfromSynGraph4Indexing($result);
-		}
-		elsif ($opt{knp}) {
-		    $indice{$sid} = $indexer->makeIndexFromKNPResult($result, \%opt);
-		}
-		else {
-		    $indice{$sid} = $indexer->makeIndexfromJumanResult($result);
-		}
+    my %indices = ();
+    # Title, Keywords, Description はとなりあう文とは思わない
+    $indices{$sid += 2} = &extract_indices_from_annotation($indexer, $sfdat->getTitle()) if ($opt{title});
+    $indices{$sid += 2} = &extract_indices_from_annotation($indexer, $sfdat->getKeywords()) if ($opt{keywords});
+    $indices{$sid += 2} = &extract_indices_from_annotation($indexer, $sfdat->getDescription()) if ($opt{description});
+
+    if ($opt{inlinks}) {
+	foreach my $inlink (@{$sfdat->getInlinks()}) {
+	    my $num_of_pages = scalar(@{$inlink->{dids}});
+	    my $terms = &extract_indices_from_annotation($indexer, $inlink);
+	    foreach my $term (@$terms) {
+		$term->{score} *= $num_of_pages;
+		$term->{freq} *= $num_of_pages;
 	    }
-
-	    $result = undef;
-	    $annotationFlag = 0;
-	} elsif (/.*\<Annotation Scheme=\"$opt{scheme}\"\>\<\!\[CDATA\[/) {
-	    my $line = "$'";
-	    $result = $line unless ($line =~ /^#/);
-	    $annotationFlag = 1;
-	} elsif ($annotationFlag && $contentFlag) {
-	    next if ($_ =~ /^\#/);
-	    # 標準フォーマット内の解析結果が SynGraph かつ $opt{knp} ならば `!' ではじまる行はスキップ
-	    if ($opt{scheme} eq 'SynGraph' && $opt{knp}) {
-		next if ($_ =~ /^!/);
-	    }
-	    $result .= $_;
+	    # Inlink はとなりあう文とは思わない
+	    $indices{$sid += 2} = $terms;
 	}
     }
 
+    if ($opt{sentences}) {
+	foreach my $s (@{$sfdat->getSentences()}) {
+	    $indices{$s->{id}} = &extract_indices_from_annotation($indexer, $s);
+	}
+    }
+
+    return &merge_indices(\%indices);
+}
+
+sub merge_indices {
+    my ($indices) = @_;
+
     # 索引のマージ
     my %ret;
-    foreach my $sid (sort {$a <=> $b} keys %indice) {
-	foreach my $index (@{$indice{$sid}}) {
+    foreach my $sid (sort {$a <=> $b} keys %$indices) {
+	foreach my $index (@{$indices->{$sid}}) {
 	    my $midasi = $index->{midasi};
+	    next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
+
+	    print $midasi if ($opt{verbose});
 	    $ret{$midasi}->{sids}{$sid} = 1;
 	    if ($opt{syn}) {
 		push(@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
@@ -191,6 +372,52 @@ sub extract_indice {
     }
 
     return \%ret;
+}
+
+# Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
+sub extract_indices_from_annotation {
+    my ($indexer, $node) = @_;
+
+
+    my $annotation = $node->{annotation};
+
+    if ($opt{verbose}) {
+	my $rawstring = $node->{rawstring};
+	print $rawstring . "\n";
+    }
+
+    return if ($annotation eq '');
+
+    my $indices;
+    if ($opt{syn}) {
+	if ($opt{scheme} eq 'SynGraph') {
+	    $indices = $indexer->makeIndexfromSynGraph4Indexing($annotation);
+	} else {
+	    die "標準フォーマット内の解析結果と抽出したい索引表現のタイプが一致しません. (標準フォーマット: $opt{scheme}, 索引表現:SynGraph)\n";
+	}
+    }
+    else {
+	my $knp_result;
+	if ($opt{scheme} eq 'SynGraph' && $opt{knp}) {
+	    foreach my $line (split("\n", $annotation)) {
+		# `!' ではじまる行はスキップ
+		next if ($line =~ /^!/);
+
+		$knp_result .= $line . "\n";
+	    }
+	} else {
+	    $knp_result = $annotation;
+	}
+
+	if ($opt{knp}) {
+	    $indices = $indexer->makeIndexFromKNPResult($knp_result, \%opt);
+	}
+	else {
+	    $indices = $indexer->makeIndexfromJumanResult($knp_result);
+	}
+    }
+
+    return $indices;
 }
 
 sub output_syngraph_indice_wo_position {
