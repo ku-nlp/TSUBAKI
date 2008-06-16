@@ -22,7 +22,8 @@ my @attrs = ();
 push(@attrs, 'DATE');
 push(@attrs, 'HOST');
 push(@attrs, 'ACCESS');
-push(@attrs, 'IS_CACHE');
+push(@attrs, 'status');
+push(@attrs, 'portal');
 push(@attrs, 'create_se_obj');
 push(@attrs, 'hitcount');
 push(@attrs, 'merge');
@@ -53,7 +54,7 @@ while (<LOG>) {
       my %vals = ();
       foreach my $opt (split(/,/, join(' ', @options))) {
 	  my($k, $v) = split(/=/, $opt);
-	  $vals{$k} = $v;
+	  $vals{$k} = ($v eq '') ? undef : $v;
       }
 
       $buf .= sprintf "<TR>";
@@ -64,7 +65,7 @@ while (<LOG>) {
       foreach my $k (@attrs) {
 	  next if ($k eq 'DATE' || $k eq 'ACCESS' || $k eq 'HOST');
 
-	  if (exists $vals{$k}) {
+	  if (defined $vals{$k}) {
 	      $buf .= "<TD style='border: 1px solid black;' nowrap>$vals{$k}&nbsp;";
 	      if (exists $vals{"max_$k"}) {
 		  $buf .= qq(<SPAN style="color: red;">) . $vals{"max_$k"} . "</SPAN>\n";
