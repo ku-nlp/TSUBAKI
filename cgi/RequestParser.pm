@@ -252,6 +252,9 @@ sub parseQuery {
     # クエリ解析時間のログをとる
     $logger->setTimeAs('parse_query', '%.3f') if ($logger);
 
+    # ポータルからのアクセスかどうかのログをとる
+    $logger->setParameterAs('portal', $params->{from_portal}) if ($logger);
+
     return $query;
 }
 
