@@ -7,11 +7,12 @@ workspace=/tmp/mk_tsubaki_idx
 scriptdir=$HOME/cvs/SearchEngine/scripts
 
 
+# 作成するインデックスのタイプ(-knp/-syn)
+type=$1
+fp=$2
+id=`basename $fp | cut -f 2 -d 's' | cut -f 1 -d '.'`
 
-fp=$1
-id=`basename $fp | cut -f 2 -d 'x' | cut -f 1 -d '.'`
-
-xdir=x$id
+xdir=s$id
 idir=i$id
 
 mkdir $workspace 2> /dev/null
@@ -21,19 +22,25 @@ scp -r $fp ./
 
 mkdir $idir 2> /dev/null
 
-echo tar xzf x$id.tgz
-tar xzf x$id.tgz
-rm x$id.tgz
+echo tar xzf $xdir.tgz
+tar xzf $xdir.tgz
+rm $xdir.tgz
+
+# スワップしないように仕様するメモリサイズを制限する(max 2GB)
+ulimit -m 2097152
+ulimit -v 2097152
 
 # ファイル単位でインデックスの抽出
-echo perl -I $scriptdir $scriptdir/make_idx.pl -knp -in $xdir -out $idir -position -z -compress
-perl -I $scriptdir $scriptdir/make_idx.pl -knp -in $xdir -out $idir -position -z -compress
+# SYNノードを含む係り受け関係は除外、5MBを越える標準フォーマットからは抽出しない
+echo perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880
+perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880
 rm -r $xdir
+
 
 # 1万ページ分のインデックスをマージ
 
 # N件ずつメモリを使ってマージ
-N=50
+N=10
 echo perl $scriptdir/merge_idx.pl -dir $idir -n $N -z -compress
 perl $scriptdir/merge_idx.pl -dir $idir -n $N -z -compress
 rm -r $idir
