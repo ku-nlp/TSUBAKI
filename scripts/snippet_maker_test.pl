@@ -52,9 +52,9 @@ sub main {
 #	my $sentences = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $id, \%opt);
 	foreach my $s (@$sentences) {
 	    if ($opt{kwic}) {
-		print $s->{contextL} . " ";
+		print join("|", @{$s->{contextsL}}) . " ";
 		print "[" . $s->{keyword} . "] ";
-		print $s->{contextR} . "\n";
+		print join("|", @{$s->{contextsR}}) . "\n";
 	    } else {
 		print $s->{including_all_indices} . " ";
 		print $file . " ";
