@@ -242,3 +242,7 @@ CACHE_DIR		/share03/WISDOM/data/cache
 DUMY_LOCK_FILE		/tmp/lockfile.out
 
 LOCK_FILE		/tmp/lockfile.in
+
+# マスターサーバーが検索中の時、後続するクエリがRETRYする回数
+# 0を指定すると処理されるまでマスターサーバーにリトライしつづける 
+MAX_NUM_OF_RETRY	5

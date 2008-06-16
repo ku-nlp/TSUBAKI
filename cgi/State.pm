@@ -29,7 +29,7 @@ sub checkIn {
     while (!symlink($CONFIG->{DUMY_LOCK_FILE}, $CONFIG->{LOCK_FILE})) {
 	$count++;
 	sleep(1);
-	if ($count > 5) {
+	if ($count > $CONFIG->{MAX_NUM_OF_RETRY} && $CONFIG->{MAX_NUM_OF_RETRY} > 0) {
 	    return 0;
 	}
     }
