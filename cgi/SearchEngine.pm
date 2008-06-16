@@ -18,13 +18,13 @@ use Cache;
 use State;
 use Logger;
 
+my $CONFIG = Configure::get_instance();
+
 # コンストラクタ
 # 接続先ホスト、ポート番号
 sub new {
     my($class, $syngraph) = @_;
     my $this = {hosts => []};
-
-    my $CONFIG = Configure::get_instance();
 
     my $servers;
     if ($syngraph > 0) {
@@ -72,9 +72,9 @@ sub search {
 	$logger->setParameterAs('IS_CACHE', 1);
 	$status = 'cache';
     } else {
-	# 混雑していなければ検索サーバーに対してクエリを投げる
+	# 混雑していない or スケジューリング機能を用いない場合は検索サーバーに対してクエリを投げる
 	my $state = new State();
-	if ($state->checkIn()) {
+	if ($CONFIG->{DISABLE_REQUEST_SCHEDULING} || $state->checkIn()) {
 	    $result = $this->broadcastSearch($query, $logger);
 	    $cache->save($query, $result);
 	    $logger->setParameterAs('IS_CACHE', 0);
@@ -116,8 +116,9 @@ sub broadcastSearch {
 	    PeerAddr => $this->{hosts}->[$i]->{name},
 	    PeerPort => $this->{hosts}->[$i]->{port},
 	    Proto    => 'tcp' );
-	
-	$selecter->add($socket) or die "Cannot connect to the server $this->{hosts}->[$i]->{name}:$this->{hotst}->[$i]->{port}. $!\n";
+
+	# print $this->{hosts}[$i]{name} . " " . $this->{hosts}[$i]{port} . "<BR>\n";
+	$selecter->add($socket) or die "Cannot connect to the server $this->{hosts}->[$i]->{name}:$this->{hosts}->[$i]->{port}. $!\n";
 	
  	# 検索クエリの送信
  	print $socket encode_base64(Storable::freeze($query), "") . "\n";
