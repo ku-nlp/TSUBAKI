@@ -23,7 +23,7 @@ my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
 my $HOSTNAME = `hostname` ; chop($HOSTNAME);
 
 my (%opt);
-GetOptions(\%opt, 'help', 'port=s', 'string_mode', 'is_old_version', 'verbose');
+GetOptions(\%opt, 'help', 'port=s', 'string_mode', 'is_old_version', 'ignore_yomi', 'verbose');
 
 if (!$opt{port} || $opt{help}) {
     print "Usage\n";
@@ -102,6 +102,7 @@ sub main {
 	    my $option = Storable::thaw(decode_base64($buff));
 	    $option->{string_mode} = $opt{string_mode};
 	    $option->{is_old_version} = $opt{is_old_version};
+	    $option->{ignore_yomi} = $opt{ignore_yomi};
 
 	    # スニペッツの生成
 	    my %result = ();
