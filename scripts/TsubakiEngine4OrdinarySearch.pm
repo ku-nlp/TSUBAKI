@@ -41,6 +41,7 @@ sub merge_docs {
     my @merged_docs = ();
     my %d_length_buff = ();
     my @q2scores = ();
+
     # 検索キーワードごとに区切る
     foreach my $docs_word (@{$alldocs_words}) {
 	foreach my $doc (@{$docs_word}) {
@@ -88,8 +89,8 @@ sub merge_docs {
 
 		    my $weight = $gid2weight->{$qid2gid->{$qid}};
 		    # 関数化するよりも高速
-		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 		    # my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+		    my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 		    my $score = $tff * $idf;
 		    $qid2poslist{$qid} = $this->{word_retriever}->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums});
@@ -122,11 +123,12 @@ sub merge_docs {
 			    }
 			    else {
 				my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
-				# my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 				my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 				# $score = $qtf;
 				$score = $qtf * $tff * $idf;
+				$this->{verbose} = 1 if ($did =~ /78922624/ || $did =~ /58400434/);
 				print "* qid=$dpnd_qid dist=$dist rate=$tf df=$df qtf=$qtf score=$score\n"  if ($this->{verbose});
+				$this->{verbose} = 0;
 			    }
 
 			    $q2scores[$i]->{near}{$qid} = {dist => $dist, qtf => $qtf, df => $df, dlength => $dlength, score => $score, kakarisaki_qid => $kakarisaki_qid, DIST => $DIST} if $this->{logging_query_score};
@@ -165,14 +167,16 @@ sub merge_docs {
 			$score = 0;
 		    }
 		    else {
-			my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 			# my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+			my $tff = (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 			$score = $tff * $idf;
 			$score *= $this->{WEIGHT_DPND_SCORE};
 		    }
 
+		    $this->{verbose} = 1 if ($did =~ /78922624/ || $did =~ /58400434/);
 		    print "did=$did qid=$qid tf=$tf df=$df qtf=$qtf length=$dlength score=$score\n" if ($this->{verbose});
+		    $this->{verbose} = 0;
 		    $q2scores[$i]->{dpnd}{$qid} = {tf => $tf, qtf => $qtf, df => $df, dlength => $dlength, score => $score * $qtf} if $this->{logging_query_score};
 
 		    $merged_docs[$i]->{dpnd_score}{$qid} = $score * $qtf;
@@ -185,8 +189,8 @@ sub merge_docs {
     foreach my $docs_word (@{$alldocs_words_anchor}) {
 	foreach my $doc (@{$docs_word}) {
 	    my $did = $doc->{did};
-	    # $this->{verbose} = 1 if ($did =~ /78922624/);
-	    $this->{verbose} = 1 if ($did =~ /29939252/);
+	    $this->{verbose} = 1 if ($did =~ /78922624/ || $did =~ /58400434/);
+	    # $this->{verbose} = 1 if ($did =~ /29939252/);
 
 	    if (exists($did2pos{$did})) {
 		my $i = $did2pos{$did};
@@ -203,7 +207,8 @@ sub merge_docs {
 			$score = 0;
 		    }
 		    else {
-			my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+			# my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+			my $tff = 1 * (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 			$score = $tff * $idf;
 		    }
@@ -221,7 +226,7 @@ sub merge_docs {
 	foreach my $doc (@{$docs_dpnd}) {
 	    my $did = $doc->{did};
 
-	    $this->{verbose} = 1 if ($did =~ /29939252/);
+	    $this->{verbose} = 1 if ($did =~ /78922624/ || $did =~ /58400434/);
 	    if (exists($did2pos{$did})) {
 		my $i = $did2pos{$did};
 		foreach my $qid_freq (@{$doc->{qid_freq}}) {
@@ -237,7 +242,8 @@ sub merge_docs {
 			$score = 0;
 		    }
 		    else {
-			my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+			# my $tff = (2 * $tf) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf); # k1 = 1, b = 0.6, k3 = 0
+			my $tff = 1 * (3 * $tf) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $tf);
 			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
 			$score = $tff * $idf;
 		    }
@@ -288,14 +294,14 @@ sub merge_docs {
 	    print "$e->{did} $score $e->{word_score} $dpnd_score $dist_score\n";
 	}
 
-	push(@result, {did => $e->{did},
-		       score_total => $score,
-		       score_word => $e->{word_score},
-		       score_dpnd => $dpnd_score,
-		       score_dist => $dist_score,
-		       score_word_anchor => $word_anchor_score,
-		       score_dpnd_anchor => $dpnd_anchor_score
-	     });
+	push(@result, {did => $e->{did},score_total => $score});
+	if ($this->{score_verbose}) {
+	    $result[-1]->{score_word} = $e->{word_score};
+	    $result[-1]->{score_dpnd} = $dpnd_score;
+	    $result[-1]->{score_dist} = $dist_score;
+	    $result[-1]->{score_word_anchor} = $word_anchor_score;
+	    $result[-1]->{score_dpnd_anchor} = $dpnd_anchor_score;
+	}
 	$result[-1]->{q2score} = $q2scores[$i] if $this->{logging_query_score};
 
 	$result[-1]{verbose} = $e->{verbose} if $this->{store_verbose};

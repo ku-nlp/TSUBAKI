@@ -56,6 +56,7 @@ sub new {
 	idxdir4anchor => $opts->{idxdir4anchor},
 	store_verbose => $opts->{store_verbose},
 	dlengthdb_hash => $opts->{dlengthdb_hash},
+	score_verbose => $opts->{score_verbose},
 	logging_query_score => $opts->{logging_query_score},
 	WEIGHT_DPND_SCORE => defined $opts->{weight_dpnd_score} ? $opts->{weight_dpnd_score} : 1,
 	show_speed => $opts->{show_speed}
@@ -189,7 +190,6 @@ sub retrieveFromBinaryData {
     # keyword中の単語を含む文書の検索
     # 文書頻度の低い単語から検索する
     foreach my $reps (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{$type}}) {
-	$this->{verbose} = 0;
 	if ($this->{verbose}) {
 	    foreach my $rep (@$reps) {
 		foreach my $k (keys %$rep) {

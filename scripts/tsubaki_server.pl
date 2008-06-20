@@ -133,6 +133,7 @@ sub main {
 	    }
 	    my $qid2df = Storable::thaw(decode_base64($buff));
 
+	    $opt{score_verbose} = $query->{score_verbose};
 	    my $factory = new TsubakiEngineFactory(\%opt);
 	    my $tsubaki = $factory->get_instance();
 
