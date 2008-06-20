@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -51,6 +51,8 @@ sub main {
 
 	    # 検索クエリの構造体を取得
 	    my $query = RequestParser::parseQuery($params, $logger);
+	    # use Dumper;
+	    # print Dumper::dump_as_HTML($query) . "<br>\n";
 
 
 	    # 検索スレーブサーバーへの問い合わせ
@@ -59,7 +61,7 @@ sub main {
 
 
 	    # 検索結果の表示
-	    $params->{query} =~ s/~100W$//g;
+	    $params->{query} =~ s/~100w$//g;
 	    $renderer->printSearchResultForBrowserAccess($params, $results, $query, $logger, $status);
 
 
