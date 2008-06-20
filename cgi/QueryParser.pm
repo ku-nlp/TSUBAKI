@@ -50,7 +50,7 @@ sub new {
 
     # ストップワードの処理
     unless ($opts->{STOP_WORDS}) {
-	$this->{INDEXER} = new Indexer();
+	$this->{INDEXER} = new Indexer({ignore_yomi => $opts->{ignore_yomi}});
     } else {
 	my %stop_words;
 	foreach my $word (@{$opts->{STOP_WORDS}}) {
@@ -68,7 +68,8 @@ sub new {
 	    }
 	    $stop_words{$word} = 1;
 	}
-	$this->{INDEXER} = new Indexer({ STOP_WORDS => \%stop_words });
+	$this->{INDEXER} = new Indexer({ STOP_WORDS => \%stop_words,
+					 ignore_yomi => $opts->{ignore_yomi} });
     }
 
     print STDERR "done.\n" if ($opts->{verbose});
@@ -246,7 +247,7 @@ sub parse {
 	    my $df_of_basic_node = $gid2df{$gid};
 	    $df_of_basic_node = 0 unless (defined $df_of_basic_node);
 	    $qid2df{$qid} = $df_of_basic_node;
-	    print "qid=$qid gid=$gid df=$df_of_basic_node\n" if ($opt->{verbose});
+	    print "qid=$qid gid=$gid df=$df_of_basic_node<br>\n" if ($opt->{verbose});
 	}
     }
 
