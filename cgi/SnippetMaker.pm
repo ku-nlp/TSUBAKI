@@ -105,7 +105,7 @@ sub extract_sentences_from_content_for_kwic {
     my $sentences = $sfdat->getSentences();
     for (my $i = 0; $i < scalar(@$sentences); $i++) {
 	my $s = $sentences->[$i];
-	my ($repnameList_s, $surfList_s) = &make_repname_list($s->{annotation});
+	my ($repnameList_s, $surfList_s) = &make_repname_list($s->{annotation}, $opt);
 	my ($flag, $from, $end) = &isMatch($repnameList_q, $repnameList_s);
 	if ($flag) {
 	    my $keyword;
@@ -213,7 +213,7 @@ sub extract_sentences_from_content_for_kwic {
 }
 
 sub make_repname_list {
-    my ($knpresult) = @_;
+    my ($knpresult, $opt) = @_;
 
     my @repnameList;
     my @surfList;
@@ -229,7 +229,7 @@ sub make_repname_list {
 	my $katsuyou = $m[9];
 	my $hinshi = $m[3];
 #	my $midashi = "$m[2]/$m[1]";
-	my $midashi = $surf;
+	my $midashi = $m[2];
 	my %reps = ();
 	# 代表表記の取得
 # 	if ($line =~ /\<代表表記:([^>]+)\>/) {
@@ -254,12 +254,14 @@ sub make_repname_list {
 # 	}
 # 	$line = $lnbuf;
 
-	if ($hinshi eq '動詞') {
-	    my %new_reps;
-	    foreach my $k (keys %reps) {
-		$new_reps{$k . ":$katsuyou"} = $reps{$k};
+	if ($opt->{is_phrasal_search}) {
+	    if ($hinshi eq '動詞') {
+		my %new_reps;
+		foreach my $k (keys %reps) {
+		    $new_reps{$k . ":$katsuyou"} = $reps{$k};
+		}
+		%reps = %new_reps;
 	    }
-	    %reps = %new_reps;
 	}
 
 	push(@repnameList, \%reps);
@@ -273,7 +275,118 @@ sub extract_sentences_from_content {
     my($query, $content, $opt) = @_;
 
     my $annotation;
-    my $indexer = new Indexer();
+    my $indexer = new Indexer({ignore_yomi => $opt->{ignore_yomi}});
+    my @sentences = ();
+    my %sbuff = ();
+    my $sid = 0;
+    my $in_title = 0;
+    my $in_link_tag = 0;
+    my $in_meta_tag = 0;
+    foreach my $line (split(/\n/, $content)) {
+	$line .= "\n";
+	if ($opt->{discard_title}) {
+	    # タイトルはスニッペッツの対象としない
+	    if ($line =~ /<Title [^>]+>/) {
+		$in_title = 1;
+	    } elsif ($line =~ /<\/Title>/ || $line =~ /<\/Header>/) {
+		$in_title = 0;
+	    }
+	}
+	next if ($in_title > 0);
+	next if ($line =~ /^!/ && !$opt->{syngraph});
+
+	$in_link_tag = 1 if ($line =~ /<InLinks>/);
+	$in_link_tag = 0 if ($line =~ /<\/InLinks>/);
+	$in_link_tag = 1 if ($line =~ /<OutLinks>/);
+	$in_link_tag = 0 if ($line =~ /<\/OutLinks>/);
+
+	$in_meta_tag = 1 if ($line =~ /<Description>/);
+	$in_meta_tag = 0 if ($line =~ /<\/Description>/);
+	$in_meta_tag = 1 if ($line =~ /<Keywords>/);
+	$in_meta_tag = 0 if ($line =~ /<\/Keywords>/);
+
+	next if ($in_link_tag || $in_meta_tag);
+
+	$annotation .= $line;
+
+	$sid = $1 if ($line =~ m!<S .+ Id="(\d+)"!);
+	$sid = 0 if ($line =~ m!<Title !);
+
+	if ($line =~ m!</Annotation>!) {
+	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
+		my $result = $1;
+		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result, undef, $opt) : $indexer->makeIndexFromKNPResult($result, $opt);
+		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
+
+		my $sentence = {
+		    rawstring => undef,
+		    score => 0,
+		    smoothed_score => 0,
+		    words => {},
+		    dpnds => {},
+		    surfs => [],
+		    reps => [],
+		    sid => $sid,
+		    number_of_included_queries => $num_of_queries,
+		    number_of_included_query_types => $num_of_types,
+		    including_all_indices => $including_all_indices
+		};
+
+		$sentence->{result} = $result if ($opt->{keep_result});
+
+		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
+
+		my $num_of_whitespace_cdot_comma = 0;
+		foreach my $w (@{$word_list}) {
+		    my $surf = $w->{surf};
+		    my $reps = $w->{reps};
+		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
+
+		    $sentence->{rawstring} .= $surf;
+		    push(@{$sentence->{surfs}}, $surf);
+		    push(@{$sentence->{reps}}, $w->{reps});
+		}
+
+		my $length = scalar(@{$sentence->{surfs}});
+		$length = 1 if ($length < 1);
+		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * log($length);
+		$sentence->{score} = $score;
+		$sentence->{smoothed_score} = $score;
+		$sentence->{length} = $length;
+		$sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
+
+		push(@sentences, $sentence);
+#		print encode('euc-jp', $sentence->{rawstring}) . " (" . $num_of_whitespace_cdot_comma . ") is SKIPPED.\n";
+	    }
+	    $annotation = '';
+	}
+    }
+
+    my $window_size = $opt->{window_size};
+    my $size = scalar(@sentences);
+    for (my $i = 0; $i < scalar(@sentences); $i++) {
+	my $s = $sentences[$i];
+	for (my $j = 0; $j < $window_size; $j++) {
+	    my $k = $i - $j - 1;
+	    last if ($k < 0);
+	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
+	}
+
+	for (my $j = 0; $j < $window_size; $j++) {
+	    my $k = $i + $j + 1;
+	    last if ($k > $size - 1);
+	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
+	}
+    }
+
+    return \@sentences;
+}
+
+sub extract_sentences_from_content_old {
+    my($query, $content, $opt) = @_;
+
+    my $annotation;
+    my $indexer = new Indexer({ignore_yomi => $opt->{ignore_yomi}});
     my @sentences = ();
     my %sbuff = ();
     my $sid = 0;
@@ -318,7 +431,7 @@ sub extract_sentences_from_content {
 
 		$sentence->{result} = $result if ($opt->{keep_result});
 
-		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result);
+		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
 
 		my $num_of_whitespace_cdot_comma = 0;
 		foreach my $w (@{$word_list}) {
@@ -428,7 +541,7 @@ sub calculate_score {
 }
 
 sub make_word_list {
-    my ($sent) = @_;
+    my ($sent, $opt) = @_;
 
     my @words;
     foreach my $line (split(/\n/,$sent)){
@@ -449,6 +562,7 @@ sub make_word_list {
 	    if ($line =~ /\<代表表記:([^>]+)\>/) {
 		$midashi = $1;
 	    }
+	    $midashi =~ s/\/.+// if ($opt->{ignore_yomi});
 
 	    $reps{&toUpperCase_utf8($midashi)} = 1;
 	    
@@ -461,9 +575,10 @@ sub make_word_list {
 		my $alt_cont = $1;
 		if ($alt_cont =~ /代表表記:(.+?)(?: |\")/) {
 		    my $midashi = $1;
+		    $midashi =~ s/\/.+// if ($opt->{ignore_yomi});
 		    $reps{&toUpperCase_utf8($midashi)} = 1;
 		} elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
-		    my $midashi = "$3/$2";
+		    my $midashi = ($opt->{ignore_yomi}) ? $3 : "$3/$2";
 		    $reps{&toUpperCase_utf8($midashi)} = 1;
 		}
 	    }
@@ -522,6 +637,7 @@ sub make_word_list_syngraph {
 	    $wordcnt++;
 	} else {
 	    my ($dumy, $bnstId, $syn_node_str) = split(/ /, $line);
+
 	    if ($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>((<[^>]+>)*)$!) {
 		my $sid = $1;
 		my $features = $3;
