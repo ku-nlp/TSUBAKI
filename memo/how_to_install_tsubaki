@@ -41,6 +41,10 @@
 	(mrph_ne 固有表現形態素 ルールループ先行)
 	(/home/skeiji/cvs/knp/rule/mrph_microsoft 形態素 ルールループ先行)
 
+  * knpディレクトリ以下のsystem/const.h内のGeneralRule_MAXの値を10240にする
+
+  * knpをmakeしなおす
+
 　* knpを実行し、質問文タイプタグ（<What型>，<What-Search型>）がつくことを確認する
 
 [skeiji@nlpc01 skeiji] juman | knp -tab -dpnd -postprocess
