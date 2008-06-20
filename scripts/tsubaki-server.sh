@@ -2,6 +2,9 @@
 
 # $Id$
 
+# VERBOSE=-verbose
+VERBOSE=
+
 HOSTS_PREFIX=
 HOSTS_START=
 HOSTS_END=
@@ -54,7 +57,7 @@ start() {
 		port=`echo $LINE | cut -f 3 -d ' '`
 		dlengthdbdir=$idxdir
 		echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR $SCRIPTS_DIR/$COMMAND -idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $port $USE_OF_SYNGRAPH"
-		ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR $SCRIPTS_DIR/$COMMAND -idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $port $USE_OF_SYNGRAPH"
+		ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR $SCRIPTS_DIR/$COMMAND -idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $port $USE_OF_SYNGRAPH $VERBOSE"
 	    fi
 	done < $PORTSFILE
     done
