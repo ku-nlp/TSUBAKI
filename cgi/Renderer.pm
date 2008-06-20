@@ -49,7 +49,7 @@ sub printQuery {
 	my $hitcount = $logger->getParameter('hitcount');
 	while ($hitcount =~ s/(.*\d)(\d\d\d)/$1,$2/){};
 
-	print " を含む文書 $hitcount 件\n"; 
+	print " で検索された文書 $hitcount 件\n"; 
 	if ($size > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
 	    my $end = $params->{'start'} + $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
 	    $end = $size if ($end > $size);
@@ -74,7 +74,7 @@ sub printSearchTime {
     } else {
 	printf("%s: %3.1f [%s]\n", "検索時間", $search_time, "秒");
     }
-#    print "</DIV>\n";
+#   print "</DIV>\n";
     print "</TD></TR></TABLE>\n";
 }
 
@@ -309,45 +309,46 @@ END_OF_HTML
     print qq(<INPUT type="submit"name="送信" value="検索する"/>\n);
     print qq(<INPUT type="button"name="clear" value="クリア" onclick="document.all.INPUT.value=''"/>\n);
 
-#     print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
-#     if($params->{'logical_operator'} eq "OR"){
-# 	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
-# 	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/>全ての語を含む</LABEL></TD>\n";
-# 	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む</LABEL></TD>\n";
-#     }elsif($params->{'logical_operator'} =~ /AND/){
-# 	if($params->{'force_dpnd'} > 0){
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\" checked/>全ての係り受けを含む</LABEL></TD>\n";
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/> 全ての語を含む</LABEL></TD>\n";
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
-# 	}else{
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\" checked/> 全ての語を含む</LABEL></TD>\n";
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
-# 	}
-#     }
-#     print "</TR>";
+    if ($params->{develop_mode}) {
+	print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
+	if($params->{'logical_operator'} eq "OR"){
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/>全ての語を含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む</LABEL></TD>\n";
+	}elsif($params->{'logical_operator'} =~ /AND/){
+	    if($params->{'force_dpnd'} > 0){
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\" checked/>全ての係り受けを含む</LABEL></TD>\n";
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/> 全ての語を含む</LABEL></TD>\n";
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
+	    }else{
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\" checked/> 全ての語を含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
+	    }
+	}
+	print "</TR>";
 
-#     print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
-#     if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-# 	print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL>";
-#     } else {
-# 	if ($params->{syngraph}) {
-# 	    print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL>";
-# 	} else {
-# 	    print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
-# 	}
-#     }
-#     if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
-# 	print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
-#     } else {
-# 	if ($params->{kwic}) {
-# 	    print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
-# 	} else {
-# 	    print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
-# 	}
-#     }
-
-#    print "</TD></TR></TABLE>\n";
+	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
+	if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
+	    print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL>";
+	} else {
+	    if ($params->{syngraph}) {
+		print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+	    } else {
+		print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+	    }
+	}
+	if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
+	    print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
+	} else {
+	    if ($params->{kwic}) {
+		print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	    } else {
+		print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	    }
+	}
+	print "</TD></TR></TABLE>\n";
+    }
    
     print qq(</FORM>\n);
     print qq(</TD></TR></TABLE>\n);
@@ -408,46 +409,48 @@ END_OF_HTML
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
     print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.q.value=''\"/>\n";
 
-#     print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
-#     if($params->{'logical_operator'} eq "OR"){
-# 	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
-# 	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/>全ての語を含む</LABEL></TD>\n";
-# 	print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む</LABEL></TD>\n";
-#     }elsif($params->{'logical_operator'} eq "AND"){
-# 	if($params->{'force_dpnd'} > 0){
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\" checked/>全ての係り受けを含む</LABEL></TD>\n";
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/> 全ての語を含む</LABEL></TD>\n";
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
-# 	}else{
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\" checked/> 全ての語を含む</LABEL></TD>\n";
-# 	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
-# 	}
-#     }
-#     print "</TR>";
+    if ($params->{develop_mode}) {
+	print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
+	if ($params->{'logical_operator'} eq "OR") {
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/>全ての語を含む</LABEL></TD>\n";
+	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む</LABEL></TD>\n";
+	} elsif ($params->{'logical_operator'} eq "AND") {
+	    if ($params->{'force_dpnd'} > 0) {
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\" checked/>全ての係り受けを含む</LABEL></TD>\n";
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/> 全ての語を含む</LABEL></TD>\n";
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
+	    } else {
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\" checked/> 全ての語を含む</LABEL></TD>\n";
+		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
+	    }
+	}
+	print "</TR>";
 
-#     print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
-#     if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-# 	print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL>";
-#     } else {
-# 	if ($params->{syngraph}) {
-# 	    print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL>";
-# 	} else {
-# 	    print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
-# 	}
-#     }
+	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
+	if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
+	    print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL>";
+	} else {
+	    if ($params->{syngraph}) {
+		print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+	    } else {
+		print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+	    }
+	}
 
-#     if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
-# 	print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
-#     } else {
-# 	if ($params->{kwic}) {
-# 	    print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
-# 	} else {
-# 	    print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
-# 	}
-#     }
+	if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
+	    print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
+	} else {
+	    if ($params->{kwic}) {
+		print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	    } else {
+		print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	    }
+	}
 
-    print "</TD></TR></TABLE>\n";
+	print "</TD></TR></TABLE>\n";
+    }
     
     print "</FORM>\n";
 
@@ -637,7 +640,7 @@ sub printOrdinarySearchResult {
 
 	my $output = qq(<DIV class="result">);
 
-	$output .= qq(<TABLE cellpadding="0" border="0"><TR><TD>\n);
+	$output .= qq(<TABLE cellpadding="0" border="0" width="100%"><TR><TD>\n);
 	$output .= qq(<SPAN class="rank">) . ($rank + 1) . "</SPAN>";
 	$output .= qq(</TD>\n);
 
@@ -661,10 +664,17 @@ sub printOrdinarySearchResult {
 	    if ($params->{from_portal}) {
 		$output .= qq(<DIV class="meta"><A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');">$open_label</A> </DIV>\n);
 	    } else {
-		$output .= qq(<DIV class="meta">id=$did, score=$score, <A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');">$open_label</A></DIV>\n);
+		if ($params->{score_verbose}) {
+		    $output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f), <A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '%s', '%s');">%s</A></DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor},$results->[$rank]{score_dpnd_anchor}, $open_label, $close_label;
+		} else {
+		    $output .= qq(<DIV class="meta">id=$did, score=$score, <A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');">$open_label</A></DIV>\n);
+		}
 	    }
 	} else {
-	    $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n) unless ($params->{from_portal});
+	    unless ($params->{from_portal}) {
+		$output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)</DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor}, $results->[$rank]{score_dpnd_anchor};
+		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n)
+	    }
 	}
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
 	$output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
