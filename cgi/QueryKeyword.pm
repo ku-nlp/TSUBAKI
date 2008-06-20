@@ -43,7 +43,7 @@ sub new {
     my %buff;
     unless ($opt->{syngraph}) {
 	# KNP 結果から索引語を抽出
-	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult->all, {string_mode => 1});
+	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult->all);
 	# $indice = $opt->{indexer}->make_index_from_KNP_result_object($knpresult);
     } else {
 	# SynGraph 結果から索引語を抽出
@@ -64,6 +64,7 @@ sub new {
 	$indice = $opt->{indexer}->makeIndexfromSynGraph($synresult, \@content_words,
  							 { use_of_syngraph_dependency => $CONFIG->{USE_OF_SYNGRAPH_DEPENDENCY},
  							   use_of_hypernym => $CONFIG->{USE_OF_HYPERNYM},
+							   string_mode => 0,
  							   use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM}
  							 });
     }
@@ -74,7 +75,7 @@ sub new {
 	push(@{$buff{$idx->{group_id}}}, $idx);
     }
 
-    foreach my $group_id (sort {$buff{$a}->[0]{pos}[0] <=> $buff{$b}->[0]{pos}[0]} keys %buff) {
+    foreach my $group_id (sort {$buff{$a}->[0]{pos} <=> $buff{$b}->[0]{pos}} keys %buff) {
 	my @word_reps;
 	my @dpnd_reps;
 	foreach my $m (@{$buff{$group_id}}) {
