@@ -102,10 +102,12 @@ sub parseCGIRequest {
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
     $params->{from_portal} = $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
+    $params->{develop_mode} = $cgi->param('develop_mode') if (defined($cgi->param('develop_mode')));
+    $params->{score_verbose} = $cgi->param('develop_mode');
 
     &normalize_logical_operator($params);
 
-    $params->{syngraph} = 1 if ($cgi->param('syngraph'));
+    $params->{syngraph} = 1 if ($cgi->param('syngraph') || !$params->{develop_mode});
 
     # クエリに制約が指定されていなければ~100wをつける
     if ($params->{query} !~ /~/ && $params->{query} ne '') {
@@ -210,7 +212,8 @@ sub parseQuery {
     $logger->setParameterAs('query', $params->{query}) if ($logger);
 
     my $DFDB_DIR = ($params->{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
-    my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR });
+    my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR,
+				     ignore_yomi => $CONFIG->{IGNORE_YOMI} });
 
     # クエリの解析
     # logical_cond_qk: クエリ間の論理演算
@@ -236,6 +239,9 @@ sub parseQuery {
     $query->{flag_of_dpnd_use} = $params->{flag_of_dpnd_use};
     $query->{flag_of_dist_use} = $params->{flag_of_dist_use};
     $query->{flag_of_anchor_use} = $params->{flag_of_anchor_use};
+
+    # スコアの詳細が必要かどうか
+    $query->{score_verbose} = $params->{score_verbose};
 
     # start をセット
     $query->{start} = $params->{start};
