@@ -45,7 +45,8 @@ sub makeIndexfromSynGraph {
 
     my %dpndInfo = ();
     my %synNodes = ();
-    my $position= 0;
+    my $position = 0;
+    my $word_num = 0;
     my $knpbuf = '';
     my $first = 0;
     foreach my $line (split(/\n/, $syngraph)) {
@@ -53,7 +54,7 @@ sub makeIndexfromSynGraph {
 	    my($dumy, $id, $kakari, $midasi) = split(/ /, $line);
 	    if ($kakari =~ /^(.+)(A|I|D|P)$/) {
 		$dpndInfo{$id}->{kakariType} = $2;
-		$dpndInfo{$id}->{pos} = $position++;
+		$dpndInfo{$id}->{pos} = $position + $this->{absolute_pos};
 		foreach my $kakariSakiID (split(/\//, $1)) {
 		    push(@{$dpndInfo{$id}->{kakariSaki}}, $kakariSakiID);
 		}
@@ -72,20 +73,26 @@ sub makeIndexfromSynGraph {
 		my $features = $3;
 
 		# 読みの削除
-		$sid = $1 if ($sid =~ m!^([^/]+)/!);
+		my $buf;
+		foreach my $w (split(/\+/, $sid)) {
+		    $w =~ s!^([^/]+)/!!;
+		    $buf .= "$1+";
+		}
+		chop($buf);
+		$sid = $buf;
 
 		# <上位語>を利用するかどうか
 		if ($features =~ /<上位語>/) {
 		    if ($opt->{use_of_hypernym}) {
 			# $features =~ s/<上位語>//g;
 		    } else {
-			next;
+			# next;
 		    }
 		}
 
 		# <反義語><否定>を利用するかどうか
 		if ($features =~ /<反義語>/ && $features =~ /<否定>/) {
-		    next unless ($opt->{use_of_negation_and_antonym});
+		    # next unless ($opt->{use_of_negation_and_antonym});
 		}
 
 
@@ -98,12 +105,13 @@ sub makeIndexfromSynGraph {
 		# <下位語数:(数字)>を削除
 		$features =~ s/<下位語数:\d+>//;
 
+		my $pos = $position + $this->{absolute_pos}; # ($bnstId =~ /,(\d+)$/) ? $1 : $bnstId;
 		my $midasi = $sid . $features;
 		my $syn_node = {midasi => $midasi,
 				score => $score,
 				grpId => $bnstId,
 				fstring => $fstring,
-				pos => [],
+				pos => $pos,
 				NE => undef,
 				question_type => undef,
 				absolute_pos => []};
@@ -122,15 +130,24 @@ sub makeIndexfromSynGraph {
 
 		push(@{$synNodes{$bnstId}}, $syn_node);
 	    }
+	} elsif ($line =~ /^\+ /) {
+	    $first = 1 if ($knpbuf =~ /(<[^>]+型>)/);
+	    $knpbuf = '';
+	} elsif ($line =~ /^\* /) {
+	    $knpbuf .= ($line . "\n");
+	} elsif ($line =~ /^EOS$/) {
+	    $knpbuf .= ($line . "\n");
+	} elsif ($line =~ /^S\-ID:\d+$/) {
+	    $knpbuf .= ($line . "\n");
+# 	} elsif ($line =~ /^#/) {
+# 	    $knpbuf .= ($line . "\n");
 	} else {
-	    if ($line =~ /^\+/) {
-		$first = 1 if ($knpbuf =~ /(<[^>]+型>)/);
-		$knpbuf = '';
-	    } else {
-		$knpbuf .= ($line . "\n");
-	    }
+	    $knpbuf .= ($line . "\n");
+	    $position = $word_num if ($line =~ /<内容語|意味有>/);
+	    $word_num++;
 	}
     }
+    $this->{absolute_pos} += $word_num;
 
     # 並列句において、係り元の係り先を、係り先の係り先に変更する
     # スプーンとフォークで食べる
@@ -142,15 +159,17 @@ sub makeIndexfromSynGraph {
 	    foreach my $kakarisakiID (@{$dinfo->{kakariSaki}}) {
 		my $kakariSakiInfo = $dpndInfo{$kakarisakiID};
 		foreach my $kakariSakiNoKakaiSakiID (@{$kakariSakiInfo->{kakariSaki}}) {
-		    next if ($kakariSakiNoKakaiSakiID eq '-1');
-		    push(@new_kakariSaki, $kakariSakiNoKakaiSakiID);
+		    if ($kakariSakiNoKakaiSakiID eq '-1') {
+			push(@new_kakariSaki, $kakarisakiID);			
+		    } else {
+			push(@new_kakariSaki, $kakariSakiNoKakaiSakiID);
+		    }
 		}
 	    }
 	    $dinfo->{kakariSaki} = \@new_kakariSaki;
 	}
     }
 
-    my $pos = 0;
     my @freq = ();
     foreach my $id (sort {$a <=> $b} keys %synNodes) {
 	foreach my $synNode (@{$synNodes{$id}}){
@@ -158,10 +177,13 @@ sub makeIndexfromSynGraph {
 	    my $kakariType = $dpndInfo{$id}->{kakariType};
 	    my $groupId = $synNode->{grpId};
 	    my $score = $synNode->{score};
+	    my $pos = $synNode->{pos};
 
 	    push(@freq, {midasi => $synNode->{midasi}});
 	    $freq[-1]->{freq} = $score;
-	    push(@{$freq[-1]->{pos}}, $pos);
+	    $freq[-1]->{score} = $score;
+	    # push(@{$freq[-1]->{pos}}, $pos);
+	    $freq[-1]->{pos} = $pos;
 	    $freq[-1]->{group_id} = $groupId;
 	    $freq[-1]->{midasi} = $synNode->{midasi};
 	    $freq[-1]->{isContentWord} = 1;
@@ -176,6 +198,7 @@ sub makeIndexfromSynGraph {
 	    
 	    foreach my $kakariSakiID (@{$kakariSakis}){
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
+
 		foreach my $kakariSakiNode (@{$kakariSakiNodes}){
 		    # SYNノードがらみの係り受けを使わない場合は next
 		    next if (!$opt->{use_of_syngraph_dependency} &&
@@ -184,7 +207,9 @@ sub makeIndexfromSynGraph {
 		    my $s = $score * $kakariSakiNode->{score};
 		    push(@freq, {midasi => "$synNode->{midasi}->$kakariSakiNode->{midasi}"});
 		    $freq[-1]->{freq} = $s;
-		    push(@{$freq[-1]->{pos}}, $pos);
+		    $freq[-1]->{score} = $s;
+		    # push(@{$freq[-1]->{pos}}, $pos);
+		    $freq[-1]->{pos} = $pos;
 		    $freq[-1]->{group_id} = "$groupId\/$kakariSakiNode->{grpId}";
 		    $freq[-1]->{midasi} = "$synNode->{midasi}->$kakariSakiNode->{midasi}";
 		    $freq[-1]->{isContentWord} = 1;
@@ -200,7 +225,6 @@ sub makeIndexfromSynGraph {
 		}
 	    }
 	}
-	$pos++;
     }
 
     return \@freq;
@@ -750,6 +774,7 @@ sub makeIndexfromSynGraph4Indexing {
 		rawstring => $midasi,
 		group_id => $groupID,
 		score => $score,
+		freq => $score,
 		pos => $pos,
 		isContentWord => 1
 	    };
@@ -766,6 +791,7 @@ sub makeIndexfromSynGraph4Indexing {
 			rawstring => ($midasi . '->' . $kakariSakiNode->{midasi}),
 			group_id => ($groupID . '/' . $kakariSakiNode->{grpId}),
 			score => ($score * $kakariSakiNode->{score}),
+			freq => $score,
 			pos => $pos,
 			isContentWord => 1
 		    };
