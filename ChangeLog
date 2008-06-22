@@ -1,3 +1,314 @@
+2008-06-22  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Query.pm:
+	クエリを正規化する際にscore_verboseを考慮しないようにした.
+
+	* cgi/configure: パラメータの追加およびデフォルト値の変更.
+
+2008-06-20  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* memo/how_to_install_tsubaki: updated.
+
+	* cgi/SnippetMaker.pm:
+	ignore_yomiオプションに対応. 
+	KWIC生成時に、フレーズ検索の時のみ、動詞の活用形をチェックするようにした. 
+	<inLink>,<OutLink>からスニペット生成しないようにした.
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	文書のスコアを計算する部分のコードを整理(SYNGRAPH解析結果から作成したアンカーテキストインデックスに対応.)
+
+	* scripts/Indexer.pm:
+	コード整理.
+
+	* scripts/snippet_make_server.pl:
+	ignore_yomiオプションの追加.
+
+	* scripts/tsubaki-server.sh:
+	verboseオプションの追加
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4OrdinarySearch.pm, scripts/TsubakiEngineFactory.pm, scripts/tsubaki_server.pl:
+	score_verboseオプションに対応.
+
+	* cgi/RequestParser.pm:
+	score_verbose, develop_modeオプションの追加. 
+	QueryParserをnewする際に、ignore_yomiオプションを渡すようにした. 
+	デフォルトでSYNGRAPH検索をonにした.
+
+	* cgi/QueryKeyword.pm:
+	Indexerが抽出する索引表現のメンバ変数の変更に対応.
+
+	* cgi/Renderer.pm:
+	score_verboseオプションでスコアの内訳を表示するようにした. 開発モードのときだけ、検索オプションを表示するようにした.
+
+	* cgi/QueryParser.pm:
+	Indexerをnewする際に、ignore_yomiオプションをとるようにした.
+
+2008-06-16  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm, cgi/configure, cgi/configure.nict:
+	リクエストのスケジューリング機能のオン/オフをオプション化.
+
+	* cgi/State.pm, cgi/configure, cgi/configure.nict:
+	マスターサーバーが検索中の時、後続するクエリがRETRYする回数をオプション化.
+
+	* scripts/make_idx.pl:
+	オプションの追加（-ignore_syn_dpnd, -skip_large_file, -max_num_of_indices），
+	オプション(-title, -keywords, -description, -inlinks, -sentences)により索引表現を抽出する箇所を指定するようにした, 
+	インリンクの場合は披リンク数を頻度に考慮するようにした, 
+	StandardFormatクラスのインスタンスから索引表現を抽出する関数の追加.
+
+	* scripts/make-index.sh:
+	作成するインデックスのタイプをオプション化, 使用するメモリの上限を設定(2GB)するなどしてメモリを大量に利用しないようにした.
+
+	* scripts/merge-index.sh:
+	バイナリ化処理を追加した.
+
+	* scripts/seek_test.pl:
+	-ignore_yomiオプションの追加.
+
+	* cgi/log.cgi:
+	検索時のステータスおよびポータルからのアクセスについてのログを表示するようにした.
+
+	* cgi/RequestParser.pm:
+	ポータルからのアクセスかどうかのログをとるようにした.
+
+2008-06-13  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	ブラウザにより読み込むcssをわけた.
+
+	* cgi/RequestParser.pm:
+	クエリに追加する制約を~100w(100語以内，語順を考慮しない)に変更
+
+	* cgi/QueryParser.pm, cgi/RequestParser.pm:
+	同義表現検索においても近接制約を指定できるようにした.
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	アンカー検索に対応. verbose指定時に出力されるメッセージの追加.
+
+	* scripts/TsubakiEngine.pm:
+	コメントの追加, verbose指定時に出力されるメッセージの追加.
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm, cgi/se.css:
+	検索結果表示の修正（爆発ポータルからアクセスされた場合はスコアを隠す、検索結果レイアウトの調整）
+
+	* cgi/Renderer.pm:
+	使い方ガイドへのリンクを削除, ヒット件数の表示を修正.
+
+2008-06-12  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	ユーザに見せる検索結果数をNUM_OF_PROVIDE_SEARCH_RESULTSに従って決めるようにした.
+
+	* cgi/configure:
+	ユーザに見せる検索結果数をオプション化
+
+	* scripts/tsubaki-server.sh:
+	NICT側でも起動できるようにした.
+
+	* cgi/SearchEngine.pm:
+	検索スレーブ側からログデータが送信されなかった場合、エラーメッセージを出力するようにした.
+
+	* cgi/QueryParser.pm, cgi/RequestParser.pm:
+	ブラウザ検索において、クエリ内の文末表現を検索に用いないようにした.
+
+2008-06-12  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm:
+	ブラウザアクセス時にKWICの左右のコンテキストが表示されないバグを修正.
+
+2008-06-11  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	同じ基本句から抽出された同義グループに対して同じ色を塗るようにした.
+
+	* cgi/Renderer.pm:
+	ヒット件数を3桁ごとにカンマで区切るようにした.
+
+	* cgi/Renderer.pm, cgi/se.css:
+	検索クエリ、検索時間の表示方法を変更.
+
+	* cgi/Cache.pm:
+	検索クエリがキャッシュされているかどうかを確認するメソッド(exists)の追加.
+
+	* cgi/Renderer.pm:
+	検索結果に表示するロゴを小さくした. 検索時のオプションを隠した（とりあえず）
+
+2008-06-09  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm:
+	URLリクエストによるAPI呼び出し時も、kwic_window_sizeを指定できるようにした.
+
+	* cgi/SnippetMaker.pm:
+	複数個のキーワードがある場合、何番目のキーワードを使ってKWICを作るか指定できるようにした.
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm, cgi/api.cgi:
+	POSTアクセスに対してもKWIC取得を対応した.
+
+
+2008-06-08  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm:
+	正規化時にSYNGRAPH解析結果が出力されないようにした.
+
+	* cgi/Renderer.pm:
+	検索時間と検索語を表示するメソッドをわけた. 同義表現検索時の検索語の表示を整理した.
+
+	* cgi/Logger.pm:
+	登録されているキーを返すメソッドの追加.
+
+	* cgi/SearchEngine.pm, cgi/log.cgi:
+	献策スレーブサーバーが返すログに対応.
+
+	* scripts/TsubakiEngine.pm, scripts/tsubaki_server.pl:
+	検索スレーブサーバー側のログをとり、マスターサーバーに返却するようにした.
+
+	* cgi/api.cgi:
+	検索スレーブサーバーが混雑している際、その旨を出力するようにした.
+
+	* cgi/Renderer.pm:
+	検索時間にスニペット生成時間を加えるようにした. クエリの解析、検索、スニペット生成にかかった時間を表示するようにした.
+
+2008-06-07  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm:
+	同義表現検索指定時に~100Wをつけないようにした.
+
+	* cgi/RequestParser.pm, cgi/index.cgi:
+	制約条件の指定がない場合、~100Wをつけるようにした.
+
+2008-06-05  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/index.cgi:
+	Searcher.pmの変更に対応.
+
+	* cgi/configure, cgi/configure.nict:
+	検索負荷を判断する際に利用する環境変数の追加.
+
+	* cgi/SearchEngine.pm:
+	検索ーバーが混雑しているときは、クエリを投げないようにした.
+
+	* cgi/RequestParser.pm: KWIC表示に関するオプション(kwic=0/1)を追加.
+
+	* cgi/Searcher.pm:
+	検索結果が取得できたのか、できた場合はどの方法で取得したのかをロギングするようにした.
+
+	* cgi/SnippetMakerAgent.pm:
+	アクセス方法（API、ブラウザ）によってKWIC作成メソッドをわけた.
+
+	* cgi/api.cgi:
+	RendererのコンストラクタにAPIからの呼出であることを示す変数をセット.
+
+	* cgi/Renderer.pm:
+	サーバーが込んでる際はその旨を表示するようにした.
+
+	* cgi/Renderer.pm:
+	KWIC表示をAPIでも得られるようにした. get_snippetsメソッドをAPI呼出時にも呼ぶようにした. コードの整理.
+
+	* scripts/snippet_make_server.pl, scripts/snippet_maker_test.pl:
+	旧バージョンの標準フォーマットからKWICを生成できるようにした.
+
+	* scripts/StandardFormatData.pm:
+	旧バージョンの標準フォーマットに対応.
+
+	* cgi/Renderer.pm:
+	TUTORIALを[使い方ガイド]に変更.
+
+	* cgi/api.cgi:
+	通常のAPIアクセス時に<Cache>内が表示されないバグを修正.
+
+2008-05-26  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	チュートリアルページへのリンクを追加.
+
+2008-05-23  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/index.cgi:
+	初期画面の描画時にフラグ付文字列が出力されないようにした.
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4OrdinarySearch.pm, scripts/TsubakiEngineFactory.pm:
+	索引表現ごとに計算されるスコアの保持をオプション化 (デフォルトでは保持しない, 消費メモリを20%削減)
+
+2008-05-22  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm:
+	URIパラメタの変更, アンカーテキストを考慮するようにパラメタのデフォルト値を変更した.
+
+	* cgi/Renderer.pm:
+	KWIC表示におけるソート方法の表示の仕方を変更.
+
+	* cgi/SnippetMaker.pm:
+	KWIC作成時に、代表表記レベルで文とのマッチングをとるのをやめた
+
+	* cgi/Renderer.pm: SnippetMaker.pmの変更に対応.(KWIC表示)
+
+	* cgi/SnippetMaker.pm:
+	KWIC作成の際、前後の文もコンテキストとして表示するようにした.
+
+	* scripts/StandardFormatData.pm: <S>要素を取得する正規表現のバグ修正
+
+	* cgi/Searcher.pm:
+	類似ページ判定において、UTF8フラグが落ちている状態でタイトルを比較していたバグを修正.
+
+2008-05-21  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/api.cgi:
+	ハイライト表示のオン/オフを切り替えられるようにした.
+
+	* cgi/Renderer.pm:
+	スニペットのハイライト表示をリクエストパラメータで制御できるようにした.
+
+	* cgi/RequestParser.pm:
+	highlightオプションをPOST呼出にも対応させた.
+
+	* cgi/RequestParser.pm:
+	APIが返すスニペットをハイライトさせるオプションを追加 (highlight=0/1 デフォルト: 0(オフ))
+
+	* cgi/Renderer.pm: SnippetMakerAgent.pmの変更に対応.
+
+	* cgi/SnippetMakerAgent.pm:
+	get_decorated_snippets_for_each_did()メソッドとget_snippets_for_each_did()メソッドをマージし、ハイライトするかどうかはget_snippets_for_each_did()メソッドのオプションにした.
+
+	* cgi/SnippetMakerAgent.pm:
+	検索クエリ内の語に付与されたスタイル情報を使って、スニペットのハイライト表示を作成するように変更した.
+
+	* cgi/Renderer.pm:
+	検索クエリ内の語に付与されたスタイル情報を使って、検索結果のハイライト表示をするように変更した. SYNGRAPH検索時に表示されるツールチップを作成する部分を関数化.
+
+	* cgi/QueryParser.pm:
+	クエリ内の各語のスタイル情報を付与するようにした. 全角空白を区切りとして見なすようにした.
+
+	* cgi/SnippetMaker.pm:
+	クエリと文のマッチングをとる際、動詞については活用形を考慮するようにした（KWIC作成時）
+
+	* scripts/snippet_maker_test.pl:
+	コードの整理.
+
+	* cgi/Renderer.pm:
+	KWIC表示の際、タイトルがない場合はno_title.と表示するようにした.
+
+	* cgi/SnippetMaker.pm:
+	KWIC生成時に、文とクエリのマッチングを代表表記レベルで行うようにした.
+
+	* scripts/snippet_maker_test.pl:
+	-kwicオプションが指定された際、SnippetMaker::extract_sentences_from_standard_formatメソッドの戻り値が変わったので、それに対応した.
+
+	* scripts/StandardFormatData.pm:
+	不要なコードの削除, 読み込み済みの標準フォーマットをコンストラクタで受け付けるようにした, parseLinkInfoメソッド内の正規表現のバグを修正.
+
+	* cgi/SnippetMakerAgent.pm:
+	スニペット用の処理からKWIC用の処理を切り離し、独立のメソッドにした.
+
+	* cgi/Renderer.pm:
+	検索結果表示部分からKWIC表示部分を切り離し、独立のメソッドにした.
+
+	* cgi/RequestParser.pm: 環境変数およびKWIC用パラメータの追加.
+
+	* cgi/SnippetMaker.pm:
+	スニペット生成メソッドからKWIC生成部分を切り離し、独立のメソッドにした.
+
+
 2008-05-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* utils/api_req.pl:
