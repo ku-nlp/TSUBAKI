@@ -40,6 +40,7 @@ sub normalize {
 	next if ($memberName eq 'keywords');
 	next if ($memberName eq 'dpnd_map');
 	next if ($memberName eq 'start');
+	next if ($memberName eq 'score_verbose');
 
 	push(@buf, $memberName . "=" . $this->{$memberName});
     }
