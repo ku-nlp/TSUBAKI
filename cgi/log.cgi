@@ -12,7 +12,7 @@ my $CONFIG = Configure::get_instance();
 
 my @OPTs = ('query', 'start', 'results', 'logical_operator', 'dpnd', 'filter_simpages', 'only_hitcount', 'id', 'format');
 
-open(LOG, "tac $CONFIG->{LOG_FILE_PATH} | head -300 |");
+open(LOG, "tac $CONFIG->{LOG_FILE_PATH} | head -1000 |");
 binmode(LOG, ':utf8');
 print header(-charset => 'utf-8');
 
@@ -50,6 +50,7 @@ push(@attrs, 'total');
 
 while (<LOG>) {
       my ($date, $host, $access, @options) = split(/ /, $_);
+      next if ($access eq 'API');
 
       my %vals = ();
       foreach my $opt (split(/,/, join(' ', @options))) {

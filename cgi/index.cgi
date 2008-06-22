@@ -1,4 +1,4 @@
-#!/share09/home/skeiji/local/bin/perl
+#!/home/skeiji/local/bin/perl
 
 # $Id$
 
