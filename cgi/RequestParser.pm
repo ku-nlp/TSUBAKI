@@ -10,6 +10,7 @@ use strict;
 use utf8;
 use Encode;
 use Configure;
+use Encode::Guess;
 
 
 my $CONFIG = Configure::get_instance();
@@ -141,7 +142,15 @@ sub parseAPIRequest {
     }
 
     # 指定された検索条件に変更
-    $params->{'query'} = decode('utf8', $cgi->param('query')) if ($cgi->param('query'));
+    my $recievedString = $cgi->param('query') if ($cgi->param('query'));
+    my $encoding = guess_encoding($recievedString, qw/ascii euc-jp shiftjis 7bit-jis utf8/); # range
+    unless ($encoding =~ /utf8/) {
+	require Renderer;
+	Renderer::printErrorMessage($cgi, 'queryの値はutf8でエンコードした文字列を指定して下さい。');
+	exit(1);
+    }
+
+    $params->{'query'} = decode('utf8', $recievedString);
     $params->{'query'} =~ s/^(?: | )+//g;
     $params->{'query'} =~ s/(?: | )+$//g;
 
@@ -182,6 +191,10 @@ sub parseAPIRequest {
 	    Renderer::printErrorMessage($cgi, 'resultsの値は1以上を指定して下さい.');
 	    exit(1);
 	}
+    }
+
+    if ($params->{query} =~ //) {
+	
     }
 
     return $params;
