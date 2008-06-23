@@ -653,7 +653,7 @@ sub printOrdinarySearchResult {
 	}
 	$output .= qq(</TD></TR>\n);
 
-	$output .= qq(<TR><TD></TD>\n);
+	$output .= qq(<TR><TD>&nbsp</TD>\n);
 
 	$output .= qq(<TD>\n);
 	my $num_of_sim_pages = 0;
@@ -672,15 +672,15 @@ sub printOrdinarySearchResult {
 	    }
 	} else {
 	    unless ($params->{from_portal}) {
-		$output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)</DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor}, $results->[$rank]{score_dpnd_anchor};
-		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n)
+		# $output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)</DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor}, $results->[$rank]{score_dpnd_anchor};
+		$output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n)
 	    }
 	}
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
 	$output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
 	$output .= "</DIV>";
 
-	$output .= "<DIV id=\"simpages_$rank\" style=\"display: none;\">";
+	$output .= qq(<DIV id="simpages_$rank" style="display: none;">);
 	foreach my $sim_page (@{$results->[$rank]{similar_pages}}) {
 	    my $did = sprintf("%09d", $sim_page->{did});
 	    my $score = $sim_page->{score_total};
@@ -689,8 +689,8 @@ sub printOrdinarySearchResult {
 	    my $snippet = $did2snippets->{$did};
 	    $score = sprintf("%.4f", $score);
 
-	    $output .= "<DIV class=\"similar\">";
-	    $output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+	    $output .= qq(<DIV class="similar">);
+	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=") . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	    $output .= $sim_page->{title} . "</a>";
 	    if ($params->{from_portal}) {
 		$output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN><BR>\n);
