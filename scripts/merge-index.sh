@@ -2,19 +2,39 @@
 
 # 1万件ごとのインデックスデータを100万件単位にマージするスクリプト
 
+# usage: sh merge-index.sh [-syn] 000 /somewhere/flist
+
+
 # ★以下の値を変更すること
 workspace=/tmp/mg_tsubaki_idx
 scriptdir=$HOME/cvs/SearchEngine/scripts
 
 
 
+
+# スワップしないように仕様するメモリサイズを制限する(max 4GB)
+ulimit -m 4194304
+ulimit -v 4194304
+
+
+# SYNGRAPH検索用インデックスかどうかのチェック
+type=
+if [ $1 = "-syn" ];
+then
+    type="-syn"
+    shift
+fi
 id=$1
 flist=$2
+
+# 作業ディレクトリの作成
 mkdir $workspace 2> /dev/null
 cd $workspace
 
 mkdir $id 2> /dev/null
 cd $id
+
+
 
 # インデックスデータをコピー
 for f in `egrep "i$id...idx.gz" $flist`
@@ -23,6 +43,8 @@ do
     scp $f ./
 done
 cd ..
+
+
 
 # ディスク上でマージ
 echo "perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz | gzip > $id.idx.gz"
