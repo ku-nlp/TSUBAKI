@@ -31,7 +31,18 @@ sub main {
 
     if ($params->{'cache'}) {
 	# キャッシュページの出力
-	&print_cached_page($params);
+	my $id = $params->{'cache'};
+	my $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
+
+	# KEYごとに色を付ける
+	my $query = decode('utf8', $params->{'KEYS'});
+
+	push(@INC, $CONFIG->{WWW2SF_PATH});
+	require CachedHTMLDocument;
+	
+	# キャッシュされたページを表示
+	my $cachedHTML = new CachedHTMLDocument($query, { file => $file, z => 1 });
+	print $cachedHTML->to_string();
     } else {
 	my $renderer = new Renderer(0);
 
@@ -69,40 +80,4 @@ sub main {
 	    $logger->close();
 	}
     }
-}
-
-
-# キャッシュされたページを表示
-sub print_cached_page {
-    my ($params) = @_;
-
-    my $color;
-    my $id = $params->{'cache'};
-    my $htmlfile = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
-    my $htmldat = decode('utf8', `gunzip -c  $htmlfile | $CONFIG->{TOOL_HOME}/nkf -w`);
-
-    if ($htmldat =~ /(<meta [^>]*content=[" ]*text\/html[; ]*)(charset=([^" >]+))/i) {
-	my $fwd = $1;
-	my $match = $2;
-	$htmldat =~ s/$fwd$match/${fwd}charset=utf\-8/;
-    }
-
-    # KEYごとに色を付ける
-    my @KEYS = split(/:/, decode('utf8', $params->{'KEYS'}));
-    print "<DIV style=\"padding:1em; background-color:#f1f4ff; border-top:1px solid gray; border-bottom:1px solid gray;\"><U>次のキーワードがハイライトされています:&nbsp;";
-    foreach my $key (@KEYS) {
-	next unless ($key);
-
-	print "<span style=\"background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];\">";
-	print encode('utf8', $key) . "</span>&nbsp;";
-	if($color > 4){
-	    # background-color が暗いので foreground-color を白に変更
-	    $htmldat =~ s/$key/<span style="color:white; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$key<\/span>/g;
-	}else{
-	    $htmldat =~ s/$key/<span style="background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$key<\/span>/g;
-	}
-	$color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
-    }
-    print "</U></DIV>";
-    print encode('utf8', $htmldat);
 }
