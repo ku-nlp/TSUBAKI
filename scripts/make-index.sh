@@ -2,6 +2,8 @@
 
 # 1万ページ毎にtgzされた標準フォーマットの塊からインデックスを抽出するスクリプト
 
+# usage: sh make-index.sh [-knp|-syn] iccc100:/data2/skeiji/embed_knp_and_syngraph_080512/s01573.tgz
+
 # ★以下の値を変更すること
 workspace=/tmp/mk_tsubaki_idx
 scriptdir=$HOME/cvs/SearchEngine/scripts
