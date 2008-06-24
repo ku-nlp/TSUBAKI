@@ -465,6 +465,37 @@ END_OF_HTML
 sub get_uri_escaped_query {
     my ($this, $query) = @_;
     # キャッシュページで索引語をハイライトさせるため、索引語をuri_escapeした文字列を生成する
+
+    my %buf;
+    my $pos = 0;
+    foreach my $qk (@{$query->{keywords}}) {
+ 	my $words = $qk->{words};
+ 	foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$words}) {
+	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @{$reps}) {
+		next if($rep->{isContentWord} < 1 && $rep->{is_phrasal_search} < 1);
+		my $string = $rep->{string};
+
+		next if ($string =~ /s\d+:/);
+
+		# $string =~ s/s\d+://; # SynID の削除
+		$string =~ s/\/.+$//; # 読みがなの削除
+
+		next if ($string =~ /<^>]+?>/);
+		next if (exists $buf{$string});
+
+		$buf{$string} = $pos++;
+	    }
+	}
+    }
+
+    my $search_k = join(":", sort {$buf{$a} <=> $buf{$b}} keys %buf);
+    my $uri_escaped_search_keys = &uri_escape(encode('utf8', $search_k));
+    return $uri_escaped_search_keys;
+}
+
+sub get_uri_escaped_query2 {
+    my ($this, $query) = @_;
+    # キャッシュページで索引語をハイライトさせるため、索引語をuri_escapeした文字列を生成する
     my $search_k;
     foreach my $qk (@{$query->{keywords}}) {
 	my $words = $qk->{words};
@@ -608,7 +639,7 @@ sub printKwicView {
 	}
 
 	$output .= sprintf qq(<TR><TD style="width: %dem; vertical-align: top;" nowrap>), $CONFIG->{MAX_LENGTH_OF_TITLE} + 2;
-	$output .= "<A class=\"title\" href=index.cgi?cache=$did&KEYS=" . $uri_escaped_search_keys . " target=\"_blank\" class=\"ex\">";
+	$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	$output .=  $title . "</a>";
 	$output .= "</TD>";
 
@@ -645,7 +676,7 @@ sub printOrdinarySearchResult {
 	$output .= qq(</TD>\n);
 
 	$output .= qq(<TD>\n);
-	$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq( target="_blank" class="ex">);
+	$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	$output .= $title . "</a>";
 
 	if ($params->{from_portal}) {
@@ -690,7 +721,7 @@ sub printOrdinarySearchResult {
 	    $score = sprintf("%.4f", $score);
 
 	    $output .= qq(<DIV class="similar">);
-	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=") . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
+	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	    $output .= $sim_page->{title} . "</a>";
 	    if ($params->{from_portal}) {
 		$output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN><BR>\n);
