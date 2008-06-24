@@ -36,8 +36,7 @@ KNP_OPTIONS	-postprocess,-tab,-dpnd
 # KNP_RCFILE	/opt/KNP/knp.20070627/etc/knprc
 KNP_RCFILE	/opt/KNP/current/etc/knprc
 SYNGRAPH_PM_PATH	/share09/home/skeiji/cvs/SynGraph/perl
-
-
+WWW2SF_PATH	/share09/home/skeiji/cvs/WWW2sf/tool/perl
 
 
 
