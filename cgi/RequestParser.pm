@@ -42,6 +42,7 @@ sub getDefaultValues {
     $params{flag_of_dist_use} = 1;
     $params{flag_of_anchor_use} = ($call_from_API) ? 1 : 1;
     $params{highlight} = ($call_from_API) ? 0 : 1;
+    $params{develop_mode} = $CONFIG->{TEST_MODE};
 
     return \%params;
 }
