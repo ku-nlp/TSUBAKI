@@ -65,7 +65,8 @@ sub new {
  							 { use_of_syngraph_dependency => $CONFIG->{USE_OF_SYNGRAPH_DEPENDENCY},
  							   use_of_hypernym => $CONFIG->{USE_OF_HYPERNYM},
 							   string_mode => 0,
- 							   use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM}
+ 							   use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM},
+							   antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}
  							 });
     }
 

@@ -156,7 +156,7 @@ sub parse {
 
 	my $q;
 	if ($opt->{syngraph} > 0) {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, trimming => $opt->{trimming}, antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}, verbose => $opt->{verbose}});
 	} else {
 	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
 	}
@@ -260,7 +260,8 @@ sub parse {
 			  qid2gid => \%qid2gid,
 			  qid2df => \%qid2df,
 			  gid2qids => \%gid2qids,
-			  dpnd_map => \%dpnd_map
+			  dpnd_map => \%dpnd_map,
+			  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}
 			});
 
 

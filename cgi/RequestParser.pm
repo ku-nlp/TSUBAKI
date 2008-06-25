@@ -103,8 +103,12 @@ sub parseCGIRequest {
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
     $params->{from_portal} = $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
+
+    $params->{develop_mode} = 1 if ($CONFIG->{INDEX_CGI} =~ /develop/);
     $params->{develop_mode} = $cgi->param('develop_mode') if (defined($cgi->param('develop_mode')));
-    $params->{score_verbose} = $cgi->param('develop_mode');
+    $params->{score_verbose} = $params->{develop_mode};
+
+    $params->{antonym_and_negation_expansion} = $cgi->param('antonym_and_negation_expansion') if (defined($cgi->param('antonym_and_negation_expansion')));
 
     &normalize_logical_operator($params);
 
@@ -166,6 +170,7 @@ sub parseAPIRequest {
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
     $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
+    $params->{antonym_and_negation_expansion} = (defined($cgi->param('antonym_and_negation_expansion'))) ? $cgi->param('antonym_and_negation_expansion') : 0;
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;
@@ -228,9 +233,10 @@ sub parseQuery {
     my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR,
 				     ignore_yomi => $CONFIG->{IGNORE_YOMI} });
 
+
     # クエリの解析
     # logical_cond_qk: クエリ間の論理演算
-    my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}, near => $params->{near}, trimming => 1 });
+    my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}, near => $params->{near}, trimming => 1, antonym_and_negation_expansion => $params->{antonym_and_negation_expansion} });
 
     # 取得ページ数のセット
     $query->{results} = $params->{results};
