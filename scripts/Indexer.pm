@@ -49,6 +49,7 @@ sub makeIndexfromSynGraph {
     my $word_num = 0;
     my $knpbuf = '';
     my $first = 0;
+    my %lastBnstIds = ();
     foreach my $line (split(/\n/, $syngraph)) {
 	if ($line =~ /^!! /) {
 	    my($dumy, $id, $kakari, $midasi) = split(/ /, $line);
@@ -84,15 +85,15 @@ sub makeIndexfromSynGraph {
 		# <上位語>を利用するかどうか
 		if ($features =~ /<上位語>/) {
 		    if ($opt->{use_of_hypernym}) {
-			# $features =~ s/<上位語>//g;
+			$features =~ s/<上位語>//g;
 		    } else {
-			# next;
+			next;
 		    }
 		}
 
 		# <反義語><否定>を利用するかどうか
 		if ($features =~ /<反義語>/ && $features =~ /<否定>/) {
-		    # next unless ($opt->{use_of_negation_and_antonym});
+		    next unless ($opt->{use_of_negation_and_antonym});
 		}
 
 
@@ -129,11 +130,13 @@ sub makeIndexfromSynGraph {
 		}
 
 		push(@{$synNodes{$bnstId}}, $syn_node);
+		$lastBnstIds{$bnstId} = 1;
 	    }
 	} elsif ($line =~ /^\+ /) {
 	    $first = 1 if ($knpbuf =~ /(<[^>]+型>)/);
 	    $knpbuf = '';
 	} elsif ($line =~ /^\* /) {
+	    %lastBnstIds = ();
 	    $knpbuf .= ($line . "\n");
 	} elsif ($line =~ /^EOS$/) {
 	    $knpbuf .= ($line . "\n");
@@ -149,6 +152,39 @@ sub makeIndexfromSynGraph {
     }
     $this->{absolute_pos} += $word_num;
 
+
+    if ($opt->{antonym_and_negation_expansion}) {
+	foreach my $bnstId (keys %lastBnstIds) {
+	    my %buf;
+	    foreach my $synNode (@{$synNodes{$bnstId}}) {
+
+		# 構造体のコピー
+		my $node;
+		while (my ($k, $v) = each (%$synNode)) {
+		    $node->{$k} = $v;
+		}
+
+		# 反義情報の削除
+		$node->{midasi} =~ s/<反義語>//;
+
+		# <否定>の付け変え
+		if ($node->{midasi} =~ /<否定>/) {
+		    $node->{midasi} =~ s/<否定>//;
+		} else {
+		    $node->{midasi} .= '<否定>';
+		}
+		$node->{additional_node} = 1;
+		$buf{$node->{midasi}} = $node;
+	    }
+
+	    foreach my $k (keys %buf) {
+		push (@{$synNodes{$bnstId}}, $buf{$k});
+	    }
+	}
+    }
+
+
+
     # 並列句において、係り元の係り先を、係り先の係り先に変更する
     # スプーンとフォークで食べる
     # スプーン->食べる、フォーク->食べる
@@ -160,7 +196,7 @@ sub makeIndexfromSynGraph {
 		my $kakariSakiInfo = $dpndInfo{$kakarisakiID};
 		foreach my $kakariSakiNoKakaiSakiID (@{$kakariSakiInfo->{kakariSaki}}) {
 		    if ($kakariSakiNoKakaiSakiID eq '-1') {
-			push(@new_kakariSaki, $kakarisakiID);			
+			push(@new_kakariSaki, $kakarisakiID);
 		    } else {
 			push(@new_kakariSaki, $kakariSakiNoKakaiSakiID);
 		    }
@@ -697,6 +733,7 @@ sub makeIndexfromSynGraph4Indexing {
 		my $synid = $1;
 		my $score = $2;
 		my $features = $3;
+		my $synid_w_yomi = $synid;
 
 		# 読みの削除
 		my $buf;
@@ -729,6 +766,19 @@ sub makeIndexfromSynGraph4Indexing {
 		    pos => $pos,
 		    absolute_pos => $pos};
 		push(@{$synNodes{$bnstId}}, $syn_node);
+
+# 		if ($syn_node->{midasi} !~ /s\d+/) {
+# 		    my $syn_node = {
+# 			midasi => $synid_w_yomi . $features,
+# 			synId => $synid_w_yomi,
+# 			features => $features,
+# 			score => $score,
+# 			grpId => $bnstId,
+# 			pos => $pos,
+# 			with_yomi => 1,
+# 			absolute_pos => $pos};
+# 		    push(@{$synNodes{$bnstId}}, $syn_node);
+# 		}
 	    }
 	} elsif ($line =~ /^\+ /) {
 	} elsif ($line =~ /^\* /) {
@@ -765,6 +815,8 @@ sub makeIndexfromSynGraph4Indexing {
     # 索引の作成
     foreach my $bnstId (sort {$a <=> $b} keys %synNodes) {
 	foreach my $synNode (@{$synNodes{$bnstId}}){
+	    next if ($synNode->{with_yomi});
+
 	    my $groupID = $synNode->{grpId};
 	    my $score = $synNode->{score};
 	    my $pos =  $synNode->{absolute_pos};
@@ -786,6 +838,8 @@ sub makeIndexfromSynGraph4Indexing {
 	    foreach my $kakariSakiID (@{$kakariSakis}){
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
 		foreach my $kakariSakiNode (@{$kakariSakiNodes}){
+		    next if ($kakariSakiNode->{with_yomi});
+
 		    my $index_dpnd = {
 			midasi => ($midasi . '->' . $kakariSakiNode->{midasi}),
 			rawstring => ($midasi . '->' . $kakariSakiNode->{midasi}),
