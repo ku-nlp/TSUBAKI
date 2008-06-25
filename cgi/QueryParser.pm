@@ -151,6 +151,9 @@ sub parse {
 	    }
 	}
 
+	# 空白はスキップ
+	next if ($q_str eq '');
+
 	## 半角アスキー文字列を全角に置換する
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
 
