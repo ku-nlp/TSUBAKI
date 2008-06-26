@@ -108,6 +108,7 @@ sub parseCGIRequest {
     $params->{develop_mode} = 1 if ($CONFIG->{INDEX_CGI} =~ /develop/);
     $params->{develop_mode} = $cgi->param('develop_mode') if (defined($cgi->param('develop_mode')));
     $params->{score_verbose} = $params->{develop_mode};
+    $params->{debug} = $cgi->param('debug') if (defined($cgi->param('debug')));
 
     $params->{antonym_and_negation_expansion} = $cgi->param('antonym_and_negation_expansion') if (defined($cgi->param('antonym_and_negation_expansion')));
 
