@@ -7,6 +7,8 @@ use Configure;
 use Encode;
 use HtmlGuessEncoding;
 use ModifiedTokeParser;
+use URI::Split qw(uri_split uri_join);
+use Data::Dumper;
 
 my $CONFIG = Configure::get_instance();
 
@@ -24,8 +26,9 @@ sub new {
     my $crawler_html = 0;
     my $buf;
     my $url;
+
     while (<READER>) {
-	if (!$buf and /^HTML (\S+)/) {
+	if (!$buf && /^HTML (\S+)/) {
 	    $url = $1;
 	    $crawler_html = 1;
 	}
@@ -47,7 +50,8 @@ sub new {
 
     my $color;
     my @patterns;
-    my $message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:#e0e0e0; color: black;">次の単語がハイライトされています:&nbsp;);
+    my $message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
+    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>次の単語がハイライトされています:&nbsp;);
     my @KEYS = split(/:/, $query);
     foreach my $key (@KEYS) {
 	next unless ($key);
@@ -72,9 +76,17 @@ sub new {
 	if ($type eq 'S') {
 	    if ($token->[1] eq 'body') {
 		$buf .= $token->[6];
-		$buf .= $message;
 		$inBody = 1;
-	    } else {
+	    }
+	    elsif ($token->[1] =~ /(a|link|img)/) {
+		my $fpath = ($1 eq 'link' || $1 eq 'a') ? $token->[2]{href} : $token->[2]{src};
+ 		if ($fpath) {
+ 		    my $furl = &convertURL($url, $fpath);
+		    $token->[6] =~ s/$fpath/$furl/;
+ 		}
+		$buf .= $token->[6];
+	    }
+	    else {
 		if ($token->[1] eq 'meta' && $token->[6] =~ /charset/i) {
 		    # 文字コードの指定がある場合は, コメントアウト
 		    $buf .= ("<!-- " . $token->[6] . "-->\n");
@@ -107,7 +119,7 @@ sub new {
     my $this = {
 	FILE_PATH => $opts->{file},
 	HEADER => $header,
-	BODY => $buf,
+	BODY => $message . $buf,
 	ENCODING => $encoding
     };
 
@@ -121,6 +133,29 @@ sub to_string {
     my ($this, $query, $opt) = @_;
 
     return $this->{BODY};
+}
+
+
+sub convertURL {
+    my ($url, $fpath) = @_;
+
+    return $fpath if ($fpath =~ /^http/);
+
+    my ($scheme, $auth, $path, $query, $frag) = uri_split($url);
+
+    if ($fpath =~ m!^/!) {
+	return uri_join($scheme, $auth, $fpath);	
+    }
+    else {
+	if ($path =~ /\// && $path ne '/') {
+	    my @f = split('/', $path);
+	    $f[-1] = $fpath;
+	    return uri_join($scheme, $auth, join('/', @f));
+	}
+	else {
+	    return uri_join($scheme, $auth, $path);
+	}
+    }
 }
 
 1;
