@@ -62,7 +62,7 @@ sub DESTROY {}
 
 # 呼出用検索インターフェイス
 sub search {
-    my ($this, $query, $logger) = @_;
+    my ($this, $query, $logger, $opt) = @_;
 
     my $cache = new Cache();
     my $result = $cache->load($query);
@@ -75,7 +75,7 @@ sub search {
 	# 混雑していない or スケジューリング機能を用いない場合は検索サーバーに対してクエリを投げる
 	my $state = new State();
 	if ($CONFIG->{DISABLE_REQUEST_SCHEDULING} || $state->checkIn()) {
-	    $result = $this->broadcastSearch($query, $logger);
+	    $result = $this->broadcastSearch($query, $logger, $opt);
 	    $cache->save($query, $result);
 	    $logger->setParameterAs('IS_CACHE', 0);
 	    $state->checkOut();
@@ -105,7 +105,7 @@ sub get_DF {
 
 # 実際に検索を行うメソッド
 sub broadcastSearch {
-    my($this, $query, $logger) = @_;
+    my($this, $query, $logger, $opt) = @_;
 
     # $logger->clearTimer();
 
@@ -166,7 +166,7 @@ sub broadcastSearch {
 		    }
 		}
 	    } else {
-		print "<EM>検索スレーブ側のログデータを受信できませんでした。</EM><BR>\n";
+		# print "<EM>検索スレーブ側のログデータを受信できませんでした。</EM><BR>\n" if ($opt->{develop_mode});
 	    }
 
 	    $buff = undef; 
