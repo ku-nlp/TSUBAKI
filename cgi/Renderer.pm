@@ -338,6 +338,13 @@ END_OF_HTML
 		print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
 	    }
 	}
+
+	if ($params->{antonym_and_negation_expansion}) {
+	    print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion" checked></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
+	} else {
+	    print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion"></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
+	}
+
 	if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
 	    print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
 	} else {
@@ -437,6 +444,12 @@ END_OF_HTML
 	    } else {
 		print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
 	    }
+	}
+
+	if ($params->{antonym_and_negation_expansion}) {
+	    print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion" checked></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
+	} else {
+	    print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion"></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
 	}
 
 	if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
