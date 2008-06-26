@@ -4,7 +4,7 @@
 # を参考にして下さい。
 
 # 1行1ポート, 「#」から始まる行は無視される
-/data/home/skeiji/idx_knp/dat1 /data/home/skeiji/idx_knp/dat1a 47001
-/data/home/skeiji/idx_knp/dat2 /data/home/skeiji/idx_knp/dat2a 47002
-/data/home/skeiji/idx_knp/dat3 /data/home/skeiji/idx_knp/dat3a 47003
-/data/home/skeiji/idx_knp/dat4 /data/home/skeiji/idx_knp/dat4a 47004
+/data2/skeiji/idx_knp/dat1 /data2/skeiji/idx_knp/dat1a 47101
+/data2/skeiji/idx_knp/dat2 /data2/skeiji/idx_knp/dat2a 47102
+/data2/skeiji/idx_knp/dat3 /data2/skeiji/idx_knp/dat3a 47103
+/data2/skeiji/idx_knp/dat4 /data2/skeiji/idx_knp/dat4a 47104
