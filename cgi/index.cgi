@@ -15,6 +15,7 @@ use Renderer;
 use Logger;
 use QueryParser;
 use RequestParser;
+use Dumper;
 
 
 my $CONFIG = Configure::get_instance();
@@ -62,8 +63,10 @@ sub main {
 
 	    # 検索クエリの構造体を取得
 	    my $query = RequestParser::parseQuery($params, $logger);
-	    # use Dumper;
-	    # print Dumper::dump_as_HTML($query) . "<br>\n";
+	    if ($params->{debug}) {
+		print Dumper::dump_as_HTML($query) . "<br>\n";
+		print "<hr>\n";
+	    }
 
 
 	    # 検索スレーブサーバーへの問い合わせ

@@ -105,8 +105,8 @@ sub parseCGIRequest {
     $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
     $params->{from_portal} = $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
 
-    $params->{develop_mode} = 1 if ($CONFIG->{INDEX_CGI} =~ /develop/);
     $params->{develop_mode} = $cgi->param('develop_mode') if (defined($cgi->param('develop_mode')));
+    $params->{develop_mode} = 1 if ($CONFIG->{INDEX_CGI} =~ /develop/);
     $params->{score_verbose} = $params->{develop_mode};
     $params->{debug} = $cgi->param('debug') if (defined($cgi->param('debug')));
 
@@ -235,6 +235,15 @@ sub parseQuery {
     my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR,
 				     ignore_yomi => $CONFIG->{IGNORE_YOMI} });
 
+
+    if ($params->{debug}) {
+	while (my ($k, $v) = each %$q_parser) {
+	    if ($k eq 'INDEXER' || $k eq 'KNP') {
+		print Dumper::dump_as_HTML($v) . "<br>\n";
+		print "<hr>\n";
+	    }
+	}
+    }
 
     # クエリの解析
     # logical_cond_qk: クエリ間の論理演算
