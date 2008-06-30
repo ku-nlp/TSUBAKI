@@ -51,27 +51,56 @@ sub create_snippets {
     for (my $i = 0; $i < scalar(@{$CONFIG->{SNIPPET_SERVERS}}); $i++) {
 	next unless (exists $host2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{name}});
 
-	my $socket = IO::Socket::INET->new(
-	    PeerAddr => $CONFIG->{SNIPPET_SERVERS}[$i]{name},
-	    PeerPort => $CONFIG->{SNIPPET_SERVERS}[$i]{port},
-	    Proto    => 'tcp' );
-	
-	$selecter->add($socket) or die;
-	
- 	# 検索クエリの送信
- 	print $socket encode_base64(Storable::freeze($query), "") . "\n";
-	print $socket "EOQ\n";
+	# 文書ID列をN分割 (Nは開いているポート数)
+	my $num_of_ports = scalar(@{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}});
+	my $dids = $host2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{name}};
+	my %port2dids = ();
+	my $count = 0;
 
- 	# 文書IDの送信
- 	print $socket encode_base64(Storable::freeze($host2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{name}}), "") . "\n";
-	print $socket "EOD\n";
+	foreach my $did (@$dids) {
+	    push(@{$port2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}[$count++ % $num_of_ports]}}, $did);
+	}
 
-	# スニペット生成のオプションを送信
- 	print $socket encode_base64(Storable::freeze($opt), "") . "\n";
-	print $socket "EOO\n";
+
+	# debug表示用
+	if ($opt->{debug}) {
+	    print "<HR>all dids=[" if ($opt->{debug});
+	    print join(", ", @$dids);
+	    print "]<P>\n" if ($opt->{debug});
+
+	    foreach my $port (sort {$a <=> $b} keys %port2dids) {
+		print "port=" . $port . "<BR>　dids=[";
+		print join(", ", @{$port2dids{$port}});
+		print "]<BR>\n";
+	    }
+	}
+
+
+	foreach my $port (@{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}}) {
+	    next unless (defined $port2dids{$port});
+
+	    my $socket = IO::Socket::INET->new(
+		PeerAddr => $CONFIG->{SNIPPET_SERVERS}[$i]{name},
+		PeerPort => $port,
+		Proto    => 'tcp' );
 	
-	$socket->flush();
-	$num_of_sockets++;
+	    $selecter->add($socket) or die;
+	
+	    # 検索クエリの送信
+	    print $socket encode_base64(Storable::freeze($query), "") . "\n";
+	    print $socket "EOQ\n";
+
+	    # 文書IDの送信
+	    print $socket encode_base64(Storable::freeze($port2dids{$port}), "") . "\n";
+	    print $socket "EOD\n";
+
+	    # スニペット生成のオプションを送信
+	    print $socket encode_base64(Storable::freeze($opt), "") . "\n";
+	    print $socket "EOO\n";
+	
+	    $socket->flush();
+	    $num_of_sockets++;
+	}
     }
     
     # 検索結果の受信
