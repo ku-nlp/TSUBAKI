@@ -123,7 +123,7 @@ sub extract_indices_wo_pm {
 			       without_using_repname => $opt{genkei}
   			      });
 
-    if ($my_opt->{z}) {
+    if ($my_opt->{gzipped}) {
 	open(READER, "zcat $file |");
     } else {
 	open(READER, $file);
@@ -272,10 +272,10 @@ sub extract_indice_from_single_file {
     # 索引表現の抽出
     my $indice;
     if ($opt{use_pm}) {
-	my $sfdat = new StandardFormatData($file, {gzipped => $opt{z}, is_old_version => 1});
+	my $sfdat = new StandardFormatData($file, {gzipped => $opt{z}, is_old_version => 0});
 	$indice = &extract_indices($sfdat, $fid);
     } else {
-	$indice = &extract_indices_wo_pm($file, $fid, {gzipped => $opt{z}, is_old_version => 1});
+	$indice = &extract_indices_wo_pm($file, $fid, {gzipped => $opt{z}});
     }
 
     # 出力
