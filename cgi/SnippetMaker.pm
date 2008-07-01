@@ -630,7 +630,10 @@ sub make_word_list_syngraph {
 		reps => [],
 		isContentWord => 0
 	    };
-	    $word->{isContentWord} = 1 if ($line =~ /(<意味有>|<内容語>)/);
+	    # 準内容語もハイライトの要素とする
+	    # 準内容語の部分に、内容語を代入する
+	    # 薬 の 効果 的な 飲み 方 → 薬 の 効果 効果 飲み 飲み
+	    $word->{isContentWord} = 1 if ($line =~ /(<意味有>|<準?内容語>)/);
 
 	    $words[$wordcnt] = $word;
 	    push(@{$bnst2pos{$bnstcnt}}, $wordcnt);
