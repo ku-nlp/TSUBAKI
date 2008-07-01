@@ -96,8 +96,30 @@ sub search {
 	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない
     }
 
+
+
+    my %basicNodes;
+    my %gid2df;
+    foreach my $qkw (@{$query->{keywords}}) {
+	foreach my $words (@{$qkw->{words}}) {
+	    foreach my $word (@$words) {
+		$basicNodes{$word->{qid}} = 1 if ($word->{isBasicNode});
+	    }
+	}
+
+	foreach my $dpnds (@{$qkw->{dpnds}}) {
+	    foreach my $dpnd (@$dpnds) {
+		next unless ($dpnd->{isBasicNode});
+
+		$gid2df{$dpnd->{gid}} = $dpnd->{df};
+	    }
+	}
+    }
+
+
+
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight}, $opt->{results});
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight}, $opt->{results}, \%gid2df, \%basicNodes);
     $opt->{LOGGER}->setTimeAs('document_scoring', '%.3f');
 
     my $finish_time = Time::HiRes::time;
@@ -128,7 +150,7 @@ sub retrieve_from_dat {
 	$results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
 
 	if ($this->{verbose}) {
-	    print $rep->{qid} . " ";
+	    print "qid " . $rep->{qid} . " ";
 	    foreach my $d (@{$results[$i]}) {
 		print $d->[0] . " ";
 	    }
