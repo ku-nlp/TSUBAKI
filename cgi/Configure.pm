@@ -42,12 +42,16 @@ sub _new {
 	    }
 	}
 	elsif ($_ =~ /STANDARD_FORMAT_LOCATION/) {
-	    my ($key, $host, $port, $dids) = split(/\t+/, $_);
+	    my ($key, $host, $ports, $dids) = split(/\t+/, $_);
 	    $host =~ s/^\s*//;
 	    $host =~ s/\s*$//;
 	    $dids =~ s/^\s*//;
 	    $dids =~ s/\s*$//;
-	    push(@{$this->{SNIPPET_SERVERS}}, {name => $host, port => $port});
+	    push(@{$this->{SNIPPET_SERVERS}}, {name => $host, ports => []});
+	    foreach my $port (split(/,/, $ports)) {
+		push(@{$this->{SNIPPET_SERVERS}[-1]{ports}}, $port);
+	    }
+
 	    foreach my $did (split(/,/, $dids)) {
 		$this->{DID2HOST}{$did} = $host;
 	    }
