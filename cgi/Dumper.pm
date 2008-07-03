@@ -11,6 +11,7 @@ sub dump_as_HTML {
 
     my $dumpstr = Dumper($obj);
 
+    $dumpstr =~ s/</&lt;/g;
     $dumpstr =~ s/\n/<br>\n/g;
     $dumpstr =~ s/ /&nbsp;/g;
 
