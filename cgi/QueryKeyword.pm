@@ -48,8 +48,11 @@ sub new {
     } else {
 	# SynGraph 結果から索引語を抽出
  	$knpresult->set_id(0);
- 	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option});
+ 	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
 	$this->{syn_result} = $synresult;
+
+# 	use Dumper;
+# 	print Dumper::dump_as_HTML($synresult) . "\n";
 
 	my @content_words = ();
 	foreach my $tag ($knpresult->tag) {
@@ -274,7 +277,7 @@ sub to_string_verbose {
 	my $reason;
 	foreach my $w (@{$ws}) {
 #	    $reps .= "$w->{string}\[qid=$w->{qid}, df=$w->{df}, rank_df=$w->{df_rank}";
-	    $reps .= "$w->{string}\[qid=$w->{qid}, df=$w->{df}, weight=$w->{weight}, isContentWord=$w->{isContentWord}";
+	    $reps .= "$w->{string}\[gid=$w->{gid}, qid=$w->{qid}, df=$w->{df}, weight=$w->{weight}, isContentWord=$w->{isContentWord}";
 	    $max_df = $w->{df} if ($w->{df} > $max_df);
 	    $max_dfrank = $w->{df_rank} if ($w->{df_rank} > $max_dfrank);
 
@@ -319,7 +322,7 @@ sub to_string_verbose {
 	my $reason;
 	my $weight_flag = "　　　";
 	foreach my $d (@{$ds}) {
-	    $reps .= "$d->{string}\[qid=$d->{qid}, df=$d->{df}, weight=$d->{weight}";
+	    $reps .= "$d->{string}\[gid=$d->{gid}, qid=$d->{qid}, df=$d->{df}, weight=$d->{weight}";
 #	    $reps .= "$d->{string}\[qid=$d->{qid}, df=$d->{df}";
 	    $reps .= ", isBasicNode" if ($d->{isBasicNode});
 	    $reps .= "], ";
