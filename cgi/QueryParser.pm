@@ -93,7 +93,7 @@ sub parse {
 	require SynGraph;
 
 	$this->{SYNGRAPH} = new SynGraph($CONFIG->{SYNDB_PATH});
-	$this->{SYNGRAPH_OPTION} = {relation => 1, antonym => 1, hypocut_attachnode => 9};
+	$this->{SYNGRAPH_OPTION} = {regist_exclude_semi_contentword => 1, relation => 1, antonym => 1, hypocut_attachnode => 9};
     }
 
     ## 空白で区切る
@@ -181,9 +181,14 @@ sub parse {
     my $count = 0;
 
     # 検索語中の各索引語にIDをふる
-    foreach my $qk (@qks) {
+    my $gid_prefix = 0;
+    for (my $gid_prefix = 0; $gid_prefix < scalar(@qks); $gid_prefix++) {
+	my $qk = $qks[$gid_prefix];
 	foreach my $reps (@{$qk->{words}}) {
 	    foreach my $rep (@{$reps}) {
+		# グループIDを検索キーワード毎に異なるようにする
+		$rep->{gid} = "$gid_prefix.$rep->{gid}";
+
 		$rep2qid{$rep->{string}} = $qid;
 		$qid2rep{$qid} = $rep->{string};
 		$qid2gid{$qid} = $rep->{gid};
@@ -218,6 +223,10 @@ sub parse {
 
 	foreach my $reps (@{$qk->{dpnds}}) {
 	    foreach my $rep (@{$reps}) {
+		# グループIDを検索キーワード毎に異なるようにする
+		my ($x, $y) = split("/", $rep->{gid});
+		$rep->{gid} = "$gid_prefix.$x/$gid_prefix.$y";
+
 		$qid2rep{$qid} = $rep->{string};
 		$qid2gid{$qid} = $rep->{gid};
 		$qid2df{$qid} = $this->get_DF($rep->{string});
