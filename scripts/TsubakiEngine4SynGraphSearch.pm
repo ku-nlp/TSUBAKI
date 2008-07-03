@@ -96,7 +96,7 @@ sub retrieve_from_dat2 {
 
 
 sub calculate_score {
-    my ($this, $merged_docs, $alldocs, $did2idx, $retriever, $field_type, $qid2gid, $qid2qtf, $qid2df, $d_length_buff, $q2scores, $did2idx_is_empty, $gid2df, $calculateNearDpnds, $basicNodes) = @_;
+    my ($this, $merged_docs, $alldocs, $did2idx, $retriever, $field_type, $qid2gid, $qid2qtf, $qid2df, $d_length_buff, $q2scores, $did2idx_is_empty, $gid2df, $calculateNearDpnds, $basicNodes, $dpnds) = @_;
 
 
     #####################################################################
@@ -157,29 +157,67 @@ sub calculate_score {
 	################
 	my %dists = ();
 	if ($calculateNearDpnds) {
-	    my $prev = undef;
-	    foreach my $pos (sort {$a <=> $b} keys %{$pos2score_gid_qid}) {
-		my $qid = $pos2score_gid_qid->{$pos}{qid};
-		my $gid = $pos2score_gid_qid->{$pos}{gid};
-		if (defined $prev) {
-		    if ($gid != $prev->{gid} && (!$basicNodes->{$qid} || !$basicNodes->{$prev->{qid}})) {
-			my $dist = $pos - $prev->{pos};
 
-			# $DIST以内ならば登録
-			if ($dist < $DIST) {
-			    $dists{"$prev->{gid}/$gid"} += ($dist / $DIST);
+	    my @poslist = sort {$a <=> $b} keys %{$pos2score_gid_qid};
+	    foreach my $dpnd (@$dpnds) {
+		my $moto = $dpnd->{moto};
+		my $saki = $dpnd->{saki};
+
+		my $prev = undef;
+		foreach my $pos (@poslist) {
+		    my $qid = $pos2score_gid_qid->{$pos}{qid};
+		    my $gid = $pos2score_gid_qid->{$pos}{gid};
+
+		    # print "$pos $qid $gid\n" if ($did == 7079771);
+
+		    if (defined $prev) {
+			if (($gid eq $moto || $gid eq $saki) && $gid != $prev->{gid}) {
+			    my $dist = $pos - $prev->{pos};
+
+			    # $DIST以内ならば登録
+			    if ($dist < $DIST) {
+				$dists{"$moto/$saki"} += ($dist / $DIST);
+			    }
+
+			    $prev->{gid} = $gid;
 			}
-
+			$prev->{qid} = $qid;
+			$prev->{pos} = $pos;
+		    } else {
+			$prev->{pos} = $pos;
 			$prev->{gid} = $gid;
+			$prev->{qid} = $qid;
 		    }
-		    $prev->{qid} = $qid;
-		    $prev->{pos} = $pos;
-		} else {
-		    $prev->{pos} = $pos;
-		    $prev->{gid} = $gid;
-		    $prev->{qid} = $qid;
 		}
 	    }
+
+# 	    my $prev = undef;
+# 	    foreach my $pos (sort {$a <=> $b} keys %{$pos2score_gid_qid}) {
+# 		my $qid = $pos2score_gid_qid->{$pos}{qid};
+# 		my $gid = $pos2score_gid_qid->{$pos}{gid};
+
+# 		print "$pos $qid $gid\n" if ($did == 7079771);
+
+
+# 		if (defined $prev) {
+# 		    if ($gid != $prev->{gid} && (!$basicNodes->{$qid} || !$basicNodes->{$prev->{qid}})) {
+# 			my $dist = $pos - $prev->{pos};
+
+# 			# $DIST以内ならば登録
+# 			if ($dist < $DIST) {
+# 			    $dists{"$prev->{gid}/$gid"} += ($dist / $DIST);
+# 			}
+
+# 			$prev->{gid} = $gid;
+# 		    }
+# 		    $prev->{qid} = $qid;
+# 		    $prev->{pos} = $pos;
+# 		} else {
+# 		    $prev->{pos} = $pos;
+# 		    $prev->{gid} = $gid;
+# 		    $prev->{qid} = $qid;
+# 		}
+# 	    }
 	}
 
 
@@ -286,7 +324,7 @@ sub calculate_score {
 
 # 文書のスコアリング
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight, $results, $gid2df, $basicNodes) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight, $results, $gid2df, $basicNodes, $dpnds) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -434,9 +472,9 @@ sub merge_docs {
     my %did2idx = ();
     my $did2idx_is_empty = 1;
     my $calculateNearDpnds = 1;
-    $this->calculate_score(\@merged_docs, $alldocs_words, \%did2idx, $this->{word_retriever}, 'word', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $gid2df, $calculateNearDpnds, $basicNodes);
-    $did2idx_is_empty = 0;
 
+    $this->calculate_score(\@merged_docs, $alldocs_words, \%did2idx, $this->{word_retriever}, 'word', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $gid2df, $calculateNearDpnds, $basicNodes, $dpnds);
+    $did2idx_is_empty = 0;
     $this->calculate_score(\@merged_docs, $alldocs_dpnds, \%did2idx, $this->{dpnd_retriever}, 'dpnd', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty);
     $this->calculate_score(\@merged_docs, $alldocs_word_anchor, \%did2idx, $this->{word_retriever4anchor}, 'word_anchor', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty);
     $this->calculate_score(\@merged_docs, $alldocs_dpnd_anchor, \%did2idx, $this->{dpnd_retriever4anchor}, 'dpnd_anchor', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty);
@@ -708,6 +746,7 @@ sub merge_search_result {
     my $serialized_docs = [];
     my $pos = 0;
     my %did2pos = ();
+
     for(my $i = 0; $i < scalar(@{$docs_list}); $i++) {
 	my $qid = $idx2qid->{$i};
 	foreach my $d (@{$docs_list->[$i]}) {
@@ -741,6 +780,14 @@ sub merge_search_result {
     # ★このソートは無駄★
     # 上の処理でpushする際に適切な位置に挿入できればよい
     @{$serialized_docs} = sort {$a->{did} <=> $b->{did}} @{$serialized_docs};
+
+    if ($this->{verbose}) {
+	foreach my $e (@{$serialized_docs->[0]{qid_freq}}) {
+	    print "$e->{qid}\n";
+	}
+	print "--------------------\n";
+    }
+
 
     my $finish_time = Time::HiRes::time;
     my $conduct_time = $finish_time - $start_time;
