@@ -30,6 +30,12 @@ sub new {
     $opts->{KNP_OPTIONS} = $CONFIG->{KNP_OPTIONS} unless ($opts->{KNP_OPTIONS});
     # $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
 
+    if ($opts->{use_of_case_analysis}) {
+	for (my $i = 0; $i < scalar(@{$opts->{KNP_OPTIONS}}); $i++) {
+	    $opts->{KNP_OPTIONS}[$i] = '' if ($opts->{KNP_OPTIONS}[$i] eq  '-dpnd');
+	}
+    }
+
     my $this = {
 	KNP => new KNP(-Command => $opts->{KNP_COMMAND},
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),

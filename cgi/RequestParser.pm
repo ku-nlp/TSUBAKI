@@ -111,6 +111,7 @@ sub parseCGIRequest {
     $params->{debug} = $cgi->param('debug') if (defined($cgi->param('debug')));
 
     $params->{antonym_and_negation_expansion} = $cgi->param('antonym_and_negation_expansion') if (defined($cgi->param('antonym_and_negation_expansion')));
+    $params->{use_of_case_analysis} = 1;
 
     &normalize_logical_operator($params);
 
@@ -174,6 +175,7 @@ sub parseAPIRequest {
     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
     $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
     $params->{antonym_and_negation_expansion} = (defined($cgi->param('antonym_and_negation_expansion'))) ? $cgi->param('antonym_and_negation_expansion') : 0;
+    $params->{use_of_case_analysis} = 1 if (defined($cgi->param('use_of_case_analysis')));
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;
@@ -234,7 +236,9 @@ sub parseQuery {
 
     my $DFDB_DIR = ($params->{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
     my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR,
-				     ignore_yomi => $CONFIG->{IGNORE_YOMI} });
+				     ignore_yomi => $CONFIG->{IGNORE_YOMI},
+				     use_of_case_analysis => $params->{use_of_case_analysis}
+				   });
 
 
     if ($params->{debug}) {
