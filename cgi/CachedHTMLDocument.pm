@@ -7,6 +7,7 @@ use Configure;
 use Encode;
 use HtmlGuessEncoding;
 use ModifiedTokeParser;
+use Unicode::Japanese;
 use URI::Split qw(uri_split uri_join);
 use Data::Dumper;
 
@@ -47,23 +48,42 @@ sub new {
     my $encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
     my $parser = ModifiedTokeParser->new(\$buf) or die $!;
 
+    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n";
 
     my $color;
     my @patterns;
     my $message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
-    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>次の単語がハイライトされています:&nbsp;);
-    my @KEYS = split(/:/, $query);
-    foreach my $key (@KEYS) {
-	next unless ($key);
+    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>次の単語とその同義語がハイライトされています:&nbsp;);
+    foreach my $reps (split(/,/, $query)) {
+	foreach my $word (split(/;/,  $reps)) {
+	    next unless ($word);
 
-	$message .= sprintf qq(<span style="background-color:#%s;">), $CONFIG->{HIGHLIGHT_COLOR}[$color];
-	$message .= sprintf qq(%s</span>&nbsp;), $key;
+	    if ($word =~ /^s\d+/) {
+		foreach my $synonym (split('\|', decode('utf8', $synonyms{$word}))) {
+		    # 読みの削除
+		    if ($synonym =~ m!^([^/]+)/!) {
+			$synonym = $1;
+		    }
 
-	push(@patterns, {key => $key, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$key<\/span>)});
+		    # 情報源を削除
+		    $synonym =~ s/\[.+?\]//;
+
+		    $synonym =~ s/<[^>]+>//g;
+		    push(@patterns, {key => $synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$synonym<\/span>)});
+		    my $h_synonym = Unicode::Japanese->new($synonym)->z2h->get;
+		    push(@patterns, {key => $h_synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$h_synonym<\/span>)});
+		}
+	    }
+	    # 単語はヘッダーには表示
+	    else {
+		$message .= sprintf qq(<span style="background-color:#%s;">), $CONFIG->{HIGHLIGHT_COLOR}[$color];
+		$message .= sprintf qq(%s</span>&nbsp;), $word;
+		push(@patterns, {key => $word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$word<\/span>)});
+	    }
+	}
 	$color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
     }
     $message .= "</DIV>";
-
 
 
     my $header;
@@ -105,7 +125,7 @@ sub new {
 		    if (index($text, $p->{key}) > -1) {
 			my $k = $p->{key};
 			my $r = $p->{regexp};
-			$text =~ s/$k/$r/g;
+			$text =~ s/$k/$r/ig;
 		    }
 		}
 	    }

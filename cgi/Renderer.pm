@@ -478,29 +478,31 @@ sub get_uri_escaped_query {
     my ($this, $query) = @_;
     # キャッシュページで索引語をハイライトさせるため、索引語をuri_escapeした文字列を生成する
 
-    my %buf;
+    my @buf2;
     my $pos = 0;
     foreach my $qk (@{$query->{keywords}}) {
  	my $words = $qk->{words};
  	foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$words}) {
+	    my %buf1;
 	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @{$reps}) {
 		next if($rep->{isContentWord} < 1 && $rep->{is_phrasal_search} < 1);
 		my $string = $rep->{string};
 
-		next if ($string =~ /s\d+:/);
+		# next if ($string =~ /s\d+:/);
 
 		# $string =~ s/s\d+://; # SynID の削除
 		$string =~ s/\/.+$//; # 読みがなの削除
 
 		next if ($string =~ /<^>]+?>/);
-		next if (exists $buf{$string});
+		next if (exists $buf1{$string});
 
-		$buf{$string} = $pos++;
+		$buf1{$string}++;
 	    }
+	    push(@buf2, join(";", sort {$a cmp $b} keys %buf1));
 	}
     }
 
-    my $search_k = join(":", sort {$buf{$a} <=> $buf{$b}} keys %buf);
+    my $search_k = join(",", @buf2);
     my $uri_escaped_search_keys = &uri_escape(encode('utf8', $search_k));
     return $uri_escaped_search_keys;
 }
@@ -701,6 +703,7 @@ sub printOrdinarySearchResult {
 	$output .= qq(<TD>\n);
 	my $num_of_sim_pages = 0;
 	$num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
+
 	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
 	    my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
 	    my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
@@ -715,8 +718,8 @@ sub printOrdinarySearchResult {
 	    }
 	} else {
 	    unless ($params->{from_portal}) {
-		# $output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)</DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor}, $results->[$rank]{score_dpnd_anchor};
-		$output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n)
+		$output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)</DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor}, $results->[$rank]{score_dpnd_anchor};
+		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n)
 	    }
 	}
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
