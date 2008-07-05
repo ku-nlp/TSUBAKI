@@ -289,12 +289,11 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 	<body style="padding: 0em; margin:0em;">
 END_OF_HTML
 
-    # print qq(<DIV style="width: 100%; text-align: right; padding:0.5em 0.5em 0em 0em;">\n);
+    print qq(<DIV style="width: 100%; text-align: right; padding:0.5em 0.5em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A>\n);
-    # print qq(</DIV>\n);
-
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A>\n);
+    print qq(</DIV>\n);
 
     # タイトル出力
     print qq(<TABLE width="100%" border="0"><TR><TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
@@ -399,11 +398,11 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 END_OF_HTML
 
     # タイトル出力
-    # print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
+    print qq(<DIV style="text-align:right;margin:0.5em 1em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
-    # print qq(</DIV>\n);
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
+    print qq(</DIV>\n);
 
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
     printf ("<A href=%s><IMG border=0 src=./logo.png></A>\n", $CONFIG->{INDEX_CGI});
