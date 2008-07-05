@@ -273,7 +273,7 @@ sub set_bunmatsu_feature {
 	my $all_mrph_matched = 1;
 	foreach my $mrph (reverse $bnst->mrph) {
 	    if ($mrph->fstring =~ /<([^>]+)型>/) {
-		if ($1 ne 'How-Inc' && $1 ne 'How') {
+		if ($1 ne 'How-Inc' && $1 ne 'How' && $1 ne 'Symptom-Inc') {
 		    my @f = ();
 		    push(@f, "削除::表現文末");
 		    $mrph->push_feature(@f);
