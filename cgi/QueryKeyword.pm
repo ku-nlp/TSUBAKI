@@ -9,6 +9,7 @@ use utf8;
 use Encode;
 use Data::Dumper;
 use Configure;
+use Error qw(:try);
 
 my $CONFIG = Configure::get_instance();
 
@@ -28,8 +29,27 @@ sub new {
 	syngraph => $syngraph
     };
 
-    my $indice;
-    my $knpresult = $opt->{knp}->parse($string);
+    unless ($string) {
+	print "Empty query !<BR>\n";
+	exit;
+    }
+
+    my $knpresult;
+    try {
+	$knpresult = $opt->{knp}->parse($string);
+    }
+    catch Error with {
+	my $err = shift;
+	print "Bad query: $string<BR>\n";
+	print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
+	exit;
+    };
+
+    unless (defined $knpresult) {
+	print "Can't parse the query: $string<BR>\n";
+	exit;
+    }
+
 
     if ($opt->{trimming}) {
 	require QueryTrimmer;
@@ -41,6 +61,7 @@ sub new {
     $this->{knp_result} = $knpresult;
 
     my %buff;
+    my $indice;
     unless ($opt->{syngraph}) {
 	# KNP 結果から索引語を抽出
 	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult->all);
