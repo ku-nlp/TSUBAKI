@@ -10,6 +10,7 @@ use Encode;
 use Data::Dumper;
 use Configure;
 use Error qw(:try);
+use RequisiteItemDetector;
 
 my $CONFIG = Configure::get_instance();
 
@@ -72,8 +73,8 @@ sub new {
  	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
 	$this->{syn_result} = $synresult;
 
-# 	use Dumper;
-# 	print Dumper::dump_as_HTML($synresult) . "\n";
+ 	# use Dumper;
+ 	# print Dumper::dump_as_HTML($synresult) . "\n";
 
 	my @content_words = ();
 	foreach my $tag ($knpresult->tag) {
@@ -94,6 +95,15 @@ sub new {
  							 });
     }
 
+
+
+    # 必須検索係り受けの自動判定
+    my $requisites;
+    if ($opt->{detect_requisite_dpnd}) {
+	$requisites = $opt->{requisite_item_detector}->getRequisiteDependencies($knpresult);
+    }
+
+
     # Indexer.pm より返される索引語を同じ代表表記ごとにまとめる
     foreach my $idx (@{$indice}) {
 	$buff{$idx->{group_id}} = [] unless (exists($buff{$idx->{group_id}}));
@@ -103,16 +113,22 @@ sub new {
     foreach my $group_id (sort {$buff{$a}->[0]{pos} <=> $buff{$b}->[0]{pos}} keys %buff) {
 	my @word_reps;
 	my @dpnd_reps;
+	my %fbuf;
 	foreach my $m (@{$buff{$group_id}}) {
 	    # 近接条件が指定されていない かつ 機能語 の場合は検索に用いない
 	    next if ($m->{isContentWord} < 1 && $this->{is_phrasal_search} < 0);
 
 	    if ($m->{midasi} =~ /\-\>/) {
+		my $flag = (exists $requisites->{$m->{midasi}} || exists $fbuf{$group_id}) ? 1 : 0;
+		$fbuf{$group_id} = 1 if ($flag);
+
 		push(@dpnd_reps, {string => $m->{midasi},
 				  gid => $group_id,
 				  qid => -1,
 				  weight => 1,
 				  freq => $m->{freq},
+				  requisite => $flag,
+				  optional => !$flag,
 				  isContentWord => $m->{isContentWord},
 				  isBasicNode => $m->{isBasicNode}
 		     });
@@ -122,6 +138,8 @@ sub new {
 				  qid => -1,
 				  weight => 1,
 				  freq => $m->{freq},
+				  requisite => 1,
+				  optional => 0,
 				  isContentWord => $m->{isContentWord},
 				  question_type => $m->{question_type},
 				  NE => $m->{NE},
