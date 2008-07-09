@@ -86,10 +86,10 @@ sub DESTROY {
 sub search {
     my ($this, $query, $qid2df, $opt) = @_;
 
-    my $start_time = Time::HiRes::time;
     # 検索
-    # 文書のスコアリング
     my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use}, $opt->{LOGGER});
+
+    # return [] unless ($alldocs_word);
 
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
@@ -135,11 +135,6 @@ sub search {
     my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight}, $opt->{results}, \%gid2df, \%basicNodes, \@dpnds);
     $opt->{LOGGER}->setTimeAs('document_scoring', '%.3f');
 
-    my $finish_time = Time::HiRes::time;
-    my $conduct_time = $finish_time - $start_time;
-    if ($this->{show_speed}) {
-	printf ("@@@ %.4f sec. search method calling.\n", $conduct_time);
-    }
 
     return $doc_list;
 }
@@ -216,7 +211,7 @@ sub calculate_score {
 }
 
 sub retrieveFromBinaryData {
-    my ($this, $retriever, $query, $qid2df, $keyword, $type, $alwaysAppend) = @_;
+    my ($this, $retriever, $query, $qid2df, $keyword, $type, $alwaysAppend, $requisite_only, $optional_only) = @_;
 
     my @results = ();
     my $add_flag = 1;
@@ -234,10 +229,12 @@ sub retrieveFromBinaryData {
 	    }
 	    print "------\n";
 	}
+	next if ($reps->[0]{requisite} && $optional_only);
+	next if ($reps->[0]{optional} && $requisite_only);
+
 
 	# バイナリファイルから文書の取得
 	my $docs = $this->retrieve_from_dat($retriever, $reps, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
-
 	unless ($alwaysAppend) {
 	    print $add_flag . "=aflag\n" if ($this->{verbose});
 	    # $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
@@ -253,6 +250,29 @@ sub retrieveFromBinaryData {
     return \@results;
 }
 
+
+sub get_requisite_docs {
+    my ($docs_word, $docs_dpnd) = @_;
+
+    # 必須が指定された検索単語・係り受けを含む文書IDのマージ
+    foreach my $ret (@$docs_dpnd) {
+	push(@$docs_word, $ret);
+    }
+
+    return &intersect($docs_word);
+}
+
+sub get_optional_docs {
+    my ($docs_word, $docs_dpnd) = @_;
+
+    # 必須が指定された検索単語・係り受けを含む文書IDのマージ
+    foreach my $ret (@$docs_dpnd) {
+	push(@$docs_word, $ret);
+    }
+
+    return $docs_word;
+}
+
 sub retrieve_documents {
     my ($this, $query, $qid2df, $flag_of_anchor_use, $logger) = @_;
 
@@ -262,55 +282,32 @@ sub retrieve_documents {
     my $alldocs_dpnd = [];
     my $alldocs_word_anchor = [];
     my $alldocs_dpnd_anchor = [];
-    my $requisite_docs = undef;
     my $doc_buff = {};
 
     $logger->clearTimer();
-    # requisiteである単語を含む文書の検索
-    foreach my $keyword (@{$query->{keywords}}) {
-	my $docs_word = [];
-	my $j = 0;
-	my $add_flag = 1;
-	my $requisite_flag = 0;
-
-	# 文書頻度の低い単語から検索する
-	next unless (defined $keyword->{dpnds});
-	foreach my $reps_of_word (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{dpnds}}) {
-	    my %idx2qid = ();
-	    my @results = ();
-	    for (my $i = 0; $i < scalar(@{$reps_of_word}); $i++) {
-		# rep は構造体
-		# rep = {qid, string}
-		my $rep = $reps_of_word->[$i];
-		next unless ($rep->{requisite});
-
-		$requisite_flag = 1;
-		# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
-		$results[$j] = $this->{dpnd_retriever}->search($rep, $doc_buff, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
-
-		$idx2qid{$j++} = $rep->{qid};
-		$add_flag = 0;
-
-		my $docs = $this->merge_search_result(\@results, \%idx2qid);
-
-		# 各語について検索された結果を納めた配列に push
-		push(@{$docs_word}, $docs);
-	    }
-	}
-
-	if ($requisite_flag > 0) {
-	    $docs_word = &intersect($docs_word);
-	    $requisite_docs = &serialize($docs_word);
-	}
-    }
-    $logger->setTimeAs('requisite_query_search', '%.3f');
 
     ##########
     # 通常検索
     ##########
     foreach my $keyword (@{$query->{keywords}}) {
-	my $docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 0);
-	my $docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 1);
+	my ($requisite_only, $optional_only) = (1, 0);
+
+	my %dpnd_qids = ();
+	foreach my $reps_of_word (@{$keyword->{dpnds}}) {
+	    foreach my $rep (@$reps_of_word) {
+		$dpnd_qids{$rep->{qid}} = 1;
+	    }
+	}
+
+	# 必須が指定された検索単語・係り受けの検索
+	my $requisite_docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 0, $requisite_only, $optional_only);
+	my $requisite_docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 0, $requisite_only, $optional_only);
+
+	# オプショナルが指定された検索単語・係り受けの検索
+	($requisite_only, $optional_only) = (0, 1);
+	my $optional_docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 1, $requisite_only, $optional_only);
+	my $optional_docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 1, $requisite_only, $optional_only);
+
 	$logger->setTimeAs('normal_search', '%.3f');
 
 	my $docs_word_anchor = [];
@@ -325,74 +322,48 @@ sub retrieve_documents {
  	}
 	$logger->setTimeAs('anchor_search', '%.3f');
 
-	# 検索キーワードごとに検索された文書の配列へpush
-	if ($keyword->{logical_cond_qkw} eq 'AND') {
-	    if ($this->{verbose}) {
-		foreach my $docs (@$docs_word) {
-		    foreach my $doc (@$docs) {
-			print $doc->{did} . " ";
-		    }
-		    print "\n-----\n";
-		}
-	    }
 
-	    # 検索キーワード中の単語間のANDをとる
-	    # ★ already_appned_bufを使っているので、最後に検索した検索語の持つ文書IDがANDをとった結果
-	    $docs_word = &intersect($docs_word);
+	# 必須が指定された検索単語・係り受けを含む文書IDのマージ
+	my $requisites = &get_requisite_docs($requisite_docs_word, $requisite_docs_dpnd);
+	# オプショナルが指定された検索単語・係り受けを含む文書IDのマージ
+	my $optionals = &get_optional_docs($optional_docs_word, $optional_docs_dpnd);
 
-	    if ($this->{verbose}) {
-		foreach my $docs (@$docs_word) {
-		    foreach my $doc (@$docs) {
-			print $doc->{did} . " ";
-		    }
-		    print "\n-----\n";
-		}
-	    }
-	    $logger->setTimeAs('keyword_level_and_condition', '%.3f');
-	    
-	    # 係り受け制約の適用
-	    if (scalar(@{$keyword->{dpnds}}) > 0 && $keyword->{force_dpnd} > 0) {
-		$docs_word = $this->filter_by_force_dpnd_constraint($docs_word, $docs_dpnd);
-	    }
-	    $logger->setTimeAs('force_dpnd_condition', '%.3f');
+	use Data::Dumper;
+	print Dumper($requisites) . "\n";
+
+	# 近接制約の適用
+	if ($keyword->{near}) {
+	    $requisites = $this->filter_by_NEAR_constraint($requisites, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
+	}
+	$logger->setTimeAs('near_condition', '%.3f');
 
 
-	    # 近接制約の適用
-	    if ($keyword->{near}) {
-		$docs_word = $this->filter_by_NEAR_constraint($docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
+	# requisites, optionals を単語と係り受けに分類する
+	my $word_docs = ();
+	my $dpnd_docs = ();
+	foreach my $d (@$requisites) {
+	    if (exists $dpnd_qids{$d->[0]{qid_freq}[0]{qid}}) {
+		push(@$dpnd_docs, $d);
+	    } else {
+		push(@$word_docs, $d);
 	    }
-	    $logger->setTimeAs('near_condition', '%.3f');
 	}
 
+	foreach my $d (@$optionals) {
+	    if (exists $dpnd_qids{$d->[0]{qid_freq}[0]{qid}}) {
+		push(@$dpnd_docs, $d);
+	    } else {
+		push(@$word_docs, $d);
+	    }
+	}
 
 	# 検索語について収集された文書をマージ
-	push(@{$alldocs_word}, &serialize($docs_word));
-	push(@{$alldocs_dpnd}, &serialize($docs_dpnd));
+	push(@{$alldocs_word}, &serialize($word_docs));
+	push(@{$alldocs_dpnd}, &serialize($dpnd_docs));
 	push(@{$alldocs_word_anchor}, &serialize($docs_word_anchor));
 	push(@{$alldocs_dpnd_anchor}, &serialize($docs_dpnd_anchor));
 	$logger->setTimeAs('merge_dids', '%.3f');
     }
-
-
-    if (defined $requisite_docs) {
-	my %dids = ();
-	foreach my $e (@$requisite_docs) {
-	    $dids{$e->{did}} = 1;
-	}
-
-	my @new_alldocs_word = ();
-	foreach my $docs (@$alldocs_word) {
-	    push(@new_alldocs_word, []);
-	    foreach my $d (@$docs) {
-		next unless (exists $dids{$d->{did}});
-
-		push(@{$new_alldocs_word[-1]}, $d);
-	    }
-	}
-
-	$alldocs_word =  \@new_alldocs_word;
-    }
-    $logger->setTimeAs('requisite_condition', '%.3f');
 
     # 論理条件にしたがい検索語ごとに収集された文書のマージ
     if ($query->{logical_cond_qk} eq 'AND') {
@@ -402,11 +373,6 @@ sub retrieve_documents {
     }
     $logger->setTimeAs('logical_condition', '%.3f');
 
-    if ($this->{show_speed}) {
-	my $finish_time = Time::HiRes::time;
-	my $conduct_time = $finish_time - $start_time;
-	printf ("@@@ %.4f sec. doclist retrieving.\n", $conduct_time);
-    }
 
     return ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor);
 }
