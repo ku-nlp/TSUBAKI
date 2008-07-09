@@ -111,7 +111,7 @@ sub parseCGIRequest {
     $params->{debug} = $cgi->param('debug') if (defined($cgi->param('debug')));
 
     $params->{antonym_and_negation_expansion} = $cgi->param('antonym_and_negation_expansion') if (defined($cgi->param('antonym_and_negation_expansion')));
-    $params->{use_of_case_analysis} = 1;
+    $params->{use_of_case_analysis} = 0;
 
     &normalize_logical_operator($params);
 
@@ -237,7 +237,8 @@ sub parseQuery {
     my $DFDB_DIR = ($params->{syngraph} > 0) ? $CONFIG->{SYNGRAPH_DFDB_PATH} : $CONFIG->{ORDINARY_DFDB_PATH};
     my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR,
 				     ignore_yomi => $CONFIG->{IGNORE_YOMI},
-				     use_of_case_analysis => $params->{use_of_case_analysis}
+				     use_of_case_analysis => $params->{use_of_case_analysis},
+				     debug => $params->{debug}
 				   });
 
 
