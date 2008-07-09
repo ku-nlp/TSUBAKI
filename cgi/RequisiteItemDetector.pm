@@ -10,7 +10,6 @@ use utf8;
 use Encode;
 use Data::Dumper;
 use Configure;
-use CompoundNounExtractor;
 
 my $CONFIG = Configure::get_instance();
 
@@ -19,6 +18,7 @@ sub new {
 
     my $this;
     $this->{threshold} = ($opt->{threshold}) ? $opt->{threshold} : 5;
+    $this->{debug} = $opt->{debug};
     $this->{DFDB_OF_CNS} = ();
 
     bless $this;
@@ -29,13 +29,18 @@ sub new {
 sub getRequisiteDependencies {
     my ($this, $knpresult, $opt) = @_;
 
-    $opt->{detect_compound_nouns} = 1;
+    if ($this->{debug}) {
+	print "LIST OF REQUISITE DEPENDENCIES<BR>\n";
+	print "<HR>\n"
+    }
 
     my %requisites = ();
-
-    # データベースの遅延読み込み
     unless ($this->{DFDB_OF_CNS}) {
+	# データベースの遅延読み込み
 	tie %{$this->{DFDB_OF_CNS}}, 'CDB_File', $CONFIG->{COMPOUND_NOUN_DFDB_PATH} or die "$0: can't tie to $CONFIG->{COMPOUND_NOUN_DFDB_PATH} $!\n";
+
+	push(@INC, $CONFIG->{UTILS_PATH});
+	require CompoundNounExtractor;
 	$this->{CN_EXTRACTOR} = new CompoundNounExtractor({no_yomi_in_repname => $CONFIG->{IGNORE_YOMI}});
     }
 
@@ -53,15 +58,20 @@ sub getRequisiteDependencies {
 	    my $anob_freq = $this->{DFDB_OF_CNS}{$anob};
 
 	    my $rate = -1;
+	    my $ab_freq;
 	    if ($anob_freq > 0) {
-		my $ab_freq = $this->{DFDB_OF_CNS}{"$a$b"};
+		$ab_freq = $this->{DFDB_OF_CNS}{"$a$b"};
 		$rate = $ab_freq / $anob_freq;
 		next if ($rate < $this->{threshold});
 	    }
 
+	    if ($this->{debug}) {
+		printf("%s->%s is requisite. (%.3f (= %d / %d) > %s)<BR>\n", $a, $b, $rate, $ab_freq, $anob_freq, $this->{threshold});
+	    }
 	    $requisites{sprintf("%s->%s", $a, $b)} = 1;
 	}
     }
+    print "<HR>\n" if ($this->{debug});
 
     return \%requisites;
 }
