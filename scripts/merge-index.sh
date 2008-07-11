@@ -6,8 +6,8 @@
 
 
 # ★以下の値を変更すること
-workspace=/tmp/mg_tsubaki_idx
-scriptdir=$HOME/cvs/SearchEngine/scripts
+workspace=/data2/skeiji/smallset/mg_tsubaki_idx.db5
+scriptdir=$HOME/work/new-syngraph-test/mgidx/SearchEngine/scripts
 
 
 
@@ -56,8 +56,8 @@ rm -r $id
 fname=$id.idx.gz
 
 # バイナリ化
-echo perl -I $scriptdir $scriptdir/binarize_idx.pl -z -quiet $fname
-perl -I $scriptdir $scriptdir/binarize_idx.pl -z -quiet $fname
+echo perl -I $scriptdir $scriptdir/binarize_idx.pl -z -quiet $fname $type
+perl -I $scriptdir $scriptdir/binarize_idx.pl -z -quiet $fname $type
 
 # 文書頻度の取得
 echo "perl $scriptdir/idx2df.pl $id.idx.gz"
