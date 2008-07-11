@@ -5,8 +5,8 @@
 # usage: sh make-index.sh [-knp|-syn] iccc100:/data2/skeiji/embed_knp_and_syngraph_080512/s01573.tgz
 
 # ★以下の値を変更すること
-workspace=/tmp/mk_tsubaki_idx
-scriptdir=$HOME/cvs/SearchEngine/scripts
+workspace=/data2/skeiji/smallset/mkidx
+scriptdir=$HOME/work/new-syngraph-test/mkidx/SearchEngine/scripts
 
 
 # 作成するインデックスのタイプ(-knp/-syn)
@@ -34,8 +34,8 @@ ulimit -v 2097152
 
 # ファイル単位でインデックスの抽出
 # SYNノードを含む係り受け関係は除外、5MBを越える標準フォーマットからは抽出しない
-echo perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880
-perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880
+echo perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z
+perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z
 rm -r $xdir
 
 
