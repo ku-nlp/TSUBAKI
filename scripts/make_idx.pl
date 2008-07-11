@@ -38,6 +38,7 @@ GetOptions(\%opt,
 	   'file=s',
 	   'ignore_yomi',
 	   'ignore_syn_dpnd',
+	   'ignore_hypernym',
 	   'skip_large_file=s',
 	   'max_num_of_indices=s',
 	   'genkei',
@@ -69,6 +70,7 @@ if (!$opt{title} && !$opt{keywords} && !$opt{description} && !$opt{inlinks} && !
 if (!$opt{title} && !$opt{keywords} && !$opt{description} && $opt{inlinks} && !$opt{sentences}) {
     $opt{only_inlinks} = 1;
 }
+
 
 
 # 一文から抽出される索引表現数の上限
@@ -237,8 +239,10 @@ sub extractIndices {
 	    }
 	    push(@content_words, $m);
 	}
-	$terms = $indexer->makeIndexfromSynGraph($annotation, \@content_words, {use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
-										max_num_of_indices => $opt{max_num_of_indices},
+	$terms = $indexer->makeIndexfromSynGraph($annotation, \@content_words, {max_num_of_indices => $opt{max_num_of_indices},
+										use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
+										use_of_hypernym => !$opt{ignore_hypernym},
+										use_of_negation_and_antonym => !$opt{ignore_negation_and_antonym},
 										verbose => $opt{verbose}} );
 	unless (defined $terms) {
 	    my ($rawstring) = ($content =~ m!<RawString>(.+?)</RawString>!);
