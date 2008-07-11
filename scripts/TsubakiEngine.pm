@@ -342,6 +342,7 @@ sub retrieve_documents {
 	my $word_docs = ();
 	my $dpnd_docs = ();
 	foreach my $d (@$requisites) {
+	    next unless (defined $d->[0]);
 	    if (exists $dpnd_qids{$d->[0]{qid_freq}[0]{qid}}) {
 		push(@$dpnd_docs, $d);
 	    } else {
@@ -350,6 +351,7 @@ sub retrieve_documents {
 	}
 
 	foreach my $d (@$optionals) {
+	    next unless (defined $d->[0]);
 	    if (exists $dpnd_qids{$d->[0]{qid_freq}[0]{qid}}) {
 		push(@$dpnd_docs, $d);
 	    } else {
