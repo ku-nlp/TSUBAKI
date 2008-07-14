@@ -27,17 +27,14 @@
 # 基本ツールの設定（★要変更）
 ##################################################
 TOOL_HOME	/share03/WISDOM/local/bin
-# KNP_COMMAND	/opt/KNP/knp.20070627/bin/knp
-# JUMAN_COMMAND	/opt/JUMAN/juman.20070627/bin/juman
 KNP_COMMAND	/opt/KNP/current/bin/knp
 JUMAN_COMMAND	/opt/JUMAN/current/bin/juman
 SYNDB_PATH	/share09/home/skeiji/public_html/cgi-bin/SearchEngine-develop/data/syndb.080512/x86_64
 KNP_OPTIONS	-postprocess,-tab,-dpnd
-# KNP_RCFILE	/opt/KNP/knp.20070627/etc/knprc
 KNP_RCFILE	/opt/KNP/current/etc/knprc
 SYNGRAPH_PM_PATH	/share09/home/skeiji/cvs/SynGraph/perl
 WWW2SF_PATH	/share09/home/skeiji/cvs/WWW2sf/tool/perl
-
+UTILS_PATH	/share09/home/skeiji/cvs/Utils/perl
 
 
 ##################################################
@@ -47,7 +44,7 @@ WWW2SF_PATH	/share09/home/skeiji/cvs/WWW2sf/tool/perl
 # キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
 HTML_FILE_PATH		/share03/WISDOM/data/htmls
 ORDINARY_SF_PATH	/share03/WISDOM/data/xmls
-SYNGRAPH_SF_PATH	/share03/WISDOM/data/sfs_w_syn #ダミー
+SYNGRAPH_SF_PATH	/share03/WISDOM/data/sfs_w_syn
 
 # スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス
 DIR_PREFIX_FOR_SFS	/data2/skeiji/sfs_w_syn_080608
@@ -66,6 +63,7 @@ URL_DB_PATH	/data2/WISDOM/DBs/urldb
 # 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
 ORDINARY_DFDB_PATH	/share09/home/skeiji/public_html/cgi-bin/SearchEngine-develop/data/dfdbs/knp
 SYNGRAPH_DFDB_PATH	/share09/home/skeiji/public_html/cgi-bin/SearchEngine-develop/data/dfdbs/syn
+COMPOUND_NOUN_DFDB_PATH	../data/cns.100M.cls.df1000.cdb
 
 
 
@@ -196,7 +194,7 @@ CACHED_HTML_PATH_TEMPLATE	/share03/WISDOM/data/htmls/h%03d/h%05d/%09d.html.gz
 SF_PATH_TEMPLATE		/share03/WISDOM/data/xmls/x%03d/x%05d/%09d.xml.gz #ダミー
 
 # index.cgiのアドレス（★要変更）
-INDEX_CGI			http://www4.crawl.kclab.jgn2.jp/~skeiji/cgi-bin/SearchEngine-develop/cgi/index.cgi
+INDEX_CGI			http://www4.crawl.kclab.jgn2.jp/~skeiji/cgi-bin/SearchEngine-test/cgi/index.cgi
 
 # キャッシュページへのリンクを生成する際に用いるテンプレート
 CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
@@ -228,7 +226,7 @@ DISABLE_KWIC_DISPLAY	0
 
 KWIC_WINDOW_SIZE	20
 
-CACHE_DIR		/share09/home/skeiji/public_html/cgi-bin/SearchEngine-develop/cache
+CACHE_DIR		/tmp/cache
 
 DUMY_LOCK_FILE		/tmp/lockfile.out
 
