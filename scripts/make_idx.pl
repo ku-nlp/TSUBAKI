@@ -57,6 +57,7 @@ GetOptions(\%opt,
 
 # 指定がない場合は、標準フォーマットにSYNGRAPHの解析結果が埋め込まれていると見なす
 $opt{scheme} = "SynGraph" unless ($opt{scheme});
+$opt{ignore_syn_dpnd} = 0 unless ($opt{ignore_syn_dpnd});
 
 if (!$opt{title} && !$opt{keywords} && !$opt{description} && !$opt{inlinks} && !$opt{sentences}) {
     # インデックス抽出対象が指定されていない場合は title, keywords, description, sentences を対象とする
@@ -121,12 +122,12 @@ sub main {
 sub extract_indices_wo_pm {
     my ($file, $fid, $my_opt) = @_;
   
-    my $indexer = new Indexer({ignore_yomi => $opt{ignore_yomi},
-			       without_using_repname => $opt{genkei}
-  			      });
+    my $indexer = new Indexer({
+	ignore_yomi => $opt{ignore_yomi},
+	without_using_repname => $opt{genkei} });
 
     if ($my_opt->{gzipped}) {
-	open(READER, "zcat $file |");
+	open(READER, "zcat $file 2> /dev/null |");
     } else {
 	open(READER, $file);
     }
@@ -173,7 +174,7 @@ sub extract_indices_wo_pm {
 	    # インリンクの場合は披リンク数分を考慮する
 	    if ($tagName eq 'InLink') {
 		my $num_of_linked_pages = 0;
-		while ($content =~ m!<DocID[^>]+>\d+</DocID>!go) {
+		while ($content =~ m!<DocID[^>]+>(NW)?\d+</DocID>!go) {
 		    $num_of_linked_pages++;
 		}
 
@@ -290,6 +291,9 @@ sub extract_indice_from_single_file {
     } else {
 	open(WRITER, '>:utf8', "$opt{out}/$fid.idx");
     }
+
+    # NTCIRで提供されている文書の場合は、$fidから先頭のNWを削除
+    $fid =~ s/^NW//;
 
     if ($opt{position}) {
 	if ($opt{syn}) {
