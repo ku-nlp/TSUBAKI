@@ -50,7 +50,7 @@ sub search {
 
     my $se_obj = new SearchEngine($opt->{syngraph});
     $logger->setTimeAs('create_se_obj', '%.3f');
-    my ($hitcount, $results, $status) = $se_obj->search($query, $logger);
+    my ($hitcount, $results, $status) = $se_obj->search($query, $logger, $opt);
 
     # ヒット件数をロギング
     $logger->setParameterAs('hitcount', $hitcount);

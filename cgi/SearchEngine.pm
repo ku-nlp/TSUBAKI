@@ -67,7 +67,7 @@ sub search {
     my $cache = new Cache();
     my $result = $cache->load($query);
     my $status;
-    if ($result) {
+    if ($result && !$opt->{disable_cache}) {
 	$logger->setTimeAs('search', '%.3f');
 	$logger->setParameterAs('IS_CACHE', 1);
 	$status = 'cache';
@@ -76,7 +76,7 @@ sub search {
 	my $state = new State();
 	if ($CONFIG->{DISABLE_REQUEST_SCHEDULING} || $state->checkIn()) {
 	    $result = $this->broadcastSearch($query, $logger, $opt);
-	    $cache->save($query, $result);
+	    $cache->save($query, $result) unless ($opt->{disable_cache});
 	    $logger->setParameterAs('IS_CACHE', 0);
 	    $state->checkOut();
 	    $status = 'search';

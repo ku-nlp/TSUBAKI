@@ -43,6 +43,7 @@ sub getDefaultValues {
     $params{flag_of_anchor_use} = ($call_from_API) ? 1 : 1;
     $params{highlight} = ($call_from_API) ? 0 : 1;
     $params{develop_mode} = $CONFIG->{TEST_MODE};
+    $params{disable_cache} = 0;
 
     return \%params;
 }
@@ -112,6 +113,7 @@ sub parseCGIRequest {
 
     $params->{antonym_and_negation_expansion} = $cgi->param('antonym_and_negation_expansion') if (defined($cgi->param('antonym_and_negation_expansion')));
     $params->{use_of_case_analysis} = 0;
+    $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
 
     &normalize_logical_operator($params);
 
@@ -176,6 +178,7 @@ sub parseAPIRequest {
     $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
     $params->{antonym_and_negation_expansion} = (defined($cgi->param('antonym_and_negation_expansion'))) ? $cgi->param('antonym_and_negation_expansion') : 0;
     $params->{use_of_case_analysis} = 1 if (defined($cgi->param('use_of_case_analysis')));
+    $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;
