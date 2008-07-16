@@ -78,7 +78,6 @@ sub new {
 	$this->{INDEXER} = new Indexer({ STOP_WORDS => \%stop_words,
 					 ignore_yomi => $opts->{ignore_yomi} });
     }
-    $this->{requisite_item_detector} = new RequisiteItemDetector({debug => $opts->{debug}});
 
     print STDERR "done.\n" if ($opts->{verbose});
     bless $this;
@@ -103,6 +102,12 @@ sub parse {
 	$this->{SYNGRAPH} = new SynGraph($CONFIG->{SYNDB_PATH});
 	$this->{SYNGRAPH_OPTION} = {regist_exclude_semi_contentword => 1, relation => 1, antonym => 1, hypocut_attachnode => 9};
     }
+
+    if ($opt->{detect_requisite_dpnd}) {
+	$this->{requisite_item_detector} = new RequisiteItemDetector({debug => $opt->{debug}});
+    }
+
+
 
     ## 空白で区切る
     # $qks_str =~ s/ /　/g;
@@ -167,9 +172,9 @@ sub parse {
 
 	my $q;
 	if ($opt->{syngraph} > 0) {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, requisite_item_detector => $this->{requisite_item_detector}, detect_requisite_dpnd => 1, trimming => $opt->{trimming}, antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, requisite_item_detector => $this->{requisite_item_detector}, trimming => $opt->{trimming}, antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}, verbose => $opt->{verbose}});
 	} else {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, requisite_item_detector => $this->{requisite_item_detector}, detect_requisite_dpnd => 1, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, requisite_item_detector => $this->{requisite_item_detector}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
 	}
 
 	push(@qks, $q);

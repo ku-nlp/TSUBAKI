@@ -99,7 +99,7 @@ sub new {
 
     # 必須検索係り受けの自動判定
     my $requisites;
-    if ($opt->{detect_requisite_dpnd}) {
+    if (defined $opt->{requisite_item_detector}) {
 	$requisites = $opt->{requisite_item_detector}->getRequisiteDependencies($knpresult);
     }
 
