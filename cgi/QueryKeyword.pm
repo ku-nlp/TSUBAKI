@@ -10,7 +10,7 @@ use Encode;
 use Data::Dumper;
 use Configure;
 use Error qw(:try);
-use RequisiteItemDetector;
+
 
 my $CONFIG = Configure::get_instance();
 
@@ -103,11 +103,19 @@ sub new {
 	$requisites = $opt->{requisite_item_detector}->getRequisiteDependencies($knpresult);
     }
 
+    # 不要な動詞を検知し、動詞を軸とする名詞同士の検索係り受けを生成
+    my ($removalItems, $additionalItems);
+    if (defined $opt->{query_filter}) {
+	($removalItems, $additionalItems) = $opt->{query_filter}->filterOutWorthlessVerbs($knpresult, {th => 10, ignore_yomi => 1});
+    }
 
+
+    my %removalItemGids = ();
     # Indexer.pm より返される索引語を同じ代表表記ごとにまとめる
     foreach my $idx (@{$indice}) {
 	$buff{$idx->{group_id}} = [] unless (exists($buff{$idx->{group_id}}));
 	push(@{$buff{$idx->{group_id}}}, $idx);
+	$removalItemGids{$idx->{group_id}} = 1 if (exists $removalItems->{$idx->{midasi}});
     }
 
     foreach my $group_id (sort {$buff{$a}->[0]{pos} <=> $buff{$b}->[0]{pos}} keys %buff) {
@@ -122,6 +130,10 @@ sub new {
 		my $flag = (exists $requisites->{$m->{midasi}} || exists $fbuf{$group_id}) ? 1 : 0;
 		$fbuf{$group_id} = 1 if ($flag);
 
+		# 係り元、係り先ともにNE内ならば必須
+		$flag = 1 if ($m->{kakarimoto_fstring} =~ /<NE:/ &&
+			      $m->{kakarisaki_fstring} =~ /<NE:/);
+
 		push(@dpnd_reps, {string => $m->{midasi},
 				  gid => $group_id,
 				  qid => -1,
@@ -133,13 +145,14 @@ sub new {
 				  isBasicNode => $m->{isBasicNode}
 		     });
 	    } else {
+		my $flag = (exists $removalItemGids{$group_id}) ? 1 : 0;
 		push(@word_reps, {string => $m->{midasi},
 				  gid => $group_id,
 				  qid => -1,
 				  weight => 1,
 				  freq => $m->{freq},
-				  requisite => 1,
-				  optional => 0,
+				  requisite => !$flag,
+				  optional => $flag,
 				  isContentWord => $m->{isContentWord},
 				  question_type => $m->{question_type},
 				  NE => $m->{NE},
@@ -153,8 +166,25 @@ sub new {
 		}
 	    }
 	}
+
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
+    }
+
+    my $gid = 1000;
+    foreach my $i (keys %$additionalItems) {
+	my @a;
+	push (@a, {string => $i,
+		   gid => $gid++,
+		   qid => -1,
+		   weight => 1,
+		   freq => 1,
+		   requisite => 0,
+		   optional => 1,
+		   isContentWord => 1,
+		   isBasicNode => 1
+	      });
+	push(@{$this->{dpnds}}, \@a);
     }
 
 #     文レベルでの近接制約でない場合は、キーワード内の形態素数を考慮する
@@ -519,6 +549,22 @@ sub normalize {
     }
 
     return join(',', @buf);
+}
+
+sub debug_print {
+    my ($this) = @_;
+
+    use Dumper;
+    print "<TABLE border=1>\n";
+    foreach my $type ('words', 'dpnds') {
+	foreach my $words (@{$this->{$type}}) {
+	    foreach my $rep (@$words) {
+		my $flag = ($rep->{requisite}) ? '●' : (($rep->{optional}) ? '▲' : '×');
+		printf ("<TR><TD>%s</TD><TD>%s</TD><TD>%d</TD></TR>\n", $flag, $rep->{string}, $rep->{df});
+	    }
+	}
+    }
+    print "</TABLE>\n";
 }
 
 1;
