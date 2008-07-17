@@ -37,6 +37,11 @@ sub new {
 	}
     }
 
+    # クエリに対して固有表現解析する際は、オプションを追加
+    if ($opts->{use_of_NE_tagger}) {
+	push(@{$opts->{KNP_OPTIONS}}, '-ne-crf');
+    }
+
     my $this = {
 	KNP => new KNP(-Command => $opts->{KNP_COMMAND},
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),

@@ -113,6 +113,7 @@ sub parseCGIRequest {
 
     $params->{antonym_and_negation_expansion} = $cgi->param('antonym_and_negation_expansion') if (defined($cgi->param('antonym_and_negation_expansion')));
     $params->{use_of_case_analysis} = 0;
+    $params->{use_of_NE_tagger} = 0;
     $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
 
     &normalize_logical_operator($params);
@@ -241,7 +242,8 @@ sub parseQuery {
     my $q_parser = new QueryParser({ DFDB_DIR => $DFDB_DIR,
 				     ignore_yomi => $CONFIG->{IGNORE_YOMI},
 				     use_of_case_analysis => $params->{use_of_case_analysis},
- 				     debug => $params->{debug}
+				     use_of_NE_tagger => $params->{use_of_NE_tagger},
+				     debug => $params->{debug}
 				   });
 
 
