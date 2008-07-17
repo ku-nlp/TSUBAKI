@@ -1,11 +1,209 @@
-2008-06-22  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-07-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm: 論理条件がORの時に対応.
+
+	* cgi/QueryKeyword.pm:
+	クエリの処理結果(requisite, optionalなど)を, 反映するようにした. debug_printメソッドの追加.
+
+	* cgi/RequestParser.pm: クエリ中の動詞を処理するようにした.
+
+	* cgi/QueryParser.pm:
+	クエリ中の動詞の処理をオプション化 (デフォルトでは処理されない. 処理する場合はparseメソッドの第2引数にquery_filtering=1を指定する).
+
+	* cgi/QueryParser.pm, cgi/RequestParser.pm:
+	クエリを固有表現解析するオプションの追加.
+
+	* cgi/configure, cgi/configure.nict:
+	名詞と動詞の相互情報量データベースへのパスを追加(オプション名: MIDB_PATH)
+
+	* cgi/index.cgi: デバック表示追加.
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm: 不要コードの削除
+
+	* scripts/TsubakiEngine.pm:
+	bug fixed (requisite指定された文書とoptional指定された文書のORになっていたのを修正, 近接制約適用時に，検索係り受けで得られた文書が入っていたのを除いた)
+
+2008-07-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Cache.pm:
+	ヒット件数が0件のときは、キャッシュに保存しないようにした.
+
+	* cgi/RequestParser.pm, cgi/SearchEngine.pm, cgi/Searcher.pm:
+	検索時に、キャッシュを利用しないオプション(disable_cache)を追加.
+
+	* cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/RequestParser.pm:
+	クエリの複合名詞解析をオプション化.
+
+2008-07-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	NTCIRの文書セットが入力された時は、文書IDの先頭にあるNWを削除するようにした. zcatで開いたファイルを、全部読み込まずにcloseした際に出力されるエラーを/dev/nullにはくようにした.
+
+	* memo/how_to_install_tsubaki: updated.
+
+	* cgi/configure.nict:
+	パラメータの追加. (COMPOUND_NOUN_DFDB_PATH. UTILS_PATH)
+
+	* data/PORTS.SYN.NICT: added.
+
+2008-07-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/merge-index.sh:
+	bug fixed (binarize_idx.plを呼ぶ際に-typeの値を考慮するようにした)
+
+	* scripts/make-index.sh:
+	インデックス作成時に、デフォルトで-ignore_hypernymをつけるようにした.
+
+	* scripts/make_idx.pl:
+	インデックス時に上位語を無視するオプションを追加(-ignore_hypernym).
+
+	* scripts/TsubakiEngine.pm: 空の検索結果が生成されるバグを修正
+
+2008-07-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure: パラメータの追加.
+
+	* cgi/RequisiteItemDetector.pm:
+	debug表示の追加. cgiで動作するようにした.
+
+	* cgi/RequestParser.pm: QueryParserにdebugオプションが回るようにした.
+
+	* cgi/QueryParser.pm: RequisiteItemDetectorを利用するようにした.
+
+	* cgi/QueryKeyword.pm:
+	RequisiteItemDetectorの出力に応じて、検索単語・係り受けに対して、必須、オプショナルフラグを立てるようにした.
+
+	* scripts/TsubakiEngine.pm:
+	検索単語・係り受けについた必須、オプショナルオプションに対応.
+
+2008-07-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm:
+	KNPでクエリの解析に失敗した際は、エラーメッセージを出力するようにした.
+
+2008-07-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryTrimmer.pm:
+	<Symptom-Inc型>素性が付いている語を削除しないようにした.
+
+	* cgi/CachedHTMLDocument.pm, cgi/Renderer.pm:
+	キャッシュページを表時する際、同義グループの中身の語もハイライトさせるようにした.
+
+	* cgi/QueryParser.pm, cgi/RequestParser.pm:
+	クエリ解析時に格解析するオプションを追加した.
+
+	* cgi/Renderer.pm: 使い方ガイドの表示を復活させた.
+
+2008-07-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4SynGraphSearch.pm:
+	語順に関係なく、近接をスコアに考慮するようにした.
+
+	* cgi/Dumper.pm: <を&lt;に変更するようにした.
+
+	* cgi/QueryKeyword.pm:
+	regist_exclude_semi_contentwordオプションがSynGraph.pmにわたるようにした. to_string_verbose時にgidを出力するようにした.
+
+	* cgi/QueryParser.pm:
+	「代表+的だ」中の「代表」を検索で用いるようにした. 検索キーワードごとに異なる同義グループが付与されるようにした.
+
+	* cgi/QueryTrimmer.pm:
+	<How型>がついている語(eg 方法)を削除しないようにした.
+
+2008-07-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* rules/mrph_microsoft.rule: 文末表現削除ルールの追加.
+
+2008-07-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4SynGraphSearch.pm:
+	同義表現検索において、近接をスコアに考慮するようにした.
+
+	* cgi/SnippetMaker.pm: 準内容語もハイライトされるようにした.
+
+	* cgi/RequestParser.pm:
+	bug fixed (フレーズ検索時に、近接制約が付加されないようにした)
+
+	* cgi/Configure.pm: スニペットサーバーの並列化に対応.
+
+2008-06-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet-server.sh: コメント追加.
+
+	* cgi/configure.nict: スニペット生成サーバーの並列化に対応.
+
+	* cgi/Renderer.pm:
+	debugオプションがSnippetMakerAgent.pmに渡るようにした.
+
+	* cgi/SnippetMakerAgent.pm: スニペット生成サーバーの並列化に対応.
+
+	* scripts/snippet-server.sh:
+	スニペット生成サーバー起動スクリプトを追加.
+
+	* scripts/make_idx.pl: bug fixed (-zオプションを有効にした)
+
+2008-06-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm, cgi/index.cgi: debug文を追加.
+
+	* cgi/RequestParser.pm: debugオプションの追加.
+
+	* cgi/CachedHTMLDocument.pm:
+	キャッシュページを表時する際、画像、スタイルシートをダウンロードするようにした.
+
+	* cgi/Renderer.pm:
+	「反義語・否定を考慮する」チェックボックスが出るようにした.
+
+2008-06-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	bug fixed (クエリの前後にある空白を削除するようにした)
+
+	* cgi/RequestParser.pm, cgi/configure, cgi/configure.nict:
+	configureファイルからテストモードかどうかを指定できるようにした.
+
+	* scripts/Indexer.pm:
+	antonym_and_negation_expansionオプション指定時に、末尾の同義表現の反義語・否定表現を生成するようにした.
+
+	* cgi/Query.pm, cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/RequestParser.pm:
+	同義表現検索時に、反義語、否定表現を考慮するオプション(antonym_and_negation_expansion)を追加.
+
+2008-06-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	キャッシュページを表示する際、基本ノードのラベルだけハイライトさせるようにした。
+
+	* cgi/configure.nict, cgi/configure:
+	WWW2sf/tool/perlのパスを環境変数に追加.
+
+	* cgi/index.cgi:
+	キャッシュページの整形をCachedHTMLDocument.pmを使って行うようにした.
+
+	* scripts/merge-index.sh:
+	オプションで作成するインデックスの種類を切り替えるようにした. 使用するメモリの上限を設定.
+
+	* scripts/make-index.sh: コメント追加.
+
+	* cgi/configure: コメントを追加.
+
+	* cgi/configure.nict: IGNORE_YOMIオプションを追加.
+
+2008-06-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm:
+	utf8以外の文字コードで変換されたクエリが来た際は、エラーメッセージを出力するようにした.
+
+	* cgi/Renderer.pm:
+	bug fixed.(キャッシュページを表示した際、target=と出力されているのを削除)
+
+2008-06-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Query.pm:
 	クエリを正規化する際にscore_verboseを考慮しないようにした.
 
 	* cgi/configure: パラメータの追加およびデフォルト値の変更.
 
-2008-06-20  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* memo/how_to_install_tsubaki: updated.
 
@@ -43,7 +241,7 @@
 	* cgi/QueryParser.pm:
 	Indexerをnewする際に、ignore_yomiオプションをとるようにした.
 
-2008-06-16  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/SearchEngine.pm, cgi/configure, cgi/configure.nict:
 	リクエストのスケジューリング機能のオン/オフをオプション化.
@@ -72,7 +270,7 @@
 	* cgi/RequestParser.pm:
 	ポータルからのアクセスかどうかのログをとるようにした.
 
-2008-06-13  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Renderer.pm:
 	ブラウザにより読み込むcssをわけた.
@@ -95,7 +293,7 @@
 	* cgi/Renderer.pm:
 	使い方ガイドへのリンクを削除, ヒット件数の表示を修正.
 
-2008-06-12  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Renderer.pm:
 	ユーザに見せる検索結果数をNUM_OF_PROVIDE_SEARCH_RESULTSに従って決めるようにした.
@@ -112,12 +310,12 @@
 	* cgi/QueryParser.pm, cgi/RequestParser.pm:
 	ブラウザ検索において、クエリ内の文末表現を検索に用いないようにした.
 
-2008-06-12  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/RequestParser.pm:
 	ブラウザアクセス時にKWICの左右のコンテキストが表示されないバグを修正.
 
-2008-06-11  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/QueryParser.pm:
 	同じ基本句から抽出された同義グループに対して同じ色を塗るようにした.
@@ -134,7 +332,7 @@
 	* cgi/Renderer.pm:
 	検索結果に表示するロゴを小さくした. 検索時のオプションを隠した（とりあえず）
 
-2008-06-09  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Renderer.pm, cgi/RequestParser.pm:
 	URLリクエストによるAPI呼び出し時も、kwic_window_sizeを指定できるようにした.
@@ -146,7 +344,7 @@
 	POSTアクセスに対してもKWIC取得を対応した.
 
 
-2008-06-08  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/QueryKeyword.pm:
 	正規化時にSYNGRAPH解析結果が出力されないようにした.
@@ -169,7 +367,7 @@
 	* cgi/Renderer.pm:
 	検索時間にスニペット生成時間を加えるようにした. クエリの解析、検索、スニペット生成にかかった時間を表示するようにした.
 
-2008-06-07  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/RequestParser.pm:
 	同義表現検索指定時に~100Wをつけないようにした.
@@ -177,7 +375,7 @@
 	* cgi/RequestParser.pm, cgi/index.cgi:
 	制約条件の指定がない場合、~100Wをつけるようにした.
 
-2008-06-05  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-06-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/index.cgi:
 	Searcher.pmの変更に対応.
@@ -217,12 +415,12 @@
 	* cgi/api.cgi:
 	通常のAPIアクセス時に<Cache>内が表示されないバグを修正.
 
-2008-05-26  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-05-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Renderer.pm:
 	チュートリアルページへのリンクを追加.
 
-2008-05-23  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-05-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/index.cgi:
 	初期画面の描画時にフラグ付文字列が出力されないようにした.
@@ -230,7 +428,7 @@
 	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4OrdinarySearch.pm, scripts/TsubakiEngineFactory.pm:
 	索引表現ごとに計算されるスコアの保持をオプション化 (デフォルトでは保持しない, 消費メモリを20%削減)
 
-2008-05-22  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-05-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/RequestParser.pm:
 	URIパラメタの変更, アンカーテキストを考慮するようにパラメタのデフォルト値を変更した.
@@ -251,7 +449,7 @@
 	* cgi/Searcher.pm:
 	類似ページ判定において、UTF8フラグが落ちている状態でタイトルを比較していたバグを修正.
 
-2008-05-21  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-05-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/api.cgi:
 	ハイライト表示のオン/オフを切り替えられるようにした.
@@ -455,7 +653,7 @@
 
 	* utils/api_req.pl: 標準フォーマット取得オプションの追加.
 
-2008-04-25  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/Indexer.pm:
 	<反義語><否定>の利用をオプション化した. <反義語>を削除しないようにした.
@@ -469,7 +667,7 @@
 	* cgi/configure:
 	SYNGRAPH検索のオプション（係り受けの利用、<上位語>の利用、<反義語><否定>の利用）を設定ファイルに移行.
 
-2008-04-23  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/SnippetMaker.pm, cgi/SnippetMakerAgent.pm, cgi/configure:
 	誤ってcommitしたものを前のバージョンに戻した.
@@ -492,7 +690,7 @@
 
 	* doc/manual.tex: 言語解析部分をupdate
 
-2008-04-20  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/Retrieve.pm:
 	searchメソッドからSYNGRAPH検索に分岐するようにした. load_scoreメソッドにおいて1000で割るようにした. コード整理.
@@ -500,7 +698,7 @@
 	* scripts/seek_test.pl, scripts/seek_test_syn.pl:
 	SYNGRAPH検索に対応(seek_test_syn.plの廃止). QueryParserを使うようにした.
 
-2008-04-18  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-18  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine4OrdinarySearch.pm:
 	OKAPIのパラメータをBM25に戻した. bug fixed(get_minimun_distanceの戻り値が-1の時は、近接ボーナスを与えない)
@@ -517,7 +715,7 @@
 	* scripts/snippet_maker_test.pl:
 	-debugオプションの追加.
 
-2008-04-17  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/SnippetMaker.pm:
 	変数名を修正(midashi -> midasi)
@@ -546,7 +744,7 @@
 	* scripts/TsubakiEngine.pm:
 	近接制約適用時に、語順を考慮するかどうかのオプションを追加化.
 
-2008-04-16  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/snippet_make_server.pl:
 	西千葉標準フォーマットから重要文を抽出するオプションを追加.
@@ -590,7 +788,7 @@
 	* scripts/seek_test.pl:
 	Retrieve.pm, Dumperを使うように変更.
 
-2008-04-15  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/index.cgi:
 	Renderer.pm, Searcher.pmの変更に対応.
@@ -604,7 +802,7 @@
 	* cgi/configure.nict:
 	defalut値の変更.
 
-2008-04-14  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/tsubaki_server.pl:
 	負荷を返す機能を追加.
@@ -630,7 +828,7 @@
 	* cgi/Renderer.pm:
 	エラー表示用クラスメソッドの追加.
 
-2008-04-12  Keiji Shinzato  <skeiji@nlpc.kuee.kyoto-u.ac.jp>
+2008-04-12  Keiji Shinzato  <shinzato@nlpc.kuee.kyoto-u.ac.jp>
 
 	* cgi/RequestParser.pm:
 	スニペットが表示されない不具合を修正.
@@ -649,7 +847,7 @@
 	bug fixed.(係り受け強制制約適用時、文書IDチェックの終了条件を修正).
 	verbose時に出力されるコメントを追加.
 
-2008-04-11  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-04-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Configure.pm
 	誤ってcommitしたのを戻した.
@@ -872,12 +1070,12 @@
 
 	* cgi/QueryParser.pm: SynGraphを必要時にだけnewするように変更.
 
-2008-03-13  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-03-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/QueryParser.pm:
 	SynGraphを必要時にだけnewするように変更.
 
-2008-02-10  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-02-10  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/configure, cgi/configure.nict: KNPのrcfileを含めた．
 
@@ -897,7 +1095,7 @@
 	* cgi/index.cgi, cgi/api.cgi, cgi/SnippetMakerAgent.pm, cgi/SearchEngine.pm:
 	設定ファイルに記述された環境変数を用いるように変更．
 
-2008-02-09  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2008-02-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/make-dlength-db.perl: 基本形を計数するバグをフィックス
 
@@ -962,16 +1160,16 @@
 
 	* cgi/SearchEngine.pm: .keymapファイルを読み込まないように変更．
 
-2007-12-28  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2007-12-28  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/Indexer.pm: 並列Pを係り受けDに変換する部分のバグ修正
 
-2007-12-20  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2007-12-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine4OrdinarySearch.pm:
 	インデックスがどの程度文書のスコアに貢献したか返すように変更．係り受け、近接スコアの考慮を制御するフラグオプションの追加．
 
-2007-12-17  Keiji Shinzato  <skeiji@nlp.kuee.kyoto-u.ac.jp>
+2007-12-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine.pm:
 	bug fixed.(get_minimun_distnaceでポジションが片方しかない場合は-1を返す)
