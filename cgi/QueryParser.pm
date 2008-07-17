@@ -14,7 +14,7 @@ use QueryKeyword;
 use Configure;
 use CDB_File;
 use Query;
-use RequisiteItemDetector;
+
 
 my $CONFIG = Configure::get_instance();
 
@@ -108,8 +108,15 @@ sub parse {
 	$this->{SYNGRAPH_OPTION} = {regist_exclude_semi_contentword => 1, relation => 1, antonym => 1, hypocut_attachnode => 9};
     }
 
+
     if ($opt->{detect_requisite_dpnd}) {
+	require RequisiteItemDetector;
 	$this->{requisite_item_detector} = new RequisiteItemDetector({debug => $opt->{debug}});
+    }
+
+    if ($opt->{query_filtering}) {
+	require QueryFilter;
+	$this->{query_filter} = new QueryFilter($opt);
     }
 
 
@@ -177,9 +184,42 @@ sub parse {
 
 	my $q;
 	if ($opt->{syngraph} > 0) {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, syngraph => $this->{SYNGRAPH}, syngraph_option => $this->{SYNGRAPH_OPTION}, requisite_item_detector => $this->{requisite_item_detector}, trimming => $opt->{trimming}, antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword(
+		$q_str,
+		$sentence_flag,
+		$phrasal_flag,
+		$near,
+		$keep_order,
+		$force_dpnd,
+		$logical_cond_qkw,
+		$opt->{syngraph},
+		{ knp => $this->{KNP},
+		  indexer => $this->{INDEXER},
+		  syngraph => $this->{SYNGRAPH},
+		  syngraph_option => $this->{SYNGRAPH_OPTION},
+		  requisite_item_detector => $this->{requisite_item_detector},
+		  query_filter => $this->{query_filter},
+		  trimming => $opt->{trimming},
+		  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
+		  verbose => $opt->{verbose}
+		});
 	} else {
-	    $q = new QueryKeyword($q_str, $sentence_flag, $phrasal_flag, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt->{syngraph}, {knp => $this->{KNP}, indexer => $this->{INDEXER}, requisite_item_detector => $this->{requisite_item_detector}, trimming => $opt->{trimming}, verbose => $opt->{verbose}});
+	    $q = new QueryKeyword(
+		$q_str,
+		$sentence_flag,
+		$phrasal_flag,
+		$near,
+		$keep_order,
+		$force_dpnd,
+		$logical_cond_qkw,
+		$opt->{syngraph},
+		{ knp => $this->{KNP},
+		  indexer => $this->{INDEXER},
+		  requisite_item_detector => $this->{requisite_item_detector},
+		  query_filter => $this->{query_filter},
+		  trimming => $opt->{trimming},
+		  verbose => $opt->{verbose}
+		});
 	}
 
 	push(@qks, $q);
