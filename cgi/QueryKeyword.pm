@@ -134,6 +134,8 @@ sub new {
 		$flag = 1 if ($m->{kakarimoto_fstring} =~ /<NE:/ &&
 			      $m->{kakarisaki_fstring} =~ /<NE:/);
 
+		$flag = 0 if ($this->{logical_cond_qkw} eq 'OR');
+
 		push(@dpnd_reps, {string => $m->{midasi},
 				  gid => $group_id,
 				  qid => -1,
@@ -146,6 +148,9 @@ sub new {
 		     });
 	    } else {
 		my $flag = (exists $removalItemGids{$group_id}) ? 1 : 0;
+
+		$flag = 1 if ($this->{logical_cond_qkw} eq 'OR');
+
 		push(@word_reps, {string => $m->{midasi},
 				  gid => $group_id,
 				  qid => -1,
