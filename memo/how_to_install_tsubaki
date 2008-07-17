@@ -26,6 +26,22 @@
 　* wget http://reed.kuee.kyoto-u.ac.jp:/home/skeiji/public_html/data/cns.100M.cls.df1000.cdb 
 
 
+■ CalcSimilarityByCFをcvsから取得する
+
+  * configureファイル内のMIDB_PATHの値を，CalcSimilarityByCF/db/all-miへのパスにする
+
+  * cgi/QueryHandler.pm内のuse lib '/home/skeiji/cvs/CalcSimilarityByCF/perl';を編集する
+
+
+■ 検索クエリを固有表現解析する際は、固有表現解析オプションを指定してKNPをコンパイルする
+
+  * 参考
+
+　　-  http://nlp.kuee.kyoto-u.ac.jp/local/nlp/knp/
+
+    -  http://nlp.kuee.kyoto-u.ac.jp/local/index.php?%B8%C7%CD%AD%C9%BD%B8%BD%C3%EA%BD%D0%A5%B7%A5%B9%A5%C6%A5%E0
+
+
 ■ cgi/configure を編集する
 
 　* juman, knpのパスや、標準フォーマットが置いてあるディレクトリ、キャッシュデータの保管場所などを設定する
