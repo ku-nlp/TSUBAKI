@@ -30,6 +30,7 @@ TOOL_HOME	/home/skeiji/local/bin
 KNP_COMMAND	/home/skeiji/local/080620/bin/knp
 JUMAN_COMMAND	/home/skeiji/local/080620/bin/juman
 SYNDB_PATH	/home/skeiji/tsubaki-develop/SearchEngine/data/syndb/i686
+MIDB_PATH	/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi
 KNP_OPTIONS	-postprocess,-tab,-dpnd
 KNP_RCFILE	/home/skeiji/.knprc
 SYNGRAPH_PM_PATH	/home/skeiji/tsubaki-develop/SynGraph/perl

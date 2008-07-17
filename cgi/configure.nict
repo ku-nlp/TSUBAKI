@@ -30,6 +30,7 @@ TOOL_HOME	/share03/WISDOM/local/bin
 KNP_COMMAND	/opt/KNP/current/bin/knp
 JUMAN_COMMAND	/opt/JUMAN/current/bin/juman
 SYNDB_PATH	/share09/home/skeiji/public_html/cgi-bin/SearchEngine-develop/data/syndb.080512/x86_64
+MIDB_PATH	/share09/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi
 KNP_OPTIONS	-postprocess,-tab,-dpnd
 KNP_RCFILE	/opt/KNP/current/etc/knprc
 SYNGRAPH_PM_PATH	/share09/home/skeiji/cvs/SynGraph/perl
