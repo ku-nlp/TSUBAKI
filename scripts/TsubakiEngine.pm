@@ -148,6 +148,7 @@ sub retrieve_from_dat {
     ## 代表表記化／SynGraph により複数個の索引に分割された場合の処理 (かんこう -> 観光 OR 刊行 OR 敢行 OR 感光 を検索する)
     my %idx2qid;
     my @results;
+
     for (my $i = 0; $i < scalar(@{$reps}); $i++) {
 	# rep は構造体
 	# rep = {qid, string}
@@ -162,10 +163,13 @@ sub retrieve_from_dat {
 	    foreach my $d (@{$results[$i]}) {
 		print $d->[0] . " ";
 	    }
+	    print "\n";
 	}
 
 	$idx2qid{$i} = $rep->{qid};
     }
+    print "-----\n" if ($this->{verbose});
+
     my $ret = $this->merge_search_result(\@results, \%idx2qid);
 
     if ($this->{show_speed}) {
@@ -210,6 +214,7 @@ sub calculate_score {
     return $tf * $idf;
 }
 
+
 sub retrieveFromBinaryData {
     my ($this, $retriever, $query, $qid2df, $keyword, $type, $alwaysAppend, $requisite_only, $optional_only) = @_;
 
@@ -242,10 +247,144 @@ sub retrieveFromBinaryData {
 	    print scalar(@$docs) . "=size\n" if ($this->{verbose});
 	}
 
-	# 各語について検索された結果を納めた配列に push
+	# 各検索単語・係り受けについて検索された結果を納めた配列に push
 	push(@results, $docs);
 	print "-----\n" if ($this->{verbose});
     }
+
+# use Data::Dumper;
+# print Dumper(\@results) . "\n";
+#
+# $VAR1 = [
+#           [
+#             {
+#               'did' => 34000954,
+#               'qid_freq' => [
+#                               {
+#                                 'qid' => 0,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '9038042087',
+#                                 'nums' => 113,
+#                                 'offset' => '9038037567'
+#                               },
+#                               {
+#                                 'qid' => 1,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '4374239993',
+#                                 'nums' => 115,
+#                                 'offset' => '4374235381'
+#                               }
+#                             ]
+#             },
+#           :
+#           :
+#           :
+#             {
+#               'did' => 34986766,
+#               'qid_freq' => [
+#                               {
+#                                 'qid' => 0,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '9038044867',
+#                                 'nums' => 6,
+#                                 'offset' => '9038042059'
+#                               },
+#                               {
+#                                 'qid' => 1,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '4374242827',
+#                                 'nums' => 6,
+#                                 'offset' => '4374239965'
+#                               }
+#                             ]
+#             }
+#           ],
+#           [
+#             {
+#               'did' => 34000954,
+#               'qid_freq' => [
+#                               {
+#                                 'qid' => 2,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '8320560358',
+#                                 'nums' => 45,
+#                                 'offset' => '8319293776'
+#                               },
+#                               {
+#                                 'qid' => 3,
+#                                 'fnum' => 0,
+#                                 'offset_score' => 463302011,
+#                                 'nums' => 45,
+#                                 'offset' => 462035429
+#                               },
+#                               {
+#                                 'qid' => 4,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '1282992072',
+#                                 'nums' => 45,
+#                                 'offset' => '1281725490'
+#                               },
+#                               {
+#                                 'qid' => 5,
+#                                 'fnum' => 0,
+#                                 'offset_score' => 460812425,
+#                                 'nums' => 45,
+#                                 'offset' => 459545843
+#                               },
+#                               {
+#                                 'qid' => 6,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '6288237291',
+#                                 'nums' => 45,
+#                                 'offset' => '6286970653'
+#                               }
+#                             ]
+#             },
+#           :
+#           :
+#           :
+#             {
+#               'did' => 34986766,
+#               'qid_freq' => [
+#                               {
+#                                 'qid' => 2,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '8321361942',
+#                                 'nums' => 3,
+#                                 'offset' => '8320545360'
+#                               },
+#                               {
+#                                 'qid' => 3,
+#                                 'fnum' => 0,
+#                                 'offset_score' => 464103595,
+#                                 'nums' => 3,
+#                                 'offset' => 463287013
+#                               },
+#                               {
+#                                 'qid' => 4,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '1283793656',
+#                                 'nums' => 3,
+#                                 'offset' => '1282977074'
+#                               },
+#                               {
+#                                 'qid' => 5,
+#                                 'fnum' => 0,
+#                                 'offset_score' => 461614009,
+#                                 'nums' => 3,
+#                                 'offset' => 460797427
+#                               },
+#                               {
+#                                 'qid' => 6,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '6289038909',
+#                                 'nums' => 3,
+#                                 'offset' => '6288222293'
+#                               }
+#                             ]
+#             }
+#           ]
+#         ];
 
     return \@results;
 }
@@ -303,6 +442,7 @@ sub retrieve_documents {
 	my $requisite_docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 0, $requisite_only, $optional_only);
 	my $requisite_docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 0, $requisite_only, $optional_only);
 
+
 	# オプショナルが指定された検索単語・係り受けの検索
 	($requisite_only, $optional_only) = (0, 1);
 	my $optional_docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 1, $requisite_only, $optional_only);
@@ -323,51 +463,60 @@ sub retrieve_documents {
 	$logger->setTimeAs('anchor_search', '%.3f');
 
 
+	# 近接制約の適用
+	if ($keyword->{near}) {
+	    $requisite_docs_word = &intersect($requisite_docs_word);
+	    $requisite_docs_word = $this->filter_by_NEAR_constraint($requisite_docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
+	}
+	$logger->setTimeAs('near_condition', '%.3f');
+
+
 	# 必須が指定された検索単語・係り受けを含む文書IDのマージ
 	my $requisites = &get_requisite_docs($requisite_docs_word, $requisite_docs_dpnd);
 	# オプショナルが指定された検索単語・係り受けを含む文書IDのマージ
 	my $optionals = &get_optional_docs($optional_docs_word, $optional_docs_dpnd);
 
-	use Data::Dumper;
-	print Dumper($requisites) . "\n";
-
-	# 近接制約の適用
-	if ($keyword->{near}) {
-	    $requisites = $this->filter_by_NEAR_constraint($requisites, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
-	}
-	$logger->setTimeAs('near_condition', '%.3f');
-
 
 	# requisites, optionals を単語と係り受けに分類する
 	my $word_docs = ();
 	my $dpnd_docs = ();
-	foreach my $d (@$requisites) {
-	    next unless (defined $d->[0]);
-	    if (exists $dpnd_qids{$d->[0]{qid_freq}[0]{qid}}) {
-		push(@$dpnd_docs, $d);
+	foreach my $docs (@$requisites) {
+	    next unless (defined $docs->[0]);
+
+	    if (exists $dpnd_qids{$docs->[0]{qid_freq}[0]{qid}}) {
+		push(@$dpnd_docs, $docs);
 	    } else {
-		push(@$word_docs, $d);
+		push(@$word_docs, $docs);
 	    }
 	}
 
-	foreach my $d (@$optionals) {
-	    next unless (defined $d->[0]);
-	    if (exists $dpnd_qids{$d->[0]{qid_freq}[0]{qid}}) {
-		push(@$dpnd_docs, $d);
+	foreach my $docs (@$optionals) {
+	    next unless (defined $docs->[0]);
+
+	    if (exists $dpnd_qids{$docs->[0]{qid_freq}[0]{qid}}) {
+		push(@$dpnd_docs, $docs);
 	    } else {
-		push(@$word_docs, $d);
+		push(@$word_docs, $docs);
 	    }
 	}
 
-	# 検索語について収集された文書をマージ
+
+	# 検索単語間の論理条件を適用
+	if ($keyword->{logical_cond_qkw} =~ /AND/) {
+	    $word_docs = &intersect($word_docs);
+	}
+
+	# 検索単語・係り受けについて収集された文書をマージ
 	push(@{$alldocs_word}, &serialize($word_docs));
 	push(@{$alldocs_dpnd}, &serialize($dpnd_docs));
+
 	push(@{$alldocs_word_anchor}, &serialize($docs_word_anchor));
 	push(@{$alldocs_dpnd_anchor}, &serialize($docs_dpnd_anchor));
 	$logger->setTimeAs('merge_dids', '%.3f');
-    }
+    }    
 
-    # 論理条件にしたがい検索語ごとに収集された文書のマージ
+
+    # 論理条件にしたがい検索表現ごとに収集された文書のマージ
     if ($query->{logical_cond_qk} eq 'AND') {
 	$alldocs_word =  &intersect($alldocs_word);
     } else {
@@ -527,7 +676,7 @@ sub filter_by_NEAR_constraint_strict {
 		    }
 		}
 	    }
-	    # 代表表記化により複数個にわかれたものの出現位置 or 出現文IDのマージ
+	    # SYNGRAPH/代表表記化により複数個にわかれたものの出現位置 or 出現文IDのマージ
 	    else {
 		my %buff = ();
 		for (my $j = 0; $j < $qid_freq_size; $j++) {
@@ -631,9 +780,16 @@ sub filter_by_NEAR_constraint {
 
     for (my $d = 0; $d < scalar(@{$docs->[0]}); $d++) {
 	my $did = $docs->[0][$d]->{did};
+
 	my @poslist = ();
 	# クエリ中の単語の出現位置リストを作成
 	for (my $q = 0; $q < scalar(@{$docs}); $q++) {
+
+	    if ($this->{debug}) {
+		print STDERR "* did=" . $did . " q=$q d=$d\n";
+		require Data::Dumper;
+		print STDERR Dumper($docs->[$q][$d]) . "\n";
+	    }
 
 	    # 文書$dに含まれている検索語$qの同義表現（または曖昧性のある代表表記）の数
 	    my $qid_freq_size = scalar(@{$docs->[$q][$d]->{qid_freq}});
@@ -702,6 +858,16 @@ sub filter_by_NEAR_constraint {
 	    my $pos = shift(@{$poslist[$min_qid]});
 	    push(@serialized_poslist, {pos => $pos, qid => $min_qid});
 	}
+
+	if ($this->{debug}) {
+	    print "poslist of a document with did=" . $did . ": ";
+	    foreach my $p (@serialized_poslist) {
+		print $p->{qid} . "/" . $q_num . "@" . $p->{pos} . " ";
+	    }
+	    print "\n";
+	    print "-----\n";
+	}
+
 
 	#  2. 各単語が$near語以内に現れているかどうかチェック
 	my $flag = -1;
