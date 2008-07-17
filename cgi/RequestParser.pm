@@ -115,6 +115,7 @@ sub parseCGIRequest {
     $params->{use_of_case_analysis} = 0;
     $params->{use_of_NE_tagger} = 0;
     $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
+    $params->{query_filtering} = 1;
 
     &normalize_logical_operator($params);
 
@@ -258,7 +259,16 @@ sub parseQuery {
 
     # クエリの解析
     # logical_cond_qk: クエリ間の論理演算
-    my $query = $q_parser->parse($params->{query}, {logical_cond_qk => $params->{logical_operator}, syngraph => $params->{syngraph}, near => $params->{near}, trimming => 1, antonym_and_negation_expansion => $params->{antonym_and_negation_expansion}, detect_requisite_dpnd => 1 });
+    my $query = $q_parser->parse(
+	$params->{query},
+	{ logical_cond_qk => $params->{logical_operator},
+	  syngraph => $params->{syngraph},
+	  near => $params->{near},
+	  trimming => 1,
+	  antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
+	  detect_requisite_dpnd => 1,
+	  query_filtering => $params->{query_filtering}
+	});
 
     # 取得ページ数のセット
     $query->{results} = $params->{results};
