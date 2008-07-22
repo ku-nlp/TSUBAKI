@@ -3,8 +3,6 @@ package QueryFilter;
 # $Id;$
 
 
-use lib '/home/skeiji/cvs/CalcSimilarityByCF/perl';
-
 use strict;
 use utf8;
 use Encode;
