@@ -271,30 +271,18 @@ sub set_bunmatsu_feature {
     # 文末表現削除素性の追加
     foreach my $bnst (reverse $result->bnst) {
 	my $all_mrph_matched = 1;
-	foreach my $mrph (reverse $bnst->mrph) {
-	    if ($mrph->fstring =~ /<([^>]+)型>/) {
-		if ($1 ne 'How-Inc' && $1 ne 'How' && $1 ne 'Symptom-Inc') {
-		    my @f = ();
-		    push(@f, "削除::表現文末");
-		    $mrph->push_feature(@f);
-		} else {
-		    $all_mrph_matched = -1;
-		    last;
-		}
-	    } else {
-		$all_mrph_matched = -1;
-		last;
+	foreach my $tag (reverse $bnst->tag) {
+	    next unless ($tag->fstring =~ /<クエリ削除語>/);
+
+	    foreach my $mrph ($tag->mrph) {
+		my @f = ();
+		push(@f, "削除::表現文末");
+		$mrph->push_feature(@f);
 	    }
-	}
-	if ($all_mrph_matched  > 0) {
-	    my @f = ();
-	    push(@f, "削除::全て表現文末");
-	    $bnst->push_feature(@f);
-	} else {
-	    last;
 	}
     }
 }
+
 
 # 主辞の設定
 sub set_lexical_head_feature {
