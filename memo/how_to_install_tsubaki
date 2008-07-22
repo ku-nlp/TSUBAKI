@@ -30,9 +30,9 @@
 
   * configureファイル内のMIDB_PATHの値を，CalcSimilarityByCF/db/all-miへのパスにする
 
-    - all-miは http://reed.kuee.kyoto-u.ac.jp/~skeiji/data/all-mi からダウンロードして下さい
+    - all-miは http://reed.kuee.kyoto-u.ac.jp/~skeiji/data/all-mi からダウンロードする
 
-  * cgi/QueryFilter.pm内のuse lib '/home/skeiji/cvs/CalcSimilarityByCF/perl';を編集する
+  * CalcSimilarityByCF/READMEの手順に従って，CalcSimilarityByCF.pmをインストールする
 
 
 ■ 検索クエリを固有表現解析する際は、固有表現解析オプションを指定してKNPをコンパイルする
