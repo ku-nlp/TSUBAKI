@@ -1,49 +1,74 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/1999/REC-html401-19991224/loose.dtd">
-<HTML lang="ja">
-<HEAD>
-	<META http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<META http-equiv="Content-Style-Type" content="text/css">
-	<TITLE>検索エンジン基盤TSUBAKI 使い方ガイド</TITLE>
-</HEAD>
-<BODY style="padding:0em 3em;">
+<!doctype html public "-//W3C//DTD HTML 4.0//EN">
+<html>
+<head>
+<style type="text/css">
+<!--
+BODY{
+	margin: 1em 3em;
+}
+h3 { 
+background-color: #FFFFFF; /* 背景色 */ 
+font-size: 12pt; /* 文字サイズ */ 
+padding: 5px; /* 帯内の余白 */ 
+border-bottom: 2px #216521 solid; /* 下の枠線（太さ・色・スタイル） */ 
+border-left: 10px #216521 solid; /* 左の枠線（太さ・色・スタイル） */ 
+}
+-->
+</style>
+<meta HTTP-EQUIV="content-type" CONTENT="text/html; charset=utf-8">
+<title>TSUBAKI 使い方ガイド</title>
+</head>
+<body>
 
-<DIV style="text-align:right;"><A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">[TSUBAKIへ戻る]</A></DIV>
-<H2 style="padding-bottom:1em;">
-  <SPAN style="color:red; font-weight:900;">TSUBAKI</SPAN>：表現の違いを気にせずに自然文で検索する
-</H2>
+<table width=100% border=0>
+<tr><td style="vertical-align:bottom;">
+<IMG src="tutorial-title.png">
+<td align=right style="vertical-align:top;">
+<a href="index.cgi">TSUBAKIへ</a></tr></table><br>
+
+
+
+
+
+<H3>概要</H3>
 
 <P>
-<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">TSUBAKI</A>では自然
-文で検索することができます。
-
-検索には、語と語の修飾関係や、同義語、表記の揺れが考慮されます。
-
-例えば「<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi?start=0&q=%E3%82%A4%E3%83%B3%E3%83%89%E3%81%AE%E7%B5%8C%E6%B8%88%E7%99%BA%E5%B1%95%E3%81%AE%E9%9A%9C%E5%AE%B3&%E9%80%81%E4%BF%A1=%E6%A4%9C%E7%B4%A2%E3%81%99%E3%82%8B&logical=WORD_AND&syngraph=on">インドの経済発展の障害</A>」で検索した場合、「インド」と「経済」の
-修飾関係や、「障害」と「妨げ」の同義関係が考慮されます。
-
-これにより、「インド経済の発展の<B>妨げ</B>」と書かれているページでも検
-索することが可能です。(下図を参照)
+TSUBAKIは表現の違いを気にせずに自然文でウェブ情報を検索することができる
+新しい検索エンジンです．検索対象は，<FONT color="red">2007年5月から7月
+</FONT>にかけて収集した日本語の1億ウェブページです（そのため最新の話題は
+検索できません）。検索は，1回当たり数秒-20秒程度かかります．また，混雑時は，
+その旨を伝えるメッセージが出力されます．その際は，お手数ですが，時間を置いてから再度
+検索を試みて下さい．
 </P>
 
-<H3 style="color:red">注意：2007年5月から7月にかけて収集した日本語ウェ
-ブページが検索対象であるため、最新の話題は検索できません。</H3>
+<P>TSUBAKIが得意とするのは，企業のトップページなどを探すような検索ではな
+く，「インドの経済発展の障害」「乳児のむし歯を予防するには」のように，
+あるトピックに関する情報を調べたいという場合の検索です．</P>
 
+<P>この際，TSUBAKIはクエリ自然文の同義語や表記の揺れ，修飾関係を考慮しま
+す．例えば「インドの経済発展の障害」で検索した場合、「インド」と「経済」
+の修飾関係や、「障害」と「妨げ」の同義関係が考慮され，「インド経済の発
+展の妨げ」と書かれているページでも検索することが可能です。</P>
 
-<DIV style="padding-top:1em; padding-bottom: 2em; text-align: center;">
 <IMG src="screenshot.png">
-</DIV>
 
-「インドの経済発展の障害」のほかにも語と語の修飾関係や、同義語、表記揺れの処理がうまく働く例を幾つか示します。
 
-<DL style="padding-left: 1em;">
-<LI><A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi?start=0&q=%E4%B9%B3%E5%85%90%E3%81%AE%E3%82%80%E3%81%97%E6%AD%AF%E3%82%92%E4%BA%88%E9%98%B2%E3%81%99%E3%82%8B%E3%81%AB%E3%81%AF&%E9%80%81%E4%BF%A1=%E6%A4%9C%E7%B4%A2%E3%81%99%E3%82%8B&logical=WORD_AND&syngraph=on">乳児のむし歯を予防するには</A></LI>
-<LI><A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi?start=0&q=%E6%9C%9D%E9%A3%9F%E3%82%92%E9%A3%9F%E3%81%B9%E3%81%AA%E3%81%84%E5%AD%90%E4%BE%9B%E3%81%AE%E5%A2%97%E5%8A%A0&%E9%80%81%E4%BF%A1=%E6%A4%9C%E7%B4%A2%E3%81%99%E3%82%8B&logical=WORD_AND&syngraph=on">朝食を食べない子供の増加</A></LI>
-<LI><A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi?start=0&q=%E3%81%8B%E3%81%9C%E8%96%AC%E3%82%92%E6%9C%8D%E7%94%A8%E3%81%99%E3%82%8B%E3%81%A8%E3%81%8D%E3%81%AE%E7%95%99%E6%84%8F%E7%82%B9&%E9%80%81%E4%BF%A1=%E6%A4%9C%E7%B4%A2%E3%81%99%E3%82%8B&logical=WORD_AND&syngraph=on">かぜ薬を服用するときの留意点</A></LI>
-<!-- <LI>ケーキ職人</LI> -->
-</DL>
 
-<DIV style="padding-top: 0.5em; border-top: 1px solid black; text-align:right;"><A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">[TSUBAKIへ戻る]</A></DIV>
-<DIV style="text-align: center;"><B>&copy;2006 - 2008 黒橋研究室</B></DIV> 
-</BODY>
-</HTML>
+<H3>実行例（クリックすると検索結果が表示されます）</H3>
 
+「インドの経済発展の障害」，
+「乳児のむし歯を予防するには」，
+「朝食を食べない子供の増加」，
+「かぜ薬を服用するときの留意点」
+
+<br>
+<div align="center">
+<font size=+2><a href="index.cgi">TSUBAKIへ</a></font>
+</div>
+<br>
+
+<hr>
+<table width=100% border=0><tr><td><address>&copy;2008 Kurohashi Lab.</address></tr></table>
+</body>
+
+</html>
