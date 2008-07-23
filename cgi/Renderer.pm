@@ -55,6 +55,7 @@ sub printQuery {
 	    $end = $size if ($end > $size);
 	    printf("のうち %d - %d 件目\n", $params->{'start'} + 1, $end);
 	}
+	print qq(<INPUT style="margin-left: 1em;" value="解析結果を見る" type="button" onClick="javascript:show_query_result();">\n);
 	print "</TD>\n";
     }
 }
@@ -100,7 +101,7 @@ sub printFooter {
 		    print "<font color=\"brown\">" . ($i + 1) . "</font>&nbsp;";
 		    $last_page_flag = 1;
 		} else {
-		    print "<a href=\"javascript:submit('$offset')\">" . ($i + 1) . "</a>&nbsp;";
+		    print "<a href=\"javascript:submit('$offset, $params->{query}')\">" . ($i + 1) . "</a>&nbsp;";
 		}
 	    }
 	    print "</DIV>";
@@ -263,16 +264,26 @@ sub print_tsubaki_interface {
 	<head>
 	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="./tsubaki.common.css">
+	<link rel="stylesheet" type="text/css" href="http://tsubaki.ixnlp.nii.ac.jp/tsubaki.common.css">
 	<script language="JavaScript">
 	var regexp = new RegExp("Gecko");
     if (navigator.userAgent.match(regexp)) {
-	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.gecko.css'>");
+	document.write("<LINK rel='stylesheet' type='text/css' href='http://tsubaki.ixnlp.nii.ac.jp/tsubaki.gecko.css'>");
     } else {
-	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.ie.css'>");
+	document.write("<LINK rel='stylesheet' type='text/css' href='http://tsubaki.ixnlp.nii.ac.jp/tsubaki.ie.css'>");
     }
 	</script>
 	<script language="JavaScript">
+
+function show_query_result () {
+    var ret = document.getElementById("results");
+    var w = open("", "_blank", "width=300,height=200,menubar=no,directories=no,locatoin=no,status=no,toolbar=no,resizable=yes");
+    w.document.writeln("<H3>クエリの解析結果</H3>");
+    w.document.writeln(ret.firstChild.innerHTML);
+    w.document.close();
+}
+
+
 function toggle_simpage_view (id, obj, open_label, close_label) {
     var disp = document.getElementById(id).style.display;
     if (disp == "block") {
@@ -289,10 +300,12 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 	<body style="padding: 0em; margin:0em;">
 END_OF_HTML
 
-    print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0.5em 0.5em 0em 0em;">\n);
+my $host = `hostname`;
+#    print "TSUBAKI on $host<BR>\n";
+    print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/eval-tsubaki/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
     print qq(</DIV>\n);
 
@@ -305,7 +318,7 @@ END_OF_HTML
     print qq(<TD width="*" align="left" valign="middle" style="border: 0px solid red; padding-top: 1em;">\n);
     print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data">\n);
     print qq(<INPUT type="hidden" name="start" value="0">\n);
-    print qq(<INPUT type="text" name="q" value="$params->{'query'}" size="80">\n);
+    print qq(<INPUT type="text" name="q" value="$params->{'query'}" size="70">\n);
     print qq(<INPUT type="submit"name="送信" value="検索する"/>\n);
     print qq(<INPUT type="button"name="clear" value="クリア" onclick="document.all.INPUT.value=''"/>\n);
 
@@ -398,11 +411,13 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 	<body style="margin:0em;">
 END_OF_HTML
 
+my $host = `hostname`;
+#    print "TSUBAKI on $host<BR>\n";
     # タイトル出力
     print qq(<DIV style="font-size:smaller; text-align:right;margin:0.5em 1em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/eval-tsubaki/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
     print qq(</DIV>\n);
 
@@ -597,6 +612,9 @@ sub printSearchResultForBrowserAccess {
     # 検索時間の表示
     ################
     $this->printSearchTime($logger, $params, $size, $query->{keywords}, $status);
+
+
+    print $query->{keywords}[0]->getGraphics() . "\n";
 
 
     ##################################
