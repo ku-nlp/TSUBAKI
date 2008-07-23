@@ -43,12 +43,13 @@ sub new {
 	    }
 	}
     }
+    $buf =~ s/\?//g;
 
     my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
     my $encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
     my $parser = ModifiedTokeParser->new(\$buf) or die $!;
 
-    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . "<br>\n";
+    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.mod.cdb\n";
 
     my $color;
     my @patterns;
