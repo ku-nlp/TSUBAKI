@@ -221,13 +221,13 @@ sub parse {
 		  verbose => $opt->{verbose}
 		});
 	}
-
 	push(@qks, $q);
     }
 
     my $qid = 0;
     my %qid2rep = ();
     my %rep2qid = ();
+    my %rep2gid = ();
     my %qid2gid = ();
     my %gid2qids = ();
     my %qid2df = ();
@@ -250,6 +250,7 @@ sub parse {
 		$rep2qid{$rep->{string}} = $qid;
 		$qid2rep{$qid} = $rep->{string};
 		$qid2gid{$qid} = $rep->{gid};
+		$rep2gid{$rep->{string}} = $rep->{gid};
 		push(@{$gid2qids{$rep->{gid}}}, $qid);
 		$qid2df{$qid} = $this->get_DF($rep->{string});
 		$qid2qtf{$qid} = $rep->{freq};
@@ -300,6 +301,8 @@ sub parse {
 		my $kakarisaki_qid = $rep2qid{$kakarisaki};
 		$rep->{kakarimoto_qid} = $kakarimoto_qid;
 		$rep->{kakarisaki_qid} = $kakarisaki_qid;
+		$rep->{kakarimoto_gid} = $rep2gid{$kakarimoto};
+		$rep->{kakarisaki_gid} = $rep2gid{$kakarisaki};
 		push(@{$dpnd_map{$rep2qid{$kakarimoto}}}, {kakarisaki_qid => $kakarisaki_qid, dpnd_qid => $qid});
 
 		if ($rep->{isBasicNode}) {
@@ -355,11 +358,11 @@ sub parse {
 	    }
 	}
     } else {
-	$this->set_head_flag(\@qks);
-	$this->set_discarded_flag(\@qks);
- 	$this->set_requisite_flag_for_dpnds_in_NE(\@qks);
-  	$this->change_weight_keishi(\@qks, $this->{OPTIONS}{keishi});
-  	$this->change_weight_jyushi(\@qks, $this->{OPTIONS}{jyushi});
+# 	$this->set_head_flag(\@qks);
+# 	$this->set_discarded_flag(\@qks);
+#  	$this->set_requisite_flag_for_dpnds_in_NE(\@qks);
+#   	$this->change_weight_keishi(\@qks, $this->{OPTIONS}{keishi});
+#   	$this->change_weight_jyushi(\@qks, $this->{OPTIONS}{jyushi});
 
 	$this->set_discarded_flag_to_bunmatsu_only(\@qks);
 
