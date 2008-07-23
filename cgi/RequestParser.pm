@@ -104,16 +104,16 @@ sub parseCGIRequest {
     $params->{num_of_pages_for_kwic_view} = $cgi->param('num_of_pages_for_kwic_view') if (defined($cgi->param('num_of_pages_for_kwic_view')));
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
-    $params->{from_portal} = $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
+    $params->{from_portal} = 1; # $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
 
     $params->{develop_mode} = $cgi->param('develop_mode') if (defined($cgi->param('develop_mode')));
-    $params->{develop_mode} = 1 if ($CONFIG->{INDEX_CGI} =~ /develop/);
+    # $params->{develop_mode} = 1 if ($CONFIG->{INDEX_CGI} =~ /develop/);
     $params->{score_verbose} = $params->{develop_mode};
     $params->{debug} = $cgi->param('debug') if (defined($cgi->param('debug')));
 
     $params->{antonym_and_negation_expansion} = $cgi->param('antonym_and_negation_expansion') if (defined($cgi->param('antonym_and_negation_expansion')));
     $params->{use_of_case_analysis} = 0;
-    $params->{use_of_NE_tagger} = 0;
+    $params->{use_of_NE_tagger} = 1;
     $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
     $params->{query_filtering} = 1;
 
@@ -267,7 +267,7 @@ sub parseQuery {
 	  trimming => 1,
 	  antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
 	  detect_requisite_dpnd => 1,
-	  query_filtering => $params->{query_filtering}
+ 	  query_filtering => $params->{query_filtering}
 	});
 
     # 取得ページ数のセット
