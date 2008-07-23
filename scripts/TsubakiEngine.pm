@@ -103,7 +103,10 @@ sub search {
     foreach my $qkw (@{$query->{keywords}}) {
 	foreach my $words (@{$qkw->{words}}) {
 	    foreach my $word (@$words) {
-		$basicNodes{$word->{qid}} = 1 if ($word->{isBasicNode});
+		if ($word->{isBasicNode}) {
+		    $basicNodes{$word->{qid}} = 1;
+		    $gid2df{$word->{gid}} = $word->{df};
+		}
 	    }
 	}
 
@@ -124,7 +127,7 @@ sub search {
 		next unless ($dpnd->{isBasicNode});
 
 		my ($moto, $saki) = split("/", $dpnd->{gid});
-		push(@dpnds, {moto => $moto, saki => $saki});
+		push(@dpnds, {gid => $dpnd->{gid}, moto => $moto, saki => $saki});
 	    }
 	}
     }
@@ -454,18 +457,21 @@ sub retrieve_documents {
 	my $docs_dpnd_anchor = [];
  	if ($flag_of_anchor_use) {
 	    # 検索にアンカーテキストを考慮する
+
+	    ($requisite_only, $optional_only) = (0, 0);
+
 	    $this->{word_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'word', 1, $this->{verbose}, $this->{show_speed});
 	    $this->{dpnd_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'dpnd', 1, $this->{verbose}, $this->{show_speed});
 
-	    $docs_word_anchor = $this->retrieveFromBinaryData($this->{word_retriever4anchor}, $query, $qid2df, $keyword, 'words', 1);
-	    $docs_dpnd_anchor = $this->retrieveFromBinaryData($this->{dpnd_retriever4anchor}, $query, $qid2df, $keyword, 'dpnds', 1);
+	    $docs_word_anchor = $this->retrieveFromBinaryData($this->{word_retriever4anchor}, $query, $qid2df, $keyword, 'words', 1, $requisite_only, $optional_only);
+	    $docs_dpnd_anchor = $this->retrieveFromBinaryData($this->{dpnd_retriever4anchor}, $query, $qid2df, $keyword, 'dpnds', 1, $requisite_only, $optional_only);
  	}
 	$logger->setTimeAs('anchor_search', '%.3f');
 
 
 	# 近接制約の適用
 	if ($keyword->{near}) {
-	    $requisite_docs_word = &intersect($requisite_docs_word);
+	    $requisite_docs_word = &intersect($requisite_docs_word, {verbose => $this->{verbose}});
 	    $requisite_docs_word = $this->filter_by_NEAR_constraint($requisite_docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
 	}
 	$logger->setTimeAs('near_condition', '%.3f');
@@ -480,15 +486,17 @@ sub retrieve_documents {
 	# requisites, optionals を単語と係り受けに分類する
 	my $word_docs = ();
 	my $dpnd_docs = ();
-	foreach my $docs (@$requisites) {
-	    next unless (defined $docs->[0]);
 
-	    if (exists $dpnd_qids{$docs->[0]{qid_freq}[0]{qid}}) {
+	foreach my $docs (@$requisites) {
+#	    next unless (defined $docs->[0]);
+
+	    if (defined $docs->[0] && exists $dpnd_qids{$docs->[0]{qid_freq}[0]{qid}}) {
 		push(@$dpnd_docs, $docs);
 	    } else {
 		push(@$word_docs, $docs);
 	    }
 	}
+
 
 	foreach my $docs (@$optionals) {
 	    next unless (defined $docs->[0]);
@@ -503,8 +511,9 @@ sub retrieve_documents {
 
 	# 検索単語間の論理条件を適用
 	if ($keyword->{logical_cond_qkw} =~ /AND/) {
-	    $word_docs = &intersect($word_docs);
+	    $word_docs = &intersect($word_docs, {verbose => $this->{verbose}});
 	}
+
 
 	# 検索単語・係り受けについて収集された文書をマージ
 	push(@{$alldocs_word}, &serialize($word_docs));
@@ -561,6 +570,9 @@ sub intersect {
     # 初期化 & 空リストのチェック
     my @results = ();
     my $flag = 0;
+
+    next unless defined $docs;
+
     for (my $i = 0; $i < scalar(@{$docs}); $i++) {
 	$flag = 1 unless (defined($docs->[$i]));
 	$flag = 2 if (scalar(@{$docs->[$i]}) < 1);
@@ -570,6 +582,7 @@ sub intersect {
     return \@results if ($flag > 0 || scalar(@{$docs}) < 1);
 
     my $variation = scalar(@{$docs});
+
     if ($variation < 2) {
 #	return $docs;
 	foreach my $doc (@{$docs->[0]}) {
@@ -579,7 +592,6 @@ sub intersect {
 	# 入力リストをサイズ順にソート (一番短い配列を先頭にするため)
 	my @sorted_docs = sort {scalar(@{$a}) <=> scalar(@{$b})} @{$docs};
 
-	$opt->{verbose} = 0;
 	if ($opt->{verbose}) {
 	    print "--------\n";
 	    print "start with AND filtering.\n";
