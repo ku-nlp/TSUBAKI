@@ -28,25 +28,25 @@ sub trim {
 
     $this->set_bunmatsu_feature($result);
 
-    my @bnst = $result->bnst;
-    $this->set_lexical_head_feature($bnst[-1]);
+#     my @bnst = $result->bnst;
+#     $this->set_lexical_head_feature($bnst[-1]);
 
-    $this->set_compound_noun_feature($result);
-    $this->set_pseudo_NE_feature($result);
-    $this->set_single_adjective_feature($result);
-    $this->set_discard_feature_by_POS($result);
-    $this->set_discard_feature_by_stopword($result);
-    $this->set_discard_feature_by_KANJI($result);
+#     $this->set_compound_noun_feature($result);
+#     $this->set_pseudo_NE_feature($result);
+#     $this->set_single_adjective_feature($result);
+#     $this->set_discard_feature_by_POS($result);
+#     $this->set_discard_feature_by_stopword($result);
+#     $this->set_discard_feature_by_KANJI($result);
 
-    my $option = { debug => 0, usewordsimcache => 1, method => 'SimpsonJaccard' };
-    my $cscf; # = new CalcSimilarityByCF($option);
-    # $cscf->TieMIDBfile("/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi");
+#     my $option = { debug => 0, usewordsimcache => 1, method => 'SimpsonJaccard' };
+#     my $cscf; # = new CalcSimilarityByCF($option);
+#     # $cscf->TieMIDBfile("/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi");
 
-    my @kihonku = $result->tag;
-#   $this->set_discard_feature_by_TELIC($kihonku[-1], undef, $cscf, $option, 0.3, {verbose => 0});
+#     my @kihonku = $result->tag;
+# #   $this->set_discard_feature_by_TELIC($kihonku[-1], undef, $cscf, $option, 0.3, {verbose => 0});
 
-    my @bnst = $result->bnst;
-    $this->set_modifier_of_NE_feature($bnst[-1], 0);
+#     my @bnst = $result->bnst;
+#     $this->set_modifier_of_NE_feature($bnst[-1], 0);
 }
 
 sub set_compound_noun_feature {
