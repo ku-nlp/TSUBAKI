@@ -49,10 +49,11 @@ sub makeIndexfromSynGraph {
     my $word_num = 0;
     my $knpbuf = '';
     my $first = 0;
+    my $surf;
     my %lastBnstIds = ();
     foreach my $line (split(/\n/, $syngraph)) {
 	if ($line =~ /^!! /) {
-	    my($dumy, $id, $kakari, $midasi) = split(/ /, $line);
+	    my ($dumy, $id, $kakari, $midasi) = split(/ /, $line);
 	    if ($kakari =~ /^(.+)(A|I|D|P)$/) {
 		$dpndInfo{$id}->{kakariType} = $2;
 		$dpndInfo{$id}->{pos} = $position + $this->{absolute_pos};
@@ -60,6 +61,7 @@ sub makeIndexfromSynGraph {
 		    push(@{$dpndInfo{$id}->{kakariSaki}}, $kakariSakiID);
 		}
 	    }
+	    ($surf) = ($midasi =~ /<見出し:([^>]+)>/);
 	} elsif ($line =~ /^! /) {
 	    my ($dumy, $bnstIds, $syn_node_str) = split(/ /, $line);
 	    my $fstring;
@@ -108,14 +110,16 @@ sub makeIndexfromSynGraph {
 
 		my $pos = $position + $this->{absolute_pos}; # ($bnstId =~ /,(\d+)$/) ? $1 : $bnstId;
 		my $midasi = $sid . $features;
-		my $syn_node = {midasi => $midasi,
-				score => $score,
-				grpId => $bnstId,
-				fstring => $fstring,
-				pos => $pos,
-				NE => undef,
-				question_type => undef,
-				absolute_pos => []};
+		my $syn_node = {
+		    surf => $surf,
+		    midasi => $midasi,
+		    score => $score,
+		    grpId => $bnstId,
+		    fstring => $fstring,
+		    pos => $pos,
+		    NE => undef,
+		    question_type => undef,
+		    absolute_pos => []};
 
 		if ($knpbuf =~ /(<NE:.+?>)/) {
 		    $syn_node->{NE} = $1;
@@ -215,7 +219,14 @@ sub makeIndexfromSynGraph {
 	    my $score = $synNode->{score};
 	    my $pos = $synNode->{pos};
 
+	    # ?の連続からなる単語は削除
+	    # next if ($synNode->{midasi} =~ /^\?+$/);
+
+	    # 5桁以上の数字からなる単語は削除
+	    # next if ($synNode->{midasi} =~ /[０|１|２|３|４|５|６|７|８|９]{5,}/);
+
 	    push(@freq, {midasi => $synNode->{midasi}});
+	    $freq[-1]->{surf} = $synNode->{surf};
 	    $freq[-1]->{freq} = $score;
 	    $freq[-1]->{score} = $score;
 	    # push(@{$freq[-1]->{pos}}, $pos);
@@ -236,9 +247,16 @@ sub makeIndexfromSynGraph {
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
 
 		foreach my $kakariSakiNode (@{$kakariSakiNodes}){
-		    # SYNノードがらみの係り受けを使わない場合は next
-		    next if (!$opt->{use_of_syngraph_dependency} &&
-			     ($kakariSakiNode->{midasi} =~ /s\d+/ || $synNode->{midasi} =~ /s\d+/));
+		    # ?の連続からなる親または子を持つ係り受けは削除
+# 		    next if ($kakariSakiNode->{midasi} =~ /^\?+$/ || $synNode->{midasi} =~ /^\?+$/);
+
+# 		    # 5桁以上の数字からなる親または子を持つ係り受けは削除
+# 		    next if ($kakariSakiNode->{midasi} =~ /[０|１|２|３|４|５|６|７|８|９]{5,}/ ||
+# 			     $synNode->{midasi} =~ /[０|１|２|３|４|５|６|７|８|９]{5,}/);
+
+ 		    # SYNノードがらみの係り受けを使わない場合は next
+ 		    next if (!$opt->{use_of_syngraph_dependency} &&
+ 			     ($kakariSakiNode->{midasi} =~ /s\d+/ || $synNode->{midasi} =~ /s\d+/));
 
 		    my $s = $score * $kakariSakiNode->{score};
 		    push(@freq, {midasi => "$synNode->{midasi}->$kakariSakiNode->{midasi}"});
