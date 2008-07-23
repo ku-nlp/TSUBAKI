@@ -141,8 +141,8 @@ sub new {
 				  qid => -1,
 				  weight => 1,
 				  freq => $m->{freq},
-				  requisite => $flag,
-				  optional => !$flag,
+				  requisite => ($flag) ? 1 : 0,
+				  optional => ($flag) ? 0 : 1,
 				  isContentWord => $m->{isContentWord},
 				  isBasicNode => $m->{isBasicNode}
 		     });
@@ -151,18 +151,20 @@ sub new {
 
 		$flag = 1 if ($this->{logical_cond_qkw} eq 'OR');
 
-		push(@word_reps, {string => $m->{midasi},
-				  gid => $group_id,
-				  qid => -1,
-				  weight => 1,
-				  freq => $m->{freq},
-				  requisite => !$flag,
-				  optional => $flag,
-				  isContentWord => $m->{isContentWord},
-				  question_type => $m->{question_type},
-				  NE => $m->{NE},
-				  isBasicNode => $m->{isBasicNode},
-				  fstring => $m->{fstring}
+		push(@word_reps, {
+		    surf => $m->{surf},
+		    string => $m->{midasi},
+		    gid => $group_id,
+		    qid => -1,
+		    weight => 1,
+		    freq => $m->{freq},
+		    requisite => ($flag) ? 0 : 1,
+		    optional => ($flag) ? 1 : 0,
+		    isContentWord => $m->{isContentWord},
+		    question_type => $m->{question_type},
+		    NE => $m->{NE},
+		    isBasicNode => $m->{isBasicNode},
+		    fstring => $m->{fstring}
 		     });
 
 		unless ($m->{isContentWord}) {
@@ -554,6 +556,154 @@ sub normalize {
     }
 
     return join(',', @buf);
+}
+
+sub getGraphics {
+    my ($this) = @_;
+
+    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.mod.cdb\n";
+
+    my $buf = qq(<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>\n);
+
+    $buf .= qq(<div style="display: none;" id="results"></div>\n);
+
+    $buf .= qq(<script type="text/javascript">\n);
+    $buf .= qq(<!--\n);
+
+    my $font_size = 12;
+    my $offsetX = 10;
+    my $offsetY = 10 * 10;
+
+    $buf .= qq(var jg = new jsGraphics("results");\n);
+    $buf .= qq(jg.setFont("","${font_size}px",Font.PLAIN);\n);
+
+    my %gid2pos = ();
+    my @stylecolor = ();
+    push(@stylecolor, 'border: 3px solid orange; background-color: #ffff99;');
+    push(@stylecolor, 'border: 3px solid navy; background-color: #bbffff;');
+    push(@stylecolor, 'border: 3px solid #779977; background-color: #bbffbb;');
+    push(@stylecolor, 'border: 3px solid maroon; background-color: #ffbbbb;');
+    push(@stylecolor, 'border: 3px solid #997799; background-color: #ffbbff;');
+    push(@stylecolor, 'border: 3px solid #770000; background-color: #bb0000; color: white;');
+    push(@stylecolor, 'border: 3px solid #007700; background-color: #00bb00; color: white;');
+    push(@stylecolor, 'border: 3px solid #777700; background-color: #bbbb00; color: white;');
+    push(@stylecolor, 'border: 3px solid #007777; background-color: #00bbbb; color: white;');
+    push(@stylecolor, 'border: 3px solid #770077; background-color: #bb00bb; color: white;');
+    
+    my %buff;
+    my $size = scalar (@{$this->{dpnds}});
+    my %dupcheck;
+    for (my $i = 0; $i < $size; $i++) {
+	my $dpnds = $this->{dpnds}[$i];
+	foreach my $dpnd (@$dpnds) {
+	    my $k = $dpnd->{kakarimoto_gid} . ":" . $dpnd->{kakarisaki_gid};
+	    next if (exists $dupcheck{$k});
+
+	    $buff{$dpnd->{kakarimoto_gid}}->{kakarimoto}++;
+	    $buff{$dpnd->{kakarisaki_gid}}->{kakarisaki}++;
+	    $dupcheck{$k} = 1;
+	}
+    }
+
+    for (my $i = 0; $i < scalar(@{$this->{words}}); $i++) {
+	my $max_length = 1;
+	my $word;
+	my $gid;
+	my %synbuf;
+	my $basicNode;
+	my $surf;
+	foreach my $rep (@{$this->{words}[$i]}) {
+	    my $str = $rep->{string};
+	    $gid = $rep->{gid};
+
+	    if ($rep->{isBasicNode}) {
+		$basicNode = $str;
+		$surf = $rep->{surf};
+		$max_length = length($str) if ($max_length < length($str));
+		$max_length = length($surf) if ($max_length < length($surf));
+		next;
+	    }
+	    next if ($rep->{NE});
+
+	    foreach my $w (split('\|', decode('utf8', $synonyms{$str}))) {
+		$w =~ s/\[.+?\]//;
+		$w =~ s/\/.+//;
+		$synbuf{$w} = 1;
+		$max_length = length($w) if ($max_length < length($w));
+	    }
+
+	}
+	delete($synbuf{$basicNode});
+	delete($synbuf{$surf});
+	my $str = join("<BR>", keys %synbuf);
+	$word .= qq($surf<BR>$str);
+
+	$word .= qq(</DIV>");
+
+	my $width = $font_size * (1.5 + $max_length);
+	$gid2pos{$gid} = $offsetX + int(0.5 * $width);
+	$word = qq("<DIV style='text-align: center; $stylecolor[$i]' width=${width}px>) . $word;
+	$buf .= qq(jg.drawStringRect($word, $offsetX, $offsetY, $width, "left");\n);
+	$offsetX += ($width + 10);
+    }
+
+    my %gid2poss;
+    my $allow_width = 8;
+    foreach my $gid (keys %buff) {
+	my $num_of_kakarisaki = $buff{$gid}->{kakarisaki};
+	my $num_of_kakarimoto = $buff{$gid}->{kakarimoto};
+
+	for (my $i = 0; $i < $num_of_kakarisaki; $i++) {
+	    push(@{$gid2poss{$gid}}, $gid2pos{$gid} - ($allow_width * ($i + 1)));
+	}
+
+	for (my $i = 0; $i < $num_of_kakarimoto; $i++) {
+	    push(@{$gid2poss{$gid}}, $gid2pos{$gid} + ($allow_width * $i));
+	}
+    }
+
+
+    %dupcheck = ();
+    for (my $i = 0; $i < $size; $i++) {
+	my $dpnds = $this->{dpnds}[$i];
+	foreach my $dpnd (@$dpnds) {
+	    my $k = $dpnd->{kakarimoto_gid} . ":" . $dpnd->{kakarisaki_gid};
+	    next if (exists $dupcheck{$k});
+	    $dupcheck{$k} = 1;
+
+	    my $x1 = shift @{$gid2poss{$dpnd->{kakarimoto_gid}}};
+	    my $x2 = shift @{$gid2poss{$dpnd->{kakarisaki_gid}}};
+
+	    my $gid1 = $dpnd->{kakarimoto_gid};
+	    my $gid2 = $dpnd->{kakarisaki_gid};
+	    my $dist = 10 * ($gid2 - $gid1 );
+
+	    my $y = $offsetY - 10 - ($dist * 10);
+
+	    $buf .= qq(jg.drawLine($x1, $offsetY, $x1, $y);\n);
+	    $buf .= qq(jg.drawLine($x1 + 1, $offsetY, $x1 + 1, $y);\n);
+	    $buf .= qq(jg.drawLine($x1 - 1, $offsetY, $x1 - 1, $y);\n);
+
+	    $buf .= qq(jg.drawLine($x1, $y, $x2, $y);\n);
+	    $buf .= qq(jg.drawLine($x1, $y - 1, $x2, $y - 1);\n);
+	    $buf .= qq(jg.drawLine($x1, $y + 1, $x2, $y + 1);\n);
+
+	    $buf .= qq(jg.drawLine($x2, $y, $x2, $offsetY);\n);
+	    $buf .= qq(jg.drawLine($x2 + 1, $y, $x2 + 1, $offsetY);\n);
+	    $buf .= qq(jg.drawLine($x2 - 1, $y, $x2 - 1, $offsetY);\n);
+
+	    $buf .= qq(jg.fillPolygon(new Array($x2, $x2 + 5, $x2 - 5), new Array($offsetY, $offsetY - 5, $offsetY - 5));\n);
+	}
+    }
+
+
+    $buf .= qq(jg.paint();\n);
+    $buf .= qq(-->\n);
+    $buf .= qq(</script>\n);
+
+    untie %synonyms;
+
+    return $buf;
 }
 
 sub debug_print {
