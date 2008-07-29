@@ -258,7 +258,11 @@ sub print_query_verbose {
 }
 
 sub print_tsubaki_interface {
-    my ($this, $params) = @_;
+    my ($this, $params, $query) = @_;
+
+    my $canvasName = 'canvas';
+    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode($canvasName);
+
     print << "END_OF_HTML";
     <html>
 	<head>
@@ -272,15 +276,20 @@ sub print_tsubaki_interface {
     } else {
 	document.write("<LINK rel='stylesheet' type='text/css' href='http://tsubaki.ixnlp.nii.ac.jp/tsubaki.ie.css'>");
     }
+
 	</script>
+	<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
 	<script language="JavaScript">
 
 function show_query_result () {
     var ret = document.getElementById("results");
-    var w = open("", "_blank", "width=300,height=200,menubar=no,directories=no,locatoin=no,status=no,toolbar=no,resizable=yes");
+    var w = open("", "_blank", "width=$width,height=$height,menubar=no,directories=no,locatoin=no,status=no,toolbar=no,resizable=yes");
     w.document.writeln("<H3>クエリの解析結果</H3>");
-    w.document.writeln(ret.firstChild.innerHTML);
+    w.document.writeln("<DIV id='$canvasName'></DIV>");
     w.document.close();
+
+    var canvas = w.document.getElementById("$canvasName");
+    $jscode
 }
 
 
@@ -582,7 +591,7 @@ sub printSearchResultForBrowserAccess {
     ##########################
     # ロゴ、検索フォームの表示
     ##########################
-    $this->print_tsubaki_interface($params);
+    $this->print_tsubaki_interface($params, $query);
 
 
     my $size = scalar(@$results);
@@ -612,9 +621,6 @@ sub printSearchResultForBrowserAccess {
     # 検索時間の表示
     ################
     $this->printSearchTime($logger, $params, $size, $query->{keywords}, $status);
-
-
-    print $query->{keywords}[0]->getGraphics() . "\n";
 
 
     ##################################

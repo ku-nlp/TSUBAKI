@@ -558,37 +558,28 @@ sub normalize {
     return join(',', @buf);
 }
 
-sub getGraphics {
-    my ($this) = @_;
+sub getPaintingJavaScriptCode {
+    my ($this, $canvas) = @_;
 
     tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.mod.cdb\n";
 
-    my $buf = qq(<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>\n);
-
-    $buf .= qq(<div style="display: none;" id="results"></div>\n);
-
-    $buf .= qq(<script type="text/javascript">\n);
-    $buf .= qq(<!--\n);
-
     my $font_size = 12;
     my $offsetX = 10;
-    my $offsetY = 10 * 10;
+    my $offsetY = $font_size * 10;
+    my $arrow_size = 5;
+    my $synbox_margin = $font_size;
 
-    $buf .= qq(var jg = new jsGraphics("results");\n);
-    $buf .= qq(jg.setFont("","${font_size}px",Font.PLAIN);\n);
-
-    my %gid2pos = ();
     my @stylecolor = ();
-    push(@stylecolor, 'border: 3px solid orange; background-color: #ffff99;');
-    push(@stylecolor, 'border: 3px solid navy; background-color: #bbffff;');
-    push(@stylecolor, 'border: 3px solid #779977; background-color: #bbffbb;');
-    push(@stylecolor, 'border: 3px solid maroon; background-color: #ffbbbb;');
-    push(@stylecolor, 'border: 3px solid #997799; background-color: #ffbbff;');
-    push(@stylecolor, 'border: 3px solid #770000; background-color: #bb0000; color: white;');
-    push(@stylecolor, 'border: 3px solid #007700; background-color: #00bb00; color: white;');
-    push(@stylecolor, 'border: 3px solid #777700; background-color: #bbbb00; color: white;');
-    push(@stylecolor, 'border: 3px solid #007777; background-color: #00bbbb; color: white;');
-    push(@stylecolor, 'border: 3px solid #770077; background-color: #bb00bb; color: white;');
+    push(@stylecolor, 'border: 2px solid orange; background-color: #ffff99;');
+    push(@stylecolor, 'border: 2px solid navy; background-color: #bbffff;');
+    push(@stylecolor, 'border: 2px solid #779977; background-color: #bbffbb;');
+    push(@stylecolor, 'border: 2px solid maroon; background-color: #ffbbbb;');
+    push(@stylecolor, 'border: 2px solid #997799; background-color: #ffbbff;');
+    push(@stylecolor, 'border: 2px solid #770000; background-color: #bb0000; color: white;');
+    push(@stylecolor, 'border: 2px solid #007700; background-color: #00bb00; color: white;');
+    push(@stylecolor, 'border: 2px solid #777700; background-color: #bbbb00; color: white;');
+    push(@stylecolor, 'border: 2px solid #007777; background-color: #00bbbb; color: white;');
+    push(@stylecolor, 'border: 2px solid #770077; background-color: #bb00bb; color: white;');
     
     my %buff;
     my $size = scalar (@{$this->{dpnds}});
@@ -605,13 +596,22 @@ sub getGraphics {
 	}
     }
 
+
+    my $jscode .= qq(var jg = new jsGraphics($canvas);\n);
+    $jscode .= qq(jg.setFont('','${font_size}px',Font.PLAIN);\n);
+
+    # 単語・同義表現グループを描画する
+    my $max_num_of_synonyms = 0;
+    my %gid2pos = ();
     for (my $i = 0; $i < scalar(@{$this->{words}}); $i++) {
-	my $max_length = 1;
-	my $word;
+
+	# 同義グループに属す表現を取得と幅（文字数）の取得
+	
 	my $gid;
-	my %synbuf;
 	my $basicNode;
 	my $surf;
+	my %synbuf;
+	my $max_num_of_words = 1;
 	foreach my $rep (@{$this->{words}[$i]}) {
 	    my $str = $rep->{string};
 	    $gid = $rep->{gid};
@@ -619,91 +619,112 @@ sub getGraphics {
 	    if ($rep->{isBasicNode}) {
 		$basicNode = $str;
 		$surf = $rep->{surf};
-		$max_length = length($str) if ($max_length < length($str));
-		$max_length = length($surf) if ($max_length < length($surf));
+		$max_num_of_words = length($str) if ($max_num_of_words < length($str));
+		$max_num_of_words = length($surf) if ($max_num_of_words < length($surf));
 		next;
 	    }
-	    next if ($rep->{NE});
 
+	    # 同義グループに属す表現を取得
 	    foreach my $w (split('\|', decode('utf8', $synonyms{$str}))) {
 		$w =~ s/\[.+?\]//;
 		$w =~ s/\/.+//;
 		$synbuf{$w} = 1;
-		$max_length = length($w) if ($max_length < length($w));
+		$max_num_of_words = length($w) if ($max_num_of_words < length($w));
 	    }
-
 	}
+
+	# 出現形、基本ノードと同じ表現は削除する
 	delete($synbuf{$basicNode});
 	delete($synbuf{$surf});
-	my $str = join("<BR>", keys %synbuf);
-	$word .= qq($surf<BR>$str);
 
-	$word .= qq(</DIV>");
-
-	my $width = $font_size * (1.5 + $max_length);
+	my $width = $font_size * (1.5 + $max_num_of_words);
+	# 同義グループのX軸の中心座標を保持（係り受けの線を描画する際に利用する）
 	$gid2pos{$gid} = $offsetX + int(0.5 * $width);
-	$word = qq("<DIV style='text-align: center; $stylecolor[$i]' width=${width}px>) . $word;
-	$buf .= qq(jg.drawStringRect($word, $offsetX, $offsetY, $width, "left");\n);
-	$offsetX += ($width + 10);
+
+	# 下に必須・オプショナルのフラグを取得
+	my $rep = $this->{words}[$i][0];
+	my $mark = ($rep->{requisite}) ?  '●' :  ($rep->{optional}) ? '▲' : '？';
+	my $synbox = sprintf(qq(<DIV style=\\'text-align: center;\\'><DIV style=\\'text-align: center; $stylecolor[$i]\\' width=%dpx>%s<BR>%s</DIV>%s</DIV>), $width, $surf, join("<BR>", keys %synbuf), $mark);
+
+	$max_num_of_synonyms = scalar(keys %synbuf) if ($max_num_of_synonyms < scalar(keys %synbuf));
+
+	$jscode .= qq(jg.drawStringRect(\'$synbox\', $offsetX, $offsetY, $width, 'left');\n);
+	$offsetX += ($width + $synbox_margin);
     }
 
+
+    # 解析結果を表示するウィンドウの幅、高さを求める
+    my $width = $offsetX;
+    my $height = $offsetY + ($max_num_of_synonyms + 5) * 1.1 * $font_size; # +5 は<H3>クエリの解析結果</H3>の分, *1.1 は行間
+
+
+    # 係り受けの線の起点の位置を計算
+    # 係り受けの距離が近いものは→←
+    # 係り受けの距離が遠いものは←→
     my %gid2poss;
-    my $allow_width = 8;
+    my $margin = $arrow_size + 3;
     foreach my $gid (keys %buff) {
 	my $num_of_kakarisaki = $buff{$gid}->{kakarisaki};
 	my $num_of_kakarimoto = $buff{$gid}->{kakarimoto};
 
 	for (my $i = 0; $i < $num_of_kakarisaki; $i++) {
-	    push(@{$gid2poss{$gid}}, $gid2pos{$gid} - ($allow_width * ($i + 1)));
+	    push(@{$gid2poss{$gid}}, $gid2pos{$gid} - ($margin * ($i + 1)));
 	}
 
 	for (my $i = 0; $i < $num_of_kakarimoto; $i++) {
-	    push(@{$gid2poss{$gid}}, $gid2pos{$gid} + ($allow_width * $i));
+	    push(@{$gid2poss{$gid}}, $gid2pos{$gid} + ($margin * $i));
 	}
     }
 
 
+
+    # 係り受け関係を描画する
     %dupcheck = ();
     for (my $i = 0; $i < $size; $i++) {
-	my $dpnds = $this->{dpnds}[$i];
-	foreach my $dpnd (@$dpnds) {
-	    my $k = $dpnd->{kakarimoto_gid} . ":" . $dpnd->{kakarisaki_gid};
+	my $dpnd_reps = $this->{dpnds}[$i];
+	foreach my $rep (@$dpnd_reps) {
+	    my $k = $rep->{kakarimoto_gid} . ":" . $rep->{kakarisaki_gid};
 	    next if (exists $dupcheck{$k});
 	    $dupcheck{$k} = 1;
 
-	    my $x1 = shift @{$gid2poss{$dpnd->{kakarimoto_gid}}};
-	    my $x2 = shift @{$gid2poss{$dpnd->{kakarisaki_gid}}};
+	    my $x1 = shift @{$gid2poss{$rep->{kakarimoto_gid}}};
+	    my $x2 = shift @{$gid2poss{$rep->{kakarisaki_gid}}};
 
-	    my $gid1 = $dpnd->{kakarimoto_gid};
-	    my $gid2 = $dpnd->{kakarisaki_gid};
-	    my $dist = 10 * ($gid2 - $gid1 );
+	    my $gid1 = $rep->{kakarimoto_gid};
+	    my $gid2 = $rep->{kakarisaki_gid};
+	    my $dist = 10 * ($gid2 - $gid1);
 
-	    my $y = $offsetY - 10 - ($dist * 10);
+	    my $y = $offsetY - $font_size - (1.5 * $dist * $font_size);
 
-	    $buf .= qq(jg.drawLine($x1, $offsetY, $x1, $y);\n);
-	    $buf .= qq(jg.drawLine($x1 + 1, $offsetY, $x1 + 1, $y);\n);
-	    $buf .= qq(jg.drawLine($x1 - 1, $offsetY, $x1 - 1, $y);\n);
+	    # 係り受けの線をひく
+	    $jscode .= qq(jg.drawLine($x1, $offsetY, $x1, $y);\n);
+	    $jscode .= qq(jg.drawLine($x1 + 1, $offsetY, $x1 + 1, $y);\n);
+	    $jscode .= qq(jg.drawLine($x1 - 1, $offsetY, $x1 - 1, $y);\n);
 
-	    $buf .= qq(jg.drawLine($x1, $y, $x2, $y);\n);
-	    $buf .= qq(jg.drawLine($x1, $y - 1, $x2, $y - 1);\n);
-	    $buf .= qq(jg.drawLine($x1, $y + 1, $x2, $y + 1);\n);
+	    $jscode .= qq(jg.drawLine($x1, $y, $x2, $y);\n);
+	    $jscode .= qq(jg.drawLine($x1, $y - 1, $x2, $y - 1);\n);
+	    $jscode .= qq(jg.drawLine($x1, $y + 1, $x2, $y + 1);\n);
 
-	    $buf .= qq(jg.drawLine($x2, $y, $x2, $offsetY);\n);
-	    $buf .= qq(jg.drawLine($x2 + 1, $y, $x2 + 1, $offsetY);\n);
-	    $buf .= qq(jg.drawLine($x2 - 1, $y, $x2 - 1, $offsetY);\n);
+	    $jscode .= qq(jg.drawLine($x2, $y, $x2, $offsetY);\n);
+	    $jscode .= qq(jg.drawLine($x2 + 1, $y, $x2 + 1, $offsetY);\n);
+	    $jscode .= qq(jg.drawLine($x2 - 1, $y, $x2 - 1, $offsetY);\n);
 
-	    $buf .= qq(jg.fillPolygon(new Array($x2, $x2 + 5, $x2 - 5), new Array($offsetY, $offsetY - 5, $offsetY - 5));\n);
+	    # 矢印
+	    $jscode .= qq(jg.fillPolygon(new Array($x2, $x2 + $arrow_size, $x2 - $arrow_size), new Array($offsetY, $offsetY - $arrow_size, $offsetY - $arrow_size));\n);
+
+
+	    # 線の上に必須・オプショナルのフラグを描画する
+	    my $mark = ($rep->{requisite}) ?  '●' :  ($rep->{optional}) ? '▲' : '？';
+	    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1 + 0.5 * ($x2 - $x1) - $font_size * 0.5, $y, $font_size, 'center');\n);
 	}
     }
 
 
-    $buf .= qq(jg.paint();\n);
-    $buf .= qq(-->\n);
-    $buf .= qq(</script>\n);
+    $jscode .= qq(jg.paint();\n);
 
     untie %synonyms;
 
-    return $buf;
+    return ($width, $height, $jscode);
 }
 
 sub debug_print {
