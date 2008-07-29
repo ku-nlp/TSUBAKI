@@ -24,16 +24,9 @@ sub new {
     my ($class) = @_;
 
     my $this = {
-	did2snippets => {},
-	query_parser => undef
+	did2snippets => {}
     };
 
-    $this->{query_parser} = new QueryParser({
-	KNP_COMMAND => $CONFIG->{KNP_COMMAND},
-	JUMAN_COMMAND => $CONFIG->{JUMAN_COMMAND},
-	SYNDB_PATH => $CONFIG->{SYNDB_PATH},
-	KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
-    
     bless $this;
 }
 
