@@ -24,57 +24,60 @@ sub new {
 
     print "constructing QueryParser object...\n" if ($opts->{debug});
 
-    # パラメータが指定されていなければデフォルト値としてCONFIGから値を取得
-    $opts->{KNP_COMMAND} = $CONFIG->{KNP_COMMAND} unless ($opts->{KNP_COMMAND});
-    $opts->{JUMAN_COMMAND} = $CONFIG->{JUMAN_COMMAND} unless ($opts->{JUMAN_COMMAND});
-    $opts->{JUMAN_RCFILE} = $CONFIG->{JUMAN_RCFILE} unless ($opts->{JUMAN_RCFILE});
-    $opts->{KNP_RCFILE} = $CONFIG->{KNP_RCFILE} unless ($opts->{KNP_RCFILE});
-    $opts->{KNP_OPTIONS} = $CONFIG->{KNP_OPTIONS} unless ($opts->{KNP_OPTIONS});
-    # $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
+    # デフォルト値以外のパラメータが指定されている場合は、新たにKNPをnewする
+    if ($opts->{KNP_COMMAND} || $opts->{JUMAN_COMMAND} || $opts->{JUMAN_RCFILE} || $opts->{KNP_RCFILE} ||
+	$opts->{KNP_OPTIONS} || $opts->{use_of_case_analysis} || $opts->{use_of_NE_tagger}) {
 
-    if ($opts->{use_of_case_analysis}) {
-	for (my $i = 0; $i < scalar(@{$opts->{KNP_OPTIONS}}); $i++) {
-	    $opts->{KNP_OPTIONS}[$i] = '' if ($opts->{KNP_OPTIONS}[$i] eq  '-dpnd');
+	$opts->{KNP_COMMAND} = $CONFIG->{KNP_COMMAND} unless ($opts->{KNP_COMMAND});
+	$opts->{JUMAN_COMMAND} = $CONFIG->{JUMAN_COMMAND} unless ($opts->{JUMAN_COMMAND});
+	$opts->{JUMAN_RCFILE} = $CONFIG->{JUMAN_RCFILE} unless ($opts->{JUMAN_RCFILE});
+	$opts->{KNP_RCFILE} = $CONFIG->{KNP_RCFILE} unless ($opts->{KNP_RCFILE});
+	$opts->{KNP_OPTIONS} = $CONFIG->{KNP_OPTIONS} unless ($opts->{KNP_OPTIONS});
+
+	# クエリを格解析する
+	if ($opts->{use_of_case_analysis}) {
+	    @{$opts->{KNP_OPTIONS}} = grep {$_ ne '-dpnd'} @{$opts->{KNP_OPTIONS}};
 	}
-    }
 
-    if ($opts->{debug}) {
-	print "* jmn -> $opts->{JUMAN_COMMAND}\n";
-	print "* knp -> $opts->{KNP_COMMAND}\n";
-	print "* knprcflie -> $opts->{KNP_RCFILE}\n";
-	print "* knpoption -> ", join(",", @{$opts->{KNP_OPTIONS}}) . "\n\n";
+	# クエリに対して固有表現解析する際は、オプションを追加
+	if ($opts->{use_of_NE_tagger}) {
+	    push(@{$opts->{KNP_OPTIONS}}, '-ne-crf');
+	}
 
-	print "* create knp object...";
-    }
+	if ($opts->{debug}) {
+	    print "* jmn -> $opts->{JUMAN_COMMAND}\n";
+	    print "* knp -> $opts->{KNP_COMMAND}\n";
+	    print "* knprcflie -> $opts->{KNP_RCFILE}\n";
+	    print "* knpoption -> ", join(",", @{$opts->{KNP_OPTIONS}}) . "\n\n";
+	    
+	    print "* re-create knp object...";
+	}
 
-    # クエリに対して固有表現解析する際は、オプションを追加
-    if ($opts->{use_of_NE_tagger}) {
-	push(@{$opts->{KNP_OPTIONS}}, '-ne-crf');
+	$CONFIG->{KNP} = new KNP(-Command => $opts->{KNP_COMMAND},
+				 -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
+				 -Rcfile => $opts->{KNP_RCFILE},
+				 -JumanRcfile => $opts->{JUMAN_RCFILE},
+				 -JumanCommand => $opts->{JUMAN_COMMAND});
+
+	print " done.\n" if ($opts->{debug});
     }
 
     my $this = {
-	KNP => new KNP(-Command => $opts->{KNP_COMMAND},
-		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
-		       -Rcfile => $opts->{KNP_RCFILE},
-		       -JumanRcfile => $opts->{JUMAN_RCFILE},
-		       -JumanCommand => $opts->{JUMAN_COMMAND}),
+	KNP => $CONFIG->{KNP},
 	OPTIONS => {trimming => $opts->{QUERY_TRIMMING},
 		    jyushi => (),
 		    keishi => (),
 		    syngraph => undef}
     };
 
-    if ($opts->{debug}) {
-	print " done.\n";
-	print "* loading word dfdbs from $opts->{DFDB_DIR}\n";
-    }
-
     $this->{OPTIONS}{jyushi} = $opts->{JYUSHI} if ($opts->{JYUSHI});
     $this->{OPTIONS}{keishi} = $opts->{KEISHI} if ($opts->{KEISHI});
 
-    my ($dfdbs_w, $dfdbs_d) = &load_DFDBs($opts->{DFDB_DIR});
+
+    my ($dfdbs_w, $dfdbs_d) = &load_DFDBs($opts->{DFDB_DIR}, $opts);
     $this->{DFDBS_WORD} = $dfdbs_w;
     $this->{DFDBS_DPND} = $dfdbs_d;
+
 
     # ストップワードの処理
     unless ($opts->{STOP_WORDS}) {
@@ -100,7 +103,7 @@ sub new {
 					 ignore_yomi => $opts->{ignore_yomi} });
     }
 
-    print "QueryParser object construction is done.\n\n" if ($opts->{debug});
+    print "QueryParser object construction is OK.\n\n" if ($opts->{debug});
     bless $this;
 }
 
@@ -677,7 +680,9 @@ sub set_discarded_flag_to_bunmatsu_only {
 
 
 sub load_DFDBs {
-    my ($dbdir) = @_;
+    my ($dbdir, $opts) = @_;
+
+    print "* loading word dfdbs from $opts->{DFDB_DIR}" if ($opts->{debug});
 
     my @DF_WORD_DBs = ();
     my @DF_DPND_DBs = ();
@@ -697,6 +702,7 @@ sub load_DFDBs {
 	}
 	closedir(DIR);
     }
+    print " is done\n" if ($opts->{debug});
 
     return (\@DF_WORD_DBs, \@DF_DPND_DBs);
 }
