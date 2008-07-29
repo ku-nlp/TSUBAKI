@@ -22,8 +22,7 @@ my %urldbs = ();
 my $instance;
 
 sub _new {
-    my ($clazz) = @_;
-
+    my ($clazz, $opts) = @_;
     my $this;
     open(READER, '<:utf8', $CONFIG_FILE_PATH) or die "$! ($CONFIG_FILE_PATH\)n";
     while (<READER>) {
@@ -68,6 +67,24 @@ sub _new {
 	}
     }
     close(READER);
+
+    if ($opts->{debug}) {
+	print "* jmn -> $this->{JUMAN_COMMAND}\n";
+	print "* knp -> $this->{KNP_COMMAND}\n";
+	print "* knprcflie -> $this->{KNP_RCFILE}\n";
+	print "* knpoption -> ", join(",", @{$this->{KNP_OPTIONS}}) . "\n\n";
+
+	print "* create knp object...";
+    }
+
+    $this->{KNP} = new KNP(
+	-Command => $this->{KNP_COMMAND},
+	-Option => join(' ', @{$this->{KNP_OPTIONS}}),
+	-Rcfile => $this->{KNP_RCFILE},
+	-JumanRcfile => $this->{JUMAN_RCFILE},
+	-JumanCommand => $this->{JUMAN_COMMAND});
+
+    print " done.\n" if ($opts->{debug});
 
     bless $this, $clazz;
 }
