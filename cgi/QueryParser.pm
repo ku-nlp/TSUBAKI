@@ -22,11 +22,12 @@ my $CONFIG = Configure::get_instance();
 sub new {
     my ($class, $opts) = @_;
 
-    print STDERR "constructing QueryParser object... " if ($opts->{verbose});
+    print "constructing QueryParser object...\n" if ($opts->{debug});
 
     # パラメータが指定されていなければデフォルト値としてCONFIGから値を取得
     $opts->{KNP_COMMAND} = $CONFIG->{KNP_COMMAND} unless ($opts->{KNP_COMMAND});
     $opts->{JUMAN_COMMAND} = $CONFIG->{JUMAN_COMMAND} unless ($opts->{JUMAN_COMMAND});
+    $opts->{JUMAN_RCFILE} = $CONFIG->{JUMAN_RCFILE} unless ($opts->{JUMAN_RCFILE});
     $opts->{KNP_RCFILE} = $CONFIG->{KNP_RCFILE} unless ($opts->{KNP_RCFILE});
     $opts->{KNP_OPTIONS} = $CONFIG->{KNP_OPTIONS} unless ($opts->{KNP_OPTIONS});
     # $opts->{DFDB_DIR} = $CONFIG->{ORDINARY_DFDB_PATH} unless ($opts->{DFDB_DIR});
@@ -35,6 +36,15 @@ sub new {
 	for (my $i = 0; $i < scalar(@{$opts->{KNP_OPTIONS}}); $i++) {
 	    $opts->{KNP_OPTIONS}[$i] = '' if ($opts->{KNP_OPTIONS}[$i] eq  '-dpnd');
 	}
+    }
+
+    if ($opts->{debug}) {
+	print "* jmn -> $opts->{JUMAN_COMMAND}\n";
+	print "* knp -> $opts->{KNP_COMMAND}\n";
+	print "* knprcflie -> $opts->{KNP_RCFILE}\n";
+	print "* knpoption -> ", join(",", @{$opts->{KNP_OPTIONS}}) . "\n\n";
+
+	print "* create knp object...";
     }
 
     # クエリに対して固有表現解析する際は、オプションを追加
@@ -46,12 +56,18 @@ sub new {
 	KNP => new KNP(-Command => $opts->{KNP_COMMAND},
 		       -Option => join(' ', @{$opts->{KNP_OPTIONS}}),
 		       -Rcfile => $opts->{KNP_RCFILE},
+		       -JumanRcfile => $opts->{JUMAN_RCFILE},
 		       -JumanCommand => $opts->{JUMAN_COMMAND}),
 	OPTIONS => {trimming => $opts->{QUERY_TRIMMING},
 		    jyushi => (),
 		    keishi => (),
 		    syngraph => undef}
     };
+
+    if ($opts->{debug}) {
+	print " done.\n";
+	print "* loading word dfdbs from $opts->{DFDB_DIR}\n";
+    }
 
     $this->{OPTIONS}{jyushi} = $opts->{JYUSHI} if ($opts->{JYUSHI});
     $this->{OPTIONS}{keishi} = $opts->{KEISHI} if ($opts->{KEISHI});
@@ -84,7 +100,7 @@ sub new {
 					 ignore_yomi => $opts->{ignore_yomi} });
     }
 
-    print STDERR "done.\n" if ($opts->{verbose});
+    print "QueryParser object construction is done.\n\n" if ($opts->{debug});
     bless $this;
 }
 
@@ -198,9 +214,10 @@ sub parse {
 		  syngraph => $this->{SYNGRAPH},
 		  syngraph_option => $this->{SYNGRAPH_OPTION},
 		  requisite_item_detector => $this->{requisite_item_detector},
-		  query_filter => $this->{query_filter},
+		  query_filter => $opt->{query_filter},
 		  trimming => $opt->{trimming},
 		  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
+		  disable_synnode => $opt->{disable_synnode},
 		  verbose => $opt->{verbose}
 		});
 	} else {
@@ -216,7 +233,7 @@ sub parse {
 		{ knp => $this->{KNP},
 		  indexer => $this->{INDEXER},
 		  requisite_item_detector => $this->{requisite_item_detector},
-		  query_filter => $this->{query_filter},
+		  query_filter => $opt->{query_filter},
 		  trimming => $opt->{trimming},
 		  verbose => $opt->{verbose}
 		});
@@ -350,10 +367,12 @@ sub parse {
     my %gid2weight = ();
     unless ($this->{OPTIONS}{trimming}) {
 	foreach my $qk (@qks) {
-	    foreach my $reps (@{$qk->{words}}) {
-		foreach my $rep (@{$reps}) {
-		    my $gid = $rep->{gid};
-		    $gid2weight{$gid} = 1;
+	    foreach my $type ('words', 'dpnds') {
+		foreach my $reps (@{$qk->{$type}}) {
+		    foreach my $rep (@{$reps}) {
+			my $gid = $rep->{gid};
+			$gid2weight{$gid} = 1;
+		    }
 		}
 	    }
 	}
