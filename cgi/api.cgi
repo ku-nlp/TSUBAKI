@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 #!/usr/local/bin/perl
 #!/home/skeiji/local/bin/perl
 
@@ -30,6 +30,12 @@ use Searcher;
 use Renderer;
 use Logger;
 use RequestParser;
+use Data::Dumper;
+{
+    package Data::Dumper;
+    sub qquote { return shift; }
+}
+$Data::Dumper::Useperl = 1;
 
 
 my $CONFIG = Configure::get_instance();
@@ -54,6 +60,7 @@ sub main {
 	# 遅延コンストラクタ呼び出し（$ENVの値を書き換えるため）
 	my $cgi = new CGI();
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
+
 	my $renderer = new Renderer();
 	$renderer->printRequestResult($dids, $results, $requestItems, $opt);
     }
@@ -102,12 +109,12 @@ sub getRequestItems {
     if (exists $requestItems->{'Snippet'}) {
 	unless ($query_obj) {
 	    # parse query
-	    my $q_parser = new QueryParser();
-	    $query_obj = $q_parser->parse($queryString, {logical_cond_qk => 'AND', syngraph => 0});
+	    my $q_parser = new QueryParser({ignore_yomi => $CONFIG->{IGNORE_YOMI}});
+	    $query_obj = $q_parser->parse($queryString, {logical_cond_qk => 'AND', syngraph => $opt->{syngraph}});
 	}
 
 	my $sni_obj = new SnippetMakerAgent();
-	$sni_obj->create_snippets($query_obj, $dids, {discard_title => 1, syngraph => 0, window_size => 5, kwic => $opt->{kwic}, kwic_window_size => $opt->{kwic_window_size}});
+	$sni_obj->create_snippets($query_obj, $dids, {discard_title => 1, syngraph => $opt->{syngraph}, window_size => 5, kwic => $opt->{kwic}, kwic_window_size => $opt->{kwic_window_size}});
 	$did2snippets = ($opt->{kwic}) ? $sni_obj->makeKWICForAPICall() : $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}});
     }
 
@@ -126,8 +133,8 @@ sub getRequestItems {
 	if (exists $requestItems->{'Cache'}) {
 	    unless ($query_obj) {
 		# parse query
-		my $q_parser = new QueryParser();
-		$query_obj = $q_parser->parse($queryString, {logical_cond_qk => 'AND', syngraph => 0});
+		my $q_parser = new QueryParser({ignore_yomi => $CONFIG->{IGNORE_YOMI}});
+		$query_obj = $q_parser->parse($queryString, {logical_cond_qk => 'AND', syngraph => $opt->{syngraph}});
 	    }
 
 	    my $cache = {

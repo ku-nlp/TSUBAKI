@@ -52,23 +52,31 @@ sub getDefaultValues {
 sub parsePostRequest {
     my ($dat) = @_;
 
+    my $THIS_IS_API_CALL = 1;
+    my $params = &getDefaultValues($THIS_IS_API_CALL);
+
     require XML::LibXML;
+    # XMLデータの解析
     my $parser = new XML::LibXML;
     my $xmlreq = $parser->parse_string($dat);
 
-    my $docinfo = shift @{$xmlreq->getChildNodes()};
 
-    my @dids = ();
-    my $query = $docinfo->getAttribute('query');
-    my $highlight = $docinfo->getAttribute('highlight');
-    my $kwic = $docinfo->getAttribute('kwic');
-    my $kwic_window_size = ($docinfo->getAttribute('kwic_window_size')) ? $docinfo->getAttribute('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
-    
+    # パラメータの取得
+    my $docinfo = shift @{$xmlreq->getChildNodes()};
+    foreach my $attr ($docinfo->attributes()) {
+	$params->{$attr->getName()} = $attr->getValue();
+    }
+
+
+    # 要素名の取得
     my %result_items = ();
     foreach my $ri (split(':', $docinfo->getAttribute('result_items'))) {
 	$result_items{$ri} = 1;
     }
 
+
+    # 文書IDの取得
+    my @dids = ();
     foreach my $doc ($docinfo->getChildNodes) {
         next if ($doc->nodeName() eq '#text');
 
@@ -76,7 +84,8 @@ sub parsePostRequest {
         push(@dids, $did);
     }
 
-    return ($query, \%result_items, \@dids, {highlight => $highlight, kwic => $kwic, kwic_window_size => $kwic_window_size});
+
+    return ($params->{query}, \%result_items, \@dids, $params);
 }
 
 # cgiパラメタを取得
