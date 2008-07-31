@@ -43,6 +43,8 @@ sub new {
 	my $err = shift;
 	print "Bad query: $string<BR>\n";
 	print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
+	print "Dumpping messages of KNP object is following.<BR>\n";
+	print Dumper($opt->{knp}) . "<BR>\n";
 	exit;
     };
 
@@ -564,8 +566,8 @@ sub getPaintingJavaScriptCode {
     tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.mod.cdb\n";
 
     my $font_size = 12;
-    my $offsetX = 10;
-    my $offsetY = $font_size * 10;
+    my $offsetX = 10 + 24;
+    my $offsetY = $font_size * 5;
     my $arrow_size = 5;
     my $synbox_margin = $font_size;
 
@@ -655,7 +657,7 @@ sub getPaintingJavaScriptCode {
 
     # 解析結果を表示するウィンドウの幅、高さを求める
     my $width = $offsetX;
-    my $height = $offsetY + ($max_num_of_synonyms + 5) * 1.1 * $font_size; # +5 は<H3>クエリの解析結果</H3>の分, *1.1 は行間
+    my $height = $offsetY + int(($max_num_of_synonyms + 1) * 1.1 * $font_size); # +1 は●▲の分, *1.1 は行間
 
 
     # 係り受けの線の起点の位置を計算

@@ -55,7 +55,6 @@ sub printQuery {
 	    $end = $size if ($end > $size);
 	    printf("のうち %d - %d 件目\n", $params->{'start'} + 1, $end);
 	}
-	print qq(<INPUT style="margin-left: 1em;" value="解析結果を見る" type="button" onClick="javascript:show_query_result();">\n);
 	print "</TD>\n";
     }
 }
@@ -159,7 +158,7 @@ sub print_query {
     print qq(<TABLE width="100%" border="0" class="querynavi"><TR><TD width="*" style="padding: 0.25em 1em; background-color:#f1f4ff;">\n);
     my @buf;
     foreach my $kwd (@$keywords) {
-	push(@buf, sprintf ("<B>%s</B>", $kwd->{rawstring}));
+	push(@buf, sprintf (qq(<A href="#" style="font-weight: 900;" id="query">%s</A>), $kwd->{rawstring}));
     }
     print join('&nbsp;', @buf);
 }
@@ -279,16 +278,29 @@ sub print_tsubaki_interface {
 
 	</script>
 	<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
+	<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
 	<script language="JavaScript">
 
-function show_query_result () {
-    var ret = document.getElementById("results");
-    var w = open("", "_blank", "width=$width,height=$height,menubar=no,directories=no,locatoin=no,status=no,toolbar=no,resizable=yes");
-    w.document.writeln("<H3>クエリの解析結果</H3>");
-    w.document.writeln("<DIV id='$canvasName'></DIV>");
-    w.document.close();
+function init () { 
+    Event.observe('query', 'mousemove', show_query_result); 
+    Event.observe('query', 'mouseout',  hide_query_result); 
+}
 
-    var canvas = w.document.getElementById("$canvasName");
+function hide_query_result () {
+    var baroon = document.getElementById("baroon");
+    baroon.style.display = "none";
+}
+
+function show_query_result (e) {
+    var x = Event.pointerX(e);
+    var y = Event.pointerY(e);
+
+    var baroon = document.getElementById("baroon");
+    baroon.style.display = "block";
+    baroon.style.left = x;
+    baroon.style.top = y + 20;
+
+    var canvas = document.getElementById("canvas");
     $jscode
 }
 
@@ -306,7 +318,24 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 
 </script>
 	</head>
-	<body style="padding: 0em; margin:0em;">
+	<body style="padding: 0em; margin:0em; z-index:1;" onload="javascript:init();">
+	  <TABLE cellpadding="0" cellspacing="0" border="0" id="baroon" style="display: none; z-index: 10; position: absolute; top: 100; left: 100;">
+	    <TR>
+	      <TD><IMG width="24" height="24" src="curve-top-left.png"></TD>
+	      <TD style="background-color:#ffffcc;"></TD>
+	      <TD><IMG width="24" height="24" src="curve-top-right.png"></TD>
+	    </TR>
+	    <TR>
+	      <TD style="background-color:#ffffcc;"></TD>
+	      <TD style="width: $width; height: $height; background-color:#ffffcc;"><DIV id="canvas"></DIV></TD>
+	      <TD style="background-color:#ffffcc;"></TD>
+	    </TR>
+	    <TR>
+	      <TD><IMG width="24" height="24" src="curve-bottom-left.png"></TD>
+	      <TD style="background-color:#ffffcc;"></TD>
+	      <TD><IMG width="24" height="24" src="curve-bottom-right.png"></TD>
+	    </TR>
+	  </TABLE>
 END_OF_HTML
 
 my $host = `hostname`;
