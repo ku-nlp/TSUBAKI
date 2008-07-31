@@ -197,8 +197,8 @@ sub parseAPIRequest {
 
     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
     $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
-    $params->{use_of_repname_for_kwic} = (defined($cgi->param('use_of_repname_for_kwic'))) ? $cgi->param('use_of_repname_for_kwic') : 0;
-    $params->{use_of_katuyou_for_kwic} = (defined($cgi->param('use_of_katuyou_for_kwic'))) ? $cgi->param('use_of_katuyou_for_kwic') : 0;
+    $params->{use_of_repname_for_kwic} = $cgi->param('use_of_repname_for_kwic') if (defined($cgi->param('use_of_repname_for_kwic')));
+    $params->{use_of_katuyou_for_kwic} = $cgi->param('use_of_katuyou_for_kwic') if (defined($cgi->param('use_of_katuyou_for_kwic')));
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;
