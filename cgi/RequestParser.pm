@@ -22,6 +22,7 @@ sub getDefaultValues {
     # 環境変数のセット
     $params{URI} = sprintf ("%s", $ENV{REQUEST_URI});
     $params{num_of_pages_for_kwic_view} = 200;
+    $params{kwic_window_size} = 5;
 
     $params{start} = 0;
     $params{logical_operator} = 'AND';
@@ -31,6 +32,7 @@ sub getDefaultValues {
     $params{filter_simpages} = 1;
     $params{near} = -1;
     $params{syngraph} = 0;
+    $params{ignore_yomi} = $CONFIG->{IGNORE_YOMI};
     $params{accuracy} = $CONFIG->{SEARCH_ACCURACY};
     $params{num_of_results_per_page} = $CONFIG->{NUM_OF_RESULTS_PER_PAGE};
     $params{only_hitcount} = 0;
@@ -113,6 +115,9 @@ sub parseCGIRequest {
     $params->{num_of_pages_for_kwic_view} = $cgi->param('num_of_pages_for_kwic_view') if (defined($cgi->param('num_of_pages_for_kwic_view')));
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
+    $params->{use_of_repname_for_kwic} = 1;
+    $params->{use_of_katuyou_for_kwic} = 1;
+
     $params->{from_portal} = 1; # $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
 
     $params->{develop_mode} = $cgi->param('develop_mode') if (defined($cgi->param('develop_mode')));
@@ -185,11 +190,14 @@ sub parseAPIRequest {
     $params->{query_verbose} = $cgi->param('query_verbose') if (defined($cgi->param('query_verbose')));
     $params->{flag_of_anchor_use} = $cgi->param('anchor') if (defined($cgi->param('anchor')));
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
-    $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
-    $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
     $params->{antonym_and_negation_expansion} = (defined($cgi->param('antonym_and_negation_expansion'))) ? $cgi->param('antonym_and_negation_expansion') : 0;
     $params->{use_of_case_analysis} = 1 if (defined($cgi->param('use_of_case_analysis')));
     $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
+
+    $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
+    $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
+    $params->{use_of_repname_for_kwic} = (defined($cgi->param('use_of_repname_for_kwic'))) ? $cgi->param('use_of_repname_for_kwic') : 0;
+    $params->{use_of_katuyou_for_kwic} = (defined($cgi->param('use_of_katuyou_for_kwic'))) ? $cgi->param('use_of_katuyou_for_kwic') : 0;
 
     if (defined($cgi->param('snippets'))) {
 	$params->{'no_snippets'} = ($cgi->param('snippets') > 0) ? 0 : 1;

@@ -55,8 +55,10 @@ sub extract_sentences_from_standard_format {
 sub isMatch {
     my ($listQ, $listS) = @_;
 
-    use Data::Dumper;
-    # print Dumper($listQ) . "\n";
+#    use Data::Dumper;
+#    print Dumper($listS) . "\n";
+#    print Dumper($listQ) . "\n";
+
 
     my $end = -1;
     my $matchQ = 0;
@@ -75,7 +77,7 @@ sub isMatch {
 		    last;
 		}
 	    }
-	    # print "\n";
+
 	    # マッチしなければ（文の方の）次の単語へ
 	    unless ($matchW) {
 		$end = -1;
@@ -100,26 +102,31 @@ sub extract_sentences_from_content_for_kwic {
     my $title = $sfdat->getTitle();
     my $queryString = $query->[$opt->{kwic_keyword_index}]{rawstring}; # kwic_keyword_index番目のqueryをkeywordとして用いる  (定義されていない場合は0番目、つまり初期クエリになる)
 
-    my ($repnameList_q, $surfList_q) = &make_repname_list($query->[$opt->{kwic_keyword_index}]{knp_result}->all());
+    my ($repnameList_q, $surfList_q) = &makeMidasiAndRepnamesList($query->[$opt->{kwic_keyword_index}]{knp_result}->all(), $opt);
 
     my $sentences = $sfdat->getSentences();
     for (my $i = 0; $i < scalar(@$sentences); $i++) {
 	my $s = $sentences->[$i];
-	my ($repnameList_s, $surfList_s) = &make_repname_list($s->{annotation}, $opt);
-	my ($flag, $from, $end) = &isMatch($repnameList_q, $repnameList_s);
+	my ($repnameList_s, $surfList_s) = &makeMidasiAndRepnamesList($s->{annotation}, $opt);
+	my ($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch($repnameList_q, $repnameList_s) : &isMatch($surfList_q, $surfList_s);
+
 	if ($flag) {
 	    my $keyword;
 	    my $contextL;
 	    my $contextR;
 	    for (my $j = 0; $j < scalar(@$surfList_s); $j++) {
+		my $surf = (keys %{$surfList_s->[$j]})[0];
+		# 活用形の情報を削除
+		$surf =~ s/:.+$//;
+
 		if ($j < $from) {
-		    $contextL .= $surfList_s->[$j];
+		    $contextL .= $surf;
 		}
 		elsif ($j > $end - 1) {
-		    $contextR .= $surfList_s->[$j];
+		    $contextR .= $surf;
 		}
 		else {
-		    $keyword .=  $surfList_s->[$j];
+		    $keyword .=  $surf;
 		}
 	    }
 
@@ -212,64 +219,55 @@ sub extract_sentences_from_content_for_kwic {
     return \@sbuf;
 }
 
-sub make_repname_list {
+# 見出しと代表表記の列を作成する
+sub makeMidasiAndRepnamesList {
     my ($knpresult, $opt) = @_;
 
-    my @repnameList;
-    my @surfList;
-    foreach my $line (split(/\n/,$knpresult)){
-	next if ($line =~ /^\*/);
-	next if ($line =~ /^\+/);
+    # SYNGRAPHの情報を除く
+    my $buf = undef;
+    foreach my $line (split(/\n/, $knpresult)) {
 	next if ($line =~ /^!/);
-	next if ($line =~ /^EOS/);
-	next if ($line =~ /^\# /);
+	$buf .= ($line . "\n");
+    }
+    $knpresult = $buf if (defined $buf);
 
-	my @m = split(/\s+/, $line);
-	my $surf = $m[0];
-	my $katsuyou = $m[9];
-	my $hinshi = $m[3];
-#	my $midashi = "$m[2]/$m[1]";
-	my $midashi = $m[2];
-	my %reps = ();
-	# 代表表記の取得
-# 	if ($line =~ /\<代表表記:([^>]+)\>/) {
-# 	    $midashi = $1;
-# 	}
-	$reps{&toUpperCase_utf8($midashi)} = 1;
 
-	# 代表表記に曖昧性がある場合は全部保持する
-	# ただし表記・読みが同一の代表表記は区別しない
-	# ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
-# 	my $lnbuf = $line;
-# 	while ($line =~ /\<ALT(.+?)\>/) {
-# 	    $line = "$'";
-# 	    my $alt_cont = $1;
-# 	    if ($alt_cont =~ /代表表記:(.+?)(?: |\")/) {
-# 		my $midashi = $1;
-# 		$reps{&toUpperCase_utf8($midashi)} = 1;
-# 	    } elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
-# 		my $midashi = "$3/$2";
-# 		$reps{&toUpperCase_utf8($midashi)} = 1;
-# 	    }
-# 	}
-# 	$line = $lnbuf;
+    my @repnamesList;
+    my @midasiList;
+    my $knpresultObj = new KNP::Result($knpresult);
+    if (defined $knpresultObj) {
+	foreach my $m ($knpresultObj->mrph) {
+	    my $midasi = &toUpperCase_utf8($m->midasi());
+	    my %repnames = ();
+	    foreach my $repname (split(/\?/, $m->repnames())) {
+		$repname =~ s/\/.+$// if ($opt->{ignore_yomi});
 
-	if ($opt->{is_phrasal_search}) {
-	    if ($hinshi eq '動詞') {
-		my %new_reps;
-		foreach my $k (keys %reps) {
-		    $new_reps{$k . ":$katsuyou"} = $reps{$k};
-		}
-		%reps = %new_reps;
+		$repnames{&toUpperCase_utf8($repname)} = 1;
 	    }
+
+	    # フレーズ検索の場合は動詞の活用を考慮する
+	    if ($opt->{use_of_katuyou_for_kwic}) {
+		if ($m->hinsi() eq '動詞') {
+		    my $katuyou = $m->katuyou1() . ":" . $m->katuyou2();
+
+		    $midasi .= ":$katuyou";
+
+		    my %repnames_w_katuyou = ();
+		    foreach my $k (keys %repnames) {
+			$repnames_w_katuyou{$k . ":$katuyou"} = $repnames{$k};
+		    }
+		    %repnames = %repnames_w_katuyou;
+		}
+	    }
+
+	    push(@midasiList, {$midasi => 1});
+	    push(@repnamesList, \%repnames);
 	}
+    }
 
-	push(@repnameList, \%reps);
-	push(@surfList, $surf);
-    } # end of foreach my $line (split(/\n/,$sent))
-
-    return (\@repnameList, \@surfList);
+    return (\@repnamesList, \@midasiList);
 }
+
 
 sub extract_sentences_from_content {
     my($query, $content, $opt) = @_;

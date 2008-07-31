@@ -55,11 +55,11 @@ sub main {
 	# 入力をパース
 	my ($queryString, $requestItems, $dids, $opt) = RequestParser::parsePostRequest($dat);
 
-	my $results = &getRequestItems($queryString, $requestItems, $dids, $opt);
-
 	# 遅延コンストラクタ呼び出し（$ENVの値を書き換えるため）
 	my $cgi = new CGI();
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
+
+	my $results = &getRequestItems($queryString, $requestItems, $dids, $opt);
 
 	my $renderer = new Renderer();
 	$renderer->printRequestResult($dids, $results, $requestItems, $opt);
@@ -114,7 +114,7 @@ sub getRequestItems {
 	}
 
 	my $sni_obj = new SnippetMakerAgent();
-	$sni_obj->create_snippets($query_obj, $dids, {discard_title => 1, syngraph => $opt->{syngraph}, window_size => 5, kwic => $opt->{kwic}, kwic_window_size => $opt->{kwic_window_size}});
+	$sni_obj->create_snippets($query_obj, $dids, $opt);
 	$did2snippets = ($opt->{kwic}) ? $sni_obj->makeKWICForAPICall() : $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}});
     }
 
