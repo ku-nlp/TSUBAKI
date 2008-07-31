@@ -22,7 +22,10 @@ sub getDefaultValues {
     # 環境変数のセット
     $params{URI} = sprintf ("%s", $ENV{REQUEST_URI});
     $params{num_of_pages_for_kwic_view} = 200;
-    $params{kwic_window_size} = 5;
+
+    $params{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
+    $params{use_of_repname_for_kwic} = 1;
+    $params{use_of_katuyou_for_kwic} = 1;
 
     $params{start} = 0;
     $params{logical_operator} = 'AND';
@@ -115,8 +118,6 @@ sub parseCGIRequest {
     $params->{num_of_pages_for_kwic_view} = $cgi->param('num_of_pages_for_kwic_view') if (defined($cgi->param('num_of_pages_for_kwic_view')));
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
-    $params->{use_of_repname_for_kwic} = 1;
-    $params->{use_of_katuyou_for_kwic} = 1;
 
     $params->{from_portal} = 1; # $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
 
