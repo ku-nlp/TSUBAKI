@@ -568,7 +568,7 @@ sub getPaintingJavaScriptCode {
     my $font_size = 12;
     my $offsetX = 10 + 24;
     my $offsetY = $font_size * 5;
-    my $arrow_size = 5;
+    my $arrow_size = 3;
     my $synbox_margin = $font_size;
 
     my @stylecolor = ();
@@ -645,7 +645,7 @@ sub getPaintingJavaScriptCode {
 
 	# 下に必須・オプショナルのフラグを取得
 	my $rep = $this->{words}[$i][0];
-	my $mark = ($rep->{requisite}) ?  '●' :  ($rep->{optional}) ? '▲' : '？';
+	my $mark = ($rep->{requisite}) ?  '○' :  ($rep->{optional}) ? '△' : '？';
 	my $synbox = sprintf(qq(<DIV style=\\'text-align: center;\\'><DIV style=\\'text-align: center; $stylecolor[$i]\\' width=%dpx>%s<BR>%s</DIV>%s</DIV>), $width, $surf, join("<BR>", keys %synbuf), $mark);
 
 	$max_num_of_synonyms = scalar(keys %synbuf) if ($max_num_of_synonyms < scalar(keys %synbuf));
@@ -700,24 +700,25 @@ sub getPaintingJavaScriptCode {
 
 	    # 係り受けの線をひく
 	    $jscode .= qq(jg.drawLine($x1, $offsetY, $x1, $y);\n);
-	    $jscode .= qq(jg.drawLine($x1 + 1, $offsetY, $x1 + 1, $y);\n);
+#	    $jscode .= qq(jg.drawLine($x1 + 1, $offsetY, $x1 + 1, $y);\n);
 	    $jscode .= qq(jg.drawLine($x1 - 1, $offsetY, $x1 - 1, $y);\n);
 
 	    $jscode .= qq(jg.drawLine($x1, $y, $x2, $y);\n);
 	    $jscode .= qq(jg.drawLine($x1, $y - 1, $x2, $y - 1);\n);
-	    $jscode .= qq(jg.drawLine($x1, $y + 1, $x2, $y + 1);\n);
+#	    $jscode .= qq(jg.drawLine($x1, $y + 1, $x2, $y + 1);\n);
 
 	    $jscode .= qq(jg.drawLine($x2, $y, $x2, $offsetY);\n);
 	    $jscode .= qq(jg.drawLine($x2 + 1, $y, $x2 + 1, $offsetY);\n);
-	    $jscode .= qq(jg.drawLine($x2 - 1, $y, $x2 - 1, $offsetY);\n);
+#	    $jscode .= qq(jg.drawLine($x2 - 1, $y, $x2 - 1, $offsetY);\n);
 
 	    # 矢印
 	    $jscode .= qq(jg.fillPolygon(new Array($x2, $x2 + $arrow_size, $x2 - $arrow_size), new Array($offsetY, $offsetY - $arrow_size, $offsetY - $arrow_size));\n);
 
 
 	    # 線の上に必須・オプショナルのフラグを描画する
-	    my $mark = ($rep->{requisite}) ?  '●' :  ($rep->{optional}) ? '▲' : '？';
+	    my $mark = ($rep->{requisite}) ?  '○' :  ($rep->{optional}) ? '△' : '？';
 	    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1 + 0.5 * ($x2 - $x1) - $font_size * 0.5, $y, $font_size, 'center');\n);
+	    # $jscode .= qq(jg.drawStringRect(\'$mark\', $x1 - $font_size - 5, $y, $font_size, 'center');\n);
 	}
     }
 
