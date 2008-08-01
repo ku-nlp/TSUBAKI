@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -6,14 +6,16 @@ use strict;
 use utf8;
 use CGI qw/:standard/;
 use CGI::Carp qw(fatalsToBrowser);
-
+use Encode;
+use URI::Escape;
 use Configure;
 my $CONFIG = Configure::get_instance();
 
 
 my @OPTs = ('query', 'start', 'results', 'logical_operator', 'dpnd', 'filter_simpages', 'only_hitcount', 'id', 'format');
 
-open(LOG, "tac $CONFIG->{LOG_FILE_PATH} | head -1000 |");
+# open(LOG, "tac $CONFIG->{LOG_FILE_PATH} | head -500 |");
+open(LOG, "cat ../data/input.log |");
 binmode(LOG, ':utf8');
 print header(-charset => 'utf-8');
 
@@ -30,9 +32,10 @@ push(@attrs, 'HOST') if ($OPTs{verbose});
 push(@attrs, 'ACCESS') if ($OPTs{verbose});
 push(@attrs, 'status') if ($OPTs{verbose});
 push(@attrs, 'portal') if ($OPTs{verbose});
+push(@attrs, 'hitcount');
+push(@attrs, 'total');
 push(@attrs, 'query');
 push(@attrs, 'create_se_obj') if ($OPTs{verbose});
-push(@attrs, 'hitcount');
 push(@attrs, 'merge')  if ($OPTs{verbose});
 # push(@attrs, 'miss_title');
 # push(@attrs, 'miss_url');
@@ -52,13 +55,11 @@ push(@attrs, 'logical_condition') if ($OPTs{verbose});
 push(@attrs, 'document_scoring') if ($OPTs{verbose});
 push(@attrs, 'snippet_creation');
 # push(@attrs, 'total_docs') if ($OPTs{verbose});
-push(@attrs, 'total');
 
 while (<LOG>) {
       my ($date, $host, $access, @options) = split(/ /, $_);
-      next if ($access eq 'API' && !$OPTs{verbose});
-      next if ($_ =~ /0705\-124143/);
-      next if ($_ =~ /total_docs=1420,total=96.783$/);
+      # next if ($access eq 'API' && !$OPTs{verbose});
+      next if ($access eq 'API');
 
       my %vals = ();
       foreach my $opt (split(/,/, join(' ', @options))) {
@@ -66,6 +67,9 @@ while (<LOG>) {
 	  $v =~ s/~100w$//;
 	  $vals{$k} = ($v eq '') ? undef : $v;
       }
+
+      next if ($vals{'status'} eq 'cache');
+
 
       $buf .= sprintf "<TR>";
       $buf .= sprintf "<TD style='border: 1px solid black;'>$date</TD>";
@@ -82,7 +86,14 @@ while (<LOG>) {
 	  }
 
 	  if (defined $vals{$k}) {
-	      $buf .= "<TD style='border: 1px solid black;' nowrap>$vals{$k}&nbsp;";
+	      if ($k eq 'query') {
+		  my $uri_encoded_query = &uri_escape(encode('utf8', $vals{$k} . "~100w"));
+		  my $url = sprintf("%s?syngraph=1&start=0&q=%s", $CONFIG->{INDEX_CGI}, $uri_encoded_query);
+		  $buf .= sprintf(qq(<TD style='border: 1px solid black; width: 20em;' nowrap><A target="_blank" href='%s'>%s&nbsp;), $url, $vals{$k});
+	      } else {
+		  $buf .= "<TD style='border: 1px solid black;' nowrap>$vals{$k}&nbsp;";
+	      }
+
 	      if (exists $vals{"max_$k"}) {
 		  $buf .= qq(<SPAN style="color: red;">) . $vals{"max_$k"} . "</SPAN>\n";
 	      }
