@@ -119,7 +119,7 @@ sub parseCGIRequest {
     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
     $params->{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
 
-    $params->{from_portal} = 1; # $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
+    $params->{from_portal} = $cgi->param('from_portal') if (defined($cgi->param('from_portal')));
 
     $params->{develop_mode} = $cgi->param('develop_mode') if (defined($cgi->param('develop_mode')));
     # $params->{develop_mode} = 1 if ($CONFIG->{INDEX_CGI} =~ /develop/);
