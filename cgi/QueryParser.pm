@@ -217,7 +217,7 @@ sub parse {
 		  syngraph => $this->{SYNGRAPH},
 		  syngraph_option => $this->{SYNGRAPH_OPTION},
 		  requisite_item_detector => $this->{requisite_item_detector},
-		  query_filter => $opt->{query_filter},
+		  query_filter => $this->{query_filter},
 		  trimming => $opt->{trimming},
 		  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
 		  disable_synnode => $opt->{disable_synnode},
@@ -965,6 +965,14 @@ sub get_discarded_qids {
 }
 
 # デストラクタ
-sub DESTROY {}
+sub DESTROY {
+    my ($this) = @_;
+
+    foreach my $type ('DFDBS_WORD', 'DFDBS_DPND') {
+	foreach my $cdb (@{$this->{$type}}) {
+	    untie %$cdb;
+	}
+    }
+}
 
 1;
