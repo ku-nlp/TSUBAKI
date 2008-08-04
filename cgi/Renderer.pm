@@ -157,8 +157,9 @@ sub print_query {
 
     print qq(<TABLE width="100%" border="0" class="querynavi"><TR><TD width="*" style="padding: 0.25em 1em; background-color:#f1f4ff;">\n);
     my @buf;
-    foreach my $kwd (@$keywords) {
-	push(@buf, sprintf (qq(<A href="#" style="font-weight: 900;" id="query">%s</A>), $kwd->{rawstring}));
+    for (my $i = 0; $i < scalar(@$keywords); $i++) {
+	my $kwd = $keywords->[$i];
+	push(@buf, sprintf (qq(<A href="#" style="font-weight: 900;" id="query%d">%s</A>), $i, $kwd->{rawstring}));
     }
     print join('&nbsp;', @buf);
 }
@@ -260,7 +261,7 @@ sub print_tsubaki_interface {
     my ($this, $params, $query) = @_;
 
     my $canvasName = 'canvas';
-    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode($canvasName);
+    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode();
 
     print << "END_OF_HTML";
     <html>
@@ -281,30 +282,6 @@ sub print_tsubaki_interface {
 	<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
 	<script language="JavaScript">
 
-function init () { 
-    Event.observe('query', 'mousemove', show_query_result); 
-    Event.observe('query', 'mouseout',  hide_query_result); 
-}
-
-function hide_query_result () {
-    var baroon = document.getElementById("baroon");
-    baroon.style.display = "none";
-}
-
-function show_query_result (e) {
-    var x = Event.pointerX(e);
-    var y = Event.pointerY(e);
-
-    var baroon = document.getElementById("baroon");
-    baroon.style.display = "block";
-    baroon.style.left = x;
-    baroon.style.top = y + 20;
-
-    var canvas = document.getElementById("canvas");
-    $jscode
-}
-
-
 function toggle_simpage_view (id, obj, open_label, close_label) {
     var disp = document.getElementById(id).style.display;
     if (disp == "block") {
@@ -316,7 +293,52 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
     }
 }
 
-</script>
+function hide_query_result () {
+    var baroon = document.getElementById("baroon");
+    baroon.style.display = "none";
+}
+
+END_OF_HTML
+
+
+
+    print << "END_OF_HTML";
+    var jg;
+function init () { 
+    jg = new jsGraphics($canvasName);
+
+END_OF_HTML
+
+    for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
+	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", $i;
+	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", $i, $i; 
+    }
+    print "}\n";
+
+    my $colorOffset = 0;
+    for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
+	my ($width, $height, $coffset, $jscode) = $query->{keywords}[$i]->getPaintingJavaScriptCode($colorOffset);
+	$colorOffset = $coffset;
+
+	printf "function show_query_result%d (e) {\n", $i;
+	print "var x = Event.pointerX(e);\n";
+	print "var y = Event.pointerY(e);\n";
+
+	print "var baroon = document.getElementById('baroon');\n";
+	print "baroon.style.display = 'block';\n";
+	print "baroon.style.left = x;";
+	print "baroon.style.top = y + 20;";
+
+	print "var canvas = document.getElementById('canvas');\n";
+	print "canvas.style.width = $width;\n";
+	print "canvas.style.height = $height;\n";
+
+	print $jscode;
+	print "}\n";
+    }
+
+    print << "END_OF_HTML";
+    </script>
 	</head>
 	<body style="padding: 0em; margin:0em; z-index:1;" onload="javascript:init();">
 	  <TABLE cellpadding="0" cellspacing="0" border="0" id="baroon" style="display: none; z-index: 10; position: absolute; top: 100; left: 100;">
@@ -327,7 +349,7 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 	    </TR>
 	    <TR>
 	      <TD style="background-color:#ffffcc;"></TD>
-	      <TD style="width: $width; height: $height; background-color:#ffffcc;"><DIV id="canvas"></DIV></TD>
+	      <TD style="background-color:#ffffcc;" id="canvas"></TD>
 	      <TD style="background-color:#ffffcc;"></TD>
 	    </TR>
 	    <TR>
@@ -338,8 +360,7 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
 	  </TABLE>
 END_OF_HTML
 
-my $host = `hostname`;
-#    print "TSUBAKI on $host<BR>\n";
+    my $host = `hostname`;
     print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);

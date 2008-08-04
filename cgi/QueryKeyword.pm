@@ -561,7 +561,7 @@ sub normalize {
 }
 
 sub getPaintingJavaScriptCode {
-    my ($this, $canvas) = @_;
+    my ($this, $colorOffset) = @_;
 
     tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.mod.cdb\n";
 
@@ -599,8 +599,7 @@ sub getPaintingJavaScriptCode {
     }
 
 
-    my $jscode .= qq(var jg = new jsGraphics($canvas);\n);
-    $jscode .= qq(jg.setFont('','${font_size}px',Font.PLAIN);\n);
+    my $jscode .= qq(jg.clear();\n);
 
     # 単語・同義表現グループを描画する
     my $max_num_of_synonyms = 0;
@@ -646,13 +645,15 @@ sub getPaintingJavaScriptCode {
 	# 下に必須・オプショナルのフラグを取得
 	my $rep = $this->{words}[$i][0];
 	my $mark = ($rep->{requisite}) ?  '○' :  ($rep->{optional}) ? '△' : '？';
-	my $synbox = sprintf(qq(<DIV style=\\'text-align: center;\\'><DIV style=\\'text-align: center; $stylecolor[$i]\\' width=%dpx>%s<BR>%s</DIV>%s</DIV>), $width, $surf, join("<BR>", keys %synbuf), $mark);
+	my $colorIndex = ($i + $colorOffset) % scalar(@stylecolor);
+	my $synbox = sprintf(qq(<DIV style=\\'text-align: center;\\'><DIV style=\\'text-align: center; $stylecolor[$colorIndex]\\' width=%dpx>%s<BR>%s</DIV>%s</DIV>), $width, $surf, join("<BR>", keys %synbuf), $mark);
 
 	$max_num_of_synonyms = scalar(keys %synbuf) if ($max_num_of_synonyms < scalar(keys %synbuf));
 
 	$jscode .= qq(jg.drawStringRect(\'$synbox\', $offsetX, $offsetY, $width, 'left');\n);
 	$offsetX += ($width + $synbox_margin);
     }
+    $colorOffset += scalar(@{$this->{words}});
 
 
     # 解析結果を表示するウィンドウの幅、高さを求める
@@ -727,7 +728,7 @@ sub getPaintingJavaScriptCode {
 
     untie %synonyms;
 
-    return ($width, $height, $jscode);
+    return ($width, $height, $colorOffset, $jscode);
 }
 
 sub debug_print {
