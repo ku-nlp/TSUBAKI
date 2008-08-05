@@ -1,11 +1,108 @@
+2008-08-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm, cgi/SnippetMaker.pm:
+	係り受けを考慮してKWICを生成できるようにした.
+
+	* scripts/snippet-server.sh:
+	スニペットサーバー起動時のオプションに-zを追加.
+
+	* scripts/snippet_make_server.pl:
+	-zオプションの追加.
+
+	* scripts/snippet_maker_test.pl:
+	KWIC生成時に係り受けを考慮するオプション(-use_of_dpnd_for_kwic)を追加.
+
+2008-08-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm, cgi/Renderer.pm:
+	複数個の検索表現が入力された場合、各々の解析結果を表示するようにした.
+
+2008-08-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	デストラクタ呼び出し時にDFDBをuntieするようにした. テリック処理が行われないバグを修正.
+
+	* cgi/QueryKeyword.pm: クエリの解析結果表示を修正.
+
+2008-07-31  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm, cgi/SnippetMaker.pm, cgi/api.cgi, cgi/Renderer.pm:
+	kwic生成時に、代表表記の利用、活用形の利用をオプションで指定できるようにした.
+
+	* scripts/snippet_maker_test.pl:
+	オプションの追加.
+
+	* cgi/QueryKeyword.pm, cgi/Renderer.pm:
+	クエリの解析結果をツールチップ形式で表示するようにした.
+
+2008-07-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm, cgi/api.cgi:
+	POST呼び出し時にもスニペットがハイライトされるようにした.
+
+2008-07-29  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	Configure.pmで生成されたKNPオブジェクトを利用するようにした.
+
+	* cgi/Configure.pm:
+	configureのパラメータに従ってKNPオブジェクトを生成し、保持するようにした.
+
+	* cgi/SnippetMakerAgent.pm:
+	不要コードの削除.
+
+	* cgi/QueryParser.pm:
+	デバック文の追加. jumanrcファイルを利用するようにした.
+
+	* cgi/QueryKeyword.pm, cgi/Renderer.pm:
+	クエリの解析結果表示に、必須・オプショナル表示を加えた. ウィンドウのサイズを自動調整するようにした.
+
+2008-07-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/log.cgi:
+	表示方法を整理した.
+
+	* scripts/TsubakiEngine.pm:
+	bug fixed (必須が付いた表現の検索結果が0件の時に発生するバグを修正.)
+
+	* scripts/Indexer.pm:
+	SYNGRAPHの結果から<見出し>を抜き出し、変数に持つようにした.
+
+	* cgi/Renderer.pm:
+	検索結果にクエリの解析結果を埋め込むようにした.
+
+	* cgi/QueryTrimmer.pm:
+	不要コードの整理.
+
+	* cgi/QueryKeyword.pm:
+	検索結果を描画するメソッドを追加.
+
+	* cgi/CachedHTMLDocument.pm:
+	?問題に対応.
+
+2008-07-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryTrimmer.pm:
+	<クエリ削除語>素性がついた基本句から索引表現を抽出しないようにした.
+
+	* cgi/QueryFilter.pm:
+	不要コードを削除.
+
+2008-07-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	wikiへのリンクを廃止し、「おしらせ」へリンクをはるようにした.
+
 2008-07-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
-	* cgi/QueryKeyword.pm: 論理条件がORの時に対応.
+	* cgi/QueryKeyword.pm:
+	論理条件がORの時に対応.
 
 	* cgi/QueryKeyword.pm:
 	クエリの処理結果(requisite, optionalなど)を, 反映するようにした. debug_printメソッドの追加.
 
-	* cgi/RequestParser.pm: クエリ中の動詞を処理するようにした.
+	* cgi/RequestParser.pm:
+	クエリ中の動詞を処理するようにした.
 
 	* cgi/QueryParser.pm:
 	クエリ中の動詞の処理をオプション化 (デフォルトでは処理されない. 処理する場合はparseメソッドの第2引数にquery_filtering=1を指定する).
@@ -16,9 +113,11 @@
 	* cgi/configure, cgi/configure.nict:
 	名詞と動詞の相互情報量データベースへのパスを追加(オプション名: MIDB_PATH)
 
-	* cgi/index.cgi: デバック表示追加.
+	* cgi/index.cgi:
+	デバック表示追加.
 
-	* scripts/TsubakiEngine4SynGraphSearch.pm: 不要コードの削除
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	不要コードの削除
 
 	* scripts/TsubakiEngine.pm:
 	bug fixed (requisite指定された文書とoptional指定された文書のORになっていたのを修正, 近接制約適用時に，検索係り受けで得られた文書が入っていたのを除いた)
