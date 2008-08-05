@@ -25,6 +25,7 @@ sub getDefaultValues {
     $params{use_of_repname_for_kwic} = 1;
     $params{use_of_katuyou_for_kwic} = 1;
     $params{use_of_dpnd_for_kwic} = 1;
+    $params{use_of_huzokugo_for_kwic} = 0;
 
     # 環境変数のセット
     $params{URI} = sprintf ("%s", $ENV{REQUEST_URI});

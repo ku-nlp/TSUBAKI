@@ -74,11 +74,10 @@ sub isMatch {
 	    # 単語レベルで代表表記がマッチしたか
 	    my $matchW = 0;
 	    foreach my $rep (keys %{$listS->[$i + $j]}) {
-		# print $rep . " ";
-		if (exists $listQ->[$j]{$rep}) {
+		# ワイルドカード(*)または同じ表現であれば
+		if ($listQ->[$j] eq '*' || exists $listQ->[$j]{$rep}) {
 		    $end = $i + $j;
 		    $matchW = 1;
-		    # print "*";
 		    last;
 		}
 	    }
@@ -160,6 +159,7 @@ sub extract_sentences_from_content_for_kwic {
     my $queryString = $query->[$opt->{kwic_keyword_index}]{rawstring}; # kwic_keyword_index番目のqueryをkeywordとして用いる  (定義されていない場合は0番目、つまり初期クエリになる)
 
     my ($repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q) = &makeMidasiAndRepnamesList($query->[$opt->{kwic_keyword_index}]{knp_result}->all(), $opt);
+    $opt->{use_of_huzokugo_for_kwic} = 1;
 
     my $sentences = $sfdat->getSentences();
     for (my $i = 0; $i < scalar(@$sentences); $i++) {
@@ -306,6 +306,7 @@ sub makeMidasiAndRepnamesList {
 	    my ($midasiL_saki, $repnameL_saki, $posL_saki) = &getMidasiAndRepnames($kakarisaki, $opt);
 
 	    # 出現形について係り受けを生成
+	    # 基本句には、先頭にのみ内容語が現れると仮定
 	    foreach my $m_self (keys %{$midasiL_self->[0]}) {
 		my %midasiDpnds;
 		foreach my $m_saki (keys %{$midasiL_saki->[0]}) {
@@ -367,9 +368,14 @@ sub getMidasiAndRepnames {
 	    }
 	}
 
-	push(@midasiL, {$midasi => 1});
-	push(@repnameL, \%repnames);
 	push(@posL, $pos);
+	if (!$opt->{use_of_huzokugo_for_kwic} && $m->fstring() !~ /<内容語>/) {
+	    push(@midasiL, '*');
+	    push(@repnameL, '*');
+	} else {
+	    push(@midasiL, {$midasi => 1});
+	    push(@repnameL, \%repnames);
+	}
     }
 
     return (\@midasiL, \@repnameL, \@posL);

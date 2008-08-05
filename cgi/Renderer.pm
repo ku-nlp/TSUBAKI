@@ -630,6 +630,7 @@ sub get_snippets {
 						use_of_repname_for_kwic => $opt->{use_of_repname_for_kwic},
 						use_of_katuyou_for_kwic => $opt->{use_of_katuyou_for_kwic},
 						use_of_dpnd_for_kwic => $opt->{use_of_dpnd_for_kwic},
+						use_of_huzokugo_for_kwic => $opt->{use_of_huzokugo_for_kwic},
 						debug => $opt->{debug}});
 
     if ($opt->{kwic}) {
