@@ -13,7 +13,23 @@ my $JUMAN_PATH = $TOOL_HOME;
 my $SYNDB_PATH = "$ENV{HOME}/cvs/SynGraph/syndb/i686";
 
 my (%opt);
-GetOptions(\%opt, 'query=s', 'z', 'syngraph', 'use_of_repname_for_kwic', 'use_of_katuyou_for_kwic', 'encoding=s', 'discard_title', 'syndb=s', 'string_mode', 'window_size=s', 'debug', 'kwic', 'is_old_version', 'kwic_window_size=s');
+GetOptions(\%opt,
+	   'query=s',
+	   'z',
+	   'syngraph',
+	   'encoding=s',
+	   'discard_title',
+	   'window_size=s',
+	   'kwic',
+	   'kwic_window_size=s',
+	   'use_of_repname_for_kwic',
+	   'use_of_katuyou_for_kwic',
+	   'use_of_dpnd_for_kwic',
+	   'syndb=s',
+	   'string_mode',
+	   'is_old_version',
+	   'debug'
+    );
 
 $SYNDB_PATH = $opt{syndb} if ($opt{syndb});
 $opt{kwic_window_size} = 5 unless ($opt{kwic_window_size});
@@ -36,7 +52,7 @@ sub init_query_parser {
 
 sub main {
     # クエリの解析
-    my $q_parser = new QueryParser();
+    my $q_parser = new QueryParser(\%opt);
     my $query = $q_parser->parse(decode($opt{encoding}, $opt{query}), {logical_cond_qk => 'AND', syngraph => $opt{syngraph}});
 
     if ($opt{debug}) {
