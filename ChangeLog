@@ -1,6 +1,12 @@
 2008-08-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Renderer.pm, cgi/RequestParser.pm, cgi/SnippetMaker.pm:
+	KWIC生成時に、付属語を考慮する／しないを切り替えられるようにした.
+
+	* scripts/snippet_maker_test.pl:
+	付属語を考慮するオプションを追加.
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm, cgi/SnippetMaker.pm:
 	係り受けを考慮してKWICを生成できるようにした.
 
 	* scripts/snippet-server.sh:
