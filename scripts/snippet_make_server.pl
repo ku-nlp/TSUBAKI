@@ -23,7 +23,7 @@ my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
 my $HOSTNAME = `hostname` ; chop($HOSTNAME);
 
 my (%opt);
-GetOptions(\%opt, 'help', 'port=s', 'string_mode', 'is_old_version', 'ignore_yomi', 'verbose');
+GetOptions(\%opt, 'help', 'port=s', 'z', 'string_mode', 'is_old_version', 'ignore_yomi', 'verbose');
 
 if (!$opt{port} || $opt{help}) {
     print "Usage\n";
@@ -103,10 +103,19 @@ sub main {
 	    $option->{string_mode} = $opt{string_mode};
 	    $option->{is_old_version} = $opt{is_old_version};
 	    $option->{ignore_yomi} = $opt{ignore_yomi};
+	    $option->{z} = $opt{z};
+
+	    if ($opt{verbose}) {
+		print "begin with snippet creation $client_hostname.\n";
+		print "-----\n";
+		print Dumper ($option);
+		print "-----\n";
+		print Dumper ($query);
+		print "-----\n";
+	    }
 
 	    # スニペッツの生成
 	    my %result = ();
-	    print "begin with snippet creation $client_hostname.\n" if ($opt{verbose});
 	    foreach my $did (@{$dids}) {
 		print $did . "\n" if ($opt{verbose});
 		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
