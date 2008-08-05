@@ -23,7 +23,7 @@ CGI_DIR=$TSUBAKI_DIR/cgi
 
 
 # 起動時のオプション
-OPTS="-string_mode -ignore_yomi"
+OPTS="-string_mode -ignore_yomi -z"
 
 CONFIGFILE=$TSUBAKI_DIR/cgi/configure$SUFFIX
 COMMAND=snippet_make_server.pl
