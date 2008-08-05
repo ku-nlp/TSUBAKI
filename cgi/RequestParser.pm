@@ -19,13 +19,15 @@ sub getDefaultValues {
     my ($call_from_API) = @_;
     my %params = ();
 
-    # 環境変数のセット
-    $params{URI} = sprintf ("%s", $ENV{REQUEST_URI});
-    $params{num_of_pages_for_kwic_view} = 200;
-
+    # KWIC表示のデフォルト設定
     $params{kwic_window_size} = $CONFIG->{KWIC_WINDOW_SIZE};
+    $params{num_of_pages_for_kwic_view} = 200;
     $params{use_of_repname_for_kwic} = 1;
     $params{use_of_katuyou_for_kwic} = 1;
+    $params{use_of_dpnd_for_kwic} = 1;
+
+    # 環境変数のセット
+    $params{URI} = sprintf ("%s", $ENV{REQUEST_URI});
 
     $params{start} = 0;
     $params{logical_operator} = 'AND';

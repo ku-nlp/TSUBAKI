@@ -38,7 +38,12 @@ sub extract_sentences_from_standard_format {
     }
 
     my $content;
-    open(READER,"zcat $xmlfile |") or die "$!";
+    if ($opt->{z}) {
+	open(READER,"zcat $xmlfile |") or die "$!";
+    } else {
+	open(READER, $xmlfile) or die "$!";
+    }
+
     binmode(READER, ':utf8');
     while (<READER>) {
 	$content .= $_;
@@ -93,22 +98,85 @@ sub isMatch {
 
     return (0, -1, -1);
 }
+
+
+sub isMatch2 {
+    my ($listQ, $listS) = @_;
+
+    use Data::Dumper;
+#     print Dumper($listS) . "\n";
+#     print Dumper($listQ) . "\n";
+
+    my $start = -1;
+    my $end = -1;
+
+    foreach my $q_dpnd_repnames (@$listQ) {
+
+	my $notFound = 0;
+      OUT_OF_FOREACH:
+	foreach my $s_dpnd_repnames (@$listS) {
+	    $notFound = 0;
+	    foreach my $s_dpnd_repname (keys %$s_dpnd_repnames) {
+		if (exists $q_dpnd_repnames->{$s_dpnd_repname}) {
+
+		    # 一文中に同一の係り受け関係が複数個含まれていないことを仮定
+		    if ($start < 0) {
+			$start = $s_dpnd_repnames->{$s_dpnd_repname}->{kakarimoto};
+		    } else {
+			$start = $s_dpnd_repnames->{$s_dpnd_repname}->{kakarimoto} if ($start > $s_dpnd_repnames->{$s_dpnd_repname}->{kakarimoto});
+		    }
+
+		    if ($end < 0) {
+			$end = $s_dpnd_repnames->{$s_dpnd_repname}->{kakarisaki};
+		    } else {
+			$end = $s_dpnd_repnames->{$s_dpnd_repname}->{kakarisaki} if ($end < $s_dpnd_repnames->{$s_dpnd_repname}->{kakarisaki});
+		    }
+
+		    last OUT_OF_FOREACH;
+		}
+	    }
+	    $notFound = 1;
+	}
+
+	# 含まれていない係り受けがあった
+	if ($notFound) {
+	    return (0, -1, -1);
+	}
+    }
+    return (0, -1, -1) if ($start < 0 || $end < 0);
+
+    # クエリ中の全係り受けが文中に含まれていた
+    return (1, $start, $end + 1);
+}
+
     
 sub extract_sentences_from_content_for_kwic {
     my ($query, $content, $opt) = @_;
 
     my $sfdat = new StandardFormatData(\$content, $opt);
+
     my @sbuf;
     my $title = $sfdat->getTitle();
     my $queryString = $query->[$opt->{kwic_keyword_index}]{rawstring}; # kwic_keyword_index番目のqueryをkeywordとして用いる  (定義されていない場合は0番目、つまり初期クエリになる)
 
-    my ($repnameList_q, $surfList_q) = &makeMidasiAndRepnamesList($query->[$opt->{kwic_keyword_index}]{knp_result}->all(), $opt);
+    my ($repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q) = &makeMidasiAndRepnamesList($query->[$opt->{kwic_keyword_index}]{knp_result}->all(), $opt);
 
     my $sentences = $sfdat->getSentences();
     for (my $i = 0; $i < scalar(@$sentences); $i++) {
 	my $s = $sentences->[$i];
-	my ($repnameList_s, $surfList_s) = &makeMidasiAndRepnamesList($s->{annotation}, $opt);
+	my ($repnameList_s, $surfList_s, $repnameDpndList_s, $surfDpndList_s) = &makeMidasiAndRepnamesList($s->{annotation}, $opt);
 	my ($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch($repnameList_q, $repnameList_s) : &isMatch($surfList_q, $surfList_s);
+
+	# 単語レベルでダメなら係り受けでチェックする
+	if (!$flag && $opt->{use_of_dpnd_for_kwic}) {
+	    ($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch2($repnameDpndList_q, $repnameDpndList_s) : &isMatch2($surfDpndList_q, $surfDpndList_s);
+	    if ($flag && $opt->{debug}) {
+		print Dumper($repnameDpndList_q) . "\n";
+		print "-----\n";
+		print Dumper($repnameDpndList_s) . "\n";
+		print "=====\n";
+	    }
+	}
 
 	if ($flag) {
 	    my $keyword;
@@ -195,25 +263,6 @@ sub extract_sentences_from_content_for_kwic {
 			 InvertedContextL => $InvertedContextL
 		 });
 	}
-# 	if (my ($s->{rawstring} =~ /$queryString/) {
-# 	    my $contextL = "$`";
-# 	    my $contextR = "$'";
-# 	    next if ($contextL eq '' && $contextR eq '');
-
-# 	    $contextR = substr($contextR, 0, $opt->{kwic_window_size});
-
-# 	    my $offset = length($contextL) - $opt->{kwic_window_size};
-# 	    $offset = 0 if ($offset < 0);
-# 	    $contextL = substr($contextL, $offset, $opt->{kwic_window_size});
-
-# 	    my $InvertedContextL = reverse($contextL);
-# 	    push(@sbuf, {title => $title->{rawstring},
-# 			 rawstring => $s->{rawstring},
-# 			 contextR => $contextR,
-# 			 contextL => $contextL,
-# 			 InvertedContextL => $InvertedContextL
-# 		 });
-# 	}
     }
 
     return \@sbuf;
@@ -231,41 +280,99 @@ sub makeMidasiAndRepnamesList {
     }
     $knpresult = $buf if (defined $buf);
 
-
-    my @repnamesList;
     my @midasiList;
+    my @midasiDpndList;
+    my @repnameList;
+    my @repnameDpndList;
     my $knpresultObj = new KNP::Result($knpresult);
     if (defined $knpresultObj) {
+	# 各単語の出現位置を素性としてに付ける
+	my $p = 0;
 	foreach my $m ($knpresultObj->mrph) {
-	    my $midasi = &toUpperCase_utf8($m->midasi());
-	    my %repnames = ();
-	    foreach my $repname (split(/\?/, $m->repnames())) {
-		$repname =~ s/\/.+$// if ($opt->{ignore_yomi});
+	    my @f = ();
+	    push(@f, sprintf("出現位置:%d", $p++));
+	    $m->push_feature(@f);
+	}
 
-		$repnames{&toUpperCase_utf8($repname)} = 1;
-	    }
 
-	    # フレーズ検索の場合は動詞の活用を考慮する
-	    if ($opt->{use_of_katuyou_for_kwic}) {
-		if ($m->hinsi() eq '動詞') {
-		    my $katuyou = $m->katuyou1() . ":" . $m->katuyou2();
+	foreach my $self ($knpresultObj->tag) {
+	    my ($midasiL_self, $repnameL_self, $posL_self) = &getMidasiAndRepnames($self, $opt);
+	    push(@midasiList, @$midasiL_self);
+	    push(@repnameList, @$repnameL_self);
 
-		    $midasi .= ":$katuyou";
+	    my $kakarisaki = $self->parent();
+	    next unless (defined $kakarisaki);
 
-		    my %repnames_w_katuyou = ();
-		    foreach my $k (keys %repnames) {
-			$repnames_w_katuyou{$k . ":$katuyou"} = $repnames{$k};
-		    }
-		    %repnames = %repnames_w_katuyou;
+	    my ($midasiL_saki, $repnameL_saki, $posL_saki) = &getMidasiAndRepnames($kakarisaki, $opt);
+
+	    # 出現形について係り受けを生成
+	    foreach my $m_self (keys %{$midasiL_self->[0]}) {
+		my %midasiDpnds;
+		foreach my $m_saki (keys %{$midasiL_saki->[0]}) {
+		    my $dpnd = sprintf("%s->%s", $m_self, $m_saki);
+		    $midasiDpnds{$dpnd}->{kakarimoto} = $posL_self->[0];
+		    $midasiDpnds{$dpnd}->{kakarisaki} = $posL_saki->[0];
+
 		}
+		push(@midasiDpndList, \%midasiDpnds);
 	    }
 
-	    push(@midasiList, {$midasi => 1});
-	    push(@repnamesList, \%repnames);
+	    # 代表表記について係り受けを生成
+	    # 基本句には、先頭にのみ内容語が現れると仮定
+	    foreach my $r_self (keys %{$repnameL_self->[0]}) {
+		my %repnameDpnds;
+		foreach my $r_saki (keys %{$repnameL_saki->[0]}) {
+		    my $dpnd = sprintf("%s->%s", $r_self, $r_saki);
+		    $repnameDpnds{$dpnd}->{kakarimoto} = $posL_self->[0];
+		    $repnameDpnds{$dpnd}->{kakarisaki} = $posL_saki->[0];
+
+		}
+		push(@repnameDpndList, \%repnameDpnds);
+	    }
 	}
     }
 
-    return (\@repnamesList, \@midasiList);
+    return (\@repnameList, \@midasiList, \@repnameDpndList, \@midasiDpndList);
+}
+
+
+sub getMidasiAndRepnames {
+    my ($kihonku, $opt) = @_;
+
+    my @midasiL;
+    my @repnameL;
+    my @posL;
+    foreach my $m ($kihonku->mrph) {
+	my $midasi = &toUpperCase_utf8($m->midasi());
+	my ($pos) = ($m->fstring() =~ /出現位置:(\d+)/);
+
+	my %repnames = ();
+	foreach my $repname (split(/\?/, $m->repnames())) {
+	    $repname =~ s/\/.+$// if ($opt->{ignore_yomi});
+
+	    $repnames{&toUpperCase_utf8($repname)} = 1;
+	}
+
+	if ($opt->{use_of_katuyou_for_kwic}) {
+	    if ($m->hinsi() eq '動詞') {
+		my $katuyou = $m->katuyou1() . ":" . $m->katuyou2();
+
+		$midasi .= ":$katuyou";
+
+		my %repnames_w_katuyou = ();
+		foreach my $k (keys %repnames) {
+		    $repnames_w_katuyou{$k . ":$katuyou"} = $repnames{$k};
+		}
+		%repnames = %repnames_w_katuyou;
+	    }
+	}
+
+	push(@midasiL, {$midasi => 1});
+	push(@repnameL, \%repnames);
+	push(@posL, $pos);
+    }
+
+    return (\@midasiL, \@repnameL, \@posL);
 }
 
 

@@ -629,6 +629,7 @@ sub get_snippets {
 						kwic_window_size => $opt->{kwic_window_size},
 						use_of_repname_for_kwic => $opt->{use_of_repname_for_kwic},
 						use_of_katuyou_for_kwic => $opt->{use_of_katuyou_for_kwic},
+						use_of_dpnd_for_kwic => $opt->{use_of_dpnd_for_kwic},
 						debug => $opt->{debug}});
 
     if ($opt->{kwic}) {
