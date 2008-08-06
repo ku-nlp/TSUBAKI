@@ -2,6 +2,7 @@
 	width: 90%;
 	font-size: x-small;
 	margin: 0.25em 0em 0.25em 0em;
+	line-height: 1.35em;
 }
 
 DIV.meta{
@@ -17,8 +18,24 @@ DIV.pagenavi{
 	font-size: x-small
 }
 
-TABLE.querynavi {
-	font-size: x-small;
-	background-color:#f1f4ff;padding: 0.1em 0em;
-	margin: 0.15em 0em;
+#questionnaire {
+	font-size: 0.8em;
+	background-color: #ffffbb;
+	padding: 0.5em;
+	width: 24em;
+	height: 7em;
 }
+
+#questionnaire TR TD {
+	margin: 0px;
+	padding: 0px;
+}
+
+INPUT#message {
+	width: 17em;
+}
+
+INPUT#qbox {
+	width: 23em;
+}
+
