@@ -185,6 +185,7 @@ sub parseAPIRequest {
     $params->{'query'} =~ s/(?: | )+$//g;
 
     $params->{'logical_operator'} = $cgi->param('logical') if (defined($cgi->param('logical')));
+    $params->{'logical_operator'} = $cgi->param('logical_operator') if (defined($cgi->param('logical_operator')));
     $params->{'only_hitcount'} = $cgi->param('only_hitcount') if (defined($cgi->param('only_hitcount')));
     $params->{'force_dpnd'} = $cgi->param('force_dpnd') if (defined($cgi->param('force_dpnd')));
     $params->{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
