@@ -246,5 +246,8 @@ IGNORE_YOMI			1
 # テストモードとして起動するか(0: サービスモード, 1: テストモード)
 TEST_MODE	0
 
+# アンケート収集を行う場合は1, そうでない場合は0
+QUESTIONNAIRE		       0
+
 # アンケート収集CGIのアドレス
 QUESTIONNARIE_CGI	http://tsubaki.ixnlp.nii.ac.jp/questionnarie.cgi
