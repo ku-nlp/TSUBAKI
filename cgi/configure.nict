@@ -171,7 +171,7 @@ STANDARD_FORMAT_LOCATION	iccc141	47997,47998,47999	200,120,121,201,202,122
 ##################################################
 
 # 強調表示に用いる色
-HIGHLIGHT_COLOR		ffff66,a0ffff,99ff99,ff9999,ff66ff,880000,00aa00,886800,004699,990099;
+HIGHLIGHT_COLOR		ffffaa,ddffff,ddffdd,ffdddd,ffddff,dd0000,00dd00,dddd00,00dddd,dd00dd
 
 # ログファイル（★要変更）
 LOG_FILE_PATH		/share09/home/skeiji/public_html/cgi-bin/tsubaki/input.log
@@ -245,3 +245,6 @@ IGNORE_YOMI			1
 
 # テストモードとして起動するか(0: サービスモード, 1: テストモード)
 TEST_MODE	0
+
+# アンケート収集CGIのアドレス
+QUESTIONNARIE_CGI	http://tsubaki.ixnlp.nii.ac.jp/questionnarie.cgi
