@@ -52,6 +52,7 @@ sub getDefaultValues {
     $params{highlight} = ($call_from_API) ? 0 : 1;
     $params{develop_mode} = $CONFIG->{TEST_MODE};
     $params{disable_cache} = 0;
+    $params{disable_synnode} = 0;
 
     return \%params;
 }
@@ -137,7 +138,8 @@ sub parseCGIRequest {
 
     &normalize_logical_operator($params);
 
-    $params->{syngraph} = 1 if ($cgi->param('syngraph') || !$params->{develop_mode});
+    $params->{syngraph} = 1;
+    $params->{disable_synnode} = $cgi->param('disable_synnode');
 
     # クエリに制約(近接およびフレーズ)が指定されていなければ~100wをつける
     if ($params->{query} !~ /~/ && $params->{query} ne '' &&
@@ -188,7 +190,10 @@ sub parseAPIRequest {
     $params->{'logical_operator'} = $cgi->param('logical_operator') if (defined($cgi->param('logical_operator')));
     $params->{'only_hitcount'} = $cgi->param('only_hitcount') if (defined($cgi->param('only_hitcount')));
     $params->{'force_dpnd'} = $cgi->param('force_dpnd') if (defined($cgi->param('force_dpnd')));
-    $params->{'syngraph'} = $cgi->param('syngraph') if (defined($cgi->param('syngraph')));
+
+    $params->{'syngraph'} = 1;
+    $params->{'disable_synnode'} = ($cgi->param('syngraph') == 1) ? 0 : 1;
+
     $params->{'sort_by'} = $cgi->param('sort_by') if (defined($cgi->param('sort_by')));
     $params->{'near'} = $cgi->param('near') if (defined $cgi->param('near'));
     $params->{'filter_simpages'} = 0 if (defined $cgi->param('filter_simpages') &&  $cgi->param('filter_simpages') eq '0');
@@ -198,6 +203,7 @@ sub parseAPIRequest {
     $params->{antonym_and_negation_expansion} = (defined($cgi->param('antonym_and_negation_expansion'))) ? $cgi->param('antonym_and_negation_expansion') : 0;
     $params->{use_of_case_analysis} = 1 if (defined($cgi->param('use_of_case_analysis')));
     $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
+    $params->{query_filtering} = 1;
 
     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
     $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
@@ -289,7 +295,8 @@ sub parseQuery {
 	  trimming => 1,
 	  antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
 	  detect_requisite_dpnd => 1,
- 	  query_filtering => $params->{query_filtering}
+ 	  query_filtering => $params->{query_filtering},
+	  disable_synnode => $params->{disable_synnode}
 	});
 
     # 取得ページ数のセット
