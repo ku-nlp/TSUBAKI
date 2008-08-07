@@ -99,6 +99,10 @@ sub makeIndexfromSynGraph {
 		}
 
 
+		# SYNノードを利用しない場合
+		next if ($sid =~ /s\d+/ && $opt->{disable_synnode});
+
+
 		# 文法素性の削除
 		$features =~ s/<可能>//;
 		$features =~ s/<尊敬>//;

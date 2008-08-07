@@ -91,6 +91,7 @@ sub new {
 	$indice = $opt->{indexer}->makeIndexfromSynGraph($synresult, \@content_words,
  							 { use_of_syngraph_dependency => $CONFIG->{USE_OF_SYNGRAPH_DEPENDENCY},
  							   use_of_hypernym => $CONFIG->{USE_OF_HYPERNYM},
+ 							   disable_synnode => $opt->{disable_synnode},
 							   string_mode => 0,
  							   use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM},
 							   antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}
@@ -211,18 +212,18 @@ sub new {
 sub print_for_web {
     my ($this) = @_;
 
-    print qq(<H4>KNP解析結果(TREE)</H4>\n);
+    print qq(<H4 style="background-color:black; color: white;"><A name="knp">KNP解析結果(TREE)</A></H4>\n);
     print qq(<PRE class="knp_tree">\n);
     $this->{knp_result}->draw_tag_tree(<STDOUT>);
     print qq(</PRE>\n\n);
 
-    print qq(<H4>KNP解析結果(TAB)</H4>\n);
+    print qq(<H4 style="background-color:black; color: white;">KNP解析結果(TAB)</H4>\n);
     print qq(<PRE class="knp_tab">\n);
     print $this->{knp_result}->all_dynamic . "\n";
     print qq(</PRE>\n\n);
 
     if ($this->{syn_result}) {
-	print qq(<H4>SYNGRAPH解析結果</H4>\n);
+	print qq(<H4 style="background-color:black; color: white;"><A name="syngraph">SYNGRAPH解析結果</A></H4>\n);
 	my $ret = $this->{syn_result};
 	$ret =~ s/</&lt;/g;
 	print qq(<PRE class="syn">\n);
