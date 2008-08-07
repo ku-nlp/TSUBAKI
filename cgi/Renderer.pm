@@ -258,7 +258,7 @@ sub print_query_verbose {
 }
 
 sub print_tsubaki_interface {
-    my ($this, $params, $query) = @_;
+    my ($this, $params, $query, $status) = @_;
 
     my $canvasName = 'canvas';
     my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode();
@@ -432,12 +432,12 @@ END_OF_HTML
 
 	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
 	if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-	    print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL>";
+	    print "<LABEL><INPUT type=\"checkbox\" name=\"disable_synnode\" disabled></INPUT><FONT color=silver>同義表現を考慮しない</FONT></LABEL>";
 	} else {
-	    if ($params->{syngraph}) {
-		print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+	    if ($params->{disable_synnode}) {
+		print "<LABEL><INPUT type=\"checkbox\" name=\"disable_synnode\" checked></INPUT><FONT color=black>同義表現を考慮しない</FONT></LABEL>";
 	    } else {
-		print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+		print "<INPUT type=\"checkbox\" name=\"disable_synnode\"></INPUT><LABEL><FONT color=black>同義表現を考慮しない</FONT></LABEL>";
 	    }
 	}
 
@@ -462,7 +462,7 @@ END_OF_HTML
     print qq(</FORM>\n);
     print qq(</TD>\n);
 
-    if ($CONFIG->{QUESTIONNAIRE} || 1 > 0) {
+    if ($CONFIG->{QUESTIONNAIRE} && $status ne 'busy') {
 	print qq(<TD id="questionnairePane" align="right" style="padding-right:0.5em;">\n);
 	print qq(<FORM name="questionnarieForm" onsubmit="javascript:send_questionnarie();">);
 
@@ -563,12 +563,12 @@ my $host = `hostname`;
 
 	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
 	if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-	    print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" disabled></INPUT><FONT color=silver>同義表現を考慮する</FONT></LABEL>";
+	    print "<LABEL><INPUT type=\"checkbox\" name=\"disable_synnode\" disabled></INPUT><FONT color=silver>同義表現を考慮しない</FONT></LABEL>";
 	} else {
-	    if ($params->{syngraph}) {
-		print "<LABEL><INPUT type=\"checkbox\" name=\"syngraph\" checked></INPUT><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+	    if ($params->{disable_synnode}) {
+		print "<LABEL><INPUT type=\"checkbox\" name=\"disable_synnode\" checked></INPUT><FONT color=black>同義表現を考慮しない</FONT></LABEL>";
 	    } else {
-		print "<INPUT type=\"checkbox\" name=\"syngraph\"></INPUT><LABEL><FONT color=black>同義表現を考慮する</FONT></LABEL>";
+		print "<INPUT type=\"checkbox\" name=\"disable_synnode\"></INPUT><LABEL><FONT color=black>同義表現を考慮しない</FONT></LABEL>";
 	    }
 	}
 
@@ -705,7 +705,7 @@ sub printSearchResultForBrowserAccess {
     ##########################
     # ロゴ、検索フォームの表示
     ##########################
-    $this->print_tsubaki_interface($params, $query);
+    $this->print_tsubaki_interface($params, $query, $status);
 
 
     my $size = scalar(@$results);
