@@ -268,19 +268,50 @@ sub print_tsubaki_interface {
 	<head>
 	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="http://tsubaki.ixnlp.nii.ac.jp/tsubaki.common.css">
+	<link rel="stylesheet" type="text/css" href="tsubaki.common.css">
 	<script language="JavaScript">
 	var regexp = new RegExp("Gecko");
     if (navigator.userAgent.match(regexp)) {
-	document.write("<LINK rel='stylesheet' type='text/css' href='http://tsubaki.ixnlp.nii.ac.jp/tsubaki.gecko.css'>");
+	document.write("<LINK rel='stylesheet' type='text/css' href='tsubaki.gecko.css'>");
     } else {
-	document.write("<LINK rel='stylesheet' type='text/css' href='http://tsubaki.ixnlp.nii.ac.jp/tsubaki.ie.css'>");
+	document.write("<LINK rel='stylesheet' type='text/css' href='tsubaki.ie.css'>");
     }
 
 	</script>
 	<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
 	<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
 	<script language="JavaScript">
+
+function send_questionnarie () {
+    var q = document.search.qbox.value;
+    var question = -1;
+    for (var i = 0; i < document.questionnarieForm.question.length; i++) {
+	if (document.questionnarieForm.question[i].checked) {
+	    question = document.questionnarieForm.question[i].value;
+	}
+    }
+    var msg = document.questionnarieForm.message.value;
+
+    var param = "q=" + q + "&question=" + question + "&msg=" + msg;
+    var myAjax = new Ajax.Request(
+	"$CONFIG->{QUESTIONNARIE_CGI}", 
+	{
+	  method: 'get', 
+	  parameters: param, 
+	  onComplete: complete
+	});
+
+}
+
+function complete (originalRequest) {
+    var pane = document.getElementById('questionnaire');
+    if (Prototype.Browser.IE) {
+	alert("アンケート結果を送信しました。ご協力有難うございました。");
+    } else {
+	pane.innerHTML = "<TR><TD align='center'>アンケート結果を送信しました。<BR>ご協力有難うございました。</TD></TR>";
+    }
+}
+
 
 function toggle_simpage_view (id, obj, open_label, close_label) {
     var disp = document.getElementById(id).style.display;
@@ -306,7 +337,6 @@ END_OF_HTML
     var jg;
 function init () { 
     jg = new jsGraphics($canvasName);
-
 END_OF_HTML
 
     for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
@@ -377,7 +407,7 @@ END_OF_HTML
     print qq(<TD width="*" align="left" valign="middle" style="border: 0px solid red; padding-top: 1em;">\n);
     print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data">\n);
     print qq(<INPUT type="hidden" name="start" value="0">\n);
-    print qq(<INPUT type="text" name="q" value="$params->{'query'}" size="70">\n);
+    print qq(<INPUT type="text" id=\"qbox\" name="q" value="$params->{'query'}" size="60">\n);
     print qq(<INPUT type="submit"name="送信" value="検索する"/>\n);
     print qq(<INPUT type="button"name="clear" value="クリア" onclick="document.all.INPUT.value=''"/>\n);
 
@@ -430,7 +460,29 @@ END_OF_HTML
     }
    
     print qq(</FORM>\n);
-    print qq(</TD></TR></TABLE>\n);
+    print qq(</TD>\n);
+
+    if ($CONFIG->{QUESTIONNAIRE} || 1 > 0) {
+	print qq(<TD id="questionnairePane" align="right" style="padding-right:0.5em;">\n);
+	print qq(<FORM name="questionnarieForm" onsubmit="javascript:send_questionnarie();">);
+
+	print qq(<TABLE id="questionnaire" border="0"><TR><TD nowrap style="color: red; font-weight: bold; padding-bottom:0.3em;">アンケートにご協力下さい。</TD>);
+	print qq(<TD align="right"><INPUT type="button" value="送信" style="margin-left: 1em;" onClick="javascript:send_questionnarie();"></TD></TR>);
+	print qq(<TR><TD nowrap>);
+	
+	print qq(・質問に対して良い検索結果ですか？</TD><TD align="right">);
+	print qq(<LABEL><INPUT type="radio" name="question" value="1">YES</LABEL>);
+	print qq(<LABEL><INPUT type="radio" name="question" value="0">NO</LABEL></TD></TR>);
+
+	print qq(<TR><TD colspan="2">);
+	print qq(・自由記述　);
+	print qq(<INPUT size="42" id="message" type="text">);
+	print qq(</TD></TR></TABLE>);
+
+	print qq(</FORM>);
+	print qq(</TD>\n);
+    }
+    print qq(</TR></TABLE>\n);
 
     print "<CENTER>\n";
     print ("<FONT color='red'>$CONFIG->{MESSAGE}</FONT>\n") if ($CONFIG->{MESSAGE});
@@ -486,7 +538,7 @@ my $host = `hostname`;
     # フォーム出力
     print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
     print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
-    print "<INPUT type=\"text\" name=\"q\" value=\'$params->{'query'}\' size=\"90\">\n";
+    print "<INPUT type=\"text\" id=\"qbox\" name=\"q\" value=\'$params->{'query'}\' size=\"90\">\n";
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
     print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.q.value=''\"/>\n";
 
