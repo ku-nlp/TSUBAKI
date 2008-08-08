@@ -51,6 +51,7 @@ sub getDefaultValues {
     $params{flag_of_anchor_use} = ($call_from_API) ? 1 : 1;
     $params{highlight} = ($call_from_API) ? 0 : 1;
     $params{develop_mode} = $CONFIG->{TEST_MODE};
+    $params{antonym_and_negation_expansion} = 0;
     $params{disable_cache} = 0;
     $params{disable_synnode} = 0;
 
