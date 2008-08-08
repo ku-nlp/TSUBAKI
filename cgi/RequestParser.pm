@@ -139,7 +139,7 @@ sub parseCGIRequest {
     &normalize_logical_operator($params);
 
     $params->{syngraph} = 1;
-    $params->{disable_synnode} = $cgi->param('disable_synnode');
+    $params->{disable_synnode} = ($cgi->param('disable_synnode') eq 'on') ? 1 : 0;
 
     # クエリに制約(近接およびフレーズ)が指定されていなければ~100wをつける
     if ($params->{query} !~ /~/ && $params->{query} ne '' &&

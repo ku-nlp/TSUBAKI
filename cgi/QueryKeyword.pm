@@ -27,7 +27,8 @@ sub new {
 	force_dpnd => $force_dpnd,
 	logical_cond_qkw => $logical_cond_qkw,
 	rawstring => $string,
-	syngraph => $syngraph
+	syngraph => $syngraph,
+	disable_synnode => $opt->{disable_synnode}
     };
 
     unless ($string) {
