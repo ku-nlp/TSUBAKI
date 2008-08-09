@@ -59,7 +59,7 @@ sub new {
 	foreach my $word (split(/;/,  $reps)) {
 	    next unless ($word);
 
-	    if ($word =~ /^s\d+/) {
+	    if ($word =~ /^s\d+/ || $word =~ /\+/) {
 		foreach my $synonym (split('\|', decode('utf8', $synonyms{$word}))) {
 		    # 読みの削除
 		    if ($synonym =~ m!^([^/]+)/!) {
@@ -68,6 +68,8 @@ sub new {
 
 		    # 情報源を削除
 		    $synonym =~ s/\[.+?\]//;
+
+		    $word =~ s/\+//g;
 
 		    $synonym =~ s/<[^>]+>//g;
 		    push(@patterns, {key => $synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$synonym<\/span>)});
@@ -103,7 +105,7 @@ sub new {
 		my $fpath = ($1 eq 'link' || $1 eq 'a') ? $token->[2]{href} : $token->[2]{src};
  		if ($fpath) {
  		    my $furl = &convertURL($url, $fpath);
-		    $token->[6] =~ s/$fpath/$furl/;
+		    $token->[6] =~ s/\Q$fpath\E/$furl/;
  		}
 		$buf .= $token->[6];
 	    }
@@ -126,7 +128,7 @@ sub new {
 		    if (index($text, $p->{key}) > -1) {
 			my $k = $p->{key};
 			my $r = $p->{regexp};
-			$text =~ s/$k/$r/ig;
+			$text =~ s/\Q$k\E/$r/ig;
 		    }
 		}
 	    }
