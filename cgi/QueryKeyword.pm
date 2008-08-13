@@ -210,6 +210,7 @@ sub new {
     bless $this;
 }
 
+
 sub print_for_web {
     my ($this) = @_;
 
@@ -217,6 +218,7 @@ sub print_for_web {
     print qq(<PRE class="knp_tree">\n);
     $this->{knp_result}->draw_tag_tree(<STDOUT>);
     print qq(</PRE>\n\n);
+
 
     print qq(<H4 style="background-color:black; color: white;">KNP解析結果(TAB)</H4>\n);
     print qq(<PRE class="knp_tab">\n);
@@ -231,8 +233,61 @@ sub print_for_web {
 	print $ret . "\n";
 	print qq(</PRE>\n\n);
     }
-}
 
+
+    my $count = 0;
+    my @colors = ('white', '#efefef');
+    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.mod.cdb\n";
+
+    printf(qq(<H4 style="background-color:black; color: white;"><A name="query">クエリの解析結果</A></H4>\n));
+    print qq(<TABLE border="1" width="100%">\n);
+    foreach my $T ('words', 'dpnds') {
+	foreach my $reps (@{$this->{$T}}) {
+	    my $flag = ($reps->[0]{requisite}) ? '<FONT color="red">必</FONT>' : (($reps->[0]{optional}) ? '<FONT color="blue">オ</FONT>' : '?');
+	    my $size = scalar(@$reps);
+
+	    my $first = 1;
+	    foreach my $rep (@$reps) {
+		my $gid = $rep->{gid};
+		my $qid = $rep->{qid};
+		my $gdf = $rep->{gdf};
+		my $qtf = $rep->{qtf};
+		my $str = $rep->{string};
+
+		if ($flag) {
+		    printf qq(<TR bgcolor="%s"><TD align="center" rowspan="$size">%s</TD>), $colors[++$count % 2], $flag;
+		    $flag = 0;
+		} else {
+		    printf qq(<TR bgcolor="%s">), $colors[$count % 2];
+		}
+
+		if ($this->{syn_result}) {
+		    my @synonymous_exps = split(/\|+/, decode('utf8', $synonyms{$str}));
+		    unshift (@synonymous_exps, '<BR>') if (scalar(@synonymous_exps) < 1);
+
+		    printf("<TD width=10%>%s</TD><TD width=10%>gid=%s</TD><TD width=10%>qid=%s</TD><TD width=10%>gdf=%.2f</TD><TD width=10%>qtf=%.2f</TD><TD width=*>%s</TD></TR>\n",
+			   $str,
+			   $gid,
+			   $qid,
+			   $gdf,
+			   $qtf,
+			   join("<BR>\n", @synonymous_exps)
+			);
+		} else {
+		    printf(qq(<TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%.3f</TD><TD>%.3f</TD><TD>%.3f</TD><TD>???</TD></TR>\n),
+			   $str,
+			   $qid,
+			   $str,
+			   $gdf,
+			   $qtf);
+		}
+	    }
+	}
+    }
+
+    print "</TABLE>\n";
+    untie %synonyms;
+}
 
 sub print_for_XML {
     my ($this) = @_;
