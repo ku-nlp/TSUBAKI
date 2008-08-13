@@ -142,7 +142,8 @@ sub parse {
 
     ## 空白で区切る
     # $qks_str =~ s/ /　/g;
-    foreach my $q_str (split(/(?: |　)+/, $qks_str)) {
+    my $delim = ($opt->{use_of_Zwhitespace_as_delimiter}) ? "(?: |　)+" : "(?: )";
+    foreach my $q_str (split(/$delim/, $qks_str)) {
 	my $near = $opt->{near};
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
 	my $keep_order = 1;
@@ -277,6 +278,7 @@ sub parse {
 
 		$rep->{qid} = $qid;
 		$rep->{df} = $qid2df{$qid};
+		$rep->{gdf} = $qid2df{$qid};
 
 		if ($rep->{isBasicNode}) {
 		    $gid2df{$rep->{gid}} = $rep->{df};
@@ -312,6 +314,7 @@ sub parse {
 		$qid2qtf{$qid} = $rep->{freq};
 
 		$rep->{qid} = $qid;
+		$rep->{gdf} = $qid2df{$qid};
 		$rep->{df} = $qid2df{$qid};
 
 		push(@{$gid2qids{$rep->{gid}}}, $qid);
