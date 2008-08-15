@@ -257,19 +257,11 @@ sub print_query_verbose {
     untie %$synonyms if (defined $synonyms);
 }
 
-sub print_tsubaki_interface {
-    my ($this, $params, $query, $status) = @_;
-
-    my $canvasName = 'canvas';
-    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode();
+sub printJavascriptCode {
+    my ($canvasName, $query) = @_;
 
     print << "END_OF_HTML";
-    <html>
-	<head>
-	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="tsubaki.common.css">
-	<script language="JavaScript">
+    <script language="JavaScript">
 	var regexp = new RegExp("Gecko");
     if (navigator.userAgent.match(regexp)) {
 	document.write("<LINK rel='stylesheet' type='text/css' href='tsubaki.gecko.css'>");
@@ -277,67 +269,16 @@ sub print_tsubaki_interface {
 	document.write("<LINK rel='stylesheet' type='text/css' href='tsubaki.ie.css'>");
     }
 
-	</script>
-	<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
-	<script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
-	<script language="JavaScript">
-
-function send_questionnarie () {
-    var q = document.search.qbox.value;
-    var question = -1;
-    for (var i = 0; i < document.questionnarieForm.question.length; i++) {
-	if (document.questionnarieForm.question[i].checked) {
-	    question = document.questionnarieForm.question[i].value;
-	}
-    }
-    var msg = document.questionnarieForm.message.value;
-
-    var param = "q=" + q + "&question=" + question + "&msg=" + msg;
-    var myAjax = new Ajax.Request(
-	"$CONFIG->{QUESTIONNARIE_CGI}", 
-	{
-	  method: 'get', 
-	  parameters: param, 
-	  onComplete: complete
-	});
-
-}
-
-function complete (originalRequest) {
-    var pane = document.getElementById('questionnaire');
-    if (Prototype.Browser.IE) {
-	alert("アンケート結果を送信しました。ご協力有難うございました。");
-    } else {
-	pane.innerHTML = "<TR><TD align='center'>アンケート結果を送信しました。<BR>ご協力有難うございました。</TD></TR>";
-    }
-}
-
-
-function toggle_simpage_view (id, obj, open_label, close_label) {
-    var disp = document.getElementById(id).style.display;
-    if (disp == "block") {
-        document.getElementById(id).style.display = "none";
-        obj.innerHTML = open_label;
-    } else {
-        document.getElementById(id).style.display = "block";
-        obj.innerHTML = close_label;
-    }
-}
-
-function hide_query_result () {
-    var baroon = document.getElementById("baroon");
-    baroon.style.display = "none";
-}
-
+    </script>
+    <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
+    <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
+    <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
+    <script language="JavaScript">
 END_OF_HTML
 
-
-
-    print << "END_OF_HTML";
-    var jg;
-function init () { 
-    jg = new jsGraphics($canvasName);
-END_OF_HTML
+print "var jg;\n";
+    print "function init () {\n";
+    print "jg = new jsGraphics($canvasName);\n";
 
     for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
 	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", $i;
@@ -366,10 +307,25 @@ END_OF_HTML
 	print $jscode;
 	print "}\n";
     }
+    print "</script>\n";
+}
+
+sub print_tsubaki_interface {
+    my ($this, $params, $query, $status) = @_;
+
+    my $canvasName = 'canvas';
+    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode();
 
     print << "END_OF_HTML";
-    </script>
-	</head>
+    <html>
+	<head>
+	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<link rel="stylesheet" type="text/css" href="tsubaki.common.css">
+END_OF_HTML
+    &printJavascriptCode('canvas', $query);
+    print << "END_OF_HTML";
+    </head>
 	<body style="padding: 0em; margin:0em; z-index:1;" onload="javascript:init();">
 	  <TABLE cellpadding="0" cellspacing="0" border="0" id="baroon" style="display: none; z-index: 10; position: absolute; top: 100; left: 100;">
 	    <TR>
@@ -505,19 +461,7 @@ sub print_tsubaki_interface_init {
 	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.ie.css'>");
     }
 	</script>
-	<script language="JavaScript">
-function toggle_simpage_view (id, obj, open_label, close_label) {
-    var disp = document.getElementById(id).style.display;
-    if (disp == "block") {
-        document.getElementById(id).style.display = "none";
-        obj.innerHTML = open_label;
-    } else {
-        document.getElementById(id).style.display = "block";
-        obj.innerHTML = close_label;
-    }
-}
-
-</script>
+	<script type="text/javascript" src="http://nlpc06.ixnlp.nii.ac.jp/./tsubaki.js"></script>
 	</head>
 	<body style="margin:0em;">
 END_OF_HTML
