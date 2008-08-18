@@ -158,11 +158,11 @@ sub parse {
 
 	    # 同義表現を考慮したフレーズ検索はできない
 	    if ($opt->{syngraph} > 0) {
-		print "<center>同義表現を考慮したフレーズ検索は実行できません。</center></DIV>\n";
-		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
-		print "</body>\n";
-		print "</html>\n";
-		exit;
+# 		print "<center>同義表現を考慮したフレーズ検索は実行できません。</center></DIV>\n";
+# 		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
+# 		print "</body>\n";
+# 		print "</html>\n";
+#		exit;
 	    }
 	}
 
@@ -201,6 +201,15 @@ sub parse {
 
 	## 半角アスキー文字列を全角に置換する
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
+
+	$q_str =~ s/－/−/g; # FULLWIDTH HYPHEN-MINUS (U+ff0d) -> MINUS SIGN (U+2212)
+	$q_str =~ s/～/〜/g; # FULLWIDTH TILDE (U+ff5e) -> WAVE DASH (U+301c)
+	$q_str =~ s/∥/‖/g; # PARALLEL TO (U+2225) -> DOUBLE VERTICAL LINE (U+2016)
+	$q_str =~ s/￠/¢/g;  # FULLWIDTH CENT SIGN (U+ffe0) -> CENT SIGN (U+00a2)
+	$q_str =~ s/￡/£/g;  # FULLWIDTH POUND SIGN (U+ffe1) -> POUND SIGN (U+00a3)
+	$q_str =~ s/￢/¬/g;  # FULLWIDTH NOT SIGN (U+ffe2) -> NOT SIGN (U+00ac)
+	$q_str =~ s/—/―/g; # EM DASH (U+2014) -> HORIZONTAL BAR (U+2015)
+	$q_str =~ s/¥/￥/g;  # YEN SIGN (U+00a5) -> FULLWIDTH YEN SIGN (U+ffe5)
 
 	my $q;
 	if ($opt->{syngraph} > 0) {
