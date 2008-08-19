@@ -76,6 +76,7 @@ sub search {
 	my $state = new State();
 	if ($CONFIG->{DISABLE_REQUEST_SCHEDULING} || $state->checkIn()) {
 	    $result = $this->broadcastSearch($query, $logger, $opt);
+
 	    $cache->save($query, $result) unless ($opt->{disable_cache});
 	    $logger->setParameterAs('IS_CACHE', 0);
 	    $state->checkOut();
@@ -107,6 +108,7 @@ sub get_DF {
 sub broadcastSearch {
     my($this, $query, $logger, $opt) = @_;
 
+    # $opt->{debug} = 1;
     # $logger->clearTimer();
 
     # 検索クエリの送信
@@ -117,7 +119,7 @@ sub broadcastSearch {
 	    PeerPort => $this->{hosts}->[$i]->{port},
 	    Proto    => 'tcp' );
 
-	# print $this->{hosts}[$i]{name} . " " . $this->{hosts}[$i]{port} . "<BR>\n";
+	print "send query to " . $this->{hosts}[$i]{name} . ":" . $this->{hosts}[$i]{port} . "<BR>\n" if ($opt->{debug});
 	$selecter->add($socket) or die "Cannot connect to the server $this->{hosts}->[$i]->{name}:$this->{hosts}->[$i]->{port}. $!\n";
 	
  	# 検索クエリの送信
@@ -185,6 +187,7 @@ sub broadcastSearch {
 		}
 		if (defined($buff)) {
 		    $docs = Storable::thaw(decode_base64($buff));
+		    print $docs->[0]{host} . " is returned.<BR>\n" if ($opt->{debug});
 		    push(@results, $docs);
 		}
 	    }
@@ -195,6 +198,9 @@ sub broadcastSearch {
 	}
     }
     $logger->setTimeAs('get_result_from_server', '%.3f');
+    if ($opt->{debug}) {
+	print "finish to harvest search results (" . $logger->getParameter('get_result_from_server') . " sec.)\n";
+    }
 
     # 検索スレーブサーバー側でのログをセット
     my $size = scalar(@results);
@@ -208,6 +214,7 @@ sub broadcastSearch {
     
     # 検索に要した時間をロギング
     $logger->setParameterAs('search', $logger->getParameter('send_query_to_server') + $logger->getParameter('get_result_from_server'));
+
 
     # 受信した結果を揃える
     @results = sort {$b->[0]{score_total} <=> $a->[0]{score_total}} @results;
