@@ -179,9 +179,11 @@ sub parseAPIRequest {
     my $recievedString = $cgi->param('query') if ($cgi->param('query'));
     my $encoding = guess_encoding($recievedString, qw/ascii euc-jp shiftjis 7bit-jis utf8/); # range
     unless ($encoding =~ /utf8/) {
-	require Renderer;
-	Renderer::printErrorMessage($cgi, 'queryの値はutf8でエンコードした文字列を指定して下さい。');
-	exit(1);
+	unless ($recievedString =~ /^(\p{Latin}|\p{Common})+$/) {
+	    require Renderer;
+	    Renderer::printErrorMessage($cgi, 'queryの値はutf8でエンコードした文字列を指定して下さい。');
+	    exit(1);
+	}
     }
 
     $params->{'query'} = decode('utf8', $recievedString);
