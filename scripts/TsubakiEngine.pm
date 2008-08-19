@@ -153,9 +153,29 @@ sub retrieve_from_dat {
     my @results;
 
     for (my $i = 0; $i < scalar(@{$reps}); $i++) {
-	# rep は構造体
-	# rep = {qid, string}
 	my $rep = $reps->[$i];
+
+	# ------------
+	# rep は構造体
+	# ------------
+
+	# 'NE' => '<NE:PERSON:宮部みゆき>'
+	# 'df' => 1662
+	# 'freq' => 1
+	# 'fstring' => '<疑似代表表記><代表表記:宮部/みやべ><正規化代表表記:宮部/みやべ><文頭><漢字><かな漢字><名詞相当語><自立><内容語><タグ単位始><文節始><固有キー><NE:PERSON:head>'
+	# 'gdf' => 1662
+	# 'gid' => 0.0
+	# 'isBasicNode' => 1
+	# 'isContentWord' => 1
+	# 'optional' => 0
+	# 'qid' => 0
+	# 'question_type' => undef
+	# 'requisite' => 1
+	# 'string' => '宮部+みゆき'
+	# 'stylesheet' => 'background-color: ffffaa; color: black; margin:0.1em 0.25em;'
+	# 'surf' => '宮部みゆきの'
+	# 'weight' => 1
+
 
 	# $retriever->search($rep, $doc_buff, $add_flag, $position);
 	# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
@@ -470,7 +490,7 @@ sub retrieve_documents {
 
 
 	# 近接制約の適用
-	if ($keyword->{near}) {
+	if ($keyword->{near} > 0) {
 	    $requisite_docs_word = &intersect($requisite_docs_word, {verbose => $this->{verbose}});
 	    $requisite_docs_word = $this->filter_by_NEAR_constraint($requisite_docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
 	}
@@ -498,20 +518,39 @@ sub retrieve_documents {
 	}
 
 
-	foreach my $docs (@$optionals) {
-	    next unless (defined $docs->[0]);
-
-	    if (exists $dpnd_qids{$docs->[0]{qid_freq}[0]{qid}}) {
-		push(@$dpnd_docs, $docs);
-	    } else {
-		push(@$word_docs, $docs);
-	    }
-	}
-
-
-	# 検索単語間の論理条件を適用
 	if ($keyword->{logical_cond_qkw} =~ /AND/) {
-	    $word_docs = &intersect($word_docs, {verbose => $this->{verbose}});
+	    # 必須のついた文書IDを取得
+	    my %req_ids = ();
+	    if (defined $requisites->[0]) {
+		foreach my $d (@{$requisites->[0]}) {
+		    $req_ids{$d->{did}} = 1;
+		}
+	    }
+
+	    foreach my $docs (@$optionals) {
+		next unless (defined $docs->[0]);
+
+		my @dbuf = ();
+		foreach my $d (@$docs) {
+		    push(@dbuf, $d) if (exists $req_ids{$d->{did}});
+		}
+
+		if (exists $dpnd_qids{$docs->[0]{qid_freq}[0]{qid}}) {
+		    push (@$dpnd_docs, \@dbuf);
+		} else {
+		    push (@$word_docs, \@dbuf);
+		}
+	    }
+	} else {
+	    foreach my $docs (@$optionals) {
+		next unless (defined $docs->[0]);
+
+		if (exists $dpnd_qids{$docs->[0]{qid_freq}[0]{qid}}) {
+		    push(@$dpnd_docs, $docs);
+		} else {
+		    push(@$word_docs, $docs);
+		}
+	    }
 	}
 
 
