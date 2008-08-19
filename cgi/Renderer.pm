@@ -27,8 +27,8 @@ sub new {
 sub DESTROY {
     my ($this) = @_;
 
-    if (defined $this->{SNYONYM_DB}) {
-	untie %$this->{SNYONYM_DB};
+    if (defined $this->{SYNONYM_DB}) {
+	untie %$this->{SYNONYM_DB};
     }
 }
 
