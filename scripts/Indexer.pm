@@ -51,6 +51,7 @@ sub makeIndexfromSynGraph {
     my $first = 0;
     my $surf;
     my %lastBnstIds = ();
+    my $NE_flag = undef;
     foreach my $line (split(/\n/, $syngraph)) {
 	if ($line =~ /^!! /) {
 	    my ($dumy, $id, $kakari, $midasi) = split(/ /, $line);
@@ -121,13 +122,9 @@ sub makeIndexfromSynGraph {
 		    grpId => $bnstId,
 		    fstring => $fstring,
 		    pos => $pos,
-		    NE => undef,
+		    NE => $NE_flag,
 		    question_type => undef,
 		    absolute_pos => []};
-
-		if ($knpbuf =~ /(<NE:.+?>)/) {
-		    $syn_node->{NE} = $1;
-		}
 
 		my $buf = $knpbuf;
 		if ($buf =~ /(<[^>]+型>)/) {
@@ -139,8 +136,11 @@ sub makeIndexfromSynGraph {
 
 		push(@{$synNodes{$bnstId}}, $syn_node);
 		$lastBnstIds{$bnstId} = 1;
+		$NE_flag = undef;
 	    }
 	} elsif ($line =~ /^\+ /) {
+	    ($NE_flag) = ($line =~ /(<NE.+?>)/);
+
 	    $first = 1 if ($knpbuf =~ /(<[^>]+型>)/);
 	    $knpbuf = '';
 	} elsif ($line =~ /^\* /) {
@@ -238,7 +238,7 @@ sub makeIndexfromSynGraph {
 	    $freq[-1]->{group_id} = $groupId;
 	    $freq[-1]->{midasi} = $synNode->{midasi};
 	    $freq[-1]->{isContentWord} = 1;
-	    $freq[-1]->{NE} = $synNode->{NE} if ($synNode->{NE});
+	    $freq[-1]->{NE} = $synNode->{NE};
 	    $freq[-1]->{question_type} = $synNode->{question_type} if ($synNode->{question_type});
 #	    $freq[-1]->{isBasicNode} = 1 if ($synNode->{midasi} !~ /s\d+/ && $synNode->{midasi} !~ /<[^>]+>/);
 	    $freq[-1]->{isBasicNode} = 1 if ($synNode->{midasi} !~ /s\d+/);
