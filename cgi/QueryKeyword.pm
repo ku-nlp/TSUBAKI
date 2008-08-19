@@ -28,6 +28,7 @@ sub new {
 	logical_cond_qkw => $logical_cond_qkw,
 	rawstring => $string,
 	syngraph => $syngraph,
+	disable_dpnd => $opt->{disable_dpnd},
 	disable_synnode => $opt->{disable_synnode}
     };
 
@@ -53,7 +54,6 @@ sub new {
 	print "Can't parse the query: $string<BR>\n";
 	exit;
     }
-
 
     if ($opt->{trimming}) {
 	require QueryTrimmer;
@@ -131,12 +131,14 @@ sub new {
 	    next if ($m->{isContentWord} < 1 && $this->{is_phrasal_search} < 0);
 
 	    if ($m->{midasi} =~ /\-\>/) {
+		next if ($opt->{disable_dpnd});
+
 		my $flag = (exists $requisites->{$m->{midasi}} || exists $fbuf{$group_id}) ? 1 : 0;
 		$fbuf{$group_id} = 1 if ($flag);
 
 		# 係り元、係り先ともにNE内ならば必須
-		$flag = 1 if ($m->{kakarimoto_fstring} =~ /<NE:/ &&
-			      $m->{kakarisaki_fstring} =~ /<NE:/);
+		$flag = 1 if ($m->{kakarimoto_fstring} =~ /<NE/ &&
+			      $m->{kakarisaki_fstring} =~ /<NE/);
 
 		$flag = 0 if ($this->{logical_cond_qkw} eq 'OR');
 
@@ -153,6 +155,7 @@ sub new {
 	    } else {
 		my $flag = (exists $removalItemGids{$group_id}) ? 1 : 0;
 
+		$flag = 1 if ($m->{fstring} =~ /固有表現を修飾/);
 		$flag = 1 if ($this->{logical_cond_qkw} eq 'OR');
 
 		push(@word_reps, {
@@ -182,20 +185,22 @@ sub new {
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
     }
 
-    my $gid = 1000;
-    foreach my $i (keys %$additionalItems) {
-	my @a;
-	push (@a, {string => $i,
-		   gid => $gid++,
-		   qid => -1,
-		   weight => 1,
-		   freq => 1,
-		   requisite => 0,
-		   optional => 1,
-		   isContentWord => 1,
-		   isBasicNode => 1
-	      });
-	push(@{$this->{dpnds}}, \@a);
+    unless ($opt->{disable_dpnd}) {
+	my $gid = 1000;
+	foreach my $i (keys %$additionalItems) {
+	    my @a;
+	    push (@a, {string => $i,
+		       gid => $gid++,
+		       qid => -1,
+		       weight => 1,
+		       freq => 1,
+		       requisite => 0,
+		       optional => 1,
+		       isContentWord => 1,
+		       isBasicNode => 1
+		  });
+	    push(@{$this->{dpnds}}, \@a);
+	}
     }
 
 #     文レベルでの近接制約でない場合は、キーワード内の形態素数を考慮する
@@ -255,7 +260,11 @@ sub print_for_web {
 		my $str = $rep->{string};
 
 		if ($flag) {
-		    printf qq(<TR bgcolor="%s"><TD align="center" rowspan="$size">%s</TD>), $colors[++$count % 2], $flag;
+		    my $NE = ($rep->{NE}) ? $rep->{NE} : '--';
+		    $NE =~ s/</&lt;/g;
+		    printf qq(<TR bgcolor="%s">), $colors[++$count % 2];
+		    printf qq(<TD align="center" rowspan="$size">%s</TD>), $flag;
+		    printf qq(<TD align="center" rowspan="$size">%s</TD>), $NE;
 		    $flag = 0;
 		} else {
 		    printf qq(<TR bgcolor="%s">), $colors[$count % 2];
