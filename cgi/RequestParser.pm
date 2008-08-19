@@ -11,6 +11,7 @@ use utf8;
 use Encode;
 use Configure;
 use Encode::Guess;
+use Dumper;
 
 
 my $CONFIG = Configure::get_instance();
@@ -276,7 +277,6 @@ sub parseQuery {
 				     debug => $params->{debug}
 				   });
 
-
     if ($params->{debug}) {
 	while (my ($k, $v) = each %$q_parser) {
 	    if ($k eq 'INDEXER' || $k eq 'KNP') {
@@ -293,10 +293,11 @@ sub parseQuery {
 	{ logical_cond_qk => $params->{logical_operator},
 	  syngraph => $params->{syngraph},
 	  near => $params->{near},
-	  trimming => 1,
+	  trimming => $params->{trimming},
 	  antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
-	  detect_requisite_dpnd => 1,
+	  detect_requisite_dpnd => $params->{detect_requisite_dpnd},
  	  query_filtering => $params->{query_filtering},
+	  disable_dpnd => $params->{disable_dpnd},
 	  disable_synnode => $params->{disable_synnode}
 	});
 
@@ -314,6 +315,7 @@ sub parseQuery {
     my $alpha = ($query->{results} > 5000) ? 1.5 : 30 * ($query->{results}**(-0.34));
     my $M = $query->{results} / $N;
     $query->{results} = int(1 + $M * $alpha);
+    $query->{results} = 1000 if ($CONFIG->{NTCIR_MODE});
     $logger->setParameterAs('request_results_for_slave_server', $query->{results}) if ($logger);
 
     # 係り受けと近接のスコアを考慮するようにする
