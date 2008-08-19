@@ -10,19 +10,24 @@ use SearchEngine;
 use Configure;
 use URI::Escape qw(uri_escape);
 use SnippetMakerAgent;
-
+use Error qw(:try);
 
 our $CONFIG = Configure::get_instance();
 
 # コンストラクタ
 sub new {
-    my($class, $called_from_API) = @_;
+    my($class, $called_from_API, $is_local_search_mode, $opt) = @_;
     my $this;
 
     $this->{called_from_API} = $called_from_API;
+    $this->{is_local_search_mode} = $is_local_search_mode;
     $this->{titledbs} = ();
     $this->{urldbs} = ();
 
+    if ($this->{is_local_search_mode}) {
+	my $factory = new TsubakiEngineFactory($opt);
+	$this->{tsubaki} = $factory->get_instance();
+    }
     bless $this;
 }
 
@@ -48,9 +53,23 @@ sub search {
 
     # 時間の測定開始
 
-    my $se_obj = new SearchEngine($opt->{syngraph});
     $logger->setTimeAs('create_se_obj', '%.3f');
-    my ($hitcount, $results, $status) = $se_obj->search($query, $logger, $opt);
+
+    my ($hitcount, $results, $status);
+    if ($this->{is_local_search_mode}) {
+	$opt->{flag_of_dpnd_use} = 1;
+	$opt->{flag_of_dist_use} = 1;
+	$opt->{flag_of_anchor_use} = 1;
+	$opt->{DIST} = 30;
+	$opt->{LOGGER} = $logger;
+
+	push(@$results, $this->{tsubaki}->search($query, $query->{qid2df}, $opt));
+	$hitcount = scalar(@$results->[0]);
+	$status = 'search';
+    } else {
+	my $se_obj = new SearchEngine($opt->{syngraph});
+	($hitcount, $results, $status) = $se_obj->search($query, $logger, $opt);
+    }
 
     # ヒット件数をロギング
     $logger->setParameterAs('hitcount', $hitcount);
@@ -66,9 +85,9 @@ sub search {
     # 検索スレーブサーバから得られた検索結果のマージ
     ################################################
 
-    my $size = $opt->{'start'} + $opt->{'results'};
+    my $size = ($query->{dids}) ? $hitcount : $opt->{'start'} + $opt->{'results'};
     $size = $hitcount if ($hitcount < $size);
-    $opt->{'results'} = $hitcount if ($opt->{'results'} > $hitcount);
+
 
     # 検索サーバから得られた検索結果のマージ
     my ($mg_result, $miss_title, $miss_url, $total_docs) = $this->merge_search_results($results, $size, $opt);
@@ -138,6 +157,7 @@ sub merge_search_results {
 	my $page = shift(@{$results->[$max]});
 	$page->{title} = decode('utf8', $page->{title}) unless (utf8::is_utf8($page->{title}));
 	my $did = sprintf("%09d", $page->{did});
+
 	unless ($opt->{'filter_simpages'}) {
 	    $this->add_list(\@merged_result, $page, $did, \$miss_title, \$miss_url);
 	} else {
@@ -232,9 +252,16 @@ sub get_title {
     my $title = decode('utf8', $this->{titledbs}{$did_prefix}->{$did});
     unless (defined($title)) {
 	my $titledbfp = "$CONFIG->{TITLE_DB_PATH}/$did_prefix.title.cdb";
-	tie my %titledb, 'CDB_File', "$titledbfp" or die "$0: can't tie to $titledbfp $!\n";
-	$this->{titledbs}{$did_prefix} = \%titledb;
-	$title = decode('utf8', $titledb{sprintf("%09d", $did)});
+	try {
+	    tie my %titledb, 'CDB_File', "$titledbfp" or die "$0: can't tie to $titledbfp $!\n";
+	    $this->{titledbs}{$did_prefix} = \%titledb;
+	    $title = decode('utf8', $titledb{sprintf("%09d", $did)});
+	}
+	catch Error with {
+	    my $err = shift;
+	    # print "Can't access title cdb ($titledbfp)<BR>\n";
+	    # print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
+	};
     }
 
     if ($title eq '') {
@@ -256,9 +283,16 @@ sub get_url {
     my $url = $this->{urldbs}{$did_prefix}->{$did};
     unless (defined($url)) {
 	my $urldbfp = "$CONFIG->{URL_DB_PATH}/$did_prefix.url.cdb";
-	tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
-	$this->{urldbs}{$did_prefix} = \%urldb;
-	$url = $urldb{sprintf("%09d", $did)};
+	try {
+	    tie my %urldb, 'CDB_File', "$urldbfp" or die "$0: can't tie to $urldbfp $!\n";
+	    $this->{urldbs}{$did_prefix} = \%urldb;
+	    $url = $urldb{sprintf("%09d", $did)};
+	}
+	catch Error with {
+	    my $err = shift;
+	    # print "Can't access url cdb ($urldbfp)<BR>\n";
+	    # print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
+	};
     }
 
     return $url;
