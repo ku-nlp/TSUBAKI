@@ -85,7 +85,7 @@ sub printFooter {
 	print "<P>\n";
     } else {
 	my $last_page_flag = 0;
-	if ($hitcount >= $params->{'results'}) {
+	if ($hitcount > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
 	    print "<DIV class='pagenavi'>検索結果ページ：";
 	    my $num_of_search_results = ($CONFIG->{'NUM_OF_SEARCH_RESULTS'} > $CONFIG->{'NUM_OF_PROVIDE_SEARCH_RESULTS'}) ? $CONFIG->{'NUM_OF_PROVIDE_SEARCH_RESULTS'} : $CONFIG->{'NUM_OF_SEARCH_RESULTS'};
 	    for (my $i = 0; $i < $num_of_search_results / $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}; $i++) {
@@ -105,7 +105,7 @@ sub printFooter {
 	    }
 	    print "</DIV>";
 	}
-	printf("<DIV class=\"bottom_message\">上の%d件と類似したページは除外されています。</DIV>\n", $size) if ($last_page_flag && $size < $hitcount && $size < $CONFIG->{'NUM_OF_SEARCH_RESULTS'});
+	printf("<DIV class=\"bottom_message\">上の%d件と類似・関連したページは除外されています。</DIV>\n", $size) if ($last_page_flag && $size < $hitcount && $size < $CONFIG->{'NUM_OF_SEARCH_RESULTS'});
     }
 
 
@@ -350,7 +350,7 @@ END_OF_HTML
     print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/eval-tsubaki/whats.html">[おしらせ等]</A>\n); 
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
     print qq(</DIV>\n);
 
@@ -463,7 +463,7 @@ sub print_tsubaki_interface_init {
 	</script>
 	<script type="text/javascript" src="http://nlpc06.ixnlp.nii.ac.jp/./tsubaki.js"></script>
 	</head>
-	<body style="margin:0em;">
+	<body style="margin:0em; padding:0em;">
 END_OF_HTML
 
 my $host = `hostname`;
@@ -472,7 +472,7 @@ my $host = `hostname`;
     print qq(<DIV style="font-size:smaller; text-align:right;margin:0.5em 1em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/eval-tsubaki/whats.html">[おしらせ等]</A>\n); 
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
     print qq(</DIV>\n);
 
@@ -774,6 +774,7 @@ sub printOrdinarySearchResult {
 
 	$output .= qq(<TD>\n);
 	$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
+	$title = substr($title, 0, $CONFIG->{MAX_LENGTH_OF_TITLE}) . "..." if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE});
 	$output .= $title . "</a>";
 
 	if ($params->{from_portal}) {
@@ -788,8 +789,8 @@ sub printOrdinarySearchResult {
 	$num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
 
 	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
-	    my $open_label = "類似ページを表示 ($num_of_sim_pages 件)";
-	    my $close_label = "類似ページを非表示 ($num_of_sim_pages 件)";
+	    my $open_label = "類似・関連ページを表示 ($num_of_sim_pages 件)";
+	    my $close_label = "類似・関連ページを非表示 ($num_of_sim_pages 件)";
 	    if ($params->{from_portal}) {
 		$output .= qq(<DIV class="meta"><A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');">$open_label</A> </DIV>\n);
 	    } else {
@@ -801,8 +802,8 @@ sub printOrdinarySearchResult {
 	    }
 	} else {
 	    unless ($params->{from_portal}) {
-		$output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)</DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor}, $results->[$rank]{score_dpnd_anchor};
-		# $output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n)
+		# $output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)</DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor}, $results->[$rank]{score_dpnd_anchor};
+		$output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n)
 	    }
 	}
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
@@ -822,7 +823,7 @@ sub printOrdinarySearchResult {
 	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	    $output .= $sim_page->{title} . "</a>";
 	    if ($params->{from_portal}) {
-		$output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN><BR>\n);
+		# $output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN><BR>\n);
 	    } else {
 		$output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
 	    }
