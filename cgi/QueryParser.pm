@@ -73,7 +73,6 @@ sub new {
     $this->{OPTIONS}{jyushi} = $opts->{JYUSHI} if ($opts->{JYUSHI});
     $this->{OPTIONS}{keishi} = $opts->{KEISHI} if ($opts->{KEISHI});
 
-
     my ($dfdbs_w, $dfdbs_d) = &load_DFDBs($opts->{DFDB_DIR}, $opts);
     $this->{DFDBS_WORD} = $dfdbs_w;
     $this->{DFDBS_DPND} = $dfdbs_d;
@@ -230,6 +229,7 @@ sub parse {
 		  query_filter => $this->{query_filter},
 		  trimming => $opt->{trimming},
 		  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
+		  disable_dpnd => $opt->{disable_dpnd},
 		  disable_synnode => $opt->{disable_synnode},
 		  verbose => $opt->{verbose}
 		});
