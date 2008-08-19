@@ -1,3 +1,103 @@
+2008-08-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm:
+	デバッグ出力の追加.
+
+	* cgi/Configure.pm:
+	ホスト名に応じて読み込むconfigureファイルを切り替えるようにした.
+
+	* cgi/QueryKeyword.pm:
+	disable_dpndオプションに対応. NEの修飾句を△にするようにした.
+
+	* cgi/QueryParser.pm:
+	disable_dpndオプションの追加.
+
+	* cgi/QueryTrimmer.pm:
+	固有表現の修飾句を同定する処理を追加. (KNPのルールに移行予定)
+
+	* cgi/RequestParser.pm:
+	複合名詞処理、係り受け利用, 文末表現削除処理, NEの修飾句同定をオプション化, NTCIRオプションを追加.
+
+	* cgi/Searcher.pm:
+	ローカルディスク上のインデックスを読みにいけるようにした.
+
+	* scripts/Indexer.pm:
+	NEの情報を基本句の行から取得するようにした.
+
+	* scripts/TsubakiEngine.pm:
+	bug fixed. (△指定された単語で検索された文書と、○指定された単語で検索された文書のANDをとっていたのをデバッグ)
+
+	* scripts/tsubaki_server.pl:
+	特定の文書IDを持つ文書の検索結果だけ得るオプションに対応
+
+2008-08-19  shibata  <shibata@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* cgi/Renderer.pm: fixed typo.
+
+2008-08-18  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	クエリ中に含まれるEUC-JPに変換できない文字を、類似する他の文字で置き換えるようにした.
+
+2008-08-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: javascriptのコードをtsubaki.jsに移動した.
+
+2008-08-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	全角空白を検索表現の区切りとして利用するかどうかをオプション化.
+
+	* cgi/QueryKeyword.pm:
+	クエリの解析結果の表示処理をQueryKeyword.pmに移した.
+
+2008-08-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm:
+	基本ノード中の＋を削除するようにした. 正規表現内の変数を\Qと\Eで括った.
+
+2008-08-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Searcher.pm:
+	URL内の%7Eと~を同一視するようにした.
+
+	* cgi/RequestParser.pm:
+	$params{antonym_and_negation_expansion}のデフォルト値として0を代入するようにした.
+
+	* cgi/Searcher.pm:
+	URLの正規化をする際に、末尾のindex.htmlを削除するようにした.
+
+	* cgi/QueryKeyword.pm, cgi/RequestParser.pm:
+	正規化時にdisable_synnodeの値を出力するようにした.
+
+2008-08-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm:
+	SYNノードを用いずに検索するオプションに対応.
+
+	* cgi/configure, cgi/configure.nict:
+	アンケートの表示／非表示を切り替えるオプションを追加.
+
+	* cgi/Renderer.pm:
+	busy時にはアンケートを出力しないようにした. チェックボックスを「同義表現を考慮する」から「同義表現を考慮しない」に変更.
+
+	* cgi/QueryKeyword.pm, scripts/Indexer.pm:
+	SYNノードを検索に利用しないオプションを追加.
+
+	* cgi/Renderer.pm:
+	アンケート収集インターフェースの追加.
+
+	* cgi/configure, cgi/configure.nict:
+	ハイライトの色を薄くした．アンケートオプションを追加．
+
+2008-08-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/tsubaki.gecko.css, cgi/tsubaki.ie.css:
+	スニペットの行間を広げた.
+
+	* cgi/RequestParser.pm:
+	APIアクセス時のパラメータlogical_operatorに対応.
+
 2008-08-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Renderer.pm, cgi/RequestParser.pm, cgi/SnippetMaker.pm:
