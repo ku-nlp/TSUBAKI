@@ -51,7 +51,6 @@ foreach my $dbf (readdir(DIR)) {
 	$dlength_db = retrieve($fp) or die;
     }
 
-    print $fp . "\n";
     push(@DOC_LENGTH_DBs, $dlength_db);
 }
 closedir(DIR);
@@ -90,6 +89,8 @@ sub main {
 	exit;
     }
 
+
+    print STDERR "TSUBAKI SERVER IS READY! (host=$hostname, port=$opt{port}, dir=$opt{idxdir})\n";
     while (1) {
 	my $new_socket = $listening_socket->accept();
 	my $client_sockaddr = $new_socket->peername();
@@ -134,6 +135,7 @@ sub main {
 	    my $qid2df = Storable::thaw(decode_base64($buff));
 
 	    $opt{score_verbose} = $query->{score_verbose};
+	    $opt{logging_query_score} = $query->{logging_query_score};
 	    my $factory = new TsubakiEngineFactory(\%opt);
 	    my $tsubaki = $factory->get_instance();
 
@@ -158,24 +160,40 @@ sub main {
 	    } else {
 		my $ret = [];
 		my $docs_size = $hitcount;
-		my $results = $query->{results};
-		# my $results = ($query->{accuracy}) ? $query->{results} * $query->{accuracy} : $query->{results};
-		$results += $query->{start};
-		$results = $docs_size if ($docs_size < $results);
-		my $max_rank_of_getting_title_and_url = $results * $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE;
-		print $query->{results} . "=ret " . $query->{accuracy} . "=acc " . $results . " * " . $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE . " = " . $max_rank_of_getting_title_and_url . "*\n" if ($opt{verbose});
 
-		for (my $rank = 0; $rank < $results; $rank++) {
-		    if ($rank < $max_rank_of_getting_title_and_url) {
-			my $did = sprintf("%09d", $docs->[$rank]{did});
-			$docs->[$rank]{url} = $URL_DBs{$did};
-			$docs->[$rank]{title} = $TITLE_DBs{$did};
-			$docs->[$rank]{title} = 'no title.' unless ($docs->[$rank]{title});
 
-			print decode('utf8', $docs->[$rank]{title} . "=title, " . $docs->[$rank]{url} . "=url\n") if ($opt{verbose});
+		# 特定の文書IDを持つ文書の検索結果だけ得たい場合
+		if ($query->{dids}) {
+		    for (my $i = 0; $i < $docs_size; $i++) {
+			my $did = sprintf("%09d", $docs->[$i]{did});
+			next unless (exists $query->{dids}{$did});
+
+			$docs->[$i]{url} = $URL_DBs{$did};
+			$docs->[$i]{title} = $TITLE_DBs{$did};
+			$docs->[$i]{title} = 'no title.' unless ($docs->[$i]{title});
+
+			push(@{$ret}, $docs->[$i]);
 		    }
-		    $docs->[$rank]{host} = $hostname;
-		    push(@{$ret}, $docs->[$rank]);
+		} else {
+		    my $results = $query->{results};
+		    # my $results = ($query->{accuracy}) ? $query->{results} * $query->{accuracy} : $query->{results};
+		    $results += $query->{start};
+		    $results = $docs_size if ($docs_size < $results);
+		    my $max_rank_of_getting_title_and_url = $results * $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE;
+		    print $query->{results} . "=ret " . $query->{accuracy} . "=acc " . $results . " * " . $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE . " = " . $max_rank_of_getting_title_and_url . "*\n" if ($opt{debug});
+
+		    for (my $rank = 0; $rank < $results; $rank++) {
+			if ($rank < $max_rank_of_getting_title_and_url) {
+			    my $did = sprintf("%09d", $docs->[$rank]{did});
+			    $docs->[$rank]{url} = $URL_DBs{$did};
+			    $docs->[$rank]{title} = $TITLE_DBs{$did};
+			    $docs->[$rank]{title} = 'no title.' unless ($docs->[$rank]{title});
+
+			    print decode('utf8', $docs->[$rank]{title} . "=title, " . $docs->[$rank]{url} . "=url\n") if ($opt{verbose});
+			}
+			$docs->[$rank]{host} = $hostname;
+			push(@{$ret}, $docs->[$rank]);
+		    }
 		}
 
 		print $new_socket encode_base64($hitcount, "") , "\n";
