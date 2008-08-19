@@ -45,8 +45,11 @@ sub trim {
 #     my @kihonku = $result->tag;
 # #   $this->set_discard_feature_by_TELIC($kihonku[-1], undef, $cscf, $option, 0.3, {verbose => 0});
 
-#     my @bnst = $result->bnst;
-#     $this->set_modifier_of_NE_feature($bnst[-1], 0);
+    foreach my $kihonku (reverse $result->tag) {
+	next unless ($kihonku->fstring() =~ /<NE.+?>/);
+
+	$this->detectNEmodifier($kihonku);
+    }
 }
 
 sub set_compound_noun_feature {
@@ -376,6 +379,24 @@ sub set_single_adjective_feature {
 		}
 	    }
 	}
+    }
+}
+
+sub detectNEmodifier {
+    my ($this, $kihonku) = @_;
+
+    foreach my $child ($kihonku->child) {
+	next if ($child->fstring =~ /<NE.+?>/ ||
+		 $child->fstring =~ /<固有表現を修飾>/);
+
+	my @f = ();
+	push(@f, '固有表現を修飾');
+
+	foreach my $m ($child->mrph) {
+	    $m->push_feature(@f);
+	}
+
+	$this->detectNEmodifier($child);
     }
 }
 
