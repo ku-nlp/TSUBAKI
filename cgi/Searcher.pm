@@ -302,7 +302,8 @@ sub get_url {
 sub get_normalized_url {
     my ($url) = @_;
     my $url_mod = $url;
-    $url_mod =~ s/%7E/~/g;
+    $url_mod =~ s/%7E/~/ig;
+    $url_mod =~ s!//www\d*\.!//!;
     $url_mod =~ s/\d+/0/g;
     $url_mod =~ s/\/+/\//g;
     $url_mod =~ s/index.html?$//g;
