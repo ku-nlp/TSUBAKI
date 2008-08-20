@@ -13,6 +13,7 @@ use Storable;
 my $N = 100132750;
 # 平均文書長
 my $AVE_DOC_LENGTH = 907.077; 
+# my $AVE_DOC_LENGTH = 274.925; # for NTCIR3
 
 # コンストラクタ
 sub new {
