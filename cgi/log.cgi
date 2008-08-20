@@ -1,3 +1,4 @@
+#!/home/skeiji/local/bin/perl
 #!/share09/home/skeiji/local/bin/perl
 
 # $Id$
@@ -9,6 +10,9 @@ use CGI::Carp qw(fatalsToBrowser);
 use Encode;
 use URI::Escape;
 use Configure;
+
+use KNP;
+
 my $CONFIG = Configure::get_instance();
 
 
