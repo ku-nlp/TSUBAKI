@@ -11,6 +11,8 @@ use utf8;
 use Getopt::Long;
 use Storable;
 
+binmode(STDOUT, ':encoding(euc-jp)');
+
 my (%opt); GetOptions(\%opt, 'z');
 
 foreach my $fp (@ARGV) {
@@ -26,11 +28,13 @@ foreach my $fp (@ARGV) {
 	open(READER, $fp) or die;
     }
     binmode(READER, ":utf8");
-#    binmode(STDOUT, ":encoding(euc-jp)");
 
     while (<READER>) {
 	next if (index($_, '->') > 0);
 	next if (index($_, '*') > 0);
+	next if (index($_, '+') > 0);
+	next if ($_ =~ /s\d+/);
+	next if ($_ =~ /<[^>]+>/);
 
 	chop($_);
 	my ($word, @did_freqs) = split(' ', $_);
