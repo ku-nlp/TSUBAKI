@@ -14,6 +14,7 @@ use QueryKeyword;
 use Configure;
 use CDB_File;
 use Query;
+use Dumper;
 
 
 my $CONFIG = Configure::get_instance();
@@ -157,11 +158,12 @@ sub parse {
 
 	    # 同義表現を考慮したフレーズ検索はできない
 	    if ($opt->{syngraph} > 0) {
+		# $opt->{syngraph} = 0;
 # 		print "<center>同義表現を考慮したフレーズ検索は実行できません。</center></DIV>\n";
 # 		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
 # 		print "</body>\n";
 # 		print "</html>\n";
-#		exit;
+# 		exit;
 	    }
 	}
 
@@ -231,7 +233,7 @@ sub parse {
 		  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
 		  disable_dpnd => $opt->{disable_dpnd},
 		  disable_synnode => $opt->{disable_synnode},
-		  verbose => $opt->{verbose}
+		  verbose => $opt->{debug}
 		});
 	} else {
 	    $q = new QueryKeyword(
