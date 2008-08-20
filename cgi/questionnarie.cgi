@@ -22,9 +22,10 @@ sub main {
     my $query = decode('utf8', $cgi->param('q'));
     my $judge = $cgi->param('question');
     my $msg = decode('utf8', $cgi->param('msg'));
+    my $browser = $ENV{HTTP_USER_AGENT};
     $msg =~ s/\n/<BR>/g;
 
     open (WRITER, '>>:utf8', $DATF);
-    printf WRITER ("%s\t%d\t%s\t%s\n", $timestamp, $judge, $query, $msg);
+    printf WRITER ("%s\t%d\t%s\t%s\t%s\t%s\n", $timestamp, $judge, $query, $msg, $browser);
     close (WRITER);
 }
