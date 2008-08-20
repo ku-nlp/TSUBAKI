@@ -105,6 +105,8 @@ sub registBuffer {
     }
 
     foreach my $p (@$pivot) {
+	next if ($p->fstring =~ /<クエリ削除語>/);
+
 	my ($noun) = ($p->fstring =~ /<正規化代表表記:([^>]+?)>/);
 	$noun = &getMidasiWithoutYomi($noun) if ($opt->{ignore_yomi});
 	$worthlessVerbs->{$verb}++;
