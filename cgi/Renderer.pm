@@ -264,9 +264,9 @@ sub printJavascriptCode {
     <script language="JavaScript">
 	var regexp = new RegExp("Gecko");
     if (navigator.userAgent.match(regexp)) {
-	document.write("<LINK rel='stylesheet' type='text/css' href='tsubaki.gecko.css'>");
+	document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.gecko.css'>");
     } else {
-	document.write("<LINK rel='stylesheet' type='text/css' href='tsubaki.ie.css'>");
+	document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
     }
 
     </script>
@@ -321,7 +321,7 @@ sub print_tsubaki_interface {
 	<head>
 	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="tsubaki.common.css">
+	<link rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
 END_OF_HTML
     &printJavascriptCode('canvas', $query);
     print << "END_OF_HTML";
@@ -329,9 +329,9 @@ END_OF_HTML
 	<body style="padding: 0em; margin:0em; z-index:1;" onload="javascript:init();">
 	  <TABLE cellpadding="0" cellspacing="0" border="0" id="baroon" style="display: none; z-index: 10; position: absolute; top: 100; left: 100;">
 	    <TR>
-	      <TD><IMG width="24" height="24" src="curve-top-left.png"></TD>
+	      <TD><IMG width="24" height="24" src="image/curve-top-left.png"></TD>
 	      <TD style="background-color:#ffffcc;"></TD>
-	      <TD><IMG width="24" height="24" src="curve-top-right.png"></TD>
+	      <TD><IMG width="24" height="24" src="image/curve-top-right.png"></TD>
 	    </TR>
 	    <TR>
 	      <TD style="background-color:#ffffcc;"></TD>
@@ -339,24 +339,24 @@ END_OF_HTML
 	      <TD style="background-color:#ffffcc;"></TD>
 	    </TR>
 	    <TR>
-	      <TD><IMG width="24" height="24" src="curve-bottom-left.png"></TD>
+	      <TD><IMG width="24" height="24" src="image/curve-bottom-left.png"></TD>
 	      <TD style="background-color:#ffffcc;"></TD>
-	      <TD><IMG width="24" height="24" src="curve-bottom-right.png"></TD>
+	      <TD><IMG width="24" height="24" src="image/curve-bottom-right.png"></TD>
 	    </TR>
 	  </TABLE>
 END_OF_HTML
 
     my $host = `hostname`;
     print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
-    # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
+    # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="image/info-logo.png"></A><BR>\n);
+    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
     print qq(</DIV>\n);
 
     # タイトル出力
     print qq(<TABLE width="100%" border="0"><TR><TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
-    printf ("<A href=%s><IMG border=0 src=./logo-mini.png></A></TD>\n", $CONFIG->{INDEX_CGI});
+    printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A></TD>\n", $CONFIG->{INDEX_CGI});
 
 
     # フォーム出力
@@ -452,16 +452,16 @@ sub print_tsubaki_interface_init {
 	<head>
 	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="./tsubaki.common.css">
+	<link rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
 	<script language="JavaScript">
 	var regexp = new RegExp("Gecko");
     if (navigator.userAgent.match(regexp)) {
-	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.gecko.css'>");
+	document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.gecko.css'>");
     } else {
-	document.write("<LINK rel='stylesheet' type='text/css' href='./tsubaki.ie.css'>");
+	document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
     }
 	</script>
-	<script type="text/javascript" src="http://nlpc06.ixnlp.nii.ac.jp/./tsubaki.js"></script>
+	<script type="text/javascript" src="javascript/tsubaki.js"></script>
 	</head>
 	<body style="margin:0em; padding:0em;">
 END_OF_HTML
@@ -470,14 +470,14 @@ my $host = `hostname`;
 #    print "TSUBAKI on $host<BR>\n";
     # タイトル出力
     print qq(<DIV style="font-size:smaller; text-align:right;margin:0.5em 1em 0em 0em;">\n);
-    # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="info-logo.png"></A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="tutorial-logo.png"></A><BR>\n);
+    # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="image/info-logo.png"></A><BR>\n);
+    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
     print qq(</DIV>\n);
 
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
-    printf ("<A href=%s><IMG border=0 src=./logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
+    printf ("<A href=%s><IMG border=0 src=image/logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
 
     # フォーム出力
     print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
