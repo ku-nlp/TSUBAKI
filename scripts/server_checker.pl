@@ -28,6 +28,8 @@ foreach my $s (@$servers) {
 	$selecter->add($socket) or die "Cannot connect to the server $s->{name}:$s->{port}. $!\n";
 
 	print $socket "IS_ALIVE\n";
+	# print $socket "GET_UPTIME\n";
+
 	$socket->flush();
 	$num_of_sockets++;
     } catch Error with {
