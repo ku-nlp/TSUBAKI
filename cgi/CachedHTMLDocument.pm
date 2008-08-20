@@ -164,6 +164,7 @@ sub convertURL {
 
     return $fpath if ($fpath =~ /^http/);
 
+    $url =~ s!/{2,}!/!;
     my ($scheme, $auth, $path, $query, $frag) = uri_split($url);
 
     if ($fpath =~ m!^/!) {
