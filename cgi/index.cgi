@@ -30,6 +30,11 @@ sub main {
     # print header(-type => 'text/plain', -charset => 'utf-8');
     print header(-charset => 'utf-8');
 
+    if ($params->{debug}) {
+	print Dumper::dump_as_HTML($CONFIG);
+	print "<HR>\n";
+    }
+
     if ($params->{'cache'}) {
 	# キャッシュページの出力
 	my $id = $params->{'cache'};
@@ -64,7 +69,8 @@ sub main {
 	    # 検索クエリの構造体を取得
 	    my $query = RequestParser::parseQuery($params, $logger);
 	    if ($params->{debug}) {
-		$query->{keywords}[0]->debug_print();
+		$query->{keywords}[0]->print_for_web();
+
 		print "<hr>\n";
 		print Dumper::dump_as_HTML($query) . "<br>\n";
 		print "<hr>\n";
