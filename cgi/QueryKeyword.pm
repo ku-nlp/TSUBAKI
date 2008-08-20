@@ -745,6 +745,11 @@ sub getPaintingJavaScriptCode {
 	}
     }
 
+#     my $dumpstr = Dumper(\%buff);
+#     $jscode .= qq(/* $dumpstr */\n);
+
+#     my $dumpstr = Dumper(\%gid2poss);
+#     $jscode .= qq(/* $dumpstr */\n);
 
 
     # 係り受け関係を描画する
@@ -761,22 +766,26 @@ sub getPaintingJavaScriptCode {
 
 	    my $gid1 = $rep->{kakarimoto_gid};
 	    my $gid2 = $rep->{kakarisaki_gid};
-	    my $dist = 10 * ($gid2 - $gid1);
+	    my $dist = abs(10 * ($gid2 - $gid1));
 
 	    my $y = $offsetY - $font_size - (1.5 * $dist * $font_size);
 
+
 	    # 係り受けの線をひく
+
+	    # コメントの出力
+# 	    $jscode .= qq(/* parent=$gid1, child=$gid2, dist=$dist */\n);
+# 	    my $dumpstr = Dumper($rep);
+# 	    $jscode .= qq(/* $dumpstr */\n);
+
 	    $jscode .= qq(jg.drawLine($x1, $offsetY, $x1, $y);\n);
-#	    $jscode .= qq(jg.drawLine($x1 + 1, $offsetY, $x1 + 1, $y);\n);
 	    $jscode .= qq(jg.drawLine($x1 - 1, $offsetY, $x1 - 1, $y);\n);
 
 	    $jscode .= qq(jg.drawLine($x1, $y, $x2, $y);\n);
 	    $jscode .= qq(jg.drawLine($x1, $y - 1, $x2, $y - 1);\n);
-#	    $jscode .= qq(jg.drawLine($x1, $y + 1, $x2, $y + 1);\n);
 
 	    $jscode .= qq(jg.drawLine($x2, $y, $x2, $offsetY);\n);
 	    $jscode .= qq(jg.drawLine($x2 + 1, $y, $x2 + 1, $offsetY);\n);
-#	    $jscode .= qq(jg.drawLine($x2 - 1, $y, $x2 - 1, $offsetY);\n);
 
 	    # 矢印
 	    $jscode .= qq(jg.fillPolygon(new Array($x2, $x2 + $arrow_size, $x2 - $arrow_size), new Array($offsetY, $offsetY - $arrow_size, $offsetY - $arrow_size));\n);
