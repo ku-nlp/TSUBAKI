@@ -14,8 +14,7 @@ my $CONFIG = Configure::get_instance();
 
 my @OPTs = ('query', 'start', 'results', 'logical_operator', 'dpnd', 'filter_simpages', 'only_hitcount', 'id', 'format');
 
-# open(LOG, "tac $CONFIG->{LOG_FILE_PATH} | head -500 |");
-open(LOG, "cat ../data/input.log |");
+open(LOG, "tac $CONFIG->{LOG_FILE_PATH} | head -2000 |");
 binmode(LOG, ':utf8');
 print header(-charset => 'utf-8');
 
