@@ -33,7 +33,6 @@ sub new {
     $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, 1, $opts->{show_speed});
 
     # 検索にアンカーテキストを考慮する
-    print $opts->{idxdir4anchor} . "\n";
     $obj->{word_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'word', 1, $opts->{verbose}, $opts->{show_speed});
     $obj->{dpnd_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
 
@@ -96,7 +95,7 @@ sub retrieve_from_dat2 {
 
 
 sub calculate_score {
-    my ($this, $merged_docs, $alldocs, $did2idx, $retriever, $field_type, $qid2gid, $qid2qtf, $qid2df, $d_length_buff, $q2scores, $did2idx_is_empty, $gid2df, $calculateNearDpnds, $basicNodes, $dpnds) = @_;
+    my ($this, $merged_docs, $alldocs, $did2idx, $retriever, $field_type, $qid2gid, $qid2qtf, $gid2df, $d_length_buff, $q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, $dpnds) = @_;
 
 
     #####################################################################
@@ -149,92 +148,20 @@ sub calculate_score {
     ##################
 
     my $idx = 0;
-    my $DIST = 30;
     while (my ($did, $pos2score_gid_qid) = each %did2pos_score) {
-
-	################
-	# 近接を計算する
-	################
-	my %dists = ();
-	if ($calculateNearDpnds) {
-
-	    my @poslist = sort {$a <=> $b} keys %{$pos2score_gid_qid};
-	    foreach my $dpnd (@$dpnds) {
-		my $moto = $dpnd->{moto};
-		my $saki = $dpnd->{saki};
-
-		my $prev = undef;
-		foreach my $pos (@poslist) {
-		    my $qid = $pos2score_gid_qid->{$pos}{qid};
-		    my $gid = $pos2score_gid_qid->{$pos}{gid};
-
-		    # print "$pos $qid $gid\n" if ($did == 7079771);
-
-		    if (defined $prev) {
-			if (($gid eq $moto || $gid eq $saki) && $gid != $prev->{gid}) {
-			    my $dist = $pos - $prev->{pos};
-
-			    # $DIST以内ならば登録
-			    if ($dist < $DIST) {
-				$dists{"$moto/$saki"} += ($dist / $DIST);
-			    }
-
-			    $prev->{gid} = $gid;
-			}
-			$prev->{qid} = $qid;
-			$prev->{pos} = $pos;
-		    } else {
-			$prev->{pos} = $pos;
-			$prev->{gid} = $gid;
-			$prev->{qid} = $qid;
-		    }
-		}
-	    }
-
-# 	    my $prev = undef;
-# 	    foreach my $pos (sort {$a <=> $b} keys %{$pos2score_gid_qid}) {
-# 		my $qid = $pos2score_gid_qid->{$pos}{qid};
-# 		my $gid = $pos2score_gid_qid->{$pos}{gid};
-
-# 		print "$pos $qid $gid\n" if ($did == 7079771);
-
-
-# 		if (defined $prev) {
-# 		    if ($gid != $prev->{gid} && (!$basicNodes->{$qid} || !$basicNodes->{$prev->{qid}})) {
-# 			my $dist = $pos - $prev->{pos};
-
-# 			# $DIST以内ならば登録
-# 			if ($dist < $DIST) {
-# 			    $dists{"$prev->{gid}/$gid"} += ($dist / $DIST);
-# 			}
-
-# 			$prev->{gid} = $gid;
-# 		    }
-# 		    $prev->{qid} = $qid;
-# 		    $prev->{pos} = $pos;
-# 		} else {
-# 		    $prev->{pos} = $pos;
-# 		    $prev->{gid} = $gid;
-# 		    $prev->{qid} = $qid;
-# 		}
-# 	    }
-	}
-
-
-
 
 	# OKAPIスコアを求め、各文書の配列に登録する
 	$idx = ($did2idx_is_empty) ? $idx : $did2idx->{$did};
 	next if (!defined $idx && !$did2idx_is_empty);
 
 
-	##############################################################
-	# 文書中での$qidの総出現回数(正確にはSYNGRAPHのスコア)を求める
-	##############################################################
+	#############################################################
+	# 文書中でのgidの総出現回数(正確にはSYNGRAPHのスコア)を求める
+	#############################################################
 
 	my %total_scores;
 	while (my ($pos, $score_gid_qid) = each(%{$pos2score_gid_qid})) {
-	    $total_scores{$score_gid_qid->{qid}} += $score_gid_qid->{score};
+	    $total_scores{$score_gid_qid->{gid}} += $score_gid_qid->{score};
 	}
 
 	my $dlength = $d_length_buff->{$did};
@@ -259,14 +186,15 @@ sub calculate_score {
 	    }
 	}
 
+	# 文書長を記録
+	$merged_docs->[$idx]{dlength} = $dlength;
 
 
-	while (my ($qid, $score) = each(%total_scores)) {
-	    my $df = $qid2df->{$qid};
-	    my $qtf = $qid2qtf->{$qid};
+	while (my ($gid, $score) = each(%total_scores)) {
+	    my $df = $gid2df->{$gid};
 
 	    my $okapi_score;
-	    # 検索クエリに含まれる係り受けが、ドキュメント集合に一度も出てこない場合
+	    # 検索クエリに含まれる単語・係り受けが、ドキュメント集合に一度も出てこない場合
 	    if ($df == -1) {
 		$okapi_score = 0;
 	    }
@@ -274,16 +202,16 @@ sub calculate_score {
 		# my $tff = 1 * (2 * $score) / ((0.4 + 0.6 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $score); # k1 = 1, b = 0.6, k3 = 0
 		my $tff = 1 * (3 * $score) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $score);
 		my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-		$okapi_score = $qtf * $tff * $idf;
+		$okapi_score = $tff * $idf;
 	    }
 
 	    $this->{verbose} = 1 if ($did =~ /78922624/ || $did =~ /58400434/);
-	    print "did=$did qid=$qid tf=$score df=$df qtf=$qtf length=$dlength score=$score okapi=$okapi_score\n" if ($this->{verbose});
-	    $this->{verbose} = 0;
+	    print "did=$did gid=$gid tf=$score df=$df length=$dlength score=$score okapi=$okapi_score\n" if ($this->{verbose});
+	    $this->{verbose} = 0 if ($did =~ /78922624/ || $did =~ /58400434/);
 
-	    $q2scores->[$idx]{$field_type}{$qid} = {tf => $score, qtf => $qtf, df => $df, dlength => $dlength, score => $okapi_score} if $this->{logging_query_score};
+	    $q2scores->[$idx]{$field_type}{$gid} = {tf => $score, df => $df, dlength => $dlength, score => $okapi_score} if $this->{logging_query_score};
 
-	    $merged_docs->[$idx]{$field_type}{$qid} = $okapi_score;
+	    $merged_docs->[$idx]{$field_type}{$gid} = $okapi_score;
 	    $merged_docs->[$idx]{'score_' . $field_type} += $okapi_score;
 	}
 
@@ -292,24 +220,61 @@ sub calculate_score {
 	# 近接スコアを計算する
 	######################
 
+	my %dists = ();
 	if ($calculateNearDpnds) {
+
+	    my @poslist = sort {$a <=> $b} keys %{$pos2score_gid_qid};
+	    foreach my $dpnd (@$dpnds) {
+		my $moto = $dpnd->{moto};
+		my $saki = $dpnd->{saki};
+
+		my $prev = undef;
+		foreach my $pos (@poslist) {
+		    my $qid = $pos2score_gid_qid->{$pos}{qid};
+		    my $gid = $pos2score_gid_qid->{$pos}{gid};
+
+		    if (defined $prev) {
+			# $prev->{gid} -> $gid || $gid -> $prev->{gid}
+			if (($prev->{gid} eq $moto && $gid eq $saki) || ($prev->{gid} eq $saki && $gid eq $moto)) {
+			    my $dist = $pos - $prev->{pos};
+
+			    # 係り元-係り先間の最小距離を取得
+			    if (exists $dists{$dpnd->{gid}}) {
+				$dists{$dpnd->{gid}} = $dist if ($dist < $dists{$dpnd->{gid}});
+			    } else {
+				$dists{$dpnd->{gid}} = $dist;
+			    }
+			}
+		    }
+
+		    $prev->{gid} = $gid;
+		    $prev->{qid} = $qid;
+		    $prev->{pos} = $pos;
+		}
+	    }
+
 	    my $okapi_score = 0;
-	    foreach my $gid (keys %dists) {
+	    while (my ($gid, $dist) = each (%dists)) {
 		my $df = $gid2df->{$gid};
 		if ($df == -1 || !defined $df) {
 		    $okapi_score = 0;
 		}
 		else {
-		    my $score = $dists{$gid};
-		    my $tff = 1 * (3 * $score) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $score);
-		    my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
-		    $okapi_score = $tff * $idf;
+		    if ($dist < $DIST) {
+			my $score = ($DIST - $dist) / $DIST;
+			my $tff = 1 * (3 * $score) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $score);
+			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+			my $okapi_score = $tff * $idf;
+			$merged_docs->[$idx]{'dist'}{$gid} = $okapi_score;
+			# score_distについては、係り受けの出現の有無を見ながら後で計算する
 
-		    $merged_docs->[$idx]{'score_dist'} += $okapi_score;
+			if ($this->{logging_query_score}) {
+			    $q2scores->[$idx]{near}{$gid} = {tf => $score, df => $df, dlength => $dlength, score => $okapi_score};
+			}
+		    }
 		}
 	    }
 	}
-
 
 	if ($did2idx_is_empty) {
 	    $merged_docs->[$idx]{did} = $did;
@@ -324,7 +289,7 @@ sub calculate_score {
 
 # 文書のスコアリング
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $qid2qtf, $dpnd_map, $qid2gid, $dpnd_on, $dist_on, $DIST, $MIN_DLENGTH, $gid2weight, $results, $gid2df, $basicNodes, $dpnds) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2qtf, $qid2gid, $dpnd_on, $dist_on, $DIST, $gid2df, $dpnds) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -338,20 +303,45 @@ sub merge_docs {
     my $did2idx_is_empty = 1;
     my $calculateNearDpnds = 1;
 
-    $this->calculate_score(\@merged_docs, $alldocs_words, \%did2idx, $this->{word_retriever}, 'word', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $gid2df, $calculateNearDpnds, $basicNodes, $dpnds);
+    $this->calculate_score(\@merged_docs, $alldocs_words, \%did2idx, $this->{word_retriever}, 'word', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, $dpnds);
+
     $did2idx_is_empty = 0;
-    $this->calculate_score(\@merged_docs, $alldocs_dpnds, \%did2idx, $this->{dpnd_retriever}, 'dpnd', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty);
-    $this->calculate_score(\@merged_docs, $alldocs_word_anchor, \%did2idx, $this->{word_retriever4anchor}, 'word_anchor', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty);
-    $this->calculate_score(\@merged_docs, $alldocs_dpnd_anchor, \%did2idx, $this->{dpnd_retriever4anchor}, 'dpnd_anchor', $qid2gid, $qid2qtf, $qid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty);
+    $calculateNearDpnds = 0;
+    $this->calculate_score(\@merged_docs, $alldocs_dpnds, \%did2idx, $this->{dpnd_retriever}, 'dpnd', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, undef);
+    $this->calculate_score(\@merged_docs, $alldocs_word_anchor, \%did2idx, $this->{word_retriever4anchor}, 'word_anchor', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, undef);
+    $this->calculate_score(\@merged_docs, $alldocs_dpnd_anchor, \%did2idx, $this->{dpnd_retriever4anchor}, 'dpnd_anchor', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, undef);
 
     my @result;
     for (my $i = 0; $i < @merged_docs; $i++) {
 	my $e = $merged_docs[$i];
 
 	my $score = $e->{score_word};
-	$score += $e->{score_dpnd} if ($dpnd_on);
-	$score += $e->{score_dist} if ($dist_on);
-	$score += ($e->{score_word_anchor} + $e->{score_dpnd_anchor});
+	# アンカー(単語)のスコアを考慮する
+	$score += $e->{score_word_anchor};
+
+	# 係り受けをスコアに考慮する
+	if ($dpnd_on) {
+	    $score += $e->{score_dpnd};
+	    # アンカー(係り受け)のスコアを考慮する
+	    $score += $e->{score_dpnd_anchor};
+	}
+
+	# 近接をスコアに考慮する
+	if ($dist_on) {
+	    my $score_dist = 0;
+	    while (my ($gid, $score) = each %{$e->{dist}}) {
+		# 出現している係り受けについては近接スコアを考慮しない
+		if (exists $e->{dpnd}{$gid}) {
+		    delete $q2scores[$i]->{near}{$gid};
+		} else {
+		    $score_dist += $score;
+		}
+	    }
+
+	    $e->{score_dist} = $score_dist;
+	    $score += $e->{score_dist};
+	}
+
 
 	if ($this->{verbose}) {
 	    printf ("did=%09d w=%.3f d=%.3f n=%.3f anchor_w=%.3f anchor_d=%.3f total=%.3f\n", $e->{did}, $e->{score_word}, $e->{score_dpnd}, $e->{score_dist}, $e->{score_word_anchor}, $e->{score_dpnd_anchor}, $score);
@@ -365,6 +355,8 @@ sub merge_docs {
 	    $result[-1]->{score_dist} = $e->{score_dist};
 	    $result[-1]->{score_word_anchor} = $e->{score_word_anchor};
 	    $result[-1]->{score_dpnd_anchor} = $e->{score_dpnd_anchor};
+	    $result[-1]->{dlength} = $e->{dlength};
+	    $result[-1]->{q2score} = $q2scores[$i];
 	}
     }
     print "-----\n"if ($this->{verbose});
