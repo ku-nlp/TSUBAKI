@@ -93,18 +93,16 @@ sub search {
 
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
-	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない
+	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない (まじめに考える)
     }
 
 
 
-    my %basicNodes;
     my %gid2df;
     foreach my $qkw (@{$query->{keywords}}) {
 	foreach my $words (@{$qkw->{words}}) {
 	    foreach my $word (@$words) {
 		if ($word->{isBasicNode}) {
-		    $basicNodes{$word->{qid}} = 1;
 		    $gid2df{$word->{gid}} = $word->{df};
 		}
 	    }
@@ -135,7 +133,7 @@ sub search {
 
 
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2df, $cal_method, $query->{qid2qtf}, $query->{dpnd_map}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, $opt->{MIN_DLENGTH}, $query->{gid2weight}, $opt->{results}, \%gid2df, \%basicNodes, \@dpnds);
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $query->{qid2qtf}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, \%gid2df, \@dpnds);
     $opt->{LOGGER}->setTimeAs('document_scoring', '%.3f');
 
 
@@ -857,7 +855,7 @@ sub filter_by_NEAR_constraint {
 		    }
 		}
 	    }
-	    # 代表表記化により複数個にわかれたものの出現位置 or 出現文IDのマージ
+	    # 代表表記化またSYNGRAPH化により複数個にわかれた表現・同義グループの出現位置(or 出現文ID)のマージ
 	    else {
 		my %buff = ();
 		for (my $j = 0; $j < $qid_freq_size; $j++) {
@@ -937,15 +935,15 @@ sub filter_by_NEAR_constraint {
 
 		    # 語順を考慮する場合は、隣接しているかどうかチェック
 		    if ($keep_order) {
-			# 隣あう索引語かどうかのチェック
-			if ($serialized_poslist[$j]->{qid} - $prev_qid > 1) {
+			# 隣あう索引語かどうかのチェック 同じqidの時の対処
+			if ($serialized_poslist[$j]->{qid} - $prev_qid != 1) {
 			    last;
 			} else {
 			    # print $serialized_poslist[$j]->{qid} . " - " . $prev_qid . "\n";
 			    $prev_qid = $serialized_poslist[$j]->{qid};
 			}
 		    }
-		    $qid_buf{$serialized_poslist[$i]->{qid}}++;
+		    $qid_buf{$serialized_poslist[$i]->{qid}}++; # 実は要らないかも知れない
 		    $qid_buf{$serialized_poslist[$j]->{qid}}++;
 		} else {
 		    # 指定された近接の範囲を超えた
