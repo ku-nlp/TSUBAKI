@@ -633,15 +633,39 @@ sub getPaintingJavaScriptCode {
 
     my $font_size = 12;
     my $offsetX = 10 + 24;
-    my $offsetY = $font_size * 5;
+    my $offsetY = $font_size * (scalar(@{$this->{words}}) + 2);
     my $arrow_size = 3;
     my $synbox_margin = $font_size;
 
+    my @color = ();
+    push(@color, '#ffa500;');
+    push(@color, '#000080;');
+    push(@color, '#779977;');
+    push(@color, '#800000;');
+    push(@color, '#997799;');
+    push(@color, '#770000;');
+    push(@color, '#007700;');
+    push(@color, '#777700;');
+    push(@color, '#007777;');
+    push(@color, '#770077;');
+
+    my @bgcolor = ();
+    push(@bgcolor, '#ffff99;');
+    push(@bgcolor, '#bbffff;');
+    push(@bgcolor, '#bbffbb;');
+    push(@bgcolor, '#ffbbbb;');
+    push(@bgcolor, '#ffbbff;');
+    push(@bgcolor, '#bb0000;');
+    push(@bgcolor, '#00bb00;');
+    push(@bgcolor, '#bbbb00;');
+    push(@bgcolor, '#00bbbb;');
+    push(@bgcolor, '#bb00bb;');
+
     my @stylecolor = ();
-    push(@stylecolor, 'border: 2px solid orange; background-color: #ffff99;');
-    push(@stylecolor, 'border: 2px solid navy; background-color: #bbffff;');
+    push(@stylecolor, 'border: 2px solid #ffa500; background-color: #ffff99;');
+    push(@stylecolor, 'border: 2px solid #000080; background-color: #bbffff;');
     push(@stylecolor, 'border: 2px solid #779977; background-color: #bbffbb;');
-    push(@stylecolor, 'border: 2px solid maroon; background-color: #ffbbbb;');
+    push(@stylecolor, 'border: 2px solid #800000; background-color: #ffbbbb;');
     push(@stylecolor, 'border: 2px solid #997799; background-color: #ffbbff;');
     push(@stylecolor, 'border: 2px solid #770000; background-color: #bb0000; color: white;');
     push(@stylecolor, 'border: 2px solid #007700; background-color: #00bb00; color: white;');
@@ -712,11 +736,28 @@ sub getPaintingJavaScriptCode {
 	my $rep = $this->{words}[$i][0];
 	my $mark = ($rep->{requisite}) ?  '○' :  ($rep->{optional}) ? '△' : '？';
 	my $colorIndex = ($i + $colorOffset) % scalar(@stylecolor);
-	my $synbox = sprintf(qq(<DIV style=\\'text-align: center;\\'><DIV style=\\'text-align: center; $stylecolor[$colorIndex]\\' width=%dpx>%s<BR>%s</DIV>%s</DIV>), $width, $surf, join("<BR>", keys %synbuf), $mark);
+
+	my $synbox;
+	$synbox .= sprintf(qq(<TABLE style=\\'font-size: $font_size; margin: 0px;text-align: center; $stylecolor[$colorIndex]\\' width=%dpx>), $width);
+	if (scalar(keys %synbuf) > 0) {
+	    my $rate = 36;
+	    my ($r, $g, $b) = ($bgcolor[$colorIndex] =~ /#(..)(..)(..);/);
+	    $r = (hex($r) + $rate > 255) ? 'ff' : sprintf ("%x", hex($r) + $rate);
+	    $g = (hex($g) + $rate > 255) ? 'ff' : sprintf ("%x", hex($g) + $rate);
+	    $b = (hex($b) + $rate > 255) ? 'ff' : sprintf ("%x", hex($b) + $rate);
+	    my $dilutedColor = sprintf("#%s%s%s", $r, $g, $b);
+
+	    $synbox .= sprintf(qq(<TR><TD style=\\'border-bottom: 1px solid %s;\\'>%s</TD></TR>), $color[$colorIndex], $surf);
+	    $synbox .= sprintf(qq(<TR><TD style=\\'background-color: %s;\\'>%s</TD></TR>), $dilutedColor, join("<BR>", keys %synbuf));
+	} else {
+	    $synbox .= sprintf(qq(<TR><TD>%s</TD></TR>), $surf);
+	}
+	$synbox .= "</TABLE>";
 
 	$max_num_of_synonyms = scalar(keys %synbuf) if ($max_num_of_synonyms < scalar(keys %synbuf));
 
 	$jscode .= qq(jg.drawStringRect(\'$synbox\', $offsetX, $offsetY, $width, 'left');\n);
+	$jscode .= qq(jg.drawStringRect(\'$mark\', $offsetX, $offsetY - 1.5 * $font_size, $font_size, 'left');\n);
 	$offsetX += ($width + $synbox_margin);
     }
     $colorOffset += scalar(@{$this->{words}});
@@ -793,7 +834,8 @@ sub getPaintingJavaScriptCode {
 
 	    # 線の上に必須・オプショナルのフラグを描画する
 	    my $mark = ($rep->{requisite}) ?  '○' :  ($rep->{optional}) ? '△' : '？';
-	    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1 + 0.5 * ($x2 - $x1) - $font_size * 0.5, $y, $font_size, 'center');\n);
+	    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1, $y - 1.5 * $font_size, $font_size, 'left');\n);
+	    # $jscode .= qq(jg.drawStringRect(\'$mark\', $x1 + 0.5 * ($x2 - $x1) - $font_size * 0.5, $y, $font_size, 'center');\n);
 	    # $jscode .= qq(jg.drawStringRect(\'$mark\', $x1 - $font_size - 5, $y, $font_size, 'center');\n);
 	}
     }
