@@ -55,6 +55,7 @@ sub new {
 	exit;
     }
 
+
     if ($opt->{trimming}) {
 	require QueryTrimmer;
 	my $trimmer = new QueryTrimmer();
@@ -841,6 +842,7 @@ sub getPaintingJavaScriptCode {
     }
 
 
+    $jscode .= qq(jg.setFont(\'ＭＳゴシック\', \'$font_size\', 0);\n);
     $jscode .= qq(jg.paint();\n);
 
     untie %synonyms;
