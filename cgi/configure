@@ -38,6 +38,7 @@ SYNGRAPH_PM_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGr
 # SYNGRAPH_PM_PATH	/data/skeiji/tsubaki/SynGraph_manual_DB5/perl
 WWW2SF_PATH	/home/skeiji/cvs/WWW2sf/tool/perl
 UTILS_PATH	/home/skeiji/cvs/Utils/perl
+TSUBAKI_MODULE_PATH	/home/skeiji/cvs/SearchEngine/perl
 
 
 

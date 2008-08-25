@@ -36,6 +36,7 @@ KNP_RCFILE	/opt/KNP/current/etc/knprc
 SYNGRAPH_PM_PATH	/share09/home/skeiji/cvs/SynGraph/perl
 WWW2SF_PATH	/share09/home/skeiji/cvs/WWW2sf/tool/perl
 UTILS_PATH	/share09/home/skeiji/cvs/Utils/perl
+TSUBAKI_MODULE_PATH	/share09/home/skeiji/cvs/SearchEngine/perl
 
 
 ##################################################
