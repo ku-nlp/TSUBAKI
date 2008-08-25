@@ -1,8 +1,21 @@
+#!/home/skeiji/local/bin/perl
 #!/share09/home/skeiji/local/bin/perl
 #!/usr/local/bin/perl
-#!/home/skeiji/local/bin/perl
 
 # $Id$
+
+
+use Configure;
+
+my $CONFIG = Configure::get_instance();
+
+# モジュールのパスを設定
+BEGIN {
+    $CONFIG = Configure::get_instance();
+    push(@INC, $CONFIG->{TSUBAKI_MODULE_PATH});
+}
+
+
 
 # REST API for search
 
@@ -25,7 +38,6 @@ use CGI::Carp qw(fatalsToBrowser);
 use File::stat;
 
 # 以下TSUBAKIオリジナルクラス
-use Configure;
 use Searcher;
 use Renderer;
 use Logger;
@@ -38,7 +50,6 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 
 
-my $CONFIG = Configure::get_instance();
 
 &main();
 
@@ -250,14 +261,14 @@ sub provideSearchResult {
 
     # サービス停止中
     if ($CONFIG->{SERVICE_STOP_FLAG}) {
-	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
-	print $CONFIG->{MESSAGE}  . "\n" if ($CONFIG->{MESSAGE});
+	require Renderer;
+	Renderer::printErrorMessage($cgi, $CONFIG->{MESSAGE}) if ($CONFIG->{MESSAGE});
 	exit;
     }
     # クエリの値がないので終了
-    elsif($params->{'query'} eq ''){
-	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
-	print "queryの値を指定して下さい。\n";
+    elsif (!defined $params->{'query'}) {
+	require Renderer;
+	Renderer::printErrorMessage($cgi, 'queryの値を指定して下さい。');
 	exit;
     }
 

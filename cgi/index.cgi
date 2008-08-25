@@ -2,6 +2,15 @@
 
 # $Id$
 
+use Configure;
+
+my $CONFIG;
+# モジュールのパスを設定
+BEGIN {
+    $CONFIG = Configure::get_instance();
+    push(@INC, $CONFIG->{TSUBAKI_MODULE_PATH});
+}
+
 use strict;
 use utf8;
 use Encode;
@@ -9,7 +18,6 @@ use CGI qw/:standard/;
 use CGI::Carp qw(fatalsToBrowser);
 
 # 以下TSUBAKIオリジナルクラス
-use Configure;
 use Searcher;
 use Renderer;
 use Logger;
@@ -18,7 +26,6 @@ use RequestParser;
 use Dumper;
 
 
-my $CONFIG = Configure::get_instance();
 
 &main();
 
@@ -27,7 +34,6 @@ sub main {
     my $params = RequestParser::parseCGIRequest(new CGI());
 
     # HTTPヘッダ出力
-    # print header(-type => 'text/plain', -charset => 'utf-8');
     print header(-charset => 'utf-8');
 
     if ($params->{debug}) {
@@ -56,7 +62,7 @@ sub main {
 	binmode(STDERR, ':utf8');
 
 	$params->{query} = undef if ($CONFIG->{SERVICE_STOP_FLAG});
-	unless ($params->{query}) {
+	unless (defined $params->{query}) {
 	    # TSUBAKI のトップ画面を表示
 	    $renderer->print_tsubaki_interface_init($params);
 	}
@@ -89,6 +95,11 @@ sub main {
 
 	    # LOGGERの終了
 	    $logger->close();
+
+
+# 	    print "<hr>\n";
+# 	    print Dumper::dump_as_HTML($params) . "<br>\n";
+# 	    print "<hr>\n";
 	}
     }
 }

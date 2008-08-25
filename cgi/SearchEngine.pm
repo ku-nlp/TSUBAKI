@@ -14,9 +14,9 @@ use Time::HiRes;
 use CDB_File;
 use Configure;
 use QueryParser;
-use Cache;
 use State;
 use Logger;
+use Tsubaki::CacheManager;
 
 my $CONFIG = Configure::get_instance();
 
@@ -64,9 +64,10 @@ sub DESTROY {}
 sub search {
     my ($this, $query, $logger, $opt) = @_;
 
-    my $cache = new Cache();
+    my $cache = new Tsubaki::CacheManager();
     my $result = $cache->load($query);
     my $status;
+
     if ($result && !$opt->{disable_cache}) {
 	$logger->setTimeAs('search', '%.3f');
 	$logger->setParameterAs('IS_CACHE', 1);
