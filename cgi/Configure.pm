@@ -6,6 +6,7 @@ package Configure;
 use strict;
 use utf8;
 use File::Basename;
+use KNP;
 use Data::Dumper;
 {
     package Data::Dumper;
