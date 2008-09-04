@@ -17,6 +17,10 @@ use Data::Dumper;
 }
 $Data::Dumper::Useperl = 1;
 
+use Configure;
+
+my $CONFIG = Configure::get_instance();
+
 binmode(STDOUT, ":encoding(euc-jp)");
 
 my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
@@ -74,6 +78,18 @@ sub main {
 		if ($_ eq "IS_ALIVE\n") {
 		    print $new_socket "$HOSTNAME:$opt{port} returns ACK.\n";
 		    $new_socket->close();
+		    exit;
+		}
+		elsif ($_ =~ /GET_SFDAT (\d+)$/) {
+		    my $did = $1;
+		    my $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 10000, $did);
+		    my $buf;
+		    open(READER, "zcat $xmlfile |");
+		    while (<READER>) {
+			$buf .= $_;
+		    }
+		    close(READER);
+		    print $new_socket $buf;
 		    exit;
 		}
 
