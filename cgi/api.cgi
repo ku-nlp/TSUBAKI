@@ -36,6 +36,7 @@ use utf8;
 use CGI qw/:standard/;
 use CGI::Carp qw(fatalsToBrowser);
 use File::stat;
+use Error qw(:try);
 
 # 以下TSUBAKIオリジナルクラス
 use Searcher;
@@ -226,31 +227,87 @@ sub provideDocumentData {
 	}
     }
 
-    # ファイルタイプに応じたファイルパスを取得
-    my $filepath;
-    if ($fileType eq 'xml_w_anchor') {
-	$filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_W_ANCHOR_PATH}, $did / 1000000, $did / 10000, $did);
-    } elsif ($fileType eq 'xml') {
-	$filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
-    } elsif ($fileType eq 'html') {
-	$filepath = sprintf("%s/h%03d/h%05d/%09d.html", $CONFIG->{HTML_FILE_PATH}, $did / 1000000, $did / 10000, $did);
-    }
+    if ($fileType eq 'xml' && $CONFIG->{PROVIDE_SFDAT_ON_SNIPPET_SERVERS}) {
+	require IO::Socket;
+	require IO::Select;
 
-
-    my $content = '';
-    if (-e $filepath) {
-	$content = ($cgi->param('no_encoding')) ?
-	    `cat $filepath` :
-	    `cat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+	my $content = &getStandardFormdatDataFromSnippetServer($did);
+	print $content . "\n";
     } else {
-	$filepath .= ".gz";
+	# ファイルタイプに応じたファイルパスを取得
+	my $filepath;
+	if ($fileType eq 'xml_w_anchor') {
+	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_W_ANCHOR_PATH}, $did / 1000000, $did / 10000, $did);
+	} elsif ($fileType eq 'xml') {
+	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
+	} elsif ($fileType eq 'html') {
+	    $filepath = sprintf("%s/h%03d/h%05d/%09d.html", $CONFIG->{HTML_FILE_PATH}, $did / 1000000, $did / 10000, $did);
+	}
+
+
+	my $content = '';
 	if (-e $filepath) {
 	    $content = ($cgi->param('no_encoding')) ?
-		`zcat $filepath` :
-		`zcat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+		`cat $filepath` :
+		`cat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+	} else {
+	    $filepath .= ".gz";
+	    if (-e $filepath) {
+		$content = ($cgi->param('no_encoding')) ?
+		    `zcat $filepath` :
+		    `zcat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+	    }
+	}
+	print $content;
+    }
+}
+
+
+sub getStandardFormdatDataFromSnippetServer {
+    my ($did) = @_;
+
+    my $num_of_sockets = 0;
+    my $host = $CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)};
+    my $selecter = IO::Select->new();
+    for (my $i = 0; $i < scalar(@{$CONFIG->{SNIPPET_SERVERS}}); $i++) {
+	next if ($host ne $CONFIG->{SNIPPET_SERVERS}[$i]{name});
+
+	my $port = $CONFIG->{SNIPPET_SERVERS}[$i]{ports}[0];
+	try {
+	    # 問い合わせ
+	    my $socket = IO::Socket::INET->new(
+		PeerAddr => $host,
+		PeerPort => $port,
+		Proto    => 'tcp' );
+	    $selecter->add($socket);# or die "Cannot connect to the server $host:$port. $!\n";
+
+	    print $socket "GET_SFDAT $did\n";
+
+	    $socket->flush();
+	    $num_of_sockets++;
+	} catch Error with {
+	    my $err = shift;
+	    printf ("Cannot connect to the server %s:%s.\n", $host, $port);
+	    printf ("Exception at line %s in %s\n", $err->{-line}, $err->{-file});
+	};
+    }
+
+    my $sfdat;
+    # 結果の受信
+    while ($num_of_sockets > 0) {
+	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
+	foreach my $socket (@{$readable_sockets}) {
+	    while (<$socket>) {
+		$sfdat .= $_;
+	    }
+
+	    $selecter->remove($socket);
+	    $socket->close();
+	    $num_of_sockets--;
 	}
     }
-    print $content;
+
+    return $sfdat;
 }
 
 
