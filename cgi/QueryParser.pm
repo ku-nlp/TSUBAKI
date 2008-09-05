@@ -74,6 +74,7 @@ sub new {
     $this->{OPTIONS}{jyushi} = $opts->{JYUSHI} if ($opts->{JYUSHI});
     $this->{OPTIONS}{keishi} = $opts->{KEISHI} if ($opts->{KEISHI});
 
+
     my ($dfdbs_w, $dfdbs_d) = &load_DFDBs($opts->{DFDB_DIR}, $opts);
     $this->{DFDBS_WORD} = $dfdbs_w;
     $this->{DFDBS_DPND} = $dfdbs_d;
@@ -139,66 +140,57 @@ sub parse {
     }
 
 
-
     ## 空白で区切る
     # $qks_str =~ s/ /　/g;
     my $delim = ($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+";
     foreach my $q_str (split(/$delim/, $qks_str)) {
+	# 空文字はスキップ
+	next if ($q_str eq '');
+
 	my $near = $opt->{near};
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
 	my $keep_order = 1;
 	my $force_dpnd = -1;
 	my $sentence_flag = -1;
 	my $phrasal_flag = -1;
+
 	# フレーズ検索かどうかの判定
-	if ($q_str =~ /^"(.+)?"$/){
+	if ($q_str =~ /^"(.+)?"$/) {
 	    $phrasal_flag = 1;
 	    $q_str = $1;
 	    $near = 1;
-
-	    # 同義表現を考慮したフレーズ検索はできない
-	    if ($opt->{syngraph} > 0) {
-		# $opt->{syngraph} = 0;
-# 		print "<center>同義表現を考慮したフレーズ検索は実行できません。</center></DIV>\n";
-# 		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
-# 		print "</body>\n";
-# 		print "</html>\n";
-# 		exit;
-	    }
 	}
-
 	# 近接検索かどうかの判定
-	if ($q_str =~ /^(.+)?~(.+)$/){
-	    # 同義表現を考慮した場合は近接制約を指定できない
-# 	    if ($opt->{syngraph} > 0) {
-# 		print "<center>同義表現を考慮した近接検索は実行できません。</center></DIV>\n";
-# 		print "<DIV class=\"footer\">&copy;2007 黒橋研究室</DIV>\n";
-# 		print "</body>\n";
-# 		print "</html>\n";
-# 		exit;
-# 	    }
-
+	elsif ($q_str =~ /^(.+)?~(.+)$/) {
 	    $q_str = $1;
 	    # 検索制約の取得
 	    my $constraint_tag = $2;
+
+	    # 近接制約
 	    if ($constraint_tag =~ /^(\d+)(W|S)$/i) {
-		# 近接制約
 		$logical_cond_qkw = 'AND';
 		$near = $1;
 		$sentence_flag = 1 if ($2 =~ /S/i);
 		$keep_order = 0 if ($2 eq 's' || $2 eq 'w');
-	    } elsif ($constraint_tag =~ /(AND|OR)/) {
-		# 論理条件制約
+	    }
+	    # 論理条件制約
+	    elsif ($constraint_tag =~ /(AND|OR)/) {
 		$logical_cond_qkw = $1;
-	    } elsif ($constraint_tag =~ /FD/) {
-		# 係り受け強制制約
+	    }
+	    # 係り受け強制制約
+	    elsif ($constraint_tag =~ /FD/) {
 		$logical_cond_qkw = 'AND';
 		$force_dpnd = 1;
 	    }
 	}
-
-	# 空白はスキップ
-	next if ($q_str eq '');
+	# 指定なし
+	else {
+	    # クエリに制約(近接およびフレーズ)が指定されていなければ~100wをつける
+	    $logical_cond_qkw = 'AND';
+	    $near = 100;
+	    $sentence_flag = 0;
+	    $keep_order = 0;
+	}
 
 	## 半角アスキー文字列を全角に置換する
 	$q_str = Unicode::Japanese->new($q_str)->h2z->getu;
