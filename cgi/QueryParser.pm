@@ -142,7 +142,7 @@ sub parse {
 
     ## 空白で区切る
     # $qks_str =~ s/ /　/g;
-    my $delim = ($opt->{use_of_Zwhitespace_as_delimiter}) ? "(?: |　)+" : "(?: )";
+    my $delim = ($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+";
     foreach my $q_str (split(/$delim/, $qks_str)) {
 	my $near = $opt->{near};
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
