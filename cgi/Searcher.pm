@@ -25,6 +25,7 @@ sub new {
     $this->{urldbs} = ();
 
     if ($this->{is_local_search_mode}) {
+	require TsubakiEngineFactory;
 	my $factory = new TsubakiEngineFactory($opt);
 	$this->{tsubaki} = $factory->get_instance();
     }
@@ -57,10 +58,10 @@ sub search {
 
     my ($hitcount, $results, $status);
     if ($this->{is_local_search_mode}) {
-	$opt->{flag_of_dpnd_use} = 1;
-	$opt->{flag_of_dist_use} = 1;
-	$opt->{flag_of_anchor_use} = 1;
-	$opt->{DIST} = 30;
+	$opt->{flag_of_dpnd_use} = $query->{flag_of_dpnd_use};
+	$opt->{flag_of_dist_use} = $query->{flag_of_dist_use};
+	$opt->{flag_of_anchor_use} = $query->{flag_of_anchor_use};
+	$opt->{DIST} = $query->{DIST};
 	$opt->{LOGGER} = $logger;
 
 	push(@$results, $this->{tsubaki}->search($query, $query->{qid2df}, $opt));
