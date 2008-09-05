@@ -59,6 +59,7 @@ push(@attrs, 'document_scoring') if ($OPTs{verbose});
 push(@attrs, 'snippet_creation');
 # push(@attrs, 'total_docs') if ($OPTs{verbose});
 
+my %history = ();
 while (<LOG>) {
       my ($date, $host, $access, @options) = split(/ /, $_);
       # next if ($access eq 'API' && !$OPTs{verbose});
@@ -91,8 +92,18 @@ while (<LOG>) {
 	  if (defined $vals{$k}) {
 	      if ($k eq 'query') {
 		  my $uri_encoded_query = &uri_escape(encode('utf8', $vals{$k} . "~100w"));
-		  my $url = sprintf("%s?syngraph=1&start=0&q=%s", $CONFIG->{INDEX_CGI}, $uri_encoded_query);
+		  my $url = sprintf("%s?syngraph=1&start=1&q=%s", $CONFIG->{INDEX_CGI}, $uri_encoded_query);
 		  $buf .= sprintf(qq(<TD style='border: 1px solid black; width: 20em;' nowrap><A target="_blank" href='%s'>%s&nbsp;), $url, $vals{$k});
+
+		  $vals{$k} =~ s/~\d+.$//;
+		  my $uri_encoded_query2 = &uri_escape(encode('utf8', $vals{$k} . "~100w"));
+		  my $url2 = sprintf("http://tsubaki.ixnlp.nii.ac.jp/index.cgi?syngraph=1&start=1&q=%s",$uri_encoded_query2);
+		  unless (exists $history{$vals{$k}}) {
+		      my $hoge = "- [[$vals{$k}:$url2]]<BR>\n";
+		      $hoge =~ s/ //g;
+#		      print $hoge;
+		      $history{$vals{$k}} = 1;
+		  }
 	      } else {
 		  $buf .= "<TD style='border: 1px solid black;' nowrap>$vals{$k}&nbsp;";
 	      }
