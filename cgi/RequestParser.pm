@@ -55,6 +55,9 @@ sub getDefaultValues {
     $params{antonym_and_negation_expansion} = 0;
     $params{disable_cache} = 0;
     $params{disable_synnode} = 0;
+    $params{detect_requisite_dpnd} = 1;
+    $params{query_filtering} = 1;
+    $params{trimming} = 1;
 
     return \%params;
 }
