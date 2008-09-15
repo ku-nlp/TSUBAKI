@@ -89,12 +89,23 @@ sub search {
     # 検索
     my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use}, $opt->{LOGGER});
 
-    # return [] unless ($alldocs_word);
 
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
 	$cal_method = undef; # ヒットカウントのみの場合はスコアは計算しない (まじめに考える)
     }
+#     # ヒットカウントのみならば、文書IDのリストを返して終了
+#     if ($query->{only_hitcount} > 0) {
+# 	my %buf = ();
+# 	foreach my $docs (@$alldocs_word) {
+# 	    foreach my $doc (@$docs) {
+# 		$buf{$doc->{did}} = 1;
+# 	    }
+# 	}
+# 	my @dids = keys %buf;
+
+# 	return \@dids;
+#     }
 
 
 
@@ -191,6 +202,7 @@ sub retrieve_from_dat {
     }
     print "-----\n" if ($this->{verbose});
 
+
     my $ret = $this->merge_search_result(\@results, \%idx2qid);
 
     if ($this->{show_speed}) {
@@ -237,6 +249,226 @@ sub calculate_score {
 
 
 sub retrieveFromBinaryData {
+    my ($this,  $query, $qid2df, $keyword, $flag_of_anchor_use) = @_;
+
+    # 検索にアンカーテキストを考慮する
+    if ($flag_of_anchor_use) {
+	$this->{word_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'word', 1, $this->{verbose}, $this->{show_speed});
+	$this->{dpnd_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'dpnd', 1, $this->{verbose}, $this->{show_speed});
+    }
+
+    my $add_flag = 1;
+    my $first_requisite_item = 1;
+    my ($ret, %requisiteDocBuf);
+    # 係り受けから検索する
+    foreach my $T (('dpnds', 'words')) {
+
+	# keyword中の単語を含む文書の検索
+	# 文書頻度の低い単語から検索する
+	foreach my $repnames (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{$T}}) {
+	    my $add_flag = 1;
+	    my $docbuf = ();
+	    if ($keyword->{logical_cond_qkw} =~ /AND/ && $repnames->[0]->{requisite}) {
+		# 一番最初の必須要素のみ追加する
+		if ($first_requisite_item) {
+		    $first_requisite_item = 0;
+		} else {
+		    $add_flag = 0;
+		}
+		$docbuf = \%requisiteDocBuf;
+	    }
+
+
+	    # バイナリファイルから文書の取得
+	    my $retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever} : $this->{word_retriever};
+	    my $docs = $this->retrieve_from_dat($retriever, $repnames, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+
+
+	    # 各検索単語・係り受けについて検索された結果を納めた配列に push
+	    my $cont = ($repnames->[0]->{requisite}) ? 'requisite' : 'optional';
+	    push(@{$ret->{$T}{$cont}}, $docs);
+
+
+
+	    # 検索にアンカーテキストを考慮する
+	    if ($flag_of_anchor_use) {
+		my $add_flag = 1;
+		my $dumyDocBuf = ();
+		my $anchor_retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever4anchor} : $this->{word_retriever4anchor};
+		my $anchor_docs = $this->retrieve_from_dat($anchor_retriever, $repnames, $dumyDocBuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+		push(@{$ret->{$T}{anchor}}, $anchor_docs);
+	    }
+	}
+    }
+
+    return ($ret->{words}{requisite}, $ret->{dpnds}{requisite}, $ret->{words}{optional}, $ret->{dpnds}{optional}, $ret->{words}{anchor}, $ret->{dpnds}{anchor});
+
+# use Data::Dumper;
+# print Dumper($ret->{word}{requisite}) . "\n";
+#
+# $VAR1 = [
+#           [
+#             {
+#               'did' => 34000954,
+#               'qid_freq' => [
+#                               {
+#                                 'qid' => 0,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '9038042087',
+#                                 'nums' => 113,
+#                                 'offset' => '9038037567'
+#                               },
+#                               {
+#                                 'qid' => 1,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '4374239993',
+#                                 'nums' => 115,
+#                                 'offset' => '4374235381'
+#                               }
+#                             ]
+#             },
+#           :
+#           :
+#           :
+#             {
+#               'did' => 34986766,
+#               'qid_freq' => [
+#                               {
+#                                 'qid' => 0,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '9038044867',
+#                                 'nums' => 6,
+#                                 'offset' => '9038042059'
+#                               },
+#                               {
+#                                 'qid' => 1,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '4374242827',
+#                                 'nums' => 6,
+#                                 'offset' => '4374239965'
+#                               }
+#                             ]
+#             }
+#           ],
+#           [
+#             {
+#               'did' => 34000954,
+#               'qid_freq' => [
+#                               {
+#                                 'qid' => 2,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '8320560358',
+#                                 'nums' => 45,
+#                                 'offset' => '8319293776'
+#                               },
+#                               {
+#                                 'qid' => 3,
+#                                 'fnum' => 0,
+#                                 'offset_score' => 463302011,
+#                                 'nums' => 45,
+#                                 'offset' => 462035429
+#                               },
+#                               {
+#                                 'qid' => 4,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '1282992072',
+#                                 'nums' => 45,
+#                                 'offset' => '1281725490'
+#                               },
+#                               {
+#                                 'qid' => 5,
+#                                 'fnum' => 0,
+#                                 'offset_score' => 460812425,
+#                                 'nums' => 45,
+#                                 'offset' => 459545843
+#                               },
+#                               {
+#                                 'qid' => 6,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '6288237291',
+#                                 'nums' => 45,
+#                                 'offset' => '6286970653'
+#                               }
+#                             ]
+#             },
+#           :
+#           :
+#           :
+#             {
+#               'did' => 34986766,
+#               'qid_freq' => [
+#                               {
+#                                 'qid' => 2,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '8321361942',
+#                                 'nums' => 3,
+#                                 'offset' => '8320545360'
+#                               },
+#                               {
+#                                 'qid' => 3,
+#                                 'fnum' => 0,
+#                                 'offset_score' => 464103595,
+#                                 'nums' => 3,
+#                                 'offset' => 463287013
+#                               },
+#                               {
+#                                 'qid' => 4,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '1283793656',
+#                                 'nums' => 3,
+#                                 'offset' => '1282977074'
+#                               },
+#                               {
+#                                 'qid' => 5,
+#                                 'fnum' => 0,
+#                                 'offset_score' => 461614009,
+#                                 'nums' => 3,
+#                                 'offset' => 460797427
+#                               },
+#                               {
+#                                 'qid' => 6,
+#                                 'fnum' => 0,
+#                                 'offset_score' => '6289038909',
+#                                 'nums' => 3,
+#                                 'offset' => '6288222293'
+#                               }
+#                             ]
+#             }
+#           ]
+#         ];
+}
+
+
+sub get_requisite_docs {
+    my ($docs_word, $docs_dpnd) = @_;
+
+    # 必須が指定された検索単語・係り受けを含む文書IDのマージ
+    foreach my $ret (@$docs_dpnd) {
+	push(@$docs_word, $ret);
+    }
+
+    return &intersect($docs_word);
+}
+
+sub get_optional_docs {
+    my ($docs_word, $docs_dpnd) = @_;
+
+    # 必須が指定された検索単語・係り受けを含む文書IDのマージ
+    foreach my $ret (@$docs_dpnd) {
+	push(@$docs_word, $ret);
+    }
+
+    return $docs_word;
+}
+
+
+
+
+
+
+
+
+sub retrieveFromBinaryData2 {
     my ($this, $retriever, $query, $qid2df, $keyword, $type, $alwaysAppend, $requisite_only, $optional_only) = @_;
 
     my @results = ();
@@ -411,27 +643,15 @@ sub retrieveFromBinaryData {
 }
 
 
-sub get_requisite_docs {
-    my ($docs_word, $docs_dpnd) = @_;
 
-    # 必須が指定された検索単語・係り受けを含む文書IDのマージ
-    foreach my $ret (@$docs_dpnd) {
-	push(@$docs_word, $ret);
-    }
 
-    return &intersect($docs_word);
-}
 
-sub get_optional_docs {
-    my ($docs_word, $docs_dpnd) = @_;
 
-    # 必須が指定された検索単語・係り受けを含む文書IDのマージ
-    foreach my $ret (@$docs_dpnd) {
-	push(@$docs_word, $ret);
-    }
 
-    return $docs_word;
-}
+
+
+
+
 
 sub retrieve_documents {
     my ($this, $query, $qid2df, $flag_of_anchor_use, $logger) = @_;
@@ -450,41 +670,11 @@ sub retrieve_documents {
     # 通常検索
     ##########
     foreach my $keyword (@{$query->{keywords}}) {
-	my ($requisite_only, $optional_only) = (1, 0);
 
-	my %dpnd_qids = ();
-	foreach my $reps_of_word (@{$keyword->{dpnds}}) {
-	    foreach my $rep (@$reps_of_word) {
-		$dpnd_qids{$rep->{qid}} = 1;
-	    }
-	}
-
-	# 必須が指定された検索単語・係り受けの検索
-	my $requisite_docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 0, $requisite_only, $optional_only);
-	my $requisite_docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 0, $requisite_only, $optional_only);
-
-
-	# オプショナルが指定された検索単語・係り受けの検索
-	($requisite_only, $optional_only) = (0, 1);
-	my $optional_docs_word = $this->retrieveFromBinaryData($this->{word_retriever}, $query, $qid2df, $keyword, 'words', 1, $requisite_only, $optional_only);
-	my $optional_docs_dpnd = $this->retrieveFromBinaryData($this->{dpnd_retriever}, $query, $qid2df, $keyword, 'dpnds', 1, $requisite_only, $optional_only);
-
+	# 検索単語・係り受けの検索
+	my ($requisite_docs_word, $requisite_docs_dpnd, $optional_docs_word, $optional_docs_dpnd, $docs_word_anchor, $docs_dpnd_anchor) = $this->retrieveFromBinaryData($query, $qid2df, $keyword, $flag_of_anchor_use);
 	$logger->setTimeAs('normal_search', '%.3f');
 
-	my $docs_word_anchor = [];
-	my $docs_dpnd_anchor = [];
- 	if ($flag_of_anchor_use) {
-	    # 検索にアンカーテキストを考慮する
-
-	    ($requisite_only, $optional_only) = (0, 0);
-
-	    $this->{word_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'word', 1, $this->{verbose}, $this->{show_speed});
-	    $this->{dpnd_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'dpnd', 1, $this->{verbose}, $this->{show_speed});
-
-	    $docs_word_anchor = $this->retrieveFromBinaryData($this->{word_retriever4anchor}, $query, $qid2df, $keyword, 'words', 1, $requisite_only, $optional_only);
-	    $docs_dpnd_anchor = $this->retrieveFromBinaryData($this->{dpnd_retriever4anchor}, $query, $qid2df, $keyword, 'dpnds', 1, $requisite_only, $optional_only);
- 	}
-	$logger->setTimeAs('anchor_search', '%.3f');
 
 
 	# 近接制約の適用
@@ -495,19 +685,25 @@ sub retrieve_documents {
 	$logger->setTimeAs('near_condition', '%.3f');
 
 
+
 	# 必須が指定された検索単語・係り受けを含む文書IDのマージ
 	my $requisites = &get_requisite_docs($requisite_docs_word, $requisite_docs_dpnd);
 	# オプショナルが指定された検索単語・係り受けを含む文書IDのマージ
 	my $optionals = &get_optional_docs($optional_docs_word, $optional_docs_dpnd);
 
 
+
+	my %dpnd_qids = ();
+	foreach my $reps_of_word (@{$keyword->{dpnds}}) {
+	    foreach my $rep (@$reps_of_word) {
+		$dpnd_qids{$rep->{qid}} = 1;
+	    }
+	}
+
 	# requisites, optionals を単語と係り受けに分類する
 	my $word_docs = ();
 	my $dpnd_docs = ();
-
 	foreach my $docs (@$requisites) {
-#	    next unless (defined $docs->[0]);
-
 	    if (defined $docs->[0] && exists $dpnd_qids{$docs->[0]{qid_freq}[0]{qid}}) {
 		push(@$dpnd_docs, $docs);
 	    } else {
