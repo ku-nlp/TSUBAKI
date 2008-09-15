@@ -393,6 +393,8 @@ sub extract_sentences_from_content {
     my $in_title = 0;
     my $in_link_tag = 0;
     my $in_meta_tag = 0;
+    my $count = 0;
+    my $th = -1;
     foreach my $line (split(/\n/, $content)) {
 	$line .= "\n";
 	if ($opt->{discard_title}) {
@@ -461,12 +463,15 @@ sub extract_sentences_from_content {
 		my $length = scalar(@{$sentence->{surfs}});
 		$length = 1 if ($length < 1);
 		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * log($length);
+		$th = $count + $opt->{window_size} if ($score > 0 && $th < 0);
 		$sentence->{score} = $score;
 		$sentence->{smoothed_score} = $score;
 		$sentence->{length} = $length;
 		$sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
-
 		push(@sentences, $sentence);
+
+		last if ($opt->{lightweight} && $count > $th && $th > 0);
+		$count++;
 #		print encode('euc-jp', $sentence->{rawstring}) . " (" . $num_of_whitespace_cdot_comma . ") is SKIPPED.\n";
 	    }
 	    $annotation = '';

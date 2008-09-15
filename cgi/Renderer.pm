@@ -619,6 +619,7 @@ sub get_snippets {
 						syngraph => $opt->{'syngraph'},
 						# options for snippet creation
 						window_size => 5,
+						lightweight => 1,
 
 						# options for kwic
 						kwic => $opt->{kwic},
