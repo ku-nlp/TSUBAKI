@@ -50,9 +50,10 @@ sub filterOutWorthlessVerbs {
     my %additionalDpnds = ();
     foreach my $t ($knpresult->tag) {
 
-	# 動詞かつ肯定表現のみ
+	# 動詞 or サ変名詞かつ肯定表現のみ
 	# 朝食を食べない子供の増加 -> 朝食の子供の増加 X
-	if ($t->fstring =~ /<用言:動>/ && $t->fstring !~ /<否定表現>/) {
+	if (($t->fstring =~ /<用言:動>/ || $t->fstring =~ /<サ変>/) &&
+	    $t->fstring !~ /<否定表現>/) {
 	    my ($verb) = ($t->fstring =~ /<正規化代表表記:([^>]+?)>/);
 	    next unless (defined $t->parent);
 
