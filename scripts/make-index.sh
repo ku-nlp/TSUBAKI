@@ -2,27 +2,37 @@
 
 # 1万ページ毎にtgzされた標準フォーマットの塊からインデックスを抽出するスクリプト
 
-# usage: sh make-index.sh [-knp|-syn] iccc100:/data2/skeiji/embed_knp_and_syngraph_080512/s01573.tgz
+# usage: sh make-index.sh [-knp|-syn] [-inlinks] iccc100:/data2/skeiji/embed_knp_and_syngraph_080512/s01573.tgz
 
 # ★以下の値を変更すること
-workspace=/data2/skeiji/smallset/mkidx
-scriptdir=$HOME/work/new-syngraph-test/mkidx/SearchEngine/scripts
+workspace=/tmp/$USER/mkidx
+scriptdir=$HOME/cvs/SearchEngine/scripts
 
 
 # 作成するインデックスのタイプ(-knp/-syn)
 type=$1
+
+# インリンクインデックスの作成かどうかのチェック
+inlinks=
+if [ $2 = "-inlinks" ];
+then
+    inlinks=$2
+    shift
+fi
+
+
 fp=$2
 id=`basename $fp | cut -f 2 -d 's' | cut -f 1 -d '.'`
 
 xdir=s$id
 idir=i$id
 
-mkdir $workspace 2> /dev/null
+mkdir -p $workspace 2> /dev/null
 cd $workspace
 
 scp -r $fp ./
 
-mkdir $idir 2> /dev/null
+mkdir -p $idir 2> /dev/null
 
 echo tar xzf $xdir.tgz
 tar xzf $xdir.tgz
@@ -34,24 +44,28 @@ ulimit -v 2097152
 
 # ファイル単位でインデックスの抽出
 # SYNノードを含む係り受け関係は除外、5MBを越える標準フォーマットからは抽出しない
-echo perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z
-perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z
+command="perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z $inlinks"
+echo $command
+$command
 rm -r $xdir
 
 
 # 1万ページ分のインデックスをマージ
 
 # N件ずつメモリを使ってマージ
-N=10
+N=50
 echo perl $scriptdir/merge_idx.pl -dir $idir -n $N -z -compress
 perl $scriptdir/merge_idx.pl -dir $idir -n $N -z -compress
 rm -r $idir
 
 # ディスク上でマージ
 tmpdir=$idir"_tmp"
-mkdir $tmpdir 2> /dev/null
+mkdir -p $tmpdir 2> /dev/null
 mv $idir.*.*gz $tmpdir
 
 echo perl $scriptdir/merge_sorted_idx.pl -dir ./$tmpdir -suffix gz -z | gzip > $idir.idx.gz
 perl $scriptdir/merge_sorted_idx.pl -dir ./$tmpdir -suffix gz -z | gzip > $idir.idx.gz
 rm -r $tmpdir
+
+mkdir $workspace/finish 2> /dev/null
+mv $idir.idx.gz finish/
