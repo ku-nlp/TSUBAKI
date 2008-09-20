@@ -30,7 +30,7 @@ idir=i$id
 mkdir -p $workspace 2> /dev/null
 cd $workspace
 
-scp -r $fp ./
+scp -o "BatchMode yes" -o "StrictHostKeyChecking no" -r $fp ./
 
 mkdir -p $idir 2> /dev/null
 
