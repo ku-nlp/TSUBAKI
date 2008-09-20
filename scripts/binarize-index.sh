@@ -6,7 +6,12 @@
 workspace=/tmp/bin_tsubaki
 scriptdir=$HOME/cvs/SearchEngine/scripts
 
-
+# SYNGRAPHインデックスかどうかの判定
+if [ $1 = "-syn" ];
+then
+    type=$1
+    shift
+fi
 
 fp=$1
 fname=`basename $fp`
@@ -18,8 +23,8 @@ cd $workspace
 scp $fp ./
 
 # バイナリ化
-echo perl -I $scriptdir $scriptdir/binarize_idx.pl -z -quiet $fname
-perl -I $scriptdir $scriptdir/binarize_idx.pl -z -quiet $fname
+echo perl -I $scriptdir $scriptdir/binarize_idx.pl -z $type -quiet $fname
+perl -I $scriptdir $scriptdir/binarize_idx.pl -z $type -quiet $fname
 
 # 文書頻度の取得
 echo "perl $scriptdir/idx2df.pl $id.idx.gz"
