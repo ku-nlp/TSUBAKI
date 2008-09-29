@@ -43,7 +43,6 @@ sub new {
 	    }
 	}
     }
-    $buf =~ s/\?//g;
 
     my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
     my $encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
