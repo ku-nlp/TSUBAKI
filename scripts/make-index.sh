@@ -4,9 +4,10 @@
 
 # usage: sh make-index.sh [-knp|-syn] [-inlinks] iccc100:/data2/skeiji/embed_knp_and_syngraph_080512/s01573.tgz
 
-# ★以下の値を変更すること
-workspace=/tmp/$USER/mkidx
-scriptdir=$HOME/cvs/SearchEngine/scripts
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/indexing.conf
+workspace=$workspace_mkidx
 
 
 # 作成するインデックスのタイプ(-knp/-syn)

@@ -5,9 +5,10 @@
 # usage: sh merge-index.sh [-syn] 000 /somewhere/flist
 
 
-# ★以下の値を変更すること
-workspace=/data2/skeiji/smallset/mg_tsubaki_idx.db5
-scriptdir=$HOME/work/new-syngraph-test/mgidx/SearchEngine/scripts
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/indexing.conf
+workspace=$workspace_mgidx
 
 
 
@@ -28,7 +29,7 @@ id=$1
 flist=$2
 
 # 作業ディレクトリの作成
-mkdir $workspace 2> /dev/null
+mkdir -p $workspace 2> /dev/null
 cd $workspace
 
 mkdir $id 2> /dev/null
@@ -50,7 +51,6 @@ cd ..
 echo "perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz | gzip > $id.idx.gz"
 perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz | gzip > $id.idx.gz
 rm -r $id
-
 
 
 fname=$id.idx.gz

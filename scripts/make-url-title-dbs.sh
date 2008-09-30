@@ -2,8 +2,9 @@
 
 # URL、タイトルデータベースを作成するスクリプト
 
-# ★以下の変数の値を変えること
-scriptdir=$HOME/cvs/SearchEngine/scripts
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/indexing.conf
 
 
 indir=$1

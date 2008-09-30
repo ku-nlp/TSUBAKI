@@ -5,11 +5,12 @@
 # 文書頻度データベースを作成するスクリプト
 
 
-# ★実行環境に合わせて以下の変数を変更してください
-workspace=.
-scriptdir=$HOME/cvs/SearchEngine/scripts
-utildir=$HOME/cvs/Utils/perl
-
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/indexing.conf
+workspace=$workspace_mkdfdb
+mkdir -p $workspace 2> /dev/null
+cd $workspace
 
 
 opt=
