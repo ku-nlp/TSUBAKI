@@ -1,3 +1,170 @@
+2008-09-30  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/binarize-index.sh, scripts/make-dfdb.sh, scripts/make-index.sh, scripts/make-url-title-dbs.sh, scripts/merge-index.sh, scripts/update-dfdb.sh:
+	conf/indexing.confファイル中の設定を利用するようにした.
+
+2008-09-29  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm: ?を削除しないようにした.
+
+2008-09-20  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/make-index.sh: scpのオプションを追加.
+
+	* scripts/binarize-index.sh:
+	SYNGRAPHインデックスを作成するかどうかを指定するオプションを追加.
+
+2008-09-16  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/make-index.sh:
+	インリンク情報からインデックスを作成するオプション-inlinksの追加.
+
+2008-09-15  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm, cgi/SnippetMaker.pm:
+	簡易スニペット生成オプションを設けた.
+
+	* cgi/QueryFilter.pm: サ変名詞をテリック処理の対象として追加
+
+	* scripts/TsubakiEngine.pm:
+	単語（必須）、係り受け（必須）、単語（オプショナル）、係り受け（オプショナル）ごとに回していたループを廃止し、一回で処理するようにした.
+
+2008-09-05  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/log.cgi: wiki用リンクを出力するコードを追加.
+
+	* cgi/RequestParser.pm: クエリ処理をデフォルトで適用するようにした.
+
+	* cgi/Searcher.pm:
+	ローカルのインデックスをひきにいく際、クエリ解析処理のオプションに対応した.
+
+	* cgi/QueryParser.pm:
+	複数の検索表現が入力された場合、全てに~100wを付けるようにした.
+
+	* cgi/QueryParser.pm:
+	全角空白をクエリの区切り文字として無視するオプションを追加.
+
+2008-09-04  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet_make_server.pl:
+	標準フォーマットデータを返すオプションを追加.
+
+	* cgi/configure: パラメータの追加.
+
+	* cgi/api.cgi:
+	スニペットサーバーから標準フォーマットデータを取得する関数を追加.
+
+2008-09-01  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm: URL中の「/」の重複を削除する処理を修正.
+
+2008-08-26  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/Configure.pm: use KNP;を追加.
+
+2008-08-25  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict:
+	Tsubakiモジュールへのパスを表す変数の追加
+
+	* cgi/SearchEngine.pm, cgi/api.cgi, cgi/index.cgi:
+	Cache.pmの移動に対応した.
+
+	* cgi/Cache.pm: perl/Tsubaki/CacheManager.pmへの移行に伴う削除
+
+2008-08-23  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm:
+	解析結果表示中の「○」が小さくならないようにした．
+
+2008-08-21  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm:
+	クエリの解析結果表示を修正. (○△×の位置、色など)
+
+	* scripts/TsubakiEngine.pm:
+	bug fixed. (語順を考慮した近接制約における判定条件を修正)
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	bug fixed. (係り受けでスコアが考慮されているペアについては、近接スコアを考慮しないようにした, 近接のスコアの計算式を修正)
+
+2008-08-20  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngineFactory.pm: NTCIR3文書セットの文書長を追加.
+
+	* scripts/make-dlength-db.perl: SYNノードを対象としないようにした.
+
+	* cgi/whats.html: リンク先を相対URLに変更.
+
+	* cgi/CachedHTMLDocument.pm: URL内の「/」の連続を1つにまとめた.
+
+	* cgi/Searcher.pm: URLを正規化する際、www, www\d+は削除するようにした.
+
+	* cgi/log.cgi: use KNP; を追加.
+
+	* cgi/questionnarie.cgi:
+	ユーザエージェントの情報をデータとして保存するようにした.
+
+	* cgi/tutorial.html: リンク先を変更.
+
+	* cgi/QueryFilter.pm:
+	係り先、係り元のどちらかに<クエリ削除語>が付いている場合は、新しく係り受け関係を生成しないようにした.
+
+	* cgi/index.cgi: 設定ファイルの中身をdebug表示するようにした.
+
+	* scripts/api_req.pl: utils/api_req.plを移動.
+
+	* doc/tex/figs/dpnd.eps, doc/tex/figs/flow.eps, doc/tex/figs/html_sf.eps, doc/tex/figs/index.eps, doc/tex/figs/index_w.eps, doc/tex/figs/link.eps, doc/tex/figs/syn_dpnd.eps, doc/tex/figs/tsubaki-overview.eps:
+	figs/*.epsをtexディレクトリ以下に移動.
+
+	* doc/tex/manual.bib, doc/tex/manual.tex, doc/manual.tex, doc/manual.bib:
+	.bib, .texをtexディレクトリに移動.
+
+	* cgi/Renderer.pm: .png, .css, .jsファイルのパス変更に対応
+
+	* cgi/javascript/tsubaki.js, cgi/tsubaki.js:
+	jsファイルをjavascriptディレクトリ以下に移動.
+
+	* cgi/api.css, cgi/css/api.css, cgi/css/tsubaki.common.css, cgi/css/tsubaki.gecko.css, cgi/css/tsubaki.ie.css, cgi/tsubaki.common.css, cgi/tsubaki.gecko.css, cgi/tsubaki.ie.css:
+	cssファイルをcssディレクトリ以下に移動.
+
+	* cgi/curve-bottom-left.png, cgi/curve-bottom-right.png, cgi/curve-top-left.png, cgi/curve-top-right.png, cgi/image/curve-bottom-left.png, cgi/image/curve-bottom-right.png, cgi/image/curve-top-left.png, cgi/image/curve-top-right.png, cgi/image/info-logo.png, cgi/image/logo-mini.png, cgi/image/logo.png, cgi/image/screenshot.png, cgi/image/tutorial-logo.png, cgi/info-logo.png, cgi/logo-mini.png, cgi/logo.png, cgi/screenshot.png, cgi/tutorial-logo.png:
+	画像ファイルをimage以下に移動.
+
+2008-08-19  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: フッターを表示する条件を変更.
+
+	* cgi/RequestParser.pm:
+	半角英数字記号からなるクエリを受け付けるようにした.
+
+	* cgi/SearchEngine.pm: デバッグ出力の追加.
+
+	* cgi/Configure.pm:
+	ホスト名に応じて読み込むconfigureファイルを切り替えるようにした.
+
+	* cgi/QueryKeyword.pm:
+	disable_dpndオプションに対応. NEの修飾句を△にするようにした.
+
+	* cgi/QueryParser.pm: disable_dpndオプションの追加.
+
+	* cgi/QueryTrimmer.pm:
+	固有表現の修飾句を同定する処理を追加. (KNPのルールに移行予定)
+
+	* cgi/RequestParser.pm:
+	複合名詞処理、係り受け利用, 文末表現削除処理, NEの修飾句同定をオプション化, NTCIRオプションを追加.
+
+	* cgi/Searcher.pm:
+	ローカルディスク上のインデックスを読みにいけるようにした.
+
+	* scripts/Indexer.pm: NEの情報を基本句の行から取得するようにした.
+
+	* scripts/TsubakiEngine.pm:
+	bug fixed. (△指定された単語で検索された文書と、○指定された単語で検索された文書のANDをとっていたのをデバッグ)
+
+	* scripts/tsubaki_server.pl:
+	特定の文書IDを持つ文書の検索結果だけ得るオプションに対応
+
 2008-08-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/SearchEngine.pm:
@@ -248,8 +415,6 @@
 
 	* cgi/configure.nict:
 	パラメータの追加. (COMPOUND_NOUN_DFDB_PATH. UTILS_PATH)
-
-	* data/PORTS.SYN.NICT: added.
 
 2008-07-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
