@@ -33,8 +33,13 @@ sub new {
     $obj->{dpnd_retriever} = new Retrieve($opts->{idxdir}, 'dpnd', $opts->{skip_pos}, $opts->{verbose}, 1, $opts->{show_speed});
 
     # 検索にアンカーテキストを考慮する
-    $obj->{word_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'word', 1, $opts->{verbose}, $opts->{show_speed});
-    $obj->{dpnd_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
+    if ($opts->{idxdir4anchor}) {
+	$obj->{word_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'word', 1, $opts->{verbose}, $opts->{show_speed});
+	$obj->{dpnd_retriever4anchor} = new Retrieve($opts->{idxdir4anchor}, 'dpnd', 1, $opts->{verbose}, $opts->{show_speed});
+	$obj->{disable_anchor} = 0;
+    } else {
+	$obj->{disable_anchor} = 1;
+    }
 
     bless $obj;
 }
@@ -74,7 +79,7 @@ sub retrieve_from_dat2 {
     }
 
     my $ret = $this->merge_search_result(\@results, \%idx2qid);
-    
+
     print scalar(@$ret) . " merged.\n"  if ($opt->{verbose});
     print "----------\n"  if ($opt->{verbose});
 
@@ -308,8 +313,10 @@ sub merge_docs {
     $did2idx_is_empty = 0;
     $calculateNearDpnds = 0;
     $this->calculate_score(\@merged_docs, $alldocs_dpnds, \%did2idx, $this->{dpnd_retriever}, 'dpnd', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, undef);
-    $this->calculate_score(\@merged_docs, $alldocs_word_anchor, \%did2idx, $this->{word_retriever4anchor}, 'word_anchor', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, undef);
-    $this->calculate_score(\@merged_docs, $alldocs_dpnd_anchor, \%did2idx, $this->{dpnd_retriever4anchor}, 'dpnd_anchor', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, undef);
+    unless ($this->{disable_anchor}) {
+	$this->calculate_score(\@merged_docs, $alldocs_word_anchor, \%did2idx, $this->{word_retriever4anchor}, 'word_anchor', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, undef);
+	$this->calculate_score(\@merged_docs, $alldocs_dpnd_anchor, \%did2idx, $this->{dpnd_retriever4anchor}, 'dpnd_anchor', $qid2gid, $qid2qtf, $gid2df, \%d_length_buff, \@q2scores, $did2idx_is_empty, $DIST, $calculateNearDpnds, undef);
+    }
 
     my @result;
     for (my $i = 0; $i < @merged_docs; $i++) {

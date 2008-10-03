@@ -252,9 +252,14 @@ sub retrieveFromBinaryData {
     my ($this,  $query, $qid2df, $keyword, $flag_of_anchor_use) = @_;
 
     # 検索にアンカーテキストを考慮する
-    if ($flag_of_anchor_use) {
+    if ($flag_of_anchor_use && !$this->{disable_anchor}) {
 	$this->{word_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'word', 1, $this->{verbose}, $this->{show_speed});
 	$this->{dpnd_retriever4anchor} = new Retrieve($this->{idxdir4anchor}, 'dpnd', 1, $this->{verbose}, $this->{show_speed});
+    } else {
+	if ($flag_of_anchor_use) {
+	    print STDERR "エラー: オプションの指定が矛盾しています。 (flag_of_anchor_use -> 1, disable_anchor -> 1)\n";
+	    exit 1;
+	}
     }
 
     my $add_flag = 1;
