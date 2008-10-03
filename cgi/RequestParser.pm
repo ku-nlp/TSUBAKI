@@ -53,7 +53,7 @@ sub getDefaultValues {
     $params{highlight} = ($call_from_API) ? 0 : 1;
     $params{develop_mode} = $CONFIG->{TEST_MODE};
     $params{antonym_and_negation_expansion} = 0;
-    $params{disable_cache} = 0;
+    $params{disable_cache} = $CONFIG->{DISABLE_CACHE};
     $params{disable_synnode} = 0;
     $params{detect_requisite_dpnd} = 1;
     $params{query_filtering} = 1;
