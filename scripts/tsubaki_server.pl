@@ -179,7 +179,9 @@ sub main {
 		    # my $results = ($query->{accuracy}) ? $query->{results} * $query->{accuracy} : $query->{results};
 		    $results += $query->{start};
 		    $results = $docs_size if ($docs_size < $results);
-		    my $max_rank_of_getting_title_and_url = $results * $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE;
+
+		    # タイトルDBがない場合はタイトルDBをひく操作をしない
+		    my $max_rank_of_getting_title_and_url = (scalar(keys %TITLE_DBs) > 0) ? $results * $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE : 0;
 		    print $query->{results} . "=ret " . $query->{accuracy} . "=acc " . $results . " * " . $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE . " = " . $max_rank_of_getting_title_and_url . "*\n" if ($opt{debug});
 
 		    for (my $rank = 0; $rank < $results; $rank++) {
