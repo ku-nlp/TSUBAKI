@@ -288,3 +288,6 @@ PROVIDE_SFDAT_ON_SNIPPET_SERVERS	1
 
 # キャッシュを利用しないようにする場合は1
 DISABLE_CACHE	0
+
+# アンカーインデックスを利用しないようにする場合は1
+DISABLE_ANCHOR_INDEX	0
