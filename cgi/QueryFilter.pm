@@ -25,6 +25,7 @@ sub new {
 	cscf => new CalcSimilarityByCF()
     };
 
+    $this->{option}{debug} = $option->{debug};
     $this->{cscf}->TieMIDBfile($CONFIG->{MIDB_PATH});
 
     bless $this;
@@ -46,15 +47,20 @@ sub getMidasiWithoutYomi {
 sub filterOutWorthlessVerbs {
     my ($this, $knpresult, $opt) = @_;
 
+    if ($this->{option}{debug}) {
+	print qq(<H4 style="background-color:black; color: white;">動詞・サ変名詞のテリック処理</H4>\n);
+    }
+
     my %worthlessVerbs = ();
     my %additionalDpnds = ();
     foreach my $t ($knpresult->tag) {
 
 	# 動詞 or サ変名詞かつ肯定表現のみ
 	# 朝食を食べない子供の増加 -> 朝食の子供の増加 X
-	if (($t->fstring =~ /<用言:動>/ || $t->fstring =~ /<サ変>/) &&
-	    $t->fstring !~ /<否定表現>/) {
-	    my ($verb) = ($t->fstring =~ /<正規化代表表記:([^>]+?)>/);
+	if (($t->fstring =~ /<用言:動>/ || $t->fstring =~ /<サ変>/) && $t->fstring !~ /<否定表現>/) {
+	    # my ($verb) = ($t->fstring =~ /<正規化代表表記:([^>]+?)>/);
+	    my $verb = ($t->mrph)[0]->repname;
+	    $verb = $1 if (($t->mrph)[0]->fstring =~ /<可能動詞:(.+?)>/);
 	    next unless (defined $t->parent);
 
 	    my $flag = 0;
@@ -94,6 +100,17 @@ sub isWorthlessVerb {
     my ($this, $mrph, $verb, $opt) = @_;
 
     my ($rank, $score) = $this->getRankOfMI($mrph, $verb);
+
+    if ($this->{option}{debug}) {
+	if ($score < 0 || $rank > $opt->{th}) {
+	    print "<FONT color=blue>\n";
+	} else {
+	    print "<FONT color=red>\n";
+	}
+
+	printf qq((%s, %s) rank=$rank score=$score</FONT><br>\n), $verb, $mrph->repname;
+    }
+
     return ($score < 0 || $rank > $opt->{th}) ? 0 : 1;
 }
 
@@ -134,13 +151,18 @@ sub getRankOfMI {
     }
 
     my $rank = 0;
-    my $score = -1;
+    my $score = -10000;
     foreach my $k (sort {$buf{$b} <=> $buf{$a}} keys %buf) {
 	$rank++;
 	if ($k eq $verb) {
 	    $score = $buf{$k};
 	    last;
 	}
+    }
+
+    if ($score == -10000) {
+	$rank = -1;
+	$score = -1;
     }
 
     return ($rank, $score);
