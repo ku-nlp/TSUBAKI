@@ -194,7 +194,7 @@ sub merge_search_results {
 		    }
 
 		    # タイトルが等しくスコアが近ければ類似ページと判定
-		    if (defined $prev && $prev->{title} eq $title) {
+		    if (defined $prev && $prev->{title} eq $title && $prev->{title} ne 'no title.' && $title ne 'no title.') {
 			$url2pos{$url_mod} = $pos - 1;
 			$prev->{score} = $page->{score_total};
 
