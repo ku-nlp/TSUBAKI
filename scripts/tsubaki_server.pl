@@ -21,6 +21,8 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 binmode(STDOUT, ':encoding(euc-jp)');
 use Logger;
+use Configure;
+
 
 
 my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 1;
@@ -68,6 +70,20 @@ foreach my $file (readdir(DIR)) {
     }
 }
 closedir(DIR);
+
+my $CONFIG = Configure::get_instance();
+my %STOP_PAGE_LIST = ();
+if ($CONFIG->{STOP_PAGE_LIST}) {
+    open (FILE, $CONFIG->{STOP_PAGE_LIST}) or die "$!\n";
+    while (<FILE>) {
+	next if ($_ =~ /^\#/);
+
+	chop;
+	$STOP_PAGE_LIST{$_} = 1;
+    }
+    close (FILE);
+}
+
 
 my $hostname = `hostname` ; chop($hostname);
 &main();
@@ -183,18 +199,21 @@ sub main {
 		    # タイトルDBがない場合はタイトルDBをひく操作をしない
 		    my $max_rank_of_getting_title_and_url = (scalar(keys %TITLE_DBs) > 0) ? $results * $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE : 0;
 		    print $query->{results} . "=ret " . $query->{accuracy} . "=acc " . $results . " * " . $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE . " = " . $max_rank_of_getting_title_and_url . "*\n" if ($opt{debug});
+		    my $size = 0;
+		    for (my $i = 0; $size < $results; $i++) {
+			my $did = sprintf("%09d", $docs->[$i]{did});
+			unless (exists $STOP_PAGE_LIST{$did}) {
+			    if ($i < $max_rank_of_getting_title_and_url) {
+				$docs->[$i]{url} = $URL_DBs{$did};
+				$docs->[$i]{title} = $TITLE_DBs{$did};
+				$docs->[$i]{title} = 'no title.' unless ($docs->[$i]{title});
 
-		    for (my $rank = 0; $rank < $results; $rank++) {
-			if ($rank < $max_rank_of_getting_title_and_url) {
-			    my $did = sprintf("%09d", $docs->[$rank]{did});
-			    $docs->[$rank]{url} = $URL_DBs{$did};
-			    $docs->[$rank]{title} = $TITLE_DBs{$did};
-			    $docs->[$rank]{title} = 'no title.' unless ($docs->[$rank]{title});
-
-			    print decode('utf8', $docs->[$rank]{title} . "=title, " . $docs->[$rank]{url} . "=url\n") if ($opt{verbose});
+				print decode('utf8', $docs->[$i]{title} . "=title, " . $docs->[$i]{url} . "=url\n") if ($opt{verbose});
+			    }
+			    $docs->[$i]{host} = $hostname;
+			    push(@{$ret}, $docs->[$i]);
+			    $size++;
 			}
-			$docs->[$rank]{host} = $hostname;
-			push(@{$ret}, $docs->[$rank]);
 		    }
 		}
 
