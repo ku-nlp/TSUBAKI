@@ -261,3 +261,6 @@ DISABLE_CACHE	0
 
 # アンカーインデックスを利用しないようにする場合は1
 DISABLE_ANCHOR_INDEX	0
+
+# 検索結果から除外すページの指定
+# STOP_PAGE_LIST	/somewhere/stoppagelist
