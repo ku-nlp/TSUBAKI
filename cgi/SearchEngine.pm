@@ -133,7 +133,7 @@ sub broadcastSearch {
 	
 	$socket->flush();
     }
-    $logger->setTimeAs('send_query_to_server', '%.3f');    
+    $logger->setTimeAs('send_query_to_server', '%.3f');
 
 
     # 検索結果の受信
@@ -177,7 +177,11 @@ sub broadcastSearch {
 		last if ($_ eq "END_OF_HITCOUNT\n");
 		$buff .= $_;
 	    }
-	    $total_hitcount += decode_base64($buff) if (defined($buff));
+	    my $num = -1;
+	    if (defined($buff)) {
+		$num = decode_base64($buff);
+		$total_hitcount += $num;
+	    }
 
 	    my $docs;
 	    unless ($query->{only_hitcount}) {
@@ -188,7 +192,7 @@ sub broadcastSearch {
 		}
 		if (defined($buff)) {
 		    $docs = Storable::thaw(decode_base64($buff));
-		    print $docs->[0]{host} . " is returned.<BR>\n" if ($opt->{debug});
+		    print $docs->[0]{host} . " returned. ($num)<BR>\n" if ($opt->{debug});
 		    push(@results, $docs);
 		}
 	    }
