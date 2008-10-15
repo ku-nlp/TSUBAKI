@@ -58,6 +58,7 @@ sub getDefaultValues {
     $params{detect_requisite_dpnd} = 1;
     $params{query_filtering} = 1;
     $params{trimming} = 1;
+    $params{use_of_NE_tagger} = 1;
 
     return \%params;
 }
@@ -144,7 +145,7 @@ sub parseCGIRequest {
     &normalize_logical_operator($params);
 
     $params->{syngraph} = 1;
-    $params->{disable_synnode} = ($cgi->param('disable_synnode') eq 'on') ? 1 : 0;
+    $params->{disable_synnode} = ($cgi->param('disable_synnode') eq '1') ? 1 : 0;
 
     # クエリに制約(近接およびフレーズ)が指定されていなければ~100wをつける
     if ($params->{query} !~ /~/ && $params->{query} ne '' &&
@@ -193,6 +194,12 @@ sub parseAPIRequest {
     $params->{'query'} =~ s/^(?: | )+//g;
     $params->{'query'} =~ s/(?: | )+$//g;
 
+    if ($params->{query} =~ /\n|\r/) {
+	require Renderer;
+	Renderer::printErrorMessage($cgi, 'queryの値に制御コードが含まれています。');
+	exit(1);
+    }
+
     $params->{'logical_operator'} = $cgi->param('logical') if (defined($cgi->param('logical')));
     $params->{'logical_operator'} = $cgi->param('logical_operator') if (defined($cgi->param('logical_operator')));
     $params->{'only_hitcount'} = $cgi->param('only_hitcount') if (defined($cgi->param('only_hitcount')));
@@ -211,8 +218,10 @@ sub parseAPIRequest {
     $params->{use_of_case_analysis} = 1 if (defined($cgi->param('use_of_case_analysis')));
     $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
     $params->{query_filtering} = 1;
+    $params->{use_of_NE_tagger} = 1;
 
     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
+    $params->{debug} = $cgi->param('debug') if (defined($cgi->param('debug')));
     $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
     $params->{use_of_repname_for_kwic} = $cgi->param('use_of_repname_for_kwic') if (defined($cgi->param('use_of_repname_for_kwic')));
     $params->{use_of_katuyou_for_kwic} = $cgi->param('use_of_katuyou_for_kwic') if (defined($cgi->param('use_of_katuyou_for_kwic')));
