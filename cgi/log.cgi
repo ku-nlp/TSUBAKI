@@ -127,6 +127,10 @@ close(LOG);
 my $hostname = `hostname` ; chop($hostname);
 # print "<H3>QUERY LOG on $hostname</H3>";
 print "<H3>QUERY LOG <FONT color=white>on $hostname</FONT></H3>";
+print "[<A href='http://nlpc02.ixnlp.nii.ac.jp/log.cgi?verbose=1'>nlpc02</A>]&nbsp;";
+print "[<A href='http://nlpc03.ixnlp.nii.ac.jp/log.cgi?verbose=1'>nlpc03</A>]&nbsp;";
+print "[<A href='http://nlpc04.ixnlp.nii.ac.jp/log.cgi?verbose=1'>nlpc04</A>]&nbsp;";
+print "[<A href='http://nlpc05.ixnlp.nii.ac.jp/log.cgi?verbose=1'>nlpc05</A>]&nbsp;";
 print "<HR>";
 
 print "<TABLE style='border: 1px solid black;' width=*>";
