@@ -6,9 +6,9 @@
 
 # NICT
 if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    CONFIG=configure.nict
+    CONFIG=../cgi/configure.nict
 else
-    CONFIG=configure
+    CONFIG=../cgi/configure
 fi
 
 SLEEP_TIME=5
