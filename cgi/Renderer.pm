@@ -352,6 +352,10 @@ END_OF_HTML
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
+
+    # 混雑具合を表示
+    my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
+    print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$percentage%&nbsp;</SPAN>);
     print qq(</DIV>\n);
 
     # タイトル出力
@@ -474,6 +478,9 @@ my $host = `hostname`;
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
+    # 混雑具合を表示
+    my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
+    print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$percentage%&nbsp;</SPAN>);
     print qq(</DIV>\n);
 
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
@@ -543,6 +550,45 @@ my $host = `hostname`;
 
     # フッターの表示
     $this->printFooter($params, 0, 0, 0);
+}
+
+sub getCongestion {
+    my $logfile = $CONFIG->{DATA_DIR} . "/access_log";
+    my $count = 1;
+    open(READER, "cat $logfile | tac | grep cgi | grep -v gif | grep -v png | grep -v cache |") or die "$!";
+    my $buf = undef;
+    while (<READER>) {
+	my @data = split(' ', $_);
+	my ($date, $hour, $min, $sec) = split(":", $data[3]);
+	$buf = $min unless (defined $buf);
+	my $request = $data[6];
+	last if ($buf - $min > 1);
+	$count ++ if ($request !~ /format/);
+    }
+    close (READER);
+
+    my $percentage = sprintf ("%.2f", 100 * $count / 6);
+    my $backgroundColor = 'red';
+    my $foregroundColor = 'yellow';
+    if (75 < $percentage && $percentage < 100) {
+	$backgroundColor = 'orange';
+	$foregroundColor = 'black';
+    }
+    elsif (50 < $percentage && $percentage <= 75) {
+	$backgroundColor = 'yellow';
+	$foregroundColor = 'black';
+    }
+    elsif (25 < $percentage && $percentage <= 50) {
+	$backgroundColor = '#CCFF99';
+	$foregroundColor = 'black';
+    }
+    elsif ($percentage <= 25) {
+	$backgroundColor = '#99FFFF';
+	$foregroundColor = 'black';
+    }
+
+
+    return ($percentage, $foregroundColor, $backgroundColor);
 }
 
 sub get_uri_escaped_query {
