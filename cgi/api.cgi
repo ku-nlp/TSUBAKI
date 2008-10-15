@@ -336,6 +336,9 @@ sub provideSearchResult {
 
     my $THIS_IS_API_CALL = 1;
 
+    print $cgi->header(-type => 'text/html', -charset => 'utf-8') if ($params->{debug});
+
+
     # LOGGERの起動
     my $logger = new Logger($THIS_IS_API_CALL);
 
@@ -344,10 +347,12 @@ sub provideSearchResult {
     my $query = RequestParser::parseQuery($params, $logger);
     $logger->setTimeAs('return_parse_query', '%.3f');
 
+
     # 検索スレーブサーバーへの問い合わせ
     my $searcher = new Searcher($THIS_IS_API_CALL);
     my ($result, $size, $status) = $searcher->search($query, $logger, $params);
 
+    exit if ($params->{debug});
 
     # 検索スレーブサーバーが込んでいた場合
     if ($status eq 'busy') {
