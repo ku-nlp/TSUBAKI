@@ -74,7 +74,7 @@ sub printSearchTime {
     } else {
 	printf("%s: %3.1f [%s]\n", "検索時間", $search_time, "秒");
     }
-#   print "</DIV>\n";
+    print qq(<A href="javascript:void(0);" style="color:white; text-decoration: none;" onclick="toggle_simpage_view('slave_server_logs', this, '.', '.');">.</A>\n);
     print "</TD></TR></TABLE>\n";
 }
 
@@ -690,8 +690,89 @@ sub get_snippets {
     }
 }
 
+
+sub printSlaveServerLogs {
+    my ($this, $logger) = @_;
+
+    my @keys = ('port', 'total_time', 'normal_search', 'logical_condition', 'near_condition', 'merge_dids', 'document_scoring', 'transfer_time', 'hitcount', 'data_size');
+    my $host2log = $logger->getParameter('host2log');
+    my %buf = ();
+    my %average = ();
+    my $count = 0;
+
+    my $verboseLogString;
+    $verboseLogString .= sprintf qq(<H3 style="border-bottom: 2px solid black;">Verbose</H3>\n);
+    foreach my $host (sort keys %$host2log) {
+	$verboseLogString .= sprintf qq(<TABLE width="100%">\n);
+	$verboseLogString .= sprintf qq(<TR><TD colspan="%d" align="center" style="color: white; font-weight: bold; background-color:gray;">$host</TD></TR>\n), scalar(@keys);
+	foreach my $k (@keys) {
+	    $verboseLogString .= sprintf qq(<TD align="center" style="color: gray; font-weight: bold; background-color:silver;">$k</TD>);
+	}
+	$verboseLogString .= sprintf "</TR>\n";
+
+	my $localLoggers = $host2log->{$host};
+	foreach my $localLogger (@$localLoggers) {
+	    my $cells;
+	    foreach my $k (@keys) {
+		my $v = ($localLogger) ? $localLogger->getParameter($k) : '---';
+		$cells .= sprintf qq(<TD align="right" style="background-color: white;">$v</TD>);
+		$average{$k} += $v if ($v ne '---');
+	    }
+	    $verboseLogString .= sprintf "<TR>$cells</TR>";
+	    $buf{qq(<TD align="center" style="background-color: white;">$host</TD>) . $cells} = $localLogger->getParameter('total_time');
+	    $count++;
+	}
+	$verboseLogString .= sprintf "</TABLE>\n";
+    }
+
+
+    print qq(<DIV id="slave_server_logs" style="padding: 0em 1em 2em 1em; display: none; background-color: #f1f4ff;">);
+    print qq(<DIV>[<A href="javascript:void(0);" onclick="toggle_simpage_view('slave_server_log_verbose', this, '詳細を開く', '詳細を閉じる');">詳細を開く</A>]&nbsp;\n);
+    print qq([<A href="javascript:void(0);" onclick="javascript:document.getElementById('slave_server_logs').style.display = 'none';">ログを閉じる</A>]</DIV>\n);
+    print qq(<H3 style="border-bottom: 2px solid black;">Summary</H3>\n);
+    print qq(<TABLE width="100%">\n);
+    printf qq(<TR><TD colspan="%d" align="center" style="color: white; font-weight: bold; background-color:gray;">AVERAGE</TD></TR>\n), scalar(@keys);
+    foreach my $k (@keys) {
+	next if ($k eq 'port');
+	print qq(<TD align="center" style="color: gray; font-weight: bold; background-color:silver;">$k</TD>);
+    }
+    print "</TR>\n";
+    foreach my $k (@keys) {
+	next if ($k eq 'port');
+	my $v = sprintf ("%.3f", ($average{$k} / $count));
+	print qq(<TD align="right" style="background-color: white;">$v</TD>);
+    }
+    print "</TABLE>\n";
+
+
+    my $rank = 1;
+    my $N = 5;
+    print qq(<TABLE width="100%">\n);
+    unshift (@keys, 'host');
+    printf qq(<TR><TD colspan="%d" align="center" style="color: white; font-weight: bold; background-color:gray;">WORST $N</TD></TR>\n), scalar(@keys);
+    foreach my $k (@keys) {
+	print qq(<TD align="center" style="color: gray; font-weight: bold; background-color:silver;">$k</TD>);
+    }
+    print "</TR>\n";
+    foreach my $cells (sort {$buf{$b} <=> $buf{$a}} keys %buf) {
+	print "<TR>$cells</TR>\n";
+	last if (++$rank > $N);
+    }
+    print "</TABLE>\n";
+
+    print qq(<DIV id="slave_server_log_verbose" style="display:none;">$verboseLogString</DIV>);
+    print "</DIV>\n";
+}
+
+
 sub printSearchResultForBrowserAccess {
     my ($this, $params, $results, $query, $logger, $status) = @_;
+
+    ##################################
+    # 検索スレーブサーバーのログを表示
+    ##################################
+    $this->printSlaveServerLogs($logger);
+
 
     ##########################
     # ロゴ、検索フォームの表示
