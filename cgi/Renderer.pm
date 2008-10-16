@@ -716,7 +716,7 @@ sub printSlaveServerLogs {
 	    foreach my $k (@keys) {
 		my $v = ($localLogger) ? $localLogger->getParameter($k) : '---';
 		$cells .= sprintf qq(<TD align="right" style="background-color: white;">$v</TD>);
-		$average{$k} += $v if ($v ne '---');
+		$average{$k} += $v if ($localLogger);
 	    }
 	    $verboseLogString .= sprintf "<TR>$cells</TR>";
 	    $buf{qq(<TD align="center" style="background-color: white;">$host</TD>) . $cells} = ($localLogger) ? $localLogger->getParameter('total_time') : '---';
@@ -771,7 +771,7 @@ sub printSearchResultForBrowserAccess {
     ##################################
     # 検索スレーブサーバーのログを表示
     ##################################
-    $this->printSlaveServerLogs($logger);
+    $this->printSlaveServerLogs($logger) unless ($logger->getParameter('IS_CACHE'));
 
 
     ##########################
