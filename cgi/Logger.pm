@@ -38,8 +38,9 @@ sub close {
 
 	my $param_str;
 	foreach my $k (sort @keys) {
-	    # $param_str .= "$k=$params->{$k},";
-	    $param_str .= "$k=$this->{log}{$k},";
+	    my $val = $this->{log}{$k};
+	    next if ((ref $val) =~ /(ARRAY|HASH)/);
+	    $param_str .= "$k=$val,";
 	}
 
 	my $total_time = sprintf("%.3f", Time::HiRes::time - $this->{start});
