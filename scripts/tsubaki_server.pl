@@ -85,7 +85,6 @@ if ($CONFIG->{STOP_PAGE_LIST}) {
 }
 
 
-my $hostname = `hostname` ; chop($hostname);
 &main();
 
 untie %TITLE_DBs;
@@ -106,7 +105,7 @@ sub main {
     }
 
 
-    print STDERR "TSUBAKI SERVER IS READY! (host=$hostname, port=$opt{port}, dir=$opt{idxdir})\n";
+    print STDERR "TSUBAKI SERVER IS READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir})\n";
     while (1) {
 	my $new_socket = $listening_socket->accept();
 	my $client_sockaddr = $new_socket->peername();
@@ -165,7 +164,17 @@ sub main {
 		MIN_DLENGTH => $query->{MIN_DLENGTH},
 		LOGGER => $logger });
 
+	    # 通信に要する時間を測定するためにクリアする
+	    $logger->clearTimer();
+
+
 	    # sending log data in a search slave server.
+	    my %hostinfo;
+	    $hostinfo{name} = $HOSTNAME;
+	    $hostinfo{port} = $opt{port};
+	    print $new_socket encode_base64(Storable::freeze(\%hostinfo), "") , "\n";
+	    print $new_socket "END_OF_HOST\n";
+
 	    print $new_socket encode_base64(Storable::freeze($logger), "") , "\n";
 	    print $new_socket "END_OF_LOGGER\n";
 
@@ -210,7 +219,6 @@ sub main {
 
 				print decode('utf8', $docs->[$i]{title} . "=title, " . $docs->[$i]{url} . "=url\n") if ($opt{verbose});
 			    }
-			    $docs->[$i]{host} = $hostname;
 			    push(@{$ret}, $docs->[$i]);
 			    $size++;
 			}
