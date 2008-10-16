@@ -140,18 +140,42 @@ sub broadcastSearch {
     my @results = ();
     my $total_hitcount = 0;
     my $num_of_sockets = scalar(@{$this->{hosts}});
-    my %logbuf;
+    my %logbuf = ();
+    my %host2log = ();
     while ($num_of_sockets > 0) {
 	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
 	foreach my $socket (@{$readable_sockets}) {
 	    my $buff = undef;
+	    # ホスト情報の取得
+	    while (<$socket>) {
+		last if ($_ eq "END_OF_HOST\n");
+		$buff .= $_;
+	    }
+	    my $hostinfo;
+	    $hostinfo = Storable::thaw(decode_base64($buff)) if (defined($buff));
+
+
+	    # ログ情報の取得
+	    $buff = undef;
 	    while (<$socket>) {
 		last if ($_ eq "END_OF_LOGGER\n");
 		$buff .= $_;
 	    }
 
+	    my $slave_logger = undef;
 	    if (defined $buff) {
-		my $slave_logger = Storable::thaw(decode_base64($buff));
+		$slave_logger = Storable::thaw(decode_base64($buff));
+		$slave_logger->setTimeAs('transfer_time', '%.3f');
+
+		# 検索に要した全時間
+		$slave_logger->setParameterAs('total_time', sprintf ("%.3f",
+								     $slave_logger->getParameter('normal_search') +
+								     $slave_logger->getParameter('logical_condition') +
+								     $slave_logger->getParameter('near_condition') +
+								     $slave_logger->getParameter('merge_dids') +
+								     $slave_logger->getParameter('document_scoring') +
+								     $slave_logger->getParameter('transfer_time')));
+
 		foreach my $k ($slave_logger->keys()) {
 		    my $v = $slave_logger->getParameter($k);
 		    $logbuf{$k} += $v;
@@ -169,9 +193,11 @@ sub broadcastSearch {
 		    }
 		}
 	    } else {
-		# print "<EM>検索スレーブ側のログデータを受信できませんでした。</EM><BR>\n" if ($opt->{develop_mode});
+		print "<EM>検索スレーブ側のログデータを受信できませんでした。</EM><BR>\n" if ($opt->{debug});
 	    }
 
+
+	    # ヒットカウントの取得
 	    $buff = undef; 
 	    while (<$socket>) {
 		last if ($_ eq "END_OF_HITCOUNT\n");
@@ -183,6 +209,8 @@ sub broadcastSearch {
 		$total_hitcount += $num;
 	    }
 
+
+	    # 検索により得られた文書情報の取得
 	    my $docs;
 	    unless ($query->{only_hitcount}) {
 		$buff = undef; 
@@ -192,11 +220,23 @@ sub broadcastSearch {
 		}
 		if (defined($buff)) {
 		    $docs = Storable::thaw(decode_base64($buff));
-		    print $docs->[0]{host} . " returned. ($num)<BR>\n" if ($opt->{debug});
+		    my $host = $hostinfo->{name};
+		    print "$host returned. ($num)<BR>\n" if ($opt->{debug});
 		    push(@results, $docs);
 		}
 	    }
 
+	    if ($slave_logger) {
+		$slave_logger->setParameterAs('data_size', sprintf ("%d", length($buff)));
+		$slave_logger->setParameterAs('hitcount', sprintf ("%d", $num));
+		$slave_logger->setParameterAs('port', sprintf ("%d", $hostinfo->{port}));
+	    }
+
+	    # ホストごとのログを保存
+	    push(@{$host2log{$hostinfo->{name}}}, $slave_logger);
+
+
+	    # ソケットの後処理
 	    $selecter->remove($socket);
 	    $socket->close();
 	    $num_of_sockets--;
@@ -219,6 +259,10 @@ sub broadcastSearch {
     
     # 検索に要した時間をロギング
     $logger->setParameterAs('search', $logger->getParameter('send_query_to_server') + $logger->getParameter('get_result_from_server'));
+
+
+    # 各サーバーからの返されたログを保持
+    $logger->setParameterAs('host2log', \%host2log);
 
 
     # 受信した結果を揃える
