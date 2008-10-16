@@ -719,7 +719,7 @@ sub printSlaveServerLogs {
 		$average{$k} += $v if ($v ne '---');
 	    }
 	    $verboseLogString .= sprintf "<TR>$cells</TR>";
-	    $buf{qq(<TD align="center" style="background-color: white;">$host</TD>) . $cells} = $localLogger->getParameter('total_time');
+	    $buf{qq(<TD align="center" style="background-color: white;">$host</TD>) . $cells} = ($localLogger) ? $localLogger->getParameter('total_time') : '---';
 	    $count++;
 	}
 	$verboseLogString .= sprintf "</TABLE>\n";
