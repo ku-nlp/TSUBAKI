@@ -1,4 +1,92 @@
-2008-09-30  Keiji Shinzato  <skeiji@orchid.lang-private.kuee.kyoto-u.ac.jp>
+2008-10-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/QueryAnalyzer.pm:
+	<一文字漢字>同士の係り受け処理を移行した.
+
+	* cgi/RequestParser.pm, cgi/QueryKeyword.pm, cgi/QueryParser.pm:
+	クエリ処理をオプション化.
+
+	* cgi/QueryKeyword.pm: クエリの解析結果表示部分を修正.
+
+	* perl/Tsubaki/QueryAnalyzer.pm:
+	文節をまたぐ固有表現内の係り受けを必須にしないようにした
+
+	* cgi/QueryFilter.pm, cgi/QueryTrimmer.pm, cgi/RequisiteItemDetector.pm:
+	QueryAnalyzer.pm に処理を統合.
+
+	* cgi/QueryKeyword.pm:
+	解析結果の描画方法を変更, KNP::Result が返す synnodes に対応, クエリ処理を QueryAnalyzer.pm に移行.
+
+	* cgi/QueryParser.pm: クエリ処理を QueryAnalyzer.pm に移行.
+
+	* cgi/Renderer.pm: フォームのパラメータ名を変更.
+
+	* cgi/RequestParser.pm:
+	results の値が 100 以下の場合は100件の検索結果を要求するようにした, API, ブラウザからのパラメータ取得部分を共通化, パラメータのチェック処理を追加.
+
+	* scripts/Indexer.pm:
+	クエリから検索に用いる単語・係り受けを抽出する際、KNP::Result オブジェクトが返す synnodes から抽出するようにした.
+
+	* scripts/tsubaki-server.sh:
+	サーバー起動時に SearchEngine/perl 以下を-Iで指定するようにした.
+
+	* perl/Tsubaki/QueryAnalyzer.pm: サ変名詞をテリック処理の対象に.
+
+2008-10-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: キャッシュに対応（ログの作成時）
+
+	* cgi/Renderer.pm: small changes.
+
+	* cgi/Renderer.pm: スレーブサーバー側のログを表示するようにした.
+
+	* cgi/Logger.pm: ARRAY, HASH型の値は保存しないようにした.
+
+	* cgi/SearchEngine.pm:
+	スレーブサーバーが返すホスト情報を取得するようにした, スレーブサーバー側のログを保持するようにした
+
+	* scripts/tsubaki_server.pl: ホスト情報を返すようにした.
+
+2008-10-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/api.cgi: debugメッセージを追加.
+
+	* cgi/SearchEngine.pm: debugメッセージの変更.
+
+	* cgi/RequestParser.pm:
+	API呼び出し時にもクエリのNE解析をするようにした, クエリに制御コードが入っている際、エラーメッセージを返すようにした.
+
+	* cgi/log.cgi: 他のサーバへのリンクを追加.
+
+	* cgi/Renderer.pm, cgi/configure.nict, cgi/configure:
+	混雑具合を表示するようにした.
+
+2008-10-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: STOP_PAGE_LISTオプションの追加.
+
+	* scripts/tsubaki_server.pl: 検索結果から除外するファイルの指定に対応.
+
+2008-10-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryFilter.pm:
+	可能動詞の場合は、<可能動詞>素性から代表表記をとるようにした.
+
+2008-10-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl:
+	DBがない場合は、スレーブ側でタイトル・URLをひかないようにした.
+
+	* cgi/RequestParser.pm, cgi/configure, cgi/configure.nict:
+	設定ファイルからアンカーインデックスを利用するかどうかを指定できるようにした.
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4SynGraphSearch.pm, scripts/tsubaki-server.sh:
+	アンカーインデックスを用いない場合に対応.
+
+	* cgi/RequestParser.pm, cgi/configure, cgi/configure.nict:
+	設定ファイルから検索時にキャッシュを利用するかどうかを指定できるようにした.
+
+2008-09-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/binarize-index.sh, scripts/make-dfdb.sh, scripts/make-index.sh, scripts/make-url-title-dbs.sh, scripts/merge-index.sh, scripts/update-dfdb.sh:
 	conf/indexing.confファイル中の設定を利用するようにした.
