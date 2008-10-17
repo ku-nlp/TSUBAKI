@@ -708,7 +708,7 @@ sub getPaintingJavaScriptCode {
 
 	# 同義グループに属す表現を取得と幅（文字数）の取得
 
-	my $basicNode;
+	my $basicNode = undef;
 	my $surf;
 	my %synbuf;
 	my $surf = ($tag->synnodes)[0]->midasi;
@@ -723,7 +723,9 @@ sub getPaintingJavaScriptCode {
 		    next if ($node->feature =~ /<否定>/);
 
 		    # 同義グループに属す表現を取得
-		    my ($str) = ($node->synid =~ /(.+)\/.+/);
+		    my $str = $node->synid;
+		    ($str) = ($node->synid =~ /(.+)\/.+/) if ($str =~ /\//);
+		    $basicNode = $str if ($str !~ /s\d+/ && !defined $basicNode);
 		    foreach my $w (split('\|', $synonyms{$str})) {
 			$w = decode('utf8', $w);
 			$w =~ s/\[.+?\]//;
@@ -734,10 +736,9 @@ sub getPaintingJavaScriptCode {
 		}
 	    }
 	}
-
 	# 出現形、基本ノードと同じ表現は削除する
-	delete($synbuf{$basicNode});
 	delete($synbuf{$surf});
+	delete($synbuf{$basicNode});
 
 	my $width = $font_size * (1.5 + $max_num_of_words);
 	# 同義グループのX軸の中心座標を保持（係り受けの線を描画する際に利用する）
@@ -790,6 +791,7 @@ sub getPaintingJavaScriptCode {
     for (my $i = 0; $i < scalar(@kihonkus); $i++) {
 	my $kakarimoto = $kihonkus[$i];
 	my $kakarisaki = $kakarimoto->parent;
+	$kakarisaki = $kakarisaki->parent if (defined $kakarisaki && $kakarimoto->dpndtype eq 'P');
 	next unless (defined $kakarisaki);
 
 	if ($kakarisaki->fstring() =~ /<クエリ不要語>/ &&
