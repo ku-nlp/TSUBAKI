@@ -10,6 +10,8 @@ use Encode;
 use Data::Dumper;
 use Configure;
 use Error qw(:try);
+use KNP::Result;
+use Tsubaki::QueryAnalyzer;
 
 
 my $CONFIG = Configure::get_instance();
@@ -56,13 +58,21 @@ sub new {
     }
 
 
-    if ($opt->{trimming}) {
-	require QueryTrimmer;
-	my $trimmer = new QueryTrimmer();
-	$trimmer->trim($knpresult);
-    }
+#     if ($opt->{trimming}) {
+# 	require QueryTrimmer;
+# 	my $trimmer = new QueryTrimmer();
+# 	$trimmer->trim($knpresult);
+#     }
 
-#   $this->{parse_tree} = $knpresult
+    my $analyzer = new Tsubaki::QueryAnalyzer();
+    $analyzer->analyze($knpresult,
+		       {
+			   telic_process => 1,
+			   CN_process => 1,
+			   NE_process => 1,
+			   modifier_of_NE_process => 1
+		       });
+
     $this->{knp_result} = $knpresult;
 
     my %buff;
@@ -75,25 +85,23 @@ sub new {
 	# SynGraph 結果から索引語を抽出
  	$knpresult->set_id(0);
  	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
-	$this->{syn_result} = $synresult;
+	$this->{syn_result} = new KNP::Result($synresult);
 
- 	# use Dumper;
- 	# print Dumper::dump_as_HTML($synresult) . "\n";
+# 	my @content_words = ();
+# 	foreach my $tag ($knpresult->tag) {
+# 	    foreach my $mrph ($tag->mrph) {
+# 		if ($mrph->fstring =~ /<意味有|内容語>/) {
+# 		    push(@content_words, $mrph);
+# 		    last;
+# 		}
+# 	    }
+# 	}
 
-	my @content_words = ();
-	foreach my $tag ($knpresult->tag) {
-	    foreach my $mrph ($tag->mrph) {
-		if ($mrph->fstring =~ /<意味有|内容語>/) {
-		    push(@content_words, $mrph);
-		    last;
-		}
-	    }
-	}
-
-	$indice = $opt->{indexer}->makeIndexfromSynGraph($synresult, \@content_words,
+	$indice = $opt->{indexer}->makeIndexFromSynGraphResultObject($this->{syn_result},
  							 { use_of_syngraph_dependency => $CONFIG->{USE_OF_SYNGRAPH_DEPENDENCY},
  							   use_of_hypernym => $CONFIG->{USE_OF_HYPERNYM},
  							   disable_synnode => $opt->{disable_synnode},
+							   force_dpnd => $this->{force_dpnd},
 							   string_mode => 0,
  							   use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM},
 							   antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}
@@ -102,62 +110,64 @@ sub new {
 
 
 
-    # 必須検索係り受けの自動判定
-    my $requisites;
-    if (defined $opt->{requisite_item_detector}) {
-	$requisites = $opt->{requisite_item_detector}->getRequisiteDependencies($knpresult);
-    }
+#     # 必須検索係り受けの自動判定
+#     my $requisites;
+#     if (defined $opt->{requisite_item_detector}) {
+# 	$requisites = $opt->{requisite_item_detector}->getRequisiteDependencies($knpresult);
+#     }
 
-    # 不要な動詞を検知し、動詞を軸とする名詞同士の検索係り受けを生成
-    my ($removalItems, $additionalItems);
-    if (defined $opt->{query_filter}) {
-	($removalItems, $additionalItems) = $opt->{query_filter}->filterOutWorthlessVerbs($knpresult, {th => 10, ignore_yomi => 1});
-    }
+#     # 不要な動詞を検知し、動詞を軸とする名詞同士の検索係り受けを生成
+#     my ($removalItems, $additionalItems);
+#     if (defined $opt->{query_filter}) {
+# 	($removalItems, $additionalItems) = $opt->{query_filter}->filterOutWorthlessVerbs($knpresult, {th => 10, ignore_yomi => 1});
+#     }
 
 
-    my %removalItemGids = ();
-    # Indexer.pm より返される索引語を同じ代表表記ごとにまとめる
+#     my %removalItemGids = ();
+    # Indexer.pm より返される索引語を同じ代表表記・SYNノードごとにまとめる
     foreach my $idx (@{$indice}) {
 	$buff{$idx->{group_id}} = [] unless (exists($buff{$idx->{group_id}}));
 	push(@{$buff{$idx->{group_id}}}, $idx);
-	$removalItemGids{$idx->{group_id}} = 1 if (exists $removalItems->{$idx->{midasi}});
+#	$removalItemGids{$idx->{group_id}} = 1 if (exists $removalItems->{$idx->{midasi}});
     }
 
     foreach my $group_id (sort {$buff{$a}->[0]{pos} <=> $buff{$b}->[0]{pos}} keys %buff) {
 	my @word_reps;
 	my @dpnd_reps;
-	my %fbuf;
 	foreach my $m (@{$buff{$group_id}}) {
 	    # 近接条件が指定されていない かつ 機能語 の場合は検索に用いない
 	    next if ($m->{isContentWord} < 1 && $this->{is_phrasal_search} < 0);
 
 	    if ($m->{midasi} =~ /\-\>/) {
-		next if ($opt->{disable_dpnd});
+#		next if ($opt->{disable_dpnd});
 
-		my $flag = (exists $requisites->{$m->{midasi}} || exists $fbuf{$group_id}) ? 1 : 0;
-		$fbuf{$group_id} = 1 if ($flag);
+#		my $flag;
+#		my $flag = (exists $requisites->{$m->{midasi}} || exists $fbuf{$group_id}) ? 1 : 0;
+#		$fbuf{$group_id} = 1 if ($flag);
 
 		# 係り元、係り先ともにNE内ならば必須
-		$flag = 1 if ($m->{kakarimoto_fstring} =~ /<NE/ &&
-			      $m->{kakarisaki_fstring} =~ /<NE/);
+#		$flag = 1 if ($m->{kakarimoto_fstring} =~ /<NE/ &&
+#			      $m->{kakarisaki_fstring} =~ /<NE/);
 
-		$flag = 0 if ($this->{logical_cond_qkw} eq 'OR');
+#		$flag = 0 if ($this->{logical_cond_qkw} eq 'OR');
 
-		push(@dpnd_reps, {string => $m->{midasi},
-				  gid => $group_id,
-				  qid => -1,
-				  weight => 1,
-				  freq => $m->{freq},
-				  requisite => ($flag) ? 1 : 0,
-				  optional => ($flag) ? 0 : 1,
-				  isContentWord => $m->{isContentWord},
-				  isBasicNode => $m->{isBasicNode}
+		push(@dpnd_reps, {
+		    string => $m->{midasi},
+		    gid => $group_id,
+		    qid => -1,
+		    weight => 1,
+		    freq => $m->{freq},
+		    requisite => $m->{requisite},
+		    optional => $m->{optional},
+		    isContentWord => $m->{isContentWord},
+		    isBasicNode => $m->{isBasicNode}
 		     });
 	    } else {
-		my $flag = (exists $removalItemGids{$group_id}) ? 1 : 0;
+#		my $flag;
+#		my $flag = (exists $removalItemGids{$group_id}) ? 1 : 0;
 
-		$flag = 1 if ($m->{fstring} =~ /固有表現を修飾/);
-		$flag = 1 if ($this->{logical_cond_qkw} eq 'OR');
+#		$flag = 1 if ($m->{fstring} =~ /固有表現を修飾/);
+#		$flag = 1 if ($this->{logical_cond_qkw} eq 'OR');
 
 		push(@word_reps, {
 		    surf => $m->{surf},
@@ -166,8 +176,8 @@ sub new {
 		    qid => -1,
 		    weight => 1,
 		    freq => $m->{freq},
-		    requisite => ($flag) ? 0 : 1,
-		    optional => ($flag) ? 1 : 0,
+		    requisite => $m->{requisite},
+		    optional =>  $m->{optional},
 		    isContentWord => $m->{isContentWord},
 		    question_type => $m->{question_type},
 		    NE => $m->{NE},
@@ -175,10 +185,10 @@ sub new {
 		    fstring => $m->{fstring}
 		     });
 
-		unless ($m->{isContentWord}) {
-		    $word_reps[-1]->{discarded} = 1;
-		    $word_reps[-1]->{reason} = "<意味無> ";
-		}
+# 		unless ($m->{isContentWord}) {
+# 		    $word_reps[-1]->{discarded} = 1;
+# 		    $word_reps[-1]->{reason} = "<意味無> ";
+# 		}
 	    }
 	}
 
@@ -186,23 +196,23 @@ sub new {
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
     }
 
-    unless ($opt->{disable_dpnd}) {
-	my $gid = 1000;
-	foreach my $i (keys %$additionalItems) {
-	    my @a;
-	    push (@a, {string => $i,
-		       gid => $gid++,
-		       qid => -1,
-		       weight => 1,
-		       freq => 1,
-		       requisite => 0,
-		       optional => 1,
-		       isContentWord => 1,
-		       isBasicNode => 1
-		  });
-	    push(@{$this->{dpnds}}, \@a);
-	}
-    }
+#    unless ($opt->{disable_dpnd}) {
+#	my $gid = 1000;
+# 	foreach my $i (keys %$additionalItems) {
+# 	    my @a;
+# 	    push (@a, {string => $i,
+# 		       gid => $gid++,
+# 		       qid => -1,
+# 		       weight => 1,
+# 		       freq => 1,
+# 		       requisite => 0,
+# 		       optional => 1,
+# 		       isContentWord => 1,
+# 		       isBasicNode => 1
+# 		  });
+# 	    push(@{$this->{dpnds}}, \@a);
+# 	}
+#    }
 
 #     文レベルでの近接制約でない場合は、キーワード内の形態素数を考慮する
 #     if ($this->{near} > -1 && $this->{sentence_flag} < 0) {
@@ -233,7 +243,8 @@ sub print_for_web {
 
     if ($this->{syn_result}) {
 	print qq(<H4 style="background-color:black; color: white;"><A name="syngraph">SYNGRAPH解析結果</A></H4>\n);
-	my $ret = $this->{syn_result};
+	my $ret = $this->{syn_result}->all_dynamic();
+	$ret = decode('utf8', $ret) unless (utf8::is_utf8($ret));
 	$ret =~ s/</&lt;/g;
 	print qq(<PRE class="syn">\n);
 	print $ret . "\n";
@@ -630,6 +641,230 @@ sub normalize {
 sub getPaintingJavaScriptCode {
     my ($this, $colorOffset) = @_;
 
+
+    my $REQUISITE = '<クエリ必須語>';
+    my $OPTIONAL  = '<クエリ不要語>';
+    my $IGNORE    = '<クエリ削除語>';
+    my $REQUISITE_DPND = '<クエリ必須係り受け>';
+
+
+
+    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.mod.cdb\n";
+
+    my $font_size = 12;
+    my $offsetX = 10 + 24;
+    my $offsetY = $font_size * (scalar(@{$this->{words}}) + 2);
+    my $arrow_size = 3;
+    my $synbox_margin = $font_size;
+
+    my @color = ();
+    push(@color, '#ffa500;');
+    push(@color, '#000080;');
+    push(@color, '#779977;');
+    push(@color, '#800000;');
+    push(@color, '#997799;');
+    push(@color, '#770000;');
+    push(@color, '#007700;');
+    push(@color, '#777700;');
+    push(@color, '#007777;');
+    push(@color, '#770077;');
+
+    my @bgcolor = ();
+    push(@bgcolor, '#ffff99;');
+    push(@bgcolor, '#bbffff;');
+    push(@bgcolor, '#bbffbb;');
+    push(@bgcolor, '#ffbbbb;');
+    push(@bgcolor, '#ffbbff;');
+    push(@bgcolor, '#bb0000;');
+    push(@bgcolor, '#00bb00;');
+    push(@bgcolor, '#bbbb00;');
+    push(@bgcolor, '#00bbbb;');
+    push(@bgcolor, '#bb00bb;');
+
+    my @stylecolor = ();
+    push(@stylecolor, 'border: 2px solid #ffa500; background-color: #ffff99;');
+    push(@stylecolor, 'border: 2px solid #000080; background-color: #bbffff;');
+    push(@stylecolor, 'border: 2px solid #779977; background-color: #bbffbb;');
+    push(@stylecolor, 'border: 2px solid #800000; background-color: #ffbbbb;');
+    push(@stylecolor, 'border: 2px solid #997799; background-color: #ffbbff;');
+    push(@stylecolor, 'border: 2px solid #770000; background-color: #bb0000; color: white;');
+    push(@stylecolor, 'border: 2px solid #007700; background-color: #00bb00; color: white;');
+    push(@stylecolor, 'border: 2px solid #777700; background-color: #bbbb00; color: white;');
+    push(@stylecolor, 'border: 2px solid #007777; background-color: #00bbbb; color: white;');
+    push(@stylecolor, 'border: 2px solid #770077; background-color: #bb00bb; color: white;');
+
+    my $removedcolor = 'border: 2px solid #9f9f9f; background-color: #e0e0e0; color: black;';
+    
+
+    my $jscode .= qq(jg.clear();\n);
+
+    # 単語・同義表現グループを描画する
+    my $max_num_of_synonyms = 0;
+    my %gid2pos = ();
+    my %gid2num = ();
+    my @kihonkus = $this->{syn_result}->tag;
+    for (my $i = 0; $i < scalar(@kihonkus); $i++) {
+	my $tag = $kihonkus[$i];
+
+	# 同義グループに属す表現を取得と幅（文字数）の取得
+
+	my $basicNode;
+	my $surf;
+	my %synbuf;
+	my $surf = ($tag->synnodes)[0]->midasi;
+	my $max_num_of_words = length($surf);
+	my $gid = ($tag->synnodes)[0]->tagid;
+	$gid2num{$gid} = $i;
+	unless ($tag->fstring() =~ /<クエリ削除語>/) {
+	    foreach my $synnodes ($tag->synnodes) {
+		foreach my $node ($synnodes->synnode) {
+		    next if ($node->feature =~ /<上位語>/);
+		    next if ($node->feature =~ /<反義語>/);
+		    next if ($node->feature =~ /<否定>/);
+
+		    # 同義グループに属す表現を取得
+		    my ($str) = ($node->synid =~ /(.+)\/.+/);
+		    foreach my $w (split('\|', $synonyms{$str})) {
+			$w = decode('utf8', $w);
+			$w =~ s/\[.+?\]//;
+			$w =~ s/\/.+//;
+			$synbuf{$w} = 1;
+			$max_num_of_words = length($w) if ($max_num_of_words < length($w));
+		    }
+		}
+	    }
+	}
+
+	# 出現形、基本ノードと同じ表現は削除する
+	delete($synbuf{$basicNode});
+	delete($synbuf{$surf});
+
+	my $width = $font_size * (1.5 + $max_num_of_words);
+	# 同義グループのX軸の中心座標を保持（係り受けの線を描画する際に利用する）
+	$gid2pos{$gid}->{pos} = $offsetX + int(0.5 * $width);
+	$gid2pos{$gid}->{num_child} = 0;
+	$gid2pos{$gid}->{num_parent} = 1;
+
+	# 下に必須・オプショナルのフラグを取得
+#	my $rep = $this->{words}[$i][0];
+	my $mark = ($tag->fstring() =~ /クエリ削除語/) ? '×' : (($tag->fstring() =~ /クエリ不要語/) ?  '△' : '○');
+	my $colorIndex = ($i + $colorOffset) % scalar(@stylecolor);
+
+	my $synbox;
+	if ($tag->fstring() =~ /<クエリ削除語>/) {
+	    $synbox .= sprintf(qq(<TABLE style=\\'font-size: $font_size; margin: 0px;text-align: center; $removedcolor\\' width=%dpx>), $width);
+	} else {
+	    $synbox .= sprintf(qq(<TABLE style=\\'font-size: $font_size; margin: 0px;text-align: center; $stylecolor[$colorIndex]\\' width=%dpx>), $width);
+	}
+
+	if (scalar(keys %synbuf) > 0) {
+	    my $rate = 36;
+	    my ($r, $g, $b) = ($bgcolor[$colorIndex] =~ /#(..)(..)(..);/);
+	    $r = (hex($r) + $rate > 255) ? 'ff' : sprintf ("%x", hex($r) + $rate);
+	    $g = (hex($g) + $rate > 255) ? 'ff' : sprintf ("%x", hex($g) + $rate);
+	    $b = (hex($b) + $rate > 255) ? 'ff' : sprintf ("%x", hex($b) + $rate);
+	    my $dilutedColor = sprintf("#%s%s%s", $r, $g, $b);
+
+	    $synbox .= sprintf(qq(<TR><TD style=\\'border-bottom: 1px solid %s;\\'>%s</TD></TR>), $color[$colorIndex], $surf);
+	    $synbox .= sprintf(qq(<TR><TD style=\\'background-color: %s;\\'>%s</TD></TR>), $dilutedColor, join("<BR>", keys %synbuf));
+	} else {
+	    $synbox .= sprintf(qq(<TR><TD>%s</TD></TR>), $surf);
+	}
+	$synbox .= "</TABLE>";
+
+	$max_num_of_synonyms = scalar(keys %synbuf) if ($max_num_of_synonyms < scalar(keys %synbuf));
+
+	$jscode .= qq(jg.drawStringRect(\'$synbox\', $offsetX, $offsetY, $width, 'left');\n);
+	$jscode .= qq(jg.drawStringRect(\'$mark\', $offsetX, $offsetY - 1.5 * $font_size, $font_size, 'left');\n);
+	$offsetX += ($width + $synbox_margin);
+    }
+    $colorOffset += scalar(@{$this->{words}});
+
+
+    # 解析結果を表示するウィンドウの幅、高さを求める
+    my $width = $offsetX;
+    my $height = $offsetY + int(($max_num_of_synonyms + 1) * 1.1 * $font_size); # +1 は●▲の分, *1.1 は行間
+
+
+
+    for (my $i = 0; $i < scalar(@kihonkus); $i++) {
+	my $kakarimoto = $kihonkus[$i];
+	my $kakarisaki = $kakarimoto->parent;
+	next unless (defined $kakarisaki);
+
+	if ($kakarisaki->fstring() =~ /<クエリ不要語>/ &&
+	    $kakarisaki->fstring() !~ /<クエリ削除語>/ &&
+	    $kakarisaki->fstring() !~ /<固有表現を修飾>/) {
+	    my $_kakarisaki = $kakarisaki->parent();
+	    next unless (defined $_kakarisaki);
+
+	    my $mark = ($kakarisaki->fstring() =~ /クエリ削除語/) ?  '×' : '△';
+	    $jscode .= &getDrawingDependencyCode($i, $kakarimoto, $_kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
+	}
+
+	my $mark = ($kakarimoto->fstring() =~ /クエリ必須係り受け/) ?  '○' : (($kakarimoto->fstring() =~ /クエリ削除係り受け/) ? '×' : '△');
+	$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
+    }
+
+
+    $jscode .= qq(jg.setFont(\'ＭＳゴシック\', \'$font_size\', 0);\n);
+    $jscode .= qq(jg.paint();\n);
+
+    untie %synonyms;
+
+    return ($width, $height, $colorOffset, $jscode);
+}
+
+
+sub getDrawingDependencyCode {
+    my ($i, $kakarimoto, $kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos) = @_;
+
+    my $jscode = '';
+
+    my $kakarimoto_gid = ($kakarimoto->synnodes)[0]->tagid;
+    my $kakarisaki_gid = ($kakarisaki->synnodes)[0]->tagid;
+
+    my $dist = abs($i - $gid2num->{$kakarisaki_gid});
+
+    my $x1 = $gid2pos->{$kakarimoto_gid}->{pos} + (3 * $gid2pos->{$kakarimoto_gid}->{num_parent} * $arrow_size);
+    my $x2 = $gid2pos->{$kakarisaki_gid}->{pos} - (3 * $gid2pos->{$kakarisaki_gid}->{num_child} * $arrow_size);
+    $gid2pos->{$kakarimoto_gid}->{num_parent}++;
+    $gid2pos->{$kakarisaki_gid}->{num_child}++;
+
+    my $y = $offsetY - $font_size - (1.5 * $dist * $font_size);
+
+
+    # 係り受けの線をひく
+
+    if ($mark eq '×') {
+	$jscode .= qq(jg.setStroke(Stroke.DOTTED);\n);
+    } else {
+	$jscode .= qq(jg.setStroke(1);\n);
+    }
+
+    $jscode .= qq(jg.drawLine($x1, $offsetY, $x1, $y);\n);
+    $jscode .= qq(jg.drawLine($x1 - 1, $offsetY, $x1 - 1, $y);\n);
+
+    $jscode .= qq(jg.drawLine($x1, $y, $x2, $y);\n);
+    $jscode .= qq(jg.drawLine($x1, $y - 1, $x2, $y - 1);\n);
+
+    $jscode .= qq(jg.drawLine($x2, $y, $x2, $offsetY);\n);
+    $jscode .= qq(jg.drawLine($x2 + 1, $y, $x2 + 1, $offsetY);\n);
+
+    # 矢印
+    $jscode .= qq(jg.fillPolygon(new Array($x2, $x2 + $arrow_size, $x2 - $arrow_size), new Array($offsetY, $offsetY - $arrow_size, $offsetY - $arrow_size));\n);
+
+
+    # 線の上に必須・オプショナルのフラグを描画する
+    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1, $y - 1.5 * $font_size, $font_size, 'left');\n);
+
+    return $jscode;
+}
+
+
+sub getPaintingJavaScriptCode2 {
+    my ($this, $colorOffset) = @_;
+
     tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.mod.cdb\n";
 
     my $font_size = 12;
@@ -717,7 +952,7 @@ sub getPaintingJavaScriptCode {
 	    }
 
 	    # 同義グループに属す表現を取得
-	    foreach my $w (split('\|', decode('utf8', $synonyms{$str}))) {
+	    foreach my $w (split('\|', $synonyms{$str})) {
 		$w =~ s/\[.+?\]//;
 		$w =~ s/\/.+//;
 		$synbuf{$w} = 1;
