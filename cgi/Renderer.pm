@@ -366,8 +366,8 @@ END_OF_HTML
     # フォーム出力
     print qq(<TD width="*" align="left" valign="middle" style="border: 0px solid red; padding-top: 1em;">\n);
     print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data">\n);
-    print qq(<INPUT type="hidden" name="start" value="0">\n);
-    print qq(<INPUT type="text" id=\"qbox\" name="q" value="$params->{'query'}" size="60">\n);
+    print qq(<INPUT type="hidden" name="start" value="1">\n);
+    print qq(<INPUT type="text" id=\"qbox\" name="query" value="$params->{'query'}" size="60">\n);
     print qq(<INPUT type="submit"name="送信" value="検索する"/>\n);
     print qq(<INPUT type="button"name="clear" value="クリア" onclick="document.all.INPUT.value=''"/>\n);
 
@@ -488,8 +488,8 @@ my $host = `hostname`;
 
     # フォーム出力
     print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
-    print "<INPUT type=\"hidden\" name=\"start\" value=\"0\">\n";
-    print "<INPUT type=\"text\" id=\"qbox\" name=\"q\" value=\'$params->{'query'}\' size=\"90\">\n";
+    print "<INPUT type=\"hidden\" name=\"start\" value=\"1\">\n";
+    print "<INPUT type=\"text\" id=\"qbox\" name=\"query\" value=\'$params->{'query'}\' size=\"90\">\n";
     print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
     print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.q.value=''\"/>\n";
 
@@ -739,7 +739,7 @@ sub printSlaveServerLogs {
     print "</TR>\n";
     foreach my $k (@keys) {
 	next if ($k eq 'port');
-	my $v = sprintf ("%.3f", ($average{$k} / $count));
+	my $v = ($count > 0) ? sprintf ("%.3f", ($average{$k} / $count)) : -1;
 	print qq(<TD align="right" style="background-color: white;">$v</TD>);
     }
     print "</TABLE>\n";
