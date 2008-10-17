@@ -71,8 +71,8 @@ sub new {
 		    syngraph => undef}
     };
 
-    $this->{OPTIONS}{jyushi} = $opts->{JYUSHI} if ($opts->{JYUSHI});
-    $this->{OPTIONS}{keishi} = $opts->{KEISHI} if ($opts->{KEISHI});
+#    $this->{OPTIONS}{jyushi} = $opts->{JYUSHI} if ($opts->{JYUSHI});
+#    $this->{OPTIONS}{keishi} = $opts->{KEISHI} if ($opts->{KEISHI});
 
 
     my ($dfdbs_w, $dfdbs_d) = &load_DFDBs($opts->{DFDB_DIR}, $opts);
@@ -129,15 +129,15 @@ sub parse {
     }
 
 
-    if ($opt->{detect_requisite_dpnd}) {
-	require RequisiteItemDetector;
-	$this->{requisite_item_detector} = new RequisiteItemDetector({debug => $opt->{debug}});
-    }
+#     if ($opt->{detect_requisite_dpnd}) {
+# 	require RequisiteItemDetector;
+# 	$this->{requisite_item_detector} = new RequisiteItemDetector({debug => $opt->{debug}});
+#     }
 
-    if ($opt->{query_filtering}) {
-	require QueryFilter;
-	$this->{query_filter} = new QueryFilter($opt);
-    }
+#     if ($opt->{query_filtering}) {
+# 	require QueryFilter;
+# 	$this->{query_filter} = new QueryFilter($opt);
+#     }
 
 
     ## 空白で区切る
@@ -150,7 +150,7 @@ sub parse {
 	my $near = $opt->{near};
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
 	my $keep_order = 1;
-	my $force_dpnd = -1;
+	my $force_dpnd = 0;
 	my $sentence_flag = -1;
 	my $phrasal_flag = -1;
 
@@ -287,7 +287,7 @@ sub parse {
 		    $gid2df{$rep->{gid}} = $rep->{df};
 		}
 		$qid++;
-		print $rep->{string} . " " . $rep->{qid} . " " . $rep->{gid} . " " . $rep->{df} . "\n" if ($opt->{verbose});
+		print $rep->{string} . " " . $rep->{qid} . " " . $rep->{gid} . " " . $rep->{df} . "<br>\n" if ($opt->{verbose});
 
 		# スニペットでハイライト表示する際のスタイルを設定
 
