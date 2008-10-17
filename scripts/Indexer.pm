@@ -17,6 +17,8 @@ use Data::Dumper;
     sub qquote { return shift; }
 }
 $Data::Dumper::Useperl = 1;
+use KNP;
+use KNP::Result;
 
 sub new {
     my($class, $opt) = @_;
@@ -136,9 +138,9 @@ sub makeIndexfromSynGraph {
 
 		push(@{$synNodes{$bnstId}}, $syn_node);
 		$lastBnstIds{$bnstId} = 1;
-		$NE_flag = undef;
 	    }
 	} elsif ($line =~ /^\+ /) {
+	    $NE_flag = undef;
 	    ($NE_flag) = ($line =~ /(<NE.+?>)/);
 
 	    $first = 1 if ($knpbuf =~ /(<[^>]+型>)/);
@@ -229,6 +231,9 @@ sub makeIndexfromSynGraph {
 	    # 5桁以上の数字からなる単語は削除
 	    # next if ($synNode->{midasi} =~ /[０|１|２|３|４|５|６|７|８|９]{5,}/);
 
+#	    next if ($synNode->{midasi} =~ /s\d+/ && $synNode->{NE});
+
+
 	    push(@freq, {midasi => $synNode->{midasi}});
 	    $freq[-1]->{surf} = $synNode->{surf};
 	    $freq[-1]->{freq} = $score;
@@ -243,9 +248,6 @@ sub makeIndexfromSynGraph {
 #	    $freq[-1]->{isBasicNode} = 1 if ($synNode->{midasi} !~ /s\d+/ && $synNode->{midasi} !~ /<[^>]+>/);
 	    $freq[-1]->{isBasicNode} = 1 if ($synNode->{midasi} !~ /s\d+/);
 	    $freq[-1]->{fstring} = $synNode->{fstring};
-	    if (!defined $freq[-1]->{isBasicNode} && $freq[-1]->{NE}) {
-		$freq[-1]->{fstring} .= "<削除::NEのSYNノード>";
-	    }
 	    
 	    foreach my $kakariSakiID (@{$kakariSakis}){
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
@@ -510,6 +512,127 @@ sub makeIndexFromKNPResultString {
     return \@freq;
 }
 
+sub makeIndexFromSynGraphResultObject {
+    my ($this, $result, $option) = @_;
+
+    my $gid = 0;
+    my $pos = 0;
+    my @idx = ();
+    foreach my $bnst ($result->bnst) {
+	foreach my $kihonku ($bnst->tag) {
+	    next if ($kihonku->fstring =~ /クエリ削除語/);
+
+	    # 係り受けインデックスの抽出
+	    unless ($option->{disable_dpnd}) {
+		if (defined $kihonku->parent) {
+		    # 係り受けインデックスの追加
+		    foreach my $idx (@{$this->get_dpnd_index($kihonku, $kihonku->parent, $option)}) {
+			$idx->{pos} = $pos;
+			$idx->{absolute_pos} = $pos;
+			$idx->{isBasicNode} = 1;
+			$idx->{group_id} = $kihonku->id . "/" . $kihonku->parent->id;
+			if ($idx->{fstring} =~ /クエリ必須係り受け/ || $option->{force_dpnd}) {
+			    $idx->{requisite} = 1;
+			    $idx->{optional}  = 0;
+			} else {
+			    $idx->{requisite} = 0;
+			    $idx->{optional}  = 1;
+			}
+			push(@idx, $idx);
+		    }
+		    $gid++;
+		}
+
+		# テリック処理により生成される係り受けの追加
+		if (defined $kihonku->parent && $kihonku->parent->fstring =~ /クエリ不要語/ && $kihonku->parent && $kihonku->parent->fstring =~ /テリック処理/ &&
+		    defined $kihonku->parent->parent && $kihonku->parent->parent->fstring !~ /クエリ削除語/) {
+		    foreach my $idx (@{$this->get_dpnd_index($kihonku, $kihonku->parent->parent, $option)}) {
+			$idx->{pos} = $pos;
+			$idx->{absolute_pos} = $pos;
+			$idx->{isBasicNode} = 1;
+#			$idx->{group_id} = $kihonku->id . "/" . $kihonku->parent->parent->id;
+			$idx->{group_id} = $gid + 1000;
+			if ($idx->{fstring} =~ /クエリ必須係り受け/) {
+			    $idx->{requisite} = 1;
+			    $idx->{optional}  = 0;
+			} else {
+			    $idx->{requisite} = 0;
+			    $idx->{optional}  = 1;
+			}
+			push(@idx, $idx);
+		    }
+		    $gid++;
+		}
+	    }
+
+
+
+	    # 単語・同義語・同義句インデックスの抽出
+	    foreach my $synnodes ($kihonku->synnodes) {
+		foreach my $synnode ($synnodes->synnode) {
+		    my $synid = $synnode->synid;
+		    my $score = $synnode->score;
+		    my $features = $synnode->feature;
+
+		    # 読みの削除
+		    my $buf;
+		    foreach my $w (split(/\+/, $synid)) {
+			my ($hyouki, $yomi) = split(/\//, $w);
+			$buf .= "${hyouki}+";
+		    }
+		    chop($buf);
+		    $synid = $buf;
+
+		    # <上位語>を利用するかどうか
+		    if ($features =~ /<上位語>/) {
+			if ($option->{use_of_hypernym}) {
+			    $features =~ s/<上位語>//g;
+			} else {
+			    next;
+			}
+		    }
+
+		    # <反義語><否定>を利用するかどうか
+		    if ($features =~ /<反義語>/ && $features =~ /<否定>/) {
+			next unless ($option->{use_of_negation_and_antonym});
+		    }
+
+		    # SYNノードを利用しない場合
+		    next if ($synid =~ /s\d+/ && $option->{disable_synnode});
+
+		    # 文法素性の削除
+		    $features =~ s/<(可能|尊敬|受身|使役)>//g;
+
+		    # <下位語数:(数字)>を削除
+		    $features =~ s/<下位語数:\d+>//g;
+
+		    push(@idx, {midasi => $synid . $features});
+		    $idx[-1]->{group_id} = $kihonku->id;
+		    $idx[-1]->{freq} = $score;
+		    $idx[-1]->{isContentWord} = 1;
+		    $idx[-1]->{isBasicNode} = ($synid =~ /s\d+/) ? 0 : 1;
+		    $idx[-1]->{fstring} = $kihonku->fstring;
+		    $idx[-1]->{surf} = $synnodes->midasi;
+		    $idx[-1]->{pos} = $pos;
+		    $idx[-1]->{NE} = ($kihonku->fstring =~ /<NE(内)?:.+?>/) ? $& : 0;
+
+		    if ($kihonku->fstring =~ /クエリ不要語/) {
+			$idx[-1]->{requisite} = 0;
+			$idx[-1]->{optional}  = 1;
+		    } else {
+			$idx[-1]->{requisite} = 1;
+			$idx[-1]->{optional}  = 0;
+		    }
+		}
+	    }
+	    $gid++;
+	    $pos++;
+	}
+    }
+
+    return \@idx;
+}
+
 sub makeIndexFromKNPResultObject {
     my ($this, $result, $option) = @_;
     my $pos = $this->{absolute_pos};
@@ -608,32 +731,63 @@ sub get_repnames {
 }
 
 sub get_repnames2 {
-    my ($this, $mrphs) = @_;
+    my ($this, $kihonku) = @_;
 
     my %reps = ();
-    foreach my $mrph (@$mrphs) {
-	next unless ($mrph->fstring =~ /<内容語|意味有>/);
+    my $hasSyngraphAnnotation = $kihonku->synnodes;
+    # SYNGRAPHの解析結果から抽出
+    if ($hasSyngraphAnnotation) {
+	foreach my $synnodes ($kihonku->synnodes) {
+	    foreach my $synnode ($synnodes->synnode) {
+		my $midasi = $synnode->synid;
+		next if ($midasi =~ /s\d+/);
 
-	my ($repnames) = ($mrph->fstring =~ /<正規化代表表記.?:([^>]+)>/);
-	if ($repnames) {
-	    foreach my $rep (split(/\?/, $repnames)) {
-		$rep =~ s/(.+?)\/.+?([a|v])?$/\1\2/ if ($this->{ignore_yomi});
-		$rep = $this->normalize_rentai($rep, $mrph->fstring);
-		$reps{&toUpperCase_utf8($rep)} = 1;
-	    }
-	} else {
-	    if ($this->{ignore_yomi}) {
-		$reps{&toUpperCase_utf8($mrph->midasi)} = 1;
-	    } else {
-		$reps{&toUpperCase_utf8($mrph->midasi) . "/" . $mrph->yomi} = 1;
+		if ($this->{ignore_yomi}) {
+		    $midasi =~ s/(.+?)\/.+?([a|v])?$/\1/;
+		}
+
+		$reps{&toUpperCase_utf8($midasi)} = 1;
 	    }
 	}
-	last;
+    }
+    # KNPの解析結果から抽出
+    else {
+	foreach my $mrph ($kihonku->mrph) {
+	    next unless ($mrph->fstring =~ /<内容語|意味有>/);
+
+	    if ($mrph->fstring =~ /<可能動詞:(.+?)>/) {
+		my $midasi = $1;
+		if ($this->{ignore_yomi}) {
+		    $midasi =~ s/(.+?)\/.+?([a|v])?$/\1\2/;
+		    $midasi = $this->normalize_rentai($midasi, $mrph->fstring);
+		    $reps{&toUpperCase_utf8($midasi)} = 1;
+		} else {
+		    $reps{&toUpperCase_utf8($midasi) . "/" . $mrph->yomi} = 1;
+		}
+	    } else {
+		my ($repnames) = ($mrph->fstring =~ /<正規化代表表記.?:([^>]+)>/);
+		if ($repnames) {
+		    foreach my $rep (split(/\?/, $repnames)) {
+			$rep =~ s/(.+?)\/.+?([a|v])?$/\1\2/ if ($this->{ignore_yomi});
+			$rep = $this->normalize_rentai($rep, $mrph->fstring);
+			$reps{&toUpperCase_utf8($rep)} = 1;
+		    }
+		} else {
+		    if ($this->{ignore_yomi}) {
+			$reps{&toUpperCase_utf8($mrph->midasi)} = 1;
+		    } else {
+			$reps{&toUpperCase_utf8($mrph->midasi) . "/" . $mrph->yomi} = 1;
+		    }
+		}
+	    }
+	    last;
+	}
     }
 
-    my @ret = keys %reps;
+    my @ret = sort keys %reps;
     return \@ret;
 }
+
 
 sub get_genkei {
     my ($mrph) = @_;
@@ -658,22 +812,24 @@ sub get_genkei2 {
 }
 
 sub get_dpnd_index {
-    my ($this, $node1, $node2, $option) = @_;
-    if ($node1->dpndtype eq 'P' && defined $node2->parent) {
-	return $this->get_dpnd_index($node1, $node2->parent, $option);
+    my ($this, $kihonku1, $kihonku2, $option) = @_;
+
+    return [] if ($kihonku2->fstring =~ /クエリ削除語/);
+
+    if ($kihonku1->dpndtype eq 'P' && defined $kihonku2->parent) {
+	return $this->get_dpnd_index($kihonku1, $kihonku2->parent, $option);
     } else {
 	my @idx = ();
-	my @mrphs1 = $node1->mrph;
-	my @mrphs2 = $node2->mrph;
-
 	my $words1 = [];
 	my $words2 = [];
 	if ($this->{genkei}) {
+	    my @mrphs1 = $kihonku1->mrph;
+	    my @mrphs2 = $kihonku2->mrph;
 	    push(@$words1, &get_genkei2(\@mrphs1));
 	    push(@$words2, &get_genkei2(\@mrphs2));
 	} else {
-	    $words1 = $this->get_repnames2(\@mrphs1);
-	    $words2 = $this->get_repnames2(\@mrphs2);
+	    $words1 = $this->get_repnames2($kihonku1);
+	    $words2 = $this->get_repnames2($kihonku2);
 	}
 
 	my $num_of_reps1 = scalar(@$words1);
@@ -682,10 +838,12 @@ sub get_dpnd_index {
 	    foreach my $rep2 (@$words2) {
 		my $midasi = sprintf("%s->%s", $rep1, $rep2);
 		push(@idx, {midasi => $midasi});
-		$idx[-1]->{freq} = 1 / ($num_of_reps1 * $num_of_reps2);
+		$idx[-1]->{freq} = 1;# / ($num_of_reps1 * $num_of_reps2);
 		$idx[-1]->{isContentWord} = 1;
+		$idx[-1]->{fstring} = $kihonku1->fstring;
 	    }
 	}
+
 	return \@idx;
     }
 }
