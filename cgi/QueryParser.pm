@@ -225,6 +225,10 @@ sub parse {
 		  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
 		  disable_dpnd => $opt->{disable_dpnd},
 		  disable_synnode => $opt->{disable_synnode},
+		  telic_process => $opt->{telic_process},
+		  CN_process => $opt->{CN_process},
+		  NE_process => $opt->{NE_process},
+		  modifier_of_NE_process => $opt->{modifier_of_NE_process},
 		  verbose => $opt->{debug}
 		});
 	} else {
@@ -242,6 +246,10 @@ sub parse {
 		  requisite_item_detector => $this->{requisite_item_detector},
 		  query_filter => $opt->{query_filter},
 		  trimming => $opt->{trimming},
+		  telic_process => $opt->{telic_process},
+		  CN_process => $opt->{CN_process},
+		  NE_process => $opt->{NE_process},
+		  modifier_of_NE_process => $opt->{modifier_of_NE_process},
 		  verbose => $opt->{verbose}
 		});
 	}

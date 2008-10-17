@@ -52,6 +52,11 @@ sub getDefaultValues {
     $params{query_filtering} = 1;
     $params{trimming} = 1;
     $params{antonym_and_negation_expansion} = 0;
+    $params{disable_query_processing} = 0;
+    $params{telic_process} = 1;
+    $params{CN_process} = 1;
+    $params{NE_process} = 1;
+    $params{modifier_of_NE_process} = 1;
 
 
     # スニペット表示のデフォルト設定
@@ -153,6 +158,17 @@ sub setParametersOfGetRequest {
 	}
     }
 
+
+    ###############################################################
+    # disable_query_processing が指定されていたらフラグをオフにする
+    ###############################################################
+
+    if ($params->{disable_query_processing}) {
+	$params->{telic_process} = 0;
+	$params->{CN_process} = 0;
+	$params->{NE_process} = 0;
+	$params->{modifier_of_NE_process} = 0;
+    }
 
 
     ######################################
@@ -366,7 +382,11 @@ sub parseQuery {
 	  detect_requisite_dpnd => $params->{detect_requisite_dpnd},
  	  query_filtering => $params->{query_filtering},
 	  disable_dpnd => $params->{disable_dpnd},
-	  disable_synnode => $params->{disable_synnode}
+	  disable_synnode => $params->{disable_synnode},
+	  telic_process => $params->{telic_process},
+	  CN_process => $params->{CN_process},
+	  NE_process => $params->{NE_process},
+	  modifier_of_NE_process => $params->{modifier_of_NE_process}
 	});
 
     # 取得ページ数のセット

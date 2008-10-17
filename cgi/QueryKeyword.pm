@@ -64,14 +64,16 @@ sub new {
 # 	$trimmer->trim($knpresult);
 #     }
 
-    my $analyzer = new Tsubaki::QueryAnalyzer();
-    $analyzer->analyze($knpresult,
-		       {
-			   telic_process => 1,
-			   CN_process => 1,
-			   NE_process => 1,
-			   modifier_of_NE_process => 1
-		       });
+    if ($opt->{telic_process} || $opt->{CN_process} || $opt->{NE_process} || $opt->{modifier_of_NE_process}) {
+	my $analyzer = new Tsubaki::QueryAnalyzer({debug => $opt->{verbose}});
+	$analyzer->analyze($knpresult,
+			   {
+			       telic_process => $opt->{telic_process},
+			       CN_process => $opt->{CN_process},
+			       NE_process => $opt->{NE_process},
+			       modifier_of_NE_process => $opt->{modifier_of_NE_process}
+			   });
+    }
 
     $this->{knp_result} = $knpresult;
 
@@ -722,16 +724,19 @@ sub getPaintingJavaScriptCode {
 		    next if ($node->feature =~ /<反義語>/);
 		    next if ($node->feature =~ /<否定>/);
 
-		    # 同義グループに属す表現を取得
 		    my $str = $node->synid;
 		    ($str) = ($node->synid =~ /(.+)\/.+/) if ($str =~ /\//);
 		    $basicNode = $str if ($str !~ /s\d+/ && !defined $basicNode);
-		    foreach my $w (split('\|', $synonyms{$str})) {
-			$w = decode('utf8', $w);
-			$w =~ s/\[.+?\]//;
-			$w =~ s/\/.+//;
-			$synbuf{$w} = 1;
-			$max_num_of_words = length($w) if ($max_num_of_words < length($w));
+
+		    # 同義グループに属す表現を取得
+		    unless ($this->{disable_synnode}) {
+			foreach my $w (split('\|', $synonyms{$str})) {
+			    $w = decode('utf8', $w);
+			    $w =~ s/\[.+?\]//;
+			    $w =~ s/\/.+//;
+			    $synbuf{$w} = 1;
+			    $max_num_of_words = length($w) if ($max_num_of_words < length($w));
+			}
 		    }
 		}
 	    }
