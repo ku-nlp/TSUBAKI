@@ -202,7 +202,7 @@ sub annotateCompoundNounFeature {
 	    my $appendflag = 0;
 	    if ($kakarimoto->fstring() =~ /一文字漢字/ &&
 		$kakarisaki->fstring() =~ /一文字漢字/) {
-		$appendflag = 0;
+		$appendflag = 1;
 	    }
 	    elsif ($this->isPhrase($kakarimoto, $kakarisaki, $opt)) {
 		$appendflag = 1;
