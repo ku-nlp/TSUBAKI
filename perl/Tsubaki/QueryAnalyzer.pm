@@ -261,7 +261,7 @@ sub isPhrase {
 	    my $ab_freq = $this->{DFDB_OF_CNS}{$ab};
 	    my $rate = $ab_freq / $anob_freq;
 
-	    print "A=$a_rep B=$b_rep (df(A no B) = $anob_freq) (df(A B) = $ab_freq) (R = $rate)<br>\n" if ($this->{debug});
+	    print "A=$a_rep B=$b_rep (df(A no B) = $anob_freq) (df(A B) = $ab_freq) (R = $rate)<br>\n" if ($this->{option}{debug});
 
 	    return 1 if ($rate >= $opt->{th});
 	}
@@ -282,16 +282,26 @@ sub isPhrase {
 #                         固有表現を検出
 ######################################################################
 
+# 固有表現内の係り受けに必須をつける
 sub annotateNEFeature {
     my ($this, $knpresult, $opt) = @_;
 
-    foreach my $kakarimoto ($knpresult->tag) {
-	my $kakarisaki = $kakarimoto->parent();
-	next unless (defined $kakarisaki);
+    foreach my $bnst ($knpresult->bnst) {
+	# 文節をまたいで複合名詞判定が行われないように、文節内の基本句をあらかじめ列挙
+	my %buf = ();
+	foreach my $tag ($bnst->tag) {
+	    $buf{$tag} = 1;
+	}
 
-	if ($kakarimoto->fstring() =~ /(<NE.+?>)/ &&
-	    $kakarisaki->fstring() =~ /(<NE.+?>)/) {
-	    $kakarimoto->push_feature(($REQUISITE_DPND));
+	foreach my $kakarimoto ($bnst->tag) {
+	    my $kakarisaki = $kakarimoto->parent();
+	    next unless (defined $kakarisaki);
+	    next unless (exists $buf{$kakarisaki});
+
+	    if ($kakarimoto->fstring() =~ /(<NE.+?>)/ &&
+		$kakarisaki->fstring() =~ /(<NE.+?>)/) {
+		$kakarimoto->push_feature(($REQUISITE_DPND));
+	    }
 	}
     }
 }
