@@ -29,6 +29,8 @@ sub new {
 sub analyze {
     my ($this, $knpresult, $opt) = @_;
 
+    print qq(<H4 style="background-color:black; color:white;">クエリ処理</H4>\n) if ($this->{option}{debug});
+
     # 不要な動詞を検出する
     if ($opt->{telic_process}) {
 	unless (defined $this->{cscf}) {
@@ -37,6 +39,12 @@ sub analyze {
 	    $this->{cscf} = new CalcSimilarityByCF();
 	    $this->{cscf}->TieMIDBfile($CONFIG->{MIDB_PATH});
 	}
+
+	unless (defined $this->{antonyms}) {
+	    $this->loadAntonymDB();
+	}
+
+	print qq(<H4 style="border-bottom: 2px solid black;">テリック処理</H4>\n) if ($this->{option}{debug});
 
 	$opt->{threshold_of_telic_process} = 10 unless (defined $opt->{threshold_of_telic_process});
 	$this->annotateTelicFeature($knpresult, {th => $opt->{threshold_of_telic_process}});
@@ -49,6 +57,8 @@ sub analyze {
 	    tie %{$this->{DFDB_OF_CNS}}, 'CDB_File', $cdbfp or die "$0: can't tie file $cdbfp $!\n";
 	}
 
+	print qq(<H4 style="border-bottom: 2px solid black;">複合名詞処理</H4>\n) if ($this->{option}{debug});
+
 	$opt->{threshold_of_CN_process} = 5 unless (defined $opt->{threshold_of_CN_process});
 	$this->annotateCompoundNounFeature($knpresult, {th => $opt->{threshold_of_CN_process}});
     }
@@ -56,12 +66,16 @@ sub analyze {
 
     # NEを検出する
     if ($opt->{NE_process}) {
+	print qq(<H4 style="border-bottom: 2px solid black;">固有表現処理</H4>\n) if ($this->{option}{debug});
+
 	$this->annotateNEFeature($knpresult, $opt);
     }
 
 
     # NEの修飾句に含まれる語を検出する
     if ($opt->{modifier_of_NE_process}) {
+	print qq(<H4 style="border-bottom: 2px solid black;">固有表現修飾句処理</H4>\n) if ($this->{option}{debug});
+
 	$this->annotateNEmodifierFeature($knpresult, $opt);
     }
 
@@ -85,6 +99,25 @@ sub analyze {
     }
 }
 
+
+
+sub loadAntonymDB {
+    my ($this) = @_;
+
+    my %db = ();
+    open (READER, '<:encoding(euc-jp)', $CONFIG->{ANTONYM_DIC_PATH}) or die "$!";
+    while (<READER>) {
+	chop;
+	my ($e1, $e2) = split (/ /, $_);
+	$e1 =~ s/:.+$//;
+	$e2 =~ s/:.+$//;
+
+	$db{$e1} = $e2;
+    }
+    close (READER);
+
+    $this->{antonyms} = \%db;
+}
 
 
 
@@ -142,7 +175,25 @@ sub isWorthlessVerb {
     my ($this, $mrph, $verb, $opt) = @_;
 
     my ($rank, $score) = $this->getRankOfMI($mrph, $verb);
-    return ($score < 0 || $rank > $opt->{th}) ? 0 : 1;
+
+    printf ("Y=%s N=%s score=%.2f, rank=%d (th=%d)<br>\n", $verb, $mrph->repname, $score, $rank, $opt->{th}) if ($this->{option}{debug});
+
+    if ($score < 0 || $rank > $opt->{th}) {
+	return 0;
+    } else {
+	# 反義語のチェック
+	my $antonymV = $this->{antonyms}{$verb};
+	if ($antonymV) {
+	    my $N = 5;
+	    my ($rank, $score) = $this->getRankOfMI($mrph, $antonymV);
+
+	    printf ("Y=%s N=%s score=%.2f, rank=%d (th=%d)<br>\n", $antonymV, $mrph->repname, $score, $rank, $N * $opt->{th}) if ($this->{option}{debug});
+
+	    # 反義語が条件を満たす場合は省略しない
+	    return ($score < 0 || $rank > ($N * $opt->{th})) ? 1 : 0;
+	}
+	return 1;
+    }
 }
 
 sub getRankOfMI {
@@ -202,6 +253,7 @@ sub annotateCompoundNounFeature {
 	    my $appendflag = 0;
 	    if ($kakarimoto->fstring() =~ /一文字漢字/ &&
 		$kakarisaki->fstring() =~ /一文字漢字/) {
+		printf qq(%s -> %s %s (一文字漢字)<br>\n), ($kakarimoto->mrph)[0]->repname, ($kakarisaki->mrph)[0]->repname, $REQUISITE_DPND if ($this->{option}{debug});
 		$appendflag = 1;
 	    }
 	    elsif ($this->isPhrase($kakarimoto, $kakarisaki, $opt)) {
@@ -258,10 +310,10 @@ sub isPhrase {
 	    my $anob = sprintf ("%sの%s", $a_rep, $b_rep);
 	    my $anob_freq = $this->{DFDB_OF_CNS}{$anob} + 1;
 
-	    my $ab_freq = $this->{DFDB_OF_CNS}{$ab};
+	    my $ab_freq = $this->{DFDB_OF_CNS}{$ab} + 0;
 	    my $rate = $ab_freq / $anob_freq;
 
-	    print "A=$a_rep B=$b_rep (df(A no B) = $anob_freq) (df(A B) = $ab_freq) (R = $rate)<br>\n" if ($this->{option}{debug});
+	    printf "A=$a_rep B=$b_rep df(A no B) = $anob_freq df(A B) = $ab_freq RATE = %.1f (th=%d)<br>\n", $rate, $opt->{th} if ($this->{option}{debug});
 
 	    return 1 if ($rate >= $opt->{th});
 	}
@@ -300,6 +352,9 @@ sub annotateNEFeature {
 
 	    if ($kakarimoto->fstring() =~ /(<NE.+?>)/ &&
 		$kakarisaki->fstring() =~ /(<NE.+?>)/) {
+
+		printf qq(%s -> %s %s (NE内)<br>\n), ($kakarimoto->mrph)[0]->repname, ($kakarisaki->mrph)[0]->repname, $REQUISITE_DPND if ($this->{option}{debug});
+
 		$kakarimoto->push_feature(($REQUISITE_DPND));
 	    }
 	}
@@ -330,6 +385,8 @@ sub annotateNEmodifierFeature {
 
     foreach my $kihonku ($knpresult->tag) {
 	if ($kihonku->fstring =~ /<固有表現を修飾>/) {
+
+	    printf qq(%s %s (NEを修飾)<br>\n), ($kihonku->mrph)[0]->repname, $OPTIONAL if ($this->{option}{debug});
 	    $kihonku->push_feature(($OPTIONAL));
 	}
     }
