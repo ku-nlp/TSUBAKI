@@ -32,13 +32,13 @@ JUMAN_COMMAND	/home/skeiji/local/080620/bin/juman
 # SYNDB_PATH	/data/skeiji/tsubaki/SynGraph_manual_DB5/syndb/i686
 SYNDB_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGraph_manual_DB5/syndb/i686
 MIDB_PATH	/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi
-KNP_OPTIONS	-postprocess,-tab,-dpnd
+KNP_OPTIONS	-postprocess,-tab,-dpnd,-ne-crf
 KNP_RCFILE	/home/skeiji/.knprc
 SYNGRAPH_PM_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGraph_manual_DB5/perl
 # SYNGRAPH_PM_PATH	/data/skeiji/tsubaki/SynGraph_manual_DB5/perl
 WWW2SF_PATH	/home/skeiji/cvs/WWW2sf/tool/perl
 UTILS_PATH	/home/skeiji/cvs/Utils/perl
-TSUBAKI_MODULE_PATH	/home/skeiji/tsubaki/SearchEngine/perl
+TSUBAKI_MODULE_PATH	/home/skeiji/tsubaki-develop/SearchEngine/perl
 
 
 
@@ -114,7 +114,6 @@ SEARCH_SERVERS	 nlpc06	  50015,50016,50017,50018
 # SEARCH_SERVERS	 157.1.128.58	  50015
 # # SEARCH_SERVERS	 157.1.128.58	  50015,50016,50017
 # # SEARCH_SERVERS	 157.1.128.59	  50015,50016,50017
-
 
 # SYNGRAPH検索用サーバー（★要変更）
 # SEARCH_SERVERS_FOR_SYNGRAPH ホスト名 ポート番号1,...
@@ -211,7 +210,7 @@ CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
 SF_PATH_TEMPLATE		/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml.gz
 
 # index.cgiのアドレス（★要変更）
-INDEX_CGI			http://tsubaki.ixnlp.nii.ac.jp/index.cgi
+INDEX_CGI	http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/tsubaki-develop/index.cgi
 
 # キャッシュページへのリンクを生成する際に用いるテンプレート
 CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
@@ -221,7 +220,7 @@ SEARCH_ACCURACY			0.2
 
 # 1ページに含まれる検索結果の数
 
-NUM_OF_RESULTS_PER_PAGE	10
+NUM_OF_RESULTS_PER_PAGE	20
 
 # ユーザが見れる検索結果数
 
@@ -284,10 +283,11 @@ QUESTIONNAIRE	1
 QUESTIONNARIE_CGI	http://tsubaki.ixnlp.nii.ac.jp/questionnarie.cgi
 
 # スニペットサーバー上の標準フォーマットデータをAPIで配布するかどうか（0:配布しない, 1:配布する）
-PROVIDE_SFDAT_ON_SNIPPET_SERVERS	1
+
+PROVIDE_SFDAT_ON_SNIPPET_SERVERS	0
 
 # キャッシュを利用しないようにする場合は1
-DISABLE_CACHE	0
+DISABLE_CACHE	1
 
 # アンカーインデックスを利用しないようにする場合は1
 DISABLE_ANCHOR_INDEX	0
@@ -303,3 +303,6 @@ APACHE_ACCESS_LOG      /var/log/apache2/access_log
 
 # SearchEngine/data ディレクトリの場所
 DATA_DIR	       /home/skeiji/tsubaki/SearchEngine/data
+
+# SynGraph/dic/rsk_iwanami 以下にある antonym.txt へのパス
+ANTONYM_DIC_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGraph_manual_DB5/dic/rsk_iwanami/antonym.txt

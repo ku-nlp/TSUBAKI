@@ -273,3 +273,6 @@ APACHE_ACCESS_LOG      /var/log/apache2/access_log
 
 # SearchEngine/data ディレクトリの場所
 DATA_DIR	       /home/skeiji/tsubaki/SearchEngine/data
+
+# SynGraph/dic/rsk_iwanami 以下にある antonym.txt へのパス
+ANTONYM_DIC_PATH	/share09/home/skeiji/cvs/SynGraph/dic/rsk_iwanami/antonym.txt
