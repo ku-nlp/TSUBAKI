@@ -1,3 +1,21 @@
+2008-10-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm: debug (OR検索が0になる問題)
+
+	* scripts/TsubakiEngineFactory.pm: or die "$!" を追加
+
+	* cgi/QueryParser.pm, cgi/RequestParser.pm: debug 文追加
+
+	* cgi/QueryKeyword.pm: コード整理, ~ORに対応.
+
+2008-10-18  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict:
+	オプション ANTONYM_DIC_PATH を追加.
+
+	* perl/Tsubaki/QueryAnalyzer.pm:
+	デバッグ表示を追加. テリック処理の際、反義語をチェックするようにした.
+
 2008-10-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* perl/Tsubaki/QueryAnalyzer.pm:
