@@ -692,7 +692,7 @@ sub retrieve_documents {
 
 
 	# 必須が指定された検索単語・係り受けを含む文書IDのマージ
-	my $requisites = &get_requisite_docs($requisite_docs_word, $requisite_docs_dpnd);
+	my $requisites = ($keyword->{logical_cond_qkw} =~ /AND/) ? &get_requisite_docs($requisite_docs_word, $requisite_docs_dpnd) : [];
 	# オプショナルが指定された検索単語・係り受けを含む文書IDのマージ
 	my $optionals = &get_optional_docs($optional_docs_word, $optional_docs_dpnd);
 
