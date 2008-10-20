@@ -66,7 +66,7 @@ sub DESTROY {}
 sub load_doc_length_dbs {
     my ($dir, $dlengthdb_hash) = @_;
     my @DOC_LENGTH_DBs;
-    opendir(DIR, $dir);
+    opendir(DIR, $dir) or die "$!";
     foreach my $dbf (readdir(DIR)) {
 	next unless ($dbf =~ /doc_length\.bin/);
 
