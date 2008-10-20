@@ -229,7 +229,7 @@ sub parse {
 		  CN_process => $opt->{CN_process},
 		  NE_process => $opt->{NE_process},
 		  modifier_of_NE_process => $opt->{modifier_of_NE_process},
-		  verbose => $opt->{debug}
+		  debug => $opt->{debug}
 		});
 	} else {
 	    $q = new QueryKeyword(
@@ -250,7 +250,7 @@ sub parse {
 		  CN_process => $opt->{CN_process},
 		  NE_process => $opt->{NE_process},
 		  modifier_of_NE_process => $opt->{modifier_of_NE_process},
-		  verbose => $opt->{verbose}
+		  debug => $opt->{debug}
 		});
 	}
 	push(@qks, $q);

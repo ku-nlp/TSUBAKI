@@ -386,7 +386,8 @@ sub parseQuery {
 	  telic_process => $params->{telic_process},
 	  CN_process => $params->{CN_process},
 	  NE_process => $params->{NE_process},
-	  modifier_of_NE_process => $params->{modifier_of_NE_process}
+	  modifier_of_NE_process => $params->{modifier_of_NE_process},
+	  debug => $params->{debug}
 	});
 
     # 取得ページ数のセット
