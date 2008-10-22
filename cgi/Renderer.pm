@@ -96,7 +96,7 @@ sub printFooter {
 		    $last_page_flag = 0;
 		}
 	    
-		if ($offset == $current_page) {
+		if ($offset - 1 == $current_page) {
 		    print "<font color=\"brown\">" . ($i + 1) . "</font>&nbsp;";
 		    $last_page_flag = 1;
 		} else {
