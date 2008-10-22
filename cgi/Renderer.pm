@@ -89,7 +89,7 @@ sub printFooter {
 	    print "<DIV class='pagenavi'>検索結果ページ：";
 	    my $num_of_search_results = ($CONFIG->{'NUM_OF_SEARCH_RESULTS'} > $CONFIG->{'NUM_OF_PROVIDE_SEARCH_RESULTS'}) ? $CONFIG->{'NUM_OF_PROVIDE_SEARCH_RESULTS'} : $CONFIG->{'NUM_OF_SEARCH_RESULTS'};
 	    for (my $i = 0; $i < $num_of_search_results / $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}; $i++) {
-		my $offset = $i * $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
+		my $offset = $i * $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'} + 1;
 		if ($size < $offset) {
 		    last;
 		} else {
@@ -896,9 +896,8 @@ sub printOrdinarySearchResult {
 
 	my $output = qq(<DIV class="result">);
 
-	$output .= qq(<TABLE cellpadding="0" border="0" width="100%"><TR><TD>\n);
-	$output .= qq(<SPAN class="rank">) . ($rank + 1) . "</SPAN>";
-	$output .= qq(</TD>\n);
+	$output .= qq(<TABLE cellpadding="0" border="0" width="100%">\n);
+	$output .= qq(<TR><TD style="width: 1em; text-align: center;"><SPAN class="rank" nowrap>) . ($rank + 1) . "</SPAN></TD>\n";
 
 	$output .= qq(<TD>\n);
 	$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
