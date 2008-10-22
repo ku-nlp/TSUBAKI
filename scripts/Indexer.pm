@@ -525,12 +525,22 @@ sub makeIndexFromSynGraphResultObject {
 	    # 係り受けインデックスの抽出
 	    unless ($option->{disable_dpnd}) {
 		if (defined $kihonku->parent) {
+
+		    # 並列句の処理
+		    my $kakarimoto = $kihonku;
+		    my $buf = $kakarimoto;
+		    my $kakarisaki = $kihonku->parent;
+		    while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
+			$buf = $kakarisaki;
+			$kakarisaki = $kakarisaki->parent;
+		    }
+
 		    # 係り受けインデックスの追加
-		    foreach my $idx (@{$this->get_dpnd_index($kihonku, $kihonku->parent, $option)}) {
+		    foreach my $idx (@{$this->get_dpnd_index($kakarimoto, $kakarisaki, $option)}) {
 			$idx->{pos} = $pos;
 			$idx->{absolute_pos} = $pos;
 			$idx->{isBasicNode} = 1;
-			$idx->{group_id} = $kihonku->id . "/" . $kihonku->parent->id;
+			$idx->{group_id} = $kakarimoto->id . "/" . $kakarisaki->id;
 			if ($idx->{fstring} =~ /クエリ必須係り受け/ || $option->{force_dpnd}) {
 			    $idx->{requisite} = 1;
 			    $idx->{optional}  = 0;
@@ -815,14 +825,6 @@ sub get_dpnd_index {
     my ($this, $kihonku1, $kihonku2, $option) = @_;
 
     return [] if ($kihonku2->fstring =~ /クエリ削除語/);
-
-    # 並列句の処理
-    my $buf = $kihonku1;
-    while ($buf->dpndtype eq 'P' && defined $kihonku2->parent) {
-	$buf = $kihonku2;
-	$kihonku2 = $kihonku2->parent;
-    }
-
 
     my @idx = ();
     my $words1 = [];
