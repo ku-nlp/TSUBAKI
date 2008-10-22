@@ -816,36 +816,40 @@ sub get_dpnd_index {
 
     return [] if ($kihonku2->fstring =~ /クエリ削除語/);
 
-    if ($kihonku1->dpndtype eq 'P' && defined $kihonku2->parent) {
-	return $this->get_dpnd_index($kihonku1, $kihonku2->parent, $option);
-    } else {
-	my @idx = ();
-	my $words1 = [];
-	my $words2 = [];
-	if ($this->{genkei}) {
-	    my @mrphs1 = $kihonku1->mrph;
-	    my @mrphs2 = $kihonku2->mrph;
-	    push(@$words1, &get_genkei2(\@mrphs1));
-	    push(@$words2, &get_genkei2(\@mrphs2));
-	} else {
-	    $words1 = $this->get_repnames2($kihonku1);
-	    $words2 = $this->get_repnames2($kihonku2);
-	}
-
-	my $num_of_reps1 = scalar(@$words1);
-	my $num_of_reps2 = scalar(@$words2);
-	foreach my $rep1 (@$words1) {
-	    foreach my $rep2 (@$words2) {
-		my $midasi = sprintf("%s->%s", $rep1, $rep2);
-		push(@idx, {midasi => $midasi});
-		$idx[-1]->{freq} = 1;# / ($num_of_reps1 * $num_of_reps2);
-		$idx[-1]->{isContentWord} = 1;
-		$idx[-1]->{fstring} = $kihonku1->fstring;
-	    }
-	}
-
-	return \@idx;
+    # 並列句の処理
+    my $buf = $kihonku1;
+    while ($buf->dpndtype eq 'P' && defined $kihonku2->parent) {
+	$buf = $kihonku2;
+	$kihonku2 = $kihonku2->parent;
     }
+
+
+    my @idx = ();
+    my $words1 = [];
+    my $words2 = [];
+    if ($this->{genkei}) {
+	my @mrphs1 = $kihonku1->mrph;
+	my @mrphs2 = $kihonku2->mrph;
+	push(@$words1, &get_genkei2(\@mrphs1));
+	push(@$words2, &get_genkei2(\@mrphs2));
+    } else {
+	$words1 = $this->get_repnames2($kihonku1);
+	$words2 = $this->get_repnames2($kihonku2);
+    }
+
+    my $num_of_reps1 = scalar(@$words1);
+    my $num_of_reps2 = scalar(@$words2);
+    foreach my $rep1 (@$words1) {
+	foreach my $rep2 (@$words2) {
+	    my $midasi = sprintf("%s->%s", $rep1, $rep2);
+	    push(@idx, {midasi => $midasi});
+	    $idx[-1]->{freq} = 1;# / ($num_of_reps1 * $num_of_reps2);
+	    $idx[-1]->{isContentWord} = 1;
+	    $idx[-1]->{fstring} = $kihonku1->fstring;
+	}
+    }
+
+    return \@idx;
 }
 
 ## 全角小文字アルファベット(utf8)を全角大文字アルファベットに変換(utf8)
