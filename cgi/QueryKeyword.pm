@@ -732,8 +732,15 @@ sub getPaintingJavaScriptCode {
     for (my $i = 0; $i < scalar(@kihonkus); $i++) {
 	my $kakarimoto = $kihonkus[$i];
 	my $kakarisaki = $kakarimoto->parent;
-	$kakarisaki = $kakarisaki->parent if (defined $kakarisaki && $kakarimoto->dpndtype eq 'P');
-	next unless (defined $kakarisaki);
+
+	# 並列句の処理
+	my $buf = $kakarimoto;
+	while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
+	    $buf = $kakarisaki;
+	    $kakarisaki = $kakarisaki->parent;
+	}
+
+ 	next unless (defined $kakarisaki);
 
 	if ($kakarisaki->fstring() =~ /<クエリ不要語>/ &&
 	    $kakarisaki->fstring() !~ /<クエリ削除語>/ &&
