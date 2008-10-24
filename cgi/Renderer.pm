@@ -555,15 +555,23 @@ my $host = `hostname`;
 sub getCongestion {
     my $logfile = $CONFIG->{DATA_DIR} . "/access_log";
     my $count = 1;
-    open(READER, "cat $logfile | tac | grep cgi | grep -v gif | grep -v png | grep -v cache |") or die "$!";
+    open(READER, "cat $logfile | tac |") or die "$!";
     my $buf = undef;
     while (<READER>) {
 	my @data = split(' ', $_);
 	my ($date, $hour, $min, $sec) = split(":", $data[3]);
 	$buf = $min unless (defined $buf);
 	my $request = $data[6];
+
+	next if ($request !~/cgi/);
+	next if ($request =~/cache/);
+	next if ($request =~/format=/);
+	next if ($request !~/query=/);
+
 	last if ($buf - $min > 1);
-	$count ++ if ($request !~ /format/);
+	if ($request !~ /format/) {
+	    $count++;
+	}
     }
     close (READER);
 
