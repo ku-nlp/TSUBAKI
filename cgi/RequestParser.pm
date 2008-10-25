@@ -213,6 +213,8 @@ sub setParametersOfGetRequest {
 	}
     }
 
+
+    $params->{query} =~ s/\n$//;
     if ($params->{query} =~ /\n|\r/) {
 	require Renderer;
 	Renderer::printErrorMessage($cgi, 'queryの値に制御コードが含まれています。');
