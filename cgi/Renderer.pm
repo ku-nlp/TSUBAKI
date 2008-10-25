@@ -368,8 +368,8 @@ END_OF_HTML
     print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data">\n);
     print qq(<INPUT type="hidden" name="start" value="1">\n);
     print qq(<INPUT type="text" id=\"qbox\" name="query" value="$params->{'query'}" size="60">\n);
-    print qq(<INPUT type="submit"name="送信" value="検索する"/>\n);
-    print qq(<INPUT type="button"name="clear" value="クリア" onclick="document.all.INPUT.value=''"/>\n);
+    print qq(<INPUT type="submit" value="検索する"/>\n);
+    print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/>\n);
 
     if ($params->{develop_mode}) {
 	print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
@@ -490,8 +490,8 @@ my $host = `hostname`;
     print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
     print "<INPUT type=\"hidden\" name=\"start\" value=\"1\">\n";
     print "<INPUT type=\"text\" id=\"qbox\" name=\"query\" value=\'$params->{'query'}\' size=\"90\">\n";
-    print "<INPUT type=\"submit\"name=\"送信\" value=\"検索する\"/>\n";
-    print "<INPUT type=\"button\"name=\"clear\" value=\"クリア\" onclick=\"document.all.q.value=''\"/>\n";
+    print qq(<INPUT type="submit" value="検索する"/>\n);
+    print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/>\n);
 
     if ($params->{develop_mode}) {
 	print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
