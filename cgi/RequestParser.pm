@@ -358,7 +358,8 @@ sub parseQuery {
 	    ignore_yomi => $CONFIG->{IGNORE_YOMI},
 	    use_of_case_analysis => $params->{use_of_case_analysis},
 	    use_of_NE_tagger => $params->{use_of_NE_tagger},
-	    debug => $params->{debug}
+	    debug => $params->{debug},
+	    option => $params
 	});
 
     if ($params->{debug}) {

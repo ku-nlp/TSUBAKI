@@ -12,6 +12,7 @@ use Configure;
 use Error qw(:try);
 use KNP::Result;
 use Tsubaki::QueryAnalyzer;
+use Logger;
 
 
 my $CONFIG = Configure::get_instance();
@@ -31,7 +32,8 @@ sub new {
 	rawstring => $string,
 	syngraph => $syngraph,
 	disable_dpnd => $opt->{disable_dpnd},
-	disable_synnode => $opt->{disable_synnode}
+	disable_synnode => $opt->{disable_synnode},
+	logger => new Logger(0)
     };
 
     unless ($string) {
@@ -51,6 +53,7 @@ sub new {
 	print Dumper($opt->{knp}) . "<BR>\n";
 	exit;
     };
+    $this->{logger}->setTimeAs('KNP', '%.3f');
 
     unless (defined $knpresult) {
 	print "Can't parse the query: $string<BR>\n";
@@ -69,6 +72,7 @@ sub new {
 			       modifier_of_NE_process => $opt->{modifier_of_NE_process}
 			   });
     }
+    $this->{logger}->setTimeAs('QueryAnalyzer', '%.3f');
 
     $this->{knp_result} = $knpresult;
 
@@ -77,11 +81,13 @@ sub new {
     unless ($opt->{syngraph}) {
 	# KNP 結果から索引語を抽出
 	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult->all);
+	$this->{logger}->setTimeAs('Indexer', '%.3f');
     } else {
 	# SynGraph 結果から索引語を抽出
  	$knpresult->set_id(0);
  	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
 	$this->{syn_result} = new KNP::Result($synresult);
+	$this->{logger}->setTimeAs('SynGraph', '%.3f');
 
 	$indice = $opt->{indexer}->makeIndexFromSynGraphResultObject($this->{syn_result},
  							 { use_of_syngraph_dependency => $CONFIG->{USE_OF_SYNGRAPH_DEPENDENCY},
@@ -92,6 +98,7 @@ sub new {
  							   use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM},
 							   antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}
  							 });
+	$this->{logger}->setTimeAs('Indexer', '%.3f');
     }
 
 
@@ -160,6 +167,7 @@ sub new {
     if ($is_phrasal_search > 0) {
 	$this->{near} = scalar(@{$this->{words}});
     }
+    $this->{logger}->setTimeAs('createQuery', '%.3f');
 
     bless $this;
 }
@@ -569,6 +577,7 @@ sub normalize {
 	next if ($memberName eq 'dpnds');
 	next if ($memberName eq 'knp_result');
 	next if ($memberName eq 'syn_result');
+	next if ($memberName eq 'logger');
 
 	push(@buf, $memberName . '=' . $this->{$memberName});
     }
@@ -591,7 +600,7 @@ sub getPaintingJavaScriptCode {
 
     my $font_size = 12;
     my $offsetX = 10 + 24;
-    my $offsetY = $font_size * (scalar(@{$this->{words}}) + 2);
+    my $offsetY = $font_size * (scalar(@{$this->{words}}) + 3);
     my $arrow_size = 3;
     my $synbox_margin = $font_size;
 
@@ -742,14 +751,17 @@ sub getPaintingJavaScriptCode {
 
  	next unless (defined $kakarisaki);
 
+	# 追加された係り受けの描画
 	if ($kakarisaki->fstring() =~ /<クエリ不要語>/ &&
 	    $kakarisaki->fstring() !~ /<クエリ削除語>/ &&
 	    $kakarisaki->fstring() !~ /<固有表現を修飾>/) {
 	    my $_kakarisaki = $kakarisaki->parent();
-	    next unless (defined $_kakarisaki);
 
-	    my $mark = ($kakarisaki->fstring() =~ /クエリ削除語/) ?  '×' : '△';
-	    $jscode .= &getDrawingDependencyCode($i, $kakarimoto, $_kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
+	    # 係り先の係り先への係り受けを描画
+	    if (defined $_kakarisaki) {
+		my $mark = ($kakarisaki->fstring() =~ /クエリ削除語/) ?  '×' : '△';
+		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $_kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
+	    }
 	}
 
 	my $mark = ($kakarimoto->fstring() =~ /クエリ必須係り受け/) ?  '○' : (($kakarimoto->fstring() =~ /クエリ削除係り受け/) ? '×' : '△');

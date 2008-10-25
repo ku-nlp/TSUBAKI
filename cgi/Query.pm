@@ -22,7 +22,8 @@ sub new {
 	qid2df => $params->{qid2df},
 	gid2qids => $params->{gid2qids},
 	dpnd_map => $params->{dpnd_map},
-	antonym_and_negation_expansion => $params->{antonym_and_negation_expansion}
+	antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
+	option => $params->{option}
     };
 
     bless $this;
@@ -43,7 +44,23 @@ sub normalize {
 	next if ($memberName eq 'start');
 	next if ($memberName eq 'score_verbose');
 
-	push(@buf, $memberName . "=" . $this->{$memberName});
+	if ($memberName eq 'option') {
+	    foreach my $k (keys %{$this->{option}}) {
+		next if ($k eq 'syngraph_option');
+		next if ($k eq 'knp');
+		next if ($k eq 'syngraph');
+		next if ($k eq 'indexer');
+		next if ($k eq 'debug');
+
+		my $v = $this->{option}{$k};
+
+		next if ((ref $v) =~ /HASH|ARRAY/);
+
+		push(@buf, $k . '=' . $v);
+	    }
+	} else {
+	    push(@buf, $memberName . "=" . $this->{$memberName});
+	}
     }
 
     my $i = 0;

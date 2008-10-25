@@ -368,7 +368,8 @@ sub parse {
 			  qid2df => \%qid2df,
 			  gid2qids => \%gid2qids,
 			  dpnd_map => \%dpnd_map,
-			  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}
+			  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
+			  option => $opt
 			});
 
 
