@@ -120,6 +120,7 @@ sub broadcastSearch {
 	    PeerPort => $this->{hosts}->[$i]->{port},
 	    Proto    => 'tcp' );
 
+	$query->{logger} = new Logger();
 	print "send query to " . $this->{hosts}[$i]{name} . ":" . $this->{hosts}[$i]{port} . "<BR>\n" if ($opt->{debug});
 	$selecter->add($socket) or die "Cannot connect to the server $this->{hosts}->[$i]->{name}:$this->{hosts}->[$i]->{port}. $!\n";
 	
@@ -165,16 +166,17 @@ sub broadcastSearch {
 	    my $slave_logger = undef;
 	    if (defined $buff) {
 		$slave_logger = Storable::thaw(decode_base64($buff));
-		$slave_logger->setTimeAs('transfer_time', '%.3f');
+		$slave_logger->setTimeAs('transfer_time_from', '%.3f');
 
 		# 検索に要した全時間
 		$slave_logger->setParameterAs('total_time', sprintf ("%.3f",
+								     $slave_logger->getParameter('transfer_time_to') +
 								     $slave_logger->getParameter('normal_search') +
 								     $slave_logger->getParameter('logical_condition') +
 								     $slave_logger->getParameter('near_condition') +
 								     $slave_logger->getParameter('merge_dids') +
 								     $slave_logger->getParameter('document_scoring') +
-								     $slave_logger->getParameter('transfer_time')));
+								     $slave_logger->getParameter('transfer_time_from')));
 
 		foreach my $k ($slave_logger->keys()) {
 		    my $v = $slave_logger->getParameter($k);
