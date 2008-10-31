@@ -380,6 +380,7 @@ sub parseQuery {
 	{ logical_cond_qk => $params->{logical_operator},
 	  syngraph => $params->{syngraph},
 	  near => $params->{near},
+	  force_dpnd => $params->{force_dpnd},
 	  trimming => $params->{trimming},
 	  antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
 	  detect_requisite_dpnd => $params->{detect_requisite_dpnd},

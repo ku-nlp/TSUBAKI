@@ -141,7 +141,7 @@ sub parse {
 	my $near = $opt->{near};
 	my $logical_cond_qkw = 'AND'; # 検索語に含まれる単語間の論理条件
 	my $keep_order = 1;
-	my $force_dpnd = 0;
+	my $force_dpnd = $opt->{force_dpnd};
 	my $sentence_flag = -1;
 	my $phrasal_flag = -1;
 
