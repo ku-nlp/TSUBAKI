@@ -1,4 +1,48 @@
+2008-10-31  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm, cgi/RequestParser.pm:
+	APIでアクセスする際のforce_dpndの値を有効にした.
+
+	* cgi/RequestParser.pm, cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/Renderer.pm:
+	クエリの解析時の各ステップの所要時間のログをとるようにした.
+
+	* cgi/SearchEngine.pm: クエリ送信にかかる時間のログをとるようにした.
+
+	* scripts/tsubaki_server.pl:
+	スレーブサーバーごとに、クエリ送信にかかる時間のログをとるようにした.
+
+2008-10-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/merge_dffiles.perl:
+	DBに登録する係り受けの頻度を指定できるようにした.
+
+2008-10-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm: クエリ末尾の改行を削除.
+
+	* cgi/Query.pm, cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/RequestParser.pm:
+	クエリ解析のオプションをキャッシュに保存するようにした.
+
+	* cgi/Renderer.pm: small changes.
+
+2008-10-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: 混具合の求めかたを修正.
+
+2008-10-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm: debug (並列句の扱いを修正)
+
+	* cgi/QueryKeyword.pm: 並列句がある場合の描画処理を修正.
+
+	* cgi/Renderer.pm: フッターに表示されるリンクを修正.
+
+	* cgi/Renderer.pm:
+	スニペットが短い際に表示がずれる問題を修正. フッターの表示を修正.
+
 2008-10-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* doc/overview.ppt: フローチャートを追加.
 
 	* scripts/TsubakiEngine.pm: debug (OR検索が0になる問題)
 
