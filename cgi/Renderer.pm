@@ -702,7 +702,7 @@ sub get_snippets {
 sub printSlaveServerLogs {
     my ($this, $logger) = @_;
 
-    my @keys = ('port', 'total_time', 'normal_search', 'logical_condition', 'near_condition', 'merge_dids', 'document_scoring', 'transfer_time', 'hitcount', 'data_size');
+    my @keys = ('port', 'total_time', 'transfer_time_to', 'normal_search', 'logical_condition', 'near_condition', 'merge_dids', 'document_scoring', 'transfer_time_from', 'hitcount', 'data_size');
     my $host2log = $logger->getParameter('host2log');
     my %buf = ();
     my %average = ();
@@ -710,6 +710,7 @@ sub printSlaveServerLogs {
 
     my $verboseLogString;
     $verboseLogString .= sprintf qq(<H3 style="border-bottom: 2px solid black;">Verbose</H3>\n);
+
     foreach my $host (sort keys %$host2log) {
 	$verboseLogString .= sprintf qq(<TABLE width="100%">\n);
 	$verboseLogString .= sprintf qq(<TR><TD colspan="%d" align="center" style="color: white; font-weight: bold; background-color:gray;">$host</TD></TR>\n), scalar(@keys);
@@ -737,7 +738,24 @@ sub printSlaveServerLogs {
     print qq(<DIV id="slave_server_logs" style="padding: 0em 1em 2em 1em; display: none; background-color: #f1f4ff;">);
     print qq(<DIV>[<A href="javascript:void(0);" onclick="toggle_simpage_view('slave_server_log_verbose', this, '詳細を開く', '詳細を閉じる');">詳細を開く</A>]&nbsp;\n);
     print qq([<A href="javascript:void(0);" onclick="javascript:document.getElementById('slave_server_logs').style.display = 'none';">ログを閉じる</A>]</DIV>\n);
-    print qq(<H3 style="border-bottom: 2px solid black;">Summary</H3>\n);
+
+    # クエリの解析時間のログ
+    my @keysForQueryParsetime = ('new_syngraph', 'KNP', 'QueryAnalyzer', 'SynGraph', 'Indexer', 'create_query', 'set_params_for_qks', 'parse_query');
+    printf qq(<H3 style="border-bottom: 2px solid black;">Query Parse Time</H3>\n);
+    printf qq(<TABLE width="100%">\n<TR>);
+    foreach my $k (@keysForQueryParsetime) {
+	printf qq(<TD align="center" style="color: white; font-weight: bold; background-color:gray;">$k</TD>);
+    }
+    printf "</TR>\n";
+
+    foreach my $k (@keysForQueryParsetime) {
+	printf qq(<TD align="center" style="color:black; background-color:white;">%s</TD>), $logger->getParameter($k);
+    }
+    printf "</TR>\n</TABLE>\n";
+
+
+
+    print qq(<H3 style="border-bottom: 2px solid black;">Summary of Search Time</H3>\n);
     print qq(<TABLE width="100%">\n);
     printf qq(<TR><TD colspan="%d" align="center" style="color: white; font-weight: bold; background-color:gray;">AVERAGE</TD></TR>\n), scalar(@keys);
     foreach my $k (@keys) {

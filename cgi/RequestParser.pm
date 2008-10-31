@@ -390,8 +390,15 @@ sub parseQuery {
 	  CN_process => $params->{CN_process},
 	  NE_process => $params->{NE_process},
 	  modifier_of_NE_process => $params->{modifier_of_NE_process},
+	  logger => $logger,
 	  debug => $params->{debug}
 	});
+
+    # クエリ解析時間のログをとる
+    $logger->setParameterAs('parse_query', sprintf ("%.3f",
+			    $logger->getParameter('new_syngraph') +
+			    $logger->getParameter('set_params_for_qks') +
+			    $logger->getParameter('make_qks'))) if ($logger);
 
     # 取得ページ数のセット
     $query->{results} = $params->{results};
@@ -429,9 +436,6 @@ sub parseQuery {
 	$qk->{force_dpnd} = 1 if ($params->{force_dpnd});
 	$qk->{logical_cond_qkw} = 'OR' if ($params->{logical_operator} eq 'OR');
     }
-
-    # クエリ解析時間のログをとる
-    $logger->setTimeAs('parse_query', '%.3f') if ($logger);
 
     # ポータルからのアクセスかどうかのログをとる
     $logger->setParameterAs('portal', $params->{from_portal}) if ($logger);

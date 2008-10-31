@@ -127,17 +127,8 @@ sub parse {
 	$this->{SYNGRAPH} = new SynGraph($CONFIG->{SYNDB_PATH});
 	$this->{SYNGRAPH_OPTION} = {regist_exclude_semi_contentword => 1, relation => 1, antonym => 1, hypocut_attachnode => 9};
     }
-
-
-#     if ($opt->{detect_requisite_dpnd}) {
-# 	require RequisiteItemDetector;
-# 	$this->{requisite_item_detector} = new RequisiteItemDetector({debug => $opt->{debug}});
-#     }
-
-#     if ($opt->{query_filtering}) {
-# 	require QueryFilter;
-# 	$this->{query_filter} = new QueryFilter($opt);
-#     }
+    # SYNGRAPHをnewする
+    $opt->{logger}->setTimeAs('new_syngraph', '%.3f') if ($opt->{logger});
 
 
     ## 空白で区切る
@@ -255,6 +246,9 @@ sub parse {
 	}
 	push(@qks, $q);
     }
+    # QueryKeyword作成にかかる時間を測定
+    $opt->{logger}->setTimeAs('make_qks', '%.3f') if ($opt->{logger});
+
 
     my $qid = 0;
     my %qid2rep = ();
@@ -428,6 +422,25 @@ sub parse {
 	$ret->{qid2qtf} = \%qid2qtf;
     }
     $ret->{gid2weight} = \%gid2weight;
+
+    # パラメータの設定にかかる時間を測定
+    $opt->{logger}->setTimeAs('set_params_for_qks', '%.3f') if ($opt->{logger});
+
+    # 検索キーワード生成に関する処理時間をロギング
+    if ($opt->{logger}) {
+	my %buf = ();
+	foreach my $qk (@{$ret->{keywords}}) {
+	    foreach my $key ($qk->{logger}->keys) {
+		my $value = $qk->{logger}->getParameter($key);
+		$buf{$key} += $value;
+	    }
+	}
+
+	foreach my $key (keys %buf) {
+	    $opt->{logger}->setParameterAs($key, sprintf('%.3f', $buf{$key}));
+	    # print $key . " " . $buf{$key} . "<BR>\n";
+	}
+    }
 
     return $ret;
 }

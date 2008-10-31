@@ -167,7 +167,8 @@ sub new {
     if ($is_phrasal_search > 0) {
 	$this->{near} = scalar(@{$this->{words}});
     }
-    $this->{logger}->setTimeAs('createQuery', '%.3f');
+
+    $this->{logger}->setTimeAs('create_query', '%.3f');
 
     bless $this;
 }
