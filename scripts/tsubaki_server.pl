@@ -155,7 +155,10 @@ sub main {
 	    my $tsubaki = $factory->get_instance();
 
 
-	    my $logger = new Logger();
+	    # スレーブサーバーへの送信にかかった時間をロギング
+	    my $logger = $query->{logger};
+	    $logger->setTimeAs('transfer_time_to', '%.3f');
+
 	    my $docs = $tsubaki->search($query, $qid2df, {
 		flag_of_dpnd_use => $query->{flag_of_dpnd_use},
 		flag_of_dist_use => $query->{flag_of_dist_use},
