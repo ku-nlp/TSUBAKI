@@ -754,7 +754,8 @@ sub getPaintingJavaScriptCode {
  	next unless (defined $kakarisaki);
 
 	# 追加された係り受けの描画
-	if ($kakarisaki->fstring() =~ /<クエリ不要語>/ &&
+	if ($kakarimoto->fstring() !~ /<クエリ削除係り受け>/ &&
+	    $kakarisaki->fstring() =~ /<クエリ不要語>/ &&
 	    $kakarisaki->fstring() !~ /<クエリ削除語>/ &&
 	    $kakarisaki->fstring() !~ /<固有表現を修飾>/) {
 	    my $_kakarisaki = $kakarisaki->parent();
