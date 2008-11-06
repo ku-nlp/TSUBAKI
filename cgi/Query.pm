@@ -35,7 +35,7 @@ sub normalize {
     my ($this) = @_;
 
     my @buf;
-    foreach my $memberName (keys %$this) {
+    foreach my $memberName (sort keys %$this) {
 	next if ($memberName =~ /^qid2/);
 	next if ($memberName =~ /^gid2/);
 	next if ($memberName eq 'only_hitcount');
@@ -43,22 +43,25 @@ sub normalize {
 	next if ($memberName eq 'dpnd_map');
 	next if ($memberName eq 'start');
 	next if ($memberName eq 'score_verbose');
+	next if ($memberName eq 'logger');
 
 	if ($memberName eq 'option') {
-	    foreach my $k (keys %{$this->{option}}) {
+	    foreach my $k (sort keys %{$this->{option}}) {
 		next if ($k eq 'syngraph_option');
 		next if ($k eq 'knp');
 		next if ($k eq 'syngraph');
 		next if ($k eq 'indexer');
 		next if ($k eq 'debug');
+		next if ($k eq 'logger');
 
-		my $v = $this->{option}{$k};
+		my $v = (defined $this->{option}{$k}) ? $this->{option}{$k} : 0;
 
-		next if ((ref $v) =~ /HASH|ARRAY/);
+		next if ((ref $v) =~ /(HASH|ARRAY)/);
 
 		push(@buf, $k . '=' . $v);
 	    }
 	} else {
+	    my $v = (defined $this->{$memberName}) ? $this->{$memberName} : 0;
 	    push(@buf, $memberName . "=" . $this->{$memberName});
 	}
     }
