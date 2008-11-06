@@ -581,6 +581,7 @@ sub makeIndexFromSynGraphResultObject {
 	    foreach my $synnodes ($kihonku->synnodes) {
 		foreach my $synnode ($synnodes->synnode) {
 		    my $synid = $synnode->synid;
+		    my $synid_with_yomi = $synid;
 		    my $score = $synnode->score;
 		    my $features = $synnode->feature;
 
@@ -617,6 +618,7 @@ sub makeIndexFromSynGraphResultObject {
 		    $features =~ s/<下位語数:\d+>//g;
 
 		    push(@idx, {midasi => $synid . $features});
+		    $idx[-1]->{midasi_with_yomi} = $synid_with_yomi;
 		    $idx[-1]->{group_id} = $kihonku->id;
 		    $idx[-1]->{freq} = $score;
 		    $idx[-1]->{isContentWord} = 1;

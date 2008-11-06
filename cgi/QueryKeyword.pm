@@ -139,6 +139,7 @@ sub new {
 		push(@word_reps, {
 		    surf => $m->{surf},
 		    string => $m->{midasi},
+		    midasi_with_yomi => $m->{midasi_with_yomi},
 		    gid => $group_id,
 		    qid => -1,
 		    weight => 1,
