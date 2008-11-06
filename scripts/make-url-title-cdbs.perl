@@ -17,9 +17,6 @@ sub main {
 	chop($_);
 	my ($did, $url, $title) = split(' ', $_);
 
-	# 文書IDを数値化
-	$did += 0;
-
 	$titlecdb->insert($did, $title);
 	$urlcdb->insert($did, $url);
     }
