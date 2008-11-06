@@ -202,7 +202,7 @@ sub print_for_web {
 
     my $count = 0;
     my @colors = ('white', '#efefef');
-    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.mod.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
+    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
 
     printf(qq(<H4 style="background-color:black; color: white;"><A name="query">クエリの解析結果</A></H4>\n));
     print qq(<TABLE border="1" width="100%">\n);
@@ -218,6 +218,7 @@ sub print_for_web {
 		my $gdf = $rep->{gdf};
 		my $qtf = $rep->{qtf};
 		my $str = $rep->{string};
+		my $str_w_yomi = $rep->{midasi_with_yomi};
 
 		if ($flag) {
 		    my $NE = ($rep->{NE}) ? $rep->{NE} : '--';
@@ -231,7 +232,7 @@ sub print_for_web {
 		}
 
 		if ($this->{syn_result}) {
-		    my @synonymous_exps = split(/\|+/, decode('utf8', $synonyms{$str}));
+		    my @synonymous_exps = split(/\|+/, decode('utf8', $synonyms{$str_w_yomi}));
 		    unshift (@synonymous_exps, '<BR>') if (scalar(@synonymous_exps) < 1);
 
 		    printf("<TD width=10%>%s</TD><TD width=10%>gid=%s</TD><TD width=10%>qid=%s</TD><TD width=10%>gdf=%.2f</TD><TD width=10%>qtf=%.2f</TD><TD width=*>%s</TD></TR>\n",
