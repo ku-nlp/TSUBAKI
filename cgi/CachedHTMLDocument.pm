@@ -59,7 +59,7 @@ sub new {
 	    next unless ($word);
 
 	    if ($word =~ /^s\d+/ || $word =~ /\+/) {
-		foreach my $synonym (split('\|', decode('utf8', $synonyms{$word}))) {
+		foreach my $synonym (sort {length($b) <=> length($a)} split('\|', decode('utf8', $synonyms{$word}))) {
 		    # 読みの削除
 		    if ($synonym =~ m!^([^/]+)/!) {
 			$synonym = $1;
@@ -78,6 +78,9 @@ sub new {
 	    }
 	    # 単語はヘッダーには表示
 	    else {
+		# 読みの削除
+		$word = $1 if ($word =~ m!^([^/]+)/!);
+
 		$message .= sprintf qq(<span style="background-color:#%s;">), $CONFIG->{HIGHLIGHT_COLOR}[$color];
 		$message .= sprintf qq(%s</span>&nbsp;), $word;
 		push(@patterns, {key => $word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$word<\/span>)});

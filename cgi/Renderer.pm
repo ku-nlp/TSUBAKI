@@ -611,12 +611,12 @@ sub get_uri_escaped_query {
 	    my %buf1;
 	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @{$reps}) {
 		next if($rep->{isContentWord} < 1 && $rep->{is_phrasal_search} < 1);
-		my $string = $rep->{string};
+		my $string = $rep->{midasi_with_yomi};
 
 		# next if ($string =~ /s\d+:/);
 
 		# $string =~ s/s\d+://; # SynID の削除
-		$string =~ s/\/.+$//; # 読みがなの削除
+		# $string =~ s/\/.+$//; # 読みがなの削除
 
 		next if ($string =~ /<^>]+?>/);
 		next if (exists $buf1{$string});
