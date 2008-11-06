@@ -1,5 +1,13 @@
 2008-11-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
+	* cgi/QueryKeyword.pm: syndb.mod.cdb の廃止. (print_for_webメソッド)
+
+	* cgi/CachedHTMLDocument.pm, cgi/Renderer.pm:
+	キャッシュページ中でのハイライト表示を修正.
+
+	* cgi/QueryKeyword.pm, scripts/Indexer.pm:
+	読み付きの見出しを保持するようにした.
+
 	* cgi/Query.pm:
 	文字列に正規化する際、logger変数の値が含まれないようにした.
 
