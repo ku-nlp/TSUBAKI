@@ -740,11 +740,12 @@ sub printSlaveServerLogs {
     print qq([<A href="javascript:void(0);" onclick="javascript:document.getElementById('slave_server_logs').style.display = 'none';">ログを閉じる</A>]</DIV>\n);
 
     # クエリの解析時間のログ
-    my @keysForQueryParsetime = ('new_syngraph', 'KNP', 'QueryAnalyzer', 'SynGraph', 'Indexer', 'create_query', 'set_params_for_qks', 'parse_query');
+    my @keysForQueryParsetime = ('parse_query', 'new_syngraph', 'KNP', 'QueryAnalyzer', 'SynGraph', 'Indexer', 'create_query', 'set_params_for_qks');
     printf qq(<H3 style="border-bottom: 2px solid black;">Query Parse Time</H3>\n);
     printf qq(<TABLE width="100%">\n<TR>);
     foreach my $k (@keysForQueryParsetime) {
-	printf qq(<TD align="center" style="color: white; font-weight: bold; background-color:gray;">$k</TD>);
+	my $kk = ($k eq 'parse_query') ? 'total_time' : $k;
+	printf qq(<TD align="center" style="color: white; font-weight: bold; background-color:gray;">$kk</TD>);
     }
     printf "</TR>\n";
 
