@@ -1,3 +1,12 @@
+2008-11-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Query.pm:
+	文字列に正規化する際、logger変数の値が含まれないようにした.
+
+2008-11-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm, cgi/QueryKeyword.pm: syndb.mod.cdb を廃止.
+
 2008-10-31  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/QueryParser.pm, cgi/RequestParser.pm:
