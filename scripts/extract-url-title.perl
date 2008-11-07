@@ -7,6 +7,7 @@
 use strict;
 use utf8;
 use Getopt::Long;
+use PerlIO::gzip;
 
 binmode(STDOUT, ':utf8');
 
@@ -16,16 +17,16 @@ GetOptions(\%opt, 'dir=s', 'url', 'title', 'z');
 main();
 
 sub main {
-    opendir(DIR, $opt{dir});
+    opendir(DIR, $opt{dir}) or die "$!";
     foreach my $file (sort readdir(DIR)) {
 	next if ($file eq '.' || $file eq '..');
 
 	my ($name) = ($file =~ /(\d+)\.xml/);
 	my $fp = "$opt{dir}/$file";
 	if ($opt{z}) {
-	    open(READER, "zcat $fp |");
+	    open(READER, '<:gzip', $fp) or die "$!";
 	} else {
-	    open(READER, $fp);
+	    open(READER, $fp) or die "$!";
 	}
 	binmode(READER, ':utf8');
 
