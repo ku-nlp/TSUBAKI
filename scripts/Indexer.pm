@@ -562,13 +562,9 @@ sub makeIndexFromSynGraphResultObject {
 			$idx->{isBasicNode} = 1;
 #			$idx->{group_id} = $kihonku->id . "/" . $kihonku->parent->parent->id;
 			$idx->{group_id} = $gid + 1000;
-			if ($idx->{fstring} =~ /クエリ必須係り受け/) {
-			    $idx->{requisite} = 1;
-			    $idx->{optional}  = 0;
-			} else {
-			    $idx->{requisite} = 0;
-			    $idx->{optional}  = 1;
-			}
+			$idx->{requisite} = 0;
+			$idx->{optional}  = 1;
+
 			push(@idx, $idx);
 		    }
 		    $gid++;
