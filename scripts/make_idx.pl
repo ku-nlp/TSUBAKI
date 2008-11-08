@@ -149,8 +149,28 @@ sub extract_indices_wo_pm {
     my $tagName;
     my $content;
     my %indices = ();
+    LOOP:
     while (<READER>) {
 	last if ($_ =~ /<Text / && $opt{only_inlinks});
+
+	if (/(<($pattern)( |\>).*\n)/o) {
+	    if ($_ =~ /Length=\"(\d+)\"/) {
+		my $length = $1;
+		# 300バイトより大きい場合は読み込まない
+		if ($length > 300) {
+		    my $rawstring = <READER>;
+		    while (<READER>) {
+			if (/(.*\<\/($pattern)\>)/o) {
+			    $isIndexingTarget = 0;
+			    $tagName = '';
+			    $content = '';
+
+			    next LOOP;
+			}
+		    }
+		}
+	    }
+	}
 
 	if (/(<($pattern)( |\>).*\n)/o) {
 	    $isIndexingTarget = 1;
