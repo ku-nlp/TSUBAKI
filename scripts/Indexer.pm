@@ -750,10 +750,10 @@ sub get_repnames2 {
 		my $midasi = $synnode->synid;
 		next if ($midasi =~ /s\d+/);
 
-		if ($this->{ignore_yomi}) {
-		    $midasi =~ s/(.+?)\/.+?([a|v])?$/\1/;
-		}
+		# 読みの削除
+		$midasi = &remove_yomi($midasi)	if ($this->{ignore_yomi});
 
+		print $midasi . "<BR>\n";
 		$reps{&toUpperCase_utf8($midasi)} = 1;
 	    }
 	}
@@ -794,6 +794,19 @@ sub get_repnames2 {
 
     my @ret = sort keys %reps;
     return \@ret;
+}
+
+sub remove_yomi {
+    my ($midasi) = @_;
+
+    my @buf;
+    foreach my $w (split(/\+/, $midasi)) {
+	my ($hyouki, $yomi) = split(/\//, $w);
+	# $hyouki .= $1 if ($yomi =~ /([a|v])$/);
+	push (@buf, ${hyouki});
+    }
+
+    return  join ('+', @buf);
 }
 
 
