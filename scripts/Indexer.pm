@@ -753,7 +753,6 @@ sub get_repnames2 {
 		# 読みの削除
 		$midasi = &remove_yomi($midasi)	if ($this->{ignore_yomi});
 
-		print $midasi . "<BR>\n";
 		$reps{&toUpperCase_utf8($midasi)} = 1;
 	    }
 	}
