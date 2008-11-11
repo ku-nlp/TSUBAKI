@@ -915,13 +915,15 @@ sub printOrdinarySearchResult {
     my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
     for (my $rank = $start; $rank < $end; $rank++) {
 	my $did = sprintf("%09d", $results->[$rank]{did});
-	my $score = $results->[$rank]{score_total};
+	my $score = sprintf("%.4f", $results->[$rank]{score_total});
 	my $snippet = $did2snippets->{$did};
 	my $title = $results->[$rank]{title};
 
-	$score = sprintf("%.4f", $score);
-
 	my $output = qq(<DIV class="result">);
+
+	###############################################################################
+	# 順位とタイトル
+	###############################################################################
 
 	$output .= qq(<TABLE cellpadding="0" border="0" width="100%">\n);
 	$output .= qq(<TR><TD style="width: 1em; text-align: center;"><SPAN class="rank" nowrap>) . ($rank + 1) . "</SPAN></TD>\n";
@@ -934,52 +936,81 @@ sub printOrdinarySearchResult {
 	if ($params->{from_portal}) {
 	    $output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN>\n);
 	}
+
 	$output .= qq(</TD></TR>\n);
-
 	$output .= qq(<TR><TD>&nbsp</TD>\n);
-
 	$output .= qq(<TD>\n);
-	my $num_of_sim_pages = 0;
-	$num_of_sim_pages = scalar(@{$results->[$rank]{similar_pages}}) if (defined $results->[$rank]{similar_pages});
 
+
+	###############################################################################
+	# タイトルの下
+	###############################################################################
+
+	$output .= qq(<DIV class="meta">\n);
+	# ポータルからのアクセスでなければ文書IDとスコアを表示する
+	if (!$params->{from_portal}) {
+	    $output .= sprintf qq(id=%09d, score=%.3f), $did, $score;
+	}
+
+	# score_verbose が指定去れている場合は内訳を表示する
+	if ($params->{score_verbose}) {
+	    my $score_w = $results->[$rank]{score_word};
+	    my $score_d = $results->[$rank]{score_dpnd};
+	    my $score_n = $results->[$rank]{score_dist};
+	    my $score_aw = $results->[$rank]{score_word_anchor};
+	    my $score_dw = $results->[$rank]{score_dpnd_anchor};
+	    $output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
+	}
+
+	# 類似・関連ページがあれば表示する
+	my $num_of_sim_pages = (defined $results->[$rank]{similar_pages}) ? scalar(@{$results->[$rank]{similar_pages}}) : 0;
 	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
 	    my $open_label = "類似・関連ページを表示 ($num_of_sim_pages 件)";
 	    my $close_label = "類似・関連ページを非表示 ($num_of_sim_pages 件)";
-	    if ($params->{from_portal}) {
-		$output .= qq(<DIV class="meta"><A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');">$open_label</A> </DIV>\n);
-	    } else {
-		if ($params->{score_verbose}) {
-		    $output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f), <A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '%s', '%s');">%s</A></DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor},$results->[$rank]{score_dpnd_anchor}, $open_label, $close_label;
-		} else {
-		    $output .= qq(<DIV class="meta">id=$did, score=$score, <A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '$open_label', '$close_label');">$open_label</A></DIV>\n);
-		}
-	    }
-	} else {
-	    unless ($params->{from_portal}) {
-		# $output .= sprintf qq(<DIV class="meta">id=%09d, score=%.3f (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)</DIV>\n), $did, $score, $results->[$rank]{score_word}, $results->[$rank]{score_dpnd}, $results->[$rank]{score_dist}, $results->[$rank]{score_word_anchor}, $results->[$rank]{score_dpnd_anchor};
-		$output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n)
-	    }
+	    $output .= sprintf qq(&nbsp;<A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '%s', '%s');">%s</A>\n), $open_label, $close_label, $open_label;
 	}
+	$output .= qq(</DIV>\n);
+
+
+	###############################################################################
+	# スニペット
+	###############################################################################
+
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
 	$output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
 	$output .= "</DIV>";
 
+
+	###############################################################################
+	# 類似・関連ページ
+	###############################################################################
+
 	$output .= qq(<DIV id="simpages_$rank" style="display: none;">);
 	foreach my $sim_page (@{$results->[$rank]{similar_pages}}) {
 	    my $did = sprintf("%09d", $sim_page->{did});
-	    my $score = $sim_page->{score_total};
+	    my $score = sprintf("%.3f", $sim_page->{score_total});
 
 	    # 装飾されたスニペッツの取得
 	    my $snippet = $did2snippets->{$did};
-	    $score = sprintf("%.4f", $score);
 
 	    $output .= qq(<DIV class="similar">);
 	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	    $output .= $sim_page->{title} . "</a>";
 	    if ($params->{from_portal}) {
 		# $output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN><BR>\n);
+		$output .= qq(<BR>\n);
 	    } else {
-		$output .= qq(<DIV class="meta">id=$did, score=$score</DIV>\n);
+		$output .= qq(<DIV class="meta">id=$did, score=$score);
+		# score_verbose が指定去れている場合は内訳を表示する
+		if ($params->{score_verbose}) {
+		    my $score_w = $results->[$rank]{score_word};
+		    my $score_d = $results->[$rank]{score_dpnd};
+		    my $score_n = $results->[$rank]{score_dist};
+		    my $score_aw = $results->[$rank]{score_word_anchor};
+		    my $score_dw = $results->[$rank]{score_dpnd_anchor};
+		    $output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
+		}
+		$output .= "</DIV>\n";
 	    }
 	    # $output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
 	    $output .= "<A class=\"cache\" href=\"$sim_page->{url}\">$sim_page->{url}</A>\n";
