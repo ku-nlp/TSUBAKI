@@ -22,6 +22,7 @@ sub new {
     } else {
 	open(READER, $filename);
     }
+    binmode(READER, ':utf8');
 
     my $flag = -1;
     my $crawler_html = 0;
@@ -44,8 +45,8 @@ sub new {
 	}
     }
 
-    my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
-    my $encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
+#   my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
+    my $encoding = 'utf8'; # $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
     my $parser = ModifiedTokeParser->new(\$buf) or die $!;
 
     tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
@@ -103,7 +104,7 @@ sub new {
 		$buf .= $token->[6];
 		$inBody = 1;
 	    }
-	    elsif ($token->[1] =~ /(a|link|img)/) {
+	    elsif ($token->[1] =~ /^(a|link|img)$/) {
 		my $fpath = ($1 eq 'link' || $1 eq 'a') ? $token->[2]{href} : $token->[2]{src};
  		if ($fpath) {
  		    my $furl = &convertURL($url, $fpath);
