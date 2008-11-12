@@ -37,11 +37,13 @@ if (!$opt{idxdir} || !$opt{port} || !$opt{dlengthdbdir} || $opt{help}) {
     exit;
 }
 
+my $ID;
 my @DOC_LENGTH_DBs;
 opendir(DIR, $opt{dlengthdbdir});
 foreach my $dbf (readdir(DIR)) {
-    next unless ($dbf =~ /doc_length\.bin/);
+    next unless ($dbf =~ /(\d+).doc_length\.bin/);
     
+    $ID = $1;
     my $fp = "$opt{dlengthdbdir}/$dbf";
     
     my $dlength_db;
@@ -105,7 +107,7 @@ sub main {
     }
 
 
-    print STDERR "TSUBAKI SERVER IS READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir})\n";
+    print STDERR "TSUBAKI SERVER IS READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir}, id=$ID)\n";
     while (1) {
 	my $new_socket = $listening_socket->accept();
 	my $client_sockaddr = $new_socket->peername();
@@ -158,6 +160,9 @@ sub main {
 	    # スレーブサーバーへの送信にかかった時間をロギング
 	    my $logger = $query->{logger};
 	    $logger->setTimeAs('transfer_time_to', '%.3f');
+
+	    # 検索している文書セットのIDを保持
+	    $logger->setParameterAs('id', $ID);
 
 	    my $docs = $tsubaki->search($query, $qid2df, {
 		flag_of_dpnd_use => $query->{flag_of_dpnd_use},
