@@ -19,7 +19,7 @@ binmode(STDOUT, ':encoding(euc-jp)');
 binmode(STDERR, ':encoding(euc-jp)');
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s', 'score_verbose');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s', 'score_verbose', 'disable_synnode');
 
 if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -68,6 +68,7 @@ sub main {
 
     $params->{query} = decode('euc-jp', $opt{query});
     $params->{syngraph} = $opt{syngraph};
+    $params->{disable_synnode} = $opt{disable_synnode};
     $params->{verbose} = $opt{verbose};
     $params->{antonym_and_negation_expansion} = 0;
     $params->{DFDB_DIR} = $opt{dfdbdir};
