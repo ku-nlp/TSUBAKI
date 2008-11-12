@@ -39,8 +39,10 @@ GetOptions(\%opt,
 	   'ignore_yomi',
 	   'ignore_syn_dpnd',
 	   'ignore_hypernym',
+	   'ignore_genkei',
 	   'skip_large_file=s',
 	   'max_num_of_indices=s',
+	   'max_length_of_rawstring=s',
 	   'genkei',
 	   'scheme=s',
 	   'title',
@@ -76,6 +78,12 @@ if (!$opt{title} && !$opt{keywords} && !$opt{description} && $opt{inlinks} && !$
 
 # 一文から抽出される索引表現数の上限
 $opt{max_num_of_indices} = 10000 unless ($opt{max_num_of_indices});
+
+# フレーズ検索のため、原形インデックスを作成（デフォルト）
+$opt{ignore_genkei} = 0 unless ($opt{ignore_genkei});
+
+# <RawString>タグの要素が5000byteを越える場合（文字化け・英数字の羅列など）はインデックス抽出を行わない
+$opt{max_length_of_rawstring} = 5000 unless ($opt{max_length_of_rawstring});
 
 &main();
 
@@ -126,6 +134,10 @@ sub extract_indices_wo_pm {
 	ignore_yomi => $opt{ignore_yomi},
 	without_using_repname => $opt{genkei} });
 
+    my $indexer_genkei = new Indexer({
+	ignore_yomi => $opt{ignore_yomi},
+	genkei => 1 });
+
     if ($my_opt->{gzipped}) {
 	open(READER, "zcat $file 2> /dev/null |");
     } else {
@@ -156,8 +168,8 @@ sub extract_indices_wo_pm {
 	if (/(<($pattern)( |\>).*\n)/o) {
 	    if ($_ =~ /Length=\"(\d+)\"/) {
 		my $length = $1;
-		# 300バイトより大きい場合は読み込まない
-		if ($length > 300) {
+		# $opt{max_length_of_rawstring}バイトより大きい場合は読み込まない, 越える場合は文字化け、英数字の羅列の可能性
+		if ($length > $opt{max_length_of_rawstring}) {
 		    my $rawstring = <READER>;
 		    while (<READER>) {
 			if (/(.*\<\/($pattern)\>)/o) {
@@ -189,7 +201,7 @@ sub extract_indices_wo_pm {
  	}
  	elsif (/(.*\<\/($pattern)\>)/o) {
 	    $content .= $1;
-	    my $terms = &extractIndices($content, $indexer, $file);
+	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei);
 
 	    # インリンクの場合は披リンク数分を考慮する
 	    if ($tagName eq 'InLink') {
@@ -223,7 +235,7 @@ sub extract_indices_wo_pm {
 	
 
 sub extractIndices {
-    my ($content, $indexer, $file) = @_;
+    my ($content, $indexer, $file, $indexer_genkei) = @_;
 
     my ($annotation) = ($content =~ /<Annotation[^>]+?>\<\!\[CDATA\[((.|\n)+)\]\]\><\/Annotation>/);
 
@@ -260,14 +272,24 @@ sub extractIndices {
 	    }
 	    push(@content_words, $m);
 	}
-	$terms = $indexer->makeIndexfromSynGraph($annotation, \@content_words, {max_num_of_indices => $opt{max_num_of_indices},
-										use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
-										use_of_hypernym => !$opt{ignore_hypernym},
-										use_of_negation_and_antonym => !$opt{ignore_negation_and_antonym},
-										verbose => $opt{verbose}} );
-	unless (defined $terms) {
+
+	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation, \@content_words, { max_num_of_indices => $opt{max_num_of_indices},
+											use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
+											use_of_hypernym => !$opt{ignore_hypernym},
+											use_of_negation_and_antonym => 1,
+											verbose => $opt{verbose}} );
+	unless (defined $terms_syn) {
 	    my ($rawstring) = ($content =~ m!<RawString>(.+?)</RawString>!);
 	    print STDERR "[SKIP] A large number of indices are extracted from [$rawstring]: $file (limit=" . $opt{max_num_of_indices} . ")\n";
+	}
+
+	# 出現形インデックスを抽出しマージする
+	if (!$opt{ignore_genkei}) {
+	    my $terms_genkei = $indexer_genkei->makeIndexFromKNPResultObject($knp_result_obj);
+	    push(@$terms, @$terms_genkei) if (defined $terms_genkei);
+	    push(@$terms, @$terms_syn) if (defined $terms_syn);
+	} else {
+	    $terms = $terms_syn;
 	}
     }
     elsif ($opt{knp}) {
@@ -462,6 +484,8 @@ sub output_syngraph_indice_with_position {
     my ($fh, $did, $indice) = @_;
 
     foreach my $midasi (sort {$a cmp $b} keys %$indice) {
+	next if ($midasi eq '' || $midasi =~ /^\->/ || $midasi =~ /\->$/);
+
 	my $score = &round($indice->{$midasi}{score});
 	my $sids_str = join(',', sort {$a <=> $b} keys %{$indice->{$midasi}{sids}});
 	my $pos_scr_str;
