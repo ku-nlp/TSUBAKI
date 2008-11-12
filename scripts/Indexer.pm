@@ -651,8 +651,8 @@ sub makeIndexFromKNPResultObject {
 	    if (defined $kihonku->parent) {
 		my $dpnd_idx = $this->get_dpnd_index($kihonku, $kihonku->parent, $option);
 		foreach my $i (@$dpnd_idx) {
-		    $i->{pos} = [$pos];
-		    $i->{absolute_pos} = [$pos];
+		    $i->{pos} = $pos;
+		    $i->{absolute_pos} = $pos;
 		    $i->{group_id} = $gid;
 		}
 		push(@idx, @$dpnd_idx);
@@ -672,12 +672,12 @@ sub makeIndexFromKNPResultObject {
 		    push(@idx, {midasi => &toUpperCase_utf8($word)});
 		    $idx[-1]->{group_id} = $gid;
 		    $idx[-1]->{freq} = (1 / $num_of_words);
-		    $idx[-1]->{isContentWord} = 1 if ($mrph->fstring =~ /<内容語|意味有>/);
+		    $idx[-1]->{isContentWord} = ($mrph->fstring =~ /<内容語|意味有>/) ? 1 : 0;
 		    $idx[-1]->{fstring} = $mrph->fstring;
 		    $idx[-1]->{surf} = $mrph->midasi;
-		    $idx[-1]->{pos} = [$pos];
+		    $idx[-1]->{pos} = $pos;
 		    $idx[-1]->{NE} = 1 if ($mrph->fstring =~ /<NE:/);
-		    $idx[-1]->{absolute_pos} = [$pos];
+		    $idx[-1]->{absolute_pos} = $pos;
 		}
 		$gid++;
 		$pos++;
@@ -812,7 +812,7 @@ sub remove_yomi {
 sub get_genkei {
     my ($mrph) = @_;
 
-    my $genkei = &toUpperCase_utf8($mrph->genkei) . '*';
+    my $genkei = &toUpperCase_utf8($mrph->midasi) . '*';
 
     return $genkei;
 }
@@ -824,7 +824,7 @@ sub get_genkei2 {
     foreach my $mrph (@$mrphs) {
 	next unless ($mrph->fstring =~ /<内容語|意味有>/);
 
-	$genkei = &toUpperCase_utf8($mrph->genkei) . '*';
+	$genkei = &toUpperCase_utf8($mrph->midasi) . '*';
 	last;
     }
 
