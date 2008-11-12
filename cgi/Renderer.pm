@@ -702,7 +702,7 @@ sub get_snippets {
 sub printSlaveServerLogs {
     my ($this, $logger) = @_;
 
-    my @keys = ('port', 'total_time', 'transfer_time_to', 'normal_search', 'logical_condition', 'near_condition', 'merge_dids', 'document_scoring', 'transfer_time_from', 'hitcount', 'data_size');
+    my @keys = ('id', 'port', 'total_time', 'transfer_time_to', 'normal_search', 'logical_condition', 'near_condition', 'merge_dids', 'document_scoring', 'transfer_time_from', 'hitcount', 'data_size');
     my $host2log = $logger->getParameter('host2log');
     my %buf = ();
     my %average = ();
@@ -720,7 +720,7 @@ sub printSlaveServerLogs {
 	$verboseLogString .= sprintf "</TR>\n";
 
 	my $localLoggers = $host2log->{$host};
-	foreach my $localLogger (@$localLoggers) {
+	foreach my $localLogger (sort {$a->getParameter('port') <=> $b->getParameter('port')} @$localLoggers) {
 	    my $cells;
 	    foreach my $k (@keys) {
 		my $v = ($localLogger) ? $localLogger->getParameter($k) : '---';
@@ -760,12 +760,12 @@ sub printSlaveServerLogs {
     print qq(<TABLE width="100%">\n);
     printf qq(<TR><TD colspan="%d" align="center" style="color: white; font-weight: bold; background-color:gray;">AVERAGE</TD></TR>\n), scalar(@keys);
     foreach my $k (@keys) {
-	next if ($k eq 'port');
+	next if ($k eq 'port' || $k eq 'id');
 	print qq(<TD align="center" style="color: gray; font-weight: bold; background-color:silver;">$k</TD>);
     }
     print "</TR>\n";
     foreach my $k (@keys) {
-	next if ($k eq 'port');
+	next if ($k eq 'port' || $k eq 'id');
 	my $v = ($count > 0) ? sprintf ("%.3f", ($average{$k} / $count)) : -1;
 	print qq(<TD align="right" style="background-color: white;">$v</TD>);
     }
