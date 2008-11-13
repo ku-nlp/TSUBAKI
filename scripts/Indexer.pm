@@ -672,6 +672,7 @@ sub makeIndexFromKNPResultObject {
 		    push(@idx, {midasi => &toUpperCase_utf8($word)});
 		    $idx[-1]->{group_id} = $gid;
 		    $idx[-1]->{freq} = (1 / $num_of_words);
+		    $idx[-1]->{score} = (1 / $num_of_words);
 		    $idx[-1]->{isContentWord} = ($mrph->fstring =~ /<内容語|意味有>/) ? 1 : 0;
 		    $idx[-1]->{fstring} = $mrph->fstring;
 		    $idx[-1]->{surf} = $mrph->midasi;
@@ -856,6 +857,7 @@ sub get_dpnd_index {
 	    my $midasi = sprintf("%s->%s", $rep1, $rep2);
 	    push(@idx, {midasi => $midasi});
 	    $idx[-1]->{freq} = 1;# / ($num_of_reps1 * $num_of_reps2);
+	    $idx[-1]->{score} = 1;# / ($num_of_reps1 * $num_of_reps2);
 	    $idx[-1]->{isContentWord} = 1;
 	    $idx[-1]->{fstring} = $kihonku1->fstring;
 	}
