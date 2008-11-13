@@ -1,4 +1,57 @@
+2008-11-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	bug fixed (出現形から作成した索引語についてメンバ変数scoreの追加)
+
+2008-11-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_test.pl: disable_synnodeオプションの追加.
+
+	* scripts/make_idx.pl:
+	max_length_of_rawstringオプションの追加, 出現形を同義語・句と一緒に出力するようにした.
+
+	* scripts/Indexer.pm:
+	インデックスの際、原型ではなく見出しをとるようにした.
+
+	* cgi/Renderer.pm: ログ表示の際に文書セットIDを表示するようにした.
+
+	* scripts/tsubaki_server.pl:
+	サーバーが検索対象とする文書セットのIDを返すようにした.
+
+2008-11-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm:
+	キャッシュページはデフォルトでutf8と見なすようにした.
+
+	* cgi/Renderer.pm:
+	bug fixed. (類似・関連ページが表示されない問題を修正)
+
+2008-11-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm: 不要なコードの削除.
+
+	* scripts/Indexer.pm:
+	bug fixed (係り受けの読みを削除する際、「+」以降が無視されないように)
+
+2008-11-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	300バイトより大きい場合は<S>要素をスキップするようにした.
+
+2008-11-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	テリック処理により生成される係り受けは常にオプショナルにするようにした.
+
+	* scripts/extract-url-title.perl:
+	PerlIO::gzipを使ってgzファイルを開くようにした.
+
 2008-11-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make-url-title-cdbs.perl: 文書IDを9桁で保存するようにした.
+
+	* cgi/QueryKeyword.pm:
+	クエリ削除語については、テリック処理により追加される係り受けを描画しないようにした.
 
 	* cgi/QueryKeyword.pm: syndb.mod.cdb の廃止. (print_for_webメソッド)
 
