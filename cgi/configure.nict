@@ -46,7 +46,6 @@ TSUBAKI_MODULE_PATH	/share09/home/skeiji/cvs/SearchEngine/perl
 # キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
 HTML_FILE_PATH		/share03/WISDOM/data/htmls
 ORDINARY_SF_PATH	/share03/WISDOM/data/xmls
-SYNGRAPH_SF_PATH	/share03/WISDOM/data/sfs_w_syn
 
 # スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス
 DIR_PREFIX_FOR_SFS	/data2/skeiji/sfs_w_syn_080608
@@ -191,9 +190,6 @@ MAX_LENGTH_OF_TITLE		15
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
 CACHED_HTML_PATH_TEMPLATE	/share03/WISDOM/data/htmls/h%03d/h%05d/%09d.html.gz
-
-# IDから標準フォーマットへのパスを求める際のテンプレート（★要変更）
-SF_PATH_TEMPLATE		/share03/WISDOM/data/xmls/x%03d/x%05d/%09d.xml.gz #ダミー
 
 # index.cgiのアドレス（★要変更）
 INDEX_CGI			http://www4.crawl.kclab.jgn2.jp/~skeiji/cgi-bin/SearchEngine-test/cgi/index.cgi

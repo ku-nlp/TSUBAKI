@@ -49,7 +49,6 @@ TSUBAKI_MODULE_PATH	/home/skeiji/tsubaki-develop/SearchEngine/perl
 # キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
 HTML_FILE_PATH		/net2/nlpcf34/disk08/skeiji
 ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
-SYNGRAPH_SF_PATH	/net2/nlpcf34/disk09/skeiji/sfs_w_syn
 ORDINARY_SF_W_ANCHOR_PATH	/net2/nlpcf34/disk11/skeiji/sfs_w_anchor
 
 # スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス
@@ -205,9 +204,6 @@ MAX_LENGTH_OF_TITLE		30
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
 CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
-
-# IDから標準フォーマットへのパスを求める際のテンプレート（★要変更）
-SF_PATH_TEMPLATE		/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml.gz
 
 # index.cgiのアドレス（★要変更）
 INDEX_CGI	http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/tsubaki-develop/index.cgi
