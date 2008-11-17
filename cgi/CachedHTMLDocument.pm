@@ -39,7 +39,7 @@ sub new {
 	if (!$crawler_html || $flag > 0) {
 	    $buf .= $_;
 	} else {
-	    if ($_ =~ /^\r$/) {
+	    if ($_ =~ /^(\x0D\x0A|\x0D|\x0A|\r)$/) {
 		$flag = 1;
 	    }
 	}
