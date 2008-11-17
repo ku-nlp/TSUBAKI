@@ -101,11 +101,28 @@ sub new {
 
 	if ($type eq 'S') {
 	    if ($token->[1] eq 'body') {
+		# 背景画像のURLを取得
+		my $fpath = $token->[2]{background};
+ 		if ($fpath) {
+ 		    my $furl = &convertURL($url, $fpath);
+		    $token->[6] =~ s/\Q$fpath\E/$furl/;
+		}
+
 		$buf .= $token->[6];
 		$inBody = 1;
 	    }
-	    elsif ($token->[1] =~ /^(a|link|img)$/) {
-		my $fpath = ($1 eq 'link' || $1 eq 'a') ? $token->[2]{href} : $token->[2]{src};
+	    elsif ($token->[1] =~ /^(a|link|img|script)$/) {
+		my $fpath;
+		if ($1 eq 'a' || $1 eq 'link') {
+		    $fpath = $token->[2]{href};
+		}
+		elsif ($1 eq 'img' || $1 eq 'script') {
+		    $fpath = $token->[2]{src};
+		}
+		else {
+		    $fpath = $token->[2]{background};
+		}
+
  		if ($fpath) {
  		    my $furl = &convertURL($url, $fpath);
 		    $token->[6] =~ s/\Q$fpath\E/$furl/;
