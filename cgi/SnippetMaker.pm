@@ -343,6 +343,7 @@ sub getMidasiAndRepnames {
     my @midasiL;
     my @repnameL;
     my @posL;
+    my $negation = ($kihonku->fstring =~ /<否定表現>/) ? 1 : 0;
     foreach my $m ($kihonku->mrph) {
 	my $midasi = &toUpperCase_utf8($m->midasi());
 	my ($pos) = ($m->fstring() =~ /出現位置:(\d+)/);
@@ -367,6 +368,18 @@ sub getMidasiAndRepnames {
 		%repnames = %repnames_w_katuyou;
 	    }
 	}
+
+
+	if ($opt->{use_of_negation_for_kwic} && $negation) {
+	    $midasi .= ":否定";
+
+	    my %repnames_w_negation = ();
+	    foreach my $k (keys %repnames) {
+		$repnames_w_negation{$k . ":否定"} = $repnames{$k};
+	    }
+	    %repnames = %repnames_w_negation;
+	}
+
 
 	push(@posL, $pos);
 	if (!$opt->{use_of_huzokugo_for_kwic} && $m->fstring() !~ /<内容語>/) {
