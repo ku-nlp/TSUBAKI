@@ -72,6 +72,7 @@ sub getDefaultValues {
     $params{use_of_katuyou_for_kwic} = 1;
     $params{use_of_dpnd_for_kwic} = 1;
     $params{use_of_huzokugo_for_kwic} = 0;
+    $params{use_of_negation_for_kwic} = 1;
 
 
     # その他
