@@ -410,9 +410,10 @@ sub parseQuery {
 
     # 検索サーバーの台数を取得
     if ($query->{results} > 100) {
-	my $N = ($query->{syngraph}) ? scalar(@{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}}) : scalar(@{$CONFIG->{SEARCH_SERVERS}});
+	my $N = ($params->{syngraph}) ? scalar(@{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}}) : scalar(@{$CONFIG->{SEARCH_SERVERS}});
 	my $alpha = ($query->{results} > 5000) ? 1.5 : 30 * ($query->{results}**(-0.34));
 	my $M = $query->{results} / $N;
+
 	$query->{results} = int(1 + $M * $alpha);
     }
     $query->{results} = 1000 if ($CONFIG->{NTCIR_MODE});
