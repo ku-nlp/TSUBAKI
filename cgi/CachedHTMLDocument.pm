@@ -111,29 +111,30 @@ sub new {
 		$buf .= $token->[6];
 		$inBody = 1;
 	    }
-	    elsif ($token->[1] =~ /^(a|link|img|script)$/) {
-		my $fpath;
-		if ($1 eq 'a' || $1 eq 'link') {
-		    $fpath = $token->[2]{href};
-		}
-		elsif ($1 eq 'img' || $1 eq 'script') {
-		    $fpath = $token->[2]{src};
-		}
-		else {
-		    $fpath = $token->[2]{background};
-		}
-
- 		if ($fpath) {
- 		    my $furl = &convertURL($url, $fpath);
-		    $token->[6] =~ s/\Q$fpath\E/$furl/;
- 		}
-		$buf .= $token->[6];
-	    }
 	    else {
 		if ($token->[1] eq 'meta' && $token->[6] =~ /charset/i) {
 		    # 文字コードの指定がある場合は, コメントアウト
 		    $buf .= ("<!-- " . $token->[6] . "-->\n");
-		} else {
+		}
+		else {
+		    my $fpath;
+		    my $tagname = $token->[1];
+		    if ($tagname eq 'a' || $tagname eq 'link') {
+			$fpath = $token->[2]{href};
+		    }
+		    elsif ($tagname eq 'img' || $tagname eq 'script') {
+			$fpath = $token->[2]{src};
+		    }
+		    else {
+			$fpath = $token->[2]{background};
+		    }
+
+		    # 相対パスを絶対パスに変換
+		    if ($fpath) {
+			my $furl = &convertURL($url, $fpath);
+			$token->[6] =~ s/\Q$fpath\E/$furl/;
+		    }
+
 		    $buf .= $token->[6];
 		}
 	    }
