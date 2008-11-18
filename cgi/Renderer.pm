@@ -735,6 +735,34 @@ sub printSlaveServerLogs {
     }
 
 
+    my @buff = ();
+    foreach my $host (sort keys %$host2log) {
+	my $localLoggers = $host2log->{$host};
+	foreach my $localLogger (sort {$a->getParameter('port') <=> $b->getParameter('port')} @$localLoggers) {
+	    my $buf = {host => $host};
+	    foreach my $k (@keys) {
+		next unless ($k eq 'id' || $k eq 'port' || $k eq 'hitcount');
+		$buf->{$k} = ($localLogger) ? $localLogger->getParameter($k) : '---';
+	    }
+	    push (@buff, $buf);
+	}
+    }
+
+    $verboseLogString .= sprintf qq(<H3 style="border-bottom: 2px solid black;">Table of ID and hitcount</H3>\n);
+    $verboseLogString .= "<TABLE border=1>\n";
+    $verboseLogString .= sprintf "<TR><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>", 'hostname', 'id', 'port', 'hitcount';
+    foreach my $i (sort {$a->{id} <=> $b->{id}} @buff) {
+	$verboseLogString .= "<TR>\n";
+	$verboseLogString .= sprintf "<TD>%s</TD>", $i->{host};
+	foreach my $k (@keys) {
+	    next unless (exists $i->{$k});
+	    $verboseLogString .= sprintf "<TD>%s</TD>", $i->{$k};
+	}
+	$verboseLogString .= "</TR>\n";
+    }
+    $verboseLogString .= "</TABLE>\n";
+
+
     print qq(<DIV id="slave_server_logs" style="padding: 0em 1em 2em 1em; display: none; background-color: #f1f4ff;">);
     print qq(<DIV>[<A href="javascript:void(0);" onclick="toggle_simpage_view('slave_server_log_verbose', this, '詳細を開く', '詳細を閉じる');">詳細を開く</A>]&nbsp;\n);
     print qq([<A href="javascript:void(0);" onclick="javascript:document.getElementById('slave_server_logs').style.display = 'none';">ログを閉じる</A>]</DIV>\n);
