@@ -211,9 +211,55 @@ sub provideDocumentData {
 
     my $did = $cgi->param('id');
 
+    # print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
     if($did eq ''){
 	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
 	print "パラメータidの値が必要です。\n";
+	exit(1);
+    }
+
+    my $content;
+    if ($fileType eq 'xml' && $CONFIG->{PROVIDE_SFDAT_ON_SNIPPET_SERVERS}) {
+	require IO::Socket;
+	require IO::Select;
+
+	$content = &getStandardFormdatDataFromSnippetServer($did);
+    } else {
+	# ファイルタイプに応じたファイルパスを取得
+	my $filepath;
+	if ($fileType eq 'xml_w_anchor') {
+	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_W_ANCHOR_PATH}, $did / 1000000, $did / 10000, $did);
+	} elsif ($fileType eq 'xml') {
+	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
+	} elsif ($fileType eq 'html') {
+	    $filepath = sprintf("%s/h%03d/h%05d/%09d.html", $CONFIG->{HTML_FILE_PATH}, $did / 1000000, $did / 10000, $did);
+	}
+
+
+	if (-e $filepath) {
+	    $content = ($cgi->param('no_encoding')) ?
+		`cat $filepath` :
+		`cat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+	} else {
+	    $filepath .= ".gz";
+	    if (-e $filepath) {
+		$content = ($cgi->param('no_encoding')) ?
+		    `zcat $filepath` :
+		    `zcat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+	    }
+	}
+    }
+
+    &printDocumentData($cgi, $did, $fileType, $content);
+}
+
+
+sub printDocumentData {
+    my ($cgi, $did, $fileType, $content) = @_;
+
+    if ($content eq '') {
+	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
+	printf "入力された文書ID(%s)のデータはありません。\n", $did;
 	exit(1);
     }
 
@@ -227,39 +273,7 @@ sub provideDocumentData {
 	}
     }
 
-    if ($fileType eq 'xml' && $CONFIG->{PROVIDE_SFDAT_ON_SNIPPET_SERVERS}) {
-	require IO::Socket;
-	require IO::Select;
-
-	my $content = &getStandardFormdatDataFromSnippetServer($did);
-	print $content . "\n";
-    } else {
-	# ファイルタイプに応じたファイルパスを取得
-	my $filepath;
-	if ($fileType eq 'xml_w_anchor') {
-	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_W_ANCHOR_PATH}, $did / 1000000, $did / 10000, $did);
-	} elsif ($fileType eq 'xml') {
-	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
-	} elsif ($fileType eq 'html') {
-	    $filepath = sprintf("%s/h%03d/h%05d/%09d.html", $CONFIG->{HTML_FILE_PATH}, $did / 1000000, $did / 10000, $did);
-	}
-
-
-	my $content = '';
-	if (-e $filepath) {
-	    $content = ($cgi->param('no_encoding')) ?
-		`cat $filepath` :
-		`cat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
-	} else {
-	    $filepath .= ".gz";
-	    if (-e $filepath) {
-		$content = ($cgi->param('no_encoding')) ?
-		    `zcat $filepath` :
-		    `zcat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
-	    }
-	}
-	print $content;
-    }
+    print $content;
 }
 
 
