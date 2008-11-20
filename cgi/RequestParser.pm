@@ -76,7 +76,7 @@ sub getDefaultValues {
 
 
     # その他
-    $params{develop_mode} = $CONFIG->{TEST_MODE};
+    $params{develop_mode} = $CONFIG->{DEVELOP_MODE};
     $params{ignore_yomi} = $CONFIG->{IGNORE_YOMI};
     $params{disable_cache} = $CONFIG->{DISABLE_CACHE};
     $params{query_verbose} = 0;
