@@ -87,8 +87,7 @@ sub search {
     my ($this, $query, $qid2df, $opt) = @_;
 
     # 検索
-    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use}, $opt->{LOGGER});
-
+    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $did2region) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use}, $opt->{LOGGER});
 
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
@@ -147,6 +146,21 @@ sub search {
     my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $query->{qid2qtf}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, \%gid2df, \@dpnds);
     $opt->{LOGGER}->setTimeAs('document_scoring', '%.3f');
 
+
+    # クエリが出現している範囲をセット
+    foreach my $doc (@$doc_list) {
+	my $did = $doc->{did};
+	if (exists $did2region->{$did}) {
+	    $doc->{start} = $did2region->{$did}{start};
+	    $doc->{end} = $did2region->{$did}{end};
+	    $doc->{pos2qid} = $did2region->{$did}{pos2qid};
+	} else {
+	    $doc->{start} = -1;
+	    $doc->{end} = -1;
+	    $doc->{pos2qid} = ();
+	}
+    }
+    $opt->{LOGGER}->setTimeAs('region_setting', '%.3f');
 
     return $doc_list;
 }
@@ -288,6 +302,13 @@ sub retrieveFromBinaryData {
 	    my $retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever} : $this->{word_retriever};
 	    my $docs = $this->retrieve_from_dat($retriever, $repnames, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
 
+# 	    my $host = `hostname`;
+# 	    if ($host =~ /033/) {
+# 		use Dumpvalue;
+# 		print Dumpvalue->new->dumpValue ($docs) . "\n";
+# 		print Dumpvalue->new->dumpValue ($repnames) . "\n";
+# 		print "-----\n";
+# 	    }
 
 	    # 各検索単語・係り受けについて検索された結果を納めた配列に push
 	    my $cont = ($repnames->[0]->{requisite}) ? 'requisite' : 'optional';
@@ -667,6 +688,7 @@ sub retrieve_documents {
     my $alldocs_dpnd = [];
     my $alldocs_word_anchor = [];
     my $alldocs_dpnd_anchor = [];
+    my $did2region = ();
     my $doc_buff = {};
 
     $logger->clearTimer();
@@ -681,11 +703,10 @@ sub retrieve_documents {
 	$logger->setTimeAs('normal_search', '%.3f');
 
 
-
 	# 近接制約の適用
 	if ($keyword->{near} > 0) {
 	    $requisite_docs_word = &intersect($requisite_docs_word, {verbose => $this->{verbose}});
-	    $requisite_docs_word = $this->filter_by_NEAR_constraint($requisite_docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
+	    ($requisite_docs_word, $did2region) = $this->filter_by_NEAR_constraint($requisite_docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
 	}
 	$logger->setTimeAs('near_condition', '%.3f');
 
@@ -760,7 +781,7 @@ sub retrieve_documents {
 	push(@{$alldocs_word_anchor}, &serialize($docs_word_anchor));
 	push(@{$alldocs_dpnd_anchor}, &serialize($docs_dpnd_anchor));
 	$logger->setTimeAs('merge_dids', '%.3f');
-    }    
+    }
 
 
     # 論理条件にしたがい検索表現ごとに収集された文書のマージ
@@ -772,7 +793,7 @@ sub retrieve_documents {
     $logger->setTimeAs('logical_condition', '%.3f');
 
 
-    return ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor);
+    return ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $did2region);
 }
 
 # 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
@@ -1028,6 +1049,7 @@ sub filter_by_NEAR_constraint {
     # 単語の（クエリ中での）出現順序でソート
     @{$docs} = sort{$a->[0]{qid_freq}[0]->{qid} <=> $b->[0]{qid_freq}[0]->{qid}} @{$docs};
 
+    my %did2region = ();
     for (my $d = 0; $d < scalar(@{$docs->[0]}); $d++) {
 	my $did = $docs->[0][$d]->{did};
 
@@ -1130,7 +1152,7 @@ sub filter_by_NEAR_constraint {
 	    next if ($qid != 0 && $keep_order);
 
 	    my $prev_qid = $qid;
-	    $qid_buf{$serialized_poslist[$i]->{qid}}++;
+	    push (@{$qid_buf{$serialized_poslist[$i]->{qid}}}, $pos);
 	    for (my $j = $i + 1; $j < scalar(@serialized_poslist); $j++) {
 		if ($serialized_poslist[$j]->{pos} - $pos < $near) {
 
@@ -1144,8 +1166,8 @@ sub filter_by_NEAR_constraint {
 			    $prev_qid = $serialized_poslist[$j]->{qid};
 			}
 		    }
-		    $qid_buf{$serialized_poslist[$i]->{qid}}++; # 実は要らないかも知れない
-		    $qid_buf{$serialized_poslist[$j]->{qid}}++;
+		    push (@{$qid_buf{$serialized_poslist[$i]->{qid}}}, $pos); # 実は要らないかも知れない
+		    push (@{$qid_buf{$serialized_poslist[$j]->{qid}}}, $serialized_poslist[$j]->{pos});
 		} else {
 		    # 指定された近接の範囲を超えた
 		    last;
@@ -1153,6 +1175,17 @@ sub filter_by_NEAR_constraint {
 	    }
 	    if (scalar(keys %qid_buf) > $q_num - 1) {
 		$flag = 1;
+		my %posbuf = ();
+		foreach my $qid (keys %qid_buf) {
+		    foreach my $p (@{$qid_buf{$qid}}) {
+			$posbuf{$p} = $qid;
+		    }
+		}
+
+		my @sorted_pos = sort {$a <=> $b} keys %posbuf;
+		$did2region{$did}->{start} = $sorted_pos[0];
+		$did2region{$did}->{end} = $sorted_pos[-1];
+		$did2region{$did}->{pos2qid} = \%posbuf;
 		last;
 	    }
 	}
@@ -1165,7 +1198,7 @@ sub filter_by_NEAR_constraint {
 	}
     }
 
-    return \@results;
+    return (\@results, \%did2region);
 }
 
 sub filter_by_force_dpnd_constraint {
