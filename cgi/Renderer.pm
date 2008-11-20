@@ -354,8 +354,10 @@ END_OF_HTML
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
 
     # 混雑具合を表示
-    my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
-    print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$percentage%&nbsp;</SPAN>);
+    if ($CONFIG->{DISPLAY_CONGESTION}) {
+	my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
+	print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$percentage%&nbsp;</SPAN>);
+    }
     print qq(</DIV>\n);
 
     # タイトル出力
@@ -479,8 +481,10 @@ my $host = `hostname`;
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
     # 混雑具合を表示
-    my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
-    print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$percentage%&nbsp;</SPAN>);
+    if ($CONFIG->{DISPLAY_CONGESTION}) {
+	my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
+	print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$percentage%&nbsp;</SPAN>);
+    }
     print qq(</DIV>\n);
 
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
