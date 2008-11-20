@@ -21,7 +21,7 @@ binmode(STDERR, ':encoding(euc-jp)');
 my (%opt);
 GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s', 'score_verbose', 'disable_synnode');
 
-if (!$opt{idxdir} || !$opt{dfdbdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
+if (!$opt{idxdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
     print "$0 -idxdir idxdir_path -dfdbdir dfdbdir_path -dlengthdbdir doc_lengthdb_dir_path -query QUERY\n";
     exit;
@@ -71,7 +71,7 @@ sub main {
     $params->{disable_synnode} = $opt{disable_synnode};
     $params->{verbose} = $opt{verbose};
     $params->{antonym_and_negation_expansion} = 0;
-    $params->{DFDB_DIR} = $opt{dfdbdir};
+#    $params->{DFDB_DIR} = $opt{dfdbdir};
 
     # logical_cond_qk : クエリ間の論理演算
     # my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
@@ -95,13 +95,16 @@ sub main {
     for (my $rank = 0; $rank < $opt{results}; $rank++) {
 	my $did = sprintf("%09d", $docs->[$rank]{did});
 	my $score = $docs->[$rank]{score_total};
+	my $start = $docs->[$rank]{start};
+	my $end = $docs->[$rank]{end};
+	my $pos2qid = join (",", sort keys %{$docs->[$rank]{pos2qid}});
 	my $score_w = $docs->[$rank]{score_word};
 	my $score_d = $docs->[$rank]{score_dpnd};
 	my $score_n = $docs->[$rank]{score_dist};
 	my $score_aw = $docs->[$rank]{score_word_anchor};
 	my $score_ad = $docs->[$rank]{score_dpnd_anchor};
 
-	printf("rank=%d did=%s score=%.3f (w=%.3f d=%.3f n=%.3f aw=%.3f ad=%.3f)\n", $rank + 1, $did, $score, $score_w, $score_d, $score_n, $score_aw, $score_ad);
+	printf("rank=%d did=%s score=%.3f start=%d end=%d pos=%s (w=%.3f d=%.3f n=%.3f aw=%.3f ad=%.3f)\n", $rank + 1, $did, $score, $start, $end, $pos2qid, $score_w, $score_d, $score_n, $score_aw, $score_ad);
     }
     print "hitcount=$hitcount\n";
 }
