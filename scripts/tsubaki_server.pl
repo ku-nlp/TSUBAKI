@@ -44,7 +44,7 @@ my $ID;
 my @DOC_LENGTH_DBs;
 opendir(DIR, $opt{dlengthdbdir});
 foreach my $dbf (readdir(DIR)) {
-    next unless ($dbf =~ /(\d+).doc_length\.bin/);
+    next unless ($dbf =~ /(\d+).doc_length\.bin$/);
     
     $ID = $1;
     my $fp = "$opt{dlengthdbdir}/$dbf";
