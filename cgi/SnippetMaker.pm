@@ -6,7 +6,7 @@ use strict;
 use Encode qw(encode decode from_to);
 use utf8;
 
-use KNP;
+use KNP::Result;
 use Indexer;
 use Configure;
 use StandardFormatData;
@@ -18,6 +18,7 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 
 my $CONFIG = Configure::get_instance();
+my $NUM_OF_CHARS_IN_HEADER = 100;
 
 sub extract_sentences_from_ID {
     my($query, $id, $opt) = @_;
@@ -53,9 +54,121 @@ sub extract_sentences_from_standard_format {
     if ($opt->{kwic}) {
 	return &extract_sentences_from_content_for_kwic($query, $content, $opt);
     } else {
-	return &extract_sentences_from_content($query, $content, $opt);
+	# Title, Keywords, Description から重要文を抽出しない
+	if ($opt->{start} > $NUM_OF_CHARS_IN_HEADER) {
+	    return &extract_sentences_from_content_using_position($query, $content, $opt);
+	} else {
+	    return &extract_sentences_from_content($query, $content, $opt);
+	}
     }	
 }
+
+sub extract_sentences_from_content_using_position {
+    my ($query, $content, $opt) = @_;
+
+    # 前後width語を重要文の抽出範囲とする
+    my $width = ($CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET} - ($opt->{end} - $opt->{start})) / 2;
+    my $start = ($opt->{start} - $width < $NUM_OF_CHARS_IN_HEADER) ? $opt->{start} : $opt->{start} - $width;
+    my $end = ($opt->{start} - $width < $NUM_OF_CHARS_IN_HEADER) ? $opt->{end} + 2 * $width : $opt->{end} + $width;
+
+    my $flag = 1;
+    my $annotationFlag = 0;
+    my $pos = 0;
+    my @linebuf;
+    my @sentences = ();
+    my $sid = -1;
+    foreach my $line (split (/\n/, $content)) {
+
+	$flag = 0 if ($line =~ /<InLinks>/);
+	$flag = 1 if ($line =~ /<\/InLinks>/);
+	$flag = 0 if ($line =~ /<OutLinks>/);
+	$flag = 1 if ($line =~ /<\/OutLinks>/);
+
+	next unless ($flag);
+
+	$sid = $1 if ($line =~ /<S.+?Id="(\d+)">/);
+
+	if ($line =~ /<Annotation/) {
+	    $annotationFlag = 1;
+	    next;
+	}
+
+	if ($line =~ /<\/Annotation>/) {
+	    my $showFlag = 0;
+	    my $number_of_included_queries = 0;
+	    my %included_query_types = ();
+	    foreach my $ln (@linebuf) {
+		if ($ln =~ /^!! /) {
+		} elsif ($ln =~ /^! /) {
+		} elsif ($ln =~ /^\+ /) {
+		} elsif ($ln =~ /^\* /) {
+		} elsif ($ln =~ /^EOS$/) {
+		} elsif ($ln =~ /^S\-ID:\d+$/) {
+		} else {
+		    $pos++;
+		    if (exists $opt->{pos2qid}{$pos}) {
+			$number_of_included_queries++;
+			$included_query_types{$opt->{pos2qid}{$pos}}++;
+		    }
+		    $showFlag = 1 if ($start <= $pos && $pos <= $end && !$showFlag);
+		}
+	    }
+	    my $result = join ("\n", @linebuf);
+
+	    @linebuf = ();
+	    $annotationFlag = 0;
+	    $pos++;
+
+	    # クエリ中の語が出現する範囲を超えた
+	    last if (!$showFlag && $pos > $end);
+
+	    if ($showFlag) {
+		my $sentence = {
+		    rawstring => '',
+		    score => 0,
+		    smoothed_score => 0,
+		    words => {},
+		    dpnds => {},
+		    surfs => [],
+		    reps => [],
+		    sid => $sid,
+		    number_of_included_queries => $number_of_included_queries,
+		    number_of_included_query_types => scalar (keys %included_query_types),
+		    num_of_whitespaces => 0
+		};
+
+ 		$sentence->{result} = $result if ($opt->{keep_result});
+
+ 		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
+
+ 		my $num_of_whitespace_cdot_comma = 0;
+		foreach my $w (@{$word_list}) {
+		    my $surf = $w->{surf};
+		    my $reps = $w->{reps};
+		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
+
+		    $sentence->{rawstring} .= $surf;
+		    push(@{$sentence->{surfs}}, $surf);
+		    push(@{$sentence->{reps}}, $w->{reps});
+		}
+
+		my $length = scalar(@{$sentence->{surfs}});
+		$length = 1 if ($length < 1);
+		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * log($length);
+		$sentence->{score} = $score;
+		$sentence->{smoothed_score} = $score;
+		$sentence->{length} = $length;
+		$sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
+
+		push(@sentences, $sentence);
+	    }
+	} else {
+	    push (@linebuf, $line) if ($annotationFlag);
+	}
+    }
+    return \@sentences;
+}
+
 
 sub isMatch {
     my ($listQ, $listS) = @_;
