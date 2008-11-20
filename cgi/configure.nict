@@ -261,6 +261,14 @@ DISABLE_ANCHOR_INDEX	0
 # 検索結果から除外すページの指定
 # STOP_PAGE_LIST	/somewhere/stoppagelist
 
+
+#######################################################################
+# 混み具合を表示する場合は1, そうでない場合は0
+# 1 の場合、LOADBALANCER_NAME, APACHE_ACCESS_LOG, DATA_DIR 設定すること
+#######################################################################
+
+DISPLAY_CONGESTION	     1
+
 # apache のロードバランサーが起動しているサーバー
 LOADBALANCER_NAME	nlpc01.ixnlp.nii.ac.jp
 
