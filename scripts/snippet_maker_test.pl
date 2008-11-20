@@ -17,6 +17,9 @@ GetOptions(\%opt,
 	   'query=s',
 	   'z',
 	   'syngraph',
+	   'start=s',
+	   'end=s',
+	   'pos=s',
 	   'encoding=s',
 	   'discard_title',
 	   'window_size=s',
@@ -65,6 +68,14 @@ sub main {
 	}
     }
 
+    my %pos2qid = ();
+    my $k = 0;
+    foreach my $p (split (/,/, $opt{pos})) {
+	$pos2qid{$p} = $k++;
+    }
+    $pos2qid{628}--;
+    $opt{pos2qid} = \%pos2qid;
+
     foreach my $file (@ARGV) {
 	my $sentences = &SnippetMaker::extract_sentences_from_standard_format($query->{keywords}, $file, \%opt);
 #	my $sentences = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $id, \%opt);
@@ -77,8 +88,8 @@ sub main {
 		print $s->{including_all_indices} . " ";
 		print $file . " ";
 		print "sid " . $s->{sid} . " ";
-		print "score " . $s->{score} . " ";
-		print "smoothed " . $s->{smoothed_score} . " ";
+		print "score " . sprintf ("%.3f", $s->{score}) . " ";
+		print "smoothed " . sprintf ("%.3f", $s->{smoothed_score}) . " ";
 		printf("whitespace %.2f ", $s->{num_of_whitespaces} / $s->{length});
 		print " $s->{rawstring}\n";
 	    }

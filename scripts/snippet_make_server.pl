@@ -106,8 +106,8 @@ sub main {
 		last if ($_ eq "EOD\n");
 		$buff .= $_;
 	    }
-	    my $dids = Storable::thaw(decode_base64($buff));
-	    print "restore dids $client_hostname.\n" if ($opt{verbose});
+	    my $docs = Storable::thaw(decode_base64($buff));
+	    print "restore docs $client_hostname.\n" if ($opt{verbose});
 
 	    # スニペッツ生成のオプションを取得
 	    $buff = undef;
@@ -132,8 +132,12 @@ sub main {
 
 	    # スニペッツの生成
 	    my %result = ();
-	    foreach my $did (@{$dids}) {
+	    foreach my $doc (@{$docs}) {
+		my $did = $doc->{did};
 		print $did . "\n" if ($opt{verbose});
+		$option->{start} = $doc->{start};
+		$option->{end} = $doc->{end};
+		$option->{qid2pos} = $doc->{qid2pos};
 		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
 		# print Dumper($result{$did}) . "\n" if ($HOSTNAME =~ /nlpc33/);
 	    }
