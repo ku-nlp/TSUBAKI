@@ -19,7 +19,10 @@ use Data::Dumper;
     sub qquote { return shift; }
 }
 $Data::Dumper::Useperl = 1;
+
 binmode(STDOUT, ':encoding(euc-jp)');
+binmode(STDERR, ':encoding(euc-jp)');
+
 use Logger;
 use Configure;
 
