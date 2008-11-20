@@ -45,7 +45,7 @@ sub getDefaultValues {
     $params{distance} = 30;
     $params{flag_of_dpnd_use} = 1;
     $params{flag_of_dist_use} = 1;
-    $params{anchor} = 1;
+    $params{anchor} = ($CONFIG->{DISABLE_ANCHOR_INDEX}) ? 0 : 1;
     $params{flag_of_anchor_use} = $params{anchor};
     $params{disable_synnode} = 0;
     $params{detect_requisite_dpnd} = 1;
