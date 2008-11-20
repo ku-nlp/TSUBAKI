@@ -480,6 +480,7 @@ my $host = `hostname`;
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
+
     # 混雑具合を表示
     if ($CONFIG->{DISPLAY_CONGESTION}) {
 	my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
@@ -559,25 +560,28 @@ my $host = `hostname`;
 sub getCongestion {
     my $logfile = $CONFIG->{DATA_DIR} . "/access_log";
     my $count = 1;
-    open(READER, "cat $logfile | tac |") or die "$!";
-    my $buf = undef;
-    while (<READER>) {
-	my @data = split(' ', $_);
-	my ($date, $hour, $min, $sec) = split(":", $data[3]);
-	$buf = $min unless (defined $buf);
-	my $request = $data[6];
 
-	next if ($request !~/cgi/);
-	next if ($request =~/cache/);
-	next if ($request =~/format=/);
-	next if ($request !~/query=/);
+    if (-e $logfile) {
+	open(READER, "cat $logfile | tac |") or die "$!";
+	my $buf = undef;
+	while (<READER>) {
+	    my @data = split(' ', $_);
+	    my ($date, $hour, $min, $sec) = split(":", $data[3]);
+	    $buf = $min unless (defined $buf);
+	    my $request = $data[6];
 
-	last if ($buf - $min > 1);
-	if ($request !~ /format/) {
-	    $count++;
+	    next if ($request !~/cgi/);
+	    next if ($request =~/cache/);
+	    next if ($request =~/format=/);
+	    next if ($request !~/query=/);
+
+	    last if ($buf - $min > 1);
+	    if ($request !~ /format/) {
+		$count++;
+	    }
 	}
+	close (READER);
     }
-    close (READER);
 
     my $percentage = sprintf ("%.2f", 100 * $count / 6);
     my $backgroundColor = 'red';
@@ -661,19 +665,25 @@ sub get_uri_escaped_query2 {
 sub get_snippets {
     my ($this, $opt, $result, $query, $from, $end) = @_;
 
-    my @dids = ();
+    my @docs = ();
     # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
     for (my $rank = $from; $rank < $end; $rank++) {
-	push(@dids, sprintf("%09d", $result->[$rank]{did}));
-	unless ($this->{called_from_API}) {
-	    foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
-		# push(@dids, sprintf("%09d", $sim_page->{did}));
-	    }
-	}
+	push(@docs, {
+	    did => sprintf("%09d", $result->[$rank]{did}),
+	    start => $result->[$rank]{start},
+	    end => $result->[$rank]{end},
+	    pos2qid => $result->[$rank]{pos2qid}
+	     });
+
+#	unless ($this->{called_from_API}) {
+#	    foreach my $sim_page (@{$result->[$rank]{similar_pages}}) {
+#		push(@dids, sprintf("%09d", $sim_page->{did}));
+#	    }
+#	}
     }
 
     my $sni_obj = new SnippetMakerAgent();
-    $sni_obj->create_snippets($query, \@dids, { discard_title => 1,
+    $sni_obj->create_snippets($query, \@docs, { discard_title => 1,
 						syngraph => $opt->{'syngraph'},
 						# options for snippet creation
 						window_size => 5,
