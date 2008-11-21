@@ -119,6 +119,12 @@ sub getRequestItems {
     my $did2snippets;
     my $query_obj = undef;
     if (exists $requestItems->{'Snippet'}) {
+	# 文書情報の作成
+	my @docs = ();
+	foreach my $did (@$dids) {
+	    push (@docs, {did => $did});
+	}
+
 	unless ($query_obj) {
 	    # parse query
 	    my $q_parser = new QueryParser({ignore_yomi => $CONFIG->{IGNORE_YOMI}});
@@ -126,7 +132,7 @@ sub getRequestItems {
 	}
 
 	my $sni_obj = new SnippetMakerAgent();
-	$sni_obj->create_snippets($query_obj, $dids, $opt);
+	$sni_obj->create_snippets($query_obj, \@docs, $opt);
 	$did2snippets = ($opt->{kwic}) ? $sni_obj->makeKWICForAPICall() : $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}});
     }
 
