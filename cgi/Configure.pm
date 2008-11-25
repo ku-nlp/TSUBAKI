@@ -34,7 +34,7 @@ sub _new {
 
 	chop;
 	if ($_ =~ /SEARCH_SERVERS/) {
-	    my ($key, $host, $ports) = split(/\t+/, $_);
+	    my ($key, $host, $ports) = split(/\s+/, $_);
 	    $host =~ s/^\s*//;
 	    $host =~ s/\s*$//;
 	    $ports =~ s/^\s*//;
@@ -44,7 +44,7 @@ sub _new {
 	    }
 	}
 	elsif ($_ =~ /STANDARD_FORMAT_LOCATION/) {
-	    my ($key, $host, $ports, $dids) = split(/\t+/, $_);
+	    my ($key, $host, $ports, $dids) = split(/\s+/, $_);
 	    $host =~ s/^\s*//;
 	    $host =~ s/\s*$//;
 	    $dids =~ s/^\s*//;
@@ -59,7 +59,7 @@ sub _new {
 	    }
 	}
 	else {
-	    my ($key, $value) = split(/\t+/, $_);
+	    my ($key, $value) = split(/\s+/, $_);
 
 	    if ($value =~ /,/) {
 		my @values = split(/,/, $value);
