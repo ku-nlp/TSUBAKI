@@ -146,8 +146,8 @@ sub setParametersOfGetRequest {
 	    # 指定された値で上書き
 	    $params->{$name} = $value;
 	    if ($name ne 'query') {
-		$params->{$name} =~ s/on/1/;
-		$params->{$name} =~ s/off/0/;
+		$params->{$name} = 1 if ($params->{$name} eq 'on');
+		$params->{$name} = 0 if ($params->{$name} eq 'off');
 	    }
 	} else {
 	    # 未定義のパラメータが指定された
