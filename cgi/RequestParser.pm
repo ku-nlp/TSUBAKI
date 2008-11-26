@@ -145,8 +145,10 @@ sub setParametersOfGetRequest {
 
 	    # 指定された値で上書き
 	    $params->{$name} = $value;
-	    $params->{$name} =~ s/on/1/;
-	    $params->{$name} =~ s/off/0/;
+	    if ($name ne 'query') {
+		$params->{$name} =~ s/on/1/;
+		$params->{$name} =~ s/off/0/;
+	    }
 	} else {
 	    # 未定義のパラメータが指定された
 	    if ($THIS_IS_API_CALL) {
