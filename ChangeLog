@@ -1,3 +1,86 @@
+2008-11-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: access_logファイルが存在するかどうかの確認をやめた.
+
+2008-11-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm: small changes.
+
+	* cgi/RequestParser.pm:
+	onを1に変換する際、queryを対象からはずすようにした.
+
+2008-11-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Configure.pm:
+	configureファイルのパラメータ名と値のデリミタとして半角空白を許すようにした.
+
+2008-11-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/api.cgi: SnippetMakerAgent.pmの変更に対応.
+
+2008-11-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet_maker_test.pl, scripts/snippet_make_server.pl:
+	単語の出現位置をもとにスニペット生成するようにした.
+
+	* scripts/TsubakiEngine.pm:
+	近接制約適用時に求める単語の出現位置を検索結果に含めるようにした.
+
+	* cgi/Renderer.pm, cgi/SnippetMakerAgent.pm:
+	検索時に得られた単語の出現位置を用いてスニペットを生成するようにした.
+
+	* cgi/SnippetMaker.pm:
+	単語の出現位置をもとにスニペット生成する関数を追加.
+
+	* scripts/tsubaki_test.pl, scripts/tsubaki_server.pl: small changes.
+
+	* scripts/tsubaki_server.pl: STDERRをbinmodeするようにした.
+
+	* cgi/RequestParser.pm: DISABLE_ANCHOR_INDEXの値を利用するようにした.
+
+	* cgi/RequestParser.pm: DEVELOP_MODEへの変更に対応.
+
+	* cgi/configure, cgi/configure.nict:
+	パラメータ名の変更（TEST_MODEをDEVELOP_MODEに）
+
+	* cgi/Renderer.pm: DISPLAY_CONGESTIONに対応.
+
+	* cgi/configure, cgi/configure.nict:
+	混み具合を表示しないようにするオプション(DISPLAY_CONGESTION)を設けた.
+
+2008-11-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/api.cgi:
+	入力された文書IDのデータがない場合は、その旨を出力するようにした.
+
+2008-11-18  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm:
+	kwic生成時に否定表現を考慮するオプション(use_of_negation_for_kwic)に対応.
+
+	* cgi/Renderer.pm: スレーブサーバーのログを出力するようにした.
+
+	* cgi/RequestParser.pm: small bug fixed.
+
+	* cgi/SnippetMaker.pm: kwic生成時に否定表現を考慮するようにした.
+
+	* scripts/snippet_maker_test.pl:
+	kwick生成時に否定を考慮するオプションを追加.
+
+	* cgi/CachedHTMLDocument.pm: bug fixed.
+
+2008-11-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm:
+	クローラのヘッダとHTML文書本体の間のデリミタを追加.
+
+	* cgi/CachedHTMLDocument.pm:
+	相対パスで指定されている背景画像、javascriptを絶対パスに変換するようにした.
+
+2008-11-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: updated.
+
 2008-11-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/Indexer.pm:
