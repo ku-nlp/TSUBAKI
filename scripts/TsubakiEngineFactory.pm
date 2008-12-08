@@ -9,11 +9,14 @@ package TsubakiEngineFactory;
 use strict;
 use Storable;
 
+use Configure;
+my $CONFIG = Configure::get_instance();
+
 # 全文書数
-my $N = 100132750;
+my $N = $CONFIG->{NUMBER_OF_DOCUMENTS};
+
 # 平均文書長
-my $AVE_DOC_LENGTH = 907.077; 
-# my $AVE_DOC_LENGTH = 274.925; # for NTCIR3
+my $AVE_DOC_LENGTH = $CONFIG->{AVERAGE_DOCUMENT_LENGTH};
 
 # コンストラクタ
 sub new {

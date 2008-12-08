@@ -182,6 +182,13 @@ STANDARD_FORMAT_LOCATION	nlpc32	60000,60001	025,051,077
 # その他の設定
 ##################################################
 
+# 総文書数
+NUMBER_OF_DOCUMENTS	100132750
+
+# 平均文書長
+AVERAGE_DOCUMENT_LENGTH	907.077
+
+
 # 強調表示に用いる色
 # HIGHLIGHT_COLOR		ffff66,a0ffff,99ff99,ff9999,ff66ff,880000,00aa00,886800,004699,990099
 HIGHLIGHT_COLOR		ffffaa,ddffff,ddffdd,ffdddd,ffddff,dd0000,00dd00,dddd00,00dddd,dd00dd

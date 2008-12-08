@@ -170,6 +170,13 @@ STANDARD_FORMAT_LOCATION	iccc141	47997,47998,47999	200,120,121,201,202,122
 # その他の設定
 ##################################################
 
+# 総文書数
+NUMBER_OF_DOCUMENTS	100132750
+
+# 平均文書長
+AVERAGE_DOCUMENT_LENGTH	907.077
+
+
 # 強調表示に用いる色
 HIGHLIGHT_COLOR		ffffaa,ddffff,ddffdd,ffdddd,ffddff,dd0000,00dd00,dddd00,00dddd,dd00dd
 
