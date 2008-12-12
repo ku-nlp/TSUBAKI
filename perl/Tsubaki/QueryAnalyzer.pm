@@ -273,7 +273,6 @@ sub isPhrase {
     my $b = ($kakarisaki->mrph)[0];
 
     return 0 if ($a->fstring() !~ /<代表表記:.[^>]+?v>/ && $b->fstring() !~ /<複合\←>/);
-    
 
     my ($a_rep) = ($a->repname =~ /(.+)\//);
     my ($b_rep) = ($b->repname =~ /(.+)\//);
@@ -283,26 +282,23 @@ sub isPhrase {
 
     my $hasSyngraphAnnotation = $kakarimoto->synnodes;
     # SYNGRAPHの解析結果から抽出
-    if ($hasSyngraphAnnotation) {
-	my $i = 0;
-	my @buf = ();
-	foreach my $kihonku (($kakarimoto, $kakarisaki)) {
-	    foreach my $synnodes ($kihonku->synnodes) {
-		foreach my $synnode ($synnodes->synnode) {
-		    my $midasi = $synnode->synid;
-		    next if ($midasi =~ /s\d+/);
+    my $i = 0;
+    my @buf = ();
+    foreach my $kihonku (($kakarimoto, $kakarisaki)) {
+	foreach my $synnodes ($kihonku->synnodes) {
+	    foreach my $synnode ($synnodes->synnode) {
+		my $midasi = $synnode->synid;
+		next if ($midasi =~ /s\d+/);
 
-		    $midasi =~ s/(.+?)\/.+?([a|v])?$/\1/;
-		    push(@{$buf[$i]}, $midasi);
-		}
+		$midasi =~ s/(.+?)\/.+?([a|v])?$/\1/;
+		push(@{$buf[$i]}, $midasi);
 	    }
-	    $i++;
 	}
-
-	push(@a_reps, @{$buf[0]}) if (defined $buf[0]);
-	push(@b_reps, @{$buf[1]}) if (defined $buf[1]);
+	$i++;
     }
 
+    push(@a_reps, @{$buf[0]}) if (defined $buf[0]);
+    push(@b_reps, @{$buf[1]}) if (defined $buf[1]);
 
     foreach $a_rep (@a_reps) {
 	foreach $b_rep (@b_reps) {
@@ -378,7 +374,9 @@ sub annotateNEmodifierFeature {
     my ($this, $knpresult, $opt) = @_;
 
     foreach my $kihonku (reverse $knpresult->tag) {
-	next unless ($kihonku->fstring() =~ /<NE.+?>/);
+	next unless ($kihonku->fstring() =~ /(<NE.+?>)/);
+	my $NEtag = $1;
+	next if ($NEtag =~ /PERCENT|TIME|DATE|MONEY/);
 
 	$this->setNEmodifier($kihonku);
     }
