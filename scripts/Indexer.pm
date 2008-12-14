@@ -648,7 +648,7 @@ sub makeIndexFromKNPResultObject {
     my @idx = ();
     foreach my $bnst ($result->bnst) {
 	foreach my $kihonku ($bnst->tag) {
-	    if (defined $kihonku->parent) {
+	    if (defined $kihonku->parent && !$option->{disable_dpnd}) {
 		my $dpnd_idx = $this->get_dpnd_index($kihonku, $kihonku->parent, $option);
 		foreach my $i (@$dpnd_idx) {
 		    $i->{pos} = $pos;
@@ -660,6 +660,8 @@ sub makeIndexFromKNPResultObject {
 	    $gid++;
 
 	    foreach my $mrph ($kihonku->mrph) {
+		next if ($option->{content_word_only} && $mrph->fstring !~ /<内容語|意味有>/);
+
 		my $words = [];
 		if ($this->{genkei}) {
 		    push(@$words, &get_genkei($mrph));
