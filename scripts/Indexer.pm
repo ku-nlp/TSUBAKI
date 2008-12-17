@@ -680,7 +680,7 @@ sub makeIndexFromKNPResultObject {
 		    $idx[-1]->{surf} = $mrph->midasi;
 		    $idx[-1]->{pos} = $pos;
 		    $idx[-1]->{NE} = 1 if ($mrph->fstring =~ /<NE:/);
-		    $idx[-1]->{absolute_pos} = $pos;
+		    $idx[-1]->{absolute_pos} = $pos + $this->{absolute_pos};
 		}
 		$gid++;
 		$pos++;
