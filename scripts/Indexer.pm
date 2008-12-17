@@ -660,6 +660,7 @@ sub makeIndexFromKNPResultObject {
 	    $gid++;
 
 	    foreach my $mrph ($kihonku->mrph) {
+		$this->{absolute_pos}++;
 		next if ($option->{content_word_only} && $mrph->fstring !~ /<内容語|意味有>/);
 
 		my $words = [];
@@ -680,15 +681,13 @@ sub makeIndexFromKNPResultObject {
 		    $idx[-1]->{surf} = $mrph->midasi;
 		    $idx[-1]->{pos} = $pos;
 		    $idx[-1]->{NE} = 1 if ($mrph->fstring =~ /<NE:/);
-		    $idx[-1]->{absolute_pos} = $pos + $this->{absolute_pos};
+		    $idx[-1]->{absolute_pos} = $this->{absolute_pos};
 		}
 		$gid++;
 		$pos++;
 	    }
 	}
     }
-
-    $this->{absolute_pos} = $pos;
     return \@idx;
 }
 
