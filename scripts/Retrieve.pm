@@ -94,7 +94,7 @@ sub printLog {
 }
 
 sub search_syngraph_test_for_new_format {
-    my($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search) = @_;
+    my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -116,6 +116,7 @@ sub search_syngraph_test_for_new_format {
 	
 	my $first_seek_time = Time::HiRes::time;
 	seek($this->{IN}[$f_num], $offset, 0);
+
 	$total_byte = $offset;
 	my $finish_time = Time::HiRes::time;
 	my $conduct_time = $finish_time - $first_seek_time;
@@ -134,8 +135,8 @@ sub search_syngraph_test_for_new_format {
 	    }
 	    else {
 		# 最初はキーワード（情報としては冗長）
-# 		$buf = join('', @str);
-# 		@str = ();
+ 		# $buf = join('', @str);
+ 		# @str = ();
 		# デリミタ0の分
 		$total_byte++;
 
@@ -145,12 +146,18 @@ sub search_syngraph_test_for_new_format {
 		$total_byte += 4;
 
 		# 文書IDの読み込み
+
+
+
+
+		read($this->{IN}[$f_num], $buf, 4 * $ldf);
+		my @dids = unpack("L$ldf", $buf);
+
 		my $pos = 0;
 		my %soeji2pos = ();
 		for (my $j = 0; $j < $ldf; $j++) {
-		    read($this->{IN}[$f_num], $buf, 4);
 		    $total_byte += 4;
-		    my $did = unpack('L', $buf);
+		    my $did = $dids[$j];
 
 		    # 先の索引で検索された文書であれば登録（AND検索時）
 		    if (exists $already_retrieved_docs->{$did} || $add_flag > 0) {
@@ -160,14 +167,6 @@ sub search_syngraph_test_for_new_format {
 			$pos++;
 		    }
 		}
-
-#		seek($this->{IN}[$f_num], $ldf * 4, 1);
-#		$total_byte += ($ldf * 4);
-#  		for (my $j = 0; $j < $ldf; $j++) {
-#  		    read($this->{IN}[$f_num], $buf, 4);
-#  		    my $freq = unpack('f', $buf);
-#  		    print $freq . "=freq\n";
-#  		}
 
 		# 場所情報フィールドの長さ（バイト数）を取得
 		read($this->{IN}[$f_num], $buf, 4);
@@ -179,13 +178,19 @@ sub search_syngraph_test_for_new_format {
 		my $scores_size = unpack('L', $buf);
 		$total_byte += 4;
 
+
+ 		read($this->{IN}[$f_num], $buf, $poss_size);
+		my @data = unpack('L*', $buf);
+
 		# 出現頻度の読み込み
+		my $index = 0;
 		my $soeji = 0;
 		# 場所情報フィールドの終了位置（バイト）を取得
 		for (my $b = 0; $b < $poss_size;) {
 		    # 出現回数を読み込み
-		    read($this->{IN}[$f_num], $buf, 4);
-		    my $num_of_poss = unpack('L', $buf);
+		    my $num_of_poss = $data[$index];
+		    $index++;
+		    $index += $num_of_poss;
 		    $total_byte += 4;
 		    $b += 4;
 
@@ -199,22 +204,13 @@ sub search_syngraph_test_for_new_format {
 			$docs[$offset_j + $pos]->[2] = $num_of_poss;
 			$docs[$offset_j + $pos]->[3] = $total_byte;
 		    }
-		    # スキップ
-# 		    seek($this->{IN}[$f_num], $total_byte, 1);
-# 		    for (my $j = 0; $j < $num_of_poss; $j++) {
-# 			read($this->{IN}[$f_num], $buf, 4);
-# 			my $pp = unpack('L', $buf);
-# 			print "$total_byte $b / $poss_size " . $docs[$offset_j + $pos]->[0] . " $j / $num_of_poss: $pp\n" if ($this->{verbose});
-# 			$b += 4;
-# 			$total_byte += 4;
-# 		    }
-# 		    print "-----\n" if ($this->{verbose});
 
- 		    seek($this->{IN}[$f_num], $num_of_poss * 4, 1);
  		    $total_byte += ($num_of_poss * 4);
  		    $b += ($num_of_poss * 4);
 		    $soeji++;
 		}
+
+
 
 		$soeji = 0;
 		# 索引のスコアを取得
@@ -235,14 +231,6 @@ sub search_syngraph_test_for_new_format {
 			$docs[$offset_j + $pos]->[4] = $total_byte;
 		    }
 
-		    # スキップ
-#   		    for (my $j = 0; $j < $num_of_scores; $j++) {
-#   			read($this->{IN}[$f_num], $buf, 2);
-#   			my $pp = unpack('S', $buf);
-# 			print $pp . "=score\n";
-#   			print "$total_byte $b / $scores_size " . $docs[$offset_j + $pos]->[0] . " $j / $num_of_scores: $pp\n" if ($this->{verbose});
-#   		    }
-#  		    print "=====\n" if ($this->{verbose});
 
  		    seek($this->{IN}[$f_num], $num_of_scores * 2, 1);
  		    $total_byte += ($num_of_scores * 2);
@@ -567,7 +555,7 @@ sub load_score {
 }
 
 sub search {
-    my($this, $keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search) = @_;
+    my ($this, $keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search) = @_;
 
     if ($syngraph_search) {
 	return $this->search_syngraph_test_for_new_format($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search);
