@@ -193,10 +193,14 @@ sub convertURL {
 	return uri_join($scheme, $auth, $fpath);	
     }
     else {
-	if ($path =~ /\// && $path ne '/') {
-	    my @f = split('/', $path);
-	    $f[-1] = $fpath;
-	    return uri_join($scheme, $auth, join('/', @f));
+	if ($path =~ /\//) {
+	    if ($path ne '/') {
+		my @f = split('/', $path);
+		$f[-1] = $fpath;
+		return uri_join($scheme, $auth, join('/', @f));
+	    } else {
+		return uri_join($scheme, $auth, $path . $fpath);
+	    }		
 	}
 	else {
 	    return uri_join($scheme, $auth, $path);
