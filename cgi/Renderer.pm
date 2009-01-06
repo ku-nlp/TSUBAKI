@@ -668,10 +668,10 @@ sub get_snippets {
     # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
     for (my $rank = $from; $rank < $end; $rank++) {
 	push(@docs, {
-	    did => sprintf("%09d", $result->[$rank]{did}),
-	    start => $result->[$rank]{start},
-	    end => $result->[$rank]{end},
-	    pos2qid => $result->[$rank]{pos2qid}
+ 	    did => sprintf("%09d", $result->[$rank]{did}),
+ 	    start => $result->[$rank]{start},
+ 	    end => $result->[$rank]{end},
+ 	    pos2qid => $result->[$rank]{pos2qid}
 	     });
 
 #	unless ($this->{called_from_API}) {
@@ -1131,7 +1131,7 @@ sub printResult {
 
 
 sub printSearchResultForAPICall {
-    my ($this, $params, $result, $query, $from, $end, $hitcount) = @_;
+    my ($this, $logger, $params, $result, $query, $from, $end, $hitcount) = @_;
 
     my $did2snippets = {};
     if ($params->{no_snippets} < 1 || $params->{Snippet} > 0) {
@@ -1152,19 +1152,38 @@ sub printSearchResultForAPICall {
 
     require XML::Writer;
 
+    my $search_time = $logger->getParameter('search') + $logger->getParameter('parse_query') +  $logger->getParameter('snippet_creation');
     my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
     $writer->xmlDecl('utf-8');
-    $writer->startTag('ResultSet', time => $timestamp, query => $queryString,
-		      totalResultsAvailable => $hitcount, 
-		      totalResultsReturned => $end - $from, 
-		      firstResultPosition => $params->{'start'} + 1,
-		      logicalOperator => $params->{'logical_operator'},
-		      forceDpnd => $params->{'force_dpnd'},
-		      dpnd => $params->{'dpnd'},
-		      anchor => $params->{flag_of_anchor_use},
-		      filterSimpages => $params->{'filter_simpages'},
-		      sort_by => $params->{'sort_by'}
-	);
+    if ($params->{show_search_time}) {
+	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
+			  totalResultsAvailable => $hitcount, 
+			  totalResultsReturned => $end - $from, 
+			  firstResultPosition => $params->{'start'} + 1,
+			  logicalOperator => $params->{'logical_operator'},
+			  forceDpnd => $params->{'force_dpnd'},
+			  dpnd => $params->{'dpnd'},
+			  anchor => $params->{flag_of_anchor_use},
+			  filterSimpages => $params->{'filter_simpages'},
+			  sort_by => $params->{'sort_by'},
+			  searchTime => $search_time,
+			  parseQueryTime => $logger->getParameter('parse_query'),
+			  indexSearchTime => $logger->getParameter('search'),
+			  snippetCreationTime => ($logger->getParameter('snippet_creation') eq '') ? 0 : $logger->getParameter('snippet_creation')
+	    );
+    } else {
+	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
+			  totalResultsAvailable => $hitcount, 
+			  totalResultsReturned => $end - $from, 
+			  firstResultPosition => $params->{'start'} + 1,
+			  logicalOperator => $params->{'logical_operator'},
+			  forceDpnd => $params->{'force_dpnd'},
+			  dpnd => $params->{'dpnd'},
+			  anchor => $params->{flag_of_anchor_use},
+			  filterSimpages => $params->{'filter_simpages'},
+			  sort_by => $params->{'sort_by'}
+	    );
+    }
 
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $page = $result->[$rank];

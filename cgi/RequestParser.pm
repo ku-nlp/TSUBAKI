@@ -86,6 +86,7 @@ sub getDefaultValues {
     $params{score_verbose} = 1;
     $params{debug} = 0;
     $params{result_items} = 'Id:Title:Cache:Url';
+    $params{show_search_time} = 0;
 
     return \%params;
 }
