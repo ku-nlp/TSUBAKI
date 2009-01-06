@@ -83,6 +83,7 @@ sub new {
     # ストップワードの処理
     unless ($opts->{STOP_WORDS}) {
 	$this->{INDEXER} = new Indexer({ignore_yomi => $opts->{ignore_yomi}});
+	$this->{INDEXER_GENKEI} = new Indexer({ignore_yomi => $opts->{ignore_yomi}, genkei => 1});
     } else {
 	my %stop_words;
 	foreach my $word (@{$opts->{STOP_WORDS}}) {
@@ -102,6 +103,9 @@ sub new {
 	}
 	$this->{INDEXER} = new Indexer({ STOP_WORDS => \%stop_words,
 					 ignore_yomi => $opts->{ignore_yomi} });
+	$this->{INDEXER_GENKEI} = new Indexer({ STOP_WORDS => \%stop_words,
+						ignore_yomi => $opts->{ignore_yomi},
+					        genkei => 1 });
     }
 
     print "QueryParser object construction is OK.\n\n" if ($opts->{debug});
@@ -133,6 +137,7 @@ sub parse {
 
     ## 空白で区切る
     # $qks_str =~ s/ /　/g;
+    my $indexer = $this->{INDEXER};
     my $delim = ($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+";
     foreach my $q_str (split(/$delim/, $qks_str)) {
 	# 空文字はスキップ
@@ -150,6 +155,7 @@ sub parse {
 	    $phrasal_flag = 1;
 	    $q_str = $1;
 	    $near = 1;
+	    $indexer = $this->{INDEXER_GENKEI};
 	}
 	# 近接検索かどうかの判定
 	elsif ($q_str =~ /^(.+)?~(.+)$/) {
@@ -207,7 +213,7 @@ sub parse {
 		$logical_cond_qkw,
 		$opt->{syngraph},
 		{ knp => $this->{KNP},
-		  indexer => $this->{INDEXER},
+		  indexer => $indexer,
 		  syngraph => $this->{SYNGRAPH},
 		  syngraph_option => $this->{SYNGRAPH_OPTION},
 		  requisite_item_detector => $this->{requisite_item_detector},
@@ -216,6 +222,7 @@ sub parse {
 		  antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
 		  disable_dpnd => $opt->{disable_dpnd},
 		  disable_synnode => $opt->{disable_synnode},
+		  end_of_sentence_process => $opt->{end_of_sentence_process},
 		  telic_process => $opt->{telic_process},
 		  CN_process => $opt->{CN_process},
 		  NE_process => $opt->{NE_process},
@@ -233,10 +240,11 @@ sub parse {
 		$logical_cond_qkw,
 		$opt->{syngraph},
 		{ knp => $this->{KNP},
-		  indexer => $this->{INDEXER},
+		  indexer => $indexer,
 		  requisite_item_detector => $this->{requisite_item_detector},
 		  query_filter => $opt->{query_filter},
 		  trimming => $opt->{trimming},
+		  end_of_sentence_process => $opt->{end_of_sentence_process},
 		  telic_process => $opt->{telic_process},
 		  CN_process => $opt->{CN_process},
 		  NE_process => $opt->{NE_process},
@@ -244,10 +252,40 @@ sub parse {
 		  debug => $opt->{debug}
 		});
 	}
-	push(@qks, $q);
+	if (scalar(@qks) < 1) {
+	    push(@qks, $q);
+ 	} else {
+ 	    push (@{$qks[0]->{words}}, @{$q->{words}}) if (scalar(@{$q->{words}}) > 0);
+ 	    push (@{$qks[0]->{dpnds}}, @{$q->{dpnds}}) if (scalar(@{$q->{dpnds}}) > 0);
+ 	}
     }
     # QueryKeyword作成にかかる時間を測定
     $opt->{logger}->setTimeAs('make_qks', '%.3f') if ($opt->{logger});
+
+
+    # $gid をふり直す
+    foreach my $qk (@qks) {
+	my $gid = 0;
+	my %str2gid = ();
+	foreach my $reps (@{$qk->{words}}) {
+	    foreach my $rep (@{$reps}) {
+		$rep->{gid} = $gid;
+		$str2gid{$rep->{string}} = $gid;
+	    }
+	    $gid++;
+	}
+
+	foreach my $reps (@{$qk->{dpnds}}) {
+	    foreach my $rep (@{$reps}) {
+		my ($saki, $moto) = ($rep->{string} =~ /^(.+?)\-\>(.+?)$/);
+		my $saki_gid = $str2gid{$saki};
+		my $moto_gid = $str2gid{$moto};
+		$rep->{gid} = sprintf ("%d/%d", $saki_gid, $moto_gid);
+	    }
+	}
+    }
+
+
 
 
     my $qid = 0;
