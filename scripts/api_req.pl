@@ -63,7 +63,7 @@ sub main {
 	    close(WRITER);
 	}
 
-	print STDERR "Succeeded in getting search reuslts.\n" if ($opt{verbose});
+	print STDERR "Succeeded in getting search results.\n" if ($opt{verbose});
     } else {
 	print STDERR "Failed to call the TSUBAKI API.\n";
     }
