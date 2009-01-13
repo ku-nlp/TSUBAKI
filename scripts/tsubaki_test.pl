@@ -27,7 +27,7 @@ if (!$opt{idxdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     exit;
 }
 
-$opt{results} = 10000 unless ($opt{results});
+$opt{results} = 1000 unless ($opt{results});
 
 my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
@@ -71,7 +71,7 @@ sub main {
     $params->{disable_synnode} = $opt{disable_synnode};
     $params->{verbose} = $opt{verbose};
     $params->{antonym_and_negation_expansion} = 0;
-#    $params->{DFDB_DIR} = $opt{dfdbdir};
+    $params->{DFDB_DIR} = $opt{dfdbdir} if ($opt{dfdbdir});
 
     # logical_cond_qk : クエリ間の論理演算
     # my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});

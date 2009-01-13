@@ -360,7 +360,7 @@ sub parseQuery {
     $logger->setParameterAs('query', $params->{query}) if ($logger);
 
     my $q_parser = new QueryParser({
-	    DFDB_DIR => $CONFIG->{SYNGRAPH_DFDB_PATH},
+	    DFDB_DIR => ($params->{DFDB_DIR}) ? $params->{DFDB_DIR} : $CONFIG->{SYNGRAPH_DFDB_PATH},
 	    ignore_yomi => $CONFIG->{IGNORE_YOMI},
 	    use_of_case_analysis => $params->{use_of_case_analysis},
 	    use_of_NE_tagger => $params->{use_of_NE_tagger},
