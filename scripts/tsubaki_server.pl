@@ -29,7 +29,7 @@ use Configure;
 
 
 my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 1;
-my $HOSTNAME = `hostname` ; chop($HOSTNAME);
+my $HOSTNAME = `hostname | cut -f 1 -d .` ; chop($HOSTNAME);
 
 my (%opt);
 GetOptions(\%opt, 'help', 'idxdir=s', 'dlengthdbdir=s', 'port=s', 'skippos', 'verbose', 'debug', 'syngraph', 'idxdir4anchor=s');
@@ -68,10 +68,18 @@ opendir(DIR, $opt{idxdir});
 foreach my $file (readdir(DIR)) {
     my $fp = "$opt{idxdir}/$file";
     if ($file =~ /title.cdb/) {
-	tie %TITLE_DBs, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	tie my %tmp, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	while (my ($k, $v) = each %tmp) {
+	    $TITLE_DBs{$k} = $v;
+	}
+	untie %tmp;
     }
     elsif ($file =~ /url.cdb/) {
-	tie %URL_DBs, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	tie my %tmp, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	while (my ($k, $v) = each %tmp) {
+	    $URL_DBs{$k} = $v;
+	}
+	untie %tmp;
     }
 }
 closedir(DIR);
@@ -92,8 +100,6 @@ if ($CONFIG->{STOP_PAGE_LIST}) {
 
 &main();
 
-untie %TITLE_DBs;
-untie %URL_DBs;
 
 sub main {
 
@@ -109,8 +115,7 @@ sub main {
 	exit;
     }
 
-
-    print STDERR "TSUBAKI SERVER IS READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir}, id=$ID)\n";
+    syswrite STDERR, "TSUBAKI SERVER IS READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir}, id=$ID)\n";
     while (1) {
 	my $new_socket = $listening_socket->accept();
 	my $client_sockaddr = $new_socket->peername();
@@ -119,7 +124,7 @@ sub main {
 	my $client_ip = inet_ntoa($client_iaddr);
 	
 	select($new_socket); $|=1; select(STDOUT);
-	
+
 	my $pid;
 	if ($pid = fork()) {
 	    $new_socket->close();
@@ -158,7 +163,6 @@ sub main {
 	    $opt{logging_query_score} = $query->{logging_query_score};
 	    my $factory = new TsubakiEngineFactory(\%opt);
 	    my $tsubaki = $factory->get_instance();
-
 
 	    # スレーブサーバーへの送信にかかった時間をロギング
 	    my $logger = $query->{logger};
