@@ -521,6 +521,7 @@ sub extract_sentences_from_content {
     my $in_meta_tag = 0;
     my $count = 0;
     my $th = -1;
+    my $paragraph_first_sentence = 0;
     foreach my $line (split(/\n/, $content)) {
 	$line .= "\n";
 	if ($opt->{discard_title}) {
@@ -550,6 +551,17 @@ sub extract_sentences_from_content {
 
 	$sid = $1 if ($line =~ m!<S .+ Id="(\d+)"!);
 	$sid = 0 if ($line =~ m!<Title !);
+	# 段落の先頭文かどうか
+	if ($opt->{get_paragraph_first_sentence}) {
+	    if ($line =~ m!<S !) {
+		if ($line =~ m!ParagraphFirstSentence="1"!) {
+		    $paragraph_first_sentence = 1;
+		}
+		else {
+		    $paragraph_first_sentence = 0;
+		}
+	    }
+	}
 
 	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
@@ -572,6 +584,7 @@ sub extract_sentences_from_content {
 		};
 
 		$sentence->{result} = $result if ($opt->{keep_result});
+		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence});
 
 		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
 
@@ -672,7 +685,6 @@ sub extract_sentences_from_content_old {
 		};
 
 		$sentence->{result} = $result if ($opt->{keep_result});
-
 		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
 
 		my $num_of_whitespace_cdot_comma = 0;
