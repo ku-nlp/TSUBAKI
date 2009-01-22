@@ -638,6 +638,43 @@ sub makeIndexFromSynGraphResultObject {
 	}
     }
 
+
+    if ($option->{antonym_and_negation_expansion}) {
+	my @buf;
+	my @lastTerms = ();
+	my $lastTermGroupID = $idx[-1]->{group_id};
+	my %midasiBuf;
+	foreach my $i (reverse @idx) {
+	    last if ($i->{group_id} ne $lastTermGroupID);
+	    $midasiBuf{$i->{midasi}} = 1;
+	    push (@lastTerms, $i);
+	}
+
+	foreach my $nd (@lastTerms) {
+	    # 構造体のコピー
+	    my $node;
+	    while (my ($k, $v) = each (%$nd)) {
+		$node->{$k} = $v;
+	    }
+
+	    # 反義情報の削除
+	    $node->{midasi} =~ s/<反義語>//;
+
+	    # <否定>の付け変え
+	    if ($node->{midasi} =~ /<否定>/) {
+		$node->{midasi} =~ s/<否定>//;
+	    } else {
+		$node->{midasi} .= '<否定>';
+	    }
+
+	    unless (exists $midasiBuf{$node->{midasi}}) {
+		$node->{additional_node} = 1;
+		push (@idx, $node);
+		$midasiBuf{$node->{midasi}} = 1;
+	    }
+	}
+    }
+
     return \@idx;
 }
 
@@ -648,12 +685,31 @@ sub makeIndexFromKNPResultObject {
     my @idx = ();
     foreach my $bnst ($result->bnst) {
 	foreach my $kihonku ($bnst->tag) {
-	    if (defined $kihonku->parent && !$option->{disable_dpnd}) {
-		my $dpnd_idx = $this->get_dpnd_index($kihonku, $kihonku->parent, $option);
+	    if (defined $kihonku->parent) {
+
+		# 並列句の処理
+		my $kakarimoto = $kihonku;
+		my $buf = $kakarimoto;
+		my $kakarisaki = $kihonku->parent;
+		while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
+		    $buf = $kakarisaki;
+		    $kakarisaki = $kakarisaki->parent;
+		}
+
+		my $dpnd_idx = $this->get_dpnd_index($kakarimoto, $kakarisaki, $option);
 		foreach my $i (@$dpnd_idx) {
 		    $i->{pos} = $pos;
 		    $i->{absolute_pos} = $pos;
+		    $i->{isBasicNode} = 1;
 		    $i->{group_id} = $gid;
+		    # $i->{group_id} = $kakarimoto->id . "/" . $kakarisaki->id;
+		    if ($i->{fstring} =~ /クエリ必須係り受け/ || $option->{force_dpnd}) {
+			$i->{requisite} = 1;
+			$i->{optional}  = 0;
+		    } else {
+			$i->{requisite} = 0;
+			$i->{optional}  = 1;
+		    }
 		}
 		push(@idx, @$dpnd_idx);
 	    }
@@ -681,7 +737,9 @@ sub makeIndexFromKNPResultObject {
 		    $idx[-1]->{surf} = $mrph->midasi;
 		    $idx[-1]->{pos} = $pos;
 		    $idx[-1]->{NE} = 1 if ($mrph->fstring =~ /<NE:/);
-		    $idx[-1]->{absolute_pos} = $this->{absolute_pos};
+		    $idx[-1]->{absolute_pos} = $pos;
+		    $idx[-1]->{requisite} = 1;
+		    $idx[-1]->{optional} = 0;
 		}
 		$gid++;
 		$pos++;
