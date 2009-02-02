@@ -12,6 +12,10 @@ use Encode;
 use Configure;
 use Encode::Guess;
 use Dumper;
+use IO::Socket;
+use IO::Select;
+use MIME::Base64;
+use Storable;
 
 
 my $CONFIG = Configure::get_instance();
@@ -359,7 +363,52 @@ sub parseQuery {
     # クエリのログをとる
     $logger->setParameterAs('query', $params->{query}) if ($logger);
 
-    my $q_parser = new QueryParser({
+    my $query;
+    if ($CONFIG->{USE_OF_QUERY_PARSE_SERVER}) {
+	my $selecter = IO::Select->new();
+	my $socket = IO::Socket::INET->new(
+	    PeerAddr => 'localhost',
+	    PeerPort => $CONFIG->{PORT_OF_QUERY_PARSE_SERVER},
+	    Proto    => 'tcp' );
+
+	$selecter->add($socket) or die "Cannot connect to the localhost:" . $CONFIG->{PORT_OF_QUERY_PARSE_SERVER} . ". $!\n";
+	
+ 	# クエリ解析時のパラメータを送信
+ 	print $socket encode_base64(Storable::freeze($params), "") . "\n";
+	print $socket "EOD\n";
+	$socket->flush();
+
+
+	# クエリ解析結果の受信
+	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
+	foreach my $socket (@{$readable_sockets}) {
+	    my $buff = undef;
+	    while (<$socket>) {
+		last if ($_ eq "EOL\n");
+		$buff .= $_;
+	    }
+	    if (defined($buff)) {
+		my $logger2 = Storable::thaw(decode_base64($buff));
+		foreach my $k ($logger2->keys()) {
+		    $logger->setParameterAs($k, $logger2->getParameter($k));
+		}
+	    }
+
+	    $buff = '';
+	    while (<$socket>) {
+		last if ($_ eq "EOD\n");
+		$buff .= $_;
+	    }
+	    if (defined($buff)) {
+		$query = Storable::thaw(decode_base64($buff));
+	    }
+
+	    # ソケットの後処理
+	    $selecter->remove($socket);
+	    $socket->close();
+	}
+    } else {
+	my $q_parser = new QueryParser({
 	    DFDB_DIR => ($params->{DFDB_DIR}) ? $params->{DFDB_DIR} : $CONFIG->{SYNGRAPH_DFDB_PATH},
 	    ignore_yomi => $CONFIG->{IGNORE_YOMI},
 	    use_of_case_analysis => $params->{use_of_case_analysis},
@@ -368,36 +417,37 @@ sub parseQuery {
 	    option => $params
 	});
 
-    if ($params->{debug}) {
-	while (my ($k, $v) = each %$q_parser) {
-	    if ($k eq 'INDEXER' || $k eq 'KNP') {
-		print Dumper::dump_as_HTML($v) . "<br>\n";
-		print "<hr>\n";
+	if ($params->{debug}) {
+	    while (my ($k, $v) = each %$q_parser) {
+		if ($k eq 'INDEXER' || $k eq 'KNP') {
+		    print Dumper::dump_as_HTML($v) . "<br>\n";
+		    print "<hr>\n";
+		}
 	    }
 	}
-    }
 
-    # クエリの解析
-    # logical_cond_qk: クエリ間の論理演算
-    my $query = $q_parser->parse(
-	$params->{query},
-	{ logical_cond_qk => $params->{logical_operator},
-	  syngraph => $params->{syngraph},
-	  near => $params->{near},
-	  force_dpnd => $params->{force_dpnd},
-	  trimming => $params->{trimming},
-	  antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
-	  detect_requisite_dpnd => $params->{detect_requisite_dpnd},
- 	  query_filtering => $params->{query_filtering},
-	  disable_dpnd => $params->{disable_dpnd},
-	  disable_synnode => $params->{disable_synnode},
-	  telic_process => $params->{telic_process},
-	  CN_process => $params->{CN_process},
-	  NE_process => $params->{NE_process},
-	  modifier_of_NE_process => $params->{modifier_of_NE_process},
-	  logger => $logger,
-	  debug => $params->{debug}
-	});
+	# クエリの解析
+	# logical_cond_qk: クエリ間の論理演算
+	$query = $q_parser->parse(
+	    $params->{query},
+	    { logical_cond_qk => $params->{logical_operator},
+	      syngraph => $params->{syngraph},
+	      near => $params->{near},
+	      force_dpnd => $params->{force_dpnd},
+	      trimming => $params->{trimming},
+	      antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
+	      detect_requisite_dpnd => $params->{detect_requisite_dpnd},
+	      query_filtering => $params->{query_filtering},
+	      disable_dpnd => $params->{disable_dpnd},
+	      disable_synnode => $params->{disable_synnode},
+	      telic_process => $params->{telic_process},
+	      CN_process => $params->{CN_process},
+	      NE_process => $params->{NE_process},
+	      modifier_of_NE_process => $params->{modifier_of_NE_process},
+	      logger => $logger,
+	      debug => $params->{debug}
+	    });
+    }
 
     # クエリ解析時間のログをとる
     $logger->setParameterAs('parse_query', sprintf ("%.3f",
