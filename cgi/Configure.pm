@@ -27,18 +27,37 @@ my $instance;
 sub _new {
     my ($clazz, $opts) = @_;
     my $this;
+    my %downservers;
     open(READER, '<:utf8', $CONFIG_FILE_PATH) or die "$! ($CONFIG_FILE_PATH\)n";
     while (<READER>) {
 	next if ($_ =~ /^\#/);
 	next if ($_ =~ /^\s*$/);
 
 	chop;
+
+	# ダウンしているサーバーを検出し利用しないようにする
+	if ($_ =~ /SERVER_STATUS_LOG/) {
+	    my ($key, $logfile) = split(/\s+/, $_);
+
+	    open (F, $logfile) or die "$!\n";
+	    while (<F>) {
+		next if ($_ =~ /alive!$/);
+
+		my ($host, $is, $down) = split (/ /, $_);
+		$downservers{$host} = 1;
+	    }
+	    close (F);
+	}
+
 	if ($_ =~ /SEARCH_SERVERS/) {
 	    my ($key, $host, $ports) = split(/\s+/, $_);
 	    $host =~ s/^\s*//;
 	    $host =~ s/\s*$//;
 	    $ports =~ s/^\s*//;
 	    $ports =~ s/\s*$//;
+
+	    next if (exists $downservers{$host});
+
 	    foreach my $p (split(/,/, $ports)) {
 		push(@{$this->{$key}}, {name => $host, port => $p});
 	    }
@@ -49,6 +68,9 @@ sub _new {
 	    $host =~ s/\s*$//;
 	    $dids =~ s/^\s*//;
 	    $dids =~ s/\s*$//;
+
+	    next if (exists $downservers{$host});
+
 	    push(@{$this->{SNIPPET_SERVERS}}, {name => $host, ports => []});
 	    foreach my $port (split(/,/, $ports)) {
 		push(@{$this->{SNIPPET_SERVERS}[-1]{ports}}, $port);
