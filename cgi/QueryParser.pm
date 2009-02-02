@@ -121,14 +121,18 @@ sub parse {
     my @qks = ();
     my %wbuff = ();
     my %dbuff = ();
-
+#    $opt->{syngraph} = 0;
     # 必要であればSynGraphをnewし、メンバ変数として保持する
     if ($opt->{syngraph}) {
-	my $CONFIG = Configure::get_instance();
-	push(@INC, $CONFIG->{SYNGRAPH_PM_PATH});
-	require SynGraph;
+	if ($opt->{SYNGRAPH}) {
+	    $this->{SYNGRAPH} = $opt->{SYNGRAPH};
+	} else {
+	    my $CONFIG = Configure::get_instance();
+	    push(@INC, $CONFIG->{SYNGRAPH_PM_PATH});
+	    require SynGraph;
 
-	$this->{SYNGRAPH} = new SynGraph($CONFIG->{SYNDB_PATH});
+	    $this->{SYNGRAPH} = new SynGraph($CONFIG->{SYNDB_PATH});
+	}
 	$this->{SYNGRAPH_OPTION} = {regist_exclude_semi_contentword => 1, relation => 1, antonym => 1, hypocut_attachnode => 9};
     }
     # SYNGRAPHをnewする
