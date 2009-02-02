@@ -81,6 +81,10 @@ COMPOUND_NOUN_DFDB_PATH	../data/cns.100M.cls.df1000.cdb
 # 検索サーバー/スニペットサーバー関係の設定
 ##################################################
 
+# サーバーの状態のログを保存するファイルの指定
+# サーバーの設定に入る前に設定すること（サーバーの設定後では反映されません）
+SERVER_STATUS_LOG	/home/skeiji/tsubaki/SearchEngine/data/server_status
+
 # 検索用サーバー（★要変更）
 # SEARCH_SERVERS ホスト名 ポート番号1,...
 
