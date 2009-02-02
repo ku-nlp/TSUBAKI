@@ -321,3 +321,9 @@ DATA_DIR	       /home/skeiji/tsubaki/SearchEngine/data
 
 # SynGraph/dic/rsk_iwanami 以下にある antonym.txt へのパス
 ANTONYM_DIC_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGraph_manual_DB5/dic/rsk_iwanami/antonym.txt
+
+# クエリ処理用サーバーを利用するかどうか（1：利用する，0：利用しない，デフォルト1）
+USE_OF_QUERY_PARSE_SERVER	1
+
+# クエリ処理用サーバーのポート番号
+PORT_OF_QUERY_PARSE_SERVER	60000
