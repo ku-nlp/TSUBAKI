@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -9,6 +9,7 @@ my $CONFIG;
 BEGIN {
     $CONFIG = Configure::get_instance();
     push(@INC, $CONFIG->{TSUBAKI_MODULE_PATH});
+    push(@INC, $CONFIG->{UTILS_PATH});
 }
 
 use strict;
@@ -53,7 +54,7 @@ sub main {
 	require CachedHTMLDocument;
 	
 	# キャッシュされたページを表示
-	my $cachedHTML = new CachedHTMLDocument($query, { file => $file, z => 1 });
+	my $cachedHTML = new CachedHTMLDocument($query, { file => $file, z => 1, debug => $params->{debug} });
 	print $cachedHTML->to_string();
     } else {
 	my $renderer = new Renderer(0);

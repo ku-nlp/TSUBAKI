@@ -15,8 +15,8 @@ SUFFIX=
 if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
     HOSTS_PREFIX=iccc0
     HOSTS_START=11
-    HOSTS_END=36
-    TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine-develop
+    HOSTS_END=38
+    TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
     SUFFIX=.NICT
 else
     HOSTS_PREFIX=nlpc
@@ -28,6 +28,7 @@ fi
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 CGI_DIR=$TSUBAKI_DIR/cgi
 MODULE_DIR=$TSUBAKI_DIR/perl
+UTILS_DIR=$HOME/cvs/Utils/perl
 COMMAND=tsubaki_server.pl
 NICE=-4
 PERL=$HOME/local/bin/perl
@@ -62,8 +63,7 @@ start() {
 		    OPTION=$OPTION" -idxdir4anchor $anchor_idxdir"
 		fi
 
-		# echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR $SCRIPTS_DIR/$COMMAND $OPTION"
-	        ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR $SCRIPTS_DIR/$COMMAND $OPTION"
+	        ssh -f $h "nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $OPTION"
 	    fi
 	done < $PORTSFILE
     done

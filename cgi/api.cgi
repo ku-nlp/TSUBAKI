@@ -13,6 +13,7 @@ my $CONFIG = Configure::get_instance();
 BEGIN {
     $CONFIG = Configure::get_instance();
     push(@INC, $CONFIG->{TSUBAKI_MODULE_PATH});
+    push(@INC, $CONFIG->{UTILS_PATH});
 }
 
 
