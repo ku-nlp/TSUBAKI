@@ -39,14 +39,17 @@ sub _new {
 	if ($_ =~ /SERVER_STATUS_LOG/) {
 	    my ($key, $logfile) = split(/\s+/, $_);
 
-	    open (F, $logfile) or die "$!\n";
-	    while (<F>) {
-		next if ($_ =~ /alive!$/);
+	    if (open (F, $logfile)) {
+		while (<F>) {
+		    next if ($_ =~ /alive!$/);
 
-		my ($host, $is, $down) = split (/ /, $_);
-		$downservers{$host} = 1;
+		    my ($host, $is, $down) = split (/ /, $_);
+		    $downservers{$host} = 1;
+		}
+		close (F);
+	    } else {
+		print STDERR "[WARNNING] $logfile is * NOT * found!\n";
 	    }
-	    close (F);
 	}
 
 	if ($_ =~ /SEARCH_SERVERS/) {
