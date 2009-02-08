@@ -13,8 +13,8 @@ HOSTS_END=
 # NICT
 if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
     HOSTS_PREFIX=iccc00
-    HOSTS_START=3
-    HOSTS_END=4
+    HOSTS_START=4
+    HOSTS_END=7
     TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine-develop
 else
     HOSTS_PREFIX=nlpc0
