@@ -24,6 +24,7 @@ else
 fi
 
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
+MODULE_DIR=$TSUBAKI_DIR/perl
 CGI_DIR=$TSUBAKI_DIR/cgi
 COMMAND=query_parse_server.pl
 NICE=-4
@@ -34,7 +35,7 @@ start() {
     for n in `seq $HOSTS_START $HOSTS_END`
     do
 	h=$HOSTS_PREFIX$n
-	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR $SCRIPTS_DIR/$COMMAND"
+	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR $SCRIPTS_DIR/$COMMAND"
     done
 }
 
