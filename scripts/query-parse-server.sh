@@ -15,7 +15,7 @@ if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
     HOSTS_PREFIX=iccc00
     HOSTS_START=4
     HOSTS_END=7
-    TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine-develop
+    TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
 else
     HOSTS_PREFIX=nlpc0
     HOSTS_START=2
@@ -26,7 +26,7 @@ fi
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 MODULE_DIR=$TSUBAKI_DIR/perl
 CGI_DIR=$TSUBAKI_DIR/cgi
-UTIL_DIR=/home/skeiji/cvs/Utils/perl
+UTIL_DIR=$HOME/cvs/Utils/perl
 COMMAND=query_parse_server.pl
 NICE=-4
 PERL=$HOME/local/bin/perl
