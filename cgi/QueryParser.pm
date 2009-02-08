@@ -15,6 +15,7 @@ use Configure;
 use CDB_File;
 use Query;
 use Dumper;
+use CDB_Reader;
 
 
 my $CONFIG = Configure::get_instance();
@@ -75,9 +76,11 @@ sub new {
 #    $this->{OPTIONS}{keishi} = $opts->{KEISHI} if ($opts->{KEISHI});
 
 
-    my ($dfdbs_w, $dfdbs_d) = &load_DFDBs($opts->{DFDB_DIR}, $opts);
-    $this->{DFDBS_WORD} = $dfdbs_w;
-    $this->{DFDBS_DPND} = $dfdbs_d;
+#   my ($dfdbs_w, $dfdbs_d) = &load_DFDBs($opts->{DFDB_DIR}, $opts);
+#   $this->{DFDBS_WORD} = $dfdbs_w;
+#   $this->{DFDBS_DPND} = $dfdbs_d;
+    $this->{DFDBS_WORD} = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR}));
+    $this->{DFDBS_DPND} = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR}));
 
 
     # ストップワードの処理
@@ -289,9 +292,6 @@ sub parse {
 	}
     }
 
-
-
-
     my $qid = 0;
     my %qid2rep = ();
     my %rep2qid = ();
@@ -382,6 +382,8 @@ sub parse {
 	    }
 	}
     }
+
+#   $opt->{logger}->clearTimer();
 
     # SynNodeのgdfは基本ノードのgdfにする
     if ($opt->{syngraph}) {
@@ -779,17 +781,11 @@ sub load_DFDBs {
 
 sub get_DF {
     my ($this, $k) = @_;
+
     my $k_utf8 = encode('utf8', $k);
-    my $gdf = 0;
     my $DFDBs = (index($k, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
-    foreach my $dfdb (@{$DFDBs}) {
-	my $val = $dfdb->{$k_utf8};
-	if (defined $val) {
-	    $gdf += $val;
-# 	    last;
- 	}
-    }
-    return $gdf;
+
+    return $DFDBs->get($k_utf8);
 }
 
 
