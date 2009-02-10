@@ -785,7 +785,7 @@ sub get_DF {
     my $k_utf8 = encode('utf8', $k);
     my $DFDBs = (index($k, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
 
-    return $DFDBs->get($k_utf8);
+    return (defined $DFDBs) ? $DFDBs->get($k_utf8) : 0;
 }
 
 
