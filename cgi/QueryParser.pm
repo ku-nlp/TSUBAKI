@@ -79,8 +79,8 @@ sub new {
 #   my ($dfdbs_w, $dfdbs_d) = &load_DFDBs($opts->{DFDB_DIR}, $opts);
 #   $this->{DFDBS_WORD} = $dfdbs_w;
 #   $this->{DFDBS_DPND} = $dfdbs_d;
-    $this->{DFDBS_WORD} = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR}));
-    $this->{DFDBS_DPND} = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR}));
+    $this->{DFDBS_WORD} = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR})) if ($opts->{DFDB_DIR});
+    $this->{DFDBS_DPND} = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR})) if ($opts->{DFDB_DIR});
 
 
     # ストップワードの処理
