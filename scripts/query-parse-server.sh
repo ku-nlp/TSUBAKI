@@ -12,15 +12,11 @@ HOSTS_END=
 
 # NICT
 if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    HOSTS_PREFIX=iccc00
-    HOSTS_START=4
-    HOSTS_END=7
     TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
+    CONFIG_FILE=$TSUBAKI_DIR/cgi/configure.nict
 else
-    HOSTS_PREFIX=nlpc0
-    HOSTS_START=2
-    HOSTS_END=6
     TSUBAKI_DIR=$HOME/tsubaki-develop/SearchEngine
+    CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
 fi
 
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
@@ -33,18 +29,16 @@ PERL=$HOME/local/bin/perl
 
 
 start() {
-    for n in `seq $HOSTS_START $HOSTS_END`
+    for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
-	h=$HOSTS_PREFIX$n
 	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND"
 	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND"
     done
 }
 
 status_or_stop() {
-    for n in `seq $HOSTS_START $HOSTS_END`
+    for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
-	h=$HOSTS_PREFIX$n
 	pid=`ssh -f $h ps auxww | grep $COMMAND | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
  	if [ "$1" = "stop" -a -n "$pid" ]; then
  	    ssh -f $h kill $pid
