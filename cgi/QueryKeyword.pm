@@ -66,6 +66,7 @@ sub new {
 	my $analyzer = new Tsubaki::QueryAnalyzer($opt);
 	$analyzer->analyze($knpresult,
 			   {
+			       end_of_sentence_process => $opt->{end_of_sentence_process},
 			       telic_process => $opt->{telic_process},
 			       CN_process => $opt->{CN_process},
 			       NE_process => $opt->{NE_process},
@@ -78,7 +79,7 @@ sub new {
 
     my %buff;
     my $indice;
-    unless ($opt->{syngraph}) {
+    if ($is_phrasal_search > 0) {
 	# KNP 結果から索引語を抽出
 	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult->all);
 	$this->{logger}->setTimeAs('Indexer', '%.3f');
@@ -133,7 +134,8 @@ sub new {
 		    requisite => $m->{requisite},
 		    optional => $m->{optional},
 		    isContentWord => $m->{isContentWord},
-		    isBasicNode => $m->{isBasicNode}
+		    isBasicNode => $m->{isBasicNode},
+		    isAdditionalNode => ($m->{additional_node}) ? 1 : 0
 		     });
 	    } else {
 		push(@word_reps, {
@@ -150,7 +152,8 @@ sub new {
 		    question_type => $m->{question_type},
 		    NE => $m->{NE},
 		    isBasicNode => $m->{isBasicNode},
-		    fstring => $m->{fstring}
+		    fstring => $m->{fstring},
+		    isAdditionalNode => ($m->{additional_node}) ? 1 : 0
 		     });
 	    }
 	}
@@ -174,6 +177,40 @@ sub new {
     bless $this;
 }
 
+
+sub reduceSynnodes {
+   my ($this, $use_of_antonym_expansion) = @_;
+
+   my $N = ($use_of_antonym_expansion) ? int (0.5 * ($CONFIG->{MAX_NUMBER_OF_SYNNODES} + 1)) : $CONFIG->{MAX_NUMBER_OF_SYNNODES};
+   my @new_words;
+   foreach my $words (@{$this->{words}}) {
+       if (scalar(@$words) < $N) {
+	   push (@new_words, $words);
+       } else {
+	   # もともとの語とクエリ処理により追加された語を分別
+	   my @basic_nodes;
+	   my @original_words;
+	   my @appended_words;
+	   foreach my $word (sort {$b->{gdf} <=> $a->{gdf}} @$words) {
+	       if ($word->{isAdditionalNode}) {
+		   push (@appended_words, $word) if (scalar(@appended_words) < $N);
+	       } else {
+		   if ($word->{isBasicNode}) {
+		       push (@basic_nodes, $word);
+		   } else {
+		       push (@original_words, $word) if (scalar(@original_words) < $N);
+		   }
+	       }
+	   }
+
+	   push (@new_words, \@basic_nodes);
+	   push (@{$new_words[-1]}, @original_words);
+	   push (@{$new_words[-1]}, @appended_words);
+       }
+   }
+
+   $this->{words} = \@new_words;
+}
 
 sub print_for_web {
     my ($this) = @_;

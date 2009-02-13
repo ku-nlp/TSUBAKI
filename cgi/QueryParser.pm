@@ -385,6 +385,12 @@ sub parse {
 
 #   $opt->{logger}->clearTimer();
 
+    if ($CONFIG->{MAX_NUMBER_OF_SYNNODES}) {
+	foreach my $qk (@qks) {
+	    $qk->reduceSynnodes($opt->{antonym_and_negation_expansion});
+	}
+    }
+
     # SynNodeのgdfは基本ノードのgdfにする
     if ($opt->{syngraph}) {
 	foreach my $qid (keys %qid2gid) {
