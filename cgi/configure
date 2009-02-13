@@ -330,3 +330,6 @@ HOST_OF_QUERY_PARSE_SERVER	nlpc02,nlpc03,nlpc04,nlpc05,nlpc06
 
 # クエリ処理用サーバーのポート番号
 PORT_OF_QUERY_PARSE_SERVER	60000
+
+# 検索に利用するSynNodeの上限（0の場合は制限なし）
+MAX_NUMBER_OF_SYNNODES		5
