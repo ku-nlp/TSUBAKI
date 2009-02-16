@@ -105,6 +105,19 @@ sub get_DF {
     return $gdf;
 }
 
+
+sub fisher_yates_shuffle {
+    my ($array) = @_;
+
+    my $i;
+    for ($i = @$array; --$i;) {
+	my $j = int rand ($i+1);
+	next if ($i == $j);
+	@$array[$i,$j] = @$array[$j,$i];
+    }
+}
+
+
 # 実際に検索を行うメソッド
 sub broadcastSearch {
     my($this, $query, $logger, $opt) = @_;
@@ -114,6 +127,10 @@ sub broadcastSearch {
 
     # 検索クエリの送信
     my $selecter = IO::Select->new();
+    my $count = $num_of_sockets;
+
+    # アクセスが集中しないようにランダムに並び変える
+    &fisher_yates_shuffle($this->{hosts});
     for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
 	my $socket = IO::Socket::INET->new(
 	    PeerAddr => $this->{hosts}->[$i]->{name},
