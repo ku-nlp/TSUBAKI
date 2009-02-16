@@ -127,8 +127,6 @@ sub broadcastSearch {
 
     # 検索クエリの送信
     my $selecter = IO::Select->new();
-    my $count = $num_of_sockets;
-
     # アクセスが集中しないようにランダムに並び変える
     &fisher_yates_shuffle($this->{hosts});
     for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
