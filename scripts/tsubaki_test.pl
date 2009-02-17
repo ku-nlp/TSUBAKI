@@ -2,6 +2,9 @@
 
 # $Id$
 
+use Logger;
+my $LOGGER = new Logger();
+
 use strict;
 use utf8;
 use Encode;
@@ -13,7 +16,7 @@ use Data::Dumper;
 use CDB_File;
 use Configure;
 use RequestParser;
-use Logger;
+
 
 binmode(STDOUT, ':encoding(euc-jp)');
 binmode(STDERR, ':encoding(euc-jp)');
@@ -63,7 +66,6 @@ my $CONFIG = Configure::get_instance();
 sub main {
     # &init();
 
-    my $logger = new Logger();
     my $params = RequestParser::getDefaultValues(0);
 
     $params->{query} = decode('euc-jp', $opt{query});
@@ -75,7 +77,12 @@ sub main {
 
     # logical_cond_qk : クエリ間の論理演算
     # my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
+
+    my $logger = new Logger();
+    my $loggerAll = new Logger();
+
     my $query = RequestParser::parseQuery($params, $logger);
+    $loggerAll->setTimeAs('query_parse_time', '%.3f');
 
     print "*** QUERY ***\n";
     foreach my $qk (@{$query->{keywords}}) {
@@ -86,9 +93,39 @@ sub main {
 
     my $factory = new TsubakiEngineFactory(\%opt);
     my $tsubaki = $factory->get_instance();
+    $loggerAll->setTimeAs('create_TSUBAKI_instance_time', '%.3f');
+
     my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, flag_of_anchor_use => 1, DIST => 30, verbose => $opt{verbose}, results => $opt{results}, LOGGER => $logger});
+    $loggerAll->setTimeAs('search_time', '%.3f');
+
+    my $merge = 0;
+    foreach my $k ($logger->keys()) {
+	next unless ($k =~ /merge_synonyms_and_repnames_of_/);
+	$merge += $logger->getParameter($k);
+    }
 
     my $hitcount = scalar(@{$docs});
+
+
+    print "query: " . decode('euc-jp', $opt{query}) . "\n";
+    print "hitcount: " . $hitcount . "\n";
+    print "query parse time: " . $loggerAll->getParameter('query_parse_time') . "\n";
+    print "create TSUBAKI instance time: " . $loggerAll->getParameter('create_TSUBAKI_instance_time') . "\n";
+    print "search time: " . $loggerAll->getParameter('search_time') . "\n";
+    print "  normal search time: " . $logger->getParameter('normal_search') . "\n";
+    print "    index access time: " . $logger->getParameter('index_access') . "\n";
+    print "    merge synonyms time: " . $merge . "\n";
+    print "  logical condition time: " . $logger->getParameter('logical_condition') . "\n";
+    print "  near condition time: " . $logger->getParameter('near_condition') . "\n";
+    print "  merge dids time: " . $logger->getParameter('merge_dids') . "\n";
+    print "  document scoring time: " . $logger->getParameter('document_scoring') . "\n";
+    print "----------------------------------\n";
+
+    $LOGGER->setTimeAs('total', '%.3f');
+    print "total time: " . $LOGGER->getParameter('total') . "\n";
+    print "----------------------------------\n";
+    exit;
+
 
     $opt{results} = ($hitcount < $opt{results}) ? $hitcount :$opt{results};
     print $opt{results} . "\n";
