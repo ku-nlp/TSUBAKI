@@ -13,6 +13,7 @@ use utf8;
 use FileHandle;
 use Storable;
 use Error qw(:try);
+use Logger;
 # use Devel::Size qw/size total_size/;
 # use Devel::Size::Report qw/report_size/;
 use Time::HiRes;
@@ -65,6 +66,7 @@ sub new {
 
 	# ファイル(idx*.dat)をオープンする
 	$this->{IN}[$fcnt] = new FileHandle;
+	# print STDERR "$dir/idx$id.$this->{TYPE}.dat\n";
 	open($this->{IN}[$fcnt], "< $dir/idx$id.$this->{TYPE}.dat") or die "$dir/idx$id.$this->{TYPE}.dat: $!\n";
 	$fcnt++;
     }
@@ -94,13 +96,14 @@ sub printLog {
 }
 
 sub search_syngraph_test_for_new_format {
-    my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search) = @_;
+    my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search, $LOGGER) = @_;
 
     my $start_time = Time::HiRes::time;
 
     my $offset_j = 0;
     my @docs = ();
     my $total_byte = 0;
+    my $logger = new Logger();
     ## idxごとに検索
     for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
 	my $offset;
@@ -108,6 +111,8 @@ sub search_syngraph_test_for_new_format {
 	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
 	    last if (defined $offset);
 	}
+	$logger->setTimeAs(sprintf ("get_offset_from_cdb_%s", $keyword->{string}), '%.3f');
+
 	# オフセットがあるかどうかのチェック
 	unless (defined($offset)) {
 	    @docs = () unless (defined(@docs));
@@ -242,6 +247,11 @@ sub search_syngraph_test_for_new_format {
 		last;
 	    }
 	}
+	$logger->setTimeAs(sprintf ("seektime_%s", $keyword->{string}), '%.3f');
+    }
+
+    foreach my $k ($logger->keys()) {
+	$LOGGER->setParameterAs($k, $logger->getParameter($k));
     }
 
     my $finish_time = Time::HiRes::time;
@@ -555,10 +565,10 @@ sub load_score {
 }
 
 sub search {
-    my ($this, $keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search) = @_;
+    my ($this, $keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search, $logger) = @_;
 
     if ($syngraph_search) {
-	return $this->search_syngraph_test_for_new_format($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search);
+	return $this->search_syngraph_test_for_new_format($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search, $logger);
     }
 
     my $start_time = Time::HiRes::time;
