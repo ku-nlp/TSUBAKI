@@ -15,6 +15,7 @@ use Retrieve;
 use Encode qw(from_to encode decode);
 use utf8;
 use Devel::Size qw/size total_size/;
+use Logger;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -141,7 +142,6 @@ sub search {
     }
 
 
-
     # 文書のスコアリング
     my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $query->{qid2qtf}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, \%gid2df, \@dpnds);
     $opt->{LOGGER}->setTimeAs('document_scoring', '%.3f');
@@ -174,7 +174,7 @@ sub retrieve_from_dat {
     ## 代表表記化／SynGraph により複数個の索引に分割された場合の処理 (かんこう -> 観光 OR 刊行 OR 敢行 OR 感光 を検索する)
     my %idx2qid;
     my @results;
-
+    my $logger = new Logger();
     for (my $i = 0; $i < scalar(@{$reps}); $i++) {
 	my $rep = $reps->[$i];
 
@@ -202,7 +202,8 @@ sub retrieve_from_dat {
 
 	# $retriever->search($rep, $doc_buff, $add_flag, $position);
 	# 戻り値は 0番めがdid, 1番めがfreqの配列の配列 [[did1, freq1], [did2, freq2], ...]
-	$results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag);
+	$results[$i] = $retriever->search($rep, $doc_buff, $add_flag, $position, $sentence_flag, $syngraph_flag, $logger);
+	$logger->setTimeAs(sprintf ("index_access_of_%s", $rep->{string}), '%.3f');
 
 	if ($this->{verbose}) {
 	    print "qid " . $rep->{qid} . " ";
@@ -218,6 +219,7 @@ sub retrieve_from_dat {
 
 
     my $ret = $this->merge_search_result(\@results, \%idx2qid);
+    $logger->setTimeAs(sprintf ("merge_synonyms_and_repnames_of_%s", $reps->[0]{string}), '%.3f');
 
     if ($this->{show_speed}) {
 	my $finish_time = Time::HiRes::time;
@@ -225,7 +227,7 @@ sub retrieve_from_dat {
 	printf ("@@@ %.4f sec. doclist retrieving from dat.\n", $conduct_time);
     }
 
-    return $ret;
+    return ($ret, $logger);
 }
 
 sub get_minimum_distance {
@@ -263,7 +265,7 @@ sub calculate_score {
 
 
 sub retrieveFromBinaryData {
-    my ($this,  $query, $qid2df, $keyword, $flag_of_anchor_use) = @_;
+    my ($this,  $query, $qid2df, $keyword, $flag_of_anchor_use, $logger) = @_;
 
     # 検索にアンカーテキストを考慮する
     if ($flag_of_anchor_use && !$this->{disable_anchor}) {
@@ -279,6 +281,7 @@ sub retrieveFromBinaryData {
     my $add_flag = 1;
     my $first_requisite_item = 1;
     my ($ret, %requisiteDocBuf);
+    my @loggers;
     # 係り受けから検索する
     foreach my $T (('dpnds', 'words')) {
 
@@ -300,19 +303,11 @@ sub retrieveFromBinaryData {
 
 	    # バイナリファイルから文書の取得
 	    my $retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever} : $this->{word_retriever};
-	    my $docs = $this->retrieve_from_dat($retriever, $repnames, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
-
-# 	    my $host = `hostname`;
-# 	    if ($host =~ /033/) {
-# 		use Dumpvalue;
-# 		print Dumpvalue->new->dumpValue ($docs) . "\n";
-# 		print Dumpvalue->new->dumpValue ($repnames) . "\n";
-# 		print "-----\n";
-# 	    }
+	    my ($docs, $logger) = $this->retrieve_from_dat($retriever, $repnames, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
 
 	    # 各検索単語・係り受けについて検索された結果を納めた配列に push
 	    my $cont = ($repnames->[0]->{requisite}) ? 'requisite' : 'optional';
-	    push(@{$ret->{$T}{$cont}}, $docs);
+	    push (@{$ret->{$T}{$cont}}, $docs);
 
 
 
@@ -321,13 +316,18 @@ sub retrieveFromBinaryData {
 		my $add_flag = 1;
 		my $dumyDocBuf = ();
 		my $anchor_retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever4anchor} : $this->{word_retriever4anchor};
-		my $anchor_docs = $this->retrieve_from_dat($anchor_retriever, $repnames, $dumyDocBuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
-		push(@{$ret->{$T}{anchor}}, $anchor_docs);
+		my ($anchor_docs, $anchor_logger) = $this->retrieve_from_dat($anchor_retriever, $repnames, $dumyDocBuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+		foreach my $k ($anchor_logger->keys()) {
+		    my $v = $anchor_logger->getParameter($k);
+		    $logger->setParameterAs('anchor_' . $k, $v);
+		}
 	    }
+
+	    push (@loggers, $logger);
 	}
     }
 
-    return ($ret->{words}{requisite}, $ret->{dpnds}{requisite}, $ret->{words}{optional}, $ret->{dpnds}{optional}, $ret->{words}{anchor}, $ret->{dpnds}{anchor});
+    return ($ret->{words}{requisite}, $ret->{dpnds}{requisite}, $ret->{words}{optional}, $ret->{dpnds}{optional}, $ret->{words}{anchor}, $ret->{dpnds}{anchor}, \@loggers);
 
 # use Data::Dumper;
 # print Dumper($ret->{word}{requisite}) . "\n";
@@ -497,6 +497,7 @@ sub get_optional_docs {
 sub retrieveFromBinaryData2 {
     my ($this, $retriever, $query, $qid2df, $keyword, $type, $alwaysAppend, $requisite_only, $optional_only) = @_;
 
+    my @loggers = ();
     my @results = ();
     my $add_flag = 1;
     my $docbuf = {};
@@ -518,7 +519,8 @@ sub retrieveFromBinaryData2 {
 
 
 	# バイナリファイルから文書の取得
-	my $docs = $this->retrieve_from_dat($retriever, $reps, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+	my ($docs, $logger) = $this->retrieve_from_dat($retriever, $reps, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+	push (@loggers, $logger);
 	unless ($alwaysAppend) {
 	    print $add_flag . "=aflag\n" if ($this->{verbose});
 	    # $add_flag = 0 if ($add_flag > 0 && ($keyword->{logical_cond_qkw} ne 'OR' || $keyword->{near} > -1));
@@ -665,7 +667,7 @@ sub retrieveFromBinaryData2 {
 #           ]
 #         ];
 
-    return \@results;
+    return (\@results, \@loggers);
 }
 
 
@@ -699,8 +701,23 @@ sub retrieve_documents {
     foreach my $keyword (@{$query->{keywords}}) {
 
 	# 検索単語・係り受けの検索
-	my ($requisite_docs_word, $requisite_docs_dpnd, $optional_docs_word, $optional_docs_dpnd, $docs_word_anchor, $docs_dpnd_anchor) = $this->retrieveFromBinaryData($query, $qid2df, $keyword, $flag_of_anchor_use);
+
+	my ($requisite_docs_word, $requisite_docs_dpnd, $optional_docs_word, $optional_docs_dpnd, $docs_word_anchor, $docs_dpnd_anchor, $sub_loggers) = $this->retrieveFromBinaryData($query, $qid2df, $keyword, $flag_of_anchor_use, $logger);
 	$logger->setTimeAs('normal_search', '%.3f');
+
+	# ログを保存
+	my $total;
+	my $merge_synonyms_total;
+	foreach my $sub_logger (@$sub_loggers) {
+	    foreach my $k ($sub_logger->keys()) {
+		my $v = $sub_logger->getParameter($k);
+		$logger->setParameterAs($k, $v);
+		$total += $v if ($k =~ /index_access_of/);
+		$merge_synonyms_total += $v if ($k =~ /merge_synonyms_and_repnames_of/);
+	    }
+	}
+	$logger->setParameterAs('index_access', sprintf ("%.3f", $total));
+	$logger->setParameterAs('merge_synonyms', sprintf ("%.3f", $merge_synonyms_total));
 
 
 	# 近接制約の適用
