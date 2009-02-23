@@ -13,15 +13,17 @@ SUFFIX=
 
 # NICT
 if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    HOSTS_PREFIX=iccc0
+    HOSTS_PREFIX=iccc
     HOSTS_START=11
     HOSTS_END=38
+    DEGIT=3
     TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
     SUFFIX=.NICT
 else
     HOSTS_PREFIX=nlpc
     HOSTS_START=34
     HOSTS_END=59
+    DEGIT=2
     TSUBAKI_DIR=$HOME/tsubaki-develop/SearchEngine
 fi
 
@@ -47,9 +49,8 @@ fi
 
 
 start() {
-    for n in `seq $HOSTS_START $HOSTS_END`
+    for n in `seq $HOSTS_START $HOSTS_END | awk '{printf "%0'$DEGIT'd\n", $1}'`
     do
-	n=`echo $n | xargs printf %02d`
 	while read LINE
 	do
 	    if echo "$LINE" | grep -E '^[^\#]' >/dev/null 2>&1; then
@@ -70,9 +71,8 @@ start() {
 }
 
 status_or_stop() {
-    for n in `seq $HOSTS_START $HOSTS_END`
+    for n in `seq $HOSTS_START $HOSTS_END | awk '{printf "%0'$DEGIT'd\n", $1}'`
     do
-	n=`echo $n | xargs printf %02d`
 	while read LINE
 	do
 	    if echo "$LINE" | grep -E '^[^\#]' >/dev/null 2>&1; then
