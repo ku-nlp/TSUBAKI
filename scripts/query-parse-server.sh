@@ -26,7 +26,7 @@ UTIL_DIR=$HOME/cvs/Utils/perl
 COMMAND=query_parse_server.pl
 NICE=-4
 PERL=$HOME/local/bin/perl
-
+PORT=`grep PORT_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}'`
 
 start() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}' | perl -pe 's/,/ /g'`
@@ -39,7 +39,7 @@ start() {
 status_or_stop() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
-	pid=`ssh -f $h ps auxww | grep $COMMAND | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
+	pid=`ssh -f $h ps auxww | grep $COMMAND | grep $PORT | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
  	if [ "$1" = "stop" -a -n "$pid" ]; then
  	    ssh -f $h kill $pid
  	fi
