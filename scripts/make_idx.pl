@@ -14,6 +14,7 @@ use File::stat;
 use Indexer;
 use KNP::Result;
 use StandardFormatData;
+use Error qw(:try);
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -50,12 +51,16 @@ GetOptions(\%opt,
 	   'description',
 	   'inlinks',
 	   'sentences',
+	   'timeout=s',
 	   'use_pm',
 	   'verbose',
 	   'help');
 
 
 # デフォルト値の設定
+
+# タイムアウトの設定(30秒)
+$opt{timeout} = 30 unless ($opt{timeout});
 
 # 指定がない場合は、標準フォーマットにSYNGRAPHの解析結果が埋め込まれていると見なす
 $opt{scheme} = "SynGraph" unless ($opt{scheme});
@@ -316,42 +321,54 @@ sub extract_indice_from_single_file {
 	}
     }
 
-    # 索引表現の抽出
-    my $indice;
-    if ($opt{use_pm}) {
-	my $sfdat = new StandardFormatData($file, {gzipped => $opt{z}, is_old_version => 0});
-	$indice = &extract_indices($sfdat, $fid);
-    } else {
-	$indice = &extract_indices_wo_pm($file, $fid, {gzipped => $opt{z}});
-    }
+    try {
+	# タイムアウトの設定
+	local $SIG{ALRM} = sub {die "timeout"};
+	alarm $opt{timeout};
 
-    # 出力
-
-    if ($opt{compress}) {
-	open(WRITER, "| gzip > $opt{out}/$fid.idx.gz");
-	binmode(WRITER, ':utf8');
-    } else {
-	open(WRITER, '>:utf8', "$opt{out}/$fid.idx");
-    }
-
-    # NTCIRで提供されている文書の場合は、$fidから先頭のNWを削除
-    $fid =~ s/^NW//;
-
-    if ($opt{position}) {
-	if ($opt{syn}) {
-	    &output_syngraph_indice_with_position(*WRITER, $fid, $indice);
+	# 索引表現の抽出
+	my $indice;
+	if ($opt{use_pm}) {
+	    my $sfdat = new StandardFormatData($file, {gzipped => $opt{z}, is_old_version => 0});
+	    $indice = &extract_indices($sfdat, $fid);
 	} else {
-	    &output_with_position(*WRITER, $fid, $indice);
+	    $indice = &extract_indices_wo_pm($file, $fid, {gzipped => $opt{z}});
 	}
-    } else {
-	if ($opt{syn}) {
-	    &output_syngraph_indice_wo_position(*WRITER, $fid, $indice);
+	# 時間内に終了すればタイムアウトの設定を解除
+	alarm 0;
+
+
+
+	# 出力
+	if ($opt{compress}) {
+	    open(WRITER, "| gzip > $opt{out}/$fid.idx.gz");
+	    binmode(WRITER, ':utf8');
 	} else {
-	    &output_wo_position(*WRITER, $fid, $indice);
+	    open(WRITER, '>:utf8', "$opt{out}/$fid.idx");
 	}
-    }
-    close(WRITER);
-    print STDERR " done.\n" if ($opt{verbose});
+
+	# NTCIRで提供されている文書の場合は、$fidから先頭のNWを削除
+	$fid =~ s/^NW//;
+
+	if ($opt{position}) {
+	    if ($opt{syn}) {
+		&output_syngraph_indice_with_position(*WRITER, $fid, $indice);
+	    } else {
+		&output_with_position(*WRITER, $fid, $indice);
+	    }
+	} else {
+	    if ($opt{syn}) {
+		&output_syngraph_indice_wo_position(*WRITER, $fid, $indice);
+	    } else {
+		&output_wo_position(*WRITER, $fid, $indice);
+	    }
+	}
+	close(WRITER);
+	print STDERR " done.\n" if ($opt{verbose});
+
+    } catch Error with {
+	printf STDERR (qq([WARNING] Time out occured! (time=%d [sec], file=%s)\n), $opt{timeout}, $file);
+    };
 }
 
 # Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
