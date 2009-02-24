@@ -28,12 +28,6 @@ else
 fi
 
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
-CGI_DIR=$TSUBAKI_DIR/cgi
-MODULE_DIR=$TSUBAKI_DIR/perl
-UTILS_DIR=$HOME/cvs/Utils/perl
-COMMAND=tsubaki_server.pl
-NICE=-4
-PERL=$HOME/local/bin/perl
 
 # SYNGRAPH検索かどうかのチェック
 if [ $1 = "-syn" ];
