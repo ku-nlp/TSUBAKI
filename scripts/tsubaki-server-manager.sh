@@ -8,8 +8,10 @@
 # 動作確認を行う間隔（秒）
 INTERVAL=10
 
+
 # NICT
 if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
+    # 環境にあわせて変更
     TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
     PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN.NICT
 else
@@ -17,14 +19,14 @@ else
     PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN
 fi
 
-#################### 変数を変更 ####################
-
+NICE=-4
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 CGI_DIR=$TSUBAKI_DIR/cgi
 MODULE_DIR=$TSUBAKI_DIR/perl
-UTILS_DIR=$HOME/cvs/Utils/perl
 COMMAND=tsubaki_server.pl
-NICE=-4
+
+# 環境にあわせて変更
+UTILS_DIR=$HOME/cvs/Utils/perl
 PERL=$HOME/local/bin/perl
 
 ####################################################
