@@ -247,11 +247,10 @@ sub broadcastSearch {
 		$slave_logger->setParameterAs('data_size', sprintf ("%d", length($buff)));
 		$slave_logger->setParameterAs('hitcount', sprintf ("%d", $num));
 		$slave_logger->setParameterAs('port', sprintf ("%d", $hostinfo->{port}));
+
+		# ホストごとのログを保存
+		push(@{$host2log{$hostinfo->{name}}}, $slave_logger);
 	    }
-
-	    # ホストごとのログを保存
-	    push(@{$host2log{$hostinfo->{name}}}, $slave_logger);
-
 
 	    # ソケットの後処理
 	    $selecter->remove($socket);
