@@ -29,16 +29,6 @@ fi
 
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 
-# SYNGRAPH検索かどうかのチェック
-if [ $1 = "-syn" ];
-then
-    PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN$SUFFIX
-    USE_OF_SYNGRAPH="-syngraph"
-    shift
-else
-    PORTSFILE=$TSUBAKI_DIR/data/PORTS.ORD$SUFFIX
-    USE_OF_SYNGRAPH=
-fi
 
 
 call() {
@@ -49,10 +39,6 @@ call() {
     done
 }
 
-restart() {
-    status_or_stop_or_halt halt
-    start
-}
 
 case $1 in
     start)
