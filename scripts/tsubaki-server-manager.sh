@@ -1,16 +1,23 @@
 #!/bin/sh
 
+# $Id$
+
+# tsubaki_server.plの起動／停止を管理するスクリプト
+# tsubaki_server.plが停止している場合は、それを自動検出し再起動する
+
+# 動作確認を行う間隔（秒）
 INTERVAL=10
 
-SUFFIX=
 # NICT
 if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
     TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
-    SUFFIX=.NICT
+    PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN.NICT
 else
     TSUBAKI_DIR=$HOME/tsubaki/SearchEngine
+    PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN
 fi
 
+#################### 変数を変更 ####################
 
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 CGI_DIR=$TSUBAKI_DIR/cgi
@@ -20,8 +27,9 @@ COMMAND=tsubaki_server.pl
 NICE=-4
 PERL=$HOME/local/bin/perl
 
+####################################################
+
 USE_OF_SYNGRAPH="-syngraph"
-PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN$SUFFIX
 
 
 start() {
