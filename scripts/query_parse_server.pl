@@ -32,15 +32,16 @@ my $CONFIG = Configure::get_instance();
 &main();
 
 sub main {
+    my $PORT = shift @ARGV;
     my $listening_socket = IO::Socket::INET->new(
-	LocalPort => $CONFIG->{PORT_OF_QUERY_PARSE_SERVER},
+	LocalPort => $PORT,
 	Listen    => SOMAXCONN,
 	Proto     => 'tcp',
 	Reuse     => 1);
 
     unless ($listening_socket) {
 	my $host = `hostname`; chop($host);
-	die "Cannot listen port No. " . $CONFIG->{PORT_OF_QUERY_PARSE_SERVER} . " on $host. $!\n";
+	die "Cannot listen port No. " . $PORT . " on $host. $!\n";
 	exit;
     }
 

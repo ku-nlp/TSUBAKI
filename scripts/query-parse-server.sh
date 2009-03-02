@@ -31,8 +31,8 @@ PORT=`grep PORT_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}'`
 start() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
-	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND"
-	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND"
+	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
+	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
     done
 }
 
