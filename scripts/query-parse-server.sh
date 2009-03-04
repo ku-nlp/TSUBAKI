@@ -26,12 +26,12 @@ UTIL_DIR=$HOME/cvs/Utils/perl
 COMMAND=query_parse_server.pl
 NICE=-4
 PERL=$HOME/local/bin/perl
-PORT=`grep PORT_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}'`
+PORT=`grep PORT_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 
 start() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
-	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
+	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
 	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
     done
 }
