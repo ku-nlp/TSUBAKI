@@ -1,5 +1,5 @@
-#!/share09/home/skeiji/local/bin/perl
 #!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 #!/usr/local/bin/perl
 
 # $Id$
@@ -344,7 +344,7 @@ sub provideSearchResult {
 	exit;
     }
     # クエリの値がないので終了
-    elsif (!defined $params->{'query'}) {
+    elsif (!defined $params->{query} && !defined $params->{site}) {
 	require Renderer;
 	Renderer::printErrorMessage($cgi, 'queryの値を指定して下さい。');
 	exit;
