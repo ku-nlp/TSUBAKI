@@ -33,14 +33,14 @@ sub DESTROY {
 }
 
 sub printQuery {
-    my ($this, $logger, $params, $size, $keywords, $status) = @_;
+    my ($this, $logger, $params, $size, $query, $status) = @_;
 
     if ($status eq 'busy') {
 	printf qq(<DIV style="text-align: center; color: red;">ただいま検索サーバーが混雑しています。時間をおいてから再検索して下さい。</DIV>);
 	return;
     }
 
-    $this->{q2color} = $this->print_query($keywords);
+    $this->{q2color} = $this->print_query($query);
 
     if ($logger->getParameter('hitcount') < 1) {
 	print " を含む文書は見つかりませんでした。\n";
@@ -153,15 +153,19 @@ sub makeToolTip {
 }
 
 sub print_query {
-    my($this, $keywords) = @_;
+    my($this, $query) = @_;
 
     print qq(<TABLE width="100%" border="0" class="querynavi"><TR><TD width="*" style="padding: 0.25em 1em; background-color:#f1f4ff;">\n);
-    my @buf;
-    for (my $i = 0; $i < scalar(@$keywords); $i++) {
-	my $kwd = $keywords->[$i];
-	push(@buf, sprintf (qq(<A href="#" style="font-weight: 900;" id="query%d">%s</A>), $i, $kwd->{rawstring}));
+    if (scalar(@{$query->{keywords}}) > 0) {
+	my @buf;
+	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
+	    my $kwd = $query->{keywords}[$i];
+	    push(@buf, sprintf (qq(<A href="#" style="font-weight: 900;" id="query%d">%s</A>), $i, $kwd->{rawstring}));
+	}
+	print join('&nbsp;', @buf);
+    } else {
+	printf ("site:%s", $query->{option}{site});
     }
-    print join('&nbsp;', @buf);
 }
 
 sub print_query_verbose {
@@ -314,7 +318,6 @@ sub print_tsubaki_interface {
     my ($this, $params, $query, $status) = @_;
 
     my $canvasName = 'canvas';
-    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode();
 
     print << "END_OF_HTML";
     <html>
@@ -323,6 +326,7 @@ sub print_tsubaki_interface {
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<link rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
 END_OF_HTML
+    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
     &printJavascriptCode('canvas', $query);
     print << "END_OF_HTML";
     </head>
@@ -716,7 +720,7 @@ sub get_snippets {
 sub printSlaveServerLogs {
     my ($this, $logger) = @_;
 
-    my @keys = ('id', 'port', 'total_time', 'transfer_time_to', 'normal_search', 'logical_condition', 'near_condition', 'merge_dids', 'document_scoring', 'transfer_time_from', 'hitcount', 'data_size');
+    my @keys = ('id', 'port', 'total_time', 'transfer_time_to', 'normal_search', 'index_access', 'merge_synonyms', 'logical_condition', 'near_condition', 'merge_dids', 'document_scoring', 'transfer_time_from', 'hitcount', 'data_size');
     my $host2log = $logger->getParameter('host2log');
     my %buf = ();
     my %average = ();
@@ -735,6 +739,9 @@ sub printSlaveServerLogs {
 
 	my $localLoggers = $host2log->{$host};
 	foreach my $localLogger (sort {$a->getParameter('port') <=> $b->getParameter('port')} @$localLoggers) {
+	    # printf qq(<H3 style="border-bottom: 2px solid black;">%s (%s)</H3>\n), $host, $localLogger->getParameter('port');
+	    # print $localLogger->toHTMLCodeOfAccessTimeOfIndex();
+
 	    my $cells;
 	    foreach my $k (@keys) {
 		my $v = ($localLogger) ? $localLogger->getParameter($k) : '---';
@@ -758,6 +765,10 @@ sub printSlaveServerLogs {
 		next unless ($k eq 'id' || $k eq 'port' || $k eq 'hitcount');
 		$buf->{$k} = ($localLogger) ? $localLogger->getParameter($k) : '---';
 	    }
+
+	    # print Dumper::dump_as_HTML($localLogger) . "\n";
+	    # print "<HR>\n";
+
 	    push (@buff, $buf);
 	}
     }
@@ -857,7 +868,7 @@ sub printSearchResultForBrowserAccess {
     ##################
     # 検索クエリの表示
     ##################
-    $this->printQuery($logger, $params, $size, $query->{keywords}, $status);
+    $this->printQuery($logger, $params, $size, $query, $status);
 
 
     ############################
@@ -1156,6 +1167,17 @@ sub printSearchResultForAPICall {
     my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
     $writer->xmlDecl('utf-8');
     if ($params->{show_search_time}) {
+	my $etcmax =
+	    $logger->getParameter('max_logical_condition') +
+	    $logger->getParameter('max_near_condition') +
+	    $logger->getParameter('max_merge_dids') +
+	    $logger->getParameter('max_document_scoring');
+	my $etc =
+	    $logger->getParameter('logical_condition') +
+	    $logger->getParameter('near_condition') +
+	    $logger->getParameter('merge_dids') +
+	    $logger->getParameter('document_scoring');
+
 	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
 			  totalResultsAvailable => $hitcount, 
 			  totalResultsReturned => $end - $from, 
@@ -1168,8 +1190,21 @@ sub printSearchResultForAPICall {
 			  sort_by => $params->{'sort_by'},
 			  searchTime => $search_time,
 			  parseQueryTime => $logger->getParameter('parse_query'),
-			  indexSearchTime => $logger->getParameter('search'),
+			  slaveServerTime => $logger->getParameter('search'),
+
+			  snippetCreationWorstTime => ($logger->getParameter('snippet_creation') eq '') ? 0 : $logger->getParameter('snippet_creation'),
+			  connectionWorstTime => $logger->getParameter('max_transfer_time_from') + $logger->getParameter('max_transfer_time_to'),
+			  indexAccessWorstTime => $logger->getParameter('max_index_access'),
+			  mergeSynonymsWorstTime => $logger->getParameter('max_merge_synonyms'),
+			  etcWorstTime => $etcmax,
+
 			  snippetCreationTime => ($logger->getParameter('snippet_creation') eq '') ? 0 : $logger->getParameter('snippet_creation'),
+			  connectionTime => $logger->getParameter('transfer_time_from') + $logger->getParameter('transfer_time_to'),
+			  indexAccessTime => $logger->getParameter('index_access'),
+			  mergeSynonymsTime => $logger->getParameter('merge_synonyms'),
+			  etcTime => $etc,
+#			  indexSearchTime => $logger->getParameter('search'),
+#			  snippetCreationTime => ($logger->getParameter('snippet_creation') eq '') ? 0 : $logger->getParameter('snippet_creation'),
 			  site => (defined $params->{site}) ? $params->{site} : 'null'
 	    );
     } else {
