@@ -22,7 +22,7 @@ my %hosts = ();
 foreach my $host (@buf) {
     $hosts{$host->{name}} = 1;
 }
-$hosts{satamu} = 1;
+
 my $flag = 0;
 my @downs;
 my $P = Net::Ping->new();
