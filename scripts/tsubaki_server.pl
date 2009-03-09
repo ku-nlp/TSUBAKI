@@ -171,13 +171,27 @@ sub main {
 	    # 検索している文書セットのIDを保持
 	    $logger->setParameterAs('id', $ID);
 
-	    my $docs = $tsubaki->search($query, $qid2df, {
-		flag_of_dpnd_use => $query->{flag_of_dpnd_use},
-		flag_of_dist_use => $query->{flag_of_dist_use},
-		flag_of_anchor_use => $query->{flag_of_anchor_use},
-		DIST => $query->{DISTANCE},
-		MIN_DLENGTH => $query->{MIN_DLENGTH},
-		LOGGER => $logger });
+	    # 検索結果
+	    my $docs = [];
+
+	    # サイト検索の場合
+	    if ($query->{only_sitesearch}) {
+		while (my ($did, $url) = each %URL_DBs) {
+		    if (index ($url, $query->{option}{site}) > -1) {
+			push (@$docs, {did => $did, url => $url, score_total => 0});
+		    }
+		}
+	    }
+	    # 通常検索の場合
+	    else {
+		$docs = $tsubaki->search($query, $qid2df, {
+		    flag_of_dpnd_use => $query->{flag_of_dpnd_use},
+		    flag_of_dist_use => $query->{flag_of_dist_use},
+		    flag_of_anchor_use => $query->{flag_of_anchor_use},
+		    DIST => $query->{DISTANCE},
+		    MIN_DLENGTH => $query->{MIN_DLENGTH},
+		    LOGGER => $logger });
+	    }
 
 	    # 通信に要する時間を測定するためにクリアする
 	    $logger->clearTimer();
@@ -200,7 +214,7 @@ sub main {
 	    } else {
 
 		# サイト指定検索の場合
-		if (defined $query->{option}{site}) {
+		if (defined $query->{option}{site} && !$query->{only_sitesearch}) {
 		    my $filteredDocs = [];
 		    for (my $i = 0; $i < scalar(@$docs); $i++) {
 			my $did = sprintf("%09d", $docs->[$i]{did});
