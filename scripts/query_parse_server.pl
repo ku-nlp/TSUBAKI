@@ -101,6 +101,7 @@ sub main {
 		  modifier_of_NE_process => $params->{modifier_of_NE_process},
 		  logger => $logger,
 		  SYNGRAPH => $SYNGRAPH,
+		  site => $params->{site},
 		  debug => $params->{debug}
 		});
 	
