@@ -32,6 +32,7 @@ PERL=$HOME/local/bin/perl
 ####################################################
 
 USE_OF_SYNGRAPH="-syngraph"
+MEM=4194304
 
 
 start() {
@@ -56,7 +57,7 @@ start() {
 		    dlengthdbdir=$idxdir
 		    OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH $VERBOSE"
 		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\)
-		    nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $OPTION &
+		    ulimit -Ss $MEM ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $OPTION &
  		fi
 	    fi
 	done < $PORTSFILE
