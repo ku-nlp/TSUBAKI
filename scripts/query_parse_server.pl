@@ -41,7 +41,7 @@ sub main {
 
     unless ($listening_socket) {
 	my $host = `hostname`; chop($host);
-	die "Cannot listen port No. " . $PORT . " on $host. $!\n";
+	printf STDERR ("[QUERY PARSE SERVER] Can't listen the given port (num=%d,host=%s). Maybe the port is already used.\n", $PORT, $host);
 	exit;
     }
 
