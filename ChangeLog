@@ -1,10 +1,199 @@
+2009-03-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl:
+	サイト検索の場合は、文書ID順に出力されるように.
+
+	* cgi/SnippetMakerAgent.pm:
+	重要文のスコアが同点の場合は、文書の先頭に近い方を優先するように.
+
+	* scripts/tsubaki-server-manager.sh: 使用するメモリの上限を4GBとした.
+
+	* cgi/api.cgi:
+	siteが指定されている場合はqueryが空でもエラーメッセージを出力しないようにした.
+
+	* cgi/Renderer.pm:
+	サイト検索（クエリなし）に対応, インデックスアクセス時間と同義語マージ時間を別々に出力するようにした, APIでshow_search_timeが指定された時の出力を詳細化.
+
+	* cgi/Logger.pm: インデックスアクセス時間の表を描画するメソッドを追加.
+
+	* cgi/Query.pm, cgi/QueryParser.pm: サイト検索（クエリなし）に対応.
+
+	* scripts/tsubaki_server.pl: サイト検索（クエリなし）に対応.
+
+	* scripts/query-parse-server.sh: コメントアウト行を無視するように.
+
+	* scripts/query_parse_server.pl:
+	２重起動時にメモリを大量消費するエラーに対応.
+
+	* cgi/QueryParser.pm: 検索ボックスからサイト指定検索ができるように.
+
+	* scripts/query_parse_server.pl, cgi/Renderer.pm, cgi/RequestParser.pm, scripts/tsubaki_server.pl:
+	サイト指定検索をサポート.
+
+2009-03-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/query-parse-server.sh:
+	ポート番号がコメントアウトされている場合に対応.
+
+2009-03-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/query-parse-server.sh, scripts/query_parse_server.pl:
+	起動時の引数にポート番号を受け取るように.
+
+2009-02-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm:
+	検索スレーブサーバーが返すログデータが空の場合に対応.
+
+	* scripts/tsubaki-server-manager.sh: コメントを追加.
+
+	* scripts/tsubaki-server.sh: 不要な変数を削除.
+
+	* cgi/configure, cgi/configure.nict: メモリ監視サーバー用変数を追加
+
+	* scripts/tsubaki-server.sh:
+	tsubaki_server.plが動作しているかどうか監視し、停止しているようであれば再起動するようにした.
+
+2009-02-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/query-parse-server.sh:
+	killを行う際にPORT番号もチェックするようにした.
+
+	* scripts/tsubaki-server.sh:
+	ホスト名内のIDの桁が異なっていてもいいようにした.
+
+	* scripts/make_idx.pl: タイムアウト機能の追加(デフォルト30秒)
+
+2009-02-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Retrieve.pm:
+	インデックスの走査時間のログを取得するようにした.
+
+	* scripts/TsubakiEngine.pm:
+	インデックスを走査する時間のログを取得するようにした.
+
+	* scripts/tsubaki_test.pl:
+	各処理にようした時間のログを出力するようにした.
+
+2009-02-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm:
+	スレーブサーバーとの通信を間隔をあけて行うようにした.
+
+2009-02-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm:
+	syngraphオプションが指定されていない場合はKNPの解析結果を利用するように.
+
+2009-02-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict:
+	検索に利用するSynNode数の上限を指定する変数(MAX_NUMBER_OF_SYNNODES)を追加.
+
+	* cgi/QueryParser.pm, cgi/QueryKeyword.pm:
+	検索に利用するSynNode数に上限を設けた．
+
+	* cgi/configure, cgi/configure.nict:
+	クエリ処理サーバーを起動するホスト名を指定する変数(HOST_OF_QUERY_PARSE_SERVER)を追加
+
+	* scripts/query-parse-server.sh:
+	クエリ処理サーバーとして利用するホストをconfigureファイルから取得するようにした.
+
+2009-02-10  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	文書頻度DBがロードされていない場合はget_DFメソッド内で引かないようにした.
+
+	* cgi/QueryParser.pm:
+	DFDB_DIRが指定されている時のみ文書頻度DBをロードするようにした.
+
+2009-02-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/query-parse-server.sh: デフォルト値の変更.
+
+	* scripts/query-parse-server.sh: Utils/perlへのパスを追加.
+
+	* cgi/QueryParser.pm:
+	文書頻度DBの読み込みにCDB_Readerを利用するようにした.
+
+	* cgi/Configure.pm:
+	SERVER_STATUS_LOGで指定されたファイルがない場合はメッセージを表示するようにした.
+
+	* scripts/query-parse-server.sh:
+	NICTで検索マスターサーバーとして利用しているノード情報を修正.
+
+2009-02-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: SynGraphをnewする条件を変更.
+
+	* cgi/RequestParser.pm: クエリ処理をサーバーで行うオプションに対応.
+
+	* cgi/configure, cgi/configure.nict:
+	クエリ処理サーバー用のパラメータを追加.
+
+	* cgi/configure, cgi/configure.nict: パラメータの追加.
+
+	* cgi/Configure.pm: ダウンしているサーバーは利用しないように.
+
+
+2009-01-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	反義語でクエリを拡張する処理をmakeIndexFromSynGraphResultObjectメソッドに追加，並列句の処理, 固有表現・複合名詞処理をmakeIndexFromKNPResultObjectメソッド内に追加
+
+2009-01-17  shibata  <shibata@nlpc02.kuro.nii-chiba.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	段落の先頭文かどうかの情報を保持するオプションを追加
+
+2009-01-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl:
+	url, titleデータベースをメモリで持つようにした.
+
+2009-01-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	検索クエリ全体で近接制約を適用するように変更.(検索クエリが「ABC DE」の場合、A,B,C,D,Eが100語以内に現れている文書を検索する)
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm, cgi/api.cgi:
+	検索時間を取得するためのオプションを追加.
+
+2009-01-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm:
+	相対リンクから絶対リンクへの変換処理を修正.
+
+2008-12-18  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Retrieve.pm:
+	インデックスからデータを逐次読み込むのではなく、いったん読み込んでからメモリ上でデータを展開するようにした.
+
+2008-12-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	makeIndexFromKNPResultObjectメソッド内で、termのメンバ変数に文書の先頭からの位置を追加するようにした.
+
+2008-12-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	内容語だけをとるオプション、係り受けをとらないオプションをmakeIndexFromKNPResultObjectメソッドに追加.
+
+2008-12-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/QueryAnalyzer.pm:
+	MONEY,DATE,TIME,PERCENTの修飾句は○にするように, 複合名詞検出コードを整理.
+
+2008-12-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict, scripts/TsubakiEngineFactory.pm:
+	総文書数,平均文書長の定義を設定ファイルに移行.
+
 2008-11-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/Renderer.pm: access_logファイルが存在するかどうかの確認をやめた.
 
 2008-11-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
-
-	* cgi/RequestParser.pm: small changes.
 
 	* cgi/RequestParser.pm:
 	onを1に変換する際、queryを対象からはずすようにした.
