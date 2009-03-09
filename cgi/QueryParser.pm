@@ -411,6 +411,7 @@ sub parse {
     my $ret = new Query({ keywords => \@qks,
 			  logical_cond_qk => $opt->{logical_cond_qk},
 			  only_hitcount => $opt->{only_hitcount},
+			  only_sitesearch => (scalar(@qks) < 1 && defined $opt->{site}) ? 1 : 0,
 			  qid2rep => \%qid2rep,
 			  qid2qtf => \%qid2qtf,
 			  qid2gid => \%qid2gid,

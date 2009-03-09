@@ -16,6 +16,7 @@ sub new {
 	keywords => $params->{keywords},
 	logical_cond_qk => $params->{logical_cond_qk},
 	only_hitcount => $params->{only_hitcount},
+	only_sitesearch => $params->{only_sitesearch},
 	qid2rep => $params->{qid2rep},
 	qid2qtf => $params->{qid2qtf},
 	qid2gid => $params->{qid2gid},
