@@ -61,6 +61,7 @@ sub getDefaultValues {
     $params{CN_process} = 1;
     $params{NE_process} = 1;
     $params{modifier_of_NE_process} = 1;
+    $params{site} = undef;
 
 
     # スニペット表示のデフォルト設定
@@ -445,6 +446,7 @@ sub parseQuery {
 	      NE_process => $params->{NE_process},
 	      modifier_of_NE_process => $params->{modifier_of_NE_process},
 	      logger => $logger,
+	      site => $params->{site},
 	      debug => $params->{debug}
 	    });
     }

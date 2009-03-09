@@ -1169,7 +1169,8 @@ sub printSearchResultForAPICall {
 			  searchTime => $search_time,
 			  parseQueryTime => $logger->getParameter('parse_query'),
 			  indexSearchTime => $logger->getParameter('search'),
-			  snippetCreationTime => ($logger->getParameter('snippet_creation') eq '') ? 0 : $logger->getParameter('snippet_creation')
+			  snippetCreationTime => ($logger->getParameter('snippet_creation') eq '') ? 0 : $logger->getParameter('snippet_creation'),
+			  site => (defined $params->{site}) ? $params->{site} : 'null'
 	    );
     } else {
 	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
@@ -1181,7 +1182,8 @@ sub printSearchResultForAPICall {
 			  dpnd => $params->{'dpnd'},
 			  anchor => $params->{flag_of_anchor_use},
 			  filterSimpages => $params->{'filter_simpages'},
-			  sort_by => $params->{'sort_by'}
+			  sort_by => $params->{'sort_by'},
+			  site => (defined $params->{site}) ? $params->{site} : 'null'
 	    );
     }
 
