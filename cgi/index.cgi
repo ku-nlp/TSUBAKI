@@ -76,7 +76,7 @@ sub main {
 	    # 検索クエリの構造体を取得
 	    my $query = RequestParser::parseQuery($params, $logger);
 	    if ($params->{debug}) {
-		$query->{keywords}[0]->print_for_web();
+		$query->{keywords}[0]->print_for_web() if (defined $query->{keywords}[0]);
 
 		print "<hr>\n";
 		print Dumper::dump_as_HTML($query) . "<br>\n";

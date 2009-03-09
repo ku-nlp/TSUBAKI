@@ -193,6 +193,7 @@ sub broadcastSearch {
 								     $slave_logger->getParameter('document_scoring') +
 								     $slave_logger->getParameter('transfer_time_from')));
 
+
 		foreach my $k ($slave_logger->keys()) {
 		    my $v = $slave_logger->getParameter($k);
 		    $logbuf{$k} += $v;
@@ -269,7 +270,7 @@ sub broadcastSearch {
 	if ($k =~ /^(max|min)/) {
 	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf{$k}));
 	} else {
-	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf{$k} / $size));
+	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf{$k} / $size)) if ($size > 0);
 	}
     }
     
