@@ -29,7 +29,7 @@ PERL=$HOME/local/bin/perl
 PORT=`grep PORT_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 
 start() {
-    for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}' | perl -pe 's/,/ /g'`
+    for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
 	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
 	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
@@ -37,7 +37,7 @@ start() {
 }
 
 status_or_stop() {
-    for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | awk '{print $2}' | perl -pe 's/,/ /g'`
+    for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
 	pid=`ssh -f $h ps auxww | grep $COMMAND | grep $PORT | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
  	if [ "$1" = "stop" -a -n "$pid" ]; then
