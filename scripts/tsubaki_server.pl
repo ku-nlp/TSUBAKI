@@ -178,7 +178,7 @@ sub main {
 	    if ($query->{only_sitesearch}) {
 		while (my ($did, $url) = each %URL_DBs) {
 		    if (index ($url, $query->{option}{site}) > -1) {
-			push (@$docs, {did => $did, url => $url, score_total => 0});
+			push (@$docs, {did => $did, url => $url, score_total => 10000000 / ($did + 1)});
 		    }
 		}
 	    }
