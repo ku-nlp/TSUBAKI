@@ -95,4 +95,49 @@ sub setTimeAs {
     return $this->setParameterAs($key, $val);
 }
 
+sub toHTMLCodeOfAccessTimeOfIndex {
+    my ($this) = @_;
+
+    my $total = 0;
+    my %buf;
+    foreach my $k (sort {$this->{log}{$b} <=> $this->{log}{$a}} keys %{$this->{log}}) {
+	next unless ($k =~ /index_access_of/ || $k =~ /seektime/ || $k =~ /get_offset/);
+	next if ($k =~ /^index_access$/);
+
+	my @tmp = split (/_/, $k);
+	my $midasi = pop @tmp;
+	$buf{$midasi}->{join ('_', @tmp)} = $this->{log}{$k};
+    }
+
+
+    my $wbuf .= "<TABLE border=1><TR>\n";
+    my $dbuf .= "<TABLE border=1><TR>\n";
+    my @keys = ('get_offset_from_cdb', 'seektime', 'index_access_of');
+#   foreach my $midasi (sort {$buf{$b}->{index_access_of} <=> $buf{$a}->{index_access_of}} keys %buf) {
+    foreach my $midasi (sort keys %buf) {
+	my $sbuf = sprintf qq(<TD nowrap>%s</TD><TD><TABLE border=1>), $midasi;
+	foreach my $prefix (('', 'anchor_')) {
+	    foreach my $k (@keys) {
+		my $K = sprintf qq(%s%s), $prefix, $k;
+		my $color = ($k =~ /index_access_of/) ? '#dddddd' : 'white';
+		my $K2 = $K;
+		$K2 =~ s/index_access_of/index_access/;
+		$K2 =~ s/seektime/load_time/;
+		$sbuf .= sprintf qq(<TR bgcolor="%s"><TD>%s</TD><TD>%s</TD></TR>\n), $color, $K2, $buf{$midasi}->{$K};
+	    }
+	}
+	$sbuf .= "</TABLE></TD>\n";
+
+	if ($midasi =~ /\-\>/) {
+	    $dbuf .= $sbuf;
+	} else {
+	    $wbuf .= $sbuf;
+	}
+    }
+    $wbuf .= "</TR></TABLE><P>\n";
+    $dbuf .= "</TR></TABLE>\n";
+
+    return ($wbuf . $dbuf);
+}
+
 1;
