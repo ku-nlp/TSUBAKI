@@ -301,9 +301,9 @@ sub get_snippets_for_each_did {
 	my %snippets = ();
 	my $sentences = $this->{did2snippets}{$did};
 
-	# スコアの高い順に処理
+	# スコアの高い順に処理（同点の場合は、sidの若い順）
 	my %sbuf = ();
-	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
+	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score} || $a->{sid} <=> $b->{sid}} @{$sentences}) {
 	    next if (exists($sbuf{$sentence->{rawstring}}));
 	    $sbuf{$sentence->{rawstring}} = 1;
 
