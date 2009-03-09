@@ -115,7 +115,7 @@ sub main {
 	exit;
     }
 
-    syswrite STDERR, "TSUBAKI SERVER IS READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir}, id=$ID)\n";
+    syswrite STDERR, "[TSUBAKI SERVER] READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir}, id=$ID)\n";
     while (1) {
 	my $new_socket = $listening_socket->accept();
 	my $client_sockaddr = $new_socket->peername();
@@ -198,6 +198,22 @@ sub main {
 		print $new_socket encode_base64($hitcount, "") , "\n";
 		print $new_socket "END_OF_HITCOUNT\n";
 	    } else {
+
+		# サイト指定検索の場合
+		if (defined $query->{option}{site}) {
+		    my $filteredDocs = [];
+		    for (my $i = 0; $i < scalar(@$docs); $i++) {
+			my $did = sprintf("%09d", $docs->[$i]{did});
+			$docs->[$i]{url} = $URL_DBs{$did};
+			next unless ($docs->[$i]{url} =~ m!\Q$query->{option}{site}\E!);
+
+			push (@$filteredDocs, $docs->[$i]);
+		    }
+		    $docs = $filteredDocs;
+		    $hitcount = scalar(@$filteredDocs);
+		}
+
+
 		my $ret = [];
 		my $docs_size = $hitcount;
 
@@ -228,7 +244,7 @@ sub main {
 			my $did = sprintf("%09d", $docs->[$i]{did});
 			unless (exists $STOP_PAGE_LIST{$did}) {
 			    if ($i < $max_rank_of_getting_title_and_url) {
-				$docs->[$i]{url} = $URL_DBs{$did};
+				$docs->[$i]{url} = $URL_DBs{$did} unless ($docs->[$i]{url});
 				$docs->[$i]{title} = $TITLE_DBs{$did};
 				$docs->[$i]{title} = 'no title.' unless ($docs->[$i]{title});
 
