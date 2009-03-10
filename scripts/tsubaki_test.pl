@@ -61,6 +61,8 @@ sub init {
 
 my $CONFIG = Configure::get_instance();
 
+$CONFIG->{USE_OF_QUERY_PARSE_SERVER} = 0;
+
 &main();
 
 sub main {
