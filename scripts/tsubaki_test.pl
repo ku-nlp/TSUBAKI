@@ -30,10 +30,13 @@ if (!$opt{idxdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     exit;
 }
 
+$opt{syngraph} = 1;
 $opt{results} = 1000 unless ($opt{results});
+$opt{score_verbose} = 1 if ($opt{debug});
 
 my @DF_WORD_DBs = ();
 my @DF_DPND_DBs = ();
+
 
 sub init {
     print STDERR "loading dfdb files... " if ($opt{verbose});
@@ -86,11 +89,13 @@ sub main {
     my $query = RequestParser::parseQuery($params, $logger);
     $loggerAll->setTimeAs('query_parse_time', '%.3f');
 
-    print "*** QUERY ***\n";
-    foreach my $qk (@{$query->{keywords}}) {
-	# print Dumper($qk) . "\n";
-	print $qk->to_string_verbose() . "\n";
-	print "*************\n";
+    if ($opt{debug}) {
+	print "*** QUERY ***\n";
+	foreach my $qk (@{$query->{keywords}}) {
+	    # print Dumper($qk) . "\n";
+	    print $qk->to_string_verbose() . "\n";
+	    print "*************\n";
+	}
     }
 
     my $factory = new TsubakiEngineFactory(\%opt);
@@ -132,7 +137,6 @@ sub main {
 
 
     $opt{results} = ($hitcount < $opt{results} || $opt{results} < 0) ? $hitcount :$opt{results};
-    print $opt{results} . "\n";
     for (my $rank = 0; $rank < $opt{results}; $rank++) {
 	my $did = sprintf("%09d", $docs->[$rank]{did});
 	my $score = $docs->[$rank]{score_total};
@@ -145,7 +149,11 @@ sub main {
 	my $score_aw = $docs->[$rank]{score_word_anchor};
 	my $score_ad = $docs->[$rank]{score_dpnd_anchor};
 
-	printf("rank=%d did=%s score=%.3f start=%d end=%d pos=%s (w=%.3f d=%.3f n=%.3f aw=%.3f ad=%.3f)\n", $rank + 1, $did, $score, $start, $end, $pos2qid, $score_w, $score_d, $score_n, $score_aw, $score_ad);
+	if ($opt{debug}) {
+	    printf("rank=%d did=%s score=%.3f start=%d end=%d pos=%s (w=%.3f d=%.3f n=%.3f aw=%.3f ad=%.3f)\n", $rank + 1, $did, $score, $start, $end, $pos2qid, $score_w, $score_d, $score_n, $score_aw, $score_ad);
+	} else {
+	    printf("rank=%d did=%s score=%.3f\n", $rank + 1, $did, $score);
+	}
     }
     print "hitcount=$hitcount\n";
 }
