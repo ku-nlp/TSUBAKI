@@ -22,7 +22,7 @@ binmode(STDOUT, ':encoding(euc-jp)');
 binmode(STDERR, ':encoding(euc-jp)');
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s', 'score_verbose', 'disable_synnode');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s', 'score_verbose', 'disable_synnode', 'show_time');
 
 if (!$opt{idxdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -109,27 +109,29 @@ sub main {
     my $hitcount = scalar(@{$docs});
 
 
-    print "query: " . decode('euc-jp', $opt{query}) . "\n";
-    print "hitcount: " . $hitcount . "\n";
-    print "query parse time: " . $loggerAll->getParameter('query_parse_time') . "\n";
-    print "create TSUBAKI instance time: " . $loggerAll->getParameter('create_TSUBAKI_instance_time') . "\n";
-    print "search time: " . $loggerAll->getParameter('search_time') . "\n";
-    print "  normal search time: " . $logger->getParameter('normal_search') . "\n";
-    print "    index access time: " . $logger->getParameter('index_access') . "\n";
-    print "    merge synonyms time: " . $merge . "\n";
-    print "  logical condition time: " . $logger->getParameter('logical_condition') . "\n";
-    print "  near condition time: " . $logger->getParameter('near_condition') . "\n";
-    print "  merge dids time: " . $logger->getParameter('merge_dids') . "\n";
-    print "  document scoring time: " . $logger->getParameter('document_scoring') . "\n";
-    print "----------------------------------\n";
+    if ($opt{show_time}) {
+	print "query: " . decode('euc-jp', $opt{query}) . "\n";
+	print "hitcount: " . $hitcount . "\n";
+	print "query parse time: " . $loggerAll->getParameter('query_parse_time') . "\n";
+	print "create TSUBAKI instance time: " . $loggerAll->getParameter('create_TSUBAKI_instance_time') . "\n";
+	print "search time: " . $loggerAll->getParameter('search_time') . "\n";
+	print "  normal search time: " . $logger->getParameter('normal_search') . "\n";
+	print "    index access time: " . $logger->getParameter('index_access') . "\n";
+	print "    merge synonyms time: " . $merge . "\n";
+	print "  logical condition time: " . $logger->getParameter('logical_condition') . "\n";
+	print "  near condition time: " . $logger->getParameter('near_condition') . "\n";
+	print "  merge dids time: " . $logger->getParameter('merge_dids') . "\n";
+	print "  document scoring time: " . $logger->getParameter('document_scoring') . "\n";
+	print "----------------------------------\n";
 
-    $LOGGER->setTimeAs('total', '%.3f');
-    print "total time: " . $LOGGER->getParameter('total') . "\n";
-    print "----------------------------------\n";
-    exit;
+	$LOGGER->setTimeAs('total', '%.3f');
+	print "total time: " . $LOGGER->getParameter('total') . "\n";
+	print "----------------------------------\n";
+	exit;
+    }
 
 
-    $opt{results} = ($hitcount < $opt{results}) ? $hitcount :$opt{results};
+    $opt{results} = ($hitcount < $opt{results} || $opt{results} < 0) ? $hitcount :$opt{results};
     print $opt{results} . "\n";
     for (my $rank = 0; $rank < $opt{results}; $rank++) {
 	my $did = sprintf("%09d", $docs->[$rank]{did});
