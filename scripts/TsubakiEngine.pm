@@ -321,6 +321,7 @@ sub retrieveFromBinaryData {
 		    my $v = $anchor_logger->getParameter($k);
 		    $logger->setParameterAs('anchor_' . $k, $v);
 		}
+		push (@{$ret->{$T}{anchor}}, $anchor_docs);
 	    }
 
 	    push (@loggers, $logger);
