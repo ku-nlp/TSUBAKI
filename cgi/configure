@@ -340,3 +340,6 @@ MAX_RATE_OF_MEMORY_USE	20
 
 # スレーブサーバーの状態のログ
 SERVER_LOG_FILE	/tmp/tsubaki-slave-server.log
+
+# インデックスデータからロードする文書データの最大数（0で全部,デフォルト0）
+MAX_SIZE_OF_DOCS	0
