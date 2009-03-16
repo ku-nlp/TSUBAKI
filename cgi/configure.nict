@@ -308,3 +308,6 @@ MAX_NUMBER_OF_SYNNODES		5
 # メモリ監視サーバー用変数
 # tsubaki_server.plがメモリを何%以上利用したらkillを行うか
 MAX_RATE_OF_MEMORY_USE	20
+
+# スレーブサーバーの状態のログ
+SERVER_LOG_FILE	/tmp/tsubaki-slave-server.log
