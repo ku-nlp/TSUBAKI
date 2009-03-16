@@ -17,9 +17,12 @@ use Logger;
 # use Devel::Size qw/size total_size/;
 # use Devel::Size::Report qw/report_size/;
 use Time::HiRes;
+use Configure;
+
 
 my $DEBUG = 1;
 my $host = `hostname`; chop($host);
+my $CONFIG = Configure::get_instance();
 
 # $DEBUG = 1 if($host eq "nlpc01\n");
 
@@ -160,7 +163,8 @@ sub search_syngraph_test_for_new_format {
 
 		my $pos = 0;
 		my %soeji2pos = ();
-		for (my $j = 0; $j < $ldf; $j++) {
+		my $N = ($CONFIG->{MAX_SIZE_OF_DOCS} == 0) ? $ldf : (($ldf > $CONFIG->{MAX_SIZE_OF_DOCS}) ? $CONFIG->{MAX_SIZE_OF_DOCS} : $ldf);
+		for (my $j = 0; $j < $N; $j++) {
 		    $total_byte += 4;
 		    my $did = $dids[$j];
 
