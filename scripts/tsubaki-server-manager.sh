@@ -14,9 +14,11 @@ if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
     # 環境にあわせて変更
     TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
     PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN.NICT
+    CONFIG_FILE=$TSUBAKI_DIR/cgi/configure.nict
 else
     TSUBAKI_DIR=$HOME/tsubaki/SearchEngine
     PORTSFILE=$TSUBAKI_DIR/data/PORTS.SYN
+    CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
 fi
 
 NICE=-4
@@ -24,6 +26,9 @@ SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 CGI_DIR=$TSUBAKI_DIR/cgi
 MODULE_DIR=$TSUBAKI_DIR/perl
 COMMAND=tsubaki_server.pl
+# ログの出力先
+LOGFILE=`grep SERVER_LOG_FILE $CONFIG_FILE | awk '{print $2}'`
+
 
 # 環境にあわせて変更
 UTILS_DIR=$HOME/cvs/Utils/perl
@@ -57,6 +62,7 @@ start() {
 		    dlengthdbdir=$idxdir
 		    OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH $VERBOSE"
 		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\)
+		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
 		    ulimit -Ss $MEM ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $OPTION &
  		fi
 	    fi
@@ -77,8 +83,10 @@ status_or_stop() {
  		if [ "$1" = "stop" ]; then
  		    kill -KILL $pid
 		    echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=`date`\)
+		    echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=`date`\) >> $LOGFILE
 		else
 		    echo [TSUBAKI SERVER STATUS] \(port\=$PORT host\=`hostname` pid\=$pid\)
+		    echo [TSUBAKI SERVER STATUS] \(port\=$PORT host\=`hostname` pid\=$pid\) >> $LOGFILE
 		fi
  	    fi
 	fi
@@ -97,6 +105,7 @@ halt() {
     if [ -n "$pid" ]; then
  	kill -KILL $pid
 	echo [TSUBAKI SERVER] HALT\ \ \ \(pid=$pid, host=`hostname`, port=$PORT, time=`date`\)
+	echo [TSUBAKI SERVER] HALT\ \ \ \(pid=$pid, host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
     fi
 }
 

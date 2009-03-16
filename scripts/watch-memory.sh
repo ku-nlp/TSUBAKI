@@ -18,8 +18,9 @@ else
 fi
 
 # 使用メモリの上限
-MEM_TH=`grep MAX_RATE_OF_MEMORY_USE $CONFIG_FILE | awk '{print $2}'`
-
+MEM_TH=`grep MAX_RATE_OF_MEMORY_USE $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+# ログの出力先
+LOGFILE=`grep SERVER_LOG_FILE $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 
 
 start() {
@@ -29,6 +30,7 @@ start() {
 	do
 	    PORT=`ps auxww | grep $COMMAND | grep -v grep | grep $pid | rev | cut -f 4 -d ' ' | rev`
 	    echo KILL TSUBAKI SERVER BECAUSE OF MEMORY OVER! \(host=`hostname`, port=$PORT, max=$MEM_TH%, time=`date`\)
+	    echo KILL TSUBAKI SERVER BECAUSE OF MEMORY OVER! \(host=`hostname`, port=$PORT, max=$MEM_TH%, time=`date`\) >> $LOGFILE
 	    kill -KILL  $pid
 	done
 
