@@ -60,7 +60,7 @@ sub extract_sentences_from_standard_format {
 	} else {
 	    return &extract_sentences_from_content($query, $content, $opt);
 	}
-    }	
+    }
 }
 
 sub extract_sentences_from_content_using_position {
@@ -154,7 +154,7 @@ sub extract_sentences_from_content_using_position {
 
 		my $length = scalar(@{$sentence->{surfs}});
 		$length = 1 if ($length < 1);
-		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * log($length);
+		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
 		$sentence->{score} = $score;
 		$sentence->{smoothed_score} = $score;
 		$sentence->{length} = $length;
@@ -261,7 +261,7 @@ sub isMatch2 {
     return (1, $start, $end + 1);
 }
 
-    
+
 sub extract_sentences_from_content_for_kwic {
     my ($query, $content, $opt) = @_;
 
@@ -344,7 +344,7 @@ sub extract_sentences_from_content_for_kwic {
 		push(@contextsL, substr($contextL, $offset, $opt->{kwic_window_size}));
 	    } else {
 		push(@contextsL, $contextL);
-		
+
 		# $opt->{kwic_window_size} に満たない場合は、前方の文を取得する
 		my $j = $i - 1;
 		while ($j > -1) {
@@ -601,7 +601,7 @@ sub extract_sentences_from_content {
 
 		my $length = scalar(@{$sentence->{surfs}});
 		$length = 1 if ($length < 1);
-		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * log($length);
+		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
 		$th = $count + $opt->{window_size} if ($score > 0 && $th < 0);
 		$sentence->{score} = $score;
 		$sentence->{smoothed_score} = $score;
@@ -806,9 +806,9 @@ sub make_word_list {
 	unless ($line =~ /^\+ (\-?\d+)([a-zA-Z])/){
 	    next if ($line =~ /^(\<|\@|EOS)/);
 	    next if ($line =~ /^\# /);
-	    
+
 	    my @m = split(/\s+/, $line);
-	    
+
 	    my $surf = $m[0];
 	    my $midashi = "$m[2]/$m[1]";
 	    my %reps = ();
@@ -819,7 +819,7 @@ sub make_word_list {
 	    $midashi =~ s/\/.+// if ($opt->{ignore_yomi});
 
 	    $reps{&toUpperCase_utf8($midashi)} = 1;
-	    
+
 	    ## 代表表記に曖昧性がある場合は全部保持する
 	    ## ただし表記・読みが同一の代表表記は区別しない
 	    ## ex) 日本 にっぽん 日本 名詞 6 地名 4 * 0 * 0 "代表表記:日本/にほん" <代表表記:日本/にほん><品曖><ALT-日本-にほん-日本-6-4-0-0-"代表表記:日本/にほん"> ...
@@ -837,7 +837,7 @@ sub make_word_list {
 		}
 	    }
 	    $line = $lnbuf;
-	    
+
 	    my @reps_array = sort keys %reps;
 	    my $word = {
 		surf => $surf,
