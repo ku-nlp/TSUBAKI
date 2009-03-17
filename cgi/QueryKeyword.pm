@@ -81,7 +81,7 @@ sub new {
     my $indice;
 
     # WebClusteringではKNPの解析結果からtermを抜き出していることに注意
-    if ($is_phrasal_search > 0 || !$opt->{syngraph}) {
+    if (!$opt->{syngraph}) {
 	# KNP 結果から索引語を抽出
 	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult->all);
 	$this->{logger}->setTimeAs('Indexer', '%.3f');
