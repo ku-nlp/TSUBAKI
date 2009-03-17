@@ -1,3 +1,68 @@
+2009-03-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm: フレーズ検索時もSynGraphを適用するように.
+
+2009-03-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: MAX_SIZE_OF_DOCSを追加.
+
+	* scripts/Retrieve.pm:
+	インデックスからロードする文書データ数の上限を指定できるようにした.
+
+	* cgi/configure, cgi/configure.nict: SERVER_LOG_FILEの追加.
+
+	* scripts/tsubaki-server-manager.sh, scripts/watch-memory.sh:
+	サーバーの状態をログファイルに出力するように.
+
+	* cgi/SnippetMaker.pm:
+	クエリのみからなる文に対してスコアが0になるバグを修正.
+
+2009-03-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm: アンカー検索の結果が反映されないバグを修正.
+
+2009-03-10  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_test.pl:
+	SynGraphインデックスをデフォルトに, 出力形式を整理.
+
+	* scripts/tsubaki_test.pl:
+	show_timeオプションの追加, resultsの引数が-1の場合は全件表示するように.
+
+	* scripts/tsubaki_test.pl: 自身でクエリ解析を行うように.
+
+2009-03-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl:
+	サイト検索の場合は、文書ID順に出力されるように.
+
+	* cgi/SnippetMakerAgent.pm:
+	重要文のスコアが同点の場合は、文頭に近い方を優先するように.
+
+	* scripts/tsubaki-server-manager.sh: 使用するメモリの上限を4GBとした.
+
+	* cgi/api.cgi:
+	siteが指定されている場合はqueryが空でもエラーメッセージを出力しないようにした.
+
+	* cgi/Renderer.pm:
+	サイト検索（クエリなし）に対応, インデックスアクセス時間と同義語マージ時間を別々に出力するようにした, APIでshow_search_timeが指定された時の出力を詳細化.
+
+	* cgi/Logger.pm: インデックスアクセス時間の表を描画するメソッドを追加.
+
+	* cgi/Query.pm, cgi/QueryParser.pm: サイト検索（クエリなし）に対応.
+
+	* scripts/tsubaki_server.pl: サイト検索（クエリなし）に対応.
+
+	* scripts/query-parse-server.sh: コメントアウト行を無視するように.
+
+	* scripts/query_parse_server.pl:
+	２重起動時にメモリを大量消費するエラーに対応.
+
+	* cgi/QueryParser.pm: 検索ボックスからサイト指定検索ができるように.
+
+	* scripts/query_parse_server.pl, cgi/Renderer.pm, cgi/RequestParser.pm, scripts/tsubaki_server.pl:
+	サイト指定検索をサポート.
+
 2009-03-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/tsubaki_server.pl:
