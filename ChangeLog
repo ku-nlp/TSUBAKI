@@ -1,3 +1,20 @@
+2009-03-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm:
+	term(optional)の文書IDをロードする際に, 既にロードされている文書IDをチェックするようにした.
+
+	* scripts/Retrieve.pm:
+	for文をforeach文に変更, for文を使う際はあらかじめscalar(@array)をするように, offset値の計算をまとめて行うように.
+
+	* cgi/SnippetMaker.pm:
+	スレーブサーバーから返される場所情報を利用してスニペットを作るように.
+
+	* cgi/QueryParser.pm: フレーズ検索ではSynNodeを利用しないように.
+
+2009-03-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm: フレーズ検索時もSynGraphを適用するように.
+
 2009-03-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/QueryKeyword.pm: フレーズ検索時もSynGraphを適用するように.
