@@ -282,49 +282,51 @@ sub retrieveFromBinaryData {
     my $first_requisite_item = 1;
     my ($ret, %requisiteDocBuf);
     my @loggers;
-    # 係り受けから検索する
-    foreach my $T (('dpnds', 'words')) {
+    # requisiteから検索する
+    foreach my $Y (('requisite', 'optional')) {
+	# 係り受けから検索する
+	foreach my $T (('dpnds', 'words')) {
+	    # keyword中の単語を含む文書の検索
+	    # 文書頻度の低い単語から検索する
+	    foreach my $repnames (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{$T}}) {
+		next if ($repnames->[0]->{requisite} && $Y eq 'optional');
+		next if ($repnames->[0]->{optional} && $Y eq 'requisite');
 
-	# keyword中の単語を含む文書の検索
-	# 文書頻度の低い単語から検索する
-	foreach my $repnames (sort {$qid2df->{$a->[0]{qid}} <=> $qid2df->{$b->[0]{qid}}} @{$keyword->{$T}}) {
-	    my $add_flag = 1;
-	    my $docbuf = ();
-	    if ($keyword->{logical_cond_qkw} =~ /AND/ && $repnames->[0]->{requisite}) {
-		# 一番最初の必須要素のみ追加する
-		if ($first_requisite_item) {
-		    $first_requisite_item = 0;
-		} else {
-		    $add_flag = 0;
+		my $add_flag = 0;
+		if ($keyword->{logical_cond_qkw} =~ /AND/ && $repnames->[0]->{requisite}) {
+		    # 一番最初の必須要素のみ追加する
+		    if ($first_requisite_item) {
+			$first_requisite_item = 0;
+			$add_flag = 1;
+		    }
 		}
-		$docbuf = \%requisiteDocBuf;
-	    }
-
-
-	    # バイナリファイルから文書の取得
-	    my $retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever} : $this->{word_retriever};
-	    my ($docs, $logger) = $this->retrieve_from_dat($retriever, $repnames, $docbuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
-
-	    # 各検索単語・係り受けについて検索された結果を納めた配列に push
-	    my $cont = ($repnames->[0]->{requisite}) ? 'requisite' : 'optional';
-	    push (@{$ret->{$T}{$cont}}, $docs);
-
-
-
-	    # 検索にアンカーテキストを考慮する
-	    if ($flag_of_anchor_use) {
-		my $add_flag = 1;
-		my $dumyDocBuf = ();
-		my $anchor_retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever4anchor} : $this->{word_retriever4anchor};
-		my ($anchor_docs, $anchor_logger) = $this->retrieve_from_dat($anchor_retriever, $repnames, $dumyDocBuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
-		foreach my $k ($anchor_logger->keys()) {
-		    my $v = $anchor_logger->getParameter($k);
-		    $logger->setParameterAs('anchor_' . $k, $v);
+		elsif ($keyword->{logical_cond_qkw} =~ /OR/) {
+		    $add_flag = 1;
 		}
-		push (@{$ret->{$T}{anchor}}, $anchor_docs);
-	    }
 
-	    push (@loggers, $logger);
+		# バイナリファイルから文書の取得
+		my $retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever} : $this->{word_retriever};
+		my ($docs, $logger) = $this->retrieve_from_dat($retriever, $repnames, \%requisiteDocBuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+
+		# 各検索単語・係り受けについて検索された結果を納めた配列に push
+		push (@{$ret->{$T}{$Y}}, $docs);
+
+
+		# 検索にアンカーテキストを考慮する
+		if ($flag_of_anchor_use) {
+		    my $add_flag = 1;
+		    my $dumyDocBuf = ();
+		    my $anchor_retriever = ($T eq 'dpnds') ? $this->{dpnd_retriever4anchor} : $this->{word_retriever4anchor};
+		    my ($anchor_docs, $anchor_logger) = $this->retrieve_from_dat($anchor_retriever, $repnames, $dumyDocBuf, $add_flag, $query->{only_hitcount}, $keyword->{sentence_flag}, $keyword->{syngraph});
+		    foreach my $k ($anchor_logger->keys()) {
+			my $v = $anchor_logger->getParameter($k);
+			$logger->setParameterAs('anchor_' . $k, $v);
+		    }
+		    push (@{$ret->{$T}{anchor}}, $anchor_docs);
+		}
+
+		push (@loggers, $logger);
+	    }
 	}
     }
 
