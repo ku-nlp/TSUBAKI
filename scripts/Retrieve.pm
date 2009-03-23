@@ -163,19 +163,17 @@ sub search_syngraph_test_for_new_format {
 
 		my $pos = 0;
 		my %soeji2pos = ();
-		my $N = ($CONFIG->{MAX_SIZE_OF_DOCS} == 0) ? $ldf : (($ldf > $CONFIG->{MAX_SIZE_OF_DOCS}) ? $CONFIG->{MAX_SIZE_OF_DOCS} : $ldf);
-		for (my $j = 0; $j < $N; $j++) {
-		    $total_byte += 4;
-		    my $did = $dids[$j];
-
-		    # 先の索引で検索された文書であれば登録（AND検索時）
-		    if (exists $already_retrieved_docs->{$did} || $add_flag > 0) {
-			$already_retrieved_docs->{$did} = 1;
+		my $j = 0;
+		foreach my $did (@dids) {
+		    # 先のtermで検索された文書であれば登録（AND検索時）
+		    if (exists $already_retrieved_docs->{$did}) {
 			$docs[$offset_j + $pos]->[0] = $did;
 			$soeji2pos{$j} = $pos;
 			$pos++;
 		    }
+		    ++$j;
 		}
+		$total_byte += (4 * scalar(@dids));
 
 		# 場所情報フィールドの長さ（バイト数）を取得
 		read($this->{IN}[$f_num], $buf, 4);
@@ -193,15 +191,12 @@ sub search_syngraph_test_for_new_format {
 
 		# 出現頻度の読み込み
 		my $index = 0;
-		my $soeji = 0;
+		my $offset_j_pos = 0;
 		# 場所情報フィールドの終了位置（バイト）を取得
-		for (my $b = 0; $b < $poss_size;) {
+		for (my $b = 0, my $soeji = 0; $b < $poss_size;) {
 		    # 出現回数を読み込み
 		    my $num_of_poss = $data[$index];
-		    $index++;
-		    $index += $num_of_poss;
-		    $total_byte += 4;
-		    $b += 4;
+		    $index += (1 + $num_of_poss);
 
 		    # AND検索によってはじかれた文書かどうかのチェック
 		    my $pos = $soeji2pos{$soeji};
@@ -209,22 +204,22 @@ sub search_syngraph_test_for_new_format {
 			# nothing to do.
 		    } else {
 			# 必要時に読み込むようにデータへのオフセットを記録
-			$docs[$offset_j + $pos]->[1] = $f_num;
-			$docs[$offset_j + $pos]->[2] = $num_of_poss;
-			$docs[$offset_j + $pos]->[3] = $total_byte;
+			$offset_j_pos = $offset_j + $pos;
+			$docs[$offset_j_pos]->[1] = $f_num;
+			$docs[$offset_j_pos]->[2] = $num_of_poss;
+			$docs[$offset_j_pos]->[3] = $total_byte + 4;
 		    }
 
- 		    $total_byte += ($num_of_poss * 4);
- 		    $b += ($num_of_poss * 4);
-		    $soeji++;
+ 		    $total_byte += ((1 + $num_of_poss) * 4);
+ 		    $b += ((1 + $num_of_poss) * 4);
+		    ++$soeji;
 		}
 
 
 
-		$soeji = 0;
 		# 索引のスコアを取得
 		# スコア情報フィールドの終了位置（バイト）を取得
-		for (my $b = 0; $b < $scores_size;) {
+		for (my $b = 0, my $soeji = 0; $b < $scores_size;) {
 		    # 出現回数を読み込み
 		    read($this->{IN}[$f_num], $buf, 4);
 		    my $num_of_scores = unpack('L', $buf);
@@ -262,6 +257,140 @@ sub search_syngraph_test_for_new_format {
     my $conduct_time = $finish_time - $start_time;
     if ($this->{SHOW_SPEED}) {
  	printf ("@@@ %.4f sec. search method calling in Retrieve.pm.\n", $conduct_time);
+    }
+
+    return \@docs;
+}
+
+sub search_syngraph_test_for_new_format_with_add_flag {
+    my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search, $LOGGER) = @_;
+
+    my $start_time = Time::HiRes::time;
+
+    my $offset_j = 0;
+    my @docs = ();
+    my $total_byte = 0;
+    my $logger = new Logger();
+    ## idxごとに検索
+    for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
+	my $offset;
+	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
+	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+	    last if (defined $offset);
+	}
+	$logger->setTimeAs(sprintf ("get_offset_from_cdb_%s", $keyword->{string}), '%.3f');
+
+	# オフセットがあるかどうかのチェック
+	unless (defined($offset)) {
+	    @docs = () unless (defined(@docs));
+	    next;
+	}
+	
+	my $first_seek_time = Time::HiRes::time;
+	seek($this->{IN}[$f_num], $offset, 0);
+
+	$total_byte = $offset;
+	my $finish_time = Time::HiRes::time;
+	my $conduct_time = $finish_time - $first_seek_time;
+	if ($this->{SHOW_SPEED}) {
+	    printf ("@@@ %f sec. first seek time.\n", $conduct_time);
+	}
+	
+	my $char;
+	my @str;
+	my $buf;
+	my $time_buff = Time::HiRes::time;
+	while (read($this->{IN}[$f_num], $char, 1)) {
+	    if (unpack('c', $char) != 0) {
+		push(@str, $char);
+		$total_byte++;
+	    }
+	    else {
+		# 最初はキーワード（情報としては冗長）
+ 		# $buf = join('', @str);
+ 		# @str = ();
+		# デリミタ0の分
+		$total_byte++;
+		# 次にキーワードの文書頻度
+		read($this->{IN}[$f_num], $buf, 4);
+		my $ldf = unpack('L', $buf);
+		$total_byte += 4;
+
+		# 文書IDの読み込み
+		read($this->{IN}[$f_num], $buf, 4 * $ldf);
+		my @dids = unpack("L$ldf", $buf);
+
+		my $pos = 0;
+		my %soeji2pos = ();
+		foreach my $did (@dids) {
+		    $already_retrieved_docs->{$did} = 1;
+		    $docs[$offset_j + $pos]->[0] = $did;
+		    $soeji2pos{$pos} = $pos++;
+		}
+		$total_byte += (4 * scalar(@dids));
+
+		# 場所情報フィールドの長さ（バイト数）を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $poss_size = unpack('L', $buf);
+		$total_byte += 4;
+
+		# スコア情報フィールドの長さ（バイト数）を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $scores_size = unpack('L', $buf);
+		$total_byte += 4;
+
+
+ 		read($this->{IN}[$f_num], $buf, $poss_size);
+		my @data = unpack('L*', $buf);
+
+		# 出現頻度の読み込み
+		my $index = 0;
+		my $offset_j_pos = 0;
+		# 場所情報フィールドの終了位置（バイト）を取得
+		for (my $b = 0, my $soeji = 0; $b < $poss_size;) {
+		    # 出現回数を読み込み
+		    my $num_of_poss = $data[$index];
+		    $index += (1 + $num_of_poss);
+
+		    # 必要時に読み込むようにデータへのオフセットを記録
+		    $offset_j_pos = $offset_j + $soeji++;
+		    $docs[$offset_j_pos]->[1] = $f_num;
+		    $docs[$offset_j_pos]->[2] = $num_of_poss;
+		    $docs[$offset_j_pos]->[3] = $total_byte + 4;
+
+ 		    $total_byte += ((1 + $num_of_poss) * 4);
+ 		    $b += ((1 + $num_of_poss) * 4);
+		}
+
+
+
+		# 索引のスコアを取得
+		# スコア情報フィールドの終了位置（バイト）を取得
+		for (my $b = 0, my $soeji = 0; $b < $scores_size;) {
+		    # 出現回数を読み込み
+		    read($this->{IN}[$f_num], $buf, 4);
+		    my $num_of_scores = unpack('L', $buf);
+		    $total_byte += 4;
+		    $b += 4;
+
+		    # スコア情報のオフセットを保存
+		    $docs[$offset_j + $soeji]->[4] = $total_byte;
+
+ 		    seek($this->{IN}[$f_num], $num_of_scores * 2, 1);
+ 		    $total_byte += ($num_of_scores * 2);
+ 		    $b += ($num_of_scores * 2);
+ 		    $soeji++;
+		}
+
+		$offset_j += (scalar keys %soeji2pos);
+		last;
+	    }
+	}
+	$logger->setTimeAs(sprintf ("seektime_%s", $keyword->{string}), '%.3f');
+    }
+
+    foreach my $k ($logger->keys()) {
+	$LOGGER->setParameterAs($k, $logger->getParameter($k));
     }
 
     return \@docs;
@@ -572,7 +701,11 @@ sub search {
     my ($this, $keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search, $logger) = @_;
 
     if ($syngraph_search) {
-	return $this->search_syngraph_test_for_new_format($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search, $logger);
+	if ($add_flag) {
+	    return $this->search_syngraph_test_for_new_format_with_add_flag($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search, $logger);
+	} else {
+	    return $this->search_syngraph_test_for_new_format($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search, $logger);
+	}
     }
 
     my $start_time = Time::HiRes::time;
@@ -647,7 +780,7 @@ sub search {
 		    read($this->{IN}[$f_num], $buf, 4);
 		    my $did = unpack('L', $buf);
 		    print STDERR $did . "=did\n" if ($this->{verbose});
-		    # 先の索引で検索された文書であれば登録（AND検索時）
+		    # 先のtermで検索された文書であれば登録（AND検索時）
 		    if (exists $already_retrieved_docs->{$did} || $add_flag > 0) {
 			$already_retrieved_docs->{$did} = 1;
 			$docs[$offset_j + $pos]->[0] = $did;
