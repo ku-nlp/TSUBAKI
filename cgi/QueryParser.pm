@@ -163,6 +163,8 @@ sub parse {
 	    $q_str = $1;
 	    $near = 1;
 	    $indexer = $this->{INDEXER_GENKEI};
+	    # フレーズ検索ではSynNodeを利用しない
+	    $opt->{disable_synnode} = 1;
 	}
 	# 近接検索かどうかの判定
 	elsif ($q_str =~ /^(.+)?~(.+)$/) {
