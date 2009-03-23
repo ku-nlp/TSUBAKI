@@ -54,6 +54,7 @@ sub extract_sentences_from_standard_format {
     if ($opt->{kwic}) {
 	return &extract_sentences_from_content_for_kwic($query, $content, $opt);
     } else {
+#	return &extract_sentences_from_content($query, $content, $opt);
 	# Title, Keywords, Description から重要文を抽出しない
 	if ($opt->{start} > $NUM_OF_CHARS_IN_HEADER) {
 	    return &extract_sentences_from_content_using_position($query, $content, $opt);
