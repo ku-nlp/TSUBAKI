@@ -175,7 +175,7 @@ sub retrieve_from_dat {
     my %idx2qid;
     my @results;
     my $logger = new Logger();
-    for (my $i = 0; $i < scalar(@{$reps}); $i++) {
+    for (my $i = 0, my $reps_size = scalar(@$reps); $i < $reps_size; $i++) {
 	my $rep = $reps->[$i];
 
 	# ------------
@@ -238,7 +238,7 @@ sub get_minimum_distance {
     return -1 unless (defined $poslist1 && defined $poslist2);
 
     my $j = 0;
-    for (my $i = 0; $i < scalar(@{$poslist1}); $i++) {
+    for (my $i = 0, my $size = scalar(@{$poslist1}); $i < $size; $i++) {
 	while ($poslist1->[$i] > $poslist2->[$j] && $j < scalar(@{$poslist2})) {
 	    $j++;
 	}
@@ -852,7 +852,7 @@ sub intersect {
 
     next unless defined $docs;
 
-    for (my $i = 0; $i < scalar(@{$docs}); $i++) {
+    for (my $i = 0, my $docs_size = scalar(@{$docs}); $i < $docs_size; $i++) {
 	$flag = 1 unless (defined($docs->[$i]));
 	$flag = 2 if (scalar(@{$docs->[$i]}) < 1);
 
@@ -936,7 +936,7 @@ sub filter_by_NEAR_constraint_strict {
     # 初期化 & 空リストのチェック
     my @results = ();
     my $flag = 0;
-    for (my $i = 0; $i < scalar(@{$docs}); $i++) {
+    for (my $i = 0, my $docs_size = scalar(@{$docs}); $i < $docs_size; $i++) {
 	$flag = 1 unless (defined($docs->[$i]));
 	$flag = 2 if (scalar(@{$docs->[$i]}) < 1);
 
@@ -1058,7 +1058,7 @@ sub filter_by_NEAR_constraint {
     # 初期化 & 空リストのチェック
     my @results = ();
     my $flag = 0;
-    for (my $i = 0; $i < scalar(@{$docs}); $i++) {
+    for (my $i = 0, my $docs_size = scalar(@{$docs}); $i < $docs_size; $i++) {
 	$flag = 1 unless (defined($docs->[$i]));
 	$flag = 2 if (scalar(@{$docs->[$i]}) < 1);
 

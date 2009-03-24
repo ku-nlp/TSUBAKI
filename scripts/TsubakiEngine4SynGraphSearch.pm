@@ -56,7 +56,7 @@ sub retrieve_from_dat2 {
     ## 代表表記化／SynGraph により複数個の索引に分割された場合の処理 (かんこう -> 観光 OR 刊行 OR 敢行 OR 感光 を検索する)
     my %idx2qid;
     my @results;
-    for (my $i = 0; $i < scalar(@{$reps}); $i++) {
+    for (my $i = 0, my $size = scalar(@{$reps}) ; $i < $size; $i++) {
 	# rep は構造体
 	# rep = {qid, string}
 	my $rep = $reps->[$i];
@@ -123,7 +123,7 @@ sub calculate_score {
 
 		my $gid = $qid2gid->{$qid};
 		my $qtf = $qid2qtf->{$qid};
-		for (my $i = 0; $i < scalar(@$pos); $i++) {
+		for (my $i = 0, my $pos_size = scalar(@$pos); $i < $pos_size; $i++) {
 		    my $p = $pos->[$i];
 		    my $s = $qtf * $score->[$i];
 
@@ -210,9 +210,9 @@ sub calculate_score {
 		$okapi_score = $tff * $idf;
 	    }
 
-	    $this->{verbose} = 1 if ($did =~ /78922624/ || $did =~ /58400434/);
+	    $this->{verbose} = 1 if ($did =~ /78922624/ || $did =~ /58400434/ || $did =~ /4964302/);
 	    print "did=$did gid=$gid tf=$score df=$df length=$dlength score=$score okapi=$okapi_score\n" if ($this->{verbose});
-	    $this->{verbose} = 0 if ($did =~ /78922624/ || $did =~ /58400434/);
+	    $this->{verbose} = 0 if ($did =~ /78922624/ || $did =~ /58400434/ || $did =~ /4964302/);
 
 	    $q2scores->[$idx]{$field_type}{$gid} = {tf => $score, df => $df, dlength => $dlength, score => $okapi_score} if $this->{logging_query_score};
 
@@ -611,7 +611,7 @@ sub merge_search_result {
     my $pos = 0;
     my %did2pos = ();
 
-    for(my $i = 0; $i < scalar(@{$docs_list}); $i++) {
+    for(my $i = 0, my $docs_list_size = scalar(@{$docs_list}); $i < $docs_list_size ; $i++) {
 	my $qid = $idx2qid->{$i};
 	foreach my $d (@{$docs_list->[$i]}) {
 	    next unless (defined($d)); # 本来なら空はないはず
