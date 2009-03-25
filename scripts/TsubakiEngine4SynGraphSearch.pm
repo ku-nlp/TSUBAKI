@@ -210,9 +210,7 @@ sub calculate_score {
 		$okapi_score = $tff * $idf;
 	    }
 
-	    $this->{verbose} = 1 if ($did =~ /78922624/ || $did =~ /58400434/ || $did =~ /4964302/);
 	    print "did=$did gid=$gid tf=$score df=$df length=$dlength score=$score okapi=$okapi_score\n" if ($this->{verbose});
-	    $this->{verbose} = 0 if ($did =~ /78922624/ || $did =~ /58400434/ || $did =~ /4964302/);
 
 	    $q2scores->[$idx]{$field_type}{$gid} = {tf => $score, df => $df, dlength => $dlength, score => $okapi_score} if $this->{logging_query_score};
 
