@@ -1076,23 +1076,15 @@ sub filter_by_NEAR_constraint {
 	my @poslist = ();
 	# クエリ中の単語の出現位置リストを作成
 	for (my $q = 0; $q < scalar(@{$docs}); $q++) {
-
-	    if ($this->{debug}) {
-		print STDERR "* did=" . $did . " q=$q d=$d\n";
-		require Data::Dumper;
-		print STDERR Dumper($docs->[$q][$d]) . "\n";
-	    }
-
 	    # 文書$dに含まれている検索語$qの同義表現（または曖昧性のある代表表記）の数
 	    my $qid_freq_size = scalar(@{$docs->[$q][$d]->{qid_freq}});
 	    if ($qid_freq_size < 2) {
-		my $fnum = $docs->[$q][$d]->{qid_freq}[0]{fnum};
-		my $nums = $docs->[$q][$d]->{qid_freq}[0]{nums};
-		my $offset = $docs->[$q][$d]->{qid_freq}[0]{offset};
-		unless (defined $offset) {
+		unless (defined $docs->[$q][$d]->{qid_freq}[0]{offset}) {
 		    $poslist[$q] = [];
 		} else {
-		    my $poss = $this->{word_retriever}->load_position($fnum, $offset, $nums);
+		    my $poss = $this->{word_retriever}->load_position($docs->[$q][$d]->{qid_freq}[0]{fnum},
+								      $docs->[$q][$d]->{qid_freq}[0]{offset},
+								      $docs->[$q][$d]->{qid_freq}[0]{nums});
 		    foreach my $p (@$poss) {
 			push(@{$poslist[$q]}, $p);
 		    }
@@ -1102,12 +1094,11 @@ sub filter_by_NEAR_constraint {
 	    else {
 		my %buff = ();
 		for (my $j = 0; $j < $qid_freq_size; $j++) {
-		    my $fnum = $docs->[$q][$d]->{qid_freq}[$j]{fnum};
-		    my $nums = $docs->[$q][$d]->{qid_freq}[$j]{nums};
-		    my $offset = $docs->[$q][$d]->{qid_freq}[$j]{offset};
-		    next unless (defined $offset);
+		    next unless (defined $docs->[$q][$d]->{qid_freq}[$j]{offset});
 
-		    my $poss = $this->{word_retriever}->load_position($fnum, $offset, $nums);
+		    my $poss = $this->{word_retriever}->load_position($docs->[$q][$d]->{qid_freq}[$j]{fnum},
+								      $docs->[$q][$d]->{qid_freq}[$j]{offset},
+								      $docs->[$q][$d]->{qid_freq}[$j]{nums});
 		    foreach my $p (@$poss) {
 			$buff{$p} = 1;
 		    }
