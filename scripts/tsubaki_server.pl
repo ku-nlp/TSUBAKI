@@ -98,6 +98,7 @@ if ($CONFIG->{STOP_PAGE_LIST}) {
 }
 
 
+
 &main();
 
 
@@ -158,15 +159,16 @@ sub main {
 		$buff .= $_;
 	    }
 	    my $qid2df = Storable::thaw(decode_base64($buff));
-
-	    $opt{score_verbose} = $query->{score_verbose};
-	    $opt{logging_query_score} = $query->{logging_query_score};
-	    my $factory = new TsubakiEngineFactory(\%opt);
-	    my $tsubaki = $factory->get_instance();
-
 	    # スレーブサーバーへの送信にかかった時間をロギング
 	    my $logger = $query->{logger};
 	    $logger->setTimeAs('transfer_time_to', '%.3f');
+
+
+	    $opt{score_verbose} = $query->{score_verbose};
+	    $opt{logging_query_score} = $query->{logging_query_score};
+	    $opt{doc_length_dbs} = \@DOC_LENGTH_DBs;
+	    my $factory = new TsubakiEngineFactory(\%opt);
+	    my $tsubaki = $factory->get_instance();
 
 	    # 検索している文書セットのIDを保持
 	    $logger->setParameterAs('id', $ID);
