@@ -109,9 +109,9 @@ sub search_syngraph_test_for_new_format {
     my $logger = new Logger();
 
     # idxごとに検索
-    for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
+    for (my $f_num = 0, my $num_of_offset_files = scalar(@{$this->{OFFSET}}); $f_num < $num_of_offset_files; $f_num++) {
 	my $offset;
-	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
+	for (my $i = 0, my $size = scalar(@{$this->{OFFSET}[$f_num]}); $i < $size; $i++) {
 	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
 	    last if (defined $offset);
 	}
@@ -226,9 +226,9 @@ sub search_syngraph_test_for_new_format_with_add_flag {
     my $logger = new Logger();
 
     # idxごとに検索
-    for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
+    for (my $f_num = 0, my $num_of_offset_files = scalar(@{$this->{OFFSET}}); $f_num < $num_of_offset_files; $f_num++) {
 	my $offset;
-	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
+	for (my $i = 0, my $size = scalar(@{$this->{OFFSET}[$f_num]}); $i < $size; $i++) {
 	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
 	    last if (defined $offset);
 	}
