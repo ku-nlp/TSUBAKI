@@ -98,16 +98,17 @@ sub printLog {
     print STDERR "$host> ($q_str)\n";
 }
 
+
+
 sub search_syngraph_test_for_new_format {
     my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search, $LOGGER) = @_;
-
-    my $start_time = Time::HiRes::time;
 
     my $offset_j = 0;
     my @docs = ();
     my $total_byte = 0;
     my $logger = new Logger();
-    ## idxごとに検索
+
+    # idxごとに検索
     for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
 	my $offset;
 	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
@@ -122,42 +123,24 @@ sub search_syngraph_test_for_new_format {
 	    next;
 	}
 	
-	my $first_seek_time = Time::HiRes::time;
 	seek($this->{IN}[$f_num], $offset, 0);
-
 	$total_byte = $offset;
-	my $finish_time = Time::HiRes::time;
-	my $conduct_time = $finish_time - $first_seek_time;
-	if ($this->{SHOW_SPEED}) {
-	    printf ("@@@ %f sec. first seek time.\n", $conduct_time);
-	}
-	
-	my $char;
-	my @str;
+
 	my $buf;
-	my $time_buff = Time::HiRes::time;
-	while (read($this->{IN}[$f_num], $char, 1)) {
-	    if (unpack('c', $char) != 0) {
-		push(@str, $char);
+	while (read($this->{IN}[$f_num], $buf, 1)) {
+	    if (unpack('c', $buf) != 0) {
 		$total_byte++;
 	    }
 	    else {
-		# 最初はキーワード（情報としては冗長）
- 		# $buf = join('', @str);
- 		# @str = ();
 		# デリミタ0の分
 		$total_byte++;
 
-		# 次にキーワードの文書頻度
+		# termの文書頻度（100万文書中）
 		read($this->{IN}[$f_num], $buf, 4);
 		my $ldf = unpack('L', $buf);
 		$total_byte += 4;
 
 		# 文書IDの読み込み
-
-
-
-
 		read($this->{IN}[$f_num], $buf, 4 * $ldf);
 		my @dids = unpack("L$ldf", $buf);
 
@@ -168,78 +151,56 @@ sub search_syngraph_test_for_new_format {
 		    # 先のtermで検索された文書であれば登録（AND検索時）
 		    if (exists $already_retrieved_docs->{$did}) {
 			$docs[$offset_j + $pos]->[0] = $did;
-			$soeji2pos{$j} = $pos;
-			$pos++;
+			$soeji2pos{$j} = $pos++;
 		    }
-		    ++$j;
+		    $j++;
 		}
-		$total_byte += (4 * scalar(@dids));
+		$total_byte += (4 * $ldf);
 
-		# 場所情報フィールドの長さ（バイト数）を取得
+		# 場所情報フィールドのバイト長を取得
 		read($this->{IN}[$f_num], $buf, 4);
 		my $poss_size = unpack('L', $buf);
-		$total_byte += 4;
 
-		# スコア情報フィールドの長さ（バイト数）を取得
+		# スコア情報フィールドのバイト長を取得
 		read($this->{IN}[$f_num], $buf, 4);
 		my $scores_size = unpack('L', $buf);
-		$total_byte += 4;
+		$total_byte += 8;
 
 
+		# 場所情報をインデックスデータから読み込む
  		read($this->{IN}[$f_num], $buf, $poss_size);
 		my @data = unpack('L*', $buf);
 
-		# 出現頻度の読み込み
-		my $index = 0;
-		my $offset_j_pos = 0;
-		# 場所情報フィールドの終了位置（バイト）を取得
-		for (my $b = 0, my $soeji = 0; $b < $poss_size;) {
+		for (my $pos = 0, my $soeji = 0, my $offset_j_pos = 0, my $index = 0; $soeji < $ldf; $soeji++) {
 		    # 出現回数を読み込み
 		    my $num_of_poss = $data[$index];
 		    $index += (1 + $num_of_poss);
 
 		    # AND検索によってはじかれた文書かどうかのチェック
-		    my $pos = $soeji2pos{$soeji};
-		    unless (defined $pos) {
-			# nothing to do.
-		    } else {
+		    if (exists $soeji2pos{$soeji}) {
 			# 必要時に読み込むようにデータへのオフセットを記録
-			$offset_j_pos = $offset_j + $pos;
+			$offset_j_pos = $offset_j + $pos++;
 			$docs[$offset_j_pos]->[1] = $f_num;
 			$docs[$offset_j_pos]->[2] = $num_of_poss;
 			$docs[$offset_j_pos]->[3] = $total_byte + 4;
 		    }
 
- 		    $total_byte += ((1 + $num_of_poss) * 4);
- 		    $b += ((1 + $num_of_poss) * 4);
-		    ++$soeji;
+ 		    $total_byte += (4 + ($num_of_poss * 4));
 		}
 
 
-
-		# 索引のスコアを取得
-		# スコア情報フィールドの終了位置（バイト）を取得
-		for (my $b = 0, my $soeji = 0; $b < $scores_size;) {
-		    # 出現回数を読み込み
-		    read($this->{IN}[$f_num], $buf, 4);
-		    my $num_of_scores = unpack('L', $buf);
-		    $total_byte += 4;
-		    $b += 4;
+		# 各出現位置でのスコアをインデックスデータから読み込む
+		read ($this->{IN}[$f_num], $buf, $scores_size);
+		for (my $pos = 0, my $soeji = 0, my $buf_offset = 0; $buf_offset < $scores_size; $soeji++) {
+		    my $buff = substr ($buf, $buf_offset, 4);
+		    my $num_of_scores = unpack('L', $buff);
 
 		    # AND検索によってはじかれた文書かどうかのチェック
-		    my $pos = $soeji2pos{$soeji};
-		    unless (defined $pos) {
-			# nothing to do.
-		    } else {
+		    if (exists $soeji2pos{$soeji}) {
 			# スコア情報のオフセットを保存
-			$docs[$offset_j + $pos]->[4] = $total_byte;
+			$docs[$offset_j + $pos++]->[4] = $total_byte + $buf_offset + 4;
 		    }
-
-
- 		    seek($this->{IN}[$f_num], $num_of_scores * 2, 1);
- 		    $total_byte += ($num_of_scores * 2);
- 		    $b += ($num_of_scores * 2);
- 		    $soeji++;
+		    $buf_offset += (4 + $num_of_scores * 2);
 		}
 
 		$offset_j += (scalar keys %soeji2pos);
@@ -253,25 +214,18 @@ sub search_syngraph_test_for_new_format {
 	$LOGGER->setParameterAs($k, $logger->getParameter($k));
     }
 
-    my $finish_time = Time::HiRes::time;
-    my $conduct_time = $finish_time - $start_time;
-    if ($this->{SHOW_SPEED}) {
- 	printf ("@@@ %.4f sec. search method calling in Retrieve.pm.\n", $conduct_time);
-    }
-
     return \@docs;
 }
 
 sub search_syngraph_test_for_new_format_with_add_flag {
     my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search, $LOGGER) = @_;
 
-    my $start_time = Time::HiRes::time;
-
     my $offset_j = 0;
     my @docs = ();
     my $total_byte = 0;
     my $logger = new Logger();
-    ## idxごとに検索
+
+    # idxごとに検索
     for (my $f_num = 0; $f_num < scalar(@{$this->{OFFSET}}); $f_num++) {
 	my $offset;
 	for (my $i = 0; $i < scalar(@{$this->{OFFSET}[$f_num]}); $i++) {
@@ -286,32 +240,19 @@ sub search_syngraph_test_for_new_format_with_add_flag {
 	    next;
 	}
 	
-	my $first_seek_time = Time::HiRes::time;
 	seek($this->{IN}[$f_num], $offset, 0);
-
 	$total_byte = $offset;
-	my $finish_time = Time::HiRes::time;
-	my $conduct_time = $finish_time - $first_seek_time;
-	if ($this->{SHOW_SPEED}) {
-	    printf ("@@@ %f sec. first seek time.\n", $conduct_time);
-	}
-	
-	my $char;
-	my @str;
+
 	my $buf;
-	my $time_buff = Time::HiRes::time;
-	while (read($this->{IN}[$f_num], $char, 1)) {
-	    if (unpack('c', $char) != 0) {
-		push(@str, $char);
+	while (read($this->{IN}[$f_num], $buf, 1)) {
+	    if (unpack('c', $buf) != 0) {
 		$total_byte++;
 	    }
 	    else {
-		# 最初はキーワード（情報としては冗長）
- 		# $buf = join('', @str);
- 		# @str = ();
 		# デリミタ0の分
 		$total_byte++;
-		# 次にキーワードの文書頻度
+
+		# termの文書頻度（100万文書中）
 		read($this->{IN}[$f_num], $buf, 4);
 		my $ldf = unpack('L', $buf);
 		$total_byte += 4;
@@ -324,62 +265,48 @@ sub search_syngraph_test_for_new_format_with_add_flag {
 		my %soeji2pos = ();
 		foreach my $did (@dids) {
 		    $already_retrieved_docs->{$did} = 1;
-		    $docs[$offset_j + $pos]->[0] = $did;
-		    $soeji2pos{$pos} = $pos++;
+		    $docs[$offset_j + $pos++]->[0] = $did;
 		}
-		$total_byte += (4 * scalar(@dids));
+		$total_byte += (4 * $ldf);
 
-		# 場所情報フィールドの長さ（バイト数）を取得
+		# 場所情報フィールドのバイト長を取得
 		read($this->{IN}[$f_num], $buf, 4);
 		my $poss_size = unpack('L', $buf);
-		$total_byte += 4;
 
-		# スコア情報フィールドの長さ（バイト数）を取得
+		# スコア情報フィールドのバイト長を取得
 		read($this->{IN}[$f_num], $buf, 4);
 		my $scores_size = unpack('L', $buf);
-		$total_byte += 4;
+		$total_byte += 8;
 
 
+		# 場所情報をインデックスデータから読み込む
  		read($this->{IN}[$f_num], $buf, $poss_size);
 		my @data = unpack('L*', $buf);
 
-		# 出現頻度の読み込み
-		my $index = 0;
-		my $offset_j_pos = 0;
-		# 場所情報フィールドの終了位置（バイト）を取得
-		for (my $b = 0, my $soeji = 0; $b < $poss_size;) {
+		for (my $pos = 0, my $soeji = 0, my $offset_j_pos = 0, my $index = 0; $soeji < $ldf; $soeji++) {
 		    # 出現回数を読み込み
 		    my $num_of_poss = $data[$index];
 		    $index += (1 + $num_of_poss);
 
 		    # 必要時に読み込むようにデータへのオフセットを記録
-		    $offset_j_pos = $offset_j + $soeji++;
+		    $offset_j_pos = $offset_j + $pos++;
 		    $docs[$offset_j_pos]->[1] = $f_num;
 		    $docs[$offset_j_pos]->[2] = $num_of_poss;
 		    $docs[$offset_j_pos]->[3] = $total_byte + 4;
 
- 		    $total_byte += ((1 + $num_of_poss) * 4);
- 		    $b += ((1 + $num_of_poss) * 4);
+ 		    $total_byte += (4 + ($num_of_poss * 4));
 		}
 
 
-
-		# 索引のスコアを取得
-		# スコア情報フィールドの終了位置（バイト）を取得
-		for (my $b = 0, my $soeji = 0; $b < $scores_size;) {
-		    # 出現回数を読み込み
-		    read($this->{IN}[$f_num], $buf, 4);
-		    my $num_of_scores = unpack('L', $buf);
-		    $total_byte += 4;
-		    $b += 4;
+		# 各出現位置でのスコアをインデックスデータから読み込む
+		read ($this->{IN}[$f_num], $buf, $scores_size);
+		for (my $pos = 0, my $soeji = 0, my $buf_offset = 0; $buf_offset < $scores_size; $soeji++) {
+		    my $buff = substr ($buf, $buf_offset, 4);
+		    my $num_of_scores = unpack('L', $buff);
 
 		    # スコア情報のオフセットを保存
-		    $docs[$offset_j + $soeji]->[4] = $total_byte;
-
- 		    seek($this->{IN}[$f_num], $num_of_scores * 2, 1);
- 		    $total_byte += ($num_of_scores * 2);
- 		    $b += ($num_of_scores * 2);
- 		    $soeji++;
+		    $docs[$offset_j + $pos++]->[4] = $total_byte + $buf_offset + 4;
+		    $buf_offset += (4 + $num_of_scores * 2);
 		}
 
 		$offset_j += (scalar keys %soeji2pos);
