@@ -16,6 +16,7 @@ use Data::Dumper;
 use CDB_File;
 use Configure;
 use RequestParser;
+use Storable;
 
 
 binmode(STDOUT, ':encoding(euc-jp)');
@@ -62,6 +63,28 @@ sub init {
     print STDERR "done.\n" if ($opt{verbose});
 }
 
+
+my @DOC_LENGTH_DBs;
+opendir(DIR, $opt{dlengthdbdir});
+foreach my $dbf (readdir(DIR)) {
+    next unless ($dbf =~ /(\d+).doc_length\.bin$/);
+    
+    my $fp = "$opt{dlengthdbdir}/$dbf";
+    
+    my $dlength_db;
+    if ($opt{dlengthdb_hash}) {
+	require CDB_File;
+	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+    }
+    else {
+	$dlength_db = retrieve($fp) or die;
+    }
+
+    push(@DOC_LENGTH_DBs, $dlength_db);
+}
+closedir(DIR);
+
+
 my $CONFIG = Configure::get_instance();
 
 $CONFIG->{USE_OF_QUERY_PARSE_SERVER} = 0;
@@ -98,6 +121,7 @@ sub main {
 	}
     }
 
+    $opt{doc_length_dbs} = \@DOC_LENGTH_DBs;
     my $factory = new TsubakiEngineFactory(\%opt);
     my $tsubaki = $factory->get_instance();
     $loggerAll->setTimeAs('create_TSUBAKI_instance_time', '%.3f');
