@@ -1163,7 +1163,7 @@ sub filter_by_NEAR_constraint {
 
 	#  2. 各単語が$near語以内に現れているかどうかチェック
 	my $flag = -1;
-	for (my $i = 0; $i < scalar(@serialized_poslist); $i++) {
+	for (my $i = 0, my $size_of_serialized_poslist = scalar(@serialized_poslist); $i < $size_of_serialized_poslist; $i++) {
 	    my %qid_buf = ();
 	    my $pos = $serialized_poslist[$i]->{pos};
 	    my $qid = $serialized_poslist[$i]->{qid};
@@ -1173,7 +1173,7 @@ sub filter_by_NEAR_constraint {
 
 	    my $prev_qid = $qid;
 	    push (@{$qid_buf{$serialized_poslist[$i]->{qid}}}, $pos);
-	    for (my $j = $i + 1; $j < scalar(@serialized_poslist); $j++) {
+	    for (my $j = $i + 1; $j < $size_of_serialized_poslist; $j++) {
 		if ($serialized_poslist[$j]->{pos} - $pos < $near) {
 
 		    # 語順を考慮する場合は、隣接しているかどうかチェック
@@ -1182,7 +1182,6 @@ sub filter_by_NEAR_constraint {
 			if ($serialized_poslist[$j]->{qid} - $prev_qid != 1) {
 			    last;
 			} else {
-			    # print $serialized_poslist[$j]->{qid} . " - " . $prev_qid . "\n";
 			    $prev_qid = $serialized_poslist[$j]->{qid};
 			}
 		    }
