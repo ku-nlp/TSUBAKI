@@ -605,8 +605,6 @@ sub merge_docs2 {
 sub merge_search_result {
     my ($this, $docs_list, $idx2qid) = @_;
 
-    my $start_time = Time::HiRes::time;
-
     my $serialized_docs = [];
     my $pos = 0;
     my %did2pos = ();
@@ -614,30 +612,15 @@ sub merge_search_result {
     for(my $i = 0, my $docs_list_size = scalar(@{$docs_list}); $i < $docs_list_size ; $i++) {
 	my $qid = $idx2qid->{$i};
 	foreach my $d (@{$docs_list->[$i]}) {
-	    next unless (defined($d)); # 本来なら空はないはず
+#	    next unless (defined($d)); # 本来なら空はないはず
 
-	    my $did = $d->[0];
-	    my $fnum = $d->[1];
-	    my $size = $d->[2];
-	    my $offset_pos = $d->[3];
-	    my $offset_score = $d->[4];
-
-	    if ($this->{verbose}) {
-		print "num_of_positions = $size\n";
-		print "index_file_ID    = $fnum\n";
-		print "offset_of_offset = $offset_pos\n";
-		print "offset_of_score  = $offset_score\n";
-		print "-----\n";
-	    }
-
-	    if (exists($did2pos{$did})) {
-		my $j = $did2pos{$did};
-		push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, fnum => $fnum, nums => $size, offset => $offset_pos, offset_score => $offset_score});
+	    if (exists($did2pos{$d->[0]})) {
+		my $j = $did2pos{$d->[0]};
+		push(@{$serialized_docs->[$j]->{qid_freq}}, {qid => $qid, fnum => $d->[1], nums => $d->[2], offset => $d->[3], offset_score => $d->[4]});
 	    } else {
-		$serialized_docs->[$pos] = {did => $did, qid_freq => [{qid => $qid, fnum => $fnum, nums => $size, offset => $offset_pos, offset_score => $offset_score}]};
+		$serialized_docs->[$pos] = {did => $d->[0], qid_freq => [{qid => $qid, fnum => $d->[1], nums => $d->[2], offset => $d->[3], offset_score => $d->[4]}]};
 
-		$did2pos{$did} = $pos;
-		$pos++;
+		$did2pos{$d->[0]} = $pos++;
 	    }
 	}
     }
@@ -654,12 +637,6 @@ sub merge_search_result {
 	    print "\n";
 	}
 	print "--------------------\n";
-    }
-
-    my $finish_time = Time::HiRes::time;
-    my $conduct_time = $finish_time - $start_time;
-    if ($this->{show_speed}) {
-	printf ("@@@ %.4f sec. doclist serializing (2).\n", $conduct_time);
     }
 
     return $serialized_docs;
