@@ -132,6 +132,101 @@ sub search_syngraph_test_for_new_format {
 		$total_byte++;
 	    }
 	    else {
+		# termの文書頻度（100万文書中）
+		read($this->{IN}[$f_num], $buf, 4);
+		my $ldf = unpack('L', $buf);
+
+		# 文書IDの読み込み
+		read($this->{IN}[$f_num], $buf, 4 * $ldf);
+		my @dids = unpack("L$ldf", $buf);
+
+		# 場所情報フィールドのバイト長を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $poss_size = unpack('L', $buf);
+
+		# スコア情報フィールドのバイト長を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $scores_size = unpack('L', $buf);
+
+		# 13 = デリミタ(1) + ldf(4) + poss_size(4) + scores_size(4)
+		$total_byte += (4 * $ldf + 13);
+
+		# 場所情報をインデックスデータから読み込む
+ 		read($this->{IN}[$f_num], $buf, $poss_size);
+		my @posdata = unpack('L*', $buf);
+
+		my $offset4positions = $total_byte;
+		my $offset4scores = $total_byte + $poss_size;
+		my $index4positions = 0;
+		my $pos = 0;
+		foreach my $did (@dids) {
+
+		    my $num_of_positions = $posdata[$index4positions];
+		    $index4positions += (1 + $num_of_positions);
+
+		    # 先のtermで検索された文書であれば登録（AND検索時）
+		    if (exists $already_retrieved_docs->{$did}) {
+			my $offset_j_pos = $offset_j + $pos++;
+
+			$docs[$offset_j_pos]->[0] = $did;
+			$docs[$offset_j_pos]->[1] = $f_num;
+			$docs[$offset_j_pos]->[2] = $num_of_positions;
+			# 場所情報のオフセットを保存
+			$docs[$offset_j_pos]->[3] = $offset4positions + 4;
+			# スコア情報のオフセットを保存
+			$docs[$offset_j_pos]->[4] = $offset4scores + 4;
+		    }
+
+ 		    $offset4positions += (4 + $num_of_positions * 4);
+		    $offset4scores += (4 + $num_of_positions * 2);
+		}
+
+		$offset_j += (scalar @docs);
+		last;
+	    }
+	}
+	$logger->setTimeAs(sprintf ("seektime_%s", $keyword->{string}), '%.3f');
+    }
+
+    foreach my $k ($logger->keys()) {
+	$LOGGER->setParameterAs($k, $logger->getParameter($k));
+    }
+
+    return \@docs;
+}
+
+sub search_syngraph_test_for_new_format2 {
+    my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search, $LOGGER) = @_;
+
+    my $offset_j = 0;
+    my @docs = ();
+    my $total_byte = 0;
+    my $logger = new Logger();
+
+    # idxごとに検索
+    for (my $f_num = 0, my $num_of_offset_files = scalar(@{$this->{OFFSET}}); $f_num < $num_of_offset_files; $f_num++) {
+	my $offset;
+	for (my $i = 0, my $size = scalar(@{$this->{OFFSET}[$f_num]}); $i < $size; $i++) {
+	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+	    last if (defined $offset);
+	}
+	$logger->setTimeAs(sprintf ("get_offset_from_cdb_%s", $keyword->{string}), '%.3f');
+
+	# オフセットがあるかどうかのチェック
+	unless (defined($offset)) {
+	    @docs = () unless (defined(@docs));
+	    next;
+	}
+	
+	seek($this->{IN}[$f_num], $offset, 0);
+	$total_byte = $offset;
+
+	my $buf;
+	while (read($this->{IN}[$f_num], $buf, 1)) {
+	    if (unpack('c', $buf) != 0) {
+		$total_byte++;
+	    }
+	    else {
 		# デリミタ0の分
 		$total_byte++;
 
@@ -218,6 +313,99 @@ sub search_syngraph_test_for_new_format {
 }
 
 sub search_syngraph_test_for_new_format_with_add_flag {
+    my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search, $LOGGER) = @_;
+
+    my $offset_j = 0;
+    my @docs = ();
+    my $total_byte = 0;
+    my $logger = new Logger();
+
+    # idxごとに検索
+    for (my $f_num = 0, my $num_of_offset_files = scalar(@{$this->{OFFSET}}); $f_num < $num_of_offset_files; $f_num++) {
+	my $offset;
+	for (my $i = 0, my $size = scalar(@{$this->{OFFSET}[$f_num]}); $i < $size; $i++) {
+	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+	    last if (defined $offset);
+	}
+	$logger->setTimeAs(sprintf ("get_offset_from_cdb_%s", $keyword->{string}), '%.3f');
+
+	# オフセットがあるかどうかのチェック
+	unless (defined($offset)) {
+	    @docs = () unless (defined(@docs));
+	    next;
+	}
+	
+	seek($this->{IN}[$f_num], $offset, 0);
+	$total_byte = $offset;
+
+	my $buf;
+	while (read($this->{IN}[$f_num], $buf, 1)) {
+	    if (unpack('c', $buf) != 0) {
+		$total_byte++;
+	    }
+	    else {
+		# termの文書頻度（100万文書中）
+		read($this->{IN}[$f_num], $buf, 4);
+		my $ldf = unpack('L', $buf);
+
+		# 文書IDの読み込み
+		read($this->{IN}[$f_num], $buf, 4 * $ldf);
+		my @dids = unpack("L$ldf", $buf);
+
+		# 場所情報フィールドのバイト長を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $poss_size = unpack('L', $buf);
+
+		# スコア情報フィールドのバイト長を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $scores_size = unpack('L', $buf);
+
+		# 13 = デリミタ(1) + ldf(4) + poss_size(4) + scores_size(4)
+		$total_byte += (4 * $ldf + 13);
+
+		# 場所情報をインデックスデータから読み込む
+ 		read($this->{IN}[$f_num], $buf, $poss_size);
+		my @posdata = unpack('L*', $buf);
+
+		my $offset4positions = $total_byte;
+		my $offset4scores = $total_byte + $poss_size;
+		my $index4positions = 0;
+		my $pos = 0;
+		foreach my $did (@dids) {
+
+		    my $num_of_positions = $posdata[$index4positions];
+		    $index4positions += (1 + $num_of_positions);
+
+		    my $offset_j_pos = $offset_j + $pos++;
+
+		    $docs[$offset_j_pos]->[0] = $did;
+		    $docs[$offset_j_pos]->[1] = $f_num;
+		    $docs[$offset_j_pos]->[2] = $num_of_positions;
+		    # 場所情報のオフセットを保存
+		    $docs[$offset_j_pos]->[3] = $offset4positions + 4;
+		    # スコア情報のオフセットを保存
+		    $docs[$offset_j_pos]->[4] = $offset4scores + 4;
+		    $already_retrieved_docs->{$did} = 1;
+
+ 		    $offset4positions += (4 + $num_of_positions * 4);
+		    $offset4scores += (4 + $num_of_positions * 2);
+		}
+
+		$offset_j += (scalar @docs);
+		last;
+	    }
+	}
+	$logger->setTimeAs(sprintf ("seektime_%s", $keyword->{string}), '%.3f');
+    }
+
+    foreach my $k ($logger->keys()) {
+	$LOGGER->setParameterAs($k, $logger->getParameter($k));
+    }
+
+    return \@docs;
+}
+
+sub search_syngraph_test_for_new_format_with_add_flag2 {
     my ($this, $keyword, $already_retrieved_docs, $add_flag, $no_position, $sentence_flag, $syngraph_search, $LOGGER) = @_;
 
     my $offset_j = 0;
@@ -596,30 +784,32 @@ sub search_syngraph_with_position_dpnd {
 sub load_position {
     my ($this, $f_num, $offset, $size_poss, $opt) = @_;
 
-    seek($this->{IN}[$f_num], $offset, 0);
     my $buf;
-    my @pos_list = ();
-    for (my $k = 0; $k < $size_poss; $k++) {
-	read($this->{IN}[$f_num], $buf, 4);
-	my $pos = unpack('L', $buf);
-	print STDERR $offset . "=offset " . $pos . "=pos\n" if ($opt->{verbose});
-	push(@pos_list, $pos);
-    }
+    seek ($this->{IN}[$f_num], $offset, 0);
+    read ($this->{IN}[$f_num], $buf, $size_poss * 4);
+    my @pos_list = unpack("L*", $buf);
+
+    return \@pos_list;
+}
+
+sub load_position {
+    my ($this, $f_num, $offset, $size_poss, $opt) = @_;
+
+    my $buf;
+    seek ($this->{IN}[$f_num], $offset, 0);
+    read ($this->{IN}[$f_num], $buf, $size_poss * 4);
+    my @pos_list = unpack("L$size_poss", $buf);
 
     return \@pos_list;
 }
 
 sub load_score {
-    my ($this, $f_num, $offset, $size_poss) = @_;
+    my ($this, $f_num, $offset, $size_scores) = @_;
 
-    seek($this->{IN}[$f_num], $offset, 0);
     my $buf;
-    my @score_list = ();
-    for (my $k = 0; $k < $size_poss; $k++) {
-	read($this->{IN}[$f_num], $buf, 2);
-	my $score = unpack('S', $buf);
-	push(@score_list, $score / 1000);
-    }
+    seek ($this->{IN}[$f_num], $offset, 0);
+    read ($this->{IN}[$f_num], $buf, $size_scores * 2);
+    my @score_list = map {$_ / 1000} unpack("S$size_scores", $buf);
 
     return \@score_list;
 }
