@@ -112,10 +112,12 @@ sub new {
 	push(@{$buff{$idx->{group_id}}}, $idx);
     }
 
+    my $num_of_semi_content_words = 0;
     foreach my $group_id (sort {$buff{$a}->[0]{pos} <=> $buff{$b}->[0]{pos}} keys %buff) {
 	my @word_reps;
 	my @dpnd_reps;
 
+	my $flag = 0;
 	foreach my $m (@{$buff{$group_id}}) {
 	    # 近接条件が指定されていない かつ 機能語 の場合は検索に用いない
 	    next if ($m->{isContentWord} < 1 && $this->{is_phrasal_search} < 0);
@@ -157,8 +159,11 @@ sub new {
 		    fstring => $m->{fstring},
 		    isAdditionalNode => ($m->{additional_node}) ? 1 : 0
 		     });
+		$flag = 1 if ($m->{midasi} =~ /\+/ && $m->{isBasicNode});
+		last if ($m->{midasi} =~ /\+/ && $m->{isBasicNode} && $is_phrasal_search > 0);
 	    }
 	}
+	$num_of_semi_content_words++ if ($flag);
 
 	push(@{$this->{words}}, \@word_reps) if (scalar(@word_reps) > 0);
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
@@ -171,7 +176,7 @@ sub new {
 #     }
 
     if ($is_phrasal_search > 0) {
-	$this->{near} = scalar(@{$this->{words}});
+	$this->{near} = scalar(@{$this->{words}}) + $num_of_semi_content_words;
     }
 
     $this->{logger}->setTimeAs('create_query', '%.3f');
