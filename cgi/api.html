@@ -8,7 +8,7 @@
 </HEAD>
 <BODY>
 
-<DIV class="lastupdate">最終更新日&nbsp;2007年10月2日</DIV>
+<DIV class="lastupdate">最終更新日&nbsp;2009年1月9日</DIV>
 
 <H2>
   <SPAN class="tsubaki">TSUBAKI</SPAN> APIマニュアル
@@ -35,6 +35,10 @@ TSUBAKI</A>のAPI利用方法について説明します。本APIに関するご
 <ADDRESS>
 tsubaki&nbsp;あっと&nbsp;nlp.kuee.kyoto-u.ac.jp
 </ADDRESS>
+
+<P>
+より詳しいAPIの利用方法はwikiにありますが、スパム対策のためユーザ制限を行っています。
+wikiにアクセスされたい方はお手数ですが上記のアドレスまでご連絡下さい。
 </P>
 
 <H3><A name="sect2">検索結果の取得方法</A></H3>
@@ -47,7 +51,7 @@ tsubaki&nbsp;あっと&nbsp;nlp.kuee.kyoto-u.ac.jp
 </P>
 
 <TABLE style="border: 1px solid darkgray;padding:0em;margin:1em;">
-<CAPTION>TSUBAKI APIで利用可能なリクエストパラメータ一覧</CAPTION>
+<CAPTION>TSUBAKI APIで利用可能なリクエストパラメータ（この他のパラメータはwikiにあります）</CAPTION>
 <TR bgcolor=#f1fff4>
   <TD>パラメータ</TD><TD>値</TD><TD>説明</TD></TR>
 </TR>
@@ -77,11 +81,6 @@ tsubaki&nbsp;あっと&nbsp;nlp.kuee.kyoto-u.ac.jp
   <TD>0/1</TD>
   <TD>係り受けを考慮した検索を行うかどうかの指定．1の時に係り受けを考慮して検索する．デフォルトは1．</TD>
 </TR>
-<TR bgcolor=#f1fff4>
-  <TD>filter_simpages</TD>
-  <TD>0/1</TD>
-  <TD>類似したページを取得したくない場合は1，類似したページも取得したい場合は0．デフォルトは0．</TD>
-</TR>
 -->
 <TR>
   <TD>only_hitcount</TD>
@@ -108,13 +107,18 @@ tsubaki&nbsp;あっと&nbsp;nlp.kuee.kyoto-u.ac.jp
   <TD>Id/Title/Score/Snippet/Url/Cache</I></TD>
   <TD>希望するデータフィールドだけを取得する．例えば、<DIV style="padding:0.5em 1em;">result_items=Title:Snippet</DIV>とするとタイトル，スニペットだけが含まれる検索結果を取得可能．特に指定がない場合は，全てのフィールドが含まれる．</TD>
 </TR>
-
 <TR bgcolor=#f1fff4>
+  <TD>filter_simpages</TD>
+  <TD>0/1</TD>
+  <TD>類似したページを取得したくない場合は1，類似したページも取得したい場合は0．デフォルトは1．</TD>
+</TR>
+
+<TR bgcolor=white>
   <TD>id</TD>
   <TD><I>string</I></TD>
   <TD>個別の文書を取得する際の文書ID．オリジナルのウェブ文書，または標準フォーマット形式の文書を得る際は必須．</TD>
 </TR>
-<TR>
+<TR bgcolor=#f1fff4>
   <TD>format</TD>
   <TD>html/xml</TD>
   <TD>オリジナルのウェブ文書，または標準フォーマット形式のウェブ文書のどちらを取得するかを指定．idを指定した際は必須．</TD>
