@@ -162,7 +162,7 @@ sub parse {
 	    $phrasal_flag = 1;
 	    $q_str = $1;
 	    $near = 1;
-	    $indexer = $this->{INDEXER_GENKEI};
+	    $indexer = $this->{INDEXER_GENKEI} if ($CONFIG->{IS_NICT_MODE});
 	    # フレーズ検索ではSynNodeを利用しない
 	    $opt->{disable_synnode} = 1;
 	}
