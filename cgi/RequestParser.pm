@@ -220,6 +220,8 @@ sub setParametersOfGetRequest {
 	    Renderer::printErrorMessage($cgi, 'resultsの値は1以上を指定して下さい.');
 	    exit(1);
 	}
+	# startの分を考慮する
+	$params->{results} += $params->{start};
     }
 
 
