@@ -343,3 +343,6 @@ SERVER_LOG_FILE	/tmp/tsubaki-slave-server.log
 
 # インデックスデータからロードする文書データの最大数（0で全部,デフォルト0）
 MAX_SIZE_OF_DOCS	0
+
+# NICTで起動しているかどうか
+IS_NICT_MODE	0
