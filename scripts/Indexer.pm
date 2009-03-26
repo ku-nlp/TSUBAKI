@@ -517,165 +517,211 @@ sub makeIndexFromSynGraphResultObject {
 
     my $gid = 0;
     my $pos = 0;
-    my @idx = ();
+    my @idxs = ();
     foreach my $bnst ($result->bnst) {
 	foreach my $kihonku ($bnst->tag) {
 	    next if ($kihonku->fstring =~ /クエリ削除語/);
 
-	    # 係り受けインデックスの抽出
 	    unless ($option->{disable_dpnd}) {
-		if (defined $kihonku->parent) {
-
-		    # 並列句の処理
-		    my $kakarimoto = $kihonku;
-		    my $buf = $kakarimoto;
-		    my $kakarisaki = $kihonku->parent;
-		    while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
-			$buf = $kakarisaki;
-			$kakarisaki = $kakarisaki->parent;
-		    }
-
-		    # 係り受けインデックスの追加
-		    foreach my $idx (@{$this->get_dpnd_index($kakarimoto, $kakarisaki, $option)}) {
-			$idx->{pos} = $pos;
-			$idx->{absolute_pos} = $pos;
-			$idx->{isBasicNode} = 1;
-			$idx->{group_id} = $kakarimoto->id . "/" . $kakarisaki->id;
-			if ($idx->{fstring} =~ /クエリ必須係り受け/ || $option->{force_dpnd}) {
-			    $idx->{requisite} = 1;
-			    $idx->{optional}  = 0;
-			} else {
-			    $idx->{requisite} = 0;
-			    $idx->{optional}  = 1;
-			}
-			push(@idx, $idx);
-		    }
-		    $gid++;
-		}
-
-		# テリック処理により生成される係り受けの追加
-		if (defined $kihonku->parent && $kihonku->parent->fstring =~ /クエリ不要語/ && $kihonku->parent && $kihonku->parent->fstring =~ /テリック処理/ &&
-		    defined $kihonku->parent->parent && $kihonku->parent->parent->fstring !~ /クエリ削除語/) {
-		    foreach my $idx (@{$this->get_dpnd_index($kihonku, $kihonku->parent->parent, $option)}) {
-			$idx->{pos} = $pos;
-			$idx->{absolute_pos} = $pos;
-			$idx->{isBasicNode} = 1;
-#			$idx->{group_id} = $kihonku->id . "/" . $kihonku->parent->parent->id;
-			$idx->{group_id} = $gid + 1000;
-			$idx->{requisite} = 0;
-			$idx->{optional}  = 1;
-
-			push(@idx, $idx);
-		    }
-		    $gid++;
-		}
+		# 係り受けtermの抽出
+		$this->extractDependencyTerms(\@idxs, $kihonku, \$gid, \$pos, $option);
 	    }
 
-
-
-	    # 単語・同義語・同義句インデックスの抽出
-	    foreach my $synnodes ($kihonku->synnodes) {
-		foreach my $synnode ($synnodes->synnode) {
-		    my $synid = $synnode->synid;
-		    my $synid_with_yomi = $synid;
-		    my $score = $synnode->score;
-		    my $features = $synnode->feature;
-
-		    # 読みの削除
-		    my $buf;
-		    foreach my $w (split(/\+/, $synid)) {
-			my ($hyouki, $yomi) = split(/\//, $w);
-			$buf .= "${hyouki}+";
-		    }
-		    chop($buf);
-		    $synid = $buf;
-
-		    # <上位語>を利用するかどうか
-		    if ($features =~ /<上位語>/) {
-			if ($option->{use_of_hypernym}) {
-			    $features =~ s/<上位語>//g;
-			} else {
-			    next;
-			}
-		    }
-
-		    # <反義語><否定>を利用するかどうか
-		    if ($features =~ /<反義語>/ && $features =~ /<否定>/) {
-			next unless ($option->{use_of_negation_and_antonym});
-		    }
-
-		    # SYNノードを利用しない場合
-		    next if ($synid =~ /s\d+/ && $option->{disable_synnode});
-
-		    # 文法素性の削除
-		    $features =~ s/<(可能|尊敬|受身|使役)>//g;
-
-		    # <下位語数:(数字)>を削除
-		    $features =~ s/<下位語数:\d+>//g;
-
-		    push(@idx, {midasi => $synid . $features});
-		    $idx[-1]->{midasi_with_yomi} = $synid_with_yomi;
-		    $idx[-1]->{group_id} = $kihonku->id;
-		    $idx[-1]->{freq} = $score;
-		    $idx[-1]->{isContentWord} = 1;
-		    $idx[-1]->{isBasicNode} = ($synid =~ /s\d+/) ? 0 : 1;
-		    $idx[-1]->{fstring} = $kihonku->fstring;
-		    $idx[-1]->{surf} = $synnodes->midasi;
-		    $idx[-1]->{pos} = $pos;
-		    $idx[-1]->{NE} = ($kihonku->fstring =~ /<NE(内)?:.+?>/) ? $& : 0;
-
-		    if ($kihonku->fstring =~ /クエリ不要語/) {
-			$idx[-1]->{requisite} = 0;
-			$idx[-1]->{optional}  = 1;
-		    } else {
-			$idx[-1]->{requisite} = 1;
-			$idx[-1]->{optional}  = 0;
-		    }
-		}
-	    }
-	    $gid++;
-	    $pos++;
-	}
-    }
-
-
-    if ($option->{antonym_and_negation_expansion}) {
-	my @buf;
-	my @lastTerms = ();
-	my $lastTermGroupID = $idx[-1]->{group_id};
-	my %midasiBuf;
-	foreach my $i (reverse @idx) {
-	    last if ($i->{group_id} ne $lastTermGroupID);
-	    $midasiBuf{$i->{midasi}} = 1;
-	    push (@lastTerms, $i);
-	}
-
-	foreach my $nd (@lastTerms) {
-	    # 構造体のコピー
-	    my $node;
-	    while (my ($k, $v) = each (%$nd)) {
-		$node->{$k} = $v;
-	    }
-
-	    # 反義情報の削除
-	    $node->{midasi} =~ s/<反義語>//;
-
-	    # <否定>の付け変え
-	    if ($node->{midasi} =~ /<否定>/) {
-		$node->{midasi} =~ s/<否定>//;
+	    # 単語に関するtermの抽出
+	    if ($this->{genkei}) {
+		$this->extractGenkeiTerms(\@idxs, $kihonku, \$gid, \$pos, $option);
+		# $gid, $posは形態素単位
 	    } else {
-		$node->{midasi} .= '<否定>';
-	    }
-
-	    unless (exists $midasiBuf{$node->{midasi}}) {
-		$node->{additional_node} = 1;
-		push (@idx, $node);
-		$midasiBuf{$node->{midasi}} = 1;
+		$this->extractSynNodeTerms(\@idxs, $kihonku, \$gid, \$pos, $option);
+		# $gid, $posは基本句単位
+		$gid++;
+		$pos++;
 	    }
 	}
     }
 
-    return \@idx;
+    # クエリの最後に出現している内容語の反対・否定表現を追加する
+    $this->expandAntonymAndNegationTerms(\@idxs) if ($option->{antonym_and_negation_expansion});
+
+    return \@idxs;
+}
+
+sub expandAntonymAndNegationTerms {
+    my ($this, $idxs) = @_;
+
+    my @buf;
+    my @lastTerms = ();
+    my $lastTermGroupID = $idxs->[-1]{group_id};
+    my %midasiBuf;
+    foreach my $i (reverse @$idxs) {
+	last if ($i->{group_id} ne $lastTermGroupID);
+	$midasiBuf{$i->{midasi}} = 1;
+	push (@lastTerms, $i);
+    }
+
+    foreach my $Nd (@lastTerms) {
+	# 構造体のコピー
+	my $node;
+	while (my ($k, $v) = each (%$Nd)) {
+	    $node->{$k} = $v;
+	}
+
+	# 反義情報の削除
+	$node->{midasi} =~ s/<反義語>//;
+
+	# <否定>の付け変え
+	if ($node->{midasi} =~ /<否定>/) {
+	    $node->{midasi} =~ s/<否定>//;
+	} else {
+	    $node->{midasi} .= '<否定>';
+	}
+	print $node->{midasi} . "\n";
+
+	unless (exists $midasiBuf{$node->{midasi}}) {
+	    $node->{additional_node} = 1;
+	    push (@$idxs, $node);
+	    $midasiBuf{$node->{midasi}} = 1;
+	}
+    }
+}
+
+sub extractDependencyTerms {
+    my ($this, $idxs, $kihonku, $gid, $pos, $option) = @_;
+
+    if (defined $kihonku->parent) {
+	# 並列句の処理
+	my $kakarimoto = $kihonku;
+	my $buf = $kakarimoto;
+	my $kakarisaki = $kihonku->parent;
+	while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
+	    $buf = $kakarisaki;
+	    $kakarisaki = $kakarisaki->parent;
+	}
+
+	# 係り受けインデックスの追加
+	foreach my $idx (@{$this->get_dpnd_index($kakarimoto, $kakarisaki, $option)}) {
+	    $idx->{pos} = ${$pos};
+	    $idx->{absolute_pos} = ${$pos};
+	    $idx->{isBasicNode} = 1;
+	    $idx->{group_id} = $kakarimoto->id . "/" . $kakarisaki->id;
+	    if ($idx->{fstring} =~ /クエリ必須係り受け/ || $option->{force_dpnd}) {
+		$idx->{requisite} = 1;
+		$idx->{optional}  = 0;
+	    } else {
+		$idx->{requisite} = 0;
+		$idx->{optional}  = 1;
+	    }
+	    push(@$idxs, $idx);
+	}
+	${$gid}++;
+    }
+
+    # テリック処理により生成される係り受けの追加
+    if (defined $kihonku->parent && $kihonku->parent->fstring =~ /クエリ不要語/ && $kihonku->parent && $kihonku->parent->fstring =~ /テリック処理/ &&
+	defined $kihonku->parent->parent && $kihonku->parent->parent->fstring !~ /クエリ削除語/) {
+	foreach my $idx (@{$this->get_dpnd_index($kihonku, $kihonku->parent->parent, $option)}) {
+	    $idx->{pos} = ${$pos};
+	    $idx->{absolute_pos} = ${$pos};
+	    $idx->{isBasicNode} = 1;
+#	    $idx->{group_id} = $kihonku->id . "/" . $kihonku->parent->parent->id;
+	    $idx->{group_id} = $gid + 1000;
+	    $idx->{requisite} = 0;
+	    $idx->{optional}  = 1;
+
+	    push(@$idxs, $idx);
+	}
+	${$gid}++;
+    }
+}
+
+sub extractGenkeiTerms {
+    my ($this, $idxs, $kihonku, $gid, $pos, $option) = @_;
+
+    foreach my $mrph ($kihonku->mrph) {
+	$this->{absolute_pos}++;
+	next if ($option->{content_word_only} && $mrph->fstring !~ /<内容語|意味有>/);
+
+	my $words = [];
+	push(@$words, &get_genkei($mrph));
+
+	my $num_of_words = scalar(@$words);
+	foreach my $word (@$words) {
+	    push(@$idxs, {midasi => &toUpperCase_utf8($word)});
+	    $idxs->[-1]{group_id} = $$gid;
+	    $idxs->[-1]{freq} = (1 / $num_of_words);
+	    $idxs->[-1]{score} = (1 / $num_of_words);
+	    $idxs->[-1]{isContentWord} = ($mrph->fstring =~ /<内容語|意味有>/) ? 1 : 0;
+	    $idxs->[-1]{fstring} = $mrph->fstring;
+	    $idxs->[-1]{surf} = $mrph->midasi;
+	    $idxs->[-1]{pos} = $$pos;
+	    $idxs->[-1]{NE} = 1 if ($mrph->fstring =~ /<NE:/);
+	    $idxs->[-1]{absolute_pos} = $$pos;
+	    $idxs->[-1]{requisite} = 1;
+	    $idxs->[-1]{optional} = 0;
+	}
+	($$gid)++;
+	($$pos)++;
+    }
+}
+
+sub extractSynNodeTerms {
+    my ($this, $idxs, $kihonku, $gid, $pos, $option) = @_;
+
+    # 単語・同義語・同義句インデックスの抽出
+    foreach my $synnodes ($kihonku->synnodes) {
+	foreach my $synnode ($synnodes->synnode) {
+	    my $synid = $synnode->synid;
+	    my $synid_with_yomi = $synid;
+	    my $score = $synnode->score;
+	    my $features = $synnode->feature;
+
+	    # 読みの削除
+	    my $buf;
+	    $synid = &remove_yomi($synid);
+
+	    # <上位語>を利用するかどうか
+	    if ($features =~ /<上位語>/) {
+		if ($option->{use_of_hypernym}) {
+		    $features =~ s/<上位語>//g;
+		} else {
+		    next;
+		}
+	    }
+
+	    # <反義語><否定>を利用するかどうか
+	    if ($features =~ /<反義語>/ && $features =~ /<否定>/) {
+		next unless ($option->{use_of_negation_and_antonym});
+	    }
+
+	    # SYNノードを利用しない場合
+	    next if ($synid =~ /s\d+/ && $option->{disable_synnode});
+
+	    # 文法素性の削除
+	    $features =~ s/<(可能|尊敬|受身|使役)>//g;
+
+	    # <下位語数:(数字)>を削除
+	    $features =~ s/<下位語数:\d+>//g;
+
+	    push(@$idxs, {midasi => $synid . $features});
+	    $idxs->[-1]{midasi_with_yomi} = $synid_with_yomi;
+	    $idxs->[-1]{group_id} = $kihonku->id;
+	    $idxs->[-1]{freq} = $score;
+	    $idxs->[-1]{isContentWord} = 1;
+	    $idxs->[-1]{isBasicNode} = ($synid =~ /s\d+/) ? 0 : 1;
+	    $idxs->[-1]{fstring} = $kihonku->fstring;
+	    $idxs->[-1]{surf} = $synnodes->midasi;
+	    $idxs->[-1]{pos} = $$pos;
+	    $idxs->[-1]{NE} = ($kihonku->fstring =~ /<NE(内)?:.+?>/) ? $& : 0;
+
+	    if ($kihonku->fstring =~ /クエリ不要語/) {
+		$idxs->[-1]{requisite} = 0;
+		$idxs->[-1]{optional}  = 1;
+	    } else {
+		$idxs->[-1]{requisite} = 1;
+		$idxs->[-1]{optional}  = 0;
+	    }
+	}
+    }
 }
 
 sub makeIndexFromKNPResultObject {
