@@ -288,7 +288,9 @@ sub get_snippets_for_each_did {
 
 	    foreach my $reps (@{$qk->{words}}) {
 		foreach my $rep (@$reps) {
-		    $rep2style{$rep->{string}} = $rep->{stylesheet};
+		    foreach my $string (split (/\+/, $rep->{string})) {
+			$rep2style{$string} = $rep->{stylesheet};
+		    }
 		}
 	    }
 	}
