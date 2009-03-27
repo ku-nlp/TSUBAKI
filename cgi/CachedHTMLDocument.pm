@@ -22,7 +22,7 @@ sub new {
     } else {
 	open(READER, $filename);
     }
-    binmode(READER, ':utf8');
+#   binmode(READER, ':utf8');
 
     my $flag = -1;
     my $crawler_html = 0;
@@ -45,21 +45,22 @@ sub new {
 	}
     }
 
-#   my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
-    my $encoding = 'utf8'; # $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
+    my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
+    my $encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
     my $parser = ModifiedTokeParser->new(\$buf) or die $!;
 
     tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
 
     my $color;
     my @patterns;
+    my %already_printed = ();
     my $message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
     $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>次の単語とその同義語がハイライトされています:&nbsp;);
     foreach my $reps (split(/,/, $query)) {
 	foreach my $word (split(/;/,  $reps)) {
 	    next unless ($word);
 
-	    if ($word =~ /^s\d+/ || $word =~ /\+/) {
+	    if ($word =~ /^s\d+/) {
 		foreach my $synonym (sort {length($b) <=> length($a)} split('\|', decode('utf8', $synonyms{$word}))) {
 		    # 読みの削除
 		    if ($synonym =~ m!^([^/]+)/!) {
@@ -69,8 +70,6 @@ sub new {
 		    # 情報源を削除
 		    $synonym =~ s/\[.+?\]//;
 
-		    $word =~ s/\+//g;
-
 		    $synonym =~ s/<[^>]+>//g;
 		    push(@patterns, {key => $synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$synonym<\/span>)});
 		    my $h_synonym = Unicode::Japanese->new($synonym)->z2h->get;
@@ -79,8 +78,15 @@ sub new {
 	    }
 	    # 単語はヘッダーには表示
 	    else {
-		# 読みの削除
-		$word = $1 if ($word =~ m!^([^/]+)/!);
+		my @buff = ();
+		foreach my $w (split (/\+/, $word)) {
+		    # 読みの削除
+		    $w = $1 if ($w =~ m!^([^/]+)/!);
+		    push (@buff, $w);
+		}
+		$word = join ("", @buff);
+		next if (exists $already_printed{$word});
+		$already_printed{$word} = 1;
 
 		$message .= sprintf qq(<span style="background-color:#%s;">), $CONFIG->{HIGHLIGHT_COLOR}[$color];
 		$message .= sprintf qq(%s</span>&nbsp;), $word;
@@ -90,6 +96,8 @@ sub new {
 	$color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
     }
     $message .= "</DIV>";
+
+    @patterns = sort {length($b->{key}) <=> length($a->{key})} @patterns;
 
 
     my $header;
