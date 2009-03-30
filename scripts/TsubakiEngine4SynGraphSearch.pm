@@ -110,35 +110,18 @@ sub calculate_score {
     my %did2pos_score = ();
     foreach my $docs (@{$alldocs}) {
 	foreach my $doc (@{$docs}) {
-	    my $did = $doc->{did};
-	    next if (!$did2idx_is_empty && !defined $did2idx->{$did});
-
-	    $did2pos_score{$did} = {} unless (exists($did2pos_score{$did}));
+	    next if (!$did2idx_is_empty && !defined $did2idx->{$doc->{did}});
 
 	    foreach my $qid_freq (@{$doc->{qid_freq}}) {
-		my $qid = $qid_freq->{qid};
-
 		my $pos = $retriever->load_position($qid_freq->{fnum}, $qid_freq->{offset}, $qid_freq->{nums});
 		my $score = $retriever->load_score($qid_freq->{fnum}, $qid_freq->{offset_score}, $qid_freq->{nums});
-
-		my $gid = $qid2gid->{$qid};
-		my $qtf = $qid2qtf->{$qid};
-		for (my $i = 0, my $pos_size = scalar(@$pos); $i < $pos_size; $i++) {
-		    my $p = $pos->[$i];
-		    my $s = $qtf * $score->[$i];
-
-		    # ポジション$pでもっともスコアの高い表現（基本ノード or SYNノード）を取得
-		    my $max_score_at_p = $did2pos_score{$did}->{$p};
-		    unless (defined $max_score_at_p) {
-			$did2pos_score{$did}->{$p}{score} = $s;
-			$did2pos_score{$did}->{$p}{gid} = $gid;
-			$did2pos_score{$did}->{$p}{qid} = $qid;
-		    } else {
-			if ($max_score_at_p < $s) {
-			    $did2pos_score{$did}->{$p}{score} = $s;
-			    $did2pos_score{$did}->{$p}{gid} = $gid;
-			    $did2pos_score{$did}->{$p}{qid} = $qid;
-			}
+		foreach my $i (0..$qid_freq->{nums} - 1) {
+# 		    # ポジション$pos->[$i]でもっともスコアの高い表現（基本ノード or SYNノード）を取得
+# 		    # $did2pos_score{$doc->{did}} が undef の場合、$did2pos_score{$doc->{did}}->{$pos->[$i]}{score} は 0 として扱われる
+		    if ($did2pos_score{$doc->{did}}->{$pos->[$i]}{score} < $score->[$i]) {
+			$did2pos_score{$doc->{did}}->{$pos->[$i]}{score} = $score->[$i];
+			$did2pos_score{$doc->{did}}->{$pos->[$i]}{gid} = $qid2gid->{$qid_freq->{qid}};
+			$did2pos_score{$doc->{did}}->{$pos->[$i]}{qid} = $qid_freq->{qid};
 		    }
 		}
 	    }
@@ -165,9 +148,9 @@ sub calculate_score {
 	#############################################################
 
 	my %total_scores;
-	while (my ($pos, $score_gid_qid) = each(%{$pos2score_gid_qid})) {
-	    $total_scores{$score_gid_qid->{gid}} += $score_gid_qid->{score};
-	}
+ 	while (my ($pos, $score_gid_qid) = each(%{$pos2score_gid_qid})) {
+ 	    $total_scores{$score_gid_qid->{gid}} += ($qid2qtf->{$score_gid_qid->{qid}} * $score_gid_qid->{score});
+ 	}
 
 	my $dlength = $d_length_buff->{$did};
 	# 文書長がバッファになければロード
@@ -231,27 +214,21 @@ sub calculate_score {
 		my $moto = $dpnd->{moto};
 		my $saki = $dpnd->{saki};
 
-		my $prev = undef;
+		my $prev = {gid => $pos2score_gid_qid->{$poslist[0]}{gid},
+			    pos => $poslist[0]};
 		foreach my $pos (@poslist) {
-		    my $qid = $pos2score_gid_qid->{$pos}{qid};
-		    my $gid = $pos2score_gid_qid->{$pos}{gid};
+		    if (($prev->{gid} eq $moto && $pos2score_gid_qid->{$pos}{gid} eq $saki) || ($prev->{gid} eq $saki && $pos2score_gid_qid->{$pos}{gid} eq $moto)) {
+			my $dist = $pos - $prev->{pos};
 
-		    if (defined $prev) {
-			# $prev->{gid} -> $gid || $gid -> $prev->{gid}
-			if (($prev->{gid} eq $moto && $gid eq $saki) || ($prev->{gid} eq $saki && $gid eq $moto)) {
-			    my $dist = $pos - $prev->{pos};
-
-			    # 係り元-係り先間の最小距離を取得
-			    if (exists $dists{$dpnd->{gid}}) {
-				$dists{$dpnd->{gid}} = $dist if ($dist < $dists{$dpnd->{gid}});
-			    } else {
-				$dists{$dpnd->{gid}} = $dist;
-			    }
+			# 係り元-係り先間の最小距離を取得
+			if (exists $dists{$dpnd->{gid}}) {
+			    $dists{$dpnd->{gid}} = $dist if ($dist < $dists{$dpnd->{gid}});
+			} else {
+			    $dists{$dpnd->{gid}} = $dist;
 			}
 		    }
 
-		    $prev->{gid} = $gid;
-		    $prev->{qid} = $qid;
+		    $prev->{gid} = $pos2score_gid_qid->{$pos}{gid};
 		    $prev->{pos} = $pos;
 		}
 	    }
