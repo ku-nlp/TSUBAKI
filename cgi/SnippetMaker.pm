@@ -23,7 +23,7 @@ my $NUM_OF_CHARS_IN_HEADER = 100;
 sub extract_sentences_from_ID {
     my($query, $id, $opt) = @_;
 
-    my $dir_prefix = ($opt->{syngraph}) ? $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH} : $CONFIG->{DIR_PREFIX_FOR_SFS};
+    my $dir_prefix = $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH};
     my $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $id / 1000000, $id / 10000, $id);
 
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
