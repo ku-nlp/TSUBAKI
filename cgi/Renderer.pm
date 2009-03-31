@@ -359,8 +359,8 @@ END_OF_HTML
 
     # 混雑具合を表示
     if ($CONFIG->{DISPLAY_CONGESTION}) {
-	my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
-	print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$percentage%&nbsp;</SPAN>);
+	my ($count, $foregroundColor, $backgroundColor) = &getCongestion();
+	print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$count クエリ/分</SPAN>);
     }
     print qq(</DIV>\n);
 
@@ -487,8 +487,8 @@ my $host = `hostname`;
 
     # 混雑具合を表示
     if ($CONFIG->{DISPLAY_CONGESTION}) {
-	my ($percentage, $foregroundColor, $backgroundColor) = &getCongestion();
-	print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$percentage%&nbsp;</SPAN>);
+	my ($count, $foregroundColor, $backgroundColor) = &getCongestion();
+	print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$count クエリ/分</SPAN>);
     }
     print qq(</DIV>\n);
 
@@ -570,7 +570,8 @@ sub getCongestion {
     while (<READER>) {
 	my @data = split(' ', $_);
 	my ($date, $hour, $min, $sec) = split(":", $data[3]);
-	$buf = $min unless (defined $buf);
+	$buf = 60 + $min unless (defined $buf);
+
 	my $request = $data[6];
 
 	next if ($request !~/cgi/);
@@ -578,7 +579,7 @@ sub getCongestion {
 	next if ($request =~/format=/);
 	next if ($request !~/query=/);
 
-	last if ($buf - $min > 1);
+	last if (($buf - $min) % 60 > 1);
 	if ($request !~ /format/) {
 	    $count++;
 	}
@@ -586,28 +587,27 @@ sub getCongestion {
     close (READER);
 
 
-    my $percentage = sprintf ("%.2f", 100 * $count / 6);
     my $backgroundColor = 'red';
     my $foregroundColor = 'yellow';
-    if (75 < $percentage && $percentage < 100) {
+    if (9 < $count) {
 	$backgroundColor = 'orange';
 	$foregroundColor = 'black';
     }
-    elsif (50 < $percentage && $percentage <= 75) {
+    elsif (5 < $count && $count <= 9) {
 	$backgroundColor = 'yellow';
 	$foregroundColor = 'black';
     }
-    elsif (25 < $percentage && $percentage <= 50) {
+    elsif (2 < $count && $count <= 5) {
 	$backgroundColor = '#CCFF99';
 	$foregroundColor = 'black';
     }
-    elsif ($percentage <= 25) {
+    elsif ($count <= 2) {
 	$backgroundColor = '#99FFFF';
 	$foregroundColor = 'black';
     }
 
 
-    return ($percentage, $foregroundColor, $backgroundColor);
+    return ($count, $foregroundColor, $backgroundColor);
 }
 
 sub get_uri_escaped_query {
@@ -826,7 +826,7 @@ sub printSlaveServerLogs {
 
 
     my $rank = 1;
-    my $N = 5;
+    my $N = 20;
     print qq(<TABLE width="100%">\n);
     unshift (@keys, 'host');
     printf qq(<TR><TD colspan="%d" align="center" style="color: white; font-weight: bold; background-color:gray;">WORST $N</TD></TR>\n), scalar(@keys);
