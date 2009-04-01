@@ -39,6 +39,7 @@ SYNGRAPH_PM_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGr
 WWW2SF_PATH	/home/skeiji/cvs/WWW2sf/tool/perl
 UTILS_PATH	/home/skeiji/cvs/Utils/perl
 TSUBAKI_MODULE_PATH	/home/skeiji/tsubaki-develop/SearchEngine/perl
+PORTS_FILE_PATH		/home/skeiji/tsubaki/SearchEngine/data/PORTS.SYN
 
 
 

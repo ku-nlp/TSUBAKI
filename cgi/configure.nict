@@ -39,7 +39,7 @@ SYNGRAPH_PM_PATH	/opt/PERL_MODS/SYNGRAPH/SynGraph.20081107
 WWW2SF_PATH	/share03/WISDOM/WWW2sf/tool/perl
 UTILS_PATH	/share03/WISDOM/Utils/perl
 TSUBAKI_MODULE_PATH	/share03/WISDOM/TSUBAKI/SearchEngine/perl
-
+PORTS_FILE_PATH		/share03/WISDOM/TSUBAKI/SearchEngine/data/PORTS.SYN.NICT
 
 ##################################################
 # キャッシュページ／標準フォーマット関係の設定
