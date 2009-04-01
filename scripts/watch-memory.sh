@@ -2,20 +2,15 @@
 
 # $Id$
 
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/tsubaki.conf
+
+
 # チェック間隔
 INTERVAL=10
 
 COMMAND=tsubaki_server.pl
-
-# NICT
-if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    # ★環境にあわせて変えること
-    TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
-    CONFIG_FILE=$TSUBAKI_DIR/cgi/configure.nict
-else
-    TSUBAKI_DIR=$HOME/tsubaki/SearchEngine
-    CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
-fi
 
 # 使用メモリの上限
 MEM_TH=`grep MAX_RATE_OF_MEMORY_USE $CONFIG_FILE | grep -v \# | awk '{print $2}'`

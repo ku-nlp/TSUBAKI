@@ -2,33 +2,11 @@
 
 # $Id$
 
-# VERBOSE=-verbose
-VERBOSE=
-
-HOSTS_PREFIX=
-HOSTS_START=
-HOSTS_END=
-
-SUFFIX=
-
-# NICT
-if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    HOSTS_PREFIX=iccc
-    HOSTS_START=11
-    HOSTS_END=38
-    DEGIT=3
-    TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
-    SUFFIX=.NICT
-else
-    HOSTS_PREFIX=nlpc
-    HOSTS_START=34
-    HOSTS_END=59
-    TSUBAKI_DIR=$HOME/tsubaki/SearchEngine
-    DEGIT=2
-fi
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/tsubaki.conf
 
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
-
 
 
 call() {

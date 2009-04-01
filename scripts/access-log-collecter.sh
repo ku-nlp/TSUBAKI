@@ -4,18 +4,16 @@
 
 # apache のログファイルを取得しつづけるデーモン
 
-# NICT
-if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    CONFIG=../cgi/configure.nict
-else
-    CONFIG=../cgi/configure
-fi
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/tsubaki.conf
+
 
 SLEEP_TIME=5
 
-hostname=`grep LOADBALANCER_NAME $CONFIG | awk '{print $2}'`
-access_log=`grep APACHE_ACCESS_LOG $CONFIG | awk '{print $2}'`
-dist_dir=`grep DATA_DIR $CONFIG | awk '{print $2}'`
+hostname=`grep LOADBALANCER_NAME $CONFIG_FILE | awk '{print $2}'`
+access_log=`grep APACHE_ACCESS_LOG $CONFIG_FILE | awk '{print $2}'`
+dist_dir=`grep DATA_DIR $CONFIG_FILE | awk '{print $2}'`
 
 while [ 1 ]
 do

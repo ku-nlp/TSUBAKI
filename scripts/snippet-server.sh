@@ -3,29 +3,16 @@
 # $Id$
 
 
-# ★環境に従ってTSUBAKI_DIRを変更すること
-
-# NICT
-SUFFIX=
-if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    TSUBAKI_DIR=$HOME/cvs/SearchEngine
-    SUFFIX=.nict
-else
-    TSUBAKI_DIR=$HOME/cvs/SearchEngine
-fi
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/tsubaki.conf
 
 
-# ★環境に従って以下の変数を変更すること
-
-PERL=$HOME/local/bin/perl
-SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 CGI_DIR=$TSUBAKI_DIR/cgi
-
+SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 
 # 起動時のオプション
 OPTS="-string_mode -ignore_yomi -z"
-
-CONFIGFILE=$TSUBAKI_DIR/cgi/configure$SUFFIX
 COMMAND=snippet_make_server.pl
 NICE=-4
 
@@ -33,7 +20,7 @@ NICE=-4
 
 
 start() {
-    grep STANDARD_FORMAT_LOCATION $CONFIGFILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
+    grep STANDARD_FORMAT_LOCATION $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
     do
 	host=`echo $LINE | cut -f 1 -d ' '`
 	ports=`echo $LINE | cut -f 2 -d ' '`
@@ -48,7 +35,7 @@ start() {
 }
 
 status_or_stop() {
-    grep STANDARD_FORMAT_LOCATION $CONFIGFILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
+    grep STANDARD_FORMAT_LOCATION $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
     do
 	host=`echo $LINE | cut -f 1 -d ' '`
 	ports=`echo $LINE | cut -f 2 -d ' '`

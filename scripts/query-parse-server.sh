@@ -2,37 +2,23 @@
 
 # $Id$
 
-# VERBOSE=-verbose
-VERBOSE=
+# 設定ファイルの読み込み
+confdir=`echo $0 | xargs dirname`/../conf
+. $confdir/tsubaki.conf
 
-HOSTS_PREFIX=
-HOSTS_START=
-HOSTS_END=
-
-
-# NICT
-if [ `domainname` = 'crawl.kclab.jgn2.jp' ]; then
-    TSUBAKI_DIR=$HOME/public_html/cgi-bin/SearchEngine
-    CONFIG_FILE=$TSUBAKI_DIR/cgi/configure.nict
-else
-    TSUBAKI_DIR=$HOME/tsubaki-develop/SearchEngine
-    CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
-fi
 
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 MODULE_DIR=$TSUBAKI_DIR/perl
 CGI_DIR=$TSUBAKI_DIR/cgi
-UTIL_DIR=$HOME/cvs/Utils/perl
 COMMAND=query_parse_server.pl
 NICE=-4
-PERL=$HOME/local/bin/perl
 PORT=`grep PORT_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 
 start() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
-	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
-	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTIL_DIR $SCRIPTS_DIR/$COMMAND $PORT"
+	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $PORT"
+	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $PORT"
     done
 }
 
