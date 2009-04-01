@@ -26,7 +26,8 @@
 ##################################################
 # 基本ツールの設定（★要変更）
 ##################################################
-##################################################
+
+PERL	/opt/PERL/wisdom/bin/perl
 TOOL_HOME	/share03/WISDOM/local/bin
 KNP_COMMAND	/opt/KNP/current/bin/knp
 JUMAN_COMMAND	/opt/JUMAN/current/bin/juman
@@ -72,6 +73,13 @@ COMPOUND_NOUN_DFDB_PATH	/share03/WISDOM/data/cns.100M.cls.df1000.cdb
 ##################################################
 # 検索サーバー/スニペットサーバー関係の設定
 ##################################################
+
+# TSUBAKIを起動するホストの情報 (conf/tsubaki.confが参照する)
+HOSTS_PREFIX	iccc
+HOSTS_START	11
+HOSTS_END	66
+HOSTS_DEGIT	3
+
 
 # サーバーの状態のログを保存するファイルの指定
 # サーバーの設定に入る前に設定すること（サーバーの設定後では反映されません）

@@ -26,6 +26,8 @@
 ##################################################
 # 基本ツールの設定（★要変更）
 ##################################################
+
+PERL	/home/skeiji/local/bin/perl
 TOOL_HOME	/home/skeiji/local/bin
 KNP_COMMAND	/home/skeiji/local/080620/bin/knp
 JUMAN_COMMAND	/home/skeiji/local/080620/bin/juman
@@ -72,6 +74,12 @@ COMPOUND_NOUN_DFDB_PATH	../data/cns.100M.cls.df1000.cdb
 ##################################################
 # 検索サーバー/スニペットサーバー関係の設定
 ##################################################
+
+# TSUBAKIを起動するホストの情報 (conf/tsubaki.confが参照する)
+HOSTS_PREFIX	nlpc
+HOSTS_START	34
+HOSTS_END	70
+HOSTS_DEGIT	2
 
 # サーバーの状態のログを保存するファイルの指定
 # サーバーの設定に入る前に設定すること（サーバーの設定後では反映されません）
