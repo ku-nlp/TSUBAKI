@@ -1,5 +1,7 @@
 package CachedHTMLDocument;
 
+# $Id$
+
 use strict;
 use utf8;
 use HTML::TokeParser;
@@ -45,8 +47,14 @@ sub new {
 	}
     }
 
-    my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
-    my $encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
+    my $encoding;
+    if ($CONFIG->{IS_NICT_MODE}) {
+	$encoding = 'utf8';
+	$buf = decode ('utf8', $buf);
+    } else {
+	my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
+	$encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
+    }
     my $parser = ModifiedTokeParser->new(\$buf) or die $!;
 
     tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
