@@ -1,3 +1,91 @@
+2009-04-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm:
+	NICT環境でキャッシュページが文字化けするバグを修正.
+
+2009-04-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: パラメータの追加.
+
+	* scripts/watch-memory-server.sh, scripts/watch-memory.sh, scripts/watch-server-status.sh, scripts/access-log-collecter.sh, scripts/query-parse-server.sh, scripts/snippet-server.sh, scripts/tsubaki-server-manager.sh, scripts/tsubaki-server.sh:
+	conf/tsubaki.confファイル中の変数を参照するように変更.
+
+2009-03-31  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: 不要なパラメータを削除.
+
+	* cgi/SnippetMaker.pm:
+	DIR_PREFIX_FOR_SFS_W_SYNGRAPHで指定されたディレクトリを常に標準フォーマットがおかれたディレクトリとみなすように.
+
+	* data/PORTS.ORD, data/PORTS.ORD.NICT: removed.
+
+	* cgi/Renderer.pm: 混具合の表示方法を変更.
+
+2009-03-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	スコア計算のバグを修正. 変数の整理.
+
+2009-03-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm: 長い表現を優先的にハイライトするように.
+
+	* cgi/SnippetMakerAgent.pm:
+	内容語が+で連結されている場合にハイライトされないbugを修正.
+
+2009-03-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: パラメータ(IS_NICT_MODE)の追加.
+
+	* cgi/QueryParser.pm: 利用するIndexerをNICTとNIIで区別するように.
+
+	* cgi/QueryKeyword.pm:
+	フレーズ検索時に, クエリ中の準内容語の数を数えるように.
+
+	* scripts/Indexer.pm:
+	makeIndexFromSynGraphResultObjectメソッドを機能ごとに分割.
+
+	* cgi/RequestParser.pm: bug fixed. (startの値をresultsで考慮するように)
+
+2009-03-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_test.pl: TsubakiEngineFactoryの変更に対応.
+
+	* scripts/Retrieve.pm:
+	文書ID, 出現位置・スコアへのオフセットを同じループ内で取得するように. load_score, load_positionメソッド内でデータを一気に読み込むように.
+
+	* scripts/TsubakiEngineFactory.pm, scripts/tsubaki_server.pl:
+	あらかじめ文書長データベースをロードしておくように.
+
+	* scripts/TsubakiEngine.pm: 変数の整理.
+
+	* scripts/Retrieve.pm: 配列のサイズをあらかじめ持つように.
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm: 変数の整理.
+
+	* scripts/TsubakiEngine.pm: 配列のサイズをあらかじめ持つように.
+
+	* scripts/Retrieve.pm:
+	スコア情報をインデックスデータから一回でロードするように, 使用する変数の整理.
+
+2009-03-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4SynGraphSearch.pm:
+	配列のサイズをあらかじめ求めるように.
+
+2009-03-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm:
+	term(optional)の文書IDをロードする際に, 既にロードされている文書IDをチェックするようにした.
+
+	* scripts/Retrieve.pm:
+	for文をforeach文に変更, for文を使う際はあらかじめscalar(@array)をするように, offset値の計算をまとめて行うように.
+
+	* cgi/SnippetMaker.pm:
+	スレーブサーバーから返される場所情報を利用してスニペットを作るように.
+
+	* cgi/QueryParser.pm: フレーズ検索ではSynNodeを利用しないように.
+
 2009-03-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine.pm:
