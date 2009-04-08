@@ -585,34 +585,69 @@ sub expandAntonymAndNegationTerms {
     }
 }
 
+sub addDependencyTerms {
+    my ($this, $idxs, $terms, $kakarimoto, $kakarisaki, $pos, $option) = @_;
+
+    # 係り受けtermの追加
+    foreach my $idx (@{$terms}) {
+	$idx->{pos} = ${$pos};
+	$idx->{absolute_pos} = ${$pos};
+	$idx->{isBasicNode} = 1;
+	$idx->{group_id} = $kakarimoto->id . "/" . $kakarisaki->id;
+	if ($idx->{fstring} =~ /クエリ必須係り受け/ || $option->{force_dpnd}) {
+	    $idx->{requisite} = 1;
+	    $idx->{optional}  = 0;
+	} else {
+	    $idx->{requisite} = 0;
+	    $idx->{optional}  = 1;
+	}
+	push(@$idxs, $idx);
+    }
+}
+
+sub generateDependencyTermsForParaType1 {
+    my ($this, $idxs, $kakarimoto, $kakarisaki, $pos, $option) = @_;
+
+    if (defined $kakarisaki->child) {
+	foreach my $child ($kakarisaki->child) {
+	    if ($child->dpndtype eq 'P') {
+		my $terms = $this->get_dpnd_index($kakarimoto, $child, $option);
+		$this->addDependencyTerms($idxs, $terms, $kakarimoto, $child, $pos, $option);
+
+		# 子の子についても処理する
+		$this->generateDependencyTermsForParaType1($idxs, $kakarimoto, $child, $pos, $option);
+	    }
+	}
+    }
+}
+
 sub extractDependencyTerms {
     my ($this, $idxs, $kihonku, $gid, $pos, $option) = @_;
 
     if (defined $kihonku->parent) {
-	# 並列句の処理
 	my $kakarimoto = $kihonku;
-	my $buf = $kakarimoto;
 	my $kakarisaki = $kihonku->parent;
+
+	# 並列句の処理１
+	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 日本->政治, 日本->経済 の部分
+	my $buf = $kakarisaki;
+	if ($kakarimoto->dpndtype ne 'P') {
+	    $this->generateDependencyTermsForParaType1($idxs, $kakarimoto, $kakarisaki, $pos, $option);
+	}
+
+	# 並列句の処理２
+	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 政治->正す, 経済->正す の部分
+	my $buf = $kakarimoto;
 	while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
 	    $buf = $kakarisaki;
 	    $kakarisaki = $kakarisaki->parent;
 	}
 
-	# 係り受けインデックスの追加
-	foreach my $idx (@{$this->get_dpnd_index($kakarimoto, $kakarisaki, $option)}) {
-	    $idx->{pos} = ${$pos};
-	    $idx->{absolute_pos} = ${$pos};
-	    $idx->{isBasicNode} = 1;
-	    $idx->{group_id} = $kakarimoto->id . "/" . $kakarisaki->id;
-	    if ($idx->{fstring} =~ /クエリ必須係り受け/ || $option->{force_dpnd}) {
-		$idx->{requisite} = 1;
-		$idx->{optional}  = 0;
-	    } else {
-		$idx->{requisite} = 0;
-		$idx->{optional}  = 1;
-	    }
-	    push(@$idxs, $idx);
-	}
+	# 係り受けtermの取得
+	my $terms = $this->get_dpnd_index($kakarimoto, $kakarisaki, $option);
+
+	# 係り受けtermの追加
+	$this->addDependencyTerms($idxs, $terms, $kakarimoto, $kakarisaki, $pos, $option);
 	${$gid}++;
     }
 
