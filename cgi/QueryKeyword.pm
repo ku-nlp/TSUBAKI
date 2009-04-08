@@ -788,7 +788,14 @@ sub getPaintingJavaScriptCode {
 	my $kakarimoto = $kihonkus[$i];
 	my $kakarisaki = $kakarimoto->parent;
 
-	# 並列句の処理
+	# 並列句の処理１
+	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 日本->政治, 日本->経済 の部分
+	if ($kakarimoto->dpndtype ne 'P') {
+	    $jscode .= &getDrawingDependencyCodeForParaType1($kakarimoto, $kakarisaki, $i, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
+	}
+
+	# 並列句の処理２
+	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 政治->正す, 経済->正す の部分
 	my $buf = $kakarimoto;
 	while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
 	    $buf = $kakarisaki;
@@ -824,6 +831,23 @@ sub getPaintingJavaScriptCode {
     return ($width, $height, $colorOffset, $jscode);
 }
 
+sub getDrawingDependencyCodeForParaType1 {
+    my ($kakarimoto, $kakarisaki, $i, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos) = @_;
+
+    my $jscode;
+    if (defined $kakarisaki && defined $kakarisaki->child) {
+	foreach my $child ($kakarisaki->child) {
+	    if ($child->dpndtype eq 'P') {
+		my $mark = ($child->fstring() =~ /クエリ削除語/) ?  '×' : '△';
+		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $child, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos);
+
+		# 子の子についても処理する
+		$jscode .= &getDrawingDependencyCodeForParaType1($kakarimoto, $child, $i, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos);
+	    }
+	}
+    }
+    return $jscode;
+}
 
 sub getDrawingDependencyCode {
     my ($i, $kakarimoto, $kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos) = @_;
