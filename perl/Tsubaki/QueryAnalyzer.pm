@@ -140,6 +140,10 @@ sub annotateTelicFeature {
 	# 朝食を食べない子供の増加 -> 朝食の子供の増加 X
 	if (($t->fstring =~ /<用言:動>/ || $t->fstring =~ /<サ変>/) && $t->fstring !~ /<否定表現>/) {
 	    my ($verb) = ($t->fstring =~ /<正規化代表表記:([^>]+?)>/);
+	    # 可能動詞の場合は原型を取得する
+	    foreach my $mrph ($t->mrph) {
+		$verb = $1 if ($mrph->fstring =~ /<可能動詞:([^>]+?)>/);
+	    }
 
 	    my $appendflag = 0;
 	    if (defined $t->parent) {
@@ -174,9 +178,12 @@ sub annotateTelicFeature {
 sub isWorthlessVerb {
     my ($this, $mrph, $verb, $opt) = @_;
 
-    my ($rank, $score) = $this->getRankOfMI($mrph, $verb);
+    my $noun = $mrph->repname;
+    $noun = $1 if ($mrph->fstring =~ /<可能動詞:([^>]+?)>/);
 
-    printf ("Y=%s N=%s score=%.2f, rank=%d (th=%d)<br>\n", $verb, $mrph->repname, $score, $rank, $opt->{th}) if ($this->{option}{debug});
+    my ($rank, $score) = $this->getRankOfMI($noun, $verb);
+
+    printf ("Y=%s N=%s score=%.2f, rank=%d (th=%d)<br>\n", $verb, $noun, $score, $rank, $opt->{th}) if ($this->{option}{debug});
 
     if ($score < 0 || $rank > $opt->{th}) {
 	return 0;
@@ -185,9 +192,9 @@ sub isWorthlessVerb {
 	my $antonymV = $this->{antonyms}{$verb};
 	if ($antonymV) {
 	    my $N = 5;
-	    my ($rank, $score) = $this->getRankOfMI($mrph, $antonymV);
+	    my ($rank, $score) = $this->getRankOfMI($noun, $antonymV);
 
-	    printf ("Y=%s N=%s score=%.2f, rank=%d (th=%d)<br>\n", $antonymV, $mrph->repname, $score, $rank, $N * $opt->{th}) if ($this->{option}{debug});
+	    printf ("Y=%s N=%s score=%.2f, rank=%d (th=%d)<br>\n", $antonymV, $noun, $score, $rank, $N * $opt->{th}) if ($this->{option}{debug});
 
 	    # 反義語が条件を満たす場合は省略しない
 	    return ($score < 0 || $rank > ($N * $opt->{th})) ? 1 : 0;
@@ -197,9 +204,9 @@ sub isWorthlessVerb {
 }
 
 sub getRankOfMI {
-    my ($this, $mrph, $verb) = @_;
+    my ($this, $noun, $verb) = @_;
 
-    my $yogen = decode('utf8', $this->{cscf}->{mi}{$mrph->repname});
+    my $yogen = decode('utf8', $this->{cscf}->{mi}{$noun});
     my %buf;
     foreach my $y (split(/\|/, $yogen)) {
 	my ($midasi, $score) = split(";", $y);
