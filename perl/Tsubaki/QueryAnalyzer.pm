@@ -146,9 +146,11 @@ sub annotateTelicFeature {
 	    }
 
 	    my $appendflag = 0;
-	    if (defined $t->parent) {
+	    if (defined $t->parent && $t->fstring =~ /連体修飾/) {
 		# 教える -> 先生
 		foreach my $saki ($t->parent) {
+		    next if ($saki->fstring =~ /クエリ削除語/);
+
 		    foreach my $m ($saki->mrph) {
 			next unless (defined $m->repname);
 
@@ -160,6 +162,8 @@ sub annotateTelicFeature {
 	    if (!$appendflag && defined $t->child) {
 		# 体育 -> 教える
 		foreach my $moto ($t->child) {
+#		    next unless ($moto->fstring =~ /連用要素/);
+
 		    foreach my $m ($moto->mrph) {
 			next unless (defined $m->repname);
 
