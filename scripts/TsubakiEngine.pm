@@ -14,7 +14,6 @@ use strict;
 use Retrieve;
 use Encode qw(from_to encode decode);
 use utf8;
-use Devel::Size qw/size total_size/;
 use Logger;
 use Data::Dumper;
 {
