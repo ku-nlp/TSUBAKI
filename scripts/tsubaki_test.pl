@@ -68,9 +68,9 @@ my @DOC_LENGTH_DBs;
 opendir(DIR, $opt{dlengthdbdir});
 foreach my $dbf (readdir(DIR)) {
     next unless ($dbf =~ /(\d+).doc_length\.bin$/);
-    
+
     my $fp = "$opt{dlengthdbdir}/$dbf";
-    
+
     my $dlength_db;
     if ($opt{dlengthdb_hash}) {
 	require CDB_File;
@@ -126,7 +126,7 @@ sub main {
     my $tsubaki = $factory->get_instance();
     $loggerAll->setTimeAs('create_TSUBAKI_instance_time', '%.3f');
 
-    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, flag_of_anchor_use => 1, DIST => 30, verbose => $opt{verbose}, results => $opt{results}, LOGGER => $logger});
+    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, flag_of_anchor_use => ($opt{idxdir4anchor}) ? 1 : 0, DIST => 30, verbose => $opt{verbose}, results => $opt{results}, LOGGER => $logger});
     $loggerAll->setTimeAs('search_time', '%.3f');
 
     my $merge = 0;
