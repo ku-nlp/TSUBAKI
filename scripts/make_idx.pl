@@ -313,12 +313,7 @@ sub extractIndices {
 
 	# 出現形インデックスを抽出しマージする
 	if (!$opt{ignore_genkei}) {
-	    my $knp_result_obj = $CACHE{$rawstring};
-	    unless ($knp_result_obj) {
-		$knp_result_obj = new KNP::Result($knp_result);
-		$CACHE{$rawstring} = $knp_result_obj;
-	    }
-
+	    my $knp_result_obj = new KNP::Result($knp_result);
 	    my $terms_genkei = $indexer_genkei->makeIndexFromKNPResultObject($knp_result_obj);
 	    push(@$terms, @$terms_genkei) if (defined $terms_genkei);
 	    push(@$terms, @$terms_syn) if (defined $terms_syn);
