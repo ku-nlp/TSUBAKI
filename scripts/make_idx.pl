@@ -90,6 +90,8 @@ $opt{ignore_genkei} = 0 unless ($opt{ignore_genkei});
 # <RawString>タグの要素が5000byteを越える場合（文字化け・英数字の羅列など）はインデックス抽出を行わない
 $opt{max_length_of_rawstring} = 5000 unless ($opt{max_length_of_rawstring});
 
+my %CACHE = ();
+
 &main();
 
 sub usage {
@@ -116,7 +118,7 @@ sub main {
 	print STDERR "Create directory: $opt{out}\n";
 	mkdir $opt{out};
     }
-    
+
     if ($opt{file}) {
 	die "Not xml file.\n" if ($opt{file} !~ /([^\/]+)\.xml/);
 	&extract_indice_from_single_file($opt{file}, $1);
@@ -134,7 +136,7 @@ sub main {
 
 sub extract_indices_wo_pm {
     my ($file, $fid, $my_opt) = @_;
-  
+
     my $indexer = new Indexer({
 	ignore_yomi => $opt{ignore_yomi},
 	without_using_repname => $opt{genkei} });
@@ -170,7 +172,14 @@ sub extract_indices_wo_pm {
     while (<READER>) {
 	last if ($_ =~ /<Text / && $opt{only_inlinks});
 
-	if (/(<($pattern)( |\>).*\n)/o) {
+	if ($_ !~ /^(?:\s|\])/) {
+	    $content .= $_ if ($isIndexingTarget);
+	}
+	elsif ($_ =~ /^\s*(<($pattern)(?: |\>).*\n)/o) {
+	    $isIndexingTarget = 1;
+	    $content = $1;
+	    $tagName = $2;
+
 	    if ($_ =~ /Length=\"(\d+)\"/) {
 		my $length = $1;
 		# $opt{max_length_of_rawstring}バイトより大きい場合は読み込まない, 越える場合は文字化け、英数字の羅列の可能性
@@ -187,12 +196,6 @@ sub extract_indices_wo_pm {
 		    }
 		}
 	    }
-	}
-
-	if (/(<($pattern)( |\>).*\n)/o) {
-	    $isIndexingTarget = 1;
-	    $content = $1;
-	    $tagName = $2;
 
 	    # 文IDの取得
 	    if (/\<S.*? Id="(\d+)"/) {
@@ -206,6 +209,7 @@ sub extract_indices_wo_pm {
  	}
  	elsif (/(.*\<\/($pattern)\>)/o) {
 	    $content .= $1;
+
 	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei);
 
 	    # インリンクの場合は披リンク数分を考慮する
@@ -237,7 +241,7 @@ sub extract_indices_wo_pm {
     return &merge_indices(\%indices);
 }
 
-	
+
 
 sub extractIndices {
     my ($content, $indexer, $file, $indexer_genkei) = @_;
@@ -248,48 +252,73 @@ sub extractIndices {
 
     my $knp_result;
     if ($opt{scheme} eq 'SynGraph') {
-	foreach my $line (split("\n", $annotation)) {
-	    # `!' or '#' ではじまる行はスキップ
-	    next if ($line =~ /^!/ || $line =~ /^#/);
-	    next if ($line eq '');
-
-	    $knp_result .= $line . "\n";
-	}
+	# `空行 or !' or '#' ではじまる行はスキップ
+	$knp_result = join ("\n", grep { $_ ne '' && $_ !~ /^(?:!|\#)/ } split ("\n", $annotation));
     } else {
 	$knp_result = $annotation;
     }
 
     my $terms;
     if ($opt{syn}) {
-	require KNP;
+	my @contentWordFeatures = ();
+	my @buf;
+	foreach my $line (split (/\n/, $knp_result)) {
+	    next if ($line =~ /^\* /);
 
-	my @content_words = ();
-	my $flag = 1;
-	my $knp_result_obj = new KNP::Result($knp_result);
-	foreach my $tag ($knp_result_obj->tag) {
-	    my @mrphs = $tag->mrph;
-	    my $m = $mrphs[-1];
-	    foreach my $mrph (@mrphs) {
-		if ($mrph->fstring =~ /<意味有|内容語>/) {
-		    $m = $mrph;
-		    last;
+	    if ($line =~ /^\+ /) {
+		if (scalar(@buf)) {
+		    my $m = $buf[-1];
+		    foreach my $mline (@buf) {
+			if ($mline =~ /<内容語>/) {
+			    $m = $mline;
+			    last;
+			}
+		    }
+
+		    if ($m =~ /((?:<[^<]+>)+)$/) {
+			push (@contentWordFeatures, $1);
+		    } else {
+			print STDERR "\? $m\n";
+		    }
+		    @buf = ();
 		}
+	    } else {
+		push (@buf, $line);
 	    }
-	    push(@content_words, $m);
 	}
 
-	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation, \@content_words, { max_num_of_indices => $opt{max_num_of_indices},
-											use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
-											use_of_hypernym => !$opt{ignore_hypernym},
-											use_of_negation_and_antonym => 1,
-											verbose => $opt{verbose}} );
+# 	my $knp_result_obj = new KNP::Result($knp_result);
+# 	foreach my $tag ($knp_result_obj->tag) {
+# 	    my @mrphs = $tag->mrph;
+# 	    my $m = $mrphs[-1];
+# 	    foreach my $mrph (@mrphs) {
+# 		print $mrph->fstring . "\n";
+# 		if ($mrph->fstring =~ /<意味有|内容語>/) {
+# 		    $m = $mrph;
+# 		    last;
+# 		}
+# 	    }
+# 	    push(@contentWordFeatures, $m);
+# 	}
+
+	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation, \@contentWordFeatures, { max_num_of_indices => $opt{max_num_of_indices},
+											      use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
+											      use_of_hypernym => !$opt{ignore_hypernym},
+											      use_of_negation_and_antonym => 1,
+											      verbose => $opt{verbose}} );
+	my ($rawstring) = ($content =~ m!<RawString>(.+?)</RawString>!);
 	unless (defined $terms_syn) {
-	    my ($rawstring) = ($content =~ m!<RawString>(.+?)</RawString>!);
 	    print STDERR "[SKIP] A large number of indices are extracted from [$rawstring]: $file (limit=" . $opt{max_num_of_indices} . ")\n";
 	}
 
 	# 出現形インデックスを抽出しマージする
 	if (!$opt{ignore_genkei}) {
+	    my $knp_result_obj = $CACHE{$rawstring};
+	    unless ($knp_result_obj) {
+		$knp_result_obj = new KNP::Result($knp_result);
+		$CACHE{$rawstring} = $knp_result_obj;
+	    }
+
 	    my $terms_genkei = $indexer_genkei->makeIndexFromKNPResultObject($knp_result_obj);
 	    push(@$terms, @$terms_genkei) if (defined $terms_genkei);
 	    push(@$terms, @$terms_syn) if (defined $terms_syn);
@@ -372,7 +401,7 @@ sub extract_indice_from_single_file {
 }
 
 # Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
-sub extract_indices {	
+sub extract_indices {
     my ($sfdat, $fid) = @_;
 
     my $sid = -10000;
