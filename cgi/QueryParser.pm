@@ -124,7 +124,6 @@ sub parse {
     my @qks = ();
     my %wbuff = ();
     my %dbuff = ();
-#    $opt->{syngraph} = 0;
     # 必要であればSynGraphをnewし、メンバ変数として保持する
     if ($opt->{syngraph}) {
 	if ($opt->{SYNGRAPH}) {
@@ -271,6 +270,7 @@ sub parse {
  	} else {
  	    push (@{$qks[0]->{words}}, @{$q->{words}}) if (scalar(@{$q->{words}}) > 0);
  	    push (@{$qks[0]->{dpnds}}, @{$q->{dpnds}}) if (scalar(@{$q->{dpnds}}) > 0);
+ 	    $qks[0]->{rawstring} .= (" " . $q->{rawstring});
  	}
     }
     # QueryKeyword作成にかかる時間を測定
