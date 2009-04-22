@@ -1,3 +1,28 @@
+2009-04-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: bug fixed (2番目以降の検索表現が表示されるように)
+
+2009-04-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm: use Devel::Sizeを削除.
+
+	* scripts/tsubaki_test.pl:
+	idxdir4anchorオプションの有無で，アンカーインデックスを利用するかどうかを決めるように.
+
+2009-04-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/QueryAnalyzer.pm: 冗長動詞を検出する際の条件を変更.
+
+2009-04-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm: 並列句の解析結果の描画を修正.
+
+	* perl/Tsubaki/QueryAnalyzer.pm:
+	可能動詞の場合は, その原型を利用するように.
+
+	* scripts/Indexer.pm:
+	並列句の処理を変更（「AのBとCをDする」からA->Bを抽出するように）
+
 2009-04-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/CachedHTMLDocument.pm:
