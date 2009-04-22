@@ -70,7 +70,8 @@ sub makeIndexfromSynGraph {
 	    my $fstring;
 	    my $bnstId = $bnstIds;
 	    foreach my $bid (split(/,/, $bnstIds)) {
-		$fstring .= $kihonkus->[$bid]->fstring;
+		# $fstring .= $kihonkus->[$bid]->fstring;
+		$fstring .= $kihonkus->[$bid];
 		$bnstId = $bid;
 	    }
 	    if ($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>((<[^>]+>)*)$!) {
@@ -156,7 +157,7 @@ sub makeIndexfromSynGraph {
 # 	    $knpbuf .= ($line . "\n");
 	} else {
 	    $knpbuf .= ($line . "\n");
-	    $position = $word_num if ($line =~ /<内容語|意味有>/);
+	    $position = $word_num if (index ($line, '<内容語>') > -1);
 	    $word_num++;
 	}
     }
@@ -685,7 +686,7 @@ sub extractGenkeiTerms {
 	    $idxs->[-1]{group_id} = $$gid;
 	    $idxs->[-1]{freq} = (1 / $num_of_words);
 	    $idxs->[-1]{score} = (1 / $num_of_words);
-	    $idxs->[-1]{isContentWord} = ($mrph->fstring =~ /<内容語|意味有>/) ? 1 : 0;
+	    $idxs->[-1]{isContentWord} = ($mrph->fstring =~ /<内容語>/) ? 1 : 0;
 	    $idxs->[-1]{fstring} = $mrph->fstring;
 	    $idxs->[-1]{surf} = $mrph->midasi;
 	    $idxs->[-1]{pos} = $$pos;
