@@ -7,10 +7,9 @@ use URI;
 use URI::Split qw(uri_split uri_join);
 use URI::Escape;
 
-
 binmode (STDIN,  ':utf8');
 binmode (STDOUT, ':utf8');
-binmode (STDERR, ':encoding(euc-jp)');
+binmode (STDERR, ':utf8');
 
 &main;
 
@@ -25,11 +24,11 @@ sub main {
 
 	my $baseurl = $did2url{$did};
 	if ($baseurl) {
-	    my $URL = &convertURL($baseurl, $url);
-	    my $DID = $url2did{$URL};
-	    if ($DID) {
-		printf "%s\t%s\t%s\t%s\t%s\n", $did, $baseurl, $DID, $URL, $anchor;
-	    }
+ 	    my $URL = &convertURL($baseurl, $url);
+ 	    my $DID = $url2did{$URL};
+ 	    if ($DID) {
+ 		printf "%s\t%s\t%s\t%s\t%s\n", $did, $baseurl, $DID, $URL, $anchor;
+ 	    }
 	} else {
 	    printf STDERR "[WARNING] $_\n";
 	}
