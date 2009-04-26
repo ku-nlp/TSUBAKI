@@ -30,7 +30,7 @@ sub main {
  		printf "%s\t%s\t%s\t%s\t%s\n", $did, $baseurl, $DID, $URL, $anchor;
  	    }
 	} else {
-	    printf STDERR "[WARNING] $_\n";
+#	    printf STDERR "[WARNING] $_\n";
 	}
     }
 
