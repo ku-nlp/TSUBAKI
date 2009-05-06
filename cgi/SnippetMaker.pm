@@ -54,7 +54,6 @@ sub extract_sentences_from_standard_format {
     if ($opt->{kwic}) {
 	return &extract_sentences_from_content_for_kwic($query, $content, $opt);
     } else {
-#	return &extract_sentences_from_content($query, $content, $opt);
 	# Title, Keywords, Description から重要文を抽出しない
 	if ($opt->{start} > $NUM_OF_CHARS_IN_HEADER) {
 	    return &extract_sentences_from_content_using_position($query, $content, $opt);
@@ -167,7 +166,12 @@ sub extract_sentences_from_content_using_position {
 	    push (@linebuf, $line) if ($annotationFlag);
 	}
     }
-    return \@sentences;
+
+    if ($opt->{uniq}) {
+	return &uniqSentences(\@sentences);
+    } else {
+	return \@sentences;
+    }
 }
 
 
@@ -508,6 +512,24 @@ sub getMidasiAndRepnames {
     return (\@midasiL, \@repnameL, \@posL);
 }
 
+sub uniqSentences {
+    my ($sentences) = @_;
+
+    my %sbuf = ();
+    my @sents = ();
+    # スコアの高い順に処理（同点の場合は、sidの若い順）
+    foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score} || $a->{sid} <=> $b->{sid}} @{$sentences}) {
+	next if (exists($sbuf{$sentence->{rawstring}}));
+	$sbuf{$sentence->{rawstring}} = 1;
+
+	push (@sents, $sentence);
+    }
+
+    # sid順にソート
+    @sents = sort {$a->{sid} <=> $b->{sid}} @sents;
+
+    return \@sents;
+}
 
 sub extract_sentences_from_content {
     my($query, $content, $opt) = @_;
@@ -541,9 +563,9 @@ sub extract_sentences_from_content {
 	$in_link_tag = 1 if ($line =~ /<OutLinks>/);
 	$in_link_tag = 0 if ($line =~ /<\/OutLinks>/);
 
-	$in_meta_tag = 1 if ($line =~ /<Description>/);
+	$in_meta_tag = 1 if ($line =~ /<Description.*?>/);
 	$in_meta_tag = 0 if ($line =~ /<\/Description>/);
-	$in_meta_tag = 1 if ($line =~ /<Keywords>/);
+	$in_meta_tag = 1 if ($line =~ /<Keywords.*?>/);
 	$in_meta_tag = 0 if ($line =~ /<\/Keywords>/);
 
 	next if ($in_link_tag || $in_meta_tag);
@@ -567,7 +589,16 @@ sub extract_sentences_from_content {
 	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
-		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result, undef, $opt) : $indexer->makeIndexFromKNPResult($result, $opt);
+
+		my $indice;
+		my $resultObj;
+		if ($opt->{syngraph}) {
+		    $indice = $indexer->makeIndexfromSynGraph($result, undef, $opt);
+		} else {
+		    $resultObj = new KNP::Result($result);
+		    $indice = $indexer->makeIndexFromKNPResultObject($resultObj, $opt);
+		}
+
 		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
 
 		my $sentence = {
@@ -584,6 +615,7 @@ sub extract_sentences_from_content {
 		    including_all_indices => $including_all_indices
 		};
 
+		$sentence->{resultObj} = $resultObj if ($opt->{keepResultObj});
 		$sentence->{result} = $result if ($opt->{keep_result});
 		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence});
 
@@ -635,7 +667,11 @@ sub extract_sentences_from_content {
 	}
     }
 
-    return \@sentences;
+    if ($opt->{uniq}) {
+	return &uniqSentences(\@sentences);
+    } else {
+	return \@sentences;
+    }
 }
 
 sub extract_sentences_from_content_old {
