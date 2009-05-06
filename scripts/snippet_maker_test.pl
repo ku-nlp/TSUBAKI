@@ -33,6 +33,7 @@ GetOptions(\%opt,
 	   'syndb=s',
 	   'string_mode',
 	   'is_old_version',
+	   'uniq',
 	   'debug'
     );
 
@@ -43,6 +44,7 @@ require SynGraph if ($opt{syngraph});
 $opt{encoding} = 'euc-jp' unless ($opt{encoding});
 
 binmode(STDOUT, ':encoding(euc-jp)');
+binmode(STDERR, ':encoding(euc-jp)');
 
 &main();
 
