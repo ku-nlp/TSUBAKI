@@ -89,6 +89,7 @@ sub main {
 	    } else {
 		print $s->{including_all_indices} . " ";
 		print $file . " ";
+		print "para " . $s->{paraid} . " ";
 		print "sid " . $s->{sid} . " ";
 		print "score " . sprintf ("%.3f", $s->{score}) . " ";
 		print "smoothed " . sprintf ("%.3f", $s->{smoothed_score}) . " ";
