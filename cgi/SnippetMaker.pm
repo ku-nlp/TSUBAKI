@@ -539,6 +539,7 @@ sub extract_sentences_from_content {
     my @sentences = ();
     my %sbuff = ();
     my $sid = 0;
+    my $paraid = 0;
     my $in_title = 0;
     my $in_link_tag = 0;
     my $in_meta_tag = 0;
@@ -574,6 +575,10 @@ sub extract_sentences_from_content {
 
 	$sid = $1 if ($line =~ m!<S .+ Id="(\d+)"!);
 	$sid = 0 if ($line =~ m!<Title !);
+
+	$paraid = $1 if ($line =~ m!<S Paragraph="(\d+)"!);
+	$paraid = 0 if ($line =~ m!<Title !);
+
 	# 段落の先頭文かどうか
 	if ($opt->{get_paragraph_first_sentence}) {
 	    if ($line =~ m!<S !) {
@@ -610,6 +615,7 @@ sub extract_sentences_from_content {
 		    surfs => [],
 		    reps => [],
 		    sid => $sid,
+		    paraid => $paraid,
 		    number_of_included_queries => $num_of_queries,
 		    number_of_included_query_types => $num_of_types,
 		    including_all_indices => $including_all_indices
@@ -656,13 +662,13 @@ sub extract_sentences_from_content {
 	my $s = $sentences[$i];
 	for (my $j = 0; $j < $window_size; $j++) {
 	    my $k = $i - $j - 1;
-	    last if ($k < 0);
+	    last if ($k < 0 || $s->{paraid} != $sentences[$k]->{paraid});
 	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
 	}
 
 	for (my $j = 0; $j < $window_size; $j++) {
 	    my $k = $i + $j + 1;
-	    last if ($k > $size - 1);
+	    last if ($k > $size - 1 || $s->{paraid} != $sentences[$k]->{paraid});
 	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
 	}
     }
