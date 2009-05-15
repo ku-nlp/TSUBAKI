@@ -277,6 +277,7 @@ sub printJavascriptCode {
     <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
     <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
     <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
+
     <script language="JavaScript">
 END_OF_HTML
 
@@ -589,7 +590,7 @@ sub getCongestion {
 
     my $backgroundColor = 'red';
     my $foregroundColor = 'yellow';
-    if (9 < $count) {
+    if (9 < $count && $count < 20) {
 	$backgroundColor = 'orange';
 	$foregroundColor = 'black';
     }
@@ -633,6 +634,7 @@ sub get_uri_escaped_query {
 		next if (exists $buf1{$string});
 
 		$buf1{$string}++;
+		last;
 	    }
 	    push(@buf2, join(";", sort {$a cmp $b} keys %buf1));
 	}
