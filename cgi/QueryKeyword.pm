@@ -157,7 +157,9 @@ sub new {
 		    NE => $m->{NE},
 		    isBasicNode => $m->{isBasicNode},
 		    fstring => $m->{fstring},
-		    isAdditionalNode => ($m->{additional_node}) ? 1 : 0
+		    isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
+		    katsuyou => $m->{katsuyou},
+		    POS => $m->{POS}
 		     });
 		$flag = 1 if ($m->{midasi} =~ /\+/ && $m->{isBasicNode});
 		last if ($m->{midasi} =~ /\+/ && $m->{isBasicNode} && $is_phrasal_search > 0);

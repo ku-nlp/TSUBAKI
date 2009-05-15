@@ -703,6 +703,15 @@ sub extractGenkeiTerms {
 sub extractSynNodeTerms {
     my ($this, $idxs, $kihonku, $gid, $pos, $option) = @_;
 
+    my $POS;
+    my $katsuyou;
+    foreach my $m (reverse $kihonku->mrph) {
+	if ($m->fstring =~ /<内容語>/) {
+	    $POS = sprintf ("%s:%s", $m->hinsi, $m->bunrui);
+	    $katsuyou = sprintf ("%s:%s", $m->katuyou1, $m->katuyou2);
+	}
+    }
+
     # 単語・同義語・同義句インデックスの抽出
     foreach my $synnodes ($kihonku->synnodes) {
 	foreach my $synnode ($synnodes->synnode) {
@@ -747,6 +756,8 @@ sub extractSynNodeTerms {
 	    $idxs->[-1]{fstring} = $kihonku->fstring;
 	    $idxs->[-1]{surf} = $synnodes->midasi;
 	    $idxs->[-1]{pos} = $$pos;
+	    $idxs->[-1]{katsuyou} = $katsuyou;
+	    $idxs->[-1]{POS} = $POS;
 	    $idxs->[-1]{NE} = ($kihonku->fstring =~ /<NE(内)?:.+?>/) ? $& : 0;
 
 	    if ($kihonku->fstring =~ /クエリ不要語/) {
