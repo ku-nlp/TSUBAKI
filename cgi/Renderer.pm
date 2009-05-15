@@ -633,6 +633,13 @@ sub get_uri_escaped_query {
 		next if ($string =~ /<^>]+?>/);
 		next if (exists $buf1{$string});
 
+		if ($rep->{katsuyou} =~ /ナ形容詞/) {
+		    my ($hyouki, $yomi) = split ("/", $string);
+		    $hyouki =~ s/だ$//;
+		    $yomi =~ s/だ$//;
+		    $string = sprintf ("%s/%s", $hyouki, $yomi);
+		}
+
 		$buf1{$string}++;
 		last;
 	    }
