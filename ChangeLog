@@ -1,4 +1,28 @@
+2009-05-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	キャッシュページのハイライト用に複数個の基本ノードを表示しないように.
+
+	* scripts/TsubakiEngine.pm:
+	重要文抽出用の領域情報として、前方にあるものは返さないように.
+
+2009-05-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm: 段落が異なる場合はスコアを伝搬させないように.
+
+2009-05-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	uniqオプションの追加, keepResultObjオプションの追加, Keywords, Descriptionから重要文を抽出しないように.
+
+	* scripts/snippet_maker_test.pl: uniqオプションの追加.
+
 2009-04-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm: make_idx.plの変更に対応.
+
+	* scripts/make_idx.pl:
+	高速化 (正規表現の適用順を変更, KNP解析結果をキャッシュ)
 
 	* cgi/QueryParser.pm: bug fixed (2番目以降の検索表現が表示されるように)
 
