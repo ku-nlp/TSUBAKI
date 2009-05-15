@@ -1153,6 +1153,8 @@ sub filter_by_NEAR_constraint {
 
 	#  2. 各単語が$near語以内に現れているかどうかチェック
 	my $flag = -1;
+	# タイトルにマッチしている可能性があるので、重要文の領域としては$NUM_OF_CHARS_IN_HEADER語以降を返す
+	my $NUM_OF_CHARS_IN_HEADER = 100;
 	for (my $i = 0, my $size_of_serialized_poslist = scalar(@serialized_poslist); $i < $size_of_serialized_poslist; $i++) {
 	    my %qid_buf = ();
 	    my $pos = $serialized_poslist[$i]->{pos};
@@ -1195,7 +1197,8 @@ sub filter_by_NEAR_constraint {
 		$did2region{$did}->{start} = $sorted_pos[0];
 		$did2region{$did}->{end} = $sorted_pos[-1];
 		$did2region{$did}->{pos2qid} = \%posbuf;
-		last;
+
+		last if ($did2region{$did}->{start} > $NUM_OF_CHARS_IN_HEADER);
 	    }
 	}
 
