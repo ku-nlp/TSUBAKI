@@ -14,6 +14,7 @@ use URI::Split qw(uri_split uri_join);
 use Data::Dumper;
 
 my $CONFIG = Configure::get_instance();
+my %MONTH = qw(Jan 1 Feb 2 Mar 3 Apr 4 May 5 Jun 6 Jul 7 Aug 8 Sep 9 Oct 10 Nov 11 Dec 12);
 
 sub new {
     my ($class, $query, $opts) = @_;
@@ -30,11 +31,16 @@ sub new {
     my $crawler_html = 0;
     my $buf;
     my $url;
+    my $crawled_date;
 
     while (<READER>) {
 	if (!$buf && /^HTML (\S+)/) {
 	    $url = $1;
 	    $crawler_html = 1;
+	}
+
+	if (/^Date: (.+)$/) {
+	    $crawled_date = &convertTimeFormat($1);
 	}
 
 	# ヘッダーが読み終わるまでバッファリングしない
@@ -63,7 +69,13 @@ sub new {
     my @patterns;
     my %already_printed = ();
     my $message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
-    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>次の単語とその同義語がハイライトされています:&nbsp;);
+
+    if ($crawled_date) {
+	$message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。（$crawled_date に取得）<BR>次の単語とその同義語がハイライトされています:&nbsp;);
+    } else {
+	$message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>次の単語とその同義語がハイライトされています:&nbsp;);
+    }
+
     foreach my $reps (split(/,/, $query)) {
 	foreach my $word (split(/;/,  $reps)) {
 	    next unless ($word);
@@ -184,6 +196,21 @@ sub new {
     };
 
     bless $this;
+}
+
+sub convertTimeFormat {
+    my ($t) = @_;
+
+    my ($youbi, $day, $month, $year, $time, $gmt) = split (/ /, $t);
+    my ($hour, $min, $sec) = split (/:/, $time);
+    $hour += 9;
+
+    if ($hour > 23) {
+	$day++;
+	$hour %= 24;
+    }
+
+    return sprintf ("%04d年%d月%d日 %d時%d分%d秒", $year, $MONTH{$month}, $day, $hour, $min, $sec);
 }
 
 sub DESTROY {
