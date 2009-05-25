@@ -46,7 +46,6 @@ PORTS_FILE_PATH		/share03/WISDOM/TSUBAKI/SearchEngine/data/PORTS.SYN.NICT
 ##################################################
 
 # キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
-HTML_FILE_PATH		/common04/wisdom/HTMLs
 ORDINARY_SF_PATH	/tsubaki01/wisdom/XMLs
 
 # スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス

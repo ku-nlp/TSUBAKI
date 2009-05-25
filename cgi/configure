@@ -48,7 +48,6 @@ PORTS_FILE_PATH		/home/skeiji/tsubaki/SearchEngine/data/PORTS.SYN
 ##################################################
 
 # キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
-HTML_FILE_PATH		/net2/nlpcf34/disk08/skeiji
 ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
 
 # スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス

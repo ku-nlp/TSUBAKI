@@ -239,14 +239,15 @@ sub provideDocumentData {
 	} elsif ($fileType eq 'xml') {
 	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
 	} elsif ($fileType eq 'html') {
-	    $filepath = sprintf("%s/h%03d/h%05d/%09d.html", $CONFIG->{HTML_FILE_PATH}, $did / 1000000, $did / 10000, $did);
+	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $did / 1000000, $did / 10000, $did);
 	}
 
 
 	if (-e $filepath) {
+	    my $CAT_COMMAND = ($filepath =~ /gz$/) ? 'zcat' : 'cat';
 	    $content = ($cgi->param('no_encoding')) ?
-		`cat $filepath` :
-		`cat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+		`$CAT_COMMAND $filepath` :
+		`$CAT_COMMAND $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
 	} else {
 	    $filepath .= ".gz";
 	    if (-e $filepath) {
