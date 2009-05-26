@@ -41,7 +41,7 @@ cd $id
 for f in `egrep "i$id...idx.gz" $flist`
 do
     echo scp $f ./
-    scp $f ./
+    scp -o "BatchMode yes" -o "StrictHostKeyChecking no" $f ./
 done
 cd ..
 

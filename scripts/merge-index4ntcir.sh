@@ -29,7 +29,7 @@ do
     if [ $min -le $fid ]; then
 	if [ $fid -lt $max ]; then
 	    echo scp $f ./
-	    scp $f ./
+	    scp -o "BatchMode yes" -o "StrictHostKeyChecking no" $f ./
 	fi
     fi
 done
