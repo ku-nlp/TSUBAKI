@@ -726,7 +726,7 @@ sub getPaintingJavaScriptCode {
 			foreach my $w (split('\|', $synonyms{$str})) {
 			    $w = decode('utf8', $w);
 			    $w =~ s/\[.+?\]//;
-			    $w =~ s/\/.+//;
+			    $w =~ s/(\/|:).+//;
 			    $synbuf{$w} = 1;
 			    $max_num_of_words = length($w) if ($max_num_of_words < length($w));
 			}
