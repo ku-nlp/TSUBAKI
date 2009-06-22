@@ -309,3 +309,13 @@ MAX_SIZE_OF_DOCS	0
 
 # NICTで起動しているかどうか
 IS_NICT_MODE	0
+
+# PAGERANKを利用しない場合は1
+DISABLE_PAGERANK	0
+
+# スコアリング時のパラメータ
+# score = WEIGHT_OF_TSUBAKI_SCORE * tsubaki_socre + (1 - WEIGHT_OF_TSUBAKI_SCORE) * pagerank * C_PAGERANK
+
+WEIGHT_OF_TSUBAKI_SCORE	0.5
+
+C_PAGERANK		100
