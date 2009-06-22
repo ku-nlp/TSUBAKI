@@ -64,6 +64,7 @@ closedir(DIR);
 
 my %TITLE_DBs = ();
 my %URL_DBs = ();
+my %PAGERANK_DB = ();
 opendir(DIR, $opt{idxdir});
 foreach my $file (readdir(DIR)) {
     my $fp = "$opt{idxdir}/$file";
@@ -81,8 +82,19 @@ foreach my $file (readdir(DIR)) {
 	}
 	untie %tmp;
     }
+    elsif ($file =~ /pagerank.txt/) {
+	open (FILE, sprintf (qw(%s/%s), $opt{idxdir}, $file)) or die "$!\n";
+	while (<FILE>) {
+	    chop;
+	    my ($did, $score) = split (/ /, $_);
+	    $PAGERANK_DB{$did} = $score;
+	}
+	close (FILE);
+    }
+
 }
 closedir(DIR);
+
 
 my $CONFIG = Configure::get_instance();
 my %STOP_PAGE_LIST = ();
@@ -167,6 +179,8 @@ sub main {
 	    $opt{score_verbose} = $query->{score_verbose};
 	    $opt{logging_query_score} = $query->{logging_query_score};
 	    $opt{doc_length_dbs} = \@DOC_LENGTH_DBs;
+	    $opt{pagerank_db} = \%PAGERANK_DB;
+
 	    my $factory = new TsubakiEngineFactory(\%opt);
 	    my $tsubaki = $factory->get_instance();
 
@@ -190,6 +204,9 @@ sub main {
 		    flag_of_dpnd_use => $query->{flag_of_dpnd_use},
 		    flag_of_dist_use => $query->{flag_of_dist_use},
 		    flag_of_anchor_use => $query->{flag_of_anchor_use},
+		    flag_of_pagerank_use => $query->{flag_of_pagerank_use},
+		    weight_of_tsubaki_score => $query->{WEIGHT_OF_TSUBAKI_SCORE},
+		    c_pagerank => $query->{C_PAGERANK},
 		    DIST => $query->{DISTANCE},
 		    MIN_DLENGTH => $query->{MIN_DLENGTH},
 		    LOGGER => $logger });

@@ -208,8 +208,9 @@ sub calculate_score {
 
 	my %dists = ();
 	if ($calculateNearDpnds) {
-
+   
 	    my @poslist = sort {$a <=> $b} keys %{$pos2score_gid_qid};
+
 	    foreach my $dpnd (@$dpnds) {
 		my $moto = $dpnd->{moto};
 		my $saki = $dpnd->{saki};
@@ -244,6 +245,7 @@ sub calculate_score {
 			my $score = ($DIST - $dist) / $DIST;
 			my $tff = 1 * (3 * $score) / ((0.5 + 1.5 * $dlength / $this->{AVERAGE_DOC_LENGTH}) + $score);
 			my $idf = log(($this->{TOTAL_NUMBUER_OF_DOCS} - $df + 0.5) / ($df + 0.5));
+
 			my $okapi_score = $tff * $idf;
 			$merged_docs->[$idx]{'dist'}{$gid} = $okapi_score;
 			# score_distについては、係り受けの出現の有無を見ながら後で計算する
@@ -269,7 +271,7 @@ sub calculate_score {
 
 # 文書のスコアリング
 sub merge_docs {
-    my ($this, $alldocs_words, $alldocs_dpnds, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2qtf, $qid2gid, $dpnd_on, $dist_on, $DIST, $gid2df, $dpnds) = @_;
+    my ($this, $alldocs_words, $alldocs_dpnds, $alldocs_word_anchor, $alldocs_dpnd_anchor, $qid2qtf, $qid2gid, $dpnd_on, $dist_on, $DIST, $gid2df, $dpnds, $pagerank_on, $weight_of_tsubaki_score, $c_pagerank) = @_;
 
     my $start_time = Time::HiRes::time;
 
@@ -324,6 +326,12 @@ sub merge_docs {
 	    $score += $e->{score_dist};
 	}
 
+	# PageRankを考慮する
+	if ($pagerank_on) {
+	    $e->{pagerank} = $this->{PAGERANK_DB}->{sprintf ("%09d", $e->{did})} * $c_pagerank;
+	    $score = $weight_of_tsubaki_score * $score + (1 - $weight_of_tsubaki_score) * $e->{pagerank};
+	}
+
 
 	if ($this->{verbose}) {
 	    printf ("did=%09d w=%.3f d=%.3f n=%.3f anchor_w=%.3f anchor_d=%.3f total=%.3f\n", $e->{did}, $e->{score_word}, $e->{score_dpnd}, $e->{score_dist}, $e->{score_word_anchor}, $e->{score_dpnd_anchor}, $score);
@@ -332,11 +340,12 @@ sub merge_docs {
 	push(@result, {did => $e->{did}, score_total => $score});
 
 	if ($this->{score_verbose}) {
-	    $result[-1]->{score_word} = $e->{score_word};
-	    $result[-1]->{score_dpnd} = $e->{score_dpnd};
-	    $result[-1]->{score_dist} = $e->{score_dist};
-	    $result[-1]->{score_word_anchor} = $e->{score_word_anchor};
-	    $result[-1]->{score_dpnd_anchor} = $e->{score_dpnd_anchor};
+	    $result[-1]->{score_word} = $e->{score_word} * $weight_of_tsubaki_score;
+	    $result[-1]->{score_dpnd} = $e->{score_dpnd} * $weight_of_tsubaki_score;
+	    $result[-1]->{score_dist} = $e->{score_dist} * $weight_of_tsubaki_score;
+	    $result[-1]->{score_word_anchor} = $e->{score_word_anchor} * $weight_of_tsubaki_score;
+	    $result[-1]->{score_dpnd_anchor} = $e->{score_dpnd_anchor} * $weight_of_tsubaki_score;
+	    $result[-1]->{pagerank} = $e->{pagerank} * (1 - $weight_of_tsubaki_score);
 	    $result[-1]->{dlength} = $e->{dlength};
 	    $result[-1]->{q2score} = $q2scores[$i];
 	}

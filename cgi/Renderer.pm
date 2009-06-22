@@ -1021,7 +1021,8 @@ sub printOrdinarySearchResult {
 	    my $score_n = $results->[$rank]{score_dist};
 	    my $score_aw = $results->[$rank]{score_word_anchor};
 	    my $score_dw = $results->[$rank]{score_dpnd_anchor};
-	    $output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
+	    my $score_pr = $results->[$rank]{pagerank};
+	    $output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f, pr=%s)), $score_w, $score_d, $score_n, $score_aw, $score_dw, $score_pr;
 	}
 
 	# 類似・関連ページがあれば表示する

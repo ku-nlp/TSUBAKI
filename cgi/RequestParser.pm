@@ -49,6 +49,9 @@ sub getDefaultValues {
     $params{distance} = 30;
     $params{flag_of_dpnd_use} = 1;
     $params{flag_of_dist_use} = 1;
+    $params{flag_of_pagerank_use} = ($CONFIG->{DISABLE_PAGERANK}) ? 0 : 1;
+    $params{weight_of_tsubaki_score} = $CONFIG->{WEIGHT_OF_TSUBAKI_SCORE};
+    $params{c_pagerank} = $CONFIG->{C_PAGERANK};
     $params{anchor} = ($CONFIG->{DISABLE_ANCHOR_INDEX}) ? 0 : 1;
     $params{flag_of_anchor_use} = $params{anchor};
     $params{disable_synnode} = 0;
@@ -490,6 +493,12 @@ sub parseQuery {
 
     # distance をセット
     $query->{DISTANCE} = $params->{distance};
+
+    # PageRankを利用するかどうか
+    $query->{flag_of_pagerank_use} = $params->{flag_of_pagerank_use};
+    $query->{WEIGHT_OF_TSUBAKI_SCORE} = $params->{weight_of_tsubaki_score};
+    $query->{C_PAGERANK} = $params->{c_pagerank};
+
 
     # 検索語にインターフェースより得られる検索制約を追加
     foreach my $qk (@{$query->{keywords}}) {

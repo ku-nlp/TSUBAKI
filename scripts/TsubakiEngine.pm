@@ -50,6 +50,7 @@ sub new {
 	word_retriever => undef,
 	dpnd_retriever => undef,
 	DOC_LENGTH_DBs => $opts->{doc_length_dbs},
+	PAGERANK_DB => $opts->{pagerank_db},
 	AVERAGE_DOC_LENGTH => $opts->{average_doc_length},
 	TOTAL_NUMBUER_OF_DOCS => $opts->{total_number_of_docs},
 	verbose => $opts->{verbose},
@@ -142,7 +143,7 @@ sub search {
 
 
     # 文書のスコアリング
-    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $query->{qid2qtf}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, \%gid2df, \@dpnds);
+    my $doc_list = $this->merge_docs($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $query->{qid2qtf}, $query->{qid2gid}, $opt->{flag_of_dpnd_use}, $opt->{flag_of_dist_use}, $opt->{DIST}, \%gid2df, \@dpnds, $opt->{flag_of_pagerank_use}, $opt->{weight_of_tsubaki_score}, $opt->{c_pagerank});
     $opt->{LOGGER}->setTimeAs('document_scoring', '%.3f');
 
 
