@@ -87,7 +87,7 @@ sub create_snippets {
 		PeerPort => $port,
 		Proto    => 'tcp' );
 	
-	    $selecter->add($socket) or die;
+	    $selecter->add($socket) or die "$!\n";
 	
 	    # 検索クエリの送信
 	    print $socket encode_base64(Storable::freeze($query), "") . "\n";
