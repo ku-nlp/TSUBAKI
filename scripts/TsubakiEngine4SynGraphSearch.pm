@@ -328,8 +328,9 @@ sub merge_docs {
 
 	# PageRankを考慮する
 	if ($pagerank_on) {
-	    $e->{pagerank} = $this->{PAGERANK_DB}->{sprintf ("%09d", $e->{did})} * $c_pagerank;
-	    $score = $weight_of_tsubaki_score * $score + (1 - $weight_of_tsubaki_score) * $e->{pagerank};
+	    $e->{pagerank} = (1 - $weight_of_tsubaki_score) * $this->{PAGERANK_DB}->{sprintf ("%09d", $e->{did})} * $c_pagerank;
+	    $e->{tsubaki_score} = $weight_of_tsubaki_score * $score;
+	    $score = $e->{tsubaki_score} + $e->{pagerank};
 	}
 
 
@@ -337,7 +338,11 @@ sub merge_docs {
 	    printf ("did=%09d w=%.3f d=%.3f n=%.3f anchor_w=%.3f anchor_d=%.3f total=%.3f\n", $e->{did}, $e->{score_word}, $e->{score_dpnd}, $e->{score_dist}, $e->{score_word_anchor}, $e->{score_dpnd_anchor}, $score);
 	}
 
-	push(@result, {did => $e->{did}, score_total => $score});
+	push(@result, {did => $e->{did},
+		       score_total => $score,
+		       tsubaki_score => $e->{tsubaki_score},
+		       pagerank => $e->{pagerank}
+	     });
 
 	if ($this->{score_verbose}) {
 	    $result[-1]->{score_word} = $e->{score_word} * $weight_of_tsubaki_score;
@@ -345,7 +350,6 @@ sub merge_docs {
 	    $result[-1]->{score_dist} = $e->{score_dist} * $weight_of_tsubaki_score;
 	    $result[-1]->{score_word_anchor} = $e->{score_word_anchor} * $weight_of_tsubaki_score;
 	    $result[-1]->{score_dpnd_anchor} = $e->{score_dpnd_anchor} * $weight_of_tsubaki_score;
-	    $result[-1]->{pagerank} = $e->{pagerank} * (1 - $weight_of_tsubaki_score);
 	    $result[-1]->{dlength} = $e->{dlength};
 	    $result[-1]->{q2score} = $q2scores[$i];
 	}
