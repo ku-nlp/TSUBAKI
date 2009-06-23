@@ -137,7 +137,7 @@ sub main {
 		print $did . "\n" if ($opt{verbose});
 		$option->{start} = $doc->{start};
 		$option->{end} = $doc->{end};
-		$option->{qid2pos} = $doc->{qid2pos};
+		$option->{pos2qid} = $doc->{pos2qid};
 		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
 		# print Dumper($result{$did}) . "\n" if ($HOSTNAME =~ /nlpc33/);
 	    }
