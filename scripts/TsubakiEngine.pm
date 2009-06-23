@@ -282,6 +282,8 @@ sub retrieveFromBinaryData {
     my $first_requisite_item = 1;
     my ($ret, %requisiteDocBuf);
     my @loggers;
+    # ハッシュのサイズを事前に定義
+    keys (%requisiteDocBuf) = 65536;
     # requisiteから検索する
     foreach my $Y (('requisite', 'optional')) {
 	# 係り受けから検索する
@@ -928,128 +930,6 @@ sub intersect {
 }
 
 # 近接条件の適用
-sub filter_by_NEAR_constraint_strict {
-    my ($this, $docs, $near, $sentence_flag) = @_;
-
-    return $docs if ($near < 0);
-
-    # 初期化 & 空リストのチェック
-    my @results = ();
-    my $flag = 0;
-    for (my $i = 0, my $docs_size = scalar(@{$docs}); $i < $docs_size; $i++) {
-	$flag = 1 unless (defined($docs->[$i]));
-	$flag = 2 if (scalar(@{$docs->[$i]}) < 1);
-
-	$results[$i] = [];
-    }
-    return \@results if ($flag > 0 || scalar(@{$docs}) < 1);
-
-    # 単語の（クエリ中での）出現順序でソート
-    @{$docs} = sort{$a->[0]{qid_freq}[0]->{qid} <=> $b->[0]{qid_freq}[0]->{qid}} @{$docs};
-
-    for (my $d = 0; $d < scalar(@{$docs->[0]}); $d++) {
-	my $did = $docs->[0][$d]->{did};
-	my @poslist = ();
-	# クエリ中の単語の出現位置リストを作成
-	for (my $q = 0; $q < scalar(@{$docs}); $q++) {
-	    my $qid_freq_size = scalar(@{$docs->[$q][$d]->{qid_freq}});
-
-	    if ($qid_freq_size < 2) {
-		my $fnum = $docs->[$q][$d]->{qid_freq}[0]{fnum};
-		my $nums = $docs->[$q][$d]->{qid_freq}[0]{nums};
-		my $offset = $docs->[$q][$d]->{qid_freq}[0]{offset};
-		unless (defined $offset) {
-		    $poslist[$q] = [];
-		} else {
-		    my $poss = $this->{word_retriever}->load_position($fnum, $offset, $nums);
-		    foreach my $p (@$poss) {
-			push(@{$poslist[$q]}, $p);
-		    }
-		}
-	    }
-	    # SYNGRAPH/代表表記化により複数個にわかれたものの出現位置 or 出現文IDのマージ
-	    else {
-		my %buff = ();
-		for (my $j = 0; $j < $qid_freq_size; $j++) {
-		    my $fnum = $docs->[$q][$d]->{qid_freq}[$j]{fnum};
-		    my $nums = $docs->[$q][$d]->{qid_freq}[$j]{nums};
-		    my $offset = $docs->[$q][$d]->{qid_freq}[$j]{offset};
-		    next unless (defined $offset);
-
-		    my $poss = $this->{word_retriever}->load_position($fnum, $offset, $nums);
-		    foreach my $p (@$poss) {
-			$buff{$p} = 1;
-		    }
-		}
-
-		if (scalar(keys %buff) > 0) {
-		    foreach my $p (sort {$a <=> $b} keys %buff) {
-			push(@{$poslist[$q]}, $p);
-		    }
-		} else {
-		    $poslist[$q] = [];
-		}
-	    }
-	}
-
-	###########################################################
-	# Binarizer.pm のバグのため position がないものはスキップ #
-	###########################################################
-	while (defined $poslist[0] && scalar(@{$poslist[0]}) > 0) {
-	    my $flag = 0;
-	    my $pos = shift(@{$poslist[0]}); # クエリ中の先頭の単語の出現位置
-	    my $distance_history = 0; # 各単語間の距離の総和
-	    for (my $q = 1; $q < scalar(@poslist); $q++) {
-		while (1) {
-		    # クエリ中の単語の出現位置リストが空なら終了
-		    if (scalar(@{$poslist[$q]}) < 1) {
-			$flag = 1;
-			last;
-		    }
-
-		    if ($sentence_flag > 0) {
-			if ($pos <= $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near - $distance_history) {
-			    $distance_history += ($poslist[$q]->[0] - $pos);
-			    $flag = 0;
-			    last;
-			} elsif ($poslist[$q]->[0] < $pos) {
-			    shift(@{$poslist[$q]});
-			} else {
-			    $flag = 1;
-			    last;
-			}
-		    } else {
-			# print "$pos < $poslist[$q]->[0] && $poslist[$q]->[0] < ", ($pos + $near - $distance_history) . "\n";
-			if ($pos < $poslist[$q]->[0] && $poslist[$q]->[0] < $pos + $near - $distance_history) {
-			    $distance_history += ($poslist[$q]->[0] - $pos);
-			    $flag = 0;
-			    last;
-			} elsif ($poslist[$q]->[0] < $pos) {
-			    shift(@{$poslist[$q]});
-			} else {
-			    $flag = 1;
-			    last;
-			}
-		    }
-		}
-
-		last if ($flag > 0);
-		$pos = $poslist[$q]->[0];
-	    }
-
-	    if ($flag == 0) {
-		for (my $q = 0; $q < scalar(@{$docs}); $q++) {
-		    push(@{$results[$q]}, $docs->[$q][$d]);
-		}
-		last;
-	    }
-	}
-    }
-
-    return \@results;
-}
-
-# 近接条件の適用
 sub filter_by_NEAR_constraint {
     my ($this, $docs, $near, $sentence_flag, $keep_order) = @_;
 
@@ -1082,35 +962,22 @@ sub filter_by_NEAR_constraint {
 		unless (defined $docs->[$q][$d]->{qid_freq}[0]{offset}) {
 		    $poslist[$q] = [];
 		} else {
-		    my $poss = $this->{word_retriever}->load_position($docs->[$q][$d]->{qid_freq}[0]{fnum},
-								      $docs->[$q][$d]->{qid_freq}[0]{offset},
-								      $docs->[$q][$d]->{qid_freq}[0]{nums});
-		    foreach my $p (@$poss) {
-			push(@{$poslist[$q]}, $p);
-		    }
+		    push (@{$poslist[$q]}, @{$this->{word_retriever}->load_position($docs->[$q][$d]->{qid_freq}[0]{fnum},
+										    $docs->[$q][$d]->{qid_freq}[0]{offset},
+										    $docs->[$q][$d]->{qid_freq}[0]{nums})});
 		}
 	    }
 	    # 代表表記化またSYNGRAPH化により複数個にわかれた表現・同義グループの出現位置(or 出現文ID)のマージ
 	    else {
 		my %buff = ();
-		for (my $j = 0; $j < $qid_freq_size; $j++) {
+		foreach my $j (0..$qid_freq_size - 1) {
 		    next unless (defined $docs->[$q][$d]->{qid_freq}[$j]{offset});
 
-		    my $poss = $this->{word_retriever}->load_position($docs->[$q][$d]->{qid_freq}[$j]{fnum},
-								      $docs->[$q][$d]->{qid_freq}[$j]{offset},
-								      $docs->[$q][$d]->{qid_freq}[$j]{nums});
-		    foreach my $p (@$poss) {
-			$buff{$p} = 1;
-		    }
+		    map {$buff{$_} = 1 } @{$this->{word_retriever}->load_position($docs->[$q][$d]->{qid_freq}[$j]{fnum},
+										  $docs->[$q][$d]->{qid_freq}[$j]{offset},
+										  $docs->[$q][$d]->{qid_freq}[$j]{nums})};
 		}
-
-		if (scalar(keys %buff) > 0) {
-		    foreach my $p (sort {$a <=> $b} keys %buff) {
-			push(@{$poslist[$q]}, $p);
-		    }
-		} else {
-		    $poslist[$q] = [];
-		}
+		push (@{$poslist[$q]}, sort {$a <=> $b} keys %buff);
 	    }
 	}
 
@@ -1124,10 +991,10 @@ sub filter_by_NEAR_constraint {
 	#####################################################
 
 	# 1. 各単語の出現位置をマージ
+	my $min_qid = 0;
 	while (1) {
-	    my $min_qid = 0;
 	    my $flag = -1;
-	    for (my $q = 0; $q < $q_num; $q++) {
+	    foreach my $q (0..$q_num - 1) {
 		next if (!defined scalar(@{$poslist[$q]}) || scalar(@{$poslist[$q]}) < 1);
 		if ($flag < 0) {
 		    $min_qid = $q;
@@ -1195,11 +1062,21 @@ sub filter_by_NEAR_constraint {
 		}
 
 		my @sorted_pos = sort {$a <=> $b} keys %posbuf;
-		$did2region{$did}->{start} = $sorted_pos[0];
-		$did2region{$did}->{end} = $sorted_pos[-1];
-		$did2region{$did}->{pos2qid} = \%posbuf;
-
-		last if ($did2region{$did}->{start} > $NUM_OF_CHARS_IN_HEADER);
+		if (exists $did2region{$did}){
+		    my $region_new = $sorted_pos[-1] - $sorted_pos[0];
+		    my $region_old = $did2region{$did}->{end} - $did2region{$did}->{start};
+		    if ($region_old >= $region_new) {
+#			print "($did2region{$did}->{end}, $did2region{$did}->{start}) [$region_old] -> ($sorted_pos[-1] , $sorted_pos[0]) [$region_new]\n" if ($did =~ /21456189/);
+			$did2region{$did}->{start} = $sorted_pos[0];
+			$did2region{$did}->{end} = $sorted_pos[-1];
+			$did2region{$did}->{pos2qid} = \%posbuf;
+		    }
+		} else {
+		    $did2region{$did}->{start} = $sorted_pos[0];
+		    $did2region{$did}->{end} = $sorted_pos[-1];
+		    $did2region{$did}->{pos2qid} = \%posbuf;
+		}
+#		last if ($did2region{$did}->{start} > $NUM_OF_CHARS_IN_HEADER);
 	    }
 	}
 
