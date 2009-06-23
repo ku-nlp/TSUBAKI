@@ -92,6 +92,9 @@ sub getDefaultValues {
     $params{sort_by_CR} = 0;
     $params{from_portal} = 0;
     $params{score_verbose} = 1;
+
+    # NICT用 TSUBAKI用スコアとページランクの値の内訳を表示
+    $params{detail_score} = 0;
     $params{debug} = 0;
     $params{result_items} = 'Id:Title:Cache:Url';
     $params{show_search_time} = 0;

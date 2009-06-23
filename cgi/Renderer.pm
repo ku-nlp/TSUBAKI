@@ -1241,19 +1241,15 @@ sub printSearchResultForAPICall {
 	my $cache_location = $page->{cache_location};
 	my $cache_size = $page->{cache_size};
 
-	if ($params->{Score} > 0) {
-	    if ($params->{Id} > 0) {
-		$writer->startTag('Result', Rank => $rank + 1, Id => $did, Score => sprintf("%.5f", $score));
-	    } else {
-		$writer->startTag('Result', Rank => $rank + 1, Score => sprintf("%.5f", $score));
-	    }
-	} else {
-	    if ($params->{Id} > 0) {
-		$writer->startTag('Result', Rank => $rank + 1, Id => $did);
-	    } else {
-		$writer->startTag('Result', Rank => $rank + 1);
-	    }
-	}
+	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, Score => 3, DetailScore => 4);
+	my %attrs_of_result_tag = ();
+	$attrs_of_result_tag{Id} = $did if ($params->{Id} > 0);
+	$attrs_of_result_tag{Rank} = $rank + 1;
+	$attrs_of_result_tag{Score} = sprintf("%.5f", $score) if ($params->{Score} > 0);
+	$attrs_of_result_tag{DetailScore} = sprintf("Tsubaki:%.5f, PageRank:%s", $page->{tsubaki_score}, $page->{pagerank}) if ($params->{detail_score});
+
+	# 開始タグの表示
+	$writer->startTag('Result', map {$_ => $attrs_of_result_tag{$_}} sort {$attrs_of_result_tag_order{$a} <=> $attrs_of_result_tag_order{$b}} keys %attrs_of_result_tag);
 
 	if ($params->{Title} > 0) {
 	    $writer->startTag('Title');
