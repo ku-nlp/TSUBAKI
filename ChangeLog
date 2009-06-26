@@ -1,4 +1,63 @@
+2009-06-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm: スコアの修正.
+
+2009-06-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: PageRankが無効の場合はprを表示しないように.
+
+2009-06-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm: 全ての出現位置で近接チェックを行うように.
+
+	* scripts/snippet_make_server.pl: bug fixed.
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	Tsubakiスコアとページランクを返すように.
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm:
+	スコアの内訳を表示するオプションを追加.
+
+2009-06-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: PageRankに関するパラメータの追加.
+
+	* cgi/RequestParser.pm, cgi/Renderer.pm: PageRankを考慮するように.
+
+	* scripts/TsubakiEngine.pm, scripts/TsubakiEngine4SynGraphSearch.pm, scripts/TsubakiEngineFactory.pm, scripts/tsubaki_server.pl:
+	PageRankを考慮するように.
+
+2009-06-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm: 語義IDが出力されないように.
+
+2009-06-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm:
+	DFDBをロードする前に, DFDB_DIRの存在をチェックするように.
+
+2009-05-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/merge-index.sh, scripts/merge-index4ntcir.sh:
+	Added scp options.
+
+2009-05-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict, cgi/api.cgi:
+	HTML_FILE_PATHパラメータを削除.
+
+2009-05-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm:
+	キャッシュページを表示する際, クロール日時を表示するように.
+
 2009-05-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	キャッシュページを表示する際、ナ形容詞については語幹のみをハイライトに用いるように.
+
+	* scripts/Indexer.pm, cgi/QueryKeyword.pm:
+	品詞・活用形を保持するように.
 
 	* cgi/Renderer.pm:
 	キャッシュページのハイライト用に複数個の基本ノードを表示しないように.
