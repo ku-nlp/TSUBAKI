@@ -22,8 +22,8 @@ use Data::Dumper;
 }
 $Data::Dumper::Useperl = 1;
 
-binmode(STDOUT, ":encoding(euc-jp)");
-binmode(STDERR, ":encoding(euc-jp)");
+binmode(STDOUT, ":utf8");
+binmode(STDERR, ":utf8");
 
 
 my (%opt);
@@ -33,6 +33,7 @@ GetOptions(\%opt,
 	   'jmn',
 	   'knp',
 	   'syn',
+	   'logfile=s',
 	   'position',
 	   'z',
 	   'compress',
@@ -92,7 +93,44 @@ $opt{max_length_of_rawstring} = 5000 unless ($opt{max_length_of_rawstring});
 
 my %CACHE = ();
 
+
+
+my %alreadyAnalyzedFiles = ();
+if (-f $opt{logfile}) {
+    open(LOG, $opt{logfile}) or die $!;
+    while (<LOG>) {
+	chomp;
+
+	my ($file, $status) = split(/ /, $_);
+	if ($status =~ /(success|error|timeout|large_file)/) {
+	    $alreadyAnalyzedFiles{$file} = $status;
+	}
+	# ログのフォーマットにマッチしない = エラーにより終了
+	else {
+	    $alreadyAnalyzedFiles{$file} = "error";
+	}
+    }
+    close(LOG);
+
+    # ログフォーマットを整形して出力
+    open(LOG, "> $opt{logfile}") or die $!;
+    foreach my $file (sort {$a cmp $b} keys %alreadyAnalyzedFiles) {
+	my $status = $alreadyAnalyzedFiles{$file};
+	print LOG "$file $status\n";
+    }
+    close(LOG);
+}
+
+
+open(LOG, ">> $opt{logfile}") or die "$!\n" if ($opt{logfile});
+
 &main();
+
+if ($opt{logfile}) {
+    print LOG "finish.\n";
+    close(LOG);
+}
+
 
 sub usage {
     print "Usage perl $0 -in xmldir -out idxdir [-jmn|-knp|-syn] [-position] [-z] [-compress] [-file] [-scheme [Juman|Knp|SynGraph]] [-title] [-keywords] [-description] [-inlinks] [-sentences] [-verbose] [-help]\n";
@@ -168,12 +206,19 @@ sub extract_indices_wo_pm {
     my $tagName;
     my $content;
     my %indices = ();
+    my $rawstring;
     LOOP:
     while (<READER>) {
 	last if ($_ =~ /<Text / && $opt{only_inlinks});
 
+	if ($_ =~ /<RawString>([^<]+?)<\/RawString>/) {
+	    $rawstring = $1;
+	}
+
 	if ($_ !~ /^(?:\s|\])/) {
-	    $content .= $_ if ($isIndexingTarget);
+	    if ($isIndexingTarget) {
+		$content .= $_;
+	    }
 	}
 	elsif ($_ =~ /^\s*(<($pattern)(?: |\>).*\n)/o) {
 	    $isIndexingTarget = 1;
@@ -228,10 +273,12 @@ sub extract_indices_wo_pm {
 
 	    $isIndexingTarget = 0;
 	    $tagName = '';
-	    $content = '';
- 	}
+	    $content = ''; 
+	}
 	else {
-	    $content .= $_ if ($isIndexingTarget);
+	    if ($isIndexingTarget) {
+		$content .= $_;
+	    }
 	}
     }
     close(READER);
@@ -334,13 +381,21 @@ sub extractIndices {
 sub extract_indice_from_single_file {
     my ($file, $fid) = @_;
 
+    return if (exists $alreadyAnalyzedFiles{$file});
+
+    syswrite LOG, "$file " if $opt{logfile};
+
     # ファイルサイズのチェック
     if ($opt{skip_large_file}) {
 	my $st = stat($file);
-	return unless $st;
+	unless ($st) {
+	    syswrite LOG, "error\n" if ($opt{logfile});
+	    return;
+	}
 
 	if ($st->size > $opt{skip_large_file}) {
 	    print STDERR "Too large file: $file (" . $st->size . " bytes > limit=$opt{skip_large_file} bytes)\n";
+	    syswrite LOG, "large_file\n" if ($opt{logfile});
 	    return;
 	}
     }
@@ -389,9 +444,10 @@ sub extract_indice_from_single_file {
 	}
 	close(WRITER);
 	print STDERR " done.\n" if ($opt{verbose});
-
+	syswrite LOG, "success\n" if ($opt{logfile});
     } catch Error with {
 	printf STDERR (qq([WARNING] Time out occured! (time=%d [sec], file=%s)\n), $opt{timeout}, $file);
+	syswrite LOG, "timeout\n" if ($opt{logfile});
     };
 }
 
