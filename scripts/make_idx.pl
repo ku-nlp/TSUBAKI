@@ -37,6 +37,7 @@ GetOptions(\%opt,
 	   'position',
 	   'z',
 	   'compress',
+	   'offset=s',
 	   'file=s',
 	   'ignore_yomi',
 	   'ignore_syn_dpnd',
@@ -123,6 +124,7 @@ if (-f $opt{logfile}) {
 
 
 open(LOG, ">> $opt{logfile}") or die "$!\n" if ($opt{logfile});
+open(SID2TID, ">> $opt{in}.sid2tid") or die "$!\n" if ($opt{offset});
 
 &main();
 
@@ -130,6 +132,8 @@ if ($opt{logfile}) {
     print LOG "finish.\n";
     close(LOG);
 }
+
+close(SID2TID) if ($opt{offset});
 
 
 sub usage {
@@ -164,9 +168,16 @@ sub main {
     elsif ($opt{in}) {
 	# データのあるディレクトリを開く
 	opendir (DIR, $opt{in}) or die;
+	my $fid = $opt{offset};
 	foreach my $file (sort {$a <=> $b} readdir(DIR)) {
-	    next unless ($file =~ /([^\/]+)\.xml/);
-	    &extract_indice_from_single_file("$opt{in}/$file", $1);
+	    next if ($file eq '.' || $file eq '..');
+
+	    if (defined $opt{offset}) {
+		&extract_indice_from_single_file("$opt{in}/$file", sprintf ("%09d", $fid++));
+	    } else {
+		next unless ($file =~ /([^\/]+)\.xml/);
+		&extract_indice_from_single_file("$opt{in}/$file", $1);
+	    }
 	}
 	closedir(DIR);
     }
@@ -354,6 +365,7 @@ sub extractIndices {
 											      use_of_negation_and_antonym => 1,
 											      verbose => $opt{verbose}} );
 	my ($rawstring) = ($content =~ m!<RawString>(.+?)</RawString>!);
+
 	unless (defined $terms_syn) {
 	    print STDERR "[SKIP] A large number of indices are extracted from [$rawstring]: $file (limit=" . $opt{max_num_of_indices} . ")\n";
 	}
@@ -402,7 +414,7 @@ sub extract_indice_from_single_file {
 
     try {
 	# タイムアウトの設定
-	local $SIG{ALRM} = sub {die "timeout"};
+	local $SIG{ALRM} = sub {die sprintf (qq([WARNING] Time out occured! (time=%d [sec], file=%s)), $opt{timeout}, $file)};
 	alarm $opt{timeout};
 
 	# 索引表現の抽出
@@ -445,6 +457,10 @@ sub extract_indice_from_single_file {
 	close(WRITER);
 	print STDERR " done.\n" if ($opt{verbose});
 	syswrite LOG, "success\n" if ($opt{logfile});
+	if ($opt{offset}) {
+	    my ($sid) = ($file =~ /(\d+(\-\d+)?)[^\/]+$/);
+	    syswrite SID2TID, "$sid $fid\n";
+	}
     } catch Error with {
 	printf STDERR (qq([WARNING] Time out occured! (time=%d [sec], file=%s)\n), $opt{timeout}, $file);
 	syswrite LOG, "timeout\n" if ($opt{logfile});
