@@ -10,6 +10,9 @@ confdir=`echo $0 | xargs dirname`/../conf
 workspace=$workspace_mkidx
 
 
+SLEEPTIME=`expr $RANDOM % 600`
+# sleep $SLEEPTIME
+
 # 作成するインデックスのタイプ(-knp/-syn)
 type=$1
 
@@ -43,11 +46,18 @@ rm $xdir.tgz
 ulimit -m 2097152
 ulimit -v 2097152
 
+
+LOGFILE=$workspace/$xdir.log
+touch $LOGFILE
+
 # ファイル単位でインデックスの抽出
 # SYNノードを含む係り受け関係は除外、5MBを越える標準フォーマットからは抽出しない
-command="perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z $inlinks"
+command="perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z $inlinks -logfile $LOGFILE"
 echo $command
-$command
+until [ `tail -1 $LOGFILE | grep finish` ] ;
+do
+    $command
+done
 rm -r $xdir
 
 
