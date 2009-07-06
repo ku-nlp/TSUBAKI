@@ -55,6 +55,7 @@ sub new {
     };
     $this->{logger}->setTimeAs('KNP', '%.3f');
 
+#   print Dumper::dump_as_HTML($opt->{knp}) . "<<< <BR>\n";
     unless (defined $knpresult) {
 	print "Can't parse the query: $string<BR>\n";
 	exit;
@@ -705,9 +706,10 @@ sub getPaintingJavaScriptCode {
 	# 同義グループに属す表現を取得と幅（文字数）の取得
 
 	my $basicNode = undef;
-	my $surf;
 	my %synbuf;
 	my $surf = ($tag->synnodes)[0]->midasi;
+	my $surf_contentW = ($tag->mrph)[0]->midasi;
+	my @repnames_contentW = ($tag->mrph)[0]->repnames;
 	my $max_num_of_words = length($surf);
 	my $gid = ($tag->synnodes)[0]->tagid;
 	$gid2num{$gid} = $i;
@@ -736,7 +738,14 @@ sub getPaintingJavaScriptCode {
 	}
 	# 出現形、基本ノードと同じ表現は削除する
 	delete($synbuf{$surf});
+	delete($synbuf{$surf_contentW});
 	delete($synbuf{$basicNode});
+	foreach my $rep (@repnames_contentW) {
+	    foreach my $word_w_yomi (split (/\?/, $rep)) {
+		my ($hyouki, $yomi) = split (/\//, $word_w_yomi);
+		delete($synbuf{$hyouki});
+	    }
+	}
 
 	my $width = $font_size * (1.5 + $max_num_of_words);
 	# 同義グループのX軸の中心座標を保持（係り受けの線を描画する際に利用する）
