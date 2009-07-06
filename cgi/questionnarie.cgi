@@ -17,7 +17,7 @@ my $DATF = "/home/skeiji/tsubaki/SearchEngine/data/questionnarie.dat";
 sub main {
     # current time
     my $timestamp = strftime("%Y-%m-%d %T", localtime(time));
-    
+
     my $cgi = new CGI();
     my $query = decode('utf8', $cgi->param('q'));
     my $judge = $cgi->param('question');
@@ -25,7 +25,8 @@ sub main {
     my $browser = $ENV{HTTP_USER_AGENT};
     $msg =~ s/\n/<BR>/g;
 
-    open (WRITER, '>>:utf8', $DATF);
+
+    open (WRITER, '>>:utf8', $DATF) or die "$!";
     printf WRITER ("%s\t%d\t%s\t%s\t%s\t%s\n", $timestamp, $judge, $query, $msg, $browser);
     close (WRITER);
 }
