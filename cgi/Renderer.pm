@@ -100,7 +100,7 @@ sub printFooter {
 		    print "<font color=\"brown\">" . ($i + 1) . "</font>&nbsp;";
 		    $last_page_flag = 1;
 		} else {
-		    print "<a href=\"javascript:submit('$offset, $params->{query}')\">" . ($i + 1) . "</a>&nbsp;";
+		    printf qq(<a href="index.cgi?start=%d&query=%s">%d</a>&nbsp;), $offset, $params->{query}, $i + 1;
 		}
 	    }
 	    print "</DIV>";
@@ -111,19 +111,10 @@ sub printFooter {
 
     # フッタ出力
     print << "END_OF_HTML";
-    <SCRIPT language="javascript">
-    <!--
-    function submit(offset){
-	document.forms['search'].start.value = offset;
-	document.forms['search'].submit();
-
-    }
-    // -->
-    </SCRIPT> 
 
     <DIV style="text-align:center;padding:1em;">
     TSUBAKI利用時の良かった点、問題点などご意見を頂けると幸いです。<br>
-    ご意見は tsubaki あっと nlp.kuee.kyoto-u.ac.jp までお願い致します。
+    ご意見は tsubaki-feedback あっと nlp.kuee.kyoto-u.ac.jp までお願い致します。
     <P>
     <DIV><B>&copy;2006 - 2009 黒橋研究室</B></DIV> 
     </DIV>
@@ -355,8 +346,8 @@ END_OF_HTML
     print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="image/info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方ガイド]</A><BR>\n);
+    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[お知らせ・使い方]</A><BR>\n);
 
     # 混雑具合を表示
     if ($CONFIG->{DISPLAY_CONGESTION}) {
