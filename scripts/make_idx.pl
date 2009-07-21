@@ -47,6 +47,7 @@ GetOptions(\%opt,
 	   'max_num_of_indices=s',
 	   'max_length_of_rawstring=s',
 	   'genkei',
+	   'english',
 	   'scheme=s',
 	   'title',
 	   'keywords',
@@ -147,12 +148,12 @@ sub main {
     }
     die "Not found! $opt{in}\n" unless (-e $opt{in} || -e $opt{file});
 
-    if (!$opt{jmn} && !$opt{knp} && !$opt{syn}) {
-	die "-jmn, -knp, -syn のいずれかを指定して下さい.\n";
+    if (!$opt{jmn} && !$opt{knp} && !$opt{syn} && !$opt{english}) {
+	die "-jmn, -knp, -syn, -english のいずれかを指定して下さい.\n";
     }
 
-    if ($opt{jmn} + $opt{knp} + $opt{syn} > 1) {
-	die "-jmn, -knp, -syn のうち一つを指定して下さい.\n";
+    if ($opt{jmn} + $opt{knp} + $opt{syn} + $opt{english} > 1) {
+	die "-jmn, -knp, -syn, -english のうち一つを指定して下さい.\n";
     }
 
 
@@ -284,7 +285,7 @@ sub extract_indices_wo_pm {
 
 	    $isIndexingTarget = 0;
 	    $tagName = '';
-	    $content = ''; 
+	    $content = '';
 	}
 	else {
 	    if ($isIndexingTarget) {
@@ -380,6 +381,9 @@ sub extractIndices {
 	    $terms = $terms_syn;
 	}
     }
+    elsif ($opt{english}) {
+	$terms = $indexer->makeIndexFromEnglishData($annotation, \%opt);
+    }
     elsif ($opt{knp}) {
 	$terms = $indexer->makeIndexFromKNPResult($knp_result, \%opt);
     }
@@ -442,13 +446,13 @@ sub extract_indice_from_single_file {
 	$fid =~ s/^NW//;
 
 	if ($opt{position}) {
-	    if ($opt{syn}) {
+	    if ($opt{syn} || $opt{english}) {
 		&output_syngraph_indice_with_position(*WRITER, $fid, $indice);
 	    } else {
 		&output_with_position(*WRITER, $fid, $indice);
 	    }
 	} else {
-	    if ($opt{syn}) {
+	    if ($opt{syn} || $opt{english}) {
 		&output_syngraph_indice_wo_position(*WRITER, $fid, $indice);
 	    } else {
 		&output_wo_position(*WRITER, $fid, $indice);
@@ -522,9 +526,9 @@ sub merge_indices {
 	    my $midasi = $index->{midasi};
 	    next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
 
-	    print $midasi if ($opt{verbose});
+	    print $midasi . "\n" if ($opt{verbose});
 	    $ret{$midasi}->{sids}{$sid} = 1;
-	    if ($opt{syn}) {
+	    if ($opt{syn} || $opt{english}) {
 		push(@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
 		$ret{$midasi}->{score} += $index->{score};
 	    } else {
