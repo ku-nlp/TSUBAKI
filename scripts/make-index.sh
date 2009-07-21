@@ -9,6 +9,7 @@ confdir=`echo $0 | xargs dirname`/../conf
 . $confdir/indexing.conf
 workspace=$workspace_mkidx
 
+source $SHELL_RCFILE
 
 SLEEPTIME=`expr $RANDOM % 600`
 # sleep $SLEEPTIME

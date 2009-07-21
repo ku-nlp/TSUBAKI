@@ -12,6 +12,7 @@ workspace=$workspace_mkdfdb
 mkdir -p $workspace 2> /dev/null
 cd $workspace
 
+source $SHELL_RCFILE
 
 opt=
 while getopts z OPT

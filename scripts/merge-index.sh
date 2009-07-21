@@ -10,7 +10,7 @@ confdir=`echo $0 | xargs dirname`/../conf
 . $confdir/indexing.conf
 workspace=$workspace_mgidx
 
-
+source $SHELL_RCFILE
 
 
 # スワップしないように仕様するメモリサイズを制限する(max 4GB)
@@ -36,15 +36,13 @@ mkdir $id 2> /dev/null
 cd $id
 
 
-
 # インデックスデータをコピー
-for f in `egrep "i$id...idx.gz" $flist`
+for f in `egrep "i$id.*idx.gz" $flist`
 do
     echo scp $f ./
     scp -o "BatchMode yes" -o "StrictHostKeyChecking no" $f ./
 done
 cd ..
-
 
 
 # ディスク上でマージ
