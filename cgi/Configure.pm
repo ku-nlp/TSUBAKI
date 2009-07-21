@@ -7,6 +7,7 @@ use strict;
 use utf8;
 use File::Basename;
 use KNP;
+use Error qw(:try);
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -48,7 +49,7 @@ sub _new {
 		}
 		close (F);
 	    } else {
-		print STDERR "[WARNNING] $logfile is * NOT * found!\n";
+		print STDERR "[WARNING] $logfile is * NOT * found!\n";
 	    }
 	}
 
@@ -105,12 +106,16 @@ sub _new {
 	print "* create knp object...";
     }
 
-    $this->{KNP} = new KNP(
-	-Command => $this->{KNP_COMMAND},
-	-Option => join(' ', @{$this->{KNP_OPTIONS}}),
-	-Rcfile => $this->{KNP_RCFILE},
-	-JumanRcfile => $this->{JUMAN_RCFILE},
-	-JumanCommand => $this->{JUMAN_COMMAND});
+    try {
+	$this->{KNP} = new KNP(
+			       -Command => $this->{KNP_COMMAND},
+			       -Option => join(' ', @{$this->{KNP_OPTIONS}}),
+			       -Rcfile => $this->{KNP_RCFILE},
+			       -JumanRcfile => $this->{JUMAN_RCFILE},
+			       -JumanCommand => $this->{JUMAN_COMMAND});
+    } catch Error with {
+	printf STDERR (qq([WARNING] Can\'t create a KNP object!\n));
+    };
 
     print " done.\n" if ($opts->{debug});
 
