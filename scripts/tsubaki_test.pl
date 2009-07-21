@@ -23,7 +23,7 @@ binmode(STDOUT, ':encoding(euc-jp)');
 binmode(STDERR, ':encoding(euc-jp)');
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s', 'score_verbose', 'disable_synnode', 'show_time');
+GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'english', 'lemma', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s', 'score_verbose', 'disable_synnode', 'show_time');
 
 if (!$opt{idxdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -109,10 +109,80 @@ sub main {
     my $logger = new Logger();
     my $loggerAll = new Logger();
 
-    my $query = RequestParser::parseQuery($params, $logger);
+    my $query;
+    if ($opt{english}) {
+	my $isPhrasalSearch = 0;
+	# フレーズ検索かどうかのチェック
+	if ($opt{query} =~ /^'.+'$/) {
+	    $isPhrasalSearch = 1;
+	    $opt{query} =~ s/^\'//;
+	    $opt{query} =~ s/\'$//;
+	}
+
+	my %param = ();
+	my @words = ();
+	my $qid = 0;
+	my $gid = 0;
+	my $num_of_words = 0;
+	my %qid2gid = ();
+	my %qid2qtf = ();
+
+	my $lemmatizer;
+	if ($opt{lemma}) {
+	    require Lemmatize;
+	    $lemmatizer = new Lemmatize();
+	}
+
+	foreach my $word (split (" ", $opt{query})) {
+	    my @terms;
+
+	    print $word . " -> " if ($opt{debug});
+	    if ($opt{lemma}) {
+		my $lemmatized_word = $lemmatizer->lemmatize($word, '');
+		$word = (defined $lemmatized_word) ? $lemmatized_word : $word;
+		$word .= "*";
+		$word = lc($word);
+	    }
+
+	    print $word . "\n" if ($opt{debug});
+
+	    my $term = {
+		requisite => 1,
+		string => $word,
+		qid => $qid,
+		qid => $gid,
+		syngraph => 1
+		};
+	    $qid2gid{$qid} = $gid;
+	    $qid2qtf{$qid} = 1;
+
+	    $param{qid2df}->{$qid++} = 1;
+	    push (@terms, $term);
+
+	    # 同義語を考慮したい場合は@termに追加する
+
+	    push (@words, \@terms);
+	    $gid++;
+	    $num_of_words++;
+	}
+
+	push (@{$param{keywords}},
+	      {
+		  near => $num_of_words,
+		  logical_cond_qkw => 'AND',
+		  syngraph => 1,
+		  words => \@words,
+		  keep_order => 1
+		});
+	$param{qid2gid} = \%qid2gid;
+	$param{qid2qtf} = \%qid2qtf;
+	$query = new Query(\%param);
+    } else {
+	$query = RequestParser::parseQuery($params, $logger);
+    }
     $loggerAll->setTimeAs('query_parse_time', '%.3f');
 
-    if ($opt{debug}) {
+    if ($opt{debug} && !$opt{english}) {
 	print "*** QUERY ***\n";
 	foreach my $qk (@{$query->{keywords}}) {
 	    # print Dumper($qk) . "\n";
@@ -126,8 +196,9 @@ sub main {
     my $tsubaki = $factory->get_instance();
     $loggerAll->setTimeAs('create_TSUBAKI_instance_time', '%.3f');
 
-    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, flag_of_anchor_use => ($opt{idxdir4anchor}) ? 1 : 0, DIST => 30, verbose => $opt{verbose}, results => $opt{results}, LOGGER => $logger});
+    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, flag_of_anchor_use => ($opt{idxdir4anchor}) ? 1 : 0, DIST => 30, weight_of_tsubaki_score => $CONFIG->{WEIGHT_OF_TSUBAKI_SCORE}, verbose => $opt{verbose}, results => $opt{results}, LOGGER => $logger});
     $loggerAll->setTimeAs('search_time', '%.3f');
+
 
     my $merge = 0;
     foreach my $k ($logger->keys()) {
