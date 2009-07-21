@@ -249,7 +249,7 @@ sub makeIndexfromSynGraph {
 #	    $freq[-1]->{isBasicNode} = 1 if ($synNode->{midasi} !~ /s\d+/ && $synNode->{midasi} !~ /<[^>]+>/);
 	    $freq[-1]->{isBasicNode} = 1 if ($synNode->{midasi} !~ /s\d+/);
 	    $freq[-1]->{fstring} = $synNode->{fstring};
-	    
+
 	    foreach my $kakariSakiID (@{$kakariSakis}){
 		my $kakariSakiNodes = $synNodes{$kakariSakiID};
 
@@ -290,6 +290,34 @@ sub makeIndexfromSynGraph {
 
     return \@freq;
 }
+
+sub makeIndexFromEnglishData {
+    my ($this, $result, $option) = @_;
+
+    my $pos = 0;
+    my $gid = 0;
+    my @terms = ();
+    foreach my $line (split (/\n/, $result)) {
+	my @midasis = split (" ", $line);
+	$midasis[-1] .= "*";
+
+	foreach my $midasi (@midasis) {
+	    push(@terms, {midasi => $midasi});
+	    $terms[-1]->{surf} = $midasi;
+	    $terms[-1]->{freq} = 1;
+	    $terms[-1]->{score} = 1;
+	    $terms[-1]->{pos} = $pos;
+	    $terms[-1]->{group_id} = $gid;
+	    $terms[-1]->{isContentWord} = 1;
+	    $terms[-1]->{isBasicNode} = 1;
+	}
+	$pos++;
+	$gid++;
+    }
+
+    return \@terms;
+}
+
 
 sub makeIndexFromKNPResult {
     my ($this, $result, $option) = @_;
