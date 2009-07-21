@@ -46,7 +46,7 @@ foreach my $ftmp (sort {$a cmp $b} @ARGV) {
 	my $val = join(' ', @fields);
 	push(@tmp_INDEX, {midasi => $key, data => $val, file_num => $FILE_NUM});
     }
-    $FILE_NUM++;  
+    $FILE_NUM++;
 }
 
 my @INDEX = sort {$a->{midasi} cmp $b->{midasi}} @tmp_INDEX;
@@ -93,7 +93,7 @@ while (@INDEX) {
 	my $val = join(' ', @fields);
 	$index->{midasi} = $key;
 	$index->{data} = $val;
-	    
+
 	my $i;
 	for ($i = $#INDEX; $i >= 0; $i--) {
 	    if (($index->{midasi} cmp $INDEX[$i]{midasi}) >= 0) {
@@ -103,7 +103,7 @@ while (@INDEX) {
 	}
 	if ($i == -1) {
 	    splice(@INDEX, 0, 0, $index);
-	}	   
+	}
     }
 }
 

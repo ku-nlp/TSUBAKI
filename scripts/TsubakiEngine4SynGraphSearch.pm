@@ -208,7 +208,6 @@ sub calculate_score {
 
 	my %dists = ();
 	if ($calculateNearDpnds) {
-   
 	    my @poslist = sort {$a <=> $b} keys %{$pos2score_gid_qid};
 
 	    foreach my $dpnd (@$dpnds) {
