@@ -11,7 +11,7 @@ use utf8;
 use Getopt::Long;
 use Encode;
 
-my (%opt); GetOptions(\%opt, 'dir=s', 'suffix=s', 'n=s', 'z', 'compress', 'verbose');
+my (%opt); GetOptions(\%opt, 'dir=s', 'idxfiles=s', 'suffix=s', 'n=s', 'z', 'compress', 'verbose', 'offset=s');
 
 # 単語IDの初期化
 my %freq;
@@ -20,7 +20,7 @@ my $fcnt = 0;
 $opt{suffix} = 'idx' unless $opt{suffix};
 
 # ディレクトリが指定された場合
-if ($opt{dir}) {
+if ($opt{dir} && !$opt{idxfiles}) {
 
     # データのあるディレクトリを開く
     opendir (DIR, $opt{dir}) or die;
@@ -58,7 +58,63 @@ if ($opt{dir}) {
     }
     closedir(DIR);
 }
+# .idxファイルのリストが与えられた場合
+elsif ($opt{idxfiles}) {
 
+    # .idx ファイルに id を振る
+    my %idx2did = ();
+    my $did = $opt{offset};
+    open (FILE, $opt{idxfiles}) or die "$!";
+    while (<FILE>) {
+	chop;
+	my $fp = $_;
+	my ($idxid) = ($fp =~ /([^\/]+)\.idx/);
+	$idx2did{$idxid} = sprintf ("%09d", $did++);
+    }
+    close (FILE);
+
+
+    # idx2did を出力
+    my ($dir) = ($opt{idxfiles} =~ /(.+)\/[^\/]+/);
+    open (WRITER, "> $dir/idx2did") or die "$!";
+    foreach my $idx (sort {$idx2did{$a} <=> $idx2did{$b}} keys %idx2did) {
+	print WRITER $idx . " " . $idx2did{$idx} . "\n";
+    }
+    close (WRITER);
+
+
+    open (FILE, $opt{idxfiles}) or die "$!";
+    while (<FILE>) {
+	chop;
+
+	my $file = $_;
+	# ファイルから読み込む
+	if ($opt{z}) {
+	    open (IDX_FILE, "zcat $file |") or die("no such file $file\n");
+	    binmode(IDX_FILE, ':utf8');
+	} else {
+	    open (IDX_FILE, '<:utf8', "$file") or die("no such file $file\n");
+	}
+	$fcnt++;
+
+	while (<IDX_FILE>) {
+	    &ReadData($_, \%idx2did);
+	}
+	close IDX_FILE;
+
+	if (defined($opt{n})) {
+	    if ($fcnt % $opt{n} == 0) {
+		my $fname = sprintf("%s.%d.%d.%s", $opt{idxfiles}, $fcnt/$opt{n}, $$, $opt{suffix});
+		&output_data($fname, \%freq);
+		%freq = ();
+	    }
+	}
+    }
+    close (FILE);
+
+    $opt{dir} = $opt{idxfiles};
+
+}
 # ディレクトリの指定がない場合は標準入力から読む
 else {
     while (<STDIN>) {
@@ -110,11 +166,18 @@ sub output_data {
 # データを読んで、各単語が出現するDocumentIDをマージ
 sub ReadData
 {
-    my ($input) = @_;
+    my ($input, $didmap) = @_;
     chomp $input;
 
     my ($midashi, $etc) = split(/\s+/, $input);
     my ($did, $dinfo) = split(':', $etc);
+
+    # did を変更
+    if (defined $didmap) {
+	$did = $didmap->{$did};
+	$etc = $did . ":" . $dinfo;
+    }
+
     # 各単語IDの頻度を計数
     $freq{$midashi}->{$did} = $etc;
 }
