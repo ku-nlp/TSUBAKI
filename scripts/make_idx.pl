@@ -39,6 +39,8 @@ GetOptions(\%opt,
 	   'compress',
 	   'offset=s',
 	   'file=s',
+	   'infiles=s',
+	   'outdir_prefix=s',
 	   'ignore_yomi',
 	   'ignore_syn_dpnd',
 	   'ignore_hypernym',
@@ -143,10 +145,10 @@ sub usage {
 }
 
 sub main {
-    if (((!$opt{in} || !$opt{file}) && !$opt{out}) || $opt{help}) {
+    if (((!$opt{in} || !$opt{file}) && (!$opt{out} && !$opt{infiles})) || (!$opt{infiles} && !$opt{outdir_prefix})  || $opt{help}) {
 	&usage();
     }
-    die "Not found! $opt{in}\n" unless (-e $opt{in} || -e $opt{file});
+    die "Not found! $opt{in}\n" unless (-e $opt{in} || -e $opt{file} || -e $opt{infiles});
 
     if (!$opt{jmn} && !$opt{knp} && !$opt{syn} && !$opt{english}) {
 	die "-jmn, -knp, -syn, -english のいずれかを指定して下さい.\n";
@@ -157,7 +159,7 @@ sub main {
     }
 
 
-    unless (-e $opt{out}) {
+    if (defined $opt{out} && !-e $opt{out}) {
 	print STDERR "Create directory: $opt{out}\n";
 	mkdir $opt{out};
     }
@@ -165,6 +167,21 @@ sub main {
     if ($opt{file}) {
 	die "Not xml file.\n" if ($opt{file} !~ /([^\/]+)\.xml/);
 	&extract_indice_from_single_file($opt{file}, $1);
+    }
+    elsif ($opt{infiles}) {
+	# インデキシング対象のファイルと出力先が記述されたファイルをを開く
+	open (FILE, $opt{infiles}) or die "$!";
+	while (<FILE>) {
+	    chop;
+	    my $file = $_;
+	    next unless ($file =~ /([^\/]+)\.xml/);
+	    my $fname = $1;
+	    my ($fid, $version) = split (/\-/, $fname);
+	    $opt{out} = sprintf (qq(%s/idxs/i%04d/i%06d), $opt{outdir_prefix}, $fid / 1000000, $fid / 1000);
+	    `mkdir -p $opt{out}` unless (-e $opt{out});
+	    &extract_indice_from_single_file($file, $fname);
+	}
+	close (FILE);
     }
     elsif ($opt{in}) {
 	# データのあるディレクトリを開く
@@ -466,7 +483,8 @@ sub extract_indice_from_single_file {
 	    syswrite SID2TID, "$sid $fid\n";
 	}
     } catch Error with {
-	printf STDERR (qq([WARNING] Time out occured! (time=%d [sec], file=%s)\n), $opt{timeout}, $file);
+	my $err = shift;
+	print STDERR "Exception at line ", $err->{-line} ," in ", $err->{-file}, " (", $err->{-text}, ")\n";
 	syswrite LOG, "timeout\n" if ($opt{logfile});
     };
 }
@@ -613,7 +631,7 @@ sub output_syngraph_indice_with_position {
 	}
 	chop($pos_scr_str);
 
-	printf $fh ("%s %d:%s@%s#%s\n", $midasi, $did, $score, $sids_str, $pos_scr_str);
+	printf $fh ("%s %s:%s@%s#%s\n", $midasi, $did, $score, $sids_str, $pos_scr_str);
     }
 }
 
