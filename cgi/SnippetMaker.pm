@@ -24,7 +24,12 @@ sub extract_sentences_from_ID {
     my($query, $id, $opt) = @_;
 
     my $dir_prefix = $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH};
-    my $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $id / 1000000, $id / 10000, $id);
+    my $xmlfile;
+    if ($CONFIG->{IS_NICT_MODE}) {
+	$xmlfile = sprintf("%s/x%04d/x%07d/%010d.xml.gz", $dir_prefix, $id / 1000000, $id / 1000, $id);
+    } else {
+	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $id / 1000000, $id / 10000, $id);
+    }
 
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
 }
