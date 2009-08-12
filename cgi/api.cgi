@@ -1,5 +1,5 @@
-#!/home/skeiji/local/bin/perl
 #!/share09/home/skeiji/local/bin/perl
+#!/home/skeiji/local/bin/perl
 #!/usr/local/bin/perl
 
 # $Id$
@@ -289,7 +289,20 @@ sub getStandardFormdatDataFromSnippetServer {
     my ($did) = @_;
 
     my $num_of_sockets = 0;
-    my $host = $CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)};
+
+
+    my $host;
+    if ($CONFIG->{IS_NICT_MODE}) {
+	foreach my $sid (sort {$a <=> $b} keys %{$CONFIG->{SID2HOST}}) {
+	    $host = $CONFIG->{SID2HOST}{$sid};
+	    last if ($did < $sid);
+	}
+    } else {
+	$host = $CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)};
+    }
+
+
+
     my $selecter = IO::Select->new();
     for (my $i = 0; $i < scalar(@{$CONFIG->{SNIPPET_SERVERS}}); $i++) {
 	next if ($host ne $CONFIG->{SNIPPET_SERVERS}[$i]{name});

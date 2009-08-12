@@ -36,7 +36,18 @@ sub create_snippets {
     # 文書IDを標準フォーマットを管理しているホストに割り振る
     my %host2dids = ();
     foreach my $doc (@$docs) {
-	push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%03d", $doc->{did} / 1000000)}}}, $doc);
+	if ($CONFIG->{IS_NICT_MODE}) {
+	    my $host = undef;
+	    my $did = $doc->{did};
+	    # ★ 00000-99 改訂番号の扱い
+	    foreach my $sid (sort {$a <=> $b} keys %{$CONFIG->{SID2HOST}}) {
+		$host = $CONFIG->{SID2HOST}{$sid};
+		last if ($did < $sid);
+	    }
+	    push(@{$host2dids{$host}}, $doc);
+	} else {
+	    push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%03d", $doc->{did} / 1000000)}}}, $doc);
+	}
     }
 
     my $num_of_sockets = 0;
