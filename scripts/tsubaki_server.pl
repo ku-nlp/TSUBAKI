@@ -127,15 +127,27 @@ closedir(DIR);
 
 
 my %STOP_PAGE_LIST = ();
-if ($CONFIG->{STOP_PAGE_LIST}) {
-    open (FILE, $CONFIG->{STOP_PAGE_LIST}) or die "$!\n";
-    while (<FILE>) {
-	next if ($_ =~ /^\#/);
-
-	chop;
-	$STOP_PAGE_LIST{$_} = 1;
+if ($CONFIG->{IS_NICT_MODE}) {
+    my $rmfile = "$opt{idxdir}/rmfiles";
+    if (-e $rmfile) {
+	open (F, $rmfile) or die "$!";
+	while (<F>) {
+	    chop;
+	    $STOP_PAGE_LIST{$_} = 1;
+	}
+	close (F);
     }
-    close (FILE);
+} else {
+    if ($CONFIG->{STOP_PAGE_LIST}) {
+	open (FILE, $CONFIG->{STOP_PAGE_LIST}) or die "$!\n";
+	while (<FILE>) {
+	    next if ($_ =~ /^\#/);
+
+	    chop;
+	    $STOP_PAGE_LIST{$_} = 1;
+	}
+	close (FILE);
+    }
 }
 
 
@@ -311,7 +323,9 @@ sub main {
 			} else {
 			    $did = sprintf("%09d", $docs->[$i]{did});
 			}
-			unless (exists $STOP_PAGE_LIST{$did}) {
+			if (exists $STOP_PAGE_LIST{$did}) {
+			    $hitcount--;
+			} else {
 			    if ($i < $max_rank_of_getting_title_and_url) {
 				$docs->[$i]{url} = $URL_DBs{$did} unless ($docs->[$i]{url});
 				$docs->[$i]{title} = $TITLE_DBs{$did};
