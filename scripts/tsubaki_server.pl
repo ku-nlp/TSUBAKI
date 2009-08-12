@@ -27,6 +27,7 @@ use Logger;
 use Configure;
 
 
+my $CONFIG = Configure::get_instance();
 
 my $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE = 1;
 my $HOSTNAME = `hostname | cut -f 1 -d .` ; chop($HOSTNAME);
@@ -44,23 +45,52 @@ my $ID;
 my @DOC_LENGTH_DBs;
 opendir(DIR, $opt{dlengthdbdir});
 foreach my $dbf (readdir(DIR)) {
-    next unless ($dbf =~ /(\d+).doc_length\.bin$/);
+    if ($CONFIG->{IS_NICT_MODE}) {
+	next unless ($dbf =~ /(\d+).doc_length\.txt$/);
     
-    $ID = $1;
-    my $fp = "$opt{dlengthdbdir}/$dbf";
-    
-    my $dlength_db;
-    if ($opt{dlengthdb_hash}) {
-	require CDB_File;
-	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-    }
-    else {
-	$dlength_db = retrieve($fp) or die;
-    }
+	$ID = $1;
+	my $fp = "$opt{dlengthdbdir}/$dbf";
+	my $dlength_db;
+	open (READER, $fp) or die "$!";
+	while (<READER>) {
+	    chop;
+	    my ($sid, $length) = split (/ /, $_);
+	    $dlength_db->{$sid} = $length;
+	}
+	close (READER);
 
-    push(@DOC_LENGTH_DBs, $dlength_db);
+	push(@DOC_LENGTH_DBs, $dlength_db);
+    } else {
+	next unless ($dbf =~ /(\d+).doc_length\.bin$/);
+    
+	$ID = $1;
+	my $fp = "$opt{dlengthdbdir}/$dbf";
+    
+	my $dlength_db;
+	if ($opt{dlengthdb_hash}) {
+	    require CDB_File;
+	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	}
+	else {
+	    $dlength_db = retrieve($fp) or die;
+	}
+
+	push(@DOC_LENGTH_DBs, $dlength_db);
+    }
 }
 closedir(DIR);
+
+my %tid2sid = ();
+my $sid2tid_file = "$opt{idxdir}/sid2tid";
+if (-e $sid2tid_file) {
+    open (READER, $sid2tid_file) or die "$!";
+    while (<READER>) {
+	chop;
+	my ($sid, $tid) = split (/ /, $_);
+	$tid2sid{$tid} = $sid;
+    }
+    close (READER);
+}
 
 my %TITLE_DBs = ();
 my %URL_DBs = ();
@@ -96,7 +126,6 @@ foreach my $file (readdir(DIR)) {
 closedir(DIR);
 
 
-my $CONFIG = Configure::get_instance();
 my %STOP_PAGE_LIST = ();
 if ($CONFIG->{STOP_PAGE_LIST}) {
     open (FILE, $CONFIG->{STOP_PAGE_LIST}) or die "$!\n";
@@ -274,7 +303,14 @@ sub main {
 		    print $query->{results} . "=ret " . $query->{accuracy} . "=acc " . $results . " * " . $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE . " = " . $max_rank_of_getting_title_and_url . "*\n" if ($opt{debug});
 		    my $size = 0;
 		    for (my $i = 0; $size < $results; $i++) {
-			my $did = sprintf("%09d", $docs->[$i]{did});
+			my $did;
+			if ($CONFIG->{IS_NICT_MODE}) {
+			    $did = sprintf("%06d", $docs->[$i]{did});
+			    $did = $tid2sid{$did};
+			    $docs->[$i]{did} = $did;
+			} else {
+			    $did = sprintf("%09d", $docs->[$i]{did});
+			}
 			unless (exists $STOP_PAGE_LIST{$did}) {
 			    if ($i < $max_rank_of_getting_title_and_url) {
 				$docs->[$i]{url} = $URL_DBs{$did} unless ($docs->[$i]{url});
