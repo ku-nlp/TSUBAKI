@@ -1,15 +1,46 @@
 #!/usr/bin/env perl
 
-use strict;
-use utf8;
-use Configure;
-
-my $CONFIG = Configure::get_instance();
-
+# $Id$
 
 # 標準フォーマットを管理しているホストを調べる
 
-foreach my $did (@ARGV) {
+use strict;
+use utf8;
+use Configure;
+use Getopt::Long;
+
+my $CONFIG = Configure::get_instance();
+
+my (%opt);
+GetOptions(\%opt, 'flist=s');
+
+&main();
+
+sub main {
+    if ($opt{flist}) {
+	open (READER, $opt{flist}) or die "$!";
+	while (<READER>) {
+	    chop;
+	    my $file = $_;
+
+	    my ($dir, $name) = ($file =~ /(.+?)\/([^\/]+)$/);
+	    my ($did) = ($name =~ /^(\d+)/);
+
+	    my $host = &lookup($did);
+	    print $file . " " . $host . "\n";
+	}
+	close (READER);
+    } else {
+	foreach my $did (@ARGV) {
+	    my $host = &lookup($did);
+	    print $did . " " . $host . "\n";
+	}
+    }
+}
+
+sub lookup {
+    my ($did) = @_;
+
     # 00000-99 改訂番号を削除
     $did =~ s/\-\d+$//g;
 
@@ -18,13 +49,9 @@ foreach my $did (@ARGV) {
     foreach my $sid (sort {$a <=> $b} keys %{$CONFIG->{SID2HOST}}) {
 	$host = $CONFIG->{SID2HOST}{$sid};
 	if ($did <= $sid) {
-	    print $did . " " . $host . "\n";
-	    $found = 1;
-	    last;
+	    return $host;
 	}
     }
 
-    unless ($found) {
-	print $did . " none" . "\n";
-    }
+    return 'none';
 }
