@@ -14,9 +14,17 @@ foreach my $did (@ARGV) {
     $did =~ s/\-\d+$//g;
 
     my $host = undef;
+    my $found = 0;
     foreach my $sid (sort {$a <=> $b} keys %{$CONFIG->{SID2HOST}}) {
 	$host = $CONFIG->{SID2HOST}{$sid};
-	last if ($did <= $sid);
+	if ($did <= $sid) {
+	    print $did . " " . $host . "\n";
+	    $found = 1;
+	    last;
+	}
     }
-    print $did . " " . $host . "\n";
+
+    unless ($found) {
+	print $did . " none" . "\n";
+    }
 }
