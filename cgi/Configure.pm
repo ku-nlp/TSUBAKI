@@ -91,6 +91,10 @@ sub _new {
 		chop;
 		my ($host, $sid) = split(/\s+/, $_);
 		last unless (defined $sid);
+
+		# 00000-99 改訂番号を削除
+		$sid =~ s/\-\d+$//g;
+
 		$this->{SID2HOST}{$sid} = $host;
 	    }
 	    close (F);
