@@ -8,6 +8,7 @@ my $CONFIG;
 # モジュールのパスを設定
 BEGIN {
     $CONFIG = Configure::get_instance();
+    push(@INC, $CONFIG->{TSUBAKI_SCRIPT_PATH});
     push(@INC, $CONFIG->{TSUBAKI_MODULE_PATH});
     push(@INC, $CONFIG->{UTILS_PATH});
 }
