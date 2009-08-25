@@ -325,6 +325,7 @@ sub makeIndexFromKNPResult {
     if ($option->{string_mode}) {
 	return $this->makeIndexFromKNPResultString($result, $option);
     } else {
+	require KNP;
 	require KNP::Result;
 	return $this->makeIndexFromKNPResultObject(new KNP::Result($result), $option);
     }
