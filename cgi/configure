@@ -38,6 +38,7 @@ KNP_RCFILE	/home/skeiji/.knprc
 SYNGRAPH_PM_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGraph_manual_DB5/perl
 WWW2SF_PATH	/home/skeiji/cvs/WWW2sf/tool/perl
 UTILS_PATH	/home/skeiji/cvs/Utils/perl
+TSUBAKI_SCRIPT_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts
 TSUBAKI_MODULE_PATH	/home/skeiji/tsubaki-develop/SearchEngine/perl
 PORTS_FILE_PATH		/home/skeiji/tsubaki/SearchEngine/data/PORTS.SYN
 
@@ -115,6 +116,9 @@ SEARCH_SERVERS_FOR_SYNGRAPH	 nlpc56	  40025,40026,40027,40028
 SEARCH_SERVERS_FOR_SYNGRAPH	 nlpc57	  40025,40026,40027
 SEARCH_SERVERS_FOR_SYNGRAPH	 nlpc58	  40025,40026,40027
 SEARCH_SERVERS_FOR_SYNGRAPH	 nlpc59	  40025,40026,40027
+
+# どのホストがどのSIDを持つデータを管理しているかを表す対応表
+# SID_RANGE	/home/skeiji/work/wisdom/sid.range
 
 # スニペットサーバーの設定（★要変更）
 # STANDARD_FORMAT_LOCATION ホスト名 ポート番号 ディスクにおいてある標準フォーマットのID1,...

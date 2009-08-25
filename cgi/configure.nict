@@ -38,6 +38,7 @@ KNP_RCFILE	/opt/KNP/current/etc/knprc
 SYNGRAPH_PM_PATH	/opt/PERL_MODS/SYNGRAPH/SynGraph.20081107
 WWW2SF_PATH	/share03/WISDOM/WWW2sf/tool/perl
 UTILS_PATH	/share03/WISDOM/Utils/perl
+TSUBAKI_SCRIPT_PATH	/share03/WISDOM/TSUBAKI/SearchEngine/scripts
 TSUBAKI_MODULE_PATH	/share03/WISDOM/TSUBAKI/SearchEngine/perl
 PORTS_FILE_PATH		/share03/WISDOM/TSUBAKI/SearchEngine/data/PORTS.SYN.NICT
 
@@ -179,7 +180,7 @@ SEARCH_SERVERS_FOR_SYNGRAPH	iccc097	47511
 
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
-SID_RANGE			/share09/home/skeiji/work/tmorii/tsubaki/sid.range
+SID_RANGE			/tsubaki01/wisdom/sid.range
 
 # スニペットサーバーの設定（★要変更）
 
