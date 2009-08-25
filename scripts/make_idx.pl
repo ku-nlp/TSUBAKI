@@ -145,9 +145,12 @@ sub usage {
 }
 
 sub main {
-    if (((!$opt{in} || !$opt{file}) && (!$opt{out} && !$opt{infiles})) || (!$opt{infiles} && !$opt{outdir_prefix})  || $opt{help}) {
-	&usage();
-    }
+    my $show_usage = 1;
+
+    $show_usage = 0 if (($opt{file} || $opt{in}) && $opt{out});
+    $show_usage = 0 if ($opt{infiles} && $opt{outdir_prefix});
+    &usage() if ($show_usage);
+
     die "Not found! $opt{in}\n" unless (-e $opt{in} || -e $opt{file} || -e $opt{infiles});
 
     if (!$opt{jmn} && !$opt{knp} && !$opt{syn} && !$opt{english}) {
@@ -169,7 +172,7 @@ sub main {
 	&extract_indice_from_single_file($opt{file}, $1);
     }
     elsif ($opt{infiles}) {
-	# インデキシング対象のファイルと出力先が記述されたファイルをを開く
+	# インデキシング対象のファイルと出力先が記述されたファイルを開く
 	open (FILE, $opt{infiles}) or die "$!";
 	while (<FILE>) {
 	    chop;
@@ -408,6 +411,14 @@ sub extractIndices {
 	$terms = $indexer->makeIndexfromJumanResult($annotation);
     }
 
+    if ($opt{verbose}) {
+	foreach my $e (@$terms) {
+	    while (my ($k, $v) = each %$e) {
+		print STDERR $k . " " . $v . "\n";
+	    }
+	}
+    }
+
     return $terms;
 }
 
@@ -463,13 +474,13 @@ sub extract_indice_from_single_file {
 	$fid =~ s/^NW//;
 
 	if ($opt{position}) {
-	    if ($opt{syn} || $opt{english}) {
+	    if ($opt{knp} || $opt{syn} || $opt{english}) {
 		&output_syngraph_indice_with_position(*WRITER, $fid, $indice);
 	    } else {
 		&output_with_position(*WRITER, $fid, $indice);
 	    }
 	} else {
-	    if ($opt{syn} || $opt{english}) {
+	    if ($opt{knp} || $opt{syn} || $opt{english}) {
 		&output_syngraph_indice_wo_position(*WRITER, $fid, $indice);
 	    } else {
 		&output_wo_position(*WRITER, $fid, $indice);
@@ -546,7 +557,7 @@ sub merge_indices {
 
 	    print $midasi . "\n" if ($opt{verbose});
 	    $ret{$midasi}->{sids}{$sid} = 1;
-	    if ($opt{syn} || $opt{english}) {
+	    if ($opt{knp} || $opt{syn} || $opt{english}) {
 		push(@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
 		$ret{$midasi}->{score} += $index->{score};
 	    } else {

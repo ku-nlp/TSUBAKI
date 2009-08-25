@@ -108,6 +108,7 @@ sub search_syngraph_test_for_new_format {
     my $total_byte = 0;
     my $logger = new Logger();
 
+
     # idxごとに検索
     for (my $f_num = 0, my $num_of_offset_files = scalar(@{$this->{OFFSET}}); $f_num < $num_of_offset_files; $f_num++) {
 	my $offset;
@@ -116,13 +117,12 @@ sub search_syngraph_test_for_new_format {
 	    last if (defined $offset);
 	}
 	$logger->setTimeAs(sprintf ("get_offset_from_cdb_%s", $keyword->{string}), '%.3f');
-
 	# オフセットがあるかどうかのチェック
 	unless (defined($offset)) {
 	    @docs = () unless (defined(@docs));
 	    next;
 	}
-	
+
 	seek($this->{IN}[$f_num], $offset, 0);
 	$total_byte = $offset;
 
