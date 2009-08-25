@@ -1,3 +1,85 @@
+2009-08-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	-knp オプション指定時も場所情報を抽出するように.
+
+2009-08-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/lookup-host-by-sid.perl: flistオプションの追加.
+
+	* scripts/lookup-host-by-sid.perl:
+	範囲を超えているSIDについてはnoneを返すように.
+
+	* cgi/Configure.pm, scripts/lookup-host-by-sid.perl:
+	改訂番号を削除するように
+
+2009-08-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl: idxdir直下のrmfilesを参照するように.
+
+	* cgi/configure.nict: SID_RANGEの追加, デフォルト値の変更.
+
+	* cgi/SnippetMakerAgent.pm, cgi/api.cgi:
+	SID_RANGEで指定されたファイルを見て、問い合わ先のスニペットサーバーを決定するように.
+
+	* cgi/Configure.pm: SID_RANGEに対応.
+
+	* cgi/SnippetMaker.pm: 新しいディレクトリの構成に対応.
+
+	* scripts/tsubaki_server.pl:
+	tidからsidへ変更する処理を追加, 文書頻度データベース(テキスト)に対応.
+
+2009-07-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/merge_idx.pl: .idxファイルのリストを受け取るオプションを追加.
+
+	* scripts/make_idx.pl:
+	term抽出の対象となるファイルのリストを受けとるオプションの追加.
+
+2009-07-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Configure.pm:
+	KNPオブジェクトを生成する際のエラーをcatchするようにした.
+
+	* conf/indexing.conf: make で利用する変数の追加.
+
+	* scripts/tsubaki_test.pl: 英語のクエリに対応.
+
+	* scripts/make-dfdb.sh, scripts/make-index.sh, scripts/merge-index.sh:
+	起動時に source $SHELL_RCFILE を実行するように.
+
+	* scripts/make_idx.pl:
+	英文の解析結果が埋め込まれた標準フォーマットからtermを抽出するオプション(-english)の追加.
+
+	* scripts/TsubakiEngine.pm: コード整理, 例外への対応.
+
+	* scripts/Indexer.pm:
+	英語の解析結果が埋め込まれた標準フォーマットデータからtermを抽出するメソッドの追加.
+
+2009-07-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: 新しいタブで検索結果を開けるように.
+
+2009-07-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: 画面右上の表示を「お知らせ・使い方」にした。
+
+	* cgi/QueryKeyword.pm:
+	クエリ中の語と同じ表現が解析結果画面に出力されないように。
+
+	* cgi/tutorial.html: whats.htmlとマージ。
+
+2009-07-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	TIDのオフセットを指定できるように(offsetオプションの追加)
+
+	* scripts/make-index.sh: Out of memoryに対応.
+
+2009-07-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl: Out of memoryに対応.
+
 2009-06-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/TsubakiEngine4SynGraphSearch.pm: スコアの修正.
