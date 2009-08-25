@@ -45,7 +45,14 @@ sub main {
     if ($params->{'cache'}) {
 	# キャッシュページの出力
 	my $id = $params->{'cache'};
-	my $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
+	my $file;
+	if ($CONFIG->{IS_NICT_MODE}) {
+	    my $did_w_version = $id;
+	    my ($did) = ($did_w_version =~ /(^\d+)/);
+	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 1000, $did_w_version);
+	} else {
+	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
+	}
 
 	# KEYごとに色を付ける
 	my $query = decode('utf8', $params->{'KEYS'});
