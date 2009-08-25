@@ -84,21 +84,6 @@ sub _new {
 		$this->{DID2HOST}{$did} = $host;
 	    }
 	}
-	elsif ($_ =~ /SID_RANGE/) {
-	    my ($key, $rangefile) = split(/\s+/, $_);
-	    open (F, $rangefile) or die "$!";
-	    while (<F>) {
-		chop;
-		my ($host, $sid) = split(/\s+/, $_);
-		last unless (defined $sid);
-
-		# 00000-99 改訂番号を削除
-		$sid =~ s/\-\d+$//g;
-
-		$this->{SID2HOST}{$sid} = $host;
-	    }
-	    close (F);
-	}
 	else {
 	    my ($key, $value) = split(/\s+/, $_);
 
