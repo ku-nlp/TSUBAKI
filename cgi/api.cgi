@@ -293,10 +293,8 @@ sub getStandardFormdatDataFromSnippetServer {
 
     my $host;
     if ($CONFIG->{IS_NICT_MODE}) {
-	foreach my $sid (sort {$a <=> $b} keys %{$CONFIG->{SID2HOST}}) {
-	    $host = $CONFIG->{SID2HOST}{$sid};
-	    last if ($did < $sid);
-	}
+	require SidRange;
+	$host = (new SidRange())->lookup($did);
     } else {
 	$host = $CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)};
     }
