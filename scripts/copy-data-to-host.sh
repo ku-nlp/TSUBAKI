@@ -32,7 +32,7 @@ datadir=$1
 datadir_prefix=`echo $datadir | xargs dirname`
 datadir_name=`echo $datadir | xargs basename`
 
-rm -r $workspace 2> /dev/null
+rm -fr $workspace 2> /dev/null
 mkdir -p $workspace
 
 flist=$workspace/flist
@@ -67,5 +67,5 @@ do
 
     scp $tgzf $host:$distdir
     ssh $host "cd $distdir ; tar xzf $tgzf"
-    ssh $host "rm $distdir/$tgzf"
+    ssh $host "rm -f $distdir/$tgzf"
 done

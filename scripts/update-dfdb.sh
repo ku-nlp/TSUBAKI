@@ -37,6 +37,6 @@ echo perl -I $utildir $scriptdir/make-df-db.perl < df.$dftype.tmp.$$
 perl -I $utildir $scriptdir/make-df-db.perl < df.$dftype.tmp.$$
 
 # ¸å½èÍý
-rm $dfdbdir/*.txt*
-rm df.$dftype.tmp.$$
+rm -f $dfdbdir/*.txt*
+rm -f df.$dftype.tmp.$$
 

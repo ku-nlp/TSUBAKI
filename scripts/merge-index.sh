@@ -48,7 +48,7 @@ cd ..
 # ディスク上でマージ
 echo "perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz | gzip > $id.idx.gz"
 perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz | gzip > $id.idx.gz
-rm -r $id
+rm -fr $id
 
 
 fname=$id.idx.gz
@@ -66,4 +66,4 @@ echo "perl $scriptdir/make-dlength-db.perl -z $id.idx.gz"
 perl $scriptdir/make-dlength-db.perl -z $id.idx.gz 
 
 echo rm $fname
-rm $fname
+rm -f $fname

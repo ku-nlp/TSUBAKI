@@ -10,7 +10,7 @@ confdir=`echo $0 | xargs dirname`/../conf
 indir=$1
 ofile=$indir.url.title
 
-rm $ofile 2> /dev/null
+rm -f $ofile 2> /dev/null
 
 # $indirは10000件分の標準フォーマットが収められたディレクトリがあるディレクトリ
 for d in `ls $indir`

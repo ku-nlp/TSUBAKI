@@ -33,5 +33,5 @@ echo done.
 
 echo making DF database...
 perl -I $utildir $scriptdir/make-df-db.perl < $workspace/merged.dffiles
-rm $workspace/merged.dffiles
+rm -f $workspace/merged.dffiles
 echo done.

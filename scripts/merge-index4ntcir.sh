@@ -43,7 +43,7 @@ ulimit -v 4097152
 # ディスク上でマージ
 echo "perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $dirid -z -suffix idx.gz | gzip > $dirid.idx.gz"
 perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $dirid -z -suffix idx.gz | gzip > $dirid.idx.gz
-rm -r $dirid
+rm -fr $dirid
 
 
 

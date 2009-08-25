@@ -35,7 +35,7 @@ perl $scriptdir/idx2df.pl $id.idx.gz
 
 # 文書長データベースの作成
 echo "perl $scriptdir/make-dlength-db.perl -z $id.idx.gz"
-perl $scriptdir/make-dlength-db.perl -z $id.idx.gz 
+perl $scriptdir/make-dlength-db.perl -z $id.idx.gz
 
 echo rm $fname
-rm $fname
+rm -f $fname

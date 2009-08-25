@@ -26,5 +26,5 @@ do
     do
 	ssh $host "cat $CDIR/$f >> $dir/rmfiles"
     done
-    rm $f
+    rm -f $f
 done

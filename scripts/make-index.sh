@@ -41,7 +41,7 @@ mkdir -p $idir 2> /dev/null
 
 echo tar xzf $xdir.tgz
 tar xzf $xdir.tgz
-rm $xdir.tgz
+rm -f $xdir.tgz
 
 # スワップしないように仕様するメモリサイズを制限する(max 2GB)
 ulimit -m 2097152
@@ -59,7 +59,7 @@ until [ `tail -1 $LOGFILE | grep finish` ] ;
 do
     $command
 done
-rm -r $xdir
+rm -fr $xdir
 
 
 # 1万ページ分のインデックスをマージ
@@ -68,7 +68,7 @@ rm -r $xdir
 N=50
 echo perl $scriptdir/merge_idx.pl -dir $idir -n $N -z -compress
 perl $scriptdir/merge_idx.pl -dir $idir -n $N -z -compress
-rm -r $idir
+rm -fr $idir
 
 # ディスク上でマージ
 tmpdir=$idir"_tmp"
@@ -77,7 +77,7 @@ mv $idir.*.*gz $tmpdir
 
 echo perl $scriptdir/merge_sorted_idx.pl -dir ./$tmpdir -suffix gz -z | gzip > $idir.idx.gz
 perl $scriptdir/merge_sorted_idx.pl -dir ./$tmpdir -suffix gz -z | gzip > $idir.idx.gz
-rm -r $tmpdir
+rm -fr $tmpdir
 
 mkdir $workspace/finish 2> /dev/null
 mv $idir.idx.gz finish/
