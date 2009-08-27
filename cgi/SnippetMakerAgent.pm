@@ -140,97 +140,6 @@ sub create_snippets {
 }
 
 
-sub create_snippets_bak {
-    my ($this, $query, $dids, $opt) = @_;
-
-    # 文書IDを標準フォーマットを管理しているホストに割り振る
-    my %host2dids = ();
-    foreach my $did (@$dids) {
-	push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)}}}, $did);
-    }
-
-    my $num_of_sockets = 0;
-    my $selecter = IO::Select->new();
-    for (my $i = 0; $i < scalar(@{$CONFIG->{SNIPPET_SERVERS}}); $i++) {
-	next unless (exists $host2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{name}});
-
-	# 文書ID列をN分割 (Nは開いているポート数)
-	my $num_of_ports = scalar(@{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}});
-	my $dids = $host2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{name}};
-	my %port2dids = ();
-	my $count = 0;
-
-	foreach my $did (@$dids) {
-	    push(@{$port2dids{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}[$count++ % $num_of_ports]}}, $did);
-	}
-
-
-	# debug表示用
-	if ($opt->{debug}) {
-	    print "<HR>all dids=[" if ($opt->{debug});
-	    print join(", ", @$dids);
-	    print "]<P>\n" if ($opt->{debug});
-
-	    foreach my $port (sort {$a <=> $b} keys %port2dids) {
-		print "port=" . $port . "<BR>　dids=[";
-		print join(", ", @{$port2dids{$port}});
-		print "]<BR>\n";
-	    }
-	}
-
-
-	foreach my $port (@{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}}) {
-	    next unless (defined $port2dids{$port});
-
-	    my $socket = IO::Socket::INET->new(
-		PeerAddr => $CONFIG->{SNIPPET_SERVERS}[$i]{name},
-		PeerPort => $port,
-		Proto    => 'tcp' );
-	
-	    $selecter->add($socket) or die;
-	
-	    # 検索クエリの送信
-	    print $socket encode_base64(Storable::freeze($query), "") . "\n";
-	    print $socket "EOQ\n";
-
-	    # 文書IDの送信
-	    print $socket encode_base64(Storable::freeze($port2dids{$port}), "") . "\n";
-	    print $socket "EOD\n";
-
-	    # スニペット生成のオプションを送信
-	    print $socket encode_base64(Storable::freeze($opt), "") . "\n";
-	    print $socket "EOO\n";
-	
-	    $socket->flush();
-	    $num_of_sockets++;
-	}
-    }
-    
-    # 検索結果の受信
-    my %did2snippets = ();
-    my $total_hitcount = 0;
-    while ($num_of_sockets > 0) {
-	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef); # ★
-	foreach my $socket (@{$readable_sockets}) {
-	    my $buff;
-	    while (<$socket>) {
-		last if ($_ eq "END\n");
-		$buff .= $_;
-	    }
-
-	    $selecter->remove($socket);
-	    $socket->close();
-	    $num_of_sockets--;
-
-	    my $results = Storable::thaw(decode_base64($buff));
-	    foreach my $did (keys %$results) {
-		$this->{did2snippets}{$did} = $results->{$did};
-#		$this->{did2snippets}{$did} = &select_snippets($results->{$did});
-	    }
-	}
-    }
-}
-
 
 # サーバから受信したスコア付きの文リストからスニペットで使う文だけを選び出す
 sub select_snippets {
@@ -321,12 +230,7 @@ sub get_snippets_for_each_did {
 	    my $length = $sentence->{length};
 	    my $num_of_whitespaces = $sentence->{num_of_whitespaces};
 
-	    if ($num_of_whitespaces / $length > 0.2) {
-# 		print $num_of_whitespaces . " ";
-# 		print $length . " ";
-# 		print $sentence->{rawstring} . "<br>\n";
-		next;
-	    }
+	    next if ($num_of_whitespaces / $length > 0.2);
 
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		my $highlighted = -1;
