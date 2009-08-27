@@ -21,14 +21,16 @@ my $CONFIG = Configure::get_instance();
 my $NUM_OF_CHARS_IN_HEADER = 100;
 
 sub extract_sentences_from_ID {
-    my($query, $id, $opt) = @_;
+    my($query, $did_w_version, $opt) = @_;
 
     my $dir_prefix = $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH};
     my $xmlfile;
     if ($CONFIG->{IS_NICT_MODE}) {
-	$xmlfile = sprintf("%s/x%04d/x%07d/%010d.xml.gz", $dir_prefix, $id / 1000000, $id / 1000, $id);
+	my ($did) = ($did_w_version =~ /(^\d+)/);
+	$xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version);
     } else {
-	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $id / 1000000, $id / 10000, $id);
+	my $did = $did_w_version;
+	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
     }
 
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);

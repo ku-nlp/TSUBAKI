@@ -78,8 +78,8 @@ sub search {
     # 検索時のステータスをロギング
     $logger->setParameterAs('status', $status);
 
-    return ([], 0, $status) if ($hitcount < 1);
 
+    return ([], 0, $status) if ($hitcount < 1);
 
 
     ################################################
@@ -157,7 +157,7 @@ sub merge_search_results {
 
 	my $page = shift(@{$results->[$max]});
 	$page->{title} = decode('utf8', $page->{title}) unless (utf8::is_utf8($page->{title}));
-	my $did = sprintf("%09d", $page->{did});
+	my $did = ($CONFIG->{IS_NICT_MODE}) ? $page->{did} : sprintf("%09d", $page->{did});
 
 	unless ($opt->{'filter_simpages'}) {
 	    $this->add_list(\@merged_result, $page, $did, \$miss_title, \$miss_url);
@@ -230,12 +230,12 @@ sub add_list {
     my ($this, $mg_result, $p, $did, $miss_title, $miss_url) = @_;
 
     unless ($p->{title}) {
-	$p->{title} = $this->get_title($did);
+#	$p->{title} = $this->get_title($did);
 	$$miss_title++;
     }
 
     unless ($p->{url}) {
-	$p->{url} = $this->get_url($did);
+#	$p->{url} = $this->get_url($did);
 	$$miss_url++;
     }
 

@@ -672,7 +672,8 @@ sub get_snippets {
     # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
     for (my $rank = $from; $rank < $end; $rank++) {
 	push(@docs, {
- 	    did => sprintf("%09d", $result->[$rank]{did}),
+# 	    did => sprintf("%09d", $result->[$rank]{did}),
+ 	    did => $result->[$rank]{did},
  	    start => $result->[$rank]{start},
  	    end => $result->[$rank]{end},
  	    pos2qid => $result->[$rank]{pos2qid}
@@ -967,7 +968,8 @@ sub printOrdinarySearchResult {
     ################
     my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
     for (my $rank = $start; $rank < $end; $rank++) {
-	my $did = sprintf("%09d", $results->[$rank]{did});
+#	my $did = sprintf("%09d", $results->[$rank]{did});
+	my $did = $results->[$rank]{did};
 	my $score = sprintf("%.4f", $results->[$rank]{score_total});
 	my $snippet = $did2snippets->{$did};
 	my $title = $results->[$rank]{title};
@@ -1002,7 +1004,8 @@ sub printOrdinarySearchResult {
 	$output .= qq(<DIV class="meta">\n);
 	# ポータルからのアクセスでなければ文書IDとスコアを表示する
 	if (!$params->{from_portal}) {
-	    $output .= sprintf qq(id=%09d, score=%.3f), $did, $score;
+#	    $output .= sprintf qq(id=%09d, score=%.3f), $did, $score;
+	    $output .= sprintf qq(id=%s, score=%.3f), $did, $score;
 	}
 
 	# score_verbose が指定去れている場合は内訳を表示する
@@ -1045,7 +1048,8 @@ sub printOrdinarySearchResult {
 
 	$output .= qq(<DIV id="simpages_$rank" style="display: none;">);
 	foreach my $sim_page (@{$results->[$rank]{similar_pages}}) {
-	    my $did = sprintf("%09d", $sim_page->{did});
+#	    my $did = sprintf("%09d", $sim_page->{did});
+	    my $did = $sim_page->{did};
 	    my $score = sprintf("%.3f", $sim_page->{score_total});
 
 	    # 装飾されたスニペッツの取得
@@ -1103,7 +1107,7 @@ sub printRequestResult {
 sub printResult {
     my ($writer, $did, $results, $opt) = @_;
 
-    $writer->startTag('Result', Id => sprintf("%09d", $did));
+    $writer->startTag('Result', Id => sprintf("%s", $did));
     foreach my $itemName (sort {$b cmp $a} keys %$results) {
 	if ($itemName ne 'Cache') {
 	    if ($itemName eq 'Snippet' && $opt->{kwic}) {
@@ -1229,7 +1233,7 @@ sub printSearchResultForAPICall {
 
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $page = $result->[$rank];
-	my $did = sprintf("%09d", $page->{did});
+	my $did = sprintf("%s", $page->{did});
 	my $url = $page->{url};
 	my $score = $page->{score_total};
 	my $title = $page->{title};
