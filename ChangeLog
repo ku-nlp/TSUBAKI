@@ -1,4 +1,28 @@
+2009-08-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMakerAgent.pm: コード整理.
+
+	* cgi/Renderer.pm, cgi/Searcher.pm, cgi/SnippetMaker.pm:
+	改訂番号付きSIDに対応.
+
 2009-08-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/api.cgi, cgi/index.cgi:
+	TSUBAKI_SCRIPT_PATH を起動時にパスに加えるように.
+
+	* cgi/index.cgi:
+	キャッシュページを読み込む際に改訂番号を考慮するように.
+
+	* cgi/configure, cgi/configure.nict:
+	SID_RANGEの初期値を変更, 環境変数 TSUBAKI_SCRIPT_PATH の追加.
+
+	* scripts/lookup-host-by-sid.perl, cgi/SnippetMakerAgent.pm, cgi/api.cgi:
+	SidRange.pmを利用するように.
+
+	* cgi/Configure.pm: SID_RANGE読み込み時の処理をSidRange.pmに移行.
+
+	* scripts/binarize-index.sh, scripts/copy-data-to-host.sh, scripts/make-dfdb.sh, scripts/make-index.sh, scripts/make-url-title-dbs.sh, scripts/merge-index.sh, scripts/merge-index4ntcir.sh, scripts/remove-sid.sh, scripts/update-dfdb.sh:
+	rm コマンドに -f オプションを追加.
 
 	* scripts/make_idx.pl:
 	-knp オプション指定時も場所情報を抽出するように.
