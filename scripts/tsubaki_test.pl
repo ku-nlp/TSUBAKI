@@ -23,7 +23,31 @@ binmode(STDOUT, ':encoding(euc-jp)');
 binmode(STDERR, ':encoding(euc-jp)');
 
 my (%opt);
-GetOptions(\%opt, 'help', 'idxdir=s', 'dfdbdir=s', 'dlengthdbdir=s', 'query=s', 'syngraph', 'english', 'lemma', 'skippos', 'dlengthdb_hash', 'hypocut=i', 'weight_dpnd_score=f', 'verbose', 'debug', 'show_speed', 'anchor', 'idxdir4anchor=s', 'logging_query_score', 'results=s', 'score_verbose', 'disable_synnode', 'show_time');
+GetOptions(\%opt,
+	   'help',
+	   'idxdir=s',
+	   'dfdbdir=s',
+	   'dlengthdbdir=s',
+	   'query=s',
+	   'syngraph',
+	   'english',
+	   'lemma',
+	   'disable_query_processing',
+	   'disable_syngraph',
+	   'skippos',
+	   'dlengthdb_hash',
+	   'hypocut=i',
+	   'weight_dpnd_score=f',
+	   'verbose',
+	   'debug',
+	   'show_speed',
+	   'anchor',
+	   'idxdir4anchor=s',
+	   'logging_query_score',
+	   'results=s',
+	   'score_verbose',
+	   'disable_synnode',
+	   'show_time');
 
 if (!$opt{idxdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
@@ -31,7 +55,6 @@ if (!$opt{idxdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
     exit;
 }
 
-$opt{syngraph} = 1;
 $opt{results} = 1000 unless ($opt{results});
 $opt{score_verbose} = 1 if ($opt{debug});
 
@@ -102,6 +125,13 @@ sub main {
     $params->{verbose} = $opt{verbose};
     $params->{antonym_and_negation_expansion} = 0;
     $params->{DFDB_DIR} = $opt{dfdbdir} if ($opt{dfdbdir});
+
+    if ($opt{disable_query_processing}) {
+	$params->{telic_process} = 0;
+	$params->{CN_process} = 0;
+	$params->{NE_process} = 0;
+	$params->{modifier_of_NE_process} = 0;
+    }
 
     # logical_cond_qk : クエリ間の論理演算
     # my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
