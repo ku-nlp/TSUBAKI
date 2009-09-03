@@ -114,7 +114,8 @@ sub _new {
 			       -JumanRcfile => $this->{JUMAN_RCFILE},
 			       -JumanCommand => $this->{JUMAN_COMMAND});
     } catch Error with {
-	printf STDERR (qq([WARNING] Can\'t create a KNP object!\n));
+	printf STDERR (qq([ERROR] Can\'t create a KNP object!\n));
+	exit;
     };
 
     print " done.\n" if ($opts->{debug});
