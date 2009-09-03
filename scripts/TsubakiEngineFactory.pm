@@ -22,45 +22,25 @@ my $AVE_DOC_LENGTH = $CONFIG->{AVERAGE_DOCUMENT_LENGTH};
 sub new {
     my ($class, $opts) = @_;
     my $this;
-    if ($opts->{syngraph}) {
-	# SynGraph 検索用 TsubakiEngine を返す
-	require TsubakiEngine4SynGraphSearch;
-	$this->{tsubaki} = new TsubakiEngine4SynGraphSearch({
-	    idxdir => $opts->{idxdir},
-	    dlengthdbdir => $opts->{dlengthdbdir},
-	    skip_pos => $opts->{skippos},
-	    verbose => $opts->{verbose},
-	    average_doc_length => $AVE_DOC_LENGTH,
-	    doc_length_dbs => $opts->{doc_length_dbs},
-	    pagerank_db => $opts->{pagerank_db},
-	    total_number_of_docs => $N,
-	    weight_dpnd_score => $opts->{weight_dpnd_score},
-	    score_verbose => $opts->{score_verbose},
-	    logging_query_score => $opts->{logging_query_score},
-	    idxdir4anchor => $opts->{idxdir4anchor},
-	    dpnd_on => $opts->{dpnd_on},
-	    dist_on => $opts->{dist_on},
-	    show_speed => $opts->{show_speed}});
-    } else {
-	# 通常検索用 TsubakiEngine を返す
-	require TsubakiEngine4OrdinarySearch;
-	$this->{tsubaki} = new TsubakiEngine4OrdinarySearch({
-	    idxdir => $opts->{idxdir},
-	    dlengthdbdir => $opts->{dlengthdbdir},
-	    skip_pos => $opts->{skippos},
-	    verbose => $opts->{verbose},
-	    average_doc_length => $AVE_DOC_LENGTH,
-	    doc_length_dbs => $opts->{doc_length_dbs},
-	    pagerank_db => $opts->{pagerank_db},
-	    total_number_of_docs => $N,
-	    weight_dpnd_score => $opts->{weight_dpnd_score},
-	    show_speed => $opts->{show_speed},
-	    score_verbose => $opts->{score_verbose},
-	    logging_query_score => $opts->{logging_query_score},
-	    idxdir4anchor => $opts->{idxdir4anchor},
-	    dpnd_on => $opts->{dpnd_on},
-	    dist_on => $opts->{dist_on}});
-    }
+
+    # SynGraph 検索用 TsubakiEngine を返す
+    require TsubakiEngine4SynGraphSearch;
+    $this->{tsubaki} = new TsubakiEngine4SynGraphSearch({
+	idxdir => $opts->{idxdir},
+	dlengthdbdir => $opts->{dlengthdbdir},
+	skip_pos => $opts->{skippos},
+	verbose => $opts->{verbose},
+	average_doc_length => $AVE_DOC_LENGTH,
+	doc_length_dbs => $opts->{doc_length_dbs},
+	pagerank_db => $opts->{pagerank_db},
+	total_number_of_docs => $N,
+	weight_dpnd_score => $opts->{weight_dpnd_score},
+	score_verbose => $opts->{score_verbose},
+	logging_query_score => $opts->{logging_query_score},
+	idxdir4anchor => $opts->{idxdir4anchor},
+	dpnd_on => $opts->{dpnd_on},
+	dist_on => $opts->{dist_on},
+	show_speed => $opts->{show_speed}});
 
     bless $this;
 }
