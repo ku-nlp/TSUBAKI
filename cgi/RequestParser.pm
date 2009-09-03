@@ -381,7 +381,7 @@ sub parseQuery {
 	    Proto    => 'tcp' );
 
 	$selecter->add($socket) or die "Cannot connect to the localhost:" . $CONFIG->{PORT_OF_QUERY_PARSE_SERVER} . ". $!\n";
-	
+
  	# クエリ解析時のパラメータを送信
  	print $socket encode_base64(Storable::freeze($params), "") . "\n";
 	print $socket "EOD\n";
@@ -474,7 +474,7 @@ sub parseQuery {
 
     # 検索サーバーの台数を取得
     if ($query->{results} > 100) {
-	my $N = ($params->{syngraph}) ? scalar(@{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}}) : scalar(@{$CONFIG->{SEARCH_SERVERS}});
+	my $N = scalar(@{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}});
 	my $alpha = ($query->{results} > 5000) ? 1.5 : 30 * ($query->{results}**(-0.34));
 	my $M = $query->{results} / $N;
 
