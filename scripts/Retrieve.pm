@@ -821,7 +821,7 @@ sub search {
 	return $this->search_syngraph_test_for_new_format_with_add_flag($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search, $logger);
     } else {
 	return $this->search_syngraph_test_for_new_format($keyword, $already_retrieved_docs, $add_flag, $only_hitcount, $sentence_flag, $syngraph_search, $logger);
-    return \@docs;
+    }
 }
 
 sub search4syngraph {
