@@ -20,8 +20,8 @@ use Data::Dumper;
 }
 $Data::Dumper::Useperl = 1;
 
-binmode(STDOUT, ':encoding(euc-jp)');
-binmode(STDERR, ':encoding(euc-jp)');
+binmode(STDOUT, ':utf8');
+binmode(STDERR, ':utf8');
 
 use Logger;
 use Configure;
@@ -314,7 +314,7 @@ sub main {
 		    my $max_rank_of_getting_title_and_url = (scalar(keys %TITLE_DBs) > 0) ? $results * $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE : 0;
 		    print $query->{results} . "=ret " . $query->{accuracy} . "=acc " . $results . " * " . $WEIGHT_OF_MAX_RANK_FOR_SETTING_URL_AND_TITLE . " = " . $max_rank_of_getting_title_and_url . "*\n" if ($opt{debug});
 		    my $size = 0;
-		    for (my $i = 0; $size < $results; $i++) {
+		    for (my $i = 0; $size < $results && $i < $results; $i++) {
 			my $did;
 			if ($CONFIG->{IS_NICT_MODE}) {
 			    $did = sprintf("%06d", $docs->[$i]{did});
@@ -323,6 +323,7 @@ sub main {
 			} else {
 			    $did = sprintf("%09d", $docs->[$i]{did});
 			}
+
 			if (exists $STOP_PAGE_LIST{$did}) {
 			    $hitcount--;
 			} else {
