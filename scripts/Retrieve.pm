@@ -398,8 +398,10 @@ sub search_syngraph_test_for_new_format_with_add_flag {
 	$logger->setTimeAs(sprintf ("seektime_%s", $keyword->{string}), '%.3f');
     }
 
-    foreach my $k ($logger->keys()) {
-	$LOGGER->setParameterAs($k, $logger->getParameter($k));
+    if (defined $LOGGER) {
+	foreach my $k ($logger->keys()) {
+	    $LOGGER->setParameterAs($k, $logger->getParameter($k));
+	}
     }
 
     return \@docs;
