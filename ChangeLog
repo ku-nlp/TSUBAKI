@@ -1,3 +1,30 @@
+2009-09-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMakerAgent.pm:
+	NICTモードで動作しているときのみ SidRange を new するように.
+
+2009-09-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Retrieve.pm: LOGGERがない場合はログをとらないように.
+
+	* scripts/tsubaki_server.pl: bug fixed. (rmfilesに大量のidが登録されている場合にも対応)
+
+2009-09-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Configure.pm: KNPがnewできない場合はexitするように.
+
+	* scripts/TsubakiEngineFactory.pm:
+	常にTsubakiEngine4SynGraphSearchオブジェクトを生成するように.
+
+	* scripts/Retrieve.pm: 不要コードの削除.
+
+	* scripts/tsubaki_test.pl: disable_query_processingオプションの追加.
+
+2009-09-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki-server-manager.sh:
+	idxdirがないノードでは tsubaki_server.pl を起動しないように.
+
 2009-08-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/SnippetMakerAgent.pm: コード整理.
