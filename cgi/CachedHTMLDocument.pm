@@ -210,7 +210,15 @@ sub convertTimeFormat {
 	$hour %= 24;
     }
 
-    return sprintf ("%04d年%d月%d日 %d時%d分%d秒", $year, $MONTH{$month}, $day, $hour, $min, $sec);
+
+    my $_month = $MONTH{$month};
+    if (($day > 31 && $month =~ /Jan|Mar|May|Jul|Aug|Oct|Dec/) ||
+	($day > 30 && $month =~ /Apr|Jun|SepNov/)) {
+	$day = 1;
+	$_month++;
+    }
+
+    return sprintf ("%04d年%d月%d日 %d時%d分%d秒", $year,$_month, $day, $hour, $min, $sec);
 }
 
 sub DESTROY {
