@@ -117,7 +117,7 @@ sub makeIndexfromSynGraph {
 		$features =~ s/<下位語数:\d+>//;
 
 		my $pos = $position + $this->{absolute_pos}; # ($bnstId =~ /,(\d+)$/) ? $1 : $bnstId;
-		my $midasi = $sid . $features;
+		my $midasi = lc($sid) . $features;
 		my $syn_node = {
 		    surf => $surf,
 		    midasi => $midasi,
@@ -379,7 +379,7 @@ sub makeIndexFromKNPResultString {
 
 		next if (defined $this->{STOP_WORDS}{$midasi});
 
-		$reps{&toUpperCase_utf8($midasi)} = 1;
+		$reps{&toLowerCase_utf8($midasi)} = 1;
 
 		## 代表表記に曖昧性がある場合は全部保持する
 		## ただし表記・読みが同一の代表表記は区別しない
@@ -389,10 +389,10 @@ sub makeIndexFromKNPResultString {
 		    my $alt_cont = $1;
 		    if ($alt_cont =~ /代表表記:(.+?)(?: |\")[a-z]?/) {
 			my $midasi = $1;
-			$reps{&toUpperCase_utf8($midasi)} = 1;
+			$reps{&toLowerCase_utf8($midasi)} = 1;
 		    } elsif ($alt_cont =~ /\-(.+?)\-(.+?)\-(.+?)\-/) {
 			my $midasi = "$3/$2";
-			$reps{&toUpperCase_utf8($midasi)} = 1;
+			$reps{&toLowerCase_utf8($midasi)} = 1;
 		    }
 		}
 
@@ -711,7 +711,7 @@ sub extractGenkeiTerms {
 
 	my $num_of_words = scalar(@$words);
 	foreach my $word (@$words) {
-	    push(@$idxs, {midasi => &toUpperCase_utf8($word)});
+	    push(@$idxs, {midasi => &toLowerCase_utf8($word)});
 	    $idxs->[-1]{group_id} = $$gid;
 	    $idxs->[-1]{freq} = (1 / $num_of_words);
 	    $idxs->[-1]{score} = (1 / $num_of_words);
@@ -776,7 +776,7 @@ sub extractSynNodeTerms {
 	    # <下位語数:(数字)>を削除
 	    $features =~ s/<下位語数:\d+>//g;
 
-	    push(@$idxs, {midasi => $synid . $features});
+	    push(@$idxs, {midasi => lc($synid) . $features});
 	    $idxs->[-1]{midasi_with_yomi} = $synid_with_yomi;
 	    $idxs->[-1]{group_id} = $kihonku->id;
 	    $idxs->[-1]{freq} = $score;
@@ -850,7 +850,7 @@ sub makeIndexFromKNPResultObject {
 
 		my $num_of_words = scalar(@$words);
 		foreach my $word (@$words) {
-		    push(@idx, {midasi => &toUpperCase_utf8($word)});
+		    push(@idx, {midasi => &toLowerCase_utf8($word)});
 		    $idx[-1]->{group_id} = $gid;
 		    $idx[-1]->{freq} = (1 / $num_of_words);
 		    $idx[-1]->{score} = (1 / $num_of_words);
@@ -906,13 +906,13 @@ sub get_repnames {
 	foreach my $rep (split(/\?/, $repnames)) {
 	    $rep =~ s/(.+?)\/.+?([a|v])?$/\1\2/ if ($this->{ignore_yomi});
 	    $rep = $this->normalize_rentai($rep, $mrph->fstring);
-	    $reps{&toUpperCase_utf8($rep)} = 1;
+	    $reps{&toLowerCase_utf8($rep)} = 1;
 	}
     } else {
 	if ($this->{ignore_yomi}) {
-	    $reps{&toUpperCase_utf8($mrph->midasi)} = 1;
+	    $reps{&toLowerCase_utf8($mrph->midasi)} = 1;
 	} else {
-	    $reps{&toUpperCase_utf8($mrph->midasi) . "/" . $mrph->yomi} = 1;
+	    $reps{&toLowerCase_utf8($mrph->midasi) . "/" . $mrph->yomi} = 1;
 	}
     }
 
@@ -935,7 +935,7 @@ sub get_repnames2 {
 		# 読みの削除
 		$midasi = &remove_yomi($midasi)	if ($this->{ignore_yomi});
 
-		$reps{&toUpperCase_utf8($midasi)} = 1;
+		$reps{&toLowerCase_utf8($midasi)} = 1;
 	    }
 	}
     }
@@ -949,9 +949,9 @@ sub get_repnames2 {
 		if ($this->{ignore_yomi}) {
 		    $midasi =~ s/(.+?)\/.+?([a|v])?$/\1\2/;
 		    $midasi = $this->normalize_rentai($midasi, $mrph->fstring);
-		    $reps{&toUpperCase_utf8($midasi)} = 1;
+		    $reps{&toLowerCase_utf8($midasi)} = 1;
 		} else {
-		    $reps{&toUpperCase_utf8($midasi) . "/" . $mrph->yomi} = 1;
+		    $reps{&toLowerCase_utf8($midasi) . "/" . $mrph->yomi} = 1;
 		}
 	    } else {
 		my ($repnames) = ($mrph->fstring =~ /<正規化代表表記.?:([^>]+)>/);
@@ -959,13 +959,13 @@ sub get_repnames2 {
 		    foreach my $rep (split(/\?/, $repnames)) {
 			$rep =~ s/(.+?)\/.+?([a|v])?$/\1\2/ if ($this->{ignore_yomi});
 			$rep = $this->normalize_rentai($rep, $mrph->fstring);
-			$reps{&toUpperCase_utf8($rep)} = 1;
+			$reps{&toLowerCase_utf8($rep)} = 1;
 		    }
 		} else {
 		    if ($this->{ignore_yomi}) {
-			$reps{&toUpperCase_utf8($mrph->midasi)} = 1;
+			$reps{&toLowerCase_utf8($mrph->midasi)} = 1;
 		    } else {
-			$reps{&toUpperCase_utf8($mrph->midasi) . "/" . $mrph->yomi} = 1;
+			$reps{&toLowerCase_utf8($mrph->midasi) . "/" . $mrph->yomi} = 1;
 		    }
 		}
 	    }
@@ -994,7 +994,7 @@ sub remove_yomi {
 sub get_genkei {
     my ($mrph) = @_;
 
-    my $genkei = &toUpperCase_utf8($mrph->midasi) . '*';
+    my $genkei = &toLowerCase_utf8($mrph->midasi) . '*';
 
     return $genkei;
 }
@@ -1006,7 +1006,7 @@ sub get_genkei2 {
     foreach my $mrph (@$mrphs) {
 	next unless ($mrph->fstring =~ /<内容語|意味有>/);
 
-	$genkei = &toUpperCase_utf8($mrph->midasi) . '*';
+	$genkei = &toLowerCase_utf8($mrph->midasi) . '*';
 	last;
     }
 
@@ -1048,36 +1048,10 @@ sub get_dpnd_index {
 }
 
 ## 全角小文字アルファベット(utf8)を全角大文字アルファベットに変換(utf8)
-sub toUpperCase_utf8 {
+sub toLowerCase_utf8 {
     my($str) = @_;
 
-    my $with_utf8_flag = utf8::is_utf8($str);
-    if ($with_utf8_flag) {
-	$str = encode('utf8', $str);
-    }
-
-    my @cbuff = ();
-    my @ch_codes = unpack("U0U*", $str);
-    for(my $i = 0; $i < scalar(@ch_codes); $i++){
-	my $ch_code = $ch_codes[$i];
-	unless(0xff40 < $ch_code && $ch_code < 0xff5b){
-	    push(@cbuff, $ch_code);
-	}else{
-	    my $uppercase_code = $ch_code - 0x0020;
-	    push(@cbuff, $uppercase_code);
-	}
-    }
-
-    my $ret= pack("U0U*",@cbuff);
-    if ($with_utf8_flag) {
-	if (utf8::is_utf8($ret)) {
-	    return $ret;
-	} else {
-	    return decode('utf8', $ret);
-	}
-    } else {
-	return $ret;
-    }
+    return lc($str);
 }
 
 sub makeIndexfromSynGraph4Indexing {
@@ -1121,7 +1095,7 @@ sub makeIndexfromSynGraph4Indexing {
 		    $buf .= "$1+";
 		}
 		chop($buf);
-		$synid = $buf;
+		$synid = uc($buf);
 
 		# 文法素性の削除
 		$features =~ s/<可能>//;
