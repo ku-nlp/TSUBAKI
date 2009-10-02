@@ -322,30 +322,6 @@ sub parseAPIRequest {
 
 
     return $params;
-
-#     $params->{'logical_operator'} = $cgi->param('logical') if (defined($cgi->param('logical')));
-#     $params->{'logical_operator'} = $cgi->param('logical_operator') if (defined($cgi->param('logical_operator')));
-#     $params->{'only_hitcount'} = $cgi->param('only_hitcount') if (defined($cgi->param('only_hitcount')));
-#     $params->{'force_dpnd'} = $cgi->param('force_dpnd') if (defined($cgi->param('force_dpnd')));
-
-#     $params->{'syngraph'} = 1;
-#     $params->{'disable_synnode'} = ($cgi->param('syngraph') == 1) ? 0 : 1;
-
-#     $params->{'sort_by'} = $cgi->param('sort_by') if (defined($cgi->param('sort_by')));
-#     $params->{'near'} = $cgi->param('near') if (defined $cgi->param('near'));
-#     $params->{'filter_simpages'} = 0 if (defined $cgi->param('filter_simpages') &&  $cgi->param('filter_simpages') eq '0');
-#     $params->{query_verbose} = $cgi->param('query_verbose') if (defined($cgi->param('query_verbose')));
-#     $params->{flag_of_anchor_use} = $cgi->param('anchor') if (defined($cgi->param('anchor')));
-#     $params->{highlight} = $cgi->param('highlight') if (defined($cgi->param('highlight')));
-#     $params->{antonym_and_negation_expansion} = (defined($cgi->param('antonym_and_negation_expansion'))) ? $cgi->param('antonym_and_negation_expansion') : 0;
-#     $params->{use_of_case_analysis} = 1 if (defined($cgi->param('use_of_case_analysis')));
-#     $params->{disable_cache} = 1 if (defined($cgi->param('disable_cache')));
-#     $params->{query_filtering} = 1;
-
-#     $params->{kwic} = $cgi->param('kwic') if (defined($cgi->param('kwic')));
-#     $params->{kwic_window_size} = (defined($cgi->param('kwic_window_size'))) ? $cgi->param('kwic_window_size') : $CONFIG->{KWIC_WINDOW_SIZE};
-#     $params->{use_of_repname_for_kwic} = $cgi->param('use_of_repname_for_kwic') if (defined($cgi->param('use_of_repname_for_kwic')));
-#     $params->{use_of_katuyou_for_kwic} = $cgi->param('use_of_katuyou_for_kwic') if (defined($cgi->param('use_of_katuyou_for_kwic')));
 }
 
 
