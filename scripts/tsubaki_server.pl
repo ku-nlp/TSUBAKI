@@ -169,7 +169,7 @@ sub main {
 	exit;
     }
 
-    syswrite STDERR, "[TSUBAKI SERVER] READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir}, id=$ID)\n";
+    syswrite STDERR, "[TSUBAKI SERVER] READY! (host=$HOSTNAME, port=$opt{port}, dir=$opt{idxdir}, id=$ID, rmfiles=" . scalar (keys %STOP_PAGE_LIST) . ")\n";
     while (1) {
 	my $new_socket = $listening_socket->accept();
 	my $client_sockaddr = $new_socket->peername();
