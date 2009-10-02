@@ -192,10 +192,17 @@ sub new {
 	FILE_PATH => $opts->{file},
 	HEADER => $header,
 	BODY => $message . $buf,
-	ENCODING => $encoding
+	ENCODING => $encoding,
+	CRAWLED_DATE => $crawled_date
     };
 
     bless $this;
+}
+
+sub getCrawledDate {
+    my ($this) = @_;
+
+    return $this->{CRAWLED_DATE};
 }
 
 sub convertTimeFormat {
