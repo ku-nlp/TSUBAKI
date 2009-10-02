@@ -113,6 +113,34 @@ sub main {
     }
 }
 
+sub getCrawledDate {
+    my ($id) = @_;
+
+    my $file;
+    if ($CONFIG->{IS_NICT_MODE}) {
+	my $did_w_version = $id;
+	my ($did) = ($did_w_version =~ /(^\d+)/);
+	$file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 1000, $did_w_version);
+    } else {
+	$file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
+    }
+
+    open (READER, "zcat $file |");
+    my $crawled_date;
+    while (<READER>) {
+	if (/^Date: (.+)$/) {
+	    push(@INC, $CONFIG->{WWW2SF_PATH});
+	    require CachedHTMLDocument;
+	    $crawled_date = &CachedHTMLDocument::convertTimeFormat($1);
+	    last;
+	}
+    }
+    close (READER);
+
+    return $crawled_date;
+}
+
+
 sub getRequestItems {
     my ($queryString, $requestItems, $dids, $opt) = @_;
 
@@ -142,7 +170,9 @@ sub getRequestItems {
     my $renderer = new Renderer();
     # 返り値をセットする
     foreach my $fid (@$dids) {
+	# スニペット
 	$results->{$fid}{'Snippet'} = $did2snippets->{$fid} if (exists $requestItems->{'Snippet'});
+
 	if (exists $requestItems->{'Title'}) {
 	    $results->{$fid}{'Title'} = $searcher->get_title($fid);
 	}
@@ -409,10 +439,14 @@ sub provideSearchResult {
     } else {
 	# 検索結果の表示
 	my $renderer = new Renderer(1);
-	if ($params->{Cache}) {
-	    foreach my $ret (@$result) {
+	foreach my $ret (@$result) {
+	    if ($params->{Cache}) {
 		$ret->{cache_location} = &get_cache_location($ret->{did}, $renderer->get_uri_escaped_query($query));
 		$ret->{cache_size} = &get_cache_size($ret->{did});
+	    }
+
+	    if ($params->{CrawledDate}) {
+		$ret->{crawled_date} = &getCrawledDate($ret->{did});
 	    }
 	}
 	$renderer->printSearchResultForAPICall($logger, $params, $result, $query, $params->{'start'}, $size, $logger->getParameter('hitcount'));
