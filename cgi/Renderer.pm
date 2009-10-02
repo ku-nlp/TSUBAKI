@@ -1237,6 +1237,7 @@ sub printSearchResultForAPICall {
 	my $url = $page->{url};
 	my $score = $page->{score_total};
 	my $title = $page->{title};
+	my $crawled_date = $page->{crawled_date};
 	my $cache_location = $page->{cache_location};
 	my $cache_size = $page->{cache_size};
 
@@ -1293,6 +1294,12 @@ sub printSearchResultForAPICall {
 		$writer->characters($did2snippets->{$did});
 		$writer->endTag('Snippet');
 	    }
+	}
+
+	if ($params->{CrawledDate} > 0) {
+	    $writer->startTag('CrawledDate');
+	    $writer->characters($crawled_date);
+	    $writer->endTag('CrawledDate');
 	}
 
 	if ($params->{Cache} > 0) {
