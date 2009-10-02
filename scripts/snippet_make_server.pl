@@ -81,8 +81,16 @@ sub main {
 		    exit;
 		}
 		elsif ($_ =~ /GET_SFDAT (\d+)$/) {
-		    my $did = $1;
-		    my $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 10000, $did);
+		    my $did_w_version = $1;
+		    my ($did) = ($did_w_version =~ /(^\d+)/);
+
+		    my $xmlfile;
+		    if ($CONFIG->{IS_NICT_MODE}) {
+			$xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 1000, $did_w_version);
+		    } else {
+			$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 10000, $did);
+		    }
+
 		    my $buf;
 		    open(READER, "zcat $xmlfile |");
 		    while (<READER>) {
@@ -134,12 +142,11 @@ sub main {
 	    my %result = ();
 	    foreach my $doc (@{$docs}) {
 		my $did = $doc->{did};
-		print $did . "\n" if ($opt{verbose});
+		print STDERR $did . "\n" if ($opt{verbose});
 		$option->{start} = $doc->{start};
 		$option->{end} = $doc->{end};
 		$option->{pos2qid} = $doc->{pos2qid};
 		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
-		# print Dumper($result{$did}) . "\n" if ($HOSTNAME =~ /nlpc33/);
 	    }
 	    print "finish of snippet creation for $client_hostname @ $HOSTNAME\n" if ($opt{verbose});
 
