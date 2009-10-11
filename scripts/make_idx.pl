@@ -58,6 +58,7 @@ GetOptions(\%opt,
 	   'sentences',
 	   'timeout=s',
 	   'use_pm',
+	   'use_block_type',
 	   'verbose',
 	   'help');
 
@@ -70,6 +71,19 @@ $opt{timeout} = 30 unless ($opt{timeout});
 # 指定がない場合は、標準フォーマットにSYNGRAPHの解析結果が埋め込まれていると見なす
 $opt{scheme} = "SynGraph" unless ($opt{scheme});
 $opt{ignore_syn_dpnd} = 0 unless ($opt{ignore_syn_dpnd});
+
+
+# BlockTypeとプレフィックスのマップ
+my %prefixOfBlockType;
+$prefixOfBlockType{header} = 'HD';
+$prefixOfBlockType{footer} = 'FT';
+$prefixOfBlockType{link} = 'LK';
+$prefixOfBlockType{img} = 'IM';
+$prefixOfBlockType{form} = 'FM';
+$prefixOfBlockType{maintext} = 'MT';
+$prefixOfBlockType{unknown_block} = 'UB';
+
+
 
 if (!$opt{title} && !$opt{keywords} && !$opt{description} && !$opt{inlinks} && !$opt{sentences}) {
     # インデックス抽出対象が指定されていない場合は title, keywords, description, sentences を対象とする
@@ -239,6 +253,7 @@ sub extract_indices_wo_pm {
     my $content;
     my %indices = ();
     my $rawstring;
+    my %sid2blockType = ();
     LOOP:
     while (<READER>) {
 	last if ($_ =~ /<Text / && $opt{only_inlinks});
@@ -283,6 +298,13 @@ sub extract_indices_wo_pm {
 		$sid += 2;
 		print STDERR "\rdir=$opt{in},file=$fid (Id=$sid)" if ($opt{verbose});
 	    }
+
+	    # 領域判定結果の取得
+	    my $blockType = 'unknown_block';
+	    if (/\<S.*? BlockType="(.+?)"/) {
+		$blockType = $1;
+	    }
+	    $sid2blockType{$sid} = $blockType;
  	}
  	elsif (/(.*\<\/($pattern)\>)/o) {
 	    $content .= $1;
@@ -317,7 +339,7 @@ sub extract_indices_wo_pm {
 
 
     # 索引のマージ
-    return &merge_indices(\%indices);
+    return &merge_indices(\%indices, \%sid2blockType);
 }
 
 
@@ -546,13 +568,14 @@ sub extract_indices {
 }
 
 sub merge_indices {
-    my ($indices) = @_;
+    my ($indices, $sid2blockType) = @_;
 
     # 索引のマージ
     my %ret;
     foreach my $sid (sort {$a <=> $b} keys %$indices) {
+	my $blockType = $prefixOfBlockType{$sid2blockType->{$sid}};
 	foreach my $index (@{$indices->{$sid}}) {
-	    my $midasi = $index->{midasi};
+	    my $midasi = ($opt{use_block_type}) ? sprintf ("%s:%s", $blockType, $index->{midasi}) : $index->{midasi};
 	    next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
 
 	    print $midasi . "\n" if ($opt{verbose});
