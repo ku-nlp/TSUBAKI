@@ -261,10 +261,10 @@ sub main {
 	    my %hostinfo;
 	    $hostinfo{name} = $HOSTNAME;
 	    $hostinfo{port} = $opt{port};
-	    print $new_socket encode_base64(Storable::freeze(\%hostinfo), "") , "\n";
+	    print $new_socket encode_base64(Storable::nfreeze(\%hostinfo), "") , "\n";
 	    print $new_socket "END_OF_HOST\n";
 
-	    print $new_socket encode_base64(Storable::freeze($logger), "") , "\n";
+	    print $new_socket encode_base64(Storable::nfreeze($logger), "") , "\n";
 	    print $new_socket "END_OF_LOGGER\n";
 
 	    my $hitcount = scalar(@{$docs});
@@ -348,7 +348,7 @@ sub main {
 		    print "-----\n";
 		}
 
-		print $new_socket encode_base64(Storable::freeze($ret), "") , "\n";
+		print $new_socket encode_base64(Storable::nfreeze($ret), "") , "\n";
 		print $new_socket "END\n";
 	    }
 	    $new_socket->close();
