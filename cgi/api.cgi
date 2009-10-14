@@ -45,6 +45,7 @@ use Searcher;
 use Renderer;
 use Logger;
 use RequestParser;
+use MIME::Base64;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -112,34 +113,6 @@ sub main {
 	}
     }
 }
-
-sub getCrawledDate {
-    my ($id) = @_;
-
-    my $file;
-    if ($CONFIG->{IS_NICT_MODE}) {
-	my $did_w_version = $id;
-	my ($did) = ($did_w_version =~ /(^\d+)/);
-	$file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 1000, $did_w_version);
-    } else {
-	$file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
-    }
-
-    open (READER, "zcat $file |");
-    my $crawled_date;
-    while (<READER>) {
-	if (/^Date: (.+)$/) {
-	    push(@INC, $CONFIG->{WWW2SF_PATH});
-	    require CachedHTMLDocument;
-	    $crawled_date = &CachedHTMLDocument::convertTimeFormat($1);
-	    last;
-	}
-    }
-    close (READER);
-
-    return $crawled_date;
-}
-
 
 sub getRequestItems {
     my ($queryString, $requestItems, $dids, $opt) = @_;
@@ -375,6 +348,78 @@ sub getStandardFormdatDataFromSnippetServer {
 }
 
 
+sub getCrawledDateFromSnippetServer {
+    my ($dids) = @_;
+
+    my $num_of_sockets = 0;
+    my %host2dids = ();
+    foreach my $did (@$dids) {
+	my $host;
+	if ($CONFIG->{IS_NICT_MODE}) {
+	    require SidRange;
+	    $host = (new SidRange())->lookup($did);
+	} else {
+	    $host = $CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)};
+	}
+	push (@{$host2dids{$host}}, $did);
+    }
+
+
+
+    my $selecter = IO::Select->new();
+    for (my $i = 0; $i < scalar(@{$CONFIG->{SNIPPET_SERVERS}}); $i++) {
+	my $_host = $CONFIG->{SNIPPET_SERVERS}[$i]{name};
+	my $port = $CONFIG->{SNIPPET_SERVERS}[$i]{ports}[0];
+	next unless (exists $host2dids{$_host});
+
+	try {
+	    # 問い合わせ
+	    my $socket = IO::Socket::INET->new(
+		PeerAddr => $_host,
+		PeerPort => $port,
+		Proto    => 'tcp' );
+	    $selecter->add($socket);# or die "Cannot connect to the server $host:$port. $!\n";
+
+	    # 文書IDの送信
+	    print $socket "GET_CRAWLED_DATE\n";
+	    print $socket encode_base64(Storable::nfreeze($host2dids{$_host}), "") . "\n";
+	    print $socket "END\n";
+
+	    $socket->flush();
+	    $num_of_sockets++;
+	} catch Error with {
+	    my $err = shift;
+	    printf ("Cannot connect to the server %s:%s.\n", $_host, $port);
+	    printf ("Exception at line %s in %s\n", $err->{-line}, $err->{-file});
+	};
+    }
+
+    my %did2date;
+    # 結果の受信
+    while ($num_of_sockets > 0) {
+	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
+	my $buf;
+	foreach my $socket (@{$readable_sockets}) {
+	    my $buf;
+	    while (<$socket>) {
+		last if ($_ eq "END\n");
+		$buf .= $_;
+	    }
+	    my $_did2date = Storable::thaw(decode_base64($buf));
+	    foreach my $did (keys %$_did2date) {
+		$did2date{$did} = $_did2date->{$did};
+	    }
+
+	    $selecter->remove($socket);
+	    $socket->close();
+	    $num_of_sockets--;
+	}
+    }
+
+    return \%did2date;
+}
+
+
 sub provideSearchResult {
     my ($cgi) = @_;
 
@@ -433,6 +478,19 @@ sub provideSearchResult {
     # print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
 
 
+
+    # クロール日時の取得
+    my $did2date = ();
+    if ($params->{CrawledDate}) {
+	my @dids = ();
+	foreach my $ret (@$result) {
+	    push (@dids, $ret->{did});
+	}
+	$did2date = &getCrawledDateFromSnippetServer(\@dids);
+    }
+
+
+
     if ($params->{'only_hitcount'}) {
 	# ヒットカウントを出力
 	printf ("%d\n", $logger->getParameter('hitcount'));
@@ -446,7 +504,7 @@ sub provideSearchResult {
 	    }
 
 	    if ($params->{CrawledDate}) {
-		$ret->{crawled_date} = &getCrawledDate($ret->{did});
+		$ret->{crawled_date} = $did2date->{$ret->{did}};
 	    }
 	}
 	$renderer->printSearchResultForAPICall($logger, $params, $result, $query, $params->{'start'}, $size, $logger->getParameter('hitcount'));
