@@ -10,6 +10,7 @@ use MIME::Base64;
 use IO::Socket;
 use Storable;
 use SnippetMaker;
+use CachedHTMLDocument;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -98,6 +99,38 @@ sub main {
 		    }
 		    close(READER);
 		    print $new_socket $buf;
+		    exit;
+		}
+		elsif ($_ =~ /GET_CRAWLED_DATE$/) {
+		    my $_buf;
+		    while (<$new_socket>) {
+			last if ($_ eq "END\n");
+			$_buf .= $_;
+		    }
+		    my $dids = Storable::thaw(decode_base64($_buf));
+
+		    my %did2date = ();
+		    foreach my $did_w_version (@$dids) {
+			my ($did) = ($did_w_version =~ /(^\d+)/);
+			my $xmlfile;
+			if ($CONFIG->{IS_NICT_MODE}) {
+			    $xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 1000, $did_w_version);
+			} else {
+			    $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 10000, $did);
+			}
+
+			open(READER, "zcat $xmlfile |");
+			my $xmldef = <READER>;
+			my $standard_format_tag = <READER>;
+			my ($date) = ($standard_format_tag =~ /CrawlTime=\"(.+?)\" /);
+			close(READER);
+
+			$did2date{$did} = &CachedHTMLDocument::convertTimeFormatFromGMT($date);
+		    }
+
+		    print $new_socket encode_base64(Storable::nfreeze(\%did2date), "") , "\n";
+		    print $new_socket "END\n";
+		    $new_socket->close();
 		    exit;
 		}
 
