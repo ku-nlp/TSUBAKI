@@ -7,8 +7,6 @@ use utf8;
 use HTML::TokeParser;
 use Configure;
 use Encode;
-use HtmlGuessEncoding;
-use ModifiedTokeParser;
 use Unicode::Japanese;
 use URI::Split qw(uri_split uri_join);
 use Data::Dumper;
@@ -58,9 +56,13 @@ sub new {
 	$encoding = 'utf8';
 	$buf = decode ('utf8', $buf);
     } else {
+	require HtmlGuessEncoding;
 	my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
 	$encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
     }
+
+    # convertTimeFormatだけを利用したい場合もあるため遅延してロードする
+    require ModifiedTokeParser;
     my $parser = ModifiedTokeParser->new(\$buf) or die $!;
 
     tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
@@ -220,12 +222,36 @@ sub convertTimeFormat {
 
     my $_month = $MONTH{$month};
     if (($day > 31 && $month =~ /Jan|Mar|May|Jul|Aug|Oct|Dec/) ||
-	($day > 30 && $month =~ /Apr|Jun|SepNov/)) {
+	($day > 30 && $month =~ /Apr|Jun|Sep|Nov/)) {
 	$day = 1;
 	$_month++;
     }
 
     return sprintf ("%04d年%d月%d日 %d時%d分%d秒", $year,$_month, $day, $hour, $min, $sec);
+}
+
+
+sub convertTimeFormatFromGMT {
+    my ($t) = @_;
+
+    my ($date, $time, $gmt) = split (/ /, $t);
+    my ($year, $month, $day) = split (/\-/, $date);
+    my ($hour, $min, $sec) = split (/:/, $time);
+    $hour += 9;
+
+    if ($hour > 23) {
+	$day++;
+	$hour %= 24;
+    }
+
+
+    if (($day > 31 && $month =~ /01|03|05|07|08|10|12/) ||
+	($day > 30 && $month =~ /04|07|09|11/)) {
+	$day = 1;
+	$month++;
+    }
+
+    return sprintf ("%04d年%d月%d日 %d時%d分%d秒", $year,$month, $day, $hour, $min, $sec);
 }
 
 sub DESTROY {
