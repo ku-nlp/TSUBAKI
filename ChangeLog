@@ -1,3 +1,47 @@
+2009-10-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet_make_server.pl:
+	標準フォーマットに埋め込まれているクロール日時を整形せずに返すように.
+
+2009-10-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm:
+	GMTフォーマットから日本時間に変換するメソッドの追加.
+
+	* cgi/api.cgi: クロール日時をスニペットサーバーを介して取得するように.
+
+	* scripts/snippet_make_server.pl:
+	クロール日時を標準フォーマットから読み込んで返せるように.
+
+2009-10-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl: freeze関数をnfreeze関数に変更.
+
+	* scripts/make_idx.pl:
+	領域判定結果をインデキシングに利用するオプションを追加（use_block_type）.
+
+2009-10-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet_make_server.pl:
+	標準フォーマットのディレクトリ名の変更に対応.
+
+	* scripts/tsubaki_server.pl:
+	起動時に読み込んだ削除IDの数を出力するように.
+
+	* cgi/api.cgi: クロール日時を取得する関数を追加.
+
+	* cgi/Renderer.pm: クロール日時を出力するように.
+
+	* cgi/CachedHTMLDocument.pm: クロール日時を返すメソッドを追加.
+
+2009-10-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm: toLowerCase_utf8メソッドの修正.
+
+2009-09-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm: 31日(30日)を超えないように.
+
 2009-09-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/SnippetMakerAgent.pm:
