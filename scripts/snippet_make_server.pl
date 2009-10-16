@@ -10,7 +10,6 @@ use MIME::Base64;
 use IO::Socket;
 use Storable;
 use SnippetMaker;
-use CachedHTMLDocument;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -125,7 +124,7 @@ sub main {
 			my ($date) = ($standard_format_tag =~ /CrawlTime=\"(.+?)\" /);
 			close(READER);
 
-			$did2date{$did} = &CachedHTMLDocument::convertTimeFormatFromGMT($date);
+			$did2date{$did} = $date;
 		    }
 
 		    print $new_socket encode_base64(Storable::nfreeze(\%did2date), "") , "\n";
