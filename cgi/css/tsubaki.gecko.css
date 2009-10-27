@@ -5,6 +5,14 @@
 	line-height: 1.35em;
 }
 
+.bib{
+	width: 90%;
+	font-size: small;
+	margin: 0.25em 0em 0.7em 0em;
+	line-height: 1em;
+	color: green;
+}
+
 DIV.meta{
 	color: silver;
 	font-size: small;
