@@ -30,9 +30,9 @@ sub extract_sentences_from_ID {
 	$xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version);
     } else {
 	my $did = $did_w_version;
-	$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
+	# $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
+	$xmlfile = sprintf("%s/%s.xml.gz", $dir_prefix, $did);
     }
-
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
 }
 
@@ -45,27 +45,39 @@ sub extract_sentences_from_standard_format {
 	print Dumper($opt) . "\n";
     }
 
-    my $content;
     if ($opt->{z}) {
 	open(READER,"zcat $xmlfile |") or die "$!";
     } else {
 	open(READER, $xmlfile) or die "$!";
     }
 
-    binmode(READER, ':utf8');
-    while (<READER>) {
-	$content .= $_;
-    }
-    close(READER);
 
-    if ($opt->{kwic}) {
-	return &extract_sentences_from_content_for_kwic($query, $content, $opt);
+    my $content;
+    if ($opt->{extract_from_abstract_only}) {
+	binmode(READER, ':utf8');
+	while (<READER>) {
+	    last  if ($_ =~ /<\/Header>/);
+	    $content .= $_;
+	}
+	close(READER);
+
+	return &extract_sentences_from_abstract($query, $content, $opt);
     } else {
-	# Title, Keywords, Description から重要文を抽出しない
-	if ($opt->{start} > $NUM_OF_CHARS_IN_HEADER) {
-	    return &extract_sentences_from_content_using_position($query, $content, $opt);
+	binmode(READER, ':utf8');
+	while (<READER>) {
+	    $content .= $_;
+	}
+	close(READER);
+
+	if ($opt->{kwic}) {
+	    return &extract_sentences_from_content_for_kwic($query, $content, $opt);
 	} else {
-	    return &extract_sentences_from_content($query, $content, $opt);
+	    # Title, Keywords, Description から重要文を抽出しない
+	    if ($opt->{start} > $NUM_OF_CHARS_IN_HEADER) {
+		return &extract_sentences_from_content_using_position($query, $content, $opt);
+	    } else {
+		return &extract_sentences_from_content($query, $content, $opt);
+	    }
 	}
     }
 }
@@ -686,6 +698,148 @@ sub extract_sentences_from_content {
 	return \@sentences;
     }
 }
+
+sub extract_sentences_from_abstract {
+    my($query, $content, $opt) = @_;
+
+    my $annotation;
+    my $indexer = new Indexer({ignore_yomi => $opt->{ignore_yomi}});
+    my @sentences = ();
+    my %sbuff = ();
+    my $sid = 0;
+    my $paraid = 0;
+    my $in_title = 0;
+    my $in_abstract_tag = 0;
+    my $count = 0;
+    my $th = -1;
+    my $paragraph_first_sentence = 0;
+    foreach my $line (split(/\n/, $content)) {
+	$line .= "\n";
+	if ($opt->{discard_title}) {
+	    # タイトルはスニッペッツの対象としない
+	    if ($line =~ /<Title [^>]+>/) {
+		$in_title = 1;
+	    } elsif ($line =~ /<\/Title>/ || $line =~ /<\/Header>/) {
+		$in_title = 0;
+	    }
+	}
+	next if ($in_title > 0);
+	next if ($line =~ /^!/ && !$opt->{syngraph});
+
+	$in_abstract_tag = 1 if ($line =~ /<Abstract.*?>/);
+	$in_abstract_tag = 0 if ($line =~ /<\/Abstract>/);
+
+	next unless ($in_abstract_tag);
+
+	$annotation .= $line;
+
+	$sid = $1 if ($line =~ m!<S .+ Id="(\d+)"!);
+	$sid = 0 if ($line =~ m!<Title !);
+
+	$paraid = $1 if ($line =~ m!<S Paragraph="(\d+)"!);
+	$paraid = 0 if ($line =~ m!<Title !);
+
+	# 段落の先頭文かどうか
+	if ($opt->{get_paragraph_first_sentence}) {
+	    if ($line =~ m!<S !) {
+		if ($line =~ m!ParagraphFirstSentence="1"!) {
+		    $paragraph_first_sentence = 1;
+		}
+		else {
+		    $paragraph_first_sentence = 0;
+		}
+	    }
+	}
+
+	if ($line =~ m!</Annotation>!) {
+	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
+		my $result = $1;
+
+		my $indice;
+		my $resultObj;
+		if ($opt->{syngraph}) {
+		    $indice = $indexer->makeIndexfromSynGraph($result, undef, $opt);
+		} else {
+		    $resultObj = new KNP::Result($result);
+		    $indice = $indexer->makeIndexFromKNPResultObject($resultObj, $opt);
+		}
+
+		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
+
+		my $sentence = {
+		    rawstring => undef,
+		    score => 0,
+		    smoothed_score => 0,
+		    words => {},
+		    dpnds => {},
+		    surfs => [],
+		    reps => [],
+		    sid => $sid,
+		    paraid => $paraid,
+		    number_of_included_queries => $num_of_queries,
+		    number_of_included_query_types => $num_of_types,
+		    including_all_indices => $including_all_indices
+		};
+
+		$sentence->{resultObj} = $resultObj if ($opt->{keepResultObj});
+		$sentence->{result} = $result if ($opt->{keep_result});
+		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence});
+
+		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
+
+		my $num_of_whitespace_cdot_comma = 0;
+		foreach my $w (@{$word_list}) {
+		    my $surf = $w->{surf};
+		    my $reps = $w->{reps};
+		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
+
+		    $sentence->{rawstring} .= $surf;
+		    push(@{$sentence->{surfs}}, $surf);
+		    push(@{$sentence->{reps}}, $w->{reps});
+		}
+
+		my $length = scalar(@{$sentence->{surfs}});
+		$length = 1 if ($length < 1);
+		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
+		$th = $count + $opt->{window_size} if ($score > 0 && $th < 0);
+		$sentence->{score} = $score;
+		$sentence->{smoothed_score} = $score;
+		$sentence->{length} = $length;
+		$sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
+		push(@sentences, $sentence);
+
+		last if ($opt->{lightweight} && $count > $th && $th > 0);
+		$count++;
+#		print encode('euc-jp', $sentence->{rawstring}) . " (" . $num_of_whitespace_cdot_comma . ") is SKIPPED.\n";
+	    }
+	    $annotation = '';
+	}
+    }
+
+    my $window_size = $opt->{window_size};
+    my $size = scalar(@sentences);
+    for (my $i = 0; $i < scalar(@sentences); $i++) {
+	my $s = $sentences[$i];
+	for (my $j = 0; $j < $window_size; $j++) {
+	    my $k = $i - $j - 1;
+	    last if ($k < 0 || $s->{paraid} != $sentences[$k]->{paraid});
+	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
+	}
+
+	for (my $j = 0; $j < $window_size; $j++) {
+	    my $k = $i + $j + 1;
+	    last if ($k > $size - 1 || $s->{paraid} != $sentences[$k]->{paraid});
+	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
+	}
+    }
+
+    if ($opt->{uniq}) {
+	return &uniqSentences(\@sentences);
+    } else {
+	return \@sentences;
+    }
+}
+
 
 sub extract_sentences_from_content_old {
     my($query, $content, $opt) = @_;
