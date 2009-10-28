@@ -32,6 +32,28 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
     }
 }
 
+function toggle_ipsj_verbose_view (id1, id2, id3, id4, obj, open_label, close_label) {
+    var disp1 = document.getElementById(id1).style.display;
+    if (disp1 == "block") {
+        document.getElementById(id1).style.display = "none";
+        document.getElementById(id3).style.display = "none";
+        obj.innerHTML = close_label;
+    } else {
+        document.getElementById(id1).style.display = "block";
+        document.getElementById(id3).style.display = "block";
+        obj.innerHTML = open_label;
+    }
+
+    var disp2 = document.getElementById(id2).style.display;
+    if (disp2 == "block") {
+        document.getElementById(id2).style.display = "none";
+        document.getElementById(id4).style.display = "none";
+    } else {
+        document.getElementById(id2).style.display = "block";
+        document.getElementById(id4).style.display = "block";
+    }
+}
+
 function hide_query_result () {
     var baroon = document.getElementById("baroon");
     baroon.style.display = "none";
