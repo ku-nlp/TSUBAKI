@@ -11,7 +11,6 @@ use IO::Select;
 use MIME::Base64;
 use QueryParser;
 use Configure;
-use SidRange;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -36,12 +35,22 @@ sub create_snippets {
 
     # 文書IDを標準フォーマットを管理しているホストに割り振る
     my %host2dids = ();
+    my $range = undef;
     my $range = ($CONFIG->{IS_NICT_MODE}) ? new SidRange() : undef;
+
+    my $count = 0;
     foreach my $doc (@$docs) {
 	if ($CONFIG->{IS_NICT_MODE}) {
+	    unless (defined $range) {
+		require SidRange;
+		$range = new SidRange();
+	    }
+
 	    my $did = $doc->{did};
 	    my $host = $range->lookup($did);
 	    push(@{$host2dids{$host}}, $doc);
+	} elsif ($CONFIG->{IS_IPSJ_MODE}) {
+	    push(@{$host2dids{$CONFIG->{IPSJ_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{IPSJ_SNIPPET_SERVERS}})]}}, $doc);
 	} else {
 	    push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%03d", $doc->{did} / 1000000)}}}, $doc);
 	}
@@ -237,10 +246,10 @@ sub get_snippets_for_each_did {
 		my $surf = $sentence->{surfs}[$i];
 		if ($opt->{highlight}) {
 		    foreach my $rep (@{$sentence->{reps}[$i]}) {
-			if (exists $rep2style{$rep}) {
+			if (exists $rep2style{lc($rep)}) {
 			    # 代表表記レベルでマッチしたらハイライト
 
-			    $snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{$rep}, $surf;
+			    $snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{lc($rep)}, $surf;
 			    $highlighted = 1;
 			}
 			last if ($highlighted > 0);

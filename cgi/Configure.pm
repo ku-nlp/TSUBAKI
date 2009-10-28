@@ -97,6 +97,14 @@ sub _new {
     }
     close(READER);
 
+
+    if ($this->{IS_IPSJ_MODE}) {
+	foreach my $host (@{$this->{SNIPPET_SERVERS}}) {
+	    push (@{$this->{IPSJ_SNIPPET_SERVERS}}, $host->{name});
+	}
+    }
+
+
     if ($opts->{debug}) {
 	print "* jmn -> $this->{JUMAN_COMMAND}\n";
 	print "* knp -> $this->{KNP_COMMAND}\n";
