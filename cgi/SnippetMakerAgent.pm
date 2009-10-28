@@ -94,26 +94,26 @@ sub create_snippets {
 		PeerAddr => $CONFIG->{SNIPPET_SERVERS}[$i]{name},
 		PeerPort => $port,
 		Proto    => 'tcp' );
-	
+
 	    $selecter->add($socket) or die "$!\n";
-	
+
 	    # 検索クエリの送信
-	    print $socket encode_base64(Storable::freeze($query), "") . "\n";
+	    print $socket encode_base64(Storable::nfreeze($query), "") . "\n";
 	    print $socket "EOQ\n";
 
 	    # 文書IDの送信
-	    print $socket encode_base64(Storable::freeze($port2docs{$port}), "") . "\n";
+	    print $socket encode_base64(Storable::nfreeze($port2docs{$port}), "") . "\n";
 	    print $socket "EOD\n";
 
 	    # スニペット生成のオプションを送信
-	    print $socket encode_base64(Storable::freeze($opt), "") . "\n";
+	    print $socket encode_base64(Storable::nfreeze($opt), "") . "\n";
 	    print $socket "EOO\n";
-	
+
 	    $socket->flush();
 	    $num_of_sockets++;
 	}
     }
-    
+
     # 検索結果の受信
     my %did2snippets = ();
     my $total_hitcount = 0;
@@ -249,7 +249,7 @@ sub get_snippets_for_each_did {
 		# ハイライトされなかった場合 or ハイライトオプションがオフの場合
 		$snippets{$sid} .= $surf if ($highlighted < 0);
 		$wordcnt++;
-		
+
 		# スニペットが N 単語を超えた終了
 		if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET}) {
 		    $snippets{$sid} .= ($opt->{highlight}) ? " <b>...</b>" : "...";
@@ -281,7 +281,7 @@ sub get_snippets_for_each_did {
 		$snippet =~ s!$qk->{rawstring}!<b>$qk->{rawstring}</b>!g;
 	    }
 	}
-	
+
 	$snippet =~ s/S\-ID:\d+//g;
 	$did2snippets{$did} = $snippet;
     }
