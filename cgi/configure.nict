@@ -436,4 +436,4 @@ C_PAGERANK		50
 
 # 論文検索モード
 
-IS_IPSJ_MODE	1
+IS_IPSJ_MODE	0
