@@ -50,11 +50,11 @@ sub extract_sentences_from_standard_format {
     } else {
 	open(READER, $xmlfile) or die "$!";
     }
+    binmode(READER, ':utf8');
 
 
     my $content;
     if ($opt->{extract_from_abstract_only}) {
-	binmode(READER, ':utf8');
 	while (<READER>) {
 	    last  if ($_ =~ /<\/Header>/);
 	    $content .= $_;
@@ -63,7 +63,6 @@ sub extract_sentences_from_standard_format {
 
 	return &extract_sentences_from_abstract($query, $content, $opt);
     } else {
-	binmode(READER, ':utf8');
 	while (<READER>) {
 	    $content .= $_;
 	}
@@ -587,6 +586,8 @@ sub extract_sentences_from_content {
 	$in_meta_tag = 0 if ($line =~ /<\/Description>/);
 	$in_meta_tag = 1 if ($line =~ /<Keywords.*?>/);
 	$in_meta_tag = 0 if ($line =~ /<\/Keywords>/);
+	$in_meta_tag = 1 if ($line =~ /<Abstract>/);
+	$in_meta_tag = 0 if ($line =~ /<\/Abstract>/);
 
 	next if ($in_link_tag || $in_meta_tag);
 
