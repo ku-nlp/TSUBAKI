@@ -49,7 +49,7 @@ sub printQuery {
 	my $hitcount = $logger->getParameter('hitcount');
 	while ($hitcount =~ s/(.*\d)(\d\d\d)/$1,$2/){};
 
-	print " で検索された文書 $hitcount 件\n"; 
+	print " で検索された文書 $hitcount 件\n";
 	if ($size > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
 	    my $end = $params->{'start'} + $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
 	    $end = $size if ($end > $size);
@@ -95,7 +95,7 @@ sub printFooter {
 		} else {
 		    $last_page_flag = 0;
 		}
-	    
+
 		if ($offset - 1 == $current_page) {
 		    print "<font color=\"brown\">" . ($i + 1) . "</font>&nbsp;";
 		    $last_page_flag = 1;
@@ -310,11 +310,13 @@ sub print_tsubaki_interface {
     my ($this, $params, $query, $status) = @_;
 
     my $canvasName = 'canvas';
+    my $title = "情報爆発プロジェクト 検索エンジン基盤 TSUBAKI";
+    $title .= " (情報処理学会 論文検索版)" if ($CONFIG->{IS_IPSJ_MODE});
 
     print << "END_OF_HTML";
     <html>
 	<head>
-	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
+	<title>$title</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<link rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
 END_OF_HTML
@@ -358,8 +360,12 @@ END_OF_HTML
 
     # タイトル出力
     print qq(<TABLE width="100%" border="0"><TR><TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
-    printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A></TD>\n", $CONFIG->{INDEX_CGI});
-
+    if ($CONFIG->{IS_IPSJ_MODE}) {
+	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
+	print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
+    } else {
+	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A></TD>\n", $CONFIG->{INDEX_CGI});
+    }
 
     # フォーム出力
     print qq(<TD width="*" align="left" valign="middle" style="border: 0px solid red; padding-top: 1em;">\n);
@@ -416,7 +422,7 @@ END_OF_HTML
 	}
 	print "</TD></TR></TABLE>\n";
     }
-   
+
     print qq(</FORM>\n);
     print qq(</TD>\n);
 
@@ -427,7 +433,7 @@ END_OF_HTML
 	print qq(<TABLE id="questionnaire" border="0"><TR><TD nowrap style="color: red; font-weight: bold; padding-bottom:0.3em;">アンケートにご協力下さい。</TD>);
 	print qq(<TD align="right"><INPUT type="button" value="送信" style="margin-left: 1em;" onClick="javascript:send_questionnarie();"></TD></TR>);
 	print qq(<TR><TD nowrap>);
-	
+
 	print qq(・質問に対して良い検索結果ですか？</TD><TD align="right">);
 	print qq(<LABEL><INPUT type="radio" name="question" value="1">YES</LABEL>);
 	print qq(<LABEL><INPUT type="radio" name="question" value="0">NO</LABEL></TD></TR>);
@@ -449,10 +455,12 @@ END_OF_HTML
 
 sub print_tsubaki_interface_init {
     my ($this, $params) = @_;
+    my $title = "情報爆発プロジェクト 検索エンジン基盤 TSUBAKI";
+    $title .= " (情報処理学会 論文検索版)" if ($CONFIG->{IS_IPSJ_MODE});
     print << "END_OF_HTML";
     <html>
 	<head>
-	<title>情報爆発プロジェクト 検索エンジン基盤 TSUBAKI</title>
+	<title>$title</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<link rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
 	<script language="JavaScript">
@@ -485,7 +493,9 @@ my $host = `hostname`;
     print qq(</DIV>\n);
 
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
-    printf ("<A href=%s><IMG border=0 src=image/logo.png></A><P>\n", $CONFIG->{INDEX_CGI});
+    printf ("<A href=%s><IMG border=0 src=image/logo.png></A><BR>\n", $CONFIG->{INDEX_CGI});
+    print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
+    print "<P>\n";
 
     # フォーム出力
     print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
@@ -542,7 +552,7 @@ my $host = `hostname`;
 
 	print "</TD></TR></TABLE>\n";
     }
-    
+
     print "</FORM>\n";
 
     print ("<FONT color='red'>$CONFIG->{MESSAGE}</FONT>\n") if ($CONFIG->{MESSAGE});
@@ -624,10 +634,10 @@ sub get_uri_escaped_query {
 		next if ($string =~ /<^>]+?>/);
 		next if (exists $buf1{$string});
 
-		if ($rep->{katsuyou} =~ /ナ形容詞/) {
+		if ($rep->{katsuyou} =~ /ナノ?形容詞/) {
 		    my ($hyouki, $yomi) = split ("/", $string);
 		    $hyouki =~ s/だ$//;
-		    $yomi =~ s/だ$//;
+		    $yomi =~ s/だa?$//;
 		    $string = sprintf ("%s/%s", $hyouki, $yomi);
 		}
 
@@ -653,7 +663,7 @@ sub get_uri_escaped_query2 {
 	    foreach my $rep (sort {$b->{string} cmp $a->{string}} @{$reps}) {
 		next if($rep->{isContentWord} < 1 && $rep->{is_phrasal_search} < 1);
 		my $string = $rep->{string};
-		
+
 		$string =~ s/s\d+://; # SynID の削除
 		$string =~ s/\/.+$//; # 読みがなの削除
 		$search_k .= "$string:";
@@ -692,6 +702,7 @@ sub get_snippets {
 						# options for snippet creation
 						window_size => 5,
 						lightweight => 1,
+						extract_from_abstract_only => 0,
 
 						# options for kwic
 						kwic => $opt->{kwic},
@@ -890,11 +901,11 @@ sub printSearchResultForBrowserAccess {
     $this->printSearchTime($logger, $params, $size, $query->{keywords}, $status);
 
 
-    ##################################
-    # KWICまたは通常版の検索結果を表示
-    ##################################
-    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end, $did2snippets);
-
+    ############################################
+    # KWIC or 論文検索 or 通常版の検索結果を表示
+    ############################################
+    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) :
+	(($CONFIG->{IS_IPSJ_MODE}) ? $this->printIPSJSearchResult($logger, $params, $results, $query, $start, $end, $did2snippets) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end, $did2snippets));
 
     ################
     # フッターの表示
@@ -1086,6 +1097,146 @@ sub printOrdinarySearchResult {
     }
 }
 
+sub printIPSJSearchResult {
+    my ($this, $logger, $params, $results, $query, $start, $end, $did2snippets) = @_;
+
+    ################
+    # 検索結果を表示
+    ################
+    my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
+    for (my $rank = $start; $rank < $end; $rank++) {
+	my $did = $results->[$rank]{did};
+	my $bibdat = $results->[$rank]{bibdat};
+	if ($bibdat) {
+	    my ($authors, $booktitle, $voln, $spage, $epage, $year) = split (" ", $bibdat);
+ 	    my ($volume, $number) = split (",", $voln);
+ 	    $number =~ s/　//;
+	    push (@{$results->[$rank]{authors}}, $authors);
+	    $results->[$rank]{booktitle} = $booktitle;
+	    $results->[$rank]{volume} = $volume;
+	    $results->[$rank]{number} = $number;
+	    $results->[$rank]{page} = sprintf qq(%s-%s), $spage, $epage;
+	    $results->[$rank]{year} = $year;
+	}
+
+	$results->[$rank]{rank} = $rank + 1;
+	$results->[$rank]{snippet} = $did2snippets->{$did};
+
+	# 一件分を作成して表示する
+	print $this->_printIPSJSearchResult($results->[$rank], $query);
+    }
+}
+
+
+sub _printIPSJSearchResult {
+    my ($this, $result, $query) = @_;
+
+    ################
+    # 検索結果を表示
+    ################
+
+    my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
+    my $rank = $result->{rank};
+    my $did = $result->{did};
+    my $score = sprintf("%.4f", $result->{score_total});
+    my $snippet = $result->{snippet};
+    my $title = $result->{title};
+    my $abst = $result->{abst};
+    my $abstAll = $result->{abstAll};
+
+    my $output = qq(<DIV class="result">);
+
+
+
+    ###############################################################################
+    # 順位とタイトル
+    ###############################################################################
+
+    $output .= qq(<TABLE cellpadding="0" border="0" width="100%">\n);
+    $output .= qq(<TR><TD style="width: 1em; text-align: center; vertical-align: top;"><SPAN class="rank" nowrap>) . ($rank) . "</SPAN></TD>\n";
+
+    $output .= qq(<TD>\n);
+    $title = substr($title, 0, $CONFIG->{MAX_LENGTH_OF_TITLE}) . "..." if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE});
+    if (defined $result->{url}) {
+	$output .= qq(<A class="title" href="$result->{url}" target="_blank">$title</A>\n) if (defined $result->{url});
+    } else {
+	$output .= sprintf qq(<SPAN stype="color; black;">$title</SPAN>\n), $title;
+    }
+    $output .= qq(<SPAN style="font-size:small;">);
+    $output .= sprintf qq(<A href="http://ci.nii.ac.jp/lognavi?name=nels&lang=jp&type=pdf&id=%s" target="_blank">[PDF]</A>&nbsp;&nbsp;\n), $result->{artid} if ($result->{artid});
+    $output .= qq(<A href="$CONFIG->{INDEX_CGI}?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">[TXT]</A>&nbsp;&nbsp;\n);
+    $output .= sprintf qq(<A href="javascript:void(0);" onclick="toggle_ipsj_verbose_view('test1_$rank', 'test2_$rank', 'test3_$rank', 'test4_$rank', this, '%s', '%s');">[ABST・本文の詳細]</A>\n), "[ABST・本文の詳細]", "[元に戻す]" if ($abstAll);
+    $output .= "</SPAN>";
+
+    $output .= qq(</TD></TR>\n);
+    $output .= qq(<TR><TD>&nbsp</TD>\n);
+    $output .= qq(<TD>\n);
+
+
+    ###############################################################################
+    # タイトルの下
+    ###############################################################################
+
+    $output .= sprintf qq(<BLOCKQUOTE class="bib">%s; %s %s（%s）), ((defined $result->{authors}) ? join(", ", @{$result->{authors}}) : ""), $result->{booktitle}, $result->{volume}, $result->{number} if ($result->{number});
+    $output .= sprintf qq(, %s), $result->{page} if ($result->{page});
+    $output .= sprintf qq(, %s年), $result->{year} if ($result->{year} =~ /^\d\d\d\d$/);
+    $output .= sprintf qq(</BLOCKQUOTE>\n);
+
+
+    ###############################################################################
+    # スニペット
+    ###############################################################################
+
+    my $MAX_LENGTH_OF_SHORT_SNIPPET = 100;
+    if ($abstAll) {
+	my $short_abst = (defined $abst) ? $abst : $this->makeShortSnippet($abstAll, $MAX_LENGTH_OF_SHORT_SNIPPET);
+
+	$output .= qq(<BLOCKQUOTE id="test1_$rank" style="display: block;" class="snippet"><SPAN style="border: 0px solid black; background-color:maroon; color:white; font-weight:bold; padding:0em 0.5em; margin-right:0.5em;">ABST</SPAN>$short_abst...</BLOCKQUOTE>);
+	$output .= qq(<BLOCKQUOTE id="test2_$rank" style="display: none;" class="snippet"><SPAN style="border: 0px solid black; background-color:maroon; color:white; font-weight:bold; padding:0em 0.5em; margin-right:0.5em;">ABST</SPAN>$abstAll</BLOCKQUOTE>);
+    }
+
+    my $short_snippet = $this->makeShortSnippet($snippet, $MAX_LENGTH_OF_SHORT_SNIPPET);
+    $short_snippet = $snippet unless ($abstAll);
+    $output .= qq(<BLOCKQUOTE id="test3_$rank" style="display: block;" class="snippet"><SPAN style="border: 0px solid black; background-color:navy; color:white; font-weight:bold; padding:0em 0.5em; margin-right:0.5em;">本文</SPAN>$short_snippet...</BLOCKQUOTE>);
+    $output .= qq(<BLOCKQUOTE id="test4_$rank" style="display: none;"  class="snippet"><SPAN style="border: 0px solid black; background-color:navy; color:white; font-weight:bold; padding:0em 0.5em; margin-right:0.5em;">本文</SPAN>$snippet</BLOCKQUOTE>);
+
+    $output .= "</TABLE>";
+    $output .= "</DIV>";
+
+    return $output;
+}
+
+sub makeShortSnippet {
+    my ($this, $string, $MAX_LENGTH_OF_SHORT_SNIPPET) = @_;
+
+    my $ch_count = 0;
+    my $inner_tag = 0;
+    my $short_snippet;
+    foreach my $substr (split /(<[^>]+>)/, $string) {
+	if ($substr =~ /^</) {
+	    $short_snippet .= $substr;
+	    if ($substr =~ /^<\//) {
+		$inner_tag = 0;
+	    } else {
+		$inner_tag = 1;
+	    }
+
+	    last if ($ch_count > $MAX_LENGTH_OF_SHORT_SNIPPET && !$inner_tag);
+	} else {
+	    if ($ch_count + length($substr) > $MAX_LENGTH_OF_SHORT_SNIPPET && !$inner_tag) {
+		my $num_of_ch = $MAX_LENGTH_OF_SHORT_SNIPPET - $ch_count;
+		$short_snippet .= substr($substr, 0, $num_of_ch);
+		last;
+	    } else {
+		$ch_count += length($substr);
+		$short_snippet .= $substr;
+	    }
+	}
+    }
+
+    return $short_snippet;
+}
+
 
 sub printRequestResult {
     my ($this, $dids, $results, $requestItems, $opt) = @_;
@@ -1218,8 +1369,8 @@ sub printSearchResultForAPICall {
 	    );
     } else {
 	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
-			  totalResultsAvailable => $hitcount, 
-			  totalResultsReturned => $end - $from, 
+			  totalResultsAvailable => $hitcount,
+			  totalResultsReturned => $end - $from,
 			  firstResultPosition => $params->{'start'} + 1,
 			  logicalOperator => $params->{'logical_operator'},
 			  forceDpnd => $params->{'force_dpnd'},
@@ -1269,6 +1420,74 @@ sub printSearchResultForAPICall {
 	    $writer->characters($url);
 	    $writer->endTag('Url');
 	}
+
+	##################################################
+	# 論文検索用タグ
+	##################################################
+	if ($CONFIG->{IS_IPSJ_MODE}) {
+	    my $abst = $page->{abstAll};
+	    my $artid = $page->{artid};
+	    my ($authors, $booktitle, $voln, $spage, $epage, $year) = split (" ", $page->{bibdat});
+	    my ($volume, $number) = split (",　", $voln);
+
+	    if ($params->{Author} > 0) {
+		$writer->startTag('Authors');
+		foreach my $author (split (/，/, $authors)) {
+		    $writer->startTag('Author');
+		    $writer->characters($author);
+		    $writer->endTag('Author');
+		}
+		$writer->endTag('Authors');
+	    }
+
+	    if ($params->{Abstract} > 0) {
+		$writer->startTag('Abstract');
+		$writer->characters($abst);
+		$writer->endTag('Abstract');
+	    }
+
+
+	    if ($params->{Year} > 0) {
+		$writer->startTag('Year');
+		$writer->characters($year);
+		$writer->endTag('Year');
+	    }
+
+	    if ($params->{Booktitle} > 0) {
+		$writer->startTag('Booktitle');
+		$writer->characters($booktitle);
+		$writer->endTag('Booktitle');
+	    }
+
+
+	    if ($params->{Volume} > 0) {
+		$writer->startTag('Volume');
+		$writer->characters($volume);
+		$writer->endTag('Volume');
+	    }
+
+
+	    if ($params->{Number} > 0) {
+		$writer->startTag('Number');
+		$writer->characters($number);
+		$writer->endTag('Number');
+	    }
+
+
+	    if ($params->{Page} > 0) {
+		$writer->startTag('Page');
+		$writer->characters(sprintf ("%s-%s", $spage, $epage));
+		$writer->endTag('Page');
+	    }
+
+
+	    if ($params->{ArtID} > 0) {
+		$writer->startTag('ArtID');
+		$writer->characters($artid);
+		$writer->endTag('ArtID');
+	    }
+	}
+
 
 	if ($params->{Snippet} > 0) {
 	    if ($params->{kwic}) {
