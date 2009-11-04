@@ -1184,7 +1184,7 @@ sub _printIPSJSearchResult {
 	foreach my $kwd (@{$query->{keywords}}) {
 	    foreach my $word (@{$kwd->{words}}) {
 		foreach my $w (@{$word}) {
-		    $_authors =~ s!\Q($w->{string})\E!<B>$1</B>!g;
+		    $_authors =~ s!\Q$w->{string}\E!<B>$w->{string}</B>!g;
 		}
 	    }
 	}
