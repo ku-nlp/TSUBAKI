@@ -9,7 +9,7 @@ function send_questionnarie () {
     var msg = document.questionnarieForm.message.value;
 
     var param = "q=" + q + "&question=" + question + "&msg=" + msg;
-    new Ajax.Request("http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/tsubaki-develop/questionnarie.cgi", {method: 'get', parameters: param, onComplete: complete});
+    new Ajax.Request("http://tsubaki.ixnlp.nii.ac.jp/questionnarie.cgi", {method: 'get', parameters: param, onComplete: complete});
 }
 
 function complete (originalRequest) {
@@ -32,6 +32,11 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
     }
 }
 
+function hide_query_result () {
+    var baroon = document.getElementById("baroon");
+    baroon.style.display = "none";
+}
+
 function toggle_ipsj_verbose_view (id1, id2, id3, id4, obj, open_label, close_label) {
     var disp1 = document.getElementById(id1).style.display;
     if (disp1 == "block") {
@@ -52,9 +57,4 @@ function toggle_ipsj_verbose_view (id1, id2, id3, id4, obj, open_label, close_la
         document.getElementById(id2).style.display = "block";
         document.getElementById(id4).style.display = "block";
     }
-}
-
-function hide_query_result () {
-    var baroon = document.getElementById("baroon");
-    baroon.style.display = "none";
 }
