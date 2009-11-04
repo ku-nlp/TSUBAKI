@@ -1177,7 +1177,20 @@ sub _printIPSJSearchResult {
     # タイトルの下
     ###############################################################################
 
-    $output .= sprintf qq(<BLOCKQUOTE class="bib">%s; %s %s（%s）), ((defined $result->{authors}) ? join(", ", @{$result->{authors}}) : ""), $result->{booktitle}, $result->{volume}, $result->{number} if ($result->{number});
+    # クエリとマッチした著者名を太字で表示
+    my $_authors = "";
+    if (defined $result->{authors}) {
+	$_authors = join ("，", @{$result->{authors}});
+	foreach my $kwd (@{$query->{keywords}}) {
+	    foreach my $word (@{$kwd->{words}}) {
+		foreach my $w (@{$word}) {
+		    $_authors =~ s!\Q($w->{string})\E!<B>$1</B>!g;
+		}
+	    }
+	}
+    }
+
+    $output .= sprintf qq(<BLOCKQUOTE class="bib">%s; %s %s（%s）), $_authors, $result->{booktitle}, $result->{volume}, $result->{number} if ($result->{number});
     $output .= sprintf qq(, %s), $result->{page} if ($result->{page});
     $output .= sprintf qq(, %s年), $result->{year} if ($result->{year} =~ /^\d\d\d\d$/);
     $output .= sprintf qq(</BLOCKQUOTE>\n);
