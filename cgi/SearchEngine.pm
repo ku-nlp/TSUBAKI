@@ -35,7 +35,7 @@ sub new {
     foreach my $s (@$servers) {
 	push(@{$this->{hosts}}, {name => $s->{name}, port => $s->{port}});
     }
-    
+
     bless $this;
 }
 
@@ -45,7 +45,7 @@ sub init {
     foreach my $cdbf (readdir(DIR)) {
 	next unless ($cdbf =~ /cdb/);
 	next if ($cdbf =~ /keymap/);
-	
+
 	my $fp = "$dir/$cdbf";
 	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
 	if (index($cdbf, 'dpnd.cdb') > -1) {
@@ -122,6 +122,7 @@ sub fisher_yates_shuffle {
 sub broadcastSearch {
     my($this, $query, $logger, $opt) = @_;
 
+    $query->{sort_by_year} = $opt->{sort_by_year};
     # $opt->{debug} = 1;
     # $logger->clearTimer();
 
@@ -132,21 +133,21 @@ sub broadcastSearch {
     for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
 	my $socket = IO::Socket::INET->new(
 	    PeerAddr => $this->{hosts}->[$i]->{name},
-	    PeerPort => $this->{hosts}->[$i]->{port},
+	    PeerPort => $this->{hosts}->[$i]->{port} + (($opt->{reference}) ? 1 : 0),
 	    Proto    => 'tcp' );
 
 	$query->{logger} = new Logger();
 	print "send query to " . $this->{hosts}[$i]{name} . ":" . $this->{hosts}[$i]{port} . "<BR>\n" if ($opt->{debug});
 	$selecter->add($socket) or die "Cannot connect to the server $this->{hosts}->[$i]->{name}:$this->{hosts}->[$i]->{port}. $!\n";
-	
+
  	# 検索クエリの送信
- 	print $socket encode_base64(Storable::freeze($query), "") . "\n";
+ 	print $socket encode_base64(Storable::nfreeze($query), "") . "\n";
 	print $socket "EOQ\n";
-	
+
 	# qid2dfの送信
- 	print $socket encode_base64(Storable::freeze($query->{qid2df}), "") . "\n";
+ 	print $socket encode_base64(Storable::nfreeze($query->{qid2df}), "") . "\n";
 	print $socket "END\n";
-	
+
 	$socket->flush();
     }
     $logger->setTimeAs('send_query_to_server', '%.3f');
@@ -216,7 +217,7 @@ sub broadcastSearch {
 
 
 	    # ヒットカウントの取得
-	    $buff = undef; 
+	    $buff = undef;
 	    while (<$socket>) {
 		last if ($_ eq "END_OF_HITCOUNT\n");
 		$buff .= $_;
@@ -231,7 +232,7 @@ sub broadcastSearch {
 	    # 検索により得られた文書情報の取得
 	    my $docs;
 	    unless ($query->{only_hitcount}) {
-		$buff = undef; 
+		$buff = undef;
 		while (<$socket>) {
 		    last if ($_ eq "END\n");
 		    $buff .= $_;
@@ -273,7 +274,7 @@ sub broadcastSearch {
 	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf{$k} / $size)) if ($size > 0);
 	}
     }
-    
+
     # 検索に要した時間をロギング
     $logger->setParameterAs('search', $logger->getParameter('send_query_to_server') + $logger->getParameter('get_result_from_server'));
 
