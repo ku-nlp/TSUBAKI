@@ -1165,6 +1165,7 @@ sub _printIPSJSearchResult {
     $output .= qq(<SPAN style="font-size:small;">);
     $output .= sprintf qq(<A href="http://ci.nii.ac.jp/lognavi?name=nels&lang=jp&type=pdf&id=%s" target="_blank">[PDF]</A>&nbsp;&nbsp;\n), $result->{artid} if ($result->{artid});
     $output .= qq(<A href="$CONFIG->{INDEX_CGI}?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">[TXT]</A>&nbsp;&nbsp;\n);
+    $output .= qq(<A href="$CONFIG->{INDEX_CGI}?did=$did&type=meta" target="_blank" class="ex">[メタ情報]</A>&nbsp;&nbsp;\n);
     $output .= sprintf qq(<A href="javascript:void($rank);" onclick="toggle_ipsj_verbose_view('test1_$rank', 'test2_$rank', 'test3_$rank', 'test4_$rank', this, '%s', '%s');">[ABST・本文の詳細]</A>\n), "[ABST・本文の詳細]", "[元に戻す]" if ($abstAll);
     $output .= "</SPAN>";
 
@@ -1172,6 +1173,13 @@ sub _printIPSJSearchResult {
     $output .= qq(<TR><TD>&nbsp</TD>\n);
     $output .= qq(<TD>\n);
 
+#     my $score_w = $result->{score_word};
+#     my $score_d = $result->{score_dpnd};
+#     my $score_n = $result->{score_dist};
+#     my $score_aw = $result->{score_word_anchor};
+#     my $score_dw = $result->{score_dpnd_anchor};
+#     my $score_pr = $result->{pagerank};
+#     $output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
 
     ###############################################################################
     # タイトルの下
@@ -1550,6 +1558,45 @@ sub printSearchResultForAPICall {
     $writer->endTag('ResultSet');
     $writer->end();
 }
+
+
+sub printIPSJMetadata {
+    my ($this, $metadata) = @_;
+
+    my @attrs = ("ID", "IPSJ", "KJ", "NCID", "UCITID", "TITLE", "ETITLE", "AUTH", "EAUTH", "JRNL", "EJRNL", "VOLN", "SPAGE" ,"EPAGE", "URL", "YEAR", "EKYWD", "KYWD", "ABST", "EABST", "CITID");
+
+    my %buf;
+    foreach my $tagname (@attrs) {
+	while ($metadata =~ m/<$tagname>(.+?)<\/$tagname>/g) {
+	    my $value = $1;
+	    next if ($value eq '');
+
+	    if ($tagname =~ /AUTH/) {
+		while ($value =~ m/<AUTH_NAME>(.+?)<\/AUTH_NAME>/g) {
+		    push (@{$buf{$tagname}}, $1);
+		}
+	    } else {
+		$buf{$tagname} = $value;
+	    }
+	}
+    }
+
+
+    print "<TABLE border=1>\n";
+    foreach my $tagname (@attrs) {
+	next if (!defined $buf{$tagname} || $buf{$tagname} eq "");
+
+	print "<TR><TD>$tagname</TD><TD>";
+	if ($tagname =~ /AUTH/) {
+	    print join (", ", @{$buf{$tagname}});
+	} else {
+	    print $buf{$tagname};
+	}
+	print "</TD></TR>\n";
+    }
+    print "</TABLE>\n";
+}
+
 
 # クラスメソッド
 sub printErrorMessage {
