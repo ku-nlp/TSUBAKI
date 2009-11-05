@@ -42,7 +42,7 @@ sub getDefaultValues {
     $params{dpnd} = 1;
     $params{results} = ($call_from_API) ? 10 : $CONFIG->{NUM_OF_SEARCH_RESULTS};
     $params{force_dpnd} = 0;
-    $params{filter_simpages} = 1;
+    $params{filter_simpages} = 0;
     $params{near} = -1;
     $params{syngraph} = 1;
     $params{only_hitcount} = 0;
@@ -65,6 +65,7 @@ sub getDefaultValues {
     $params{NE_process} = 1;
     $params{modifier_of_NE_process} = 1;
     $params{site} = undef;
+    $params{sort_by_year} = 0;
 
 
     # スニペット表示のデフォルト設定
@@ -90,14 +91,24 @@ sub getDefaultValues {
     $params{query_verbose} = 0;
     $params{sort_by} = 'score';
     $params{sort_by_CR} = 0;
-    $params{from_portal} = 0;
+    $params{from_portal} = 1;
     $params{score_verbose} = 1;
+
 
     # NICT用 TSUBAKI用スコアとページランクの値の内訳を表示
     $params{detail_score} = 0;
     $params{debug} = 0;
     $params{result_items} = 'Id:Title:Cache:Url';
     $params{show_search_time} = 0;
+
+
+    # 論文検索用
+    # メタデータ表示に利用
+    $params{did} = 0;
+    $params{type} = 0;
+
+    # 参考文献込インデックスをひくかどうかのスイッチ
+    $params{reference} = 0;
 
     return \%params;
 }
@@ -352,14 +363,14 @@ sub parseQuery {
     if ($CONFIG->{USE_OF_QUERY_PARSE_SERVER}) {
 	my $selecter = IO::Select->new();
 	my $socket = IO::Socket::INET->new(
-	    PeerAddr => 'localhost',
+	    PeerAddr => $CONFIG->{HOST_OF_QUERY_PARSE_SERVER},
 	    PeerPort => $CONFIG->{PORT_OF_QUERY_PARSE_SERVER},
 	    Proto    => 'tcp' );
 
 	$selecter->add($socket) or die "Cannot connect to the localhost:" . $CONFIG->{PORT_OF_QUERY_PARSE_SERVER} . ". $!\n";
 
  	# クエリ解析時のパラメータを送信
- 	print $socket encode_base64(Storable::freeze($params), "") . "\n";
+ 	print $socket encode_base64(Storable::nfreeze($params), "") . "\n";
 	print $socket "EOD\n";
 	$socket->flush();
 

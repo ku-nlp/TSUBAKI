@@ -1,4 +1,4 @@
-#!/share09/home/skeiji/local/bin/perl
+#!/share/usr/bin/perl
 
 # $Id$
 
@@ -52,7 +52,8 @@ sub main {
 	    my ($did) = ($did_w_version =~ /(^\d+)/);
 	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 1000, $did_w_version);
 	} else {
-	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
+	    # $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
+	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
 	}
 
 	# KEYごとに色を付ける
@@ -60,10 +61,25 @@ sub main {
 
 	push(@INC, $CONFIG->{WWW2SF_PATH});
 	require CachedHTMLDocument;
-	
+
 	# キャッシュされたページを表示
-	my $cachedHTML = new CachedHTMLDocument($query, { file => $file, z => 1, debug => $params->{debug} });
-	print $cachedHTML->to_string();
+	my $cachedHTML = new CachedHTMLDocument($query, { file => $file, z => 0, debug => $params->{debug} });
+	print $cachedHTML->to_string_with_pre_tag();
+    } elsif ($params->{'did'}) {
+	# 論文のメタ情報を表示（論文検索用）
+	if ($CONFIG->{IS_IPSJ_MODE}) {
+	    my $type = $params->{'type'};
+
+	    if ($type eq 'meta') {
+		tie my %metadb, 'CDB_File', $CONFIG->{IPSJ_METADB_PATH} or die $! . "\n";
+		my $metadata = $metadb{$params->{'did'}};
+
+		my $renderer = new Renderer(0);
+		$renderer->printIPSJMetadata($metadata);
+
+		untie %metadb;
+	    }
+	}
     } else {
 	my $renderer = new Renderer(0);
 
