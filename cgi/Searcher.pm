@@ -157,7 +157,7 @@ sub merge_search_results {
 
 	my $page = shift(@{$results->[$max]});
 	$page->{title} = decode('utf8', $page->{title}) unless (utf8::is_utf8($page->{title}));
-	my $did = ($CONFIG->{IS_NICT_MODE}) ? $page->{did} : sprintf("%09d", $page->{did});
+	my $did = ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_IPSJ_MODE}) ? $page->{did} : sprintf("%09d", $page->{did});
 
 	unless ($opt->{'filter_simpages'}) {
 	    $this->add_list(\@merged_result, $page, $did, \$miss_title, \$miss_url);
