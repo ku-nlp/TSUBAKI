@@ -437,3 +437,5 @@ C_PAGERANK		50
 # 論文検索モード
 
 IS_IPSJ_MODE	0
+
+IPSJ_METADB_PATH	/home/skeiji/ipsj/data3/org/meta.cdb
