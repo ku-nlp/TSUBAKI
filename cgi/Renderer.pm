@@ -1563,7 +1563,7 @@ sub printSearchResultForAPICall {
 sub printIPSJMetadata {
     my ($this, $metadata) = @_;
 
-    my @attrs = ("ID", "IPSJ", "KJ", "NCID", "UCITID", "TITLE", "ETITLE", "AUTH", "EAUTH", "JRNL", "EJRNL", "VOLN", "SPAGE" ,"EPAGE", "URL", "YEAR", "EKYWD", "KYWD", "ABST", "EABST", "CITID");
+    my @attrs = ("ID", "IPSJ", "KJ", "NCID", "TITLE", "ETITLE", "AUTH", "EAUTH", "JRNL", "EJRNL", "VOLN", "SPAGE" ,"EPAGE", "URL", "YEAR", "KYWD", "EKYWD", "ABST", "EABST", "CITID", "UCITID");
 
     my %buf;
     foreach my $tagname (@attrs) {
