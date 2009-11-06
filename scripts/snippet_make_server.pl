@@ -124,7 +124,7 @@ sub main {
 			my ($date) = ($standard_format_tag =~ /CrawlTime=\"(.+?)\" /);
 			close(READER);
 
-			$did2date{$did} = $date;
+			$did2date{$did_w_version} = $date;
 		    }
 
 		    print $new_socket encode_base64(Storable::nfreeze(\%did2date), "") , "\n";
