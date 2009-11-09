@@ -855,6 +855,7 @@ sub makeIndexFromKNPResultObject {
 		    $idx[-1]->{freq} = (1 / $num_of_words);
 		    $idx[-1]->{score} = (1 / $num_of_words);
 		    $idx[-1]->{isContentWord} = ($mrph->fstring =~ /<内容語|意味有>/) ? 1 : 0;
+		    $idx[-1]->{isBasicNode} = 1;
 		    $idx[-1]->{fstring} = $mrph->fstring;
 		    $idx[-1]->{surf} = $mrph->midasi;
 		    $idx[-1]->{pos} = $pos;

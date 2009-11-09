@@ -390,7 +390,7 @@ sub search_syngraph_test_for_new_format_with_add_flag {
  		    $offset4positions += (4 + $num_of_positions * 4);
 		    $offset4scores += (4 + $num_of_positions * 2);
 
-		    last if ($pos >= $CONFIG->{MAX_SIZE_OF_DOCS});
+		    last if ($CONFIG->{MAX_SIZE_OF_DOCS} > 0 && $pos >= $CONFIG->{MAX_SIZE_OF_DOCS});
 		}
 
 		$offset_j += (scalar @docs);
