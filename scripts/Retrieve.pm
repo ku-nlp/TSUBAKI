@@ -334,7 +334,7 @@ sub search_syngraph_test_for_new_format_with_add_flag {
 	    @docs = () unless (defined(@docs));
 	    next;
 	}
-	
+
 	seek($this->{IN}[$f_num], $offset, 0);
 	$total_byte = $offset;
 
@@ -389,6 +389,8 @@ sub search_syngraph_test_for_new_format_with_add_flag {
 
  		    $offset4positions += (4 + $num_of_positions * 4);
 		    $offset4scores += (4 + $num_of_positions * 2);
+
+		    last if ($pos >= $CONFIG->{MAX_SIZE_OF_DOCS});
 		}
 
 		$offset_j += (scalar @docs);
@@ -429,7 +431,7 @@ sub search_syngraph_test_for_new_format_with_add_flag2 {
 	    @docs = () unless (defined(@docs));
 	    next;
 	}
-	
+
 	seek($this->{IN}[$f_num], $offset, 0);
 	$total_byte = $offset;
 
@@ -781,17 +783,6 @@ sub search_syngraph_with_position_dpnd {
     }
 
     return \@docs;
-}   
-
-sub load_position {
-    my ($this, $f_num, $offset, $size_poss, $opt) = @_;
-
-    my $buf;
-    seek ($this->{IN}[$f_num], $offset, 0);
-    read ($this->{IN}[$f_num], $buf, $size_poss * 4);
-    my @pos_list = unpack("L*", $buf);
-
-    return \@pos_list;
 }
 
 sub load_position {
@@ -800,7 +791,7 @@ sub load_position {
     my $buf;
     seek ($this->{IN}[$f_num], $offset, 0);
     read ($this->{IN}[$f_num], $buf, $size_poss * 4);
-    my @pos_list = unpack("L$size_poss", $buf);
+    my @pos_list = unpack("L*", $buf);
 
     return \@pos_list;
 }
@@ -860,7 +851,7 @@ sub search4syngraph2 {
 		next;
 	    }
 	    # print STDERR $offset . "=offset\n";
-	    
+
 	    my $first_seek_time = Time::HiRes::time;
 	    seek($this->{IN}[$f_num], $offset, 0);
 	    my $finish_time = Time::HiRes::time;
@@ -868,7 +859,7 @@ sub search4syngraph2 {
 	    if ($this->{SHOW_SPEED}) {
 		printf ("@@@ %f sec. first seek time.\n", $conduct_time);
 	    }
-	    
+
 	    my $char;
 	    my @str;
 	    my $buf;
@@ -967,7 +958,7 @@ sub search4syngraph2 {
 
 	return \@docs;
     }
-}   
+}
 
 sub DESTROY {
     my ($this) = @_;
