@@ -14,11 +14,12 @@ use TsubakiEngineFactory;
 use Time::HiRes;
 use Data::Dumper;
 use CDB_File;
-use Configure;
+# use Configure;
 use RequestParser;
 use Storable;
 
 
+binmode(STDIN,  ':utf8');
 binmode(STDOUT, ':encoding(euc-jp)');
 binmode(STDERR, ':encoding(euc-jp)');
 
@@ -47,9 +48,10 @@ GetOptions(\%opt,
 	   'results=s',
 	   'score_verbose',
 	   'disable_synnode',
+	   'stdin',
 	   'show_time');
 
-if (!$opt{idxdir} || !$opt{query} || !$opt{dlengthdbdir} || $opt{help}) {
+if (!$opt{idxdir} || (!$opt{query} && !$opt{stdin}) || !$opt{dlengthdbdir} || $opt{help}) {
     print "Usage\n";
     print "$0 -idxdir idxdir_path -dfdbdir dfdbdir_path -dlengthdbdir doc_lengthdb_dir_path -query QUERY\n";
     exit;
@@ -90,33 +92,41 @@ sub init {
 my @DOC_LENGTH_DBs;
 opendir(DIR, $opt{dlengthdbdir});
 foreach my $dbf (readdir(DIR)) {
-    next unless ($dbf =~ /(\d+).doc_length\.bin$/);
+    my $dlength_db = undef;
+    if ($dbf =~ /(\d+).doc_length\.bin$/) {
+	my $fp = "$opt{dlengthdbdir}/$dbf";
 
-    my $fp = "$opt{dlengthdbdir}/$dbf";
-
-    my $dlength_db;
-    if ($opt{dlengthdb_hash}) {
-	require CDB_File;
-	tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	if ($opt{dlengthdb_hash}) {
+	    require CDB_File;
+	    tie %{$dlength_db}, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
+	}
+	else {
+	    $dlength_db = retrieve($fp) or die;
+	}
     }
-    else {
-	$dlength_db = retrieve($fp) or die;
+    elsif ($dbf =~ /(\d+).doc_length\.txt$/) {
+	$dlength_db = ();
+	open (FILE, "$opt{dlengthdbdir}/$dbf") or die "$!";
+	while (<FILE>) {
+	    chop;
+	    my ($did, $length) = split (/ /, $_);
+	    $dlength_db->{$did + 0} = $length;
+	}
+	close (FILE);
     }
 
-    push(@DOC_LENGTH_DBs, $dlength_db);
+    push(@DOC_LENGTH_DBs, $dlength_db) if (defined $dlength_db);
 }
 closedir(DIR);
 
 
-my $CONFIG = Configure::get_instance();
+# my $CONFIG = Configure::get_instance();
 
-$CONFIG->{USE_OF_QUERY_PARSE_SERVER} = 0;
+# $CONFIG->{USE_OF_QUERY_PARSE_SERVER} = 0;
 
 &main();
 
 sub main {
-    # &init();
-
     my $params = RequestParser::getDefaultValues(0);
 
     $params->{query} = decode('euc-jp', $opt{query});
@@ -131,13 +141,74 @@ sub main {
 	$params->{CN_process} = 0;
 	$params->{NE_process} = 0;
 	$params->{modifier_of_NE_process} = 0;
+	$params->{use_of_NE_tagger} = 0;
     }
 
-    # logical_cond_qk : クエリ間の論理演算
-    # my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => 'OR', syngraph => $opt{syngraph}});
+    if ($opt{stdin}) {
+	while (<STDIN>) {
+	    chop;
+	    $params->{query} = $_;
+	    &search($params);
+	}
+    } else {
+	&search($params);
+    }
+}
+
+sub search {
+    my ($params) = @_;
 
     my $logger = new Logger();
     my $loggerAll = new Logger();
+
+    my $query = &createQueryObject($params, $logger, $loggerAll);
+
+    $opt{doc_length_dbs} = \@DOC_LENGTH_DBs;
+    my $factory = new TsubakiEngineFactory(\%opt);
+    my $tsubaki = $factory->get_instance();
+    $loggerAll->setTimeAs('create_TSUBAKI_instance_time', '%.3f');
+
+    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, flag_of_anchor_use => ($opt{idxdir4anchor}) ? 1 : 0, DIST => 30, weight_of_tsubaki_score => 1, verbose => $opt{verbose}, results => $opt{results}, LOGGER => $logger});
+#    $loggerAll->setTimeAs('search_time', '%.3f');
+
+
+#     my $merge = 0;
+#     foreach my $k ($logger->keys()) {
+# 	next unless ($k =~ /merge_synonyms_and_repnames_of_/);
+# 	$merge += $logger->getParameter($k);
+#     }
+
+    my $hitcount = scalar(@{$docs});
+
+#   &printLog($hitcount, $merge, $logger, $loggerAll, $LOGGER) if ($opt{show_time});
+    &output($docs, $params, $hitcount);
+}
+
+sub printLog {
+    my ($hitcount, $merge, $logger, $loggerAll, $LOGGER) = @_;
+
+    print "query: " . decode('euc-jp', $opt{query}) . "\n";
+    print "hitcount: " . $hitcount . "\n";
+    print "query parse time: " . $loggerAll->getParameter('query_parse_time') . "\n";
+    print "create TSUBAKI instance time: " . $loggerAll->getParameter('create_TSUBAKI_instance_time') . "\n";
+    print "search time: " . $loggerAll->getParameter('search_time') . "\n";
+    print "  normal search time: " . $logger->getParameter('normal_search') . "\n";
+    print "    index access time: " . $logger->getParameter('index_access') . "\n";
+    print "    merge synonyms time: " . $merge . "\n";
+    print "  logical condition time: " . $logger->getParameter('logical_condition') . "\n";
+    print "  near condition time: " . $logger->getParameter('near_condition') . "\n";
+    print "  merge dids time: " . $logger->getParameter('merge_dids') . "\n";
+    print "  document scoring time: " . $logger->getParameter('document_scoring') . "\n";
+    print "----------------------------------\n";
+
+    $LOGGER->setTimeAs('total', '%.3f');
+    print "total time: " . $LOGGER->getParameter('total') . "\n";
+    print "----------------------------------\n";
+    exit;
+}
+
+sub createQueryObject {
+    my ($params, $logger, $loggerAll) = @_;
 
     my $query;
     if ($opt{english}) {
@@ -220,49 +291,14 @@ sub main {
 	    print "*************\n";
 	}
     }
+    return $query;
+}
 
-    $opt{doc_length_dbs} = \@DOC_LENGTH_DBs;
-    my $factory = new TsubakiEngineFactory(\%opt);
-    my $tsubaki = $factory->get_instance();
-    $loggerAll->setTimeAs('create_TSUBAKI_instance_time', '%.3f');
+sub output {
+    my ($docs, $params, $hitcount) = @_;
 
-    my $docs = $tsubaki->search($query, $query->{qid2df}, {flag_of_dpnd_use => 1, flag_of_dist_use => 1, flag_of_anchor_use => ($opt{idxdir4anchor}) ? 1 : 0, DIST => 30, weight_of_tsubaki_score => $CONFIG->{WEIGHT_OF_TSUBAKI_SCORE}, verbose => $opt{verbose}, results => $opt{results}, LOGGER => $logger});
-    $loggerAll->setTimeAs('search_time', '%.3f');
-
-
-    my $merge = 0;
-    foreach my $k ($logger->keys()) {
-	next unless ($k =~ /merge_synonyms_and_repnames_of_/);
-	$merge += $logger->getParameter($k);
-    }
-
-    my $hitcount = scalar(@{$docs});
-
-
-    if ($opt{show_time}) {
-	print "query: " . decode('euc-jp', $opt{query}) . "\n";
-	print "hitcount: " . $hitcount . "\n";
-	print "query parse time: " . $loggerAll->getParameter('query_parse_time') . "\n";
-	print "create TSUBAKI instance time: " . $loggerAll->getParameter('create_TSUBAKI_instance_time') . "\n";
-	print "search time: " . $loggerAll->getParameter('search_time') . "\n";
-	print "  normal search time: " . $logger->getParameter('normal_search') . "\n";
-	print "    index access time: " . $logger->getParameter('index_access') . "\n";
-	print "    merge synonyms time: " . $merge . "\n";
-	print "  logical condition time: " . $logger->getParameter('logical_condition') . "\n";
-	print "  near condition time: " . $logger->getParameter('near_condition') . "\n";
-	print "  merge dids time: " . $logger->getParameter('merge_dids') . "\n";
-	print "  document scoring time: " . $logger->getParameter('document_scoring') . "\n";
-	print "----------------------------------\n";
-
-	$LOGGER->setTimeAs('total', '%.3f');
-	print "total time: " . $LOGGER->getParameter('total') . "\n";
-	print "----------------------------------\n";
-	exit;
-    }
-
-
-    $opt{results} = ($hitcount < $opt{results} || $opt{results} < 0) ? $hitcount :$opt{results};
-    for (my $rank = 0; $rank < $opt{results}; $rank++) {
+    my $results = ($hitcount < $opt{results} || $opt{results} < 0) ? $hitcount :$opt{results};
+    for (my $rank = 0; $rank < $results; $rank++) {
 	my $did = sprintf("%09d", $docs->[$rank]{did});
 	my $score = $docs->[$rank]{score_total};
 	my $start = $docs->[$rank]{start};
@@ -277,29 +313,12 @@ sub main {
 	if ($opt{debug}) {
 	    printf("rank=%d did=%s score=%.3f start=%d end=%d pos=%s (w=%.3f d=%.3f n=%.3f aw=%.3f ad=%.3f)\n", $rank + 1, $did, $score, $start, $end, $pos2qid, $score_w, $score_d, $score_n, $score_aw, $score_ad);
 	} else {
-	    printf("rank=%d did=%s score=%.3f\n", $rank + 1, $did, $score);
+	    if ($opt{stdin}) {
+		printf("query=%s rank=%d did=%s score=%.3f\n", $params->{query}, $rank + 1, $did, $score);
+	    } else {
+		printf("rank=%d did=%s score=%.3f\n", $rank + 1, $did, $score);
+	    }
 	}
     }
     print "hitcount=$hitcount\n";
-}
-
-sub get_DF {
-    my ($k) = @_;
-
-    my $start_time = Time::HiRes::time;
-    my $k_utf8 = encode('utf8', $k);
-    my $gdf = -1;
-    my $DFDBs = (index($k, '->') > 0) ? \@DF_DPND_DBs : \@DF_WORD_DBs;
-    foreach my $dfdb (@{$DFDBs}) {
-	$gdf = $dfdb->{$k_utf8};
-	last if (defined $gdf);
-    }
-
-    my $finish_time = Time::HiRes::time;
-    my $conduct_time = $finish_time - $start_time;
-    if ($opt{show_speed}) {
-	printf ("@@@ %.4f sec. df value loading (key=%s).\n", $conduct_time, encode('euc-jp', $k));
-    }
-
-    return $gdf;
 }
