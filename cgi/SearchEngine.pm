@@ -138,8 +138,8 @@ sub broadcastSearch {
 
 	$query->{logger} = new Logger();
 	print "send query to " . $this->{hosts}[$i]{name} . ":" . $this->{hosts}[$i]{port} . "<BR>\n" if ($opt->{debug});
-	$selecter->add($socket) or die "Cannot connect to the server $this->{hosts}->[$i]->{name}:$this->{hosts}->[$i]->{port}. $!\n";
-
+	$selecter->add($socket) or die "Cannot connect to the server (host=$this->{hosts}->[$i]->{name}, port=$this->{hosts}->[$i]->{port})";
+	
  	# 検索クエリの送信
  	print $socket encode_base64(Storable::nfreeze($query), "") . "\n";
 	print $socket "EOQ\n";

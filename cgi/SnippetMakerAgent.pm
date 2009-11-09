@@ -104,7 +104,7 @@ sub create_snippets {
 		PeerPort => $port,
 		Proto    => 'tcp' );
 
-	    $selecter->add($socket) or die "$!\n";
+	    $selecter->add($socket) or die "Cannot connect to the server (host=$CONFIG->{SNIPPET_SERVERS}[$i]{name}, port=$port)";
 
 	    # 検索クエリの送信
 	    print $socket encode_base64(Storable::nfreeze($query), "") . "\n";
@@ -142,7 +142,6 @@ sub create_snippets {
 	    my $results = Storable::thaw(decode_base64($buff));
 	    foreach my $did (keys %$results) {
 		$this->{did2snippets}{$did} = $results->{$did};
-#		$this->{did2snippets}{$did} = &select_snippets($results->{$did});
 	    }
 	}
     }
