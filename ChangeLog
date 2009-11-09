@@ -1,3 +1,51 @@
+2009-11-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm, cgi/SnippetMakerAgent.pm:
+	接続に失敗した際、詳細を表示するように.
+
+2009-11-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet_make_server.pl: bug fixed.
+
+2009-11-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Searcher.pm: 論文検索用コードを追加.
+
+	* cgi/SearchEngine.pm: 参考文献込インデックスを引けるように.
+
+	* cgi/configure, cgi/configure.nict: メタ情報データベースのパスを追加.
+
+	* cgi/RequestParser.pm, cgi/index.cgi: メタ情報を返すオプションを追加.
+
+	* cgi/Renderer.pm: [メタ情報]ボタンを追加.
+
+2009-11-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	[ABST・本文の詳細]ボタンの色がいっぺんに変わらないように.
+
+	* cgi/Renderer.pm: クエリとマッチする著者名を太字で表示するように.
+
+	* cgi/Renderer.pm:
+	APIにおいて、論文検索用データを埋め込むように, 論文検索用スニペット生成メソッドを追加.
+
+2009-11-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm: Abstractタグ内からは重要文抽出をしないように.
+
+2009-10-28  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: デフォルト値を変更.
+
+	* cgi/configure, cgi/configure.nict:
+	論文検索モードに切り替えるオプションを追加.
+
+	* cgi/Configure.pm, cgi/SnippetMakerAgent.pm: 論文検索モードを追加.
+
+	* cgi/SnippetMakerAgent.pm: freezeをnfreezeに変更.
+
+	* cgi/SnippetMaker.pm: Abstractを対象に重要文を抽出する関数を追加.
+
 2009-10-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/snippet_make_server.pl:
