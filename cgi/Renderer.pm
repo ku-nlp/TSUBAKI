@@ -100,7 +100,17 @@ sub printFooter {
 		    print "<font color=\"brown\">" . ($i + 1) . "</font>&nbsp;";
 		    $last_page_flag = 1;
 		} else {
-		    printf qq(<a href="index.cgi?start=%d&query=%s">%d</a>&nbsp;), $offset, $params->{query}, $i + 1;
+ 		    if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+			my @buf;
+			foreach my $tag (keys %{$CONFIG->{BLOCK_TYPE_DATA}}) {
+			    if ($CONFIG->{BLOCK_TYPE_DATA}{$tag}{isChecked}) {
+				push (@buf, sprintf ("blockTypes=%s", $tag));
+			    }
+			}
+			printf qq(<a href="index.cgi?start=%d&query=%s&%s">%d</a>&nbsp;), $offset, $params->{query}, join ("&", @buf), $i + 1;
+ 		    } else {
+			printf qq(<a href="index.cgi?start=%d&query=%s">%d</a>&nbsp;), $offset, $params->{query}, $i + 1;
+		    }
 		}
 	    }
 	    print "</DIV>";
@@ -375,6 +385,11 @@ END_OF_HTML
     print qq(<INPUT type="submit" value="検索する"/>\n);
     print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/>\n);
 
+
+    # 検索に利用するブロックタイプを選択するチェックボックスを表示
+    &printBlockTypeCheckbox();
+
+
     if ($params->{develop_mode}) {
 	print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
 	if($params->{'logical_operator'} eq "OR"){
@@ -446,6 +461,7 @@ END_OF_HTML
 	print qq(</FORM>);
 	print qq(</TD>\n);
     }
+
     print qq(</TR></TABLE>\n);
 
     print "<CENTER>\n";
@@ -553,6 +569,9 @@ my $host = `hostname`;
 	print "</TD></TR></TABLE>\n";
     }
 
+    # 検索に利用するブロックタイプを選択するチェックボックスを表示
+    &printBlockTypeCheckbox();
+
     print "</FORM>\n";
 
     print ("<FONT color='red'>$CONFIG->{MESSAGE}</FONT>\n") if ($CONFIG->{MESSAGE});
@@ -562,6 +581,22 @@ my $host = `hostname`;
     # フッターの表示
     $this->printFooter($params, 0, 0, 0);
 }
+
+sub printBlockTypeCheckbox {
+    if ($CONFIG->{USE_OF_BLOCK_TYPES} && !$CONFIG->{DISABLE_BLOCK_TYPE_DISPLAY}) {
+	print qq(<TR>\n);
+	print qq(<TD colspan=2>\n);
+	print qq(<DIV style="padding-top:1em; border: 0px solid green;">\n);
+	foreach my $key (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
+	    my $tag = $CONFIG->{BLOCK_TYPE_DATA}{$key}{tag};
+	    my $label = $CONFIG->{BLOCK_TYPE_DATA}{$key}{label};
+	    my $flag = ($CONFIG->{BLOCK_TYPE_DATA}{$key}{isChecked}) ? 'checked' : '';
+	    printf qq(<INPUT name="blockTypes" type="checkbox" value="%s" id="%s" %s/><LABEL for="%s">%s</LABEL>\n), $tag, $tag, $flag, $tag, $label;
+	}
+	print qq(</DIV>);
+    }
+}
+
 
 sub getCongestion {
     my $logfile = $CONFIG->{DATA_DIR} . "/access_log";
@@ -1050,6 +1085,12 @@ sub printOrdinarySearchResult {
 
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
 	$output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
+
+	if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+	    # ページの構造解析結果へのリンクを生成
+	    my $block_type_detect_url = sprintf "http://orchid.kuee.kyoto-u.ac.jp/~funayama/ISA/index_dev.cgi?DetectBlocks_ROOT=%%2Fhome%%2Ffunayama%%2Fcvs%%2FDetectBlocks&DetectSender_ROOT=%%2Fhome%%2Ffunayama%%2Fcvs%%2FDetectSender&inputurl=%s?format=html\@id=%s&DetectSender_flag=&rel2abs=", "http://tsubaki.ixnlp.nii.ac.jp/api.cgi", $did;
+	    $output .= qq(&nbsp;<A class="cache" href="$block_type_detect_url" target="_blank"><SMALL>構造解析結果</SMALL></A>\n);
+	}
 	$output .= "</DIV>";
 
 
