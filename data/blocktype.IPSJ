@@ -1,8 +1,16 @@
-maintext MT
-unknown_block UB
-title TT
-author AU
-abstract AB
-keyword KW
-acknowledgement AK
-reference RF
+# ブロックタイプ情報（論文検索用）
+
+# Format: A L T C
+#
+# A: 標準フォーマットのBlockType属性の値
+# L: ブラウザ表示の際のcheckboxのラベル
+# T: タグ（termのprefixとして利用）
+# C: デフォルトで検索に利用するかどうか(0:利用しない, 1:利用する)
+
+maintext メイン MT 1
+title タイトル TT 1
+author 著者 AU 1
+abstract アブスト AB 1
+keyword キーワード KW 1
+acknowledgement 謝辞 AK
+reference 参考文献 RF

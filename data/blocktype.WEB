@@ -1,7 +1,16 @@
-header HD
-footer FT
-link LK
-img IM
-form FM
-maintext MT
-unknown_block UB
+# ブロックタイプ情報（WEB検索用）
+
+# Format: A L T C
+#
+# A: 標準フォーマットのBlockType属性の値
+# L: ブラウザ表示の際のcheckboxのラベル
+# T: タグ（termのprefixとして利用）
+# C: デフォルトで検索に利用するかどうか(0:利用しない, 1:利用する)
+
+header ヘッダー HD 1
+footer フッター FT 1
+link リンク LK 0
+img 画像 IM 0
+form フォーム FM 0
+maintext メインテキスト MT 1
+unknown_block 未判定 UB 1
