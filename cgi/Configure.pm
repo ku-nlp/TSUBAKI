@@ -84,6 +84,25 @@ sub _new {
 		$this->{DID2HOST}{$did} = $host;
 	    }
 	}
+	elsif ($_ =~ /BLOCK_TYPE_DEFINITION/) {
+	    my ($key, $file) = split (/\s+/, $_);
+	    open (FILE, '<:utf8', $file) or die "$!";
+	    while (<FILE>) {
+		chop;
+		my $line = $_;
+		$line =~ s/#.*$//;
+		next if ($line eq '');
+
+		my ($attribute, $label, $tag, $chk_flag) = split (/\s/, $_);
+		$this->{BLOCK_TYPE_DATA}{$tag}{attribute} = $attribute;
+		$this->{BLOCK_TYPE_DATA}{$tag}{label} = $label;
+		$this->{BLOCK_TYPE_DATA}{$tag}{tag} = $tag;
+		$this->{BLOCK_TYPE_DATA}{$tag}{isChecked} = $chk_flag;
+		$this->{BLOCK_TYPE_DATA}{$tag}{isDefaultChecked} = $chk_flag;
+		push (@{$this->{BLOCK_TYPE_KEYS}}, $tag);
+	    }
+	    close (FILE);
+	}
 	else {
 	    my ($key, $value) = split(/\s+/, $_);
 
