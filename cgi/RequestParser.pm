@@ -65,7 +65,7 @@ sub getDefaultValues {
     $params{NE_process} = 1;
     $params{modifier_of_NE_process} = 1;
     $params{site} = undef;
-    $params{sort_by_year} = 0;
+    $params{blockTypes} = undef;
 
 
     # スニペット表示のデフォルト設定
@@ -102,13 +102,19 @@ sub getDefaultValues {
     $params{show_search_time} = 0;
 
 
+    #######################################################
     # 論文検索用
+    #######################################################
+
     # メタデータ表示に利用
     $params{did} = 0;
     $params{type} = 0;
 
     # 参考文献込インデックスをひくかどうかのスイッチ
     $params{reference} = 0;
+
+    # 年代順にソートするかどうかのスイッチ
+    $params{sort_by_year} = 0;
 
     return \%params;
 }
@@ -158,16 +164,34 @@ sub parsePostRequest {
 sub setParametersOfGetRequest {
     my ($cgi, $params, $THIS_IS_API_CALL) = @_;
 
+    my %types;
     foreach my $name ($cgi->param()) {
 	if (exists $params->{$name}) {
-	    my $value = $cgi->param($name);
+	    my @values = $cgi->param($name);
 
 	    # エイリアスの対処
 	    $name = 'logical_operator' if ($name eq 'logical');
 	    $name = 'flag_of_anchor_use' if ($name eq 'anchor');
 
 	    # 指定された値で上書き
-	    $params->{$name} = $value;
+	    if ($name eq 'blockTypes') {
+		# 初期化
+		foreach my $tag (keys %{$CONFIG->{BLOCK_TYPE_DATA}}) {
+		    $CONFIG->{BLOCK_TYPE_DATA}{$tag}{isChecked} = 0;
+		}
+
+		foreach my $tag (@values) {
+		    $types{$tag . ":"} = 1;
+		    $CONFIG->{BLOCK_TYPE_DATA}{$tag}{isChecked} = 1;
+		}
+	    } else {
+		if (scalar (@values) > 1) {
+		    $params->{$name} = \@values;
+		} else {
+		    $params->{$name} = shift @values;
+		}
+	    }
+
 	    if ($name ne 'query') {
 		$params->{$name} = 1 if ($params->{$name} eq 'on');
 		$params->{$name} = 0 if ($params->{$name} eq 'off');
@@ -183,7 +207,8 @@ sub setParametersOfGetRequest {
 	    }
 	}
     }
-
+    $types{""} = 1;
+    $params->{blockTypes} = \%types;
 
     ###############################################################
     # disable_query_processing が指定されていたらフラグをオフにする
@@ -442,6 +467,7 @@ sub parseQuery {
 	      modifier_of_NE_process => $params->{modifier_of_NE_process},
 	      logger => $logger,
 	      site => $params->{site},
+	      blockTypes => $params->{blockTypes},
 	      debug => $params->{debug}
 	    });
     }
