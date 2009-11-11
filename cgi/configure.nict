@@ -434,8 +434,21 @@ WEIGHT_OF_TSUBAKI_SCORE	0.5
 
 C_PAGERANK		50
 
-# 論文検索モード
 
+
+# 論文検索モード
 IS_IPSJ_MODE	0
 
+# 論文検索で利用する論文のメタ情報DB
 IPSJ_METADB_PATH	/home/skeiji/ipsj/data3/org/meta.cdb
+
+
+
+# ブロックタイプを検索で利用するかどうか
+USE_OF_BLOCK_TYPES		0
+
+# ブロックタイプを選択するcheckboxを表示するかどうか
+DISABLE_BLOCK_TYPE_DISPLAY	0
+
+# ブロックタイプに関する情報を定義したファイル
+BLOCK_TYPE_DEFINITION		../data/blocktype.WEB
