@@ -93,12 +93,13 @@ sub _new {
 		$line =~ s/#.*$//;
 		next if ($line eq '');
 
-		my ($attribute, $label, $tag, $chk_flag) = split (/\s/, $_);
+		my ($attribute, $label, $tag, $chk_flag, $weight) = split (/\s/, $_);
 		$this->{BLOCK_TYPE_DATA}{$tag}{attribute} = $attribute;
 		$this->{BLOCK_TYPE_DATA}{$tag}{label} = $label;
 		$this->{BLOCK_TYPE_DATA}{$tag}{tag} = $tag;
 		$this->{BLOCK_TYPE_DATA}{$tag}{isChecked} = $chk_flag;
 		$this->{BLOCK_TYPE_DATA}{$tag}{isDefaultChecked} = $chk_flag;
+		$this->{BLOCK_TYPE_DATA}{$tag}{weight} = $weight;
 		push (@{$this->{BLOCK_TYPE_KEYS}}, $tag);
 	    }
 	    close (FILE);
@@ -122,6 +123,7 @@ sub _new {
 	    push (@{$this->{IPSJ_SNIPPET_SERVERS}}, $host->{name});
 	}
     }
+
 
 
     if ($opts->{debug}) {
