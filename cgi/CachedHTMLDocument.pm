@@ -18,7 +18,7 @@ sub new {
     my ($class, $query, $opts) = @_;
 
     my $filename = $opts->{file};
-    if ($opts->{z}) {
+    if ($filename =~ /\.gz$/) {
 	open(READER, "zcat $filename |");
     } else {
 	open(READER, $filename);
