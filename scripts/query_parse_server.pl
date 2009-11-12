@@ -104,15 +104,14 @@ sub main {
 		  site => $params->{site},
 		  debug => $params->{debug}
 		});
-	
 
 	    # sending log data in a search slave server.
-	    print $new_socket encode_base64(Storable::freeze($logger), "") , "\n";
+	    print $new_socket encode_base64(Storable::nfreeze($logger), "") , "\n";
 	    print $new_socket "EOL\n";
 
 	    $query->{option}{SYNGRAPH} = undef;
 
-	    print $new_socket encode_base64(Storable::freeze($query), "") , "\n";
+	    print $new_socket encode_base64(Storable::nfreeze($query), "") , "\n";
 	    print $new_socket "EOD\n";
 
 	    $new_socket->close();
