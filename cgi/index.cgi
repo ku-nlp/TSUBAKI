@@ -51,9 +51,12 @@ sub main {
 	    my $did_w_version = $id;
 	    my ($did) = ($did_w_version =~ /(^\d+)/);
 	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 1000, $did_w_version);
-	} else {
-	    # $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
-	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
+	}
+	elsif ($CONFIG->{IS_IPSJ_MODE}) {
+ 	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
+ 	}
+	else {
+	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 10000, $id);
 	}
 
 	# KEYごとに色を付ける
@@ -63,8 +66,12 @@ sub main {
 	require CachedHTMLDocument;
 
 	# キャッシュされたページを表示
-	my $cachedHTML = new CachedHTMLDocument($query, { file => $file, z => 0, debug => $params->{debug} });
-	print $cachedHTML->to_string_with_pre_tag();
+	my $cachedHTML = new CachedHTMLDocument($query, { file => $file, debug => $params->{debug} });
+	if ($CONFIG->{IS_IPSJ_MODE}) {
+	    print $cachedHTML->to_string_for_ipsj();
+	} else {
+	    print $cachedHTML->to_string();
+	}
     } elsif ($params->{'did'}) {
 	# 論文のメタ情報を表示（論文検索用）
 	if ($CONFIG->{IS_IPSJ_MODE}) {
