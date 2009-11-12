@@ -52,16 +52,16 @@ sub new {
     }
 
     my $encoding;
-    if ($CONFIG->{IS_NICT_MODE}) {
+    if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_IPSJ_MODE}) {
 	$encoding = 'utf8';
 	$buf = decode ('utf8', $buf);
+	$buf =~ tr/\x00-\x09\x0b-\x1f\x7f-\x9f//d;
     } else {
 	require HtmlGuessEncoding;
-	my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
-	$encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
+ 	my $HtmlGuessEncoding = new HtmlGuessEncoding({language => 'japanese'});
+ 	$encoding = $HtmlGuessEncoding->ProcessEncoding(\$buf, {change_to_utf8_with_flag => 1});
     }
 
-    # convertTimeFormatだけを利用したい場合もあるため遅延してロードする
     require ModifiedTokeParser;
     my $parser = ModifiedTokeParser->new(\$buf) or die $!;
 
@@ -72,11 +72,14 @@ sub new {
     my %already_printed = ();
     my $message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
 
-    if ($crawled_date) {
-	$message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。（$crawled_date に取得）<BR>次の単語とその同義語がハイライトされています:&nbsp;);
-    } else {
-	$message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>次の単語とその同義語がハイライトされています:&nbsp;);
+    if ($url) {
+	if ($crawled_date) {
+	    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。（$crawled_date に取得）<BR>);
+	} else {
+	    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>);
+	}
     }
+    $message .= "次の単語とその同義語がハイライトされています:&nbsp;";
 
     foreach my $reps (split(/,/, $query)) {
 	foreach my $word (split(/;/,  $reps)) {
@@ -113,6 +116,9 @@ sub new {
 		$message .= sprintf qq(<span style="background-color:#%s;">), $CONFIG->{HIGHLIGHT_COLOR}[$color];
 		$message .= sprintf qq(%s</span>&nbsp;), $word;
 		push(@patterns, {key => $word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$word<\/span>)});
+
+		my $h_word = Unicode::Japanese->new($word)->z2h->get;
+		push(@patterns, {key => $h_word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$h_word<\/span>)});
 	    }
 	}
 	$color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
@@ -193,6 +199,8 @@ sub new {
     my $this = {
 	FILE_PATH => $opts->{file},
 	HEADER => $header,
+	MESSAGE => $message,
+	RAWDATA => $buf,
 	BODY => $message . $buf,
 	ENCODING => $encoding,
 	CRAWLED_DATE => $crawled_date
@@ -263,6 +271,16 @@ sub to_string {
     return $this->{BODY};
 }
 
+sub to_string_for_ipsj {
+    my ($this, $query, $opt) = @_;
+
+    my $rawdata = $this->{RAWDATA};
+    $rawdata =~ s/\n\n/<P>/g;
+    $rawdata =~ s/\n/<BR>/g;
+    $rawdata =~ s/&nbsp;/ /g;
+    return sprintf ("%s\n<DIV>%s</DIV>", $this->{MESSAGE}, $rawdata);
+}
+
 
 sub convertURL {
     my ($url, $fpath) = @_;
@@ -274,7 +292,7 @@ sub convertURL {
     my ($scheme, $auth, $path, $query, $frag) = uri_split($url);
 
     if ($fpath =~ m!^/!) {
-	return uri_join($scheme, $auth, $fpath);	
+	return uri_join($scheme, $auth, $fpath);
     }
     else {
 	if ($path =~ /\//) {
@@ -284,7 +302,7 @@ sub convertURL {
 		return uri_join($scheme, $auth, join('/', @f));
 	    } else {
 		return uri_join($scheme, $auth, $path . $fpath);
-	    }		
+	    }
 	}
 	else {
 	    return uri_join($scheme, $auth, $path);
