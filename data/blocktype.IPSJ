@@ -1,16 +1,17 @@
 # ブロックタイプ情報（論文検索用）
 
-# Format: A L T C
+# Format: A L T C W
 #
 # A: 標準フォーマットのBlockType属性の値
 # L: ブラウザ表示の際のcheckboxのラベル
 # T: タグ（termのprefixとして利用）
 # C: デフォルトで検索に利用するかどうか(0:利用しない, 1:利用する)
+# W: ブロックタイプの重み（文書スコアリング時に利用）
 
-maintext メイン MT 1
-title タイトル TT 1
-author 著者 AU 1
-abstract アブスト AB 1
-keyword キーワード KW 1
-acknowledgement 謝辞 AK
-reference 参考文献 RF
+maintext メイン MT 1 10
+title タイトル TT 1 10000
+author 著者 AU 1 10000
+abstract アブスト AB 1 1000
+keyword キーワード KW 1 1000
+acknowledgement 謝辞 AK 1 1
+reference 参考文献 RF 0 1
