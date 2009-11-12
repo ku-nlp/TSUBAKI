@@ -36,16 +36,14 @@ sub create_snippets {
     # 文書IDを標準フォーマットを管理しているホストに割り振る
     my %host2dids = ();
     my $range = undef;
-    my $range = ($CONFIG->{IS_NICT_MODE}) ? new SidRange() : undef;
+    if ($CONFIG->{IS_NICT_MODE}) {
+	require SidRange;
+	$range = new SidRange();
+    }
 
     my $count = 0;
     foreach my $doc (@$docs) {
 	if ($CONFIG->{IS_NICT_MODE}) {
-	    unless (defined $range) {
-		require SidRange;
-		$range = new SidRange();
-	    }
-
 	    my $did = $doc->{did};
 	    my $host = $range->lookup($did);
 	    push(@{$host2dids{$host}}, $doc);
