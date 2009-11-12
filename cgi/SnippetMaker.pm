@@ -753,6 +753,7 @@ sub extract_sentences_from_abstract {
 	}
 
 	if ($line =~ m!</Annotation>!) {
+	    my ($rawstring) = ($annotation =~ m!<RawString>([^<]+?)</RawString>!);
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
 
@@ -765,10 +766,10 @@ sub extract_sentences_from_abstract {
 		    $indice = $indexer->makeIndexFromKNPResultObject($resultObj, $opt);
 		}
 
-		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
+		my ($num_of_queries, $num_of_types, $including_all_indices);
 
 		my $sentence = {
-		    rawstring => undef,
+		    rawstring => $rawstring,
 		    score => 0,
 		    smoothed_score => 0,
 		    words => {},
@@ -786,51 +787,34 @@ sub extract_sentences_from_abstract {
 		$sentence->{result} = $result if ($opt->{keep_result});
 		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence});
 
-		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
+		if (!$opt->{keyword_server_mode}) {
+		    my $word_list = ($opt->{syngraph}) ? &make_word_list_syngraph($result) : &make_word_list($result, $opt);
 
-		my $num_of_whitespace_cdot_comma = 0;
-		foreach my $w (@{$word_list}) {
-		    my $surf = $w->{surf};
-		    my $reps = $w->{reps};
-		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
+		    my $num_of_whitespace_cdot_comma = 0;
+		    foreach my $w (@{$word_list}) {
+			my $surf = $w->{surf};
+			my $reps = $w->{reps};
+			$num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
 
-		    $sentence->{rawstring} .= $surf;
-		    push(@{$sentence->{surfs}}, $surf);
-		    push(@{$sentence->{reps}}, $w->{reps});
+			push(@{$sentence->{surfs}}, $surf);
+			push(@{$sentence->{reps}}, $w->{reps});
+		    }
+
+		    my $length = scalar(@{$sentence->{surfs}});
+		    $length = 1 if ($length < 1);
+		    my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
+		    $th = $count + $opt->{window_size} if ($score > 0 && $th < 0);
+		    $sentence->{score} = $score;
+		    $sentence->{smoothed_score} = $score;
+		    $sentence->{length} = $length;
+		    $sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
 		}
 
-		my $length = scalar(@{$sentence->{surfs}});
-		$length = 1 if ($length < 1);
-		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
-		$th = $count + $opt->{window_size} if ($score > 0 && $th < 0);
-		$sentence->{score} = $score;
-		$sentence->{smoothed_score} = $score;
-		$sentence->{length} = $length;
-		$sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
 		push(@sentences, $sentence);
-
 		last if ($opt->{lightweight} && $count > $th && $th > 0);
 		$count++;
-#		print encode('euc-jp', $sentence->{rawstring}) . " (" . $num_of_whitespace_cdot_comma . ") is SKIPPED.\n";
 	    }
 	    $annotation = '';
-	}
-    }
-
-    my $window_size = $opt->{window_size};
-    my $size = scalar(@sentences);
-    for (my $i = 0; $i < scalar(@sentences); $i++) {
-	my $s = $sentences[$i];
-	for (my $j = 0; $j < $window_size; $j++) {
-	    my $k = $i - $j - 1;
-	    last if ($k < 0 || $s->{paraid} != $sentences[$k]->{paraid});
-	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
-	}
-
-	for (my $j = 0; $j < $window_size; $j++) {
-	    my $k = $i + $j + 1;
-	    last if ($k > $size - 1 || $s->{paraid} != $sentences[$k]->{paraid});
-	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
 	}
     }
 
