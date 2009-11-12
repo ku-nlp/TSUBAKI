@@ -46,10 +46,12 @@ sub close {
 	my $total_time = sprintf("%.3f", Time::HiRes::time - $this->{start});
 	$param_str .= "total=$total_time";
 
-	open(LOG, ">> $file") or die;
-	binmode(LOG, ':utf8');
-	print LOG "$date $ENV{REMOTE_ADDR} $this->{owner} $param_str\n";
-	close(LOG);
+	if (-e $file) {
+	    open(LOG, ">> $file") or die;
+	    binmode(LOG, ':utf8');
+	    print LOG "$date $ENV{REMOTE_ADDR} $this->{owner} $param_str\n";
+	    close(LOG);
+	}
     }
 }
 
