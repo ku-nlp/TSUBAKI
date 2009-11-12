@@ -22,6 +22,7 @@ use Configure;
 my $CONFIG = Configure::get_instance();
 
 binmode(STDOUT, ":encoding(euc-jp)");
+binmode(STDERR, ":encoding(euc-jp)");
 
 my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
 my $HOSTNAME = `hostname` ; chop($HOSTNAME);
@@ -61,7 +62,7 @@ sub main {
 	my $client_hostname = gethostbyaddr($client_iaddr, AF_INET);
 	
 	select($new_socket); $|=1; select(STDOUT);
-	
+
 	my $pid;
 	if ($pid = fork()) {
 	    $new_socket->close();
@@ -186,7 +187,7 @@ sub main {
 	    print $new_socket encode_base64(Storable::freeze(\%result), "") , "\n";
 	    print $new_socket "HOSTNAME $HOSTNAME\n";
 	    print $new_socket "END\n";
-	    
+
 	    $new_socket->close();
 	    exit;
 	}
