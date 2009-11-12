@@ -43,7 +43,12 @@ start() {
 		    idxdir=`echo $LINE | cut -f 1 -d ' '`
 		    anchor_idxdir=`echo $LINE | cut -f 2 -d ' '`
 		    dlengthdbdir=$idxdir
-		    OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
+		    if [ $anchor_idxdir == "none" ]; then
+			OPTION="-idxdir $idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
+		    else
+			OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
+		    fi
+
 		    if [ -e $idxdir ]; then
 			echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\)
 			echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
