@@ -303,6 +303,17 @@ sub get_url {
 sub get_normalized_url {
     my ($url) = @_;
     my $url_mod = $url;
+
+    if ($url =~ /chiebukuro.yahoo.co.jp/) {
+	$url =~ s/\?fr=rcmd_chie_detail//;
+	return $url;
+    }
+    elsif ($url =~ /okwave.jp/) {
+	$url =~ s/\?ans_count_asc=\d+//;
+	return $url;
+    }
+
+
     $url_mod =~ s/%7E/~/ig;
     $url_mod =~ s!//www\d*\.!//!;
     $url_mod =~ s/\d+/0/g;
