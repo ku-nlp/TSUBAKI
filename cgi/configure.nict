@@ -451,4 +451,4 @@ USE_OF_BLOCK_TYPES		0
 DISABLE_BLOCK_TYPE_DISPLAY	0
 
 # ブロックタイプに関する情報を定義したファイル
-BLOCK_TYPE_DEFINITION		../data/blocktype.WEB
+# BLOCK_TYPE_DEFINITION		/somewhere/SearchEngine/data/blocktype.WEB
