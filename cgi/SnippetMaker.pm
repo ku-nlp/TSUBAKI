@@ -727,7 +727,7 @@ sub extract_sentences_from_metadata {
 	}
 	next if ($in_title > 0);
 	next if ($line =~ /^!/ && !$opt->{syngraph});
-	last if ($line =~ !(</Header>|<Header/>)!);
+	last if ($line =~ m!(</Header>|<Header/>)!);
 
 	$in_abstract_tag = 1 if ($line =~ /<$tagname.*?>/);
 	$in_abstract_tag = 0 if ($line =~ /<\/$tagname>/);
