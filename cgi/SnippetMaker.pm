@@ -700,10 +700,11 @@ sub extract_sentences_from_content {
     }
 }
 
-sub extract_sentences_from_abstract {
+sub extract_sentences_from_metadata {
     my($query, $content, $opt) = @_;
 
     my $annotation;
+    my $tagname = (defined $opt->{tagname}) ? $opt->{tagname} : 'Abstract';
     my $indexer = new Indexer({ignore_yomi => $opt->{ignore_yomi}});
     my @sentences = ();
     my %sbuff = ();
@@ -726,9 +727,10 @@ sub extract_sentences_from_abstract {
 	}
 	next if ($in_title > 0);
 	next if ($line =~ /^!/ && !$opt->{syngraph});
+	last if ($line =~ !(</Header>|<Header/>)!);
 
-	$in_abstract_tag = 1 if ($line =~ /<Abstract.*?>/);
-	$in_abstract_tag = 0 if ($line =~ /<\/Abstract>/);
+	$in_abstract_tag = 1 if ($line =~ /<$tagname.*?>/);
+	$in_abstract_tag = 0 if ($line =~ /<\/$tagname>/);
 
 	next unless ($in_abstract_tag);
 
@@ -757,17 +759,7 @@ sub extract_sentences_from_abstract {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
 
-		my $indice;
-		my $resultObj;
-		if ($opt->{syngraph}) {
-		    $indice = $indexer->makeIndexfromSynGraph($result, undef, $opt);
-		} else {
-		    $resultObj = new KNP::Result($result);
-		    $indice = $indexer->makeIndexFromKNPResultObject($resultObj, $opt);
-		}
-
 		my ($num_of_queries, $num_of_types, $including_all_indices);
-
 		my $sentence = {
 		    rawstring => $rawstring,
 		    score => 0,
@@ -783,7 +775,7 @@ sub extract_sentences_from_abstract {
 		    including_all_indices => $including_all_indices
 		};
 
-		$sentence->{resultObj} = $resultObj if ($opt->{keepResultObj});
+		$sentence->{resultObj} = new KNP::Result($result) if ($opt->{keepResultObj});
 		$sentence->{result} = $result if ($opt->{keep_result});
 		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence});
 
