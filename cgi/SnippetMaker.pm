@@ -30,8 +30,11 @@ sub extract_sentences_from_ID {
 	$xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version);
     } else {
 	my $did = $did_w_version;
-	# $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
-	$xmlfile = sprintf("%s/%s.xml.gz", $dir_prefix, $did);
+	if ($CONFIG->{IS_IPSJ_MODE}) {
+	    $xmlfile = sprintf("%s/%s.xml.gz", $dir_prefix, $did);
+	} else {
+	    $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
+	}
     }
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
 }
@@ -61,7 +64,7 @@ sub extract_sentences_from_standard_format {
 	}
 	close(READER);
 
-	return &extract_sentences_from_abstract($query, $content, $opt);
+	return &extract_sentences_from_metadata($query, $content, $opt);
     } else {
 	while (<READER>) {
 	    $content .= $_;
