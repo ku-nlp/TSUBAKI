@@ -1444,6 +1444,38 @@ sub printSearchResultForAPICall {
 	    );
     }
 
+
+    # 検索スレーブサーバーのログを表示
+    if ($params->{serverLog}) {
+	$writer->startTag('ServerLog');
+	my $host2log = $logger->getParameter('host2log');
+	foreach my $host (keys %$host2log) {
+	    my $localLoggers = $host2log->{$host};
+	    foreach my $localLogger (sort {$a->getParameter('port') <=> $b->getParameter('port')} @$localLoggers) {
+		my $port = $localLogger->getParameter('port');
+		$writer->startTag('SlaveServer');
+
+		$writer->startTag('HostName');
+		$writer->characters($host);
+		$writer->endTag('HostName');
+
+		$writer->startTag('Port');
+		$writer->characters($port);
+		$writer->endTag('Port');
+
+		$writer->startTag('ServerLog');
+		$writer->startTag('SearchTime');
+		$writer->characters($localLogger->getParameter('total_time'));
+		$writer->endTag('SearchTime');
+		$writer->endTag('ServerLog');
+
+		$writer->endTag('SlaveServer');
+	    }
+	}
+	$writer->endTag('ServerLog');
+    }
+
+
     for (my $rank = $from; $rank < $end; $rank++) {
 	my $page = $result->[$rank];
 	my $did = sprintf("%s", $page->{did});
