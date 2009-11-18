@@ -28,10 +28,11 @@ sub DESTROY {}
 # ログの保存
 sub close {
     my ($this, $file) = @_;
+
+    my $CONFIG = Configure::get_instance();
     my @keys = keys %{$this->{log}};
     if (scalar(@keys) > 0) {
 	unless ($file) {
-	    my $CONFIG = Configure::get_instance();
 	    $file = $CONFIG->{LOG_FILE_PATH};
 	}
 	my $date = `date +%m%d-%H%M%S`; chomp ($date);
@@ -45,6 +46,22 @@ sub close {
 
 	my $total_time = sprintf("%.3f", Time::HiRes::time - $this->{start});
 	$param_str .= "total=$total_time";
+
+
+	# スレーブサーバで要した検索時間をロギング
+	my $host2log = $this->getParameter('host2log');
+	if ($host2log) {
+	    my @buf;
+	    foreach my $host (keys %$host2log) {
+		my $localLoggers = $host2log->{$host};
+		foreach my $localLogger (sort {$a->getParameter('port') <=> $b->getParameter('port')} @$localLoggers) {
+		    my $port = $localLogger->getParameter('port');
+		    push (@buf, sprintf ("[%s@%d@%s]", $host, $port, $localLogger->getParameter('total_time')));
+		}
+	    }
+	    $param_str .= ",slave_server_log=(" . join (":", @buf) . ")";
+	}
+
 
 	if (-e $file) {
 	    open(LOG, ">> $file") or die;
