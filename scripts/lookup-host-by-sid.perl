@@ -10,12 +10,12 @@ use SidRange;
 use Getopt::Long;
 
 my (%opt);
-GetOptions(\%opt, 'flist=s');
+GetOptions(\%opt, 'flist=s', 'stdin', 'save', 'sid_range=s');
 
 &main();
 
 sub main {
-    my $range = new SidRange();
+    my $range = new SidRange(\%opt);
 
     if ($opt{flist}) {
 	open (READER, $opt{flist}) or die "$!";
@@ -30,7 +30,31 @@ sub main {
 	    print $file . " " . $host . "\n";
 	}
 	close (READER);
-    } else {
+    }
+    elsif ($opt{stdin}) {
+	my %buf = ();
+	while (<STDIN>) {
+	    chop;
+	    my $did = $_;
+	    my $host = $range->lookup($did);
+	    if ($opt{save}) {
+		push(@{$buf{$host}}, $did);
+	    } else {
+		print $did . " " . $host . "\n";
+	    }
+	}
+
+	if ($opt{save}) {
+	    while (my ($host, $dids) = each %buf) {
+		open (WRITER, sprintf ("> %s.remove-sid", $host));
+		foreach my $did (@{$buf{$host}}) {
+		    print WRITER $did . "\n";
+		}
+		close (WRITER);
+	    }
+	}
+    }
+    else {
 	foreach my $did (@ARGV) {
 	    my $host = $range->lookup($did);
 	    print $did . " " . $host . "\n";
