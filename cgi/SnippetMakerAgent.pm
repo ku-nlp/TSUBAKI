@@ -233,6 +233,8 @@ sub get_snippets_for_each_did {
 	    $sbuf{$sentence->{rawstring}} = 1;
 
 	    my $sid = $sentence->{sid};
+	    next if (defined $opt->{usedSIDs}{$did} && !exists $opt->{usedSIDs}{$did}{$sid});
+
 	    my $length = $sentence->{length};
 	    my $num_of_whitespaces = $sentence->{num_of_whitespaces};
 
@@ -276,6 +278,7 @@ sub get_snippets_for_each_did {
 		    $snippet .= " ... " unless ($snippet =~ /\.\.\.$/);
 		}
 	    }
+#	    $snippet .= ("($sid)  " . $snippets{$sid});
 	    $snippet .= $snippets{$sid};
 	    $prev_sid = $sid;
 	}

@@ -68,13 +68,13 @@ sub main {
 	read(STDIN, $dat, $length);
 
 	# 入力をパース
-	my ($queryString, $requestItems, $dids, $opt) = RequestParser::parsePostRequest($dat);
+	my ($queryString, $requestItems, $dids, $sids, $opt) = RequestParser::parsePostRequest($dat);
 
 	# 遅延コンストラクタ呼び出し（$ENVの値を書き換えるため）
 	my $cgi = new CGI();
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 
-	my $results = &getRequestItems($queryString, $requestItems, $dids, $opt);
+	my $results = &getRequestItems($queryString, $requestItems, $dids, $sids, $opt);
 
 	my $renderer = new Renderer();
 	$renderer->printRequestResult($dids, $results, $requestItems, $opt);
@@ -115,7 +115,7 @@ sub main {
 }
 
 sub getRequestItems {
-    my ($queryString, $requestItems, $dids, $opt) = @_;
+    my ($queryString, $requestItems, $dids, $sids, $opt) = @_;
 
     # スニペットが指定されている場合は取得する
     my $results;
@@ -136,7 +136,7 @@ sub getRequestItems {
 
 	my $sni_obj = new SnippetMakerAgent();
 	$sni_obj->create_snippets($query_obj, \@docs, $opt);
-	$did2snippets = ($opt->{kwic}) ? $sni_obj->makeKWICForAPICall() : $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}});
+	$did2snippets = ($opt->{kwic}) ? $sni_obj->makeKWICForAPICall() : $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}, usedSIDs => $sids});
     }
 
     my $searcher = new Searcher();
@@ -208,8 +208,12 @@ sub provideDocumentInfo {
 	    exit(1);
 	}
     }
+    my %sids = ();
+    foreach my $sid (split (",", $cgi->param('Sids'))){
+	$sids{$did}->{$sid} = 1;
+    }
 
-    my $results = &getRequestItems($queryString, \%requestItems, [$did], $opt);
+    my $results = &getRequestItems($queryString, \%requestItems, [$did], \%sids, $opt);
 
     print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
     my $renderer = new Renderer();
@@ -476,7 +480,6 @@ sub provideSearchResult {
     my $type_value = ($params->{'only_hitcount'}) ? 'text/plain' : 'text/xml';
     print $cgi->header(-type => $type_value, -charset => 'utf-8');
     # print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
-
 
 
     # クロール日時の取得

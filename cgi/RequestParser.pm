@@ -149,15 +149,20 @@ sub parsePostRequest {
 
     # 文書IDの取得
     my @dids = ();
+    my %sids = ();
     foreach my $doc ($docinfo->getChildNodes) {
         next if ($doc->nodeName() eq '#text');
 
         my $did = $doc->getAttribute('Id');
+	foreach my $sid (split(',', $doc->getAttribute('Sids'))) {
+	    $sids{$did}->{$sid} = 1;
+	}
+
         push(@dids, $did);
     }
 
 
-    return ($params->{query}, \%result_items, \@dids, $params);
+    return ($params->{query}, \%result_items, \@dids, \%sids, $params);
 }
 
 
