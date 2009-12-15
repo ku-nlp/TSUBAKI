@@ -401,8 +401,8 @@ ANTONYM_DIC_PATH	/share09/home/skeiji/cvs/SynGraph/dic/rsk_iwanami/antonym.txt
 # クエリ処理用サーバーを利用するかどうか（1：利用する，0：利用しない，デフォルト1）
 USE_OF_QUERY_PARSE_SERVER	1
 
-# クエリ処理用サーバーのホスト名
-HOST_OF_QUERY_PARSE_SERVER	iccc003,iccc005,iccc006
+# クエリ処理用サーバーのホスト名（マスターサーバー上で解析する。マスターサーバーが分散化されていれば分散可）
+HOST_OF_QUERY_PARSE_SERVER	localhost
 
 # クエリ処理用サーバーのポート番号
 # ポート番号は各自が割り当てられているものを利用して下さい.
