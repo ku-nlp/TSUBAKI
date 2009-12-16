@@ -1,5 +1,5 @@
-#!/share09/home/skeiji/local/bin/perl
 #!/home/skeiji/local/bin/perl
+#!/share09/home/skeiji/local/bin/perl
 #!/usr/local/bin/perl
 
 # $Id$
@@ -510,7 +510,7 @@ sub provideSearchResult {
 		$ret->{crawled_date} = $did2date->{$ret->{did}};
 	    }
 	}
-	$renderer->printSearchResultForAPICall($logger, $params, $result, $query, $params->{'start'}, $size, $logger->getParameter('hitcount'));
+	$renderer->printSearchResultForAPICall($logger, $params, $result, $query, $logger->getParameter('hitcount'));
     }
 
     $logger->setTimeAs('print_result', '%.3f');
