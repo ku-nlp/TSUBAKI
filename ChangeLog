@@ -1,4 +1,101 @@
+2009-12-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm:
+	bug fixed. (論文検索モード以外のときは類似ページフィルタをデフォルトで適用するように)
+
+	* cgi/Renderer.pm, cgi/api.cgi:
+	bug fixed. (startとresultsの両方が指定されている時に検索結果数が誤るバグを修正)
+
+2009-12-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict:
+	HOST_OF_QUERY_PARSE_SERVERの値をlocalhostに変更.
+
+2009-12-10  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm, cgi/SnippetMakerAgent.pm, cgi/api.cgi:
+	スニペットに含める文を指定できるように.
+
+2009-12-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/lookup-host-by-sid.perl:
+	-stdin, -sid_range, -save オプションの追加.
+
+2009-11-18  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Logger.pm:
+	スレーブサーバで要した検索時間をログファイルに出力するように.
+
+2009-11-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm, cgi/RequestParser.pm:
+	検索スレーブサーバーで要した時間を返すオプションを追加.
+
+2009-11-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	呼び出し関数名の変更, 論文検索とWEB検索で読み込むxmlファイルのパスを切り替えるように.
+
+	* cgi/SnippetMaker.pm:
+	Headerタグ内の任意の要素から文を抽出する関数を追加.
+
+2009-11-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Searcher.pm:
+	知恵袋、OKwave のデータに対しては類似・関連ページフィルタを適用しないように.
+
+2009-11-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	アブストラクト中の文およびその解析結果だけを得るオプションを追加.
+
+	* scripts/tsubaki-server-manager.sh:
+	アンカーインデックスがない場合に対応.
+
+	* scripts/snippet_make_server.pl: コード整理.
+
+	* scripts/query_parse_server.pl: freezeをnfreezeに.
+
+	* cgi/Configure.pm: ブロックタイプの重みを読み込むように.
+
+	* data/blocktype.IPSJ, data/blocktype.WEB:
+	ブロックタイプごとの重みを追加.
+
+	* cgi/CachedHTMLDocument.pm:
+	圧縮されているかどうかをファイルの末尾を見て判定するように.
+
+	* cgi/index.cgi:
+	論文表示用コードの追加, CachedHTMLDocumentの変更に対応.
+
+	* cgi/CachedHTMLDocument.pm:
+	論文データ（テキスト）を表示するコードの追加.
+
+	* cgi/SnippetMakerAgent.pm: small bug fixed.
+
+2009-11-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure.nict: ブロックタイプに関するパラメータを追加.
+
+	* cgi/RequestParser.pm:
+	ブロックタイプに関するパラメータを受け付けるように.
+
+	* cgi/configure: ブロックタイプに関するパラメータを追加.
+
+	* cgi/Configure.pm:
+	外部ファイルに定義されたブロック情報を読み込むように.
+
+	* cgi/Renderer.pm:
+	外部ファイルに定義されたブロック情報を利用するように.
+
+	* data/blocktype.IPSJ, data/blocktype.WEB: ブロックタイプ情報の追加.
+
 2009-11-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Retrieve.pm, scripts/Indexer.pm: small changes.
+
+	* scripts/Retrieve.pm: MAX_SIZE_OF_DOCSオプションに対応.
+
+	* scripts/tsubaki_test.pl: コード整理, -stdin オプションの追加.
 
 	* cgi/SearchEngine.pm, cgi/SnippetMakerAgent.pm:
 	接続に失敗した際、詳細を表示するように.
