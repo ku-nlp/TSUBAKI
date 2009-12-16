@@ -42,7 +42,7 @@ sub getDefaultValues {
     $params{dpnd} = 1;
     $params{results} = ($call_from_API) ? 10 : $CONFIG->{NUM_OF_SEARCH_RESULTS};
     $params{force_dpnd} = 0;
-    $params{filter_simpages} = 0;
+    $params{filter_simpages} = ($CONFIG->{IS_IPSJ_MODE}) ? 0 : 1;
     $params{near} = -1;
     $params{syngraph} = 1;
     $params{only_hitcount} = 0;
