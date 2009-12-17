@@ -33,7 +33,9 @@ sub extract_sentences_from_ID {
 	if ($CONFIG->{IS_IPSJ_MODE}) {
 	    $xmlfile = sprintf("%s/%s.xml.gz", $dir_prefix, $did);
 	} else {
-	    $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
+	    my ($did) = ($did_w_version =~ /(^\d+)/);
+	    $xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version);
+#	    $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
 	}
     }
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
@@ -118,6 +120,7 @@ sub extract_sentences_from_content_using_position {
 	    my $showFlag = 0;
 	    my $number_of_included_queries = 0;
 	    my %included_query_types = ();
+	    my $start_pos = $pos;
 	    foreach my $ln (@linebuf) {
 		if ($ln =~ /^!! /) {
 		} elsif ($ln =~ /^! /) {
@@ -151,6 +154,8 @@ sub extract_sentences_from_content_using_position {
 		    words => {},
 		    dpnds => {},
 		    surfs => [],
+		    start_pos => $start_pos,
+		    end_pos => $pos - 1,
 		    reps => [],
 		    sid => $sid,
 		    number_of_included_queries => $number_of_included_queries,
@@ -567,6 +572,7 @@ sub extract_sentences_from_content {
     my $count = 0;
     my $th = -1;
     my $paragraph_first_sentence = 0;
+    my $paraid_prev = -1;
     foreach my $line (split(/\n/, $content)) {
 	$line .= "\n";
 	if ($opt->{discard_title}) {
@@ -613,6 +619,15 @@ sub extract_sentences_from_content {
 		}
 	    }
 	}
+	elsif ($opt->{get_paragraph_first_sentence_without_anntotation}) {
+	    if ($paraid != $paraid_prev) {
+		$paragraph_first_sentence = 1;
+	    } else {
+		$paragraph_first_sentence = 0;
+	    }
+
+	    $paraid_prev = $paraid;
+	}
 
 	if ($line =~ m!</Annotation>!) {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
@@ -646,7 +661,7 @@ sub extract_sentences_from_content {
 
 		$sentence->{resultObj} = $resultObj if ($opt->{keepResultObj});
 		$sentence->{result} = $result if ($opt->{keep_result});
-		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence});
+		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence} || $opt->{get_paragraph_first_sentence_without_anntotation});
 
 		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
 
