@@ -11,6 +11,10 @@ SPAN.rank{
 	margin-right:0.25em;
 }
 
+SPAN.matched_region {
+        border-bottom: 3px solid red;
+}
+
 A.title{
 
 }
@@ -18,6 +22,12 @@ A.title{
 .cache, .orig_url{
 	color: green;
 	text-decoration: none;
+}
+
+.cache2{
+	color: gray;
+	font-size: small;
+	margin-left: 0.5em;
 }
 
 DIV.footer{
