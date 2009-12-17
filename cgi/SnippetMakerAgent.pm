@@ -24,7 +24,8 @@ sub new {
     my ($class) = @_;
 
     my $this = {
-	did2snippets => {}
+	did2snippets => {},
+	did2region => {}
     };
 
     bless $this;
@@ -66,6 +67,8 @@ sub create_snippets {
 	my %port2docs = ();
 	my $count = 0;
 	foreach my $doc (@$dids) {
+	    $this->{did2region}{$doc->{did}}{start} = $doc->{start};
+	    $this->{did2region}{$doc->{did}}{end} = $doc->{end};
 	    push(@{$port2docs{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}[$count++ % $num_of_ports]}}, $doc);
 	}
 
@@ -219,7 +222,6 @@ sub get_snippets_for_each_did {
 	}
     }
 
-
     my %did2snippets = ();
     foreach my $did (keys %{$this->{did2snippets}}) {
 	my $wordcnt = 0;
@@ -228,6 +230,7 @@ sub get_snippets_for_each_did {
 
 	# スコアの高い順に処理（同点の場合は、sidの若い順）
 	my %sbuf = ();
+
 	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score} || $a->{sid} <=> $b->{sid}} @{$sentences}) {
 	    next if (exists($sbuf{$sentence->{rawstring}}));
 	    $sbuf{$sentence->{rawstring}} = 1;
@@ -238,34 +241,60 @@ sub get_snippets_for_each_did {
 	    my $length = $sentence->{length};
 	    my $num_of_whitespaces = $sentence->{num_of_whitespaces};
 
-	    next if ($num_of_whitespaces / $length > 0.2);
+	    next if ($sentence->{number_of_included_query_types} < 1 && $num_of_whitespaces / $length > 0.2);
 
+	    # 単語の位置
+	    my $start_pos = $sentence->{start_pos} + 1;
+	    my $end_pos = $sentence->{end_pos};
+	    my $flag_of_underline = ($this->{did2region}{$did}{start} > 100 && $this->{did2region}{$did}{end} - $this->{did2region}{$did}{start} < 50) ? 1 : 0;
+	    my $pos = $start_pos;
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		my $highlighted = -1;
 		my $surf = $sentence->{surfs}[$i];
+
 		if ($opt->{highlight}) {
 		    foreach my $rep (@{$sentence->{reps}[$i]}) {
 			if (exists $rep2style{lc($rep)}) {
-			    # 代表表記レベルでマッチしたらハイライト
+			    # ハイライトされる単語からのみ線を引く
+			    $snippets{$sid} .= qq(<SPAN class="matched_region">) if ($flag_of_underline && $pos == $this->{did2region}{$did}{start});
 
-			    $snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{lc($rep)}, $surf;
+			    # 代表表記レベルでマッチしたらハイライト
+			    if ($opt->{debug}) {
+				$snippets{$sid} .= sprintf qq(<span style="%s">%s<SUB>%s</SUB></span>), $rep2style{lc($rep)}, $surf, $pos;
+			    } else {
+				$snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{lc($rep)}, $surf;
+			    }
 			    $highlighted = 1;
+
+			    # ハイライトされる単語まで線を引く
+			    $snippets{$sid} .= "</SPAN>" if ($flag_of_underline && $pos == $this->{did2region}{$did}{end});
 			}
 			last if ($highlighted > 0);
 		    }
 		}
-		# ハイライトされなかった場合 or ハイライトオプションがオフの場合
-		$snippets{$sid} .= $surf if ($highlighted < 0);
-		$wordcnt++;
 
-		# スニペットが N 単語を超えた終了
-		if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET}) {
+		# ハイライトされなかった場合 or ハイライトオプションがオフの場合
+		if ($opt->{debug}) {
+		    $snippets{$sid} .= sprintf ("$surf<SUB>%s</SUB>", $pos) if ($highlighted < 0);
+		} else {
+		    $snippets{$sid} .= $surf if ($highlighted < 0);
+		}
+		print $did . " " . $sid . " " . $flag_of_underline . " " . $this->{did2region}{$did}{start} . " " . $pos . " " . $this->{did2region}{$did}{end} . "<BR>\n" if ($opt->{debug});
+
+		$wordcnt++;
+		$pos++;
+
+		# スニペットが N 単語を超えたら終了（強調表示中の場合は除く）
+		if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET} && $this->{did2region}{$did}{end} < $pos) {
 		    $snippets{$sid} .= ($opt->{highlight}) ? " <b>...</b>" : "...";
 		    last;
 		}
 	    }
-	    # ★ 多重 foreach の脱出に label をつかう
-	    last if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET});
+
+	    if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET}) {
+		$snippets{$sid} .= "</SPAN>" if ($this->{did2region}{$did}{end} > $pos);
+		last;
+	    }
 	}
 
  	my $snippet;
@@ -278,7 +307,6 @@ sub get_snippets_for_each_did {
 		    $snippet .= " ... " unless ($snippet =~ /\.\.\.$/);
 		}
 	    }
-#	    $snippet .= ("($sid)  " . $snippets{$sid});
 	    $snippet .= $snippets{$sid};
 	    $prev_sid = $sid;
 	}
@@ -292,7 +320,11 @@ sub get_snippets_for_each_did {
 	}
 
 	$snippet =~ s/S\-ID:\d+//g;
-	$did2snippets{$did} = $snippet;
+	if ($opt->{debug}) {
+	    $did2snippets{$did} = $did . " " . $this->{did2region}{$did}{start} . " " . $this->{did2region}{$did}{end} . " " . $snippet;
+	} else {
+	    $did2snippets{$did} = $snippet;
+	}
     }
 
     return \%did2snippets;
