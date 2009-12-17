@@ -840,6 +840,9 @@ sub filter_by_NEAR_constraint {
 	    # 語順を考慮する場合は、常にqid=0からチェックしなければならない
 	    next if ($qid != 0 && $keep_order);
 
+	    # 起点となるqidのposを登録
+	    push (@{$qid_buf{$qid}}, $pos);
+
 	    my $prev_qid = $qid;
 	    push (@{$qid_buf{$serialized_poslist[$i]->{qid}}}, $pos);
 	    for (my $j = $i + 1; $j < $size_of_serialized_poslist; $j++) {
@@ -854,8 +857,8 @@ sub filter_by_NEAR_constraint {
 			    $prev_qid = $serialized_poslist[$j]->{qid};
 			}
 		    }
-		    push (@{$qid_buf{$serialized_poslist[$i]->{qid}}}, $pos); # 実は要らないかも知れない
 		    push (@{$qid_buf{$serialized_poslist[$j]->{qid}}}, $serialized_poslist[$j]->{pos});
+		    last if (scalar(keys %qid_buf) > $q_num - 1);
 		} else {
 		    # 指定された近接の範囲を超えた
 		    last;
