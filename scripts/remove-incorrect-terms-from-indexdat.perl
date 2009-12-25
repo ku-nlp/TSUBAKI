@@ -7,6 +7,7 @@ use utf8;
 use Getopt::Long;
 use CDB_Reader;
 use CDB_Writer;
+use Encode;
 
 my (%opt);
 GetOptions(\%opt, 'idxdat=s', 'termdb=s', 'type=s', 'anchor');
@@ -67,6 +68,7 @@ while (read(IDXDAT, $buf, 1)) {
 	read (IDXDAT, $buf, $poss_size + $scores_size);
 	$data .= $buf;
 
+	$term = decode ('utf8', $term);
 	if ($termdb->get($term)) {
 	    print OUTDAT $data;
 	    $offset->add($term, $byte);
