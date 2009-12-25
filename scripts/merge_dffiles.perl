@@ -21,7 +21,7 @@ GetOptions(\%opt, 'z', 'dpnd_th=s', 'syngraph_dpnd_th=s');
 $opt{n} = 0 unless ($opt{n});
 $opt{th} = 0 unless ($opt{th});
 $opt{syngraph_dpnd_th} = 9 unless ($opt{syngraph_dpnd_th});
-$opt{dpnd_th} = 1 unless ($opt{dpnd_th});
+$opt{dpnd_th} = 0 unless ($opt{dpnd_th});
 $opt{numerical} = 1 if (!$opt{numerical} && !$opt{string});
 
 # ファイルをオープンする
