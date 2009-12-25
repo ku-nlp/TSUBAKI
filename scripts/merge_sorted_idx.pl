@@ -11,6 +11,7 @@ use encoding 'utf8';
 use Encode;
 use Getopt::Long;
 use FileHandle;
+use PerlIO::gzip;
 
 my (%opt);
 GetOptions(\%opt, 'dir=s', 'suffix=s', 'z');
@@ -40,7 +41,7 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
 
     $FH[$FILE_NUM] = new FileHandle;
     if ($opt{z}) {
-	open($FH[$FILE_NUM], "zcat $opt{dir}/$ftmp |") || die "$!\n";
+	open($FH[$FILE_NUM], '<:gzip', "$opt{dir}/$ftmp") || die "$!\n";
 	binmode($FH[$FILE_NUM], ':utf8');
     } else {
 	open($FH[$FILE_NUM], '<:utf8', "$opt{dir}/$ftmp") || die "$!\n";
