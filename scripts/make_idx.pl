@@ -191,10 +191,10 @@ sub main {
 	while (<FILE>) {
 	    chop;
 	    my $file = $_;
-	    next unless ($file =~ /([^\/]+)\.xml/);
+	    next unless ($file =~ /([^\/]+?)(\.inlink)?\.xml/);
 	    my $fname = $1;
 	    my ($fid, $version) = split (/\-/, $fname);
-	    $opt{out} = sprintf (qq(%s/idxs/i%04d/i%06d), $opt{outdir_prefix}, $fid / 1000000, $fid / 1000);
+	    $opt{out} = sprintf (qq(%s/i%04d/i%07d), $opt{outdir_prefix}, $fid / 1000000, $fid / 1000);
 	    `mkdir -p $opt{out}` unless (-e $opt{out});
 	    &extract_indice_from_single_file($file, $fname);
 	}
@@ -486,10 +486,18 @@ sub extract_indice_from_single_file {
 
 	# 出力
 	if ($opt{compress}) {
-	    open(WRITER, "| gzip > $opt{out}/$fid.idx.gz");
+	    if ($opt{only_inlinks}) {
+		open(WRITER, "| gzip > $opt{out}/$fid.inlink.idx.gz");
+	    } else {
+		open(WRITER, "| gzip > $opt{out}/$fid.idx.gz");
+	    }
 	    binmode(WRITER, ':utf8');
 	} else {
-	    open(WRITER, '>:utf8', "$opt{out}/$fid.idx");
+	    if ($opt{only_inlinks}) {
+		open(WRITER, "| gzip > $opt{out}/$fid.inlink.idx");
+	    } else {
+		open(WRITER, '>:utf8', "$opt{out}/$fid.idx");
+	    }
 	}
 
 	# NTCIRで提供されている文書の場合は、$fidから先頭のNWを削除
