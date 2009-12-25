@@ -11,10 +11,10 @@ use Configure;
 my $CONFIG = Configure::get_instance();
 
 sub new {
-    my($class) = @_;
+    my($class, $opt) = @_;
 
     my $this;
-    my $rangefile = $CONFIG->{SID_RANGE};
+    my $rangefile = ($opt->{sid_range}) ? $opt->{sid_range} : $CONFIG->{SID_RANGE};
     open (F, $rangefile) or die "$!";
     while (<F>) {
 	chop;
