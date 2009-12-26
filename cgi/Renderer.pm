@@ -717,7 +717,6 @@ sub get_snippets {
     # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
     for (my $rank = $from; $rank < $end; $rank++) {
 	push(@docs, {
-# 	    did => sprintf("%09d", $result->[$rank]{did}),
  	    did => $result->[$rank]{did},
  	    start => $result->[$rank]{start},
  	    end => $result->[$rank]{end},
@@ -1518,6 +1517,19 @@ sub printSearchResultForAPICall {
 	    $writer->characters($url);
 	    $writer->endTag('Url');
 	}
+
+	if ($params->{Positions} > 0) {
+	    my @posbuf;
+	    foreach my $dat (@{$result->[$rank]{positions}}) {
+		push (@posbuf, $dat->{pos});
+	    }
+
+	    $writer->startTag('Positions');
+	    $writer->characters(join(",", @posbuf));
+	    $writer->endTag('Positions');
+	}
+
+
 
 	##################################################
 	# 論文検索用タグ
