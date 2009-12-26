@@ -88,7 +88,7 @@ sub search {
     my ($this, $query, $qid2df, $opt) = @_;
 
     # 検索
-    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $did2region) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use}, $opt->{LOGGER});
+    my ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $did2region_nearest, $did2positions) = $this->retrieve_documents($query, $qid2df, $opt->{flag_of_anchor_use}, $opt->{LOGGER});
 
     my $cal_method = 1;
     if ($query->{only_hitcount} > 0) {
@@ -150,14 +150,16 @@ sub search {
     # クエリが出現している範囲をセット
     foreach my $doc (@$doc_list) {
 	my $did = $doc->{did};
-	if (exists $did2region->{$did}) {
-	    $doc->{start} = $did2region->{$did}{start};
-	    $doc->{end} = $did2region->{$did}{end};
-	    $doc->{pos2qid} = $did2region->{$did}{pos2qid};
+	if (exists $did2region_nearest->{$did}) {
+	    $doc->{start} = $did2region_nearest->{$did}{start};
+	    $doc->{end} = $did2region_nearest->{$did}{end};
+	    $doc->{pos2qid} = $did2region_nearest->{$did}{pos2qid};
+	    $doc->{positions} = $did2positions->{$did};
 	} else {
 	    $doc->{start} = -1;
 	    $doc->{end} = -1;
 	    $doc->{pos2qid} = ();
+	    $doc->{positions} = ();
 	}
     }
     $opt->{LOGGER}->setTimeAs('region_setting', '%.3f');
@@ -504,7 +506,8 @@ sub retrieve_documents {
     my $alldocs_dpnd = [];
     my $alldocs_word_anchor = [];
     my $alldocs_dpnd_anchor = [];
-    my $did2region = ();
+    my $did2region_nearest = ();
+    my $did2positions = ();
     my $doc_buff = {};
 
     $logger->clearTimer();
@@ -537,7 +540,7 @@ sub retrieve_documents {
 	# 近接制約の適用
 	if ($keyword->{near} > 0) {
 	    $requisite_docs_word = &intersect($requisite_docs_word, {verbose => $this->{verbose}});
-	    ($requisite_docs_word, $did2region) = $this->filter_by_NEAR_constraint($requisite_docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
+	    ($requisite_docs_word, $did2region_nearest, $did2positions) = $this->filter_by_NEAR_constraint($requisite_docs_word, $keyword->{near}, $keyword->{sentence_flag}, $keyword->{keep_order});
 	}
 	$logger->setTimeAs('near_condition', '%.3f');
 
@@ -624,7 +627,7 @@ sub retrieve_documents {
     $logger->setTimeAs('logical_condition', '%.3f');
 
 
-    return ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $did2region);
+    return ($alldocs_word, $alldocs_dpnd, $alldocs_word_anchor, $alldocs_dpnd_anchor, $did2region_nearest, $did2positions);
 }
 
 # 配列の配列を受け取り OR をとる (配列の配列をマージして単一の配列にする)
@@ -758,7 +761,8 @@ sub filter_by_NEAR_constraint {
     # 単語の（クエリ中での）出現順序でソート
     @{$docs} = sort{$a->[0]{qid_freq}[0]->{qid} <=> $b->[0]{qid_freq}[0]->{qid}} @{$docs};
 
-    my %did2region = ();
+    my %did2positions = ();
+    my %did2region_nearest = ();
     for (my $d = 0; $d < scalar(@{$docs->[0]}); $d++) {
 	my $did = $docs->[0][$d]->{did};
 
@@ -830,8 +834,10 @@ sub filter_by_NEAR_constraint {
 
 	#  2. 各単語が$near語以内に現れているかどうかチェック
 	my $flag = -1;
-	# タイトルにマッチしている可能性があるので、重要文の領域としては$NUM_OF_CHARS_IN_HEADER語以降を返す
-	my $NUM_OF_CHARS_IN_HEADER = 100;
+
+	# 各単語が出現している場所を保存（クラスタリング用）
+	push(@{$did2positions{$did}}, @serialized_poslist);
+
 	for (my $i = 0, my $size_of_serialized_poslist = scalar(@serialized_poslist); $i < $size_of_serialized_poslist; $i++) {
 	    my %qid_buf = ();
 	    my $pos = $serialized_poslist[$i]->{pos};
@@ -874,21 +880,20 @@ sub filter_by_NEAR_constraint {
 		}
 
 		my @sorted_pos = sort {$a <=> $b} keys %posbuf;
-		if (exists $did2region{$did}){
+		# スニペット用にもっとも密集している領域を保存
+		if (exists $did2region_nearest{$did}){
 		    my $region_new = $sorted_pos[-1] - $sorted_pos[0];
-		    my $region_old = $did2region{$did}->{end} - $did2region{$did}->{start};
+		    my $region_old = $did2region_nearest{$did}->{end} - $did2region_nearest{$did}->{start};
 		    if ($region_old >= $region_new) {
-#			print "($did2region{$did}->{end}, $did2region{$did}->{start}) [$region_old] -> ($sorted_pos[-1] , $sorted_pos[0]) [$region_new]\n" if ($did =~ /21456189/);
-			$did2region{$did}->{start} = $sorted_pos[0];
-			$did2region{$did}->{end} = $sorted_pos[-1];
-			$did2region{$did}->{pos2qid} = \%posbuf;
+			$did2region_nearest{$did}->{start} = $sorted_pos[0];
+			$did2region_nearest{$did}->{end} = $sorted_pos[-1];
+			$did2region_nearest{$did}->{pos2qid} = \%posbuf;
 		    }
 		} else {
-		    $did2region{$did}->{start} = $sorted_pos[0];
-		    $did2region{$did}->{end} = $sorted_pos[-1];
-		    $did2region{$did}->{pos2qid} = \%posbuf;
+		    $did2region_nearest{$did}->{start} = $sorted_pos[0];
+		    $did2region_nearest{$did}->{end} = $sorted_pos[-1];
+		    $did2region_nearest{$did}->{pos2qid} = \%posbuf;
 		}
-#		last if ($did2region{$did}->{start} > $NUM_OF_CHARS_IN_HEADER);
 	    }
 	}
 
@@ -900,7 +905,7 @@ sub filter_by_NEAR_constraint {
 	}
     }
 
-    return (\@results, \%did2region);
+    return (\@results, \%did2region_nearest, \%did2positions);
 }
 
 sub filter_by_force_dpnd_constraint {
