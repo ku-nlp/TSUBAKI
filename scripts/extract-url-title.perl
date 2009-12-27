@@ -8,27 +8,49 @@ use strict;
 use utf8;
 use Getopt::Long;
 use PerlIO::gzip;
+use File::stat;
+use Error qw(:try);
 
 binmode(STDOUT, ':utf8');
 
 my (%opt);
-GetOptions(\%opt, 'dir=s', 'url', 'title', 'z');
+GetOptions(\%opt, 'files=s', 'url', 'title');
+
+if (!defined $opt{url} && !defined $opt{title}) {
+    $opt{url} = 1;
+    $opt{title} = 1;
+}
+
 
 main();
 
 sub main {
-    opendir(DIR, $opt{dir}) or die "$!";
-    foreach my $file (sort readdir(DIR)) {
-	next if ($file eq '.' || $file eq '..');
+    open (FILES, $opt{files}) or die "$!";
+    while (<FILES>) {
+	chop;
 
-	my ($name) = ($file =~ /(\d+)\.xml/);
-	my $fp = "$opt{dir}/$file";
-	if ($opt{z}) {
-	    open(READER, '<:gzip', $fp) or die "$!";
+	my $file = $_;
+	my ($name) = ($file =~ /((\-|\d)+)\.xml/);
+	try {
+	    if ($file =~ /\.gz$/) {
+		open(READER, '<:gzip', $file) or die "$!";
+	    } else {
+		open(READER, $file) or die "$!";
+	    }
+	    binmode(READER, ':utf8');
+	} catch Error with {
+	    my $err = shift;
+	    print STDERR "Exception at line ", $err->{-line} ," in ", $err->{-file}, " (", $err->{-text}, ")\n";
+	};
+
+
+	my $st = stat($file);
+	my $size = 0;
+	if ($st) {
+	    $size = $st->size;
 	} else {
-	    open(READER, $fp) or die "$!";
+	    print STDERR "$file cannot obtain file status.\n";
 	}
-	binmode(READER, ':utf8');
 
 	while (<READER>) {
 	    my $sf_tag = <READER>;
@@ -37,13 +59,11 @@ sub main {
 		if ($sf_tag =~ /Url="([^"]+)"/) {
 		    $url = $1;
 		} else {
-		    open(ERR, ">> $opt{dir}.err");
-		    print ERR "$file URL parse error.\n";
-		    close(ERR);
+		    print STDERR "$file URL parse error.\n";
 		}
 	    }
 
-	    my $title;
+	    my $title = 'none';
 	    if ($opt{title}) {
 		my $header_tag = <READER>;
 		unless ($header_tag =~ /Header/) {
@@ -51,21 +71,21 @@ sub main {
 		} else {
 		    my $title_tag = <READER>;
 		    my $rawstring_tag = <READER>;
-		    ($title) = ($rawstring_tag =~ /<RawString>([^<]+)<\/RawString>/);
+		    $title = $1 if ($rawstring_tag =~ /<RawString>([^<]+)<\/RawString>/);
 		}
 	    }
 
 	    if ($opt{url} && $opt{title}) {
-		print "$name $url $title\n";
+		print "$name $url $title $size\n";
 	    } elsif ($opt{url}) {
-		print "$name $url\n";
+		print "$name $url $size\n";
 	    } elsif ($opt{title}) {
-		print "$name $title\n";
+		print "$name $title $size\n";
 	    }
 	    last;
 	}
 	close(READER);
     }
-    closedir(DIR);
+    close (FILES);
 }
 
