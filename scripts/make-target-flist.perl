@@ -5,7 +5,7 @@ use utf8;
 use Getopt::Long;
 
 my (%opt);
-GetOptions(\%opt, 'outdir=s', 'suffix=s', 'split=s', 'xmlfiles=s', 'termfiles=s', 'rmfiles=s', 'verbose');
+GetOptions(\%opt, 'outdir=s', 'suffix=s', 'split=s', 'xmlfiles=s', 'termfiles=s', 'targetids=s', 'ignore_version', 'verbose');
 
 $opt{split} = 1 unless (defined $opt{split});
 $opt{outdir} = "." unless (defined $opt{outdir});
@@ -15,17 +15,32 @@ $opt{outdir} = "." unless (defined $opt{outdir});
 sub main {
     my $xmlfiles = &load($opt{xmlfiles});
     my $tmfiles  = &load($opt{termfiles});
-    my $rmfiles  = &load($opt{rmfiles});
+#   my $rmfiles  = &load($opt{rmfiles});
+
+    my %targetids = ();
+    open (FILE, $opt{targetids}) or die "$!";
+    while (<FILE>) {
+	chop;
+
+	my $fid = $_;
+
+	$fid =~ s/\-\d+$// if ($opt{ignore_version});
+	$targetids{$fid} = 1;
+    }
+    close (FILE);
 
 
     my @buf;
     my $count = 0;
     while (my ($fid, $file) = each %$xmlfiles) {
-	# rmfiles に登録されているのでインデキシングの対象外
-	if (exists $rmfiles->{$fid}) {
-	    print STDERR "[SKIP] " . $file . " is a rmfile.\n" if ($opt{verbose});
-	    next;
-	}
+# 	# rmfiles に登録されているのでインデキシングの対象外
+# 	if (exists $rmfiles->{$fid}) {
+# 	    print STDERR "[SKIP] " . $file . " is a rmfile.\n" if ($opt{verbose});
+# 	    next;
+# 	}
+
+	# インデキシングの対象ではないので対象外
+	next unless (exists $targetids{$fid});
 
 	# 既に term ファイルがあるので対象外
 	if (exists $tmfiles->{$fid}) {
@@ -73,6 +88,8 @@ sub get_fid {
 
     my ($fname) = ($file =~ /^.+\/([^\/]+)$/);
     my ($fid) = ($fname =~ /^((\d|\-)+)/);
+
+    $fid =~ s/\-\d+$// if ($opt{ignore_version});
 
     return $fid;
 }
