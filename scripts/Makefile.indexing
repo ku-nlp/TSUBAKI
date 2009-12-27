@@ -4,8 +4,8 @@ SHELL = sh
 CONFIG = ${HOME}/cvs/SearchEngine/conf/indexing.conf
 PERL = perl
 IDXID = 000
-HOST_FILE = /share09/home/skeiji/work/mkidx/090724/SearchEngine/scripts/hosts
-CDIR = /share09/home/skeiji/work/mkidx/090724/SearchEngine/scripts
+HOST_FILE = hosts
+CDIR = $(PWD)
 
 include $(CONFIG)
 
