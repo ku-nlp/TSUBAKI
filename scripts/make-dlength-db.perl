@@ -31,10 +31,10 @@ foreach my $fp (@ARGV) {
 
     while (<READER>) {
 	next if (index($_, '->') > 0);
-	next if (index($_, '*') > 0);
-	next if (index($_, '+') > 0);
-	next if ($_ =~ /s\d+/);
-	next if ($_ =~ /<[^>]+>/);
+	next unless (index($_, '*') > 0);
+# 	next if (index($_, '+') > 0);
+# 	next if ($_ =~ /s\d+/);
+# 	next if ($_ =~ /<[^>]+>/);
 
 	chop($_);
 	my ($word, @did_freqs) = split(' ', $_);
