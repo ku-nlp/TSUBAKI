@@ -11,7 +11,7 @@ use utf8;
 use Getopt::Long;
 use Encode;
 
-my (%opt); GetOptions(\%opt, 'dir=s', 'idxfiles=s', 'suffix=s', 'n=s', 'z', 'compress', 'verbose', 'offset=s');
+my (%opt); GetOptions(\%opt, 'dir=s', 'idxfiles=s', 'suffix=s', 'n=s', 'z', 'compress', 'verbose', 'offset=s', 'idx2did=s', 'ignore_version');
 
 # 単語IDの初期化
 my %freq;
@@ -63,25 +63,15 @@ elsif ($opt{idxfiles}) {
 
     # .idx ファイルに id を振る
     my %idx2did = ();
-    my $did = $opt{offset};
-    open (FILE, $opt{idxfiles}) or die "$!";
+    open (FILE, $opt{idx2did}) or die "$!";
     while (<FILE>) {
 	chop;
-	my $fp = $_;
-	my ($idxid) = ($fp =~ /([^\/]+)\.idx/);
-	$idx2did{$idxid} = sprintf ("%09d", $did++);
+	my ($idxid, $did) = split (/ /, $_);
+
+	$idxid =~ s/\-\d+$// if ($opt{ignore_version});
+	$idx2did{$idxid} = $did;
     }
     close (FILE);
-
-
-    # idx2did を出力
-    my ($dir) = ($opt{idxfiles} =~ /(.+)\/[^\/]+/);
-    open (WRITER, "> $dir/idx2did") or die "$!";
-    foreach my $idx (sort {$idx2did{$a} <=> $idx2did{$b}} keys %idx2did) {
-	print WRITER $idx . " " . $idx2did{$idx} . "\n";
-    }
-    close (WRITER);
-
 
     open (FILE, $opt{idxfiles}) or die "$!";
     while (<FILE>) {
@@ -171,11 +161,14 @@ sub ReadData
 
     my ($midashi, $etc) = split(/\s+/, $input);
     my ($did, $dinfo) = split(':', $etc);
+    $did =~ s/.link//;
 
     # did を変更
     if (defined $didmap) {
+	my $buf = $did;
 	$did = $didmap->{$did};
 	$etc = $did . ":" . $dinfo;
+	print STDERR "[WARNING] $buf does not have an internal ID!\n" unless (defined $did);
     }
 
     # 各単語IDの頻度を計数
