@@ -447,6 +447,7 @@ allocate_data: connect_node10
 ##########################
 
 mk_targetids: connect_node11
+	gxpc e touch $(TARGETIDS)
 	gxpc e find $(SF_DIR) | grep xml.gz$ | rev | cut -f 1 -d / | rev | cut -f 1 -d . | sort -n > $(TARGETIDS)
 
 
