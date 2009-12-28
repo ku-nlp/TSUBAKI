@@ -24,6 +24,7 @@ DIST_HOST = $(HOSTNAME)
 DIST_DIR = $(WORKSPACE)
 CONV_LIST = $(DIST_DIR)/conv.list
 SID_RANGE = $(DIST_DIR)/sid.range
+TARGETIDS = $(DATA_DIR)/targetids.next.round
 
 OPTIONS=-oldfiles $(DIST_DIR)/node2sids.cdb.keymap -newfiles $(NEWSIDS) -hosts $(HOST_FILE_OF_NEXT_ROUND) -num_of_files_per_host $(NUM_OF_FILES_PER_HOST) -sid_range $(SID_RANGE) -suffix $(NODE_SUFFIX)
 
@@ -34,7 +35,7 @@ realloc: collect_filepath make_convlist copy_data copy_targetids
 copy_targetids:
 	$(PERL) -I$(SCRIPT_DIR)/../cgi -I$(SCRIPT_DIR) $(SCRIPT_DIR)/lookup-host-by-sid.perl -sid_range $(SID_RANGE) -stdin < $(NEWSIDS) > $(NEWSIDS).w.hosts
 	for h in `cut -f 1 -d ' ' $(SID_RANGE)` ; do grep $$h $(NEWSIDS).w.hosts | cut -f 1 -d ' ' > $(NEWSIDS).$$h ; done
-	for h in `cut -f 1 -d ' ' $(SID_RANGE)` ; do scp $(NEWSIDS).$$h $$h:$(DATA_DIR)/targetids ; rm $(NEWSIDS).$$h ; done
+	for h in `cut -f 1 -d ' ' $(SID_RANGE)` ; do scp $(NEWSIDS).$$h $$h:$(TARGETIDS) ; rm $(NEWSIDS).$$h ; done
 	rm $(NEWSIDS).w.hosts
 
 # 新しいhost2sidに従い、標準フォーマットデータ、リンクデータ、タームファイルのコピー

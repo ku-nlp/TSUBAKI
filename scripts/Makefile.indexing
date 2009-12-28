@@ -28,7 +28,7 @@ LINK_TERM_FILES = $(workspace_mkidx)/link.termfiles
 
 RMFILES = $(idxdir)/rmfiles
 LOGFILE = $(workspace_mkidx)/logfile
-TARGETIDS = $(DATA_DIR)/targetids
+TARGETIDS = $(DATA_DIR)/targetids.next.round
 
 # mg_termfiles に関係した変数
 OFFSET = 0
