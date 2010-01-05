@@ -17,13 +17,16 @@ confdir=`echo $0 | xargs dirname`/../conf
 workspace=/tmp/$USER/cp.$USER
 distdir=/tmp/$USER/dist.$USER
 hostid=`echo $HOSTNAME | cut -f 1 -d .`
+opt=
 
-while getopts d:T: OPT
+while getopts d:T:R: OPT
 do
     case $OPT in
 	d)  distdir=$OPTARG
 	    ;;
 	T)  workspace=$OPTARG/cp.$USER
+	    ;;
+	R)  opt="-sid_range $OPTARG"
 	    ;;
     esac
 done
@@ -45,7 +48,7 @@ cd $datadir_prefix
 find $datadir_name/ -type f > $flist
 
 # SIDに対応するホスト名を求める
-perl -I$TSUBAKI_DIR/cgi -I$TSUBAKI_DIR/scripts $TSUBAKI_DIR/scripts/lookup-host-by-sid.perl -flist $flist | grep -v $hostid | grep -v none > $mapfile
+perl -I$TSUBAKI_DIR/cgi -I$TSUBAKI_DIR/scripts $TSUBAKI_DIR/scripts/lookup-host-by-sid.perl -flist $flist $opt | grep -v $hostid | grep -v none > $mapfile
 
 # 同じホストごとにデータをまとめる
 cpshell=$workspace/cp.sh
