@@ -58,7 +58,7 @@ construct: mk_termfiles mg_termfiles binarize mk_dfdb mk_url_title_db trim_idxda
 # インデックスデータを構築するターゲット（データ追加用）
 ########################################################
 
-append: mk_targetids mk_termfiles mg_termfiles binarize mk_url_title_db copy
+append: mk_targetids mk_termfiles mg_termfiles binarize mk_url_title_db trim_idxdat copy
 
 
 
