@@ -1,3 +1,73 @@
+2010-01-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: Copyright 部分の西暦を変更.
+
+	* cgi/State.pm: 古い LOCK_FILE を削除するように.
+
+2010-01-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/copy-data-to-host.sh: sid.range ファイルを指定できるように.
+
+	* scripts/Makefile.indexing: append ターゲットに trim_idxdat を追加.
+
+2009-12-28  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Makefile.indexing: mk_targetids を修正.
+
+	* scripts/Makefile.indexing: targetidsファイルをtouchするようにした.
+
+	* scripts/Makefile.indexing, scripts/Makefile.realloc:
+	TARGETIDSの初期値を変更.
+
+2009-12-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/extract-url-title.perl:
+	dirオプションを廃止し、filesオプションを追加.
+
+	* scripts/copy-data-to-host.sh: bug fixed.
+
+	* scripts/make-dlength-db.perl: 出現型タームを利用するように.
+
+	* scripts/make-target-flist.perl:
+	targetidsファイルを入力として受け取るように.
+
+	* scripts/merge_idx.pl: sidからtidへのマップを読み込むように.
+
+2009-12-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine.pm: 単語の出現位置を返すように.
+
+	* cgi/Renderer.pm: 単語の出現位置を出力するように.
+
+2009-12-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	only_inlinks が指定されているときの出力ファイル名を変更.
+
+	* scripts/merge_dffiles.perl: dpnd_thのデフォルトを1から0に変更
+
+	* scripts/merge_sorted_idx.pl: zcat ではなく PerlIO::gzip を使うように.
+
+	* scripts/remove-incorrect-terms-from-indexdat.perl:
+	CDB を引く前に decode するように.
+
+	* scripts/SidRange.pm: sid.range ファイルを指定できるように.
+
+	* scripts/Makefile.realloc: ターゲット copy_targetids を追加.
+
+2009-12-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	段落の先頭文情報を動的に生成するように, スニペットを生成する際、文の位置情報を埋め込むように.
+
+	* cgi/css/tsubaki.common.css: updated.
+
+	* cgi/SnippetMakerAgent.pm:
+	クエリ中の語が集まっている部分をハイライトするように.
+
+	* scripts/TsubakiEngine.pm:
+	近接のチェック処理を修正（各単語について出現位置を取得したらループを抜けるように）
+
 2009-12-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/RequestParser.pm:
