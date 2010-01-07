@@ -39,11 +39,13 @@ IDX2DID = $(workspace_mkidx)/idx2did
 IDXDAT = $(workspace_mgidx)/$(IDXID).idx.gz
 ANCHOR_IDXDAT = $(workspace_mgidx)/a$(IDXID).idx.gz
 
-
 # mk_url_title_db に関係した変数
 URL_TITLE_TXT = $(workspace_mkidx)/url.title.txt
 utildir = $(HOME)/cvs/Utils
 
+# allocate_data に関係した変数
+SID_RANGE = /tsubaki01/wisdom/sid.range
+WORKSPACE_ALLOC = $(workspace_alloc)
 
 
 
@@ -58,7 +60,7 @@ construct: mk_termfiles mg_termfiles binarize mk_dfdb mk_url_title_db trim_idxda
 # インデックスデータを構築するターゲット（データ追加用）
 ########################################################
 
-append: mk_targetids mk_termfiles mg_termfiles binarize mk_url_title_db trim_idxdat copy
+append: mk_targetids mk_termfiles mg_termfiles binarize mk_url_title_db trim_idxdat copy allocate_data
 
 
 
@@ -434,8 +436,10 @@ copy: connect_node9
 
 allocate_data: connect_node10
 	gxpc e mkdir -p /data2/work/$(USER)/tmp
-	gxpc e sh $(scriptdir)/copy-data-to-host.sh -d $(DATA_DIR) -T /data2/work/$(USER)/tmp $(SF_DIR)
-	gxpc e sh $(scriptdir)/copy-data-to-host.sh -d $(DATA_DIR) -T /data2/work/$(USER)/tmp $(TERM_DIR)
+	gxpc e sh $(scriptdir)/copy-data-to-host.sh -d $(DATA_DIR) -T $(WORKSPACE_ALLOC) -R $(SID_RANGE) $(SF_DIR)
+	gxpc e sh $(scriptdir)/copy-data-to-host.sh -d $(DATA_DIR) -T $(WORKSPACE_ALLOC) -R $(SID_RANGE) $(TERM_DIR)
+	gxpc e sh $(scriptdir)/copy-data-to-host.sh -d $(DATA_DIR) -T $(WORKSPACE_ALLOC) $(LINK_DATA_DIR)
+	gxpc e sh $(scriptdir)/copy-data-to-host.sh -d $(DATA_DIR) -T $(WORKSPACE_ALLOC) -R $(SID_RANGE) $(LINK_TERM_DIR)
 	gxpc quit
 
 
