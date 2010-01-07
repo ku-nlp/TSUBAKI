@@ -3,6 +3,8 @@ package State;
 use strict;
 use utf8;
 use Configure;
+use File::stat;
+use Data::Dumper;
 
 my $CONFIG = Configure::get_instance();
 
@@ -27,10 +29,8 @@ sub checkIn {
 
     my $count = 0;
     if (!symlink($CONFIG->{DUMY_LOCK_FILE}, $CONFIG->{LOCK_FILE})) {
-	require File::stat;
-
-	my $stats = stat($ARGV[0]);
-	my $diff = time - $stats->mtime;
+	my $stats = stat($CONFIG->{LOCK_FILE});
+	my $diff = time - $stats->mtime();
 
 	# 作成後300秒以上経過している場合は削除
 	if ($diff > 300) {
