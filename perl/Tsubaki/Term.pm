@@ -89,7 +89,7 @@ sub to_string {
 sub to_S_exp {
     my ($this, $space) = @_;
 
-    return sprintf("%s((%s %d %d))\n", $space, $this->{text}, $TYPE2INT{$this->{term_type}}, 10);
+    return sprintf("%s((%s %d %d %d))\n", $space, $this->{text}, $TYPE2INT{$this->{term_type}}, 10,(($this->{node_type} eq 'basic')? 1 : 0));
 }
 
 
