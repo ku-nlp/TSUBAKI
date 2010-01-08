@@ -5,7 +5,7 @@ use utf8;
 use Getopt::Long;
 
 my (%opt);
-GetOptions(\%opt, 'remove');
+GetOptions(\%opt, 'remove', 'printid');
 
 &main();
 
@@ -53,7 +53,13 @@ sub retrieve {
 			    unlink $file;
 			    print $file . " is removed.\n";
 			} else {
-			    print $file . " is a candidate.\n";
+			    if ($opt{printid}) {
+				my $basename = $buf->{$sid}{ver}{$version};
+				$basename =~ s/\.xml.gz$//;
+				print $basename . "\n";
+			    } else {
+				print $file . " is a candidate.\n";
+			    }
 			}
 		    }
 		}
