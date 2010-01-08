@@ -5,6 +5,7 @@ CONFIG = ${HOME}/cvs/SearchEngine/conf/indexing.conf
 PERL = perl
 IDXID = 000
 HOST_FILE = hosts
+USED_HOST_FILE = hosts.used
 CDIR = $(PWD)
 
 include $(CONFIG)
@@ -60,7 +61,7 @@ construct: mk_termfiles mg_termfiles binarize mk_dfdb mk_url_title_db trim_idxda
 # インデックスデータを構築するターゲット（データ追加用）
 ########################################################
 
-append: mk_targetids mk_termfiles mg_termfiles binarize mk_url_title_db trim_idxdat copy allocate_data
+append: mk_targetids mk_termfiles mg_termfiles binarize mk_url_title_db trim_idxdat copy allocate_data update_rmfile
 
 
 
@@ -457,6 +458,19 @@ mk_targetids: connect_node11
 
 
 
+###############
+# rmfile の更新
+###############
+
+update_rmfile: connect_node12
+	gxpc e touch $(RMFILES)
+	gxpc e "perl $(scriptdir)/remove-old-data.perl -printid $(SF_DIR) >> $(RMFILES)"
+	gxpc quit
+
+
+
+
+
 
 
 
@@ -565,6 +579,15 @@ connect_node11:
 	echo make connection
 	gxpc use $(ACCESS_METHOD) $$HOSTNAME iccc
 	gxpc explore --children_hard_limit 1000 -t $(HOST_FILE)
+	gxpc e "hostname | grep -v $(HOSTNAME)\\$$"
+	gxpc smask
+	echo "*** USED HOSTS ***"
+	gxpc e hostname
+
+connect_node12:
+	echo make connection
+	gxpc use $(ACCESS_METHOD) $$HOSTNAME iccc
+	gxpc explore --children_hard_limit 1000 -t $(USED_HOST_FILE)
 	gxpc e "hostname | grep -v $(HOSTNAME)\\$$"
 	gxpc smask
 	echo "*** USED HOSTS ***"
