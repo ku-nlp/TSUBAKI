@@ -179,9 +179,9 @@ sub to_S_exp {
 	    while (my ($k, $v) = each %{$this->{optionals}}) {
 		push (@buf, $v->to_S_exp());
 	    }
-	    $S_exp = sprintf ("(%s (%s))", $_S_exp, join (" ", @buf));
+	    $S_exp = sprintf ("(ROOT (%s (%s)))", $_S_exp, join (" ", @buf));
 	} else {
-	    $S_exp = sprintf ("(%s)", $_S_exp);
+	    $S_exp = sprintf ("(ROOT (%s))", $_S_exp);
 	}
     } else {
 	my $is_single_node = (!$this->{hasChild} && scalar(@{$this->{terms}}) < 2);
