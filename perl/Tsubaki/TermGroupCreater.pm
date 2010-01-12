@@ -18,6 +18,7 @@ sub create {
     }
 
     my ($terms, $optionals) = &_create (0, \@kihonkus, \@ids, undef, "");
+
     my $root = new Tsubaki::TermGroup (
 	-1,
 	undef,
@@ -76,16 +77,23 @@ sub _create {
 	    }
 	}
 
+	my $optional_flag = (defined $kihonku && $kihonku->fstring =~ /クエリ不要語/) ? 1 : 0;
 	my $term = new Tsubaki::TermGroup (
 	    $group_id,
 	    undef,
 	    \@synnodes,
 	    \@tagids,
 	    $children,
-	    $kihonku
-	    );
+	    $kihonku,
+	    {
+		optional_flag => $optional_flag
+	    });
 
-	push (@terms, $term);
+	if ($optional_flag) {
+	    $optionals{$term->{text}} = $term unless (defined ($optionals{$term->{text}}));
+	} else {
+	    push (@terms, $term);
+	}
 
 	# 係り受けを追加
 	my $indexer = new Indexer({ignore_yomi => 1});
@@ -98,7 +106,7 @@ sub _create {
 		    my $term = new Tsubaki::Term ({
 			    tid => sprintf ("%s-%s", $gid, $count++),
 			    text => sprintf ("%s->%s", $moto, $saki),
-			    term_type => 'dpnd',
+			    term_type => (($optional_flag) ? 'dpnd' : 'force_dpnd'),
 			    node_type => 'basic' });
 
 		    if ($optional_flag) {
