@@ -73,13 +73,13 @@ sub new {
 	next if (exists $alreadyPushedTexts{$text_wo_yomi});
 	$alreadyPushedTexts{$text_wo_yomi} = 1;
 
-	push (@{$this->{terms}}, new Tsubaki::Term ({
-		  tid => sprintf ("%s-%s", $gid, $cnt++),
-		  text => $text_wo_yomi,
-		  term_type => 'word',
-		  node_type => ($synnode eq $basic_node) ? 'basic' : 'syn'
-	      })
-	    );
+	my $term = new Tsubaki::Term ({
+	    tid => sprintf ("%s-%s", $gid, $cnt++),
+	    text => $text_wo_yomi,
+	    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
+	    node_type => ($synnode eq $basic_node) ? 'basic' : 'syn'
+				      });
+	push (@{$this->{terms}}, $term);
     }
 
     bless $this;
@@ -170,18 +170,22 @@ sub to_S_exp {
     my $S_exp;
     if ($this->{isRoot}) {
 	my $_S_exp;
+	my $num_of_children = 0;
 	foreach my $child (@{$this->{children}}) {
 	    $_S_exp .= $child->to_S_exp($space);
+	    $num_of_children++;
+	}
+	$_S_exp = sprintf ("(AND %s)", $_S_exp) if ($num_of_children > 1);
+
+	my @buf;
+	while (my ($k, $v) = each %{$this->{optionals}}) {
+	    push (@buf, $v->to_S_exp());
 	}
 
-	if (scalar(keys %{$this->{optionals}}) > 1) {
-	    my @buf;
-	    while (my ($k, $v) = each %{$this->{optionals}}) {
-		push (@buf, $v->to_S_exp());
-	    }
-	    $S_exp = sprintf ("(ROOT (%s (%s)))", $_S_exp, join (" ", @buf));
+	if (scalar(@buf)) {
+	    $S_exp = sprintf ("( (ROOT %s %s ) )", $_S_exp, join (" ", @buf));
 	} else {
-	    $S_exp = sprintf ("(ROOT (%s))", $_S_exp);
+	    $S_exp = sprintf ("( (ROOT %s) )", $_S_exp);
 	}
     } else {
 	my $is_single_node = (!$this->{hasChild} && scalar(@{$this->{terms}}) < 2);
