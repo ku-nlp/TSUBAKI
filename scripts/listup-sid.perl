@@ -5,7 +5,7 @@ use strict;
 use Getopt::Long;
 
 my (%opt);
-GetOptions(\%opt, 'rmfile=s', 'grmfile=s');
+GetOptions(\%opt, 'rmfile=s', 'grmfile=s', 'sid2tid=s');
 
 my %rmfiles = ();
 if (-e $opt{rmfile}) {
@@ -30,8 +30,27 @@ if (-e $opt{grmfile}) {
 &main();
 
 sub main {
-    foreach my $dir (@ARGV) {
-	&retrieve($dir);
+
+    if (-e $opt{sid2tid}) {
+	open (FILE, $opt{sid2tid}) or die "$!\n";
+	my @buf;
+	while (<FILE>) {
+	    chop;
+	    my ($sid, $tid) = split (/ /, $_);
+	    unless (exists $rmfiles{$sid}) {
+		push (@buf, $sid);
+	    }
+	}
+	close (FILE);
+
+	foreach my $sid (sort @buf) {
+	    print $sid . "\n";
+	}
+    }
+    else {
+	foreach my $dir (@ARGV) {
+	    &retrieve($dir);
+	}
     }
 }
 
