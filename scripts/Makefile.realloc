@@ -12,6 +12,7 @@ NUM_OF_FILES_PER_HOST = 1000000
 RMFILES = rmfiles
 
 IDX_DIR = $(DATA_DIR)/idxs
+SID2TID = $(IDX_DIR)/sid2tid
 SF_DIR = $(DATA_DIR)/xmls
 TERM_DIR = $(DATA_DIR)/terms
 LINK_DAT_DIR = $(DATA_DIR)/xmls.link
@@ -83,7 +84,7 @@ collect_filepath:
 	gxpc e "hostname | grep -v $$HOSTNAME"
 	gxpc smask
 	gxpc e mkdir $(WORKSPACE) 2> /dev/null
-	gxpc e 'perl $(SCRIPT_DIR)/listup-sid.perl -rmfile $(IDX_DIR)/rmfiles $(SF_DIR) | sort -n | awk "{print \""$$HOSTNAME":\"\$$0}" > $(WORKSPACE)/node2sids'
+	gxpc e 'perl $(SCRIPT_DIR)/listup-sid.perl -rmfile $(IDX_DIR)/rmfiles -sid2tid $(SID2TID) | awk "{print \""$$HOSTNAME":\"\$$0}" > $(WORKSPACE)/node2sids'
 	gxpc cd $$PWD
 
 	mkdir -p $(DIST_DIR) 2> /dev/null
@@ -98,3 +99,27 @@ collect_filepath:
 	cat $(DIST_DIR)/node2sids | rev | cut -f 1 -d / | rev | cut -f 2 -d ":" > $(DIST_DIR)/sids
 	touch $(DIST_DIR)/node2sids.cdb.keymap
 	paste $(DIST_DIR)/sids $(DIST_DIR)/node2sids | perl -I $(UTILS_DIR)/perl $(UTILS_DIR)/scripts/make-db.perl -dbname $(DIST_DIR)/node2sids.cdb -keymapfile node2sids.cdb.keymap -tab_delimiter
+
+
+# 現在のTSUBAKIで利用しているSIDを収集する
+collect_allsids:
+	gxpc use ssh $$HOSTNAME $(NODE_PREFIX)
+	gxpc explore --children_hard_limit 1000 -t $(HOST_FILE)
+	gxpc e "hostname | grep -v $$HOSTNAME"
+	gxpc smask
+	gxpc e mkdir $(WORKSPACE) 2> /dev/null
+	gxpc e 'perl $(SCRIPT_DIR)/listup-sid.perl -rmfile $(IDX_DIR)/rmfiles -sid2tid $(SID2TID) > $(WORKSPACE)/usedsids'
+	gxpc cd $$PWD
+
+	mkdir -p $(DIST_DIR) 2> /dev/null
+	rm -r $(DIST_DIR) 2> /dev/null
+	mkdir -p $(DIST_DIR) 2> /dev/null
+
+	gxpc e 'scp $(WORKSPACE)/usedsids $(DIST_HOST):$(DIST_DIR)/usedsids.$$HOSTNAME'
+	gxpc e rm $(WORKSPACE)/usedsids
+	gxpc e rmdir $(WORKSPACE)
+	gxpc quit
+
+	mkdir $(WORKSPACE)/tmp
+	sort -m -T $(WORKSPACE)/tmp $(WORKSPACE)/usedsids.* > $(WORKSPACE)/allsids
+	rm -r $(WORKSPACE)/tmp $(WORKSPACE)/usedsids.*
