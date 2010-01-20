@@ -807,7 +807,7 @@ sub makeIndexFromKNPResultObject {
     my @idx = ();
     foreach my $bnst ($result->bnst) {
 	foreach my $kihonku ($bnst->tag) {
-	    if (defined $kihonku->parent) {
+	    if (defined $kihonku->parent && !$option->{disable_dpnd}) {
 
 		# 並列句の処理
 		my $kakarimoto = $kihonku;
