@@ -207,7 +207,7 @@ binarize: connect_node5
 # DFデータベースの作成
 #######################
 
-mk_dfdb: connect_node5
+mk_dfdb: connect_node6
 	gxpc e "cp $(workspace_mgidx)/$(IDXID).idx.df.ORG $(workspace_mgidx)/$(IDXID).idx.df"
 	gxpc e "cat -n $(HOST_FILE) | grep \$$HOSTNAME | awk '{print \"mv $(workspace_mgidx)/$(IDXID).idx.df $(workspace_mgidx)/\"\$$1\".idx.df\"}' > $(workspace_mgidx)/mv.sh"
 	gxpc e sh $(workspace_mgidx)/mv.sh
