@@ -40,7 +40,7 @@ sub main {
 	    binmode(READER, ':utf8');
 	} catch Error with {
 	    my $err = shift;
-	    print STDERR "Exception at line ", $err->{-line} ," in ", $err->{-file}, " (", $err->{-text}, ")\n";
+	    print STDERR "Exception at line ", $err->{-line} ," in ", $err->{-file}, " (", $err->{-text}, " [$file])\n";
 	};
 
 
