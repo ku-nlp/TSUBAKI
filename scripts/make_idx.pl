@@ -424,7 +424,11 @@ sub extractIndices {
 	}
     }
     elsif ($opt{english}) {
-	$terms = $indexer->makeIndexFromEnglishData($annotation, \%opt);
+	if ($opt{scheme} eq 'CoNLL') {
+	    $terms = $indexer->makeIndexFromCoNLLFormat($annotation, \%opt);
+	} else {
+	    $terms = $indexer->makeIndexFromEnglishData($annotation, \%opt);
+	}
     }
     elsif ($opt{knp}) {
 	$terms = $indexer->makeIndexFromKNPResult($knp_result, \%opt);

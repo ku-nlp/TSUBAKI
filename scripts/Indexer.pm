@@ -294,7 +294,6 @@ sub makeIndexfromSynGraph {
 sub makeIndexFromEnglishData {
     my ($this, $result, $option) = @_;
 
-    my $pos = 0;
     my $gid = 0;
     my @terms = ();
     foreach my $line (split (/\n/, $result)) {
@@ -306,18 +305,46 @@ sub makeIndexFromEnglishData {
 	    $terms[-1]->{surf} = $midasi;
 	    $terms[-1]->{freq} = 1;
 	    $terms[-1]->{score} = 1;
-	    $terms[-1]->{pos} = $pos;
+	    $terms[-1]->{pos} = $this->{absolute_pos},
 	    $terms[-1]->{group_id} = $gid;
 	    $terms[-1]->{isContentWord} = 1;
 	    $terms[-1]->{isBasicNode} = 1;
 	}
-	$pos++;
+	$this->{absolute_pos}++;
 	$gid++;
     }
 
     return \@terms;
 }
 
+sub makeIndexFromCoNLLFormat {
+    my ($this, $result, $option) = @_;
+
+    my $gid = 0;
+    my @terms = ();
+
+    foreach my $line (split (/\n/, $result)) {
+	my @data = split (/\t/, $line);
+
+	my @midasis;
+	push (@midasis, $data[1] . "*");
+	push (@midasis, $data[2]);
+	foreach my $midasi (@midasis) {
+	    push(@terms, {midasi => $midasi});
+	    $terms[-1]->{surf} = $midasi;
+	    $terms[-1]->{freq} = 1;
+	    $terms[-1]->{score} = 1;
+	    $terms[-1]->{pos} = $this->{absolute_pos},
+	    $terms[-1]->{group_id} = $gid;
+	    $terms[-1]->{isContentWord} = 1;
+	    $terms[-1]->{isBasicNode} = 1;
+	}
+	$this->{absolute_pos}++;
+	$gid++;
+    }
+
+    return \@terms;
+}
 
 sub makeIndexFromKNPResult {
     my ($this, $result, $option) = @_;
