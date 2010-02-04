@@ -30,6 +30,7 @@ LINK_TERM_FILES = $(workspace_mkidx)/link.termfiles
 RMFILES = $(idxdir)/rmfiles
 LOGFILE = $(workspace_mkidx)/logfile
 TARGETIDS = $(DATA_DIR)/targetids.next.round
+REMOVEIDS = dumy
 
 # mg_termfiles に関係した変数
 OFFSET = 0
@@ -492,9 +493,11 @@ mk_targetids: connect_node11
 ###############
 
 update_rmfile: connect_node12
+	if [ -e $(REMOVEIDS) ]; then sh remove-sid.sh $(REMOVEIDS) ; fi
 	gxpc e touch $(RMFILES)
 	gxpc e "perl $(scriptdir)/remove-old-data.perl -printid $(SF_DIR) >> $(RMFILES)"
 	gxpc quit
+ 
 
 
 
