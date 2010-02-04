@@ -46,8 +46,10 @@ utildir = $(HOME)/cvs/Utils
 
 # allocate_data に関係した変数
 WORKSPACE_ALLOC = $(workspace_alloc)
-SID_RANGE = /tsubaki01/wisdom/sid.range
 SID_RANGE_NEW = $(workspace_alloc)/sid.range.new
+
+SID_RANGE = $(sid_range)
+SID_RANGE_BACKUP = $(sid_range_backup)
 
 
 
@@ -451,7 +453,7 @@ update_sidrange: connect_node13
 	gxpc e 'rm $(WORKSPACE_ALLOC)/sids.own $(WORKSPACE_ALLOC)/flist.w.host $(WORKSPACE_ALLOC)/flist'
 	gxpc quit
 
-	mv $(SID_RANGE) $(SID_RANGE).bak
+	mv $(SID_RANGE) $(SID_RANGE_BACKUP)
 	mv $(SID_RANGE_NEW) $(SID_RANGE)
 
 
