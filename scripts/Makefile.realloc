@@ -1,5 +1,7 @@
 # $Id$
 
+
+MAX_NUM_OF_TARGETIDS = 100000000
 DATA_DIR = /data2/work/wisdom/newsid
 NEWSIDS = newsids
 HOST_FILE = hosts
@@ -29,7 +31,12 @@ TARGETIDS = $(DATA_DIR)/targetids.next.round
 
 OPTIONS=-oldfiles $(DIST_DIR)/node2sids.cdb.keymap -newfiles $(NEWSIDS) -hosts $(HOST_FILE_OF_NEXT_ROUND) -num_of_files_per_host $(NUM_OF_FILES_PER_HOST) -sid_range $(SID_RANGE) -suffix $(NODE_SUFFIX)
 
-realloc: collect_filepath make_convlist copy_data copy_targetids
+realloc: init_check collect_filepath make_convlist copy_data copy_targetids
+
+
+
+init_check:
+	if [ `wc -l $(TARGETIDS) | cut -f 1 -d " "` -gt $(MAX_NUM_OF_TARGETIDS) ]; then echo the number of the given target ids is over $(MAX_NUM_OF_TARGETIDS) ; exit 2 ; fi
 
 
 # 次ラウンドで各ノードが管理することになるsid一覧をコピーする
