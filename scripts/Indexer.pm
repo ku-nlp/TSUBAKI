@@ -55,7 +55,9 @@ sub makeIndexfromSynGraph {
     my %lastBnstIds = ();
     my $NE_flag = undef;
     foreach my $line (split(/\n/, $syngraph)) {
-	if ($line =~ /^!! /) {
+	if ($line =~ /^\# /) {
+	    next;
+	} elsif ($line =~ /^!! /) {
 	    my ($dumy, $id, $kakari, $midasi) = split(/ /, $line);
 	    if ($kakari =~ /^(.+)(A|I|D|P)$/) {
 		$dpndInfo{$id}->{kakariType} = $2;
@@ -125,6 +127,7 @@ sub makeIndexfromSynGraph {
 		    grpId => $bnstId,
 		    fstring => $fstring,
 		    pos => $pos,
+		    _pos => $position,
 		    NE => $NE_flag,
 		    question_type => undef,
 		    absolute_pos => []};
@@ -225,6 +228,7 @@ sub makeIndexfromSynGraph {
 	    my $groupId = $synNode->{grpId};
 	    my $score = $synNode->{score};
 	    my $pos = $synNode->{pos};
+	    my $_pos = $synNode->{_pos};
 
 	    # ?の連続からなる単語は削除
 	    # next if ($synNode->{midasi} =~ /^\?+$/);
@@ -241,6 +245,7 @@ sub makeIndexfromSynGraph {
 	    $freq[-1]->{score} = $score;
 	    # push(@{$freq[-1]->{pos}}, $pos);
 	    $freq[-1]->{pos} = $pos;
+	    $freq[-1]->{_pos} = $_pos;
 	    $freq[-1]->{group_id} = $groupId;
 	    $freq[-1]->{midasi} = $synNode->{midasi};
 	    $freq[-1]->{isContentWord} = 1;
@@ -271,6 +276,7 @@ sub makeIndexfromSynGraph {
 		    $freq[-1]->{score} = $s;
 		    # push(@{$freq[-1]->{pos}}, $pos);
 		    $freq[-1]->{pos} = $pos;
+		    $freq[-1]->{_pos} = $_pos;
 		    $freq[-1]->{group_id} = "$groupId\/$kakariSakiNode->{grpId}";
 		    $freq[-1]->{midasi} = "$synNode->{midasi}->$kakariSakiNode->{midasi}";
 		    $freq[-1]->{isContentWord} = 1;
@@ -830,6 +836,7 @@ sub extractSynNodeTerms {
 sub makeIndexFromKNPResultObject {
     my ($this, $result, $option) = @_;
     my $pos = $this->{absolute_pos};
+    my $_pos = 0;
     my $gid = 0;
     my @idx = ();
     foreach my $bnst ($result->bnst) {
@@ -848,6 +855,7 @@ sub makeIndexFromKNPResultObject {
 		my $dpnd_idx = $this->get_dpnd_index($kakarimoto, $kakarisaki, $option);
 		foreach my $i (@$dpnd_idx) {
 		    $i->{pos} = $pos;
+		    $i->{_pos} = $_pos;
 		    $i->{absolute_pos} = $pos;
 		    $i->{isBasicNode} = 1;
 		    $i->{group_id} = $gid;
@@ -886,6 +894,7 @@ sub makeIndexFromKNPResultObject {
 		    $idx[-1]->{fstring} = $mrph->fstring;
 		    $idx[-1]->{surf} = $mrph->midasi;
 		    $idx[-1]->{pos} = $pos;
+		    $idx[-1]->{_pos} = $_pos;
 		    $idx[-1]->{NE} = 1 if ($mrph->fstring =~ /<NE:/);
 		    $idx[-1]->{absolute_pos} = $pos;
 		    $idx[-1]->{requisite} = 1;
@@ -893,6 +902,7 @@ sub makeIndexFromKNPResultObject {
 		}
 		$gid++;
 		$pos++;
+		$_pos++
 	    }
 	}
     }
@@ -904,7 +914,7 @@ sub normalize_rentai {
     my ($this, $midasi, $fstring) = @_;
 
     if ($midasi =~ /(a|v)$/) {
-	my ($daihyo) = ($fstring =~ /<品詞変更:.+?代表表記:(.+?)">/);
+	my ($daihyo) = ($fstring =~ /<品詞変更:.+?代表表記:(.+?)">/); #"
 	($daihyo) = ($fstring =~ /<代表表記変更:(.+?)>/) unless ($daihyo);
 	my ($daihyo_kanji, $daihyo_yomi) = split(/\//, $daihyo);
 	if ($daihyo =~ /^\p{Hiragana}+\/?$/) {
@@ -1078,7 +1088,6 @@ sub get_dpnd_index {
 ## 全角小文字アルファベット(utf8)を全角大文字アルファベットに変換(utf8)
 sub toLowerCase_utf8 {
     my($str) = @_;
-
     return lc($str);
 }
 
@@ -1139,7 +1148,7 @@ sub makeIndexfromSynGraph4Indexing {
 		my $tmp = join('>', sort {$a cmp $b} split('>', $features)) . '>' unless ($features eq '');
 
 		my $syn_node = {
-		    midasi => $synid . $features,
+		    midasi => lc($synid) . $features,
 		    synId => $synid,
 		    features => $features,
 		    score => $score,
@@ -1183,7 +1192,7 @@ sub makeIndexfromSynGraph4Indexing {
 		my $kakariSakiInfo = $dpndInfo{$kakarisakiID};
 		foreach my $kakariSakiNoKakaiSakiID (@{$kakariSakiInfo->{kakariSaki}}) {
 		    if ($kakariSakiNoKakaiSakiID eq '-1') {
-			push(@new_kakariSaki, $kakarisakiID);			
+			push(@new_kakariSaki, $kakarisakiID);
 		    } else {
 			push(@new_kakariSaki, $kakariSakiNoKakaiSakiID);
 		    }
@@ -1203,7 +1212,7 @@ sub makeIndexfromSynGraph4Indexing {
 	    my $pos =  $synNode->{absolute_pos};
 	    my $midasi = $synNode->{midasi};
 	    my $index = {
-		midasi => $midasi,
+		midasi => lc($midasi),
 		rawstring => $midasi,
 		group_id => $groupID,
 		score => $score,
@@ -1222,7 +1231,7 @@ sub makeIndexfromSynGraph4Indexing {
 		    next if ($kakariSakiNode->{with_yomi});
 
 		    my $index_dpnd = {
-			midasi => ($midasi . '->' . $kakariSakiNode->{midasi}),
+			midasi => lc($midasi . '->' . $kakariSakiNode->{midasi}),
 			rawstring => ($midasi . '->' . $kakariSakiNode->{midasi}),
 			group_id => ($groupID . '/' . $kakariSakiNode->{grpId}),
 			score => ($score * $kakariSakiNode->{score}),
