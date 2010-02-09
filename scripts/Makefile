@@ -13,13 +13,16 @@ host_file = hosts
 access_method = ssh
 
 
-start: init mk_taskfile_for_mkidx run_taskfile_for_mkidx mk_taskfile_for_mgidx run_taskfile_for_mgidx run_mkdfdb
+start: init mk_mapfile mk_taskfile_for_mkidx run_taskfile_for_mkidx mk_taskfile_for_mgidx run_taskfile_for_mgidx run_mkdfdb
 # start: mk_taskfile_for_mgidx run_taskfile_for_mgidx run_mkdfdb
 
 init: connect_node
 	gxpc e mkdir -p $(workspace_prefix) 2> /dev/null
 	gxpc quit
 	mkdir -p $(basedir) 2> /dev/null
+
+mk_mapfile:
+	sh $(scriptdir)/make-mapfile.sh $(SFLIST) > $(mapfile)
 
 run_mkdfdb:
 	ssh $(host_of_mkdfdb) 'rm -rf $(workspace_mkdfdb)/data 2> /dev/null'
