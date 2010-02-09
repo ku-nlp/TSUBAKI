@@ -95,6 +95,13 @@ $prefixOfBlockType{abstract}        = 'AB';
 $prefixOfBlockType{acknowledgement} = 'AK';
 $prefixOfBlockType{reference}       = 'RF';
 
+# KUHP
+$prefixOfBlockType{findings}        = 'FD';
+$prefixOfBlockType{order}           = 'OD';
+$prefixOfBlockType{imp}             = 'IP';
+
+
+
 # istvan tags ver.1
 my %prefixOfStringType;
 $prefixOfStringType{AIM}            = 'AM';
