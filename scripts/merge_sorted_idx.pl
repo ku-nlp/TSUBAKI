@@ -14,7 +14,7 @@ use FileHandle;
 use PerlIO::gzip;
 
 my (%opt);
-GetOptions(\%opt, 'dir=s', 'suffix=s', 'z');
+GetOptions(\%opt, 'dir=s', 'suffix=s', 'mapfile=s', 'z');
 
 # データのあるディレクトリを開く
 opendir (DIR, $opt{dir}) || die "$!\n";
@@ -26,6 +26,20 @@ opendir (DIR, $opt{dir}) || die "$!\n";
 #  最後に読み込んだ行のテキスト/頻度文字列(data) 
 # を持ち、常に見出し語でソートされている
 # ex.  ((0 あい "1:1 3:3 4:2") (2 あい "8:2 9:1") (1 あう "5:3 7:2")) ・・・
+
+
+my %fid2did = ();
+if ($opt{mapfile}) {
+    open (FILE, $opt{mapfile}) or die "$!";
+    while (<FILE>) {
+	chop;
+
+	my ($fid, $did) = split (/ /, $_);
+	$fid2did{$fid} = $did;
+    }
+    close (FILE);
+}
+
 
 # ファイルをオープンする
 my @FH;
@@ -58,7 +72,7 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
 	    print STDERR encode('utf8', $_) . "\n";
 	}
     }
-    $FILE_NUM++;  
+    $FILE_NUM++;
 }
 
 my @INDEX = sort {$a->{midasi} cmp $b->{midasi}} @tmp_INDEX;
@@ -76,9 +90,21 @@ while (@INDEX) {
     # 見出し語が変化した場合はbufを出力して、見出し語を変える
     else {
 	# 文書IDのソート
+	if ($opt{mapfile}) {
+	    my @buf2 = ();
+	    foreach my $doc (split(/ /, $buf->{data})) {
+		my ($fid, $string) = split (/:/, $doc);
+		push (@buf2, sprintf ("%s:%s", $fid2did{$fid}, $string)) if (exists $fid2did{$fid});
+	    }
+	    $buf->{data} = join (" ", @buf2);
+	}
+
 	$buf->{data} = join(' ', sort {$a <=> $b} (split(/ /, $buf->{data})));
 
-	print $buf->{midasi} . " " . $buf->{data} . "\n" if ($buf->{midasi});
+	if ($buf->{midasi}) {
+	    print $buf->{midasi} . " " . $buf->{data} . "\n";
+	}
+
 	$buf->{midasi} = $index->{midasi};
 	$buf->{data} = $index->{data};
     }
@@ -92,7 +118,7 @@ while (@INDEX) {
 	} else {
 	    $index->{midasi} = $1;
 	    $index->{data} = $2;
-	    
+
 	    my $i;
 	    for ($i = $#INDEX; $i >= 0; $i--) {
 		if (($index->{midasi} cmp $INDEX[$i]{midasi}) >= 0) {
@@ -107,6 +133,16 @@ while (@INDEX) {
 	}
     }
 }
+
+if ($opt{mapfile}) {
+    my @buf2 = ();
+    foreach my $doc (split(/ /, $buf->{data})) {
+	my ($fid, $string) = split (/:/, $doc);
+	push (@buf2, sprintf ("%s:%s", $fid2did{$fid}, $string)) if (exists $fid2did{$fid});
+    }
+    $buf->{data} = join (" ", @buf2);
+}
+
 print $buf->{midasi} . " " . $buf->{data} . "\n" if ($buf->{midasi});
 
 # ファイルをクローズする

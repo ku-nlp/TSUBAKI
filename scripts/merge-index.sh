@@ -27,6 +27,7 @@ then
 fi
 id=$1
 flist=$2
+mapfile=$3
 
 # 作業ディレクトリの作成
 mkdir -p $workspace 2> /dev/null
@@ -46,8 +47,8 @@ cd ..
 
 
 # ディスク上でマージ
-echo "perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz | gzip > $id.idx.gz"
-perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz | gzip > $id.idx.gz
+echo "perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz -mapfile $mapfile | gzip > $id.idx.gz"
+perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz -mapfile $mapfile | gzip > $id.idx.gz
 rm -fr $id
 
 
@@ -60,6 +61,7 @@ perl -I $scriptdir $scriptdir/binarize_idx.pl -z -quiet $fname $type
 # 文書頻度の取得
 echo "perl $scriptdir/idx2df.pl $id.idx.gz"
 perl $scriptdir/idx2df.pl $id.idx.gz
+gzip $id.idx.df
 
 # 文書長データベースの作成
 echo "perl $scriptdir/make-dlength-db.perl -z $id.idx.gz"
