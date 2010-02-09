@@ -59,6 +59,7 @@ GetOptions(\%opt,
 	   'timeout=s',
 	   'use_pm',
 	   'use_block_type',
+	   'ipsj',
 	   'verbose',
 	   'help');
 
@@ -73,25 +74,72 @@ $opt{scheme} = "SynGraph" unless ($opt{scheme});
 $opt{ignore_syn_dpnd} = 0 unless ($opt{ignore_syn_dpnd});
 
 
+###################################
 # BlockTypeとプレフィックスのマップ
+###################################
+
 my %prefixOfBlockType;
-$prefixOfBlockType{header} = 'HD';
-$prefixOfBlockType{footer} = 'FT';
-$prefixOfBlockType{link} = 'LK';
-$prefixOfBlockType{img} = 'IM';
-$prefixOfBlockType{form} = 'FM';
-$prefixOfBlockType{maintext} = 'MT';
-$prefixOfBlockType{unknown_block} = 'UB';
+$prefixOfBlockType{header}          = 'HD';
+$prefixOfBlockType{footer}          = 'FT';
+$prefixOfBlockType{link}            = 'LK';
+$prefixOfBlockType{img}             = 'IM';
+$prefixOfBlockType{form}            = 'FM';
+$prefixOfBlockType{maintext}        = 'MT';
+$prefixOfBlockType{unknown_block}   = 'UB';
+$prefixOfBlockType{title}           = 'TT';
+$prefixOfBlockType{keyword}         = 'KW';
+
+# 論文検索
+$prefixOfBlockType{author}          = 'AU';
+$prefixOfBlockType{abstract}        = 'AB';
+$prefixOfBlockType{acknowledgement} = 'AK';
+$prefixOfBlockType{reference}       = 'RF';
+
+# istvan tags ver.1
+my %prefixOfStringType;
+$prefixOfStringType{AIM}            = 'AM';
+$prefixOfStringType{BASE}           = 'BS';
+$prefixOfStringType{PROPOSAL}       = 'PP';
+$prefixOfStringType{PROBLEM}        = 'PB';
+
+# istvan tags ver.2
+$prefixOfStringType{CONTENT}        = 'CT';
+$prefixOfStringType{CONTEXT}        = 'CX';
+$prefixOfStringType{FOCUS}          = 'FC';
+$prefixOfStringType{RELBASE}        = 'RB';
+$prefixOfStringType{RESULT}         = 'RT';
 
 
 
-if (!$opt{title} && !$opt{keywords} && !$opt{description} && !$opt{inlinks} && !$opt{sentences}) {
+my @ISTVAN_TAGS = (
+		   'AIM',
+		   'BASE',
+		   'CONTENT',
+		   'CONTEXT',
+		   'FOCUS',
+		   'PROBLEM',
+		   'PROPOSAL',
+		   'RELBASE',
+		   'RESULT'
+		   );
+
+
+if (!$opt{title} && !$opt{keywords} && !$opt{description} && !$opt{inlinks} && !$opt{sentences} && !$opt{ipsj}) {
     # インデックス抽出対象が指定されていない場合は title, keywords, description, sentences を対象とする
     $opt{title} = 1;
     $opt{keywords} = 1;
     $opt{description} = 1;
     $opt{sentences} = 1;
 }
+
+if ($opt{ipsj}) {
+    $opt{title} = 1;
+    $opt{sentences} = 1;
+    $opt{keyword} = 1;
+    $opt{author} = 1;
+    $opt{abstract} = 1;
+}
+
 
 
 if (!$opt{title} && !$opt{keywords} && !$opt{description} && $opt{inlinks} && !$opt{sentences}) {
@@ -243,17 +291,27 @@ sub extract_indices_wo_pm {
     push(@buf, 'Description') if ($opt{description});
     push(@buf, 'InLink') if ($opt{inlinks});
     push(@buf, 'S') if ($opt{sentences});
+    push(@buf, 'Keywords') if ($opt{keyword});
+    push(@buf, 'Keyword') if ($opt{keyword});
+    push(@buf, 'Authors') if ($opt{author});
+    push(@buf, 'Author') if ($opt{author});
+    push(@buf, 'Abstract') if ($opt{abstract});
+
+
     my $pattern = join("|", @buf);
 
 
     # Title, Keywords, Description, Inlink には文IDがないため、-100000からカウントする
-    my $sid = -100000;
+    my $sid;
+    my $meta_sid = -100000;
     my $isIndexingTarget = 0;
     my $tagName;
     my $content;
     my %indices = ();
     my $rawstring;
     my %sid2blockType = ();
+    my %results_of_istvan = ();
+    my $blockType;
     LOOP:
     while (<READER>) {
 	last if ($_ =~ /<Text / && $opt{only_inlinks});
@@ -289,21 +347,38 @@ sub extract_indices_wo_pm {
 		}
 	    }
 
+	    # 領域判定結果の取得
+	    $blockType = 'unknown_block' unless ($opt{ipsj});
+	    if (/\<.*? BlockType="(.+?)"/) {
+		$blockType = $1;
+	    }
+
 	    # 文IDの取得
-	    if (/\<S.*? Id="(\d+)"/) {
+	    if (/\<S.*? Id="(\d+)"/ && $blockType ne 'abstract') {
 		print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if ($opt{verbose});
 		$sid = $1;
 	    }
-	    elsif (/\<(?:Title|InLink|Description|Keywords)/) {
-		$sid += 2;
+	    elsif (/\<(?:$pattern)/) {
+		$meta_sid += 2;
+		$sid = $meta_sid;
 		print STDERR "\rdir=$opt{in},file=$fid (Id=$sid)" if ($opt{verbose});
 	    }
 
-	    # 領域判定結果の取得
-	    my $blockType = 'unknown_block';
-	    if (/\<S.*? BlockType="(.+?)"/) {
-		$blockType = $1;
+
+	    # istvan's result を利用
+	    if ($opt{ipsj} && $opt{use_block_type}) {
+		foreach my $tag (@ISTVAN_TAGS) {
+		    if ($_ =~ /$tag=\"([^\"]+?)\"/) {
+			my $values = $1;
+			foreach my $value (split ("/", $values)) {
+			    my ($begin, $end) = ($value =~ /B:(\d+),E:(\d+)/);
+			    push (@{$results_of_istvan{$sid}{$tag}}, {begin => $begin, end => $end});
+			}
+		    }
+		}
 	    }
+
+
 	    $sid2blockType{$sid} = $blockType;
  	}
  	elsif (/(.*\<\/($pattern)\>)/o) {
@@ -338,8 +413,11 @@ sub extract_indices_wo_pm {
     close(READER);
 
 
+#    use Data::Dumper;
+#    print Dumper(\%results_of_istvan) . "\n";
+
     # 索引のマージ
-    return &merge_indices(\%indices, \%sid2blockType);
+    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan);
 }
 
 
@@ -580,24 +658,47 @@ sub extract_indices {
 }
 
 sub merge_indices {
-    my ($indices, $sid2blockType) = @_;
+    my ($indices, $sid2blockType, $results_of_istvan) = @_;
 
     # 索引のマージ
     my %ret;
     foreach my $sid (sort {$a <=> $b} keys %$indices) {
 	my $blockType = $prefixOfBlockType{$sid2blockType->{$sid}};
 	foreach my $index (@{$indices->{$sid}}) {
-	    my $midasi = ($opt{use_block_type}) ? sprintf ("%s:%s", $blockType, $index->{midasi}) : $index->{midasi};
-	    next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
 
-	    print $midasi . "\n" if ($opt{verbose});
-	    $ret{$midasi}->{sids}{$sid} = 1;
-	    if ($opt{knp} || $opt{syn} || $opt{english}) {
-		push(@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
-		$ret{$midasi}->{score} += $index->{score};
+	    # 領域判定結果に対応したタグ
+	    my @tags = ();
+	    if ($opt{use_block_type}) {
+		push (@tags, sprintf ("%s:", $blockType));
+		# 論文検索の場合は istvan さんの結果も利用する
+		if ($opt{ipsj}) {
+		    foreach my $type_of_istvan (keys %{$results_of_istvan->{$sid}}) {
+			my $annotation_data = $results_of_istvan->{$sid}{$type_of_istvan};
+			foreach my $data (@$annotation_data) {
+			    if ($data->{begin} <= $index->{_pos} && $index->{_pos} <= $data->{end}) {
+				push (@tags, sprintf ("%s:", $prefixOfStringType{$type_of_istvan}));
+			    }
+			}
+		    }
+		}
 	    } else {
-		push(@{$ret{$midasi}->{poss}}, @{$index->{absolute_pos}});
-		$ret{$midasi}->{freq} += $index->{freq};
+		push (@tags, "");
+	    }
+
+
+	    foreach my $tag (@tags) {
+		my $midasi = sprintf ("%s%s", $tag, $index->{midasi});
+		next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
+
+		print $midasi . "\n" if ($opt{verbose});
+		$ret{$midasi}->{sids}{$sid} = 1;
+		if ($opt{knp} || $opt{syn} || $opt{english}) {
+		    push(@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
+		    $ret{$midasi}->{score} += $index->{score};
+		} else {
+		    push(@{$ret{$midasi}->{poss}}, @{$index->{absolute_pos}});
+		    $ret{$midasi}->{freq} += $index->{freq};
+		}
 	    }
 	}
     }
