@@ -1,0 +1,63 @@
+# $Id$
+
+# インデックス作成に利用する設定ファイル
+# 作業用ディレクトリ、スクリプトのパスなどを指定
+
+########################################################
+# ★マークの付いている変数の値を環境によって変更すること
+########################################################
+
+# ★スクリプト, Perl module のパス
+# tsubakidirだけを設定すれば良い
+tsubakidir=${HOME}/work/ipsj/SearchEngine
+cgidir=${tsubakidir}/cgi
+scriptdir=${tsubakidir}/scripts
+
+# ★Utilへのパス
+utildir=${HOME}/work/ipsj/Utils/perl
+
+# ★インデックスデータを出力するノードとディレクトリ
+dist_host_of_idx=hiro000
+dist_dir_of_idx=/data/local/${USER}/tsubaki/idxs
+
+
+# インデックスデータを置くディレクトリ（NICT用）
+idxdir=/data2/work/${USER}/tsubaki/dat/idx
+aidxdir=/data2/work/${USER}/tsubaki/dat/aidx
+
+# ★作業用ディレクトリの指定
+# 基本的にはworkspace_prefixだけを指定すれば良い
+workspace_prefix=/data/local/${USER}/tsubaki
+workspace_mkidx=${workspace_prefix}/mkidx
+workspace_mgidx=${workspace_prefix}/mgidx
+workspace_binidx=${workspace_prefix}/binidx
+workspace_mkdb=${workspace_prefix}/mkdb
+workspace_mkdldb=${workspace_prefix}/mkdldb
+workspace_alloc=${workspace_prefix}/alloc_data
+
+# ★DF ファイルのマージを行うホストの指定（ローカルディスクの空き容量が豊富なマシンにすること, TSUBAKIが動作していないホストを指定すること）
+host_of_mkdfdb=hiro000
+workspace_mkdfdb=${workspace_prefix}/mkdfdb
+
+
+
+# mkidx で使用するメモリサイズの上限
+mem_size_for_mkidx=2097152
+
+# tasks ファイル
+taskfile_for_mkidx=${mkidx_dir}/tasks
+taskfile_for_mgidx=${mgidx_dir}/tasks
+
+# make-dfdb.sh make-index.sh merge-index.sh の起動時に source コマンドで読み込まれる rc ファイル
+# ★zsh でないユーザは要変更
+SHELL_RCFILE=${HOME}/.zshrc
+
+# tasksファイル等を置くディレクトリ
+basedir=${HOME}/work/tsubaki
+mkidx_dir=${basedir}/mkidx
+mgidx_dir=${basedir}/mgidx
+
+
+# SIDファイル関係（NICT用）
+sid_range=/tsubaki01/wisdom/sid.range
+sid_range_backup=/tsubaki01/wisdom/backup/sid.range.bak
