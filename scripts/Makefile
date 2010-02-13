@@ -59,7 +59,7 @@ run_taskfile_for_mgidx: connect_node2
 
 mk_taskfile_for_mkidx:
 	mkdir -p $(mkidx_dir) 2> /dev/null
-	for f in `cat $(SFLIST)` ; do echo sh $(scriptdir)/make-index.sh $(IPSJ) $(SCHEME) $$f ; done | awk '{print "task"NR, $$0}' > $(taskfile_for_mkidx)
+	for f in `cat $(SFLIST)` ; do echo sh $(scriptdir)/make-index.sh $(SCHEME) $(IPSJ) $$f ; done | awk '{print "task"NR, $$0}' > $(taskfile_for_mkidx)
 
 connect_node:
 	echo make connection
