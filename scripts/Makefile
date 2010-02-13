@@ -9,12 +9,17 @@ mapfile = ${HOME}/ipsj/data3/org/fid2did
 
 include $(CONFIG)
 
+
+# インデックスデータの出力先
+DIST_HOST_OF_IDX = $(dist_host_of_idx)
+DIST_DIR_OF_IDX  = $(dist_dir_of_idx)
+
 host_file = hosts
 access_method = ssh
 
 
 start: init mk_mapfile mk_taskfile_for_mkidx run_taskfile_for_mkidx mk_taskfile_for_mgidx run_taskfile_for_mgidx run_mkdfdb
-# start: mk_taskfile_for_mgidx run_taskfile_for_mgidx run_mkdfdb
+
 
 init: connect_node
 	gxpc e mkdir -p $(workspace_prefix) 2> /dev/null
@@ -39,8 +44,16 @@ run_taskfile_for_mgidx: connect_node2
 	gxpc e mkdir -p $(workspace_mgidx) 2> /dev/null
 	gxpc cd $(workspace_mgidx)
 	gxpc ep $(taskfile_for_mgidx)
-	gxpc e gzip *idx.df
+	gxpc e gzip *idx.df 2> /dev/null
+	gxpc e ls -d $(workspace_mgidx) > /dev/null 2> /dev/null
+	gxpc smask
+	gxpc cd $(workspace_prefix)
+	gxpc e 'tar czf $$HOSTNAME.tgz `echo $(workspace_mgidx) | rev | cut -f 1 -d \/ | rev`'
+	ssh $(DIST_HOST_OF_IDX) mkdir -p $(DIST_DIR_OF_IDX)
+	gxpc e 'scp $$HOSTNAME.tgz $(DIST_HOST_OF_IDX):$(DIST_DIR_OF_IDX)'
+	gxpc e 'rm $$HOSTNAME.tgz'
 	gxpc quit
+
 	mv status $(mgidx_dir)/status
 
 mk_taskfile_for_mkidx:
@@ -51,7 +64,7 @@ connect_node:
 	echo make connection
 	for h in `cat $(host_file) | cut -f 1 -d . | perl -pe 's/\d+\$$//' | sort -u` ; do gxpc use $(access_method) $$HOSTNAME $$h ; done
 	gxpc explore -t $(host_file)
-	gxpc e "hostname | grep -v $(HOSTNAME)\\$$"
+	gxpc e "hostname | grep -v $$HOSTNAME\\$$"
 	gxpc smask
 	echo "*** USED HOSTS ***"
 	gxpc e hostname
@@ -60,7 +73,7 @@ connect_node1:
 	echo make connection
 	for h in `cat $(host_file) | cut -f 1 -d . | perl -pe 's/\d+\$$//' | sort -u` ; do gxpc use $(access_method) $$HOSTNAME $$h ; done
 	gxpc explore -t $(host_file)
-	gxpc e "hostname | grep -v $(HOSTNAME)\\$$"
+	gxpc e "hostname | grep -v $$HOSTNAME\\$$"
 	gxpc smask
 	echo "*** USED HOSTS ***"
 	gxpc e hostname
@@ -69,7 +82,7 @@ connect_node2:
 	echo make connection
 	for h in `cat $(host_file) | cut -f 1 -d . | perl -pe 's/\d+\$$//' | sort -u` ; do gxpc use $(access_method) $$HOSTNAME $$h ; done
 	gxpc explore --children_hard_limit 1000 -t $(host_file)
-	gxpc e "hostname | grep -v $(HOSTNAME)\\$$"
+	gxpc e "hostname | grep -v $$HOSTNAME\\$$"
 	gxpc smask
 	echo "*** USED HOSTS ***"
 	gxpc e hostname
