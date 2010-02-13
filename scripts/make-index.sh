@@ -25,6 +25,14 @@ then
     shift
 fi
 
+# 論文検索かどうかのチェック
+IPSJ=
+if [ $2 = "-ipsj" ];
+then
+    IPSJ=$2
+    shift
+fi
+
 
 fp=$2
 id=`basename $fp | cut -f 2 -d 's' | cut -f 1 -d '.'`
@@ -53,7 +61,7 @@ touch $LOGFILE
 
 # ファイル単位でインデックスの抽出
 # SYNノードを含む係り受け関係は除外、5MBを越える標準フォーマットからは抽出しない
-command="perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z $inlinks -logfile $LOGFILE"
+command="perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z $inlinks -logfile $LOGFILE $IPSJ -use_block_type"
 echo $command
 until [ `tail -1 $LOGFILE | grep finish` ] ;
 do
