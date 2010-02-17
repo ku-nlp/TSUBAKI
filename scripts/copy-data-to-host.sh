@@ -18,8 +18,8 @@ workspace=/tmp/$USER/cp.$USER
 distdir=/tmp/$USER/dist.$USER
 hostid=`echo $HOSTNAME | cut -f 1 -d .`
 opt=
-
-while getopts d:T:R: OPT
+tgz_mode=0
+while getopts d:T:R:t OPT
 do
     case $OPT in
 	d)  distdir=$OPTARG
@@ -27,6 +27,8 @@ do
 	T)  workspace=$OPTARG/cp.$USER
 	    ;;
 	R)  opt="-sid_range $OPTARG"
+	    ;;
+	t)  tgz_mode=1
 	    ;;
     esac
 done
@@ -57,6 +59,7 @@ awk '{print "mkdir -p '$workspace'/"$2"/`dirname "$1"` ; ln -s '$datadir_prefix'
 cd $workspace
 cut -f 2 -d ' ' $mapfile | sort -u | xargs mkdir -p 2> /dev/null
 
+# $datadir_prefix以下にコピー対象となるファイルのシンボリックリンクを作成する
 cd $datadir_prefix
 sh $cpshell
 
@@ -70,15 +73,23 @@ do
     tgzf=${HOSTNAME}2${dir}.tgz
     host=$dir
 
-    cd $dir
-    tar czfh $workspace/$tgzf $datadir_name
-    cd ..
+    if [ $tgz_mode -eq 1 ]; then
+	# 転送するファイルをいったんtgzしてから送る
+	cd $dir
+	tar czfh $workspace/$tgzf $datadir_name
+	cd ..
 
-    ssh $host "mkdir -p $distdir 2> /dev/null"
-    scp $tgzf $host:$distdir
-    ssh $host "cd $distdir ; tar xzfk $tgzf 2> /dev/null"
-    ssh $host "rm -f $distdir/$tgzf"
-    rm -f $workspace/$tgzf
+ 	ssh $host "mkdir -p $distdir 2> /dev/null"
+ 	scp $tgzf $host:$distdir
+ 	ssh $host "cd $distdir ; tar xzfk $tgzf 2> /dev/null"
+ 	ssh $host "rm -f $distdir/$tgzf"
+ 	rm -f $workspace/$tgzf
+    else
+	# tgzファイルを生成せず、直接コピーする
+	cd $dir
+	tar cfh - $datadir_name | ssh $host "(cd $distdir && tar xfpk -)"
+	cd ..
+    fi
 done
 
 rm -rf $workspace
