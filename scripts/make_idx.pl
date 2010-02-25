@@ -237,7 +237,7 @@ sub main {
     }
 
     if ($opt{file}) {
-	die "Not xml file.\n" if ($opt{file} !~ /([^\/]+)\.xml/);
+	die "Not xml file.\n" if ($opt{file} !~ /([^\/]+?)(\.link)?\.xml/);
 	&extract_indice_from_single_file($opt{file}, $1);
     }
     elsif ($opt{infiles}) {
@@ -246,7 +246,7 @@ sub main {
 	while (<FILE>) {
 	    chop;
 	    my $file = $_;
-	    next unless ($file =~ /([^\/]+?)(\.inlink)?\.xml/);
+	    next unless ($file =~ /([^\/]+?)(\.link)?\.xml/);
 	    my $fname = $1;
 	    my ($fid, $version) = split (/\-/, $fname);
 	    $opt{out} = sprintf (qq(%s/i%04d/i%07d), $opt{outdir_prefix}, $fid / 1000000, $fid / 1000);
@@ -265,7 +265,7 @@ sub main {
 	    if (defined $opt{offset}) {
 		&extract_indice_from_single_file("$opt{in}/$file", sprintf ("%09d", $fid++));
 	    } else {
-		next unless ($file =~ /([^\/]+)\.xml/);
+		next unless ($file =~ /([^\/]+?)(\.link)?\.xml/);
 		&extract_indice_from_single_file("$opt{in}/$file", $1);
 	    }
 	}
@@ -576,14 +576,14 @@ sub extract_indice_from_single_file {
 	# 出力
 	if ($opt{compress}) {
 	    if ($opt{only_inlinks}) {
-		open(WRITER, "| gzip > $opt{out}/$fid.inlink.idx.gz");
+		open(WRITER, "| gzip > $opt{out}/$fid.link.idx.gz");
 	    } else {
 		open(WRITER, "| gzip > $opt{out}/$fid.idx.gz");
 	    }
 	    binmode(WRITER, ':utf8');
 	} else {
 	    if ($opt{only_inlinks}) {
-		open(WRITER, "| gzip > $opt{out}/$fid.inlink.idx");
+		open(WRITER, "| gzip > $opt{out}/$fid.link.idx");
 	    } else {
 		open(WRITER, '>:utf8', "$opt{out}/$fid.idx");
 	    }

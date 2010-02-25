@@ -28,14 +28,14 @@ opendir (DIR, $opt{dir}) || die "$!\n";
 # ex.  ((0 あい "1:1 3:3 4:2") (2 あい "8:2 9:1") (1 あう "5:3 7:2")) ・・・
 
 
-my %fid2did = ();
+my %sid2tid = ();
 if ($opt{mapfile}) {
     open (FILE, $opt{mapfile}) or die "$!";
     while (<FILE>) {
 	chop;
 
-	my ($fid, $did) = split (/ /, $_);
-	$fid2did{$fid} = $did;
+	my ($sid, $tid) = split (/ /, $_);
+	$sid2tid{$sid} = $tid;
     }
     close (FILE);
 }
@@ -94,7 +94,7 @@ while (@INDEX) {
 	    my @buf2 = ();
 	    foreach my $doc (split(/ /, $buf->{data})) {
 		my ($fid, $string) = split (/:/, $doc);
-		push (@buf2, sprintf ("%s:%s", $fid2did{$fid}, $string)) if (exists $fid2did{$fid});
+		push (@buf2, sprintf ("%s:%s", $sid2tid{$fid}, $string)) if (exists $sid2tid{$fid});
 	    }
 	    $buf->{data} = join (" ", @buf2);
 	}
@@ -138,7 +138,7 @@ if ($opt{mapfile}) {
     my @buf2 = ();
     foreach my $doc (split(/ /, $buf->{data})) {
 	my ($fid, $string) = split (/:/, $doc);
-	push (@buf2, sprintf ("%s:%s", $fid2did{$fid}, $string)) if (exists $fid2did{$fid});
+	push (@buf2, sprintf ("%s:%s", $sid2tid{$fid}, $string)) if (exists $sid2tid{$fid});
     }
     $buf->{data} = join (" ", @buf2);
 }

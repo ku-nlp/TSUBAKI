@@ -62,14 +62,14 @@ if ($opt{dir} && !$opt{idxfiles}) {
 elsif ($opt{idxfiles}) {
 
     # .idx ファイルに id を振る
-    my %idx2did = ();
+    my %sid2tid = ();
     open (FILE, $opt{idx2did}) or die "$!";
     while (<FILE>) {
 	chop;
-	my ($idxid, $did) = split (/ /, $_);
+	my ($sid, $tid) = split (/ /, $_);
 
-	$idxid =~ s/\-\d+$// if ($opt{ignore_version});
-	$idx2did{$idxid} = $did;
+	$sid =~ s/\-\d+$// if ($opt{ignore_version});
+	$sid2tid{$sid} = $tid;
     }
     close (FILE);
 
@@ -88,7 +88,7 @@ elsif ($opt{idxfiles}) {
 	$fcnt++;
 
 	while (<IDX_FILE>) {
-	    &ReadData($_, \%idx2did);
+	    &ReadData($_, \%sid2tid);
 	}
 	close IDX_FILE;
 
@@ -156,21 +156,21 @@ sub output_data {
 # データを読んで、各単語が出現するDocumentIDをマージ
 sub ReadData
 {
-    my ($input, $didmap) = @_;
+    my ($input, $sid2tid) = @_;
     chomp $input;
 
     my ($midashi, $etc) = split(/\s+/, $input);
-    my ($did, $dinfo) = split(':', $etc);
-    $did =~ s/.link//;
+    my ($sid, $dinfo) = split(':', $etc);
+#   $sid =~ s/.link//;
 
-    # did を変更
-    if (defined $didmap) {
-	my $buf = $did;
-	$did = $didmap->{$did};
-	$etc = $did . ":" . $dinfo;
-	print STDERR "[WARNING] $buf does not have an internal ID!\n" unless (defined $did);
+    # sid を変更
+    if (defined $sid2tid) {
+	my $buf = $sid;
+	$sid = $sid2tid->{$sid};
+	$etc = $sid . ":" . $dinfo;
+	print STDERR "[WARNING] $buf does not have an internal ID!\n" unless (defined $sid);
     }
 
     # 各単語IDの頻度を計数
-    $freq{$midashi}->{$did} = $etc;
+    $freq{$midashi}->{$sid} = $etc;
 }
