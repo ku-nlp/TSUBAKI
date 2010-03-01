@@ -263,32 +263,36 @@ sub print_query_verbose {
 }
 
 sub printJavascriptCode {
-    my ($canvasName, $query) = @_;
+    my ($canvasName, $query, $disable_css_loading_code) = @_;
 
-    print << "END_OF_HTML";
-    <script language="JavaScript">
-	var regexp = new RegExp("Gecko");
-    if (navigator.userAgent.match(regexp)) {
-	document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.gecko.css'>");
-    } else {
-	document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
+    unless ($disable_css_loading_code) {
+	print << "END_OF_HTML";
+	<script language="JavaScript">
+	    var regexp = new RegExp("Gecko");
+	if (navigator.userAgent.match(regexp)) {
+	    document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.gecko.css'>");
+	} else {
+	    document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
+	}
+	</script>
+END_OF_HTML
     }
 
-    </script>
+    print << "END_OF_HTML";
     <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
     <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
     <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
 
-    <script language="JavaScript">
+    <script language="JavaScript" type="text/javascript">
 END_OF_HTML
 
 print "var jg;\n";
     print "function init () {\n";
-    print "jg = new jsGraphics($canvasName);\n";
+    printf "jg = new jsGraphics('%s');\n", $canvasName;
 
     for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
 	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", $i;
-	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", $i, $i; 
+	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", $i, $i;
     }
     print "}\n";
 
@@ -303,12 +307,12 @@ print "var jg;\n";
 
 	print "var baroon = document.getElementById('baroon');\n";
 	print "baroon.style.display = 'block';\n";
-	print "baroon.style.left = x;";
-	print "baroon.style.top = y + 20;";
+	print "baroon.style.left = (x + 'px');";
+	print "baroon.style.top = ((y + 20) + 'px');";
 
 	print "var canvas = document.getElementById('canvas');\n";
-	print "canvas.style.width = $width;\n";
-	print "canvas.style.height = $height;\n";
+	print "canvas.style.width = $width + 'px';\n";
+	print "canvas.style.height = $height + 'px';\n";
 
 	print $jscode;
 	print "}\n";
