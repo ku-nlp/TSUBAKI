@@ -1,4 +1,60 @@
+2010-03-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm, cgi/api.cgi:
+	apiでクエリ解析結果描画用javascriptを返すように.
+
+2010-02-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl, scripts/merge_idx.pl, scripts/merge_sorted_idx.pl:
+	リンクファイルの名称変更に対応.
+
+2010-02-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/copy-data-to-host.sh:
+	tgzファイルを作らず、ファイルを直接コピーするように.
+
+2010-02-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Makefile:
+	make-index.sh実行時に-ipsjオプションを指定するように.
+
+	* conf/indexing.conf: コメントの追加.
+
+	* scripts/Makefile:
+	インデックスデータを指定されたノードに出力するように.
+
+	* scripts/make-index.sh:
+	デフォルトで領域情報を考慮するように, -ipsjオプションを追加.
+
+2010-02-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Makefile: mk_mapfile ターゲットを追加.
+
+	* scripts/make_idx.pl: kuhp用領域情報を追加.
+
+	* scripts/merge-index.sh, scripts/merge_sorted_idx.pl:
+	mapfile(sid->tid) を受け取るように.
+
+	* scripts/Indexer.pm:
+	見出しを lc するように. term に _pos(make_idx.plで利用) を追加.
+
+	* scripts/make_idx.pl:
+	論文サーチ用のタグをインデキシング時に考慮するように.
+
+2010-02-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Makefile.realloc:
+	次のラウンドで利用するsidの数をコマンド実行時にチェックするように.
+
+	* scripts/Makefile.indexing:
+	TSUBAKI更新時に削除ファイルリストを受け付けるように.
+
+	* scripts/Makefile.indexing, conf/indexing.conf:
+	sid.rangeのバックアップ先を設定ファイルに移行.
+
 2010-01-28  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/State.pm: statからlstatに変更.
 
 	* scripts/Indexer.pm, scripts/make_idx.pl: CoNLLのフォーマットに対応.
 
