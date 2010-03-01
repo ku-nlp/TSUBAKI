@@ -94,6 +94,7 @@ sub getDefaultValues {
     $params{sort_by_CR} = 0;
     $params{from_portal} = 1;
     $params{score_verbose} = 1;
+    $params{get_jscode_for_parse_result} = 0;
 
 
     # NICT用 TSUBAKI用スコアとページランクの値の内訳を表示

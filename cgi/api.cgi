@@ -1,3 +1,5 @@
+#!/share/usr-x86_64/bin/perl
+#!/share/usr/bin/perl
 #!/home/skeiji/local/bin/perl
 #!/share09/home/skeiji/local/bin/perl
 #!/usr/local/bin/perl
@@ -83,7 +85,8 @@ sub main {
     else {
 	# 1. 一文書に対する情報取得
 	# 2. 標準フォーマット、オリジナルページ取得
-	# 3. 検索結果取得
+	# 3. クエリの解析結果表示用HTMLコードの取得
+	# 4. 検索結果取得
 
 	my $cgi = new CGI();
 
@@ -104,7 +107,11 @@ sub main {
 	elsif ($fileType) {
 	    &provideDocumentData($cgi, $fileType);
 	}
-	# 3. 検索結果取得
+	# 3. クエリの解析結果表示用HTMLコードの取得
+	elsif (defined $cgi->param('get_jscode_for_parse_result')) {
+	    &provideQueryParseResult($cgi);
+	}
+	# 4. 検索結果取得
 	else {
 	    binmode(STDOUT, ':utf8');
 	    binmode(STDERR, ':utf8');
@@ -421,6 +428,28 @@ sub getCrawledDateFromSnippetServer {
     }
 
     return \%did2date;
+}
+
+sub provideQueryParseResult {
+    my ($cgi) = @_;
+
+    my $params = RequestParser::parseAPIRequest($cgi);
+
+    # クエリの値がないので終了
+    if (!defined $params->{query} && !defined $params->{site}) {
+	require Renderer;
+	Renderer::printErrorMessage($cgi, 'queryの値を指定して下さい。');
+	exit;
+    }
+
+
+    my $THIS_IS_API_CALL = 1;
+
+    print $cgi->header(-type => 'text/html', -charset => 'utf-8');
+
+    # 検索クエリの構造体を取得
+    my $query = RequestParser::parseQuery($params, new Logger($THIS_IS_API_CALL));
+    &Renderer::printJavascriptCode('canvas', $query, 1);
 }
 
 
