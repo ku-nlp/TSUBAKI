@@ -183,6 +183,20 @@ sub select_snippets {
 sub makeKWICForAPICall {
     my ($this, $opt) = @_;
 
+    if (defined $opt->{usedSIDs}) {
+	while (my ($did, $kwic) = each %{$this->{did2snippets}}) {
+	    if (exists $opt->{usedSIDs}{$did}) {
+		my @buf;
+		foreach my $e (@$kwic) {
+		    my $sid = $e->{sid};
+		    next unless (exists $opt->{usedSIDs}{$did}{$sid});
+
+		    push(@buf, $e);
+		}
+		$this->{did2snippets}{$did} = \@buf;
+	    }
+	}
+    }
     return $this->{did2snippets};
 }
 

@@ -1,6 +1,3 @@
-#!/share/usr-x86_64/bin/perl
-#!/share/usr/bin/perl
-#!/home/skeiji/local/bin/perl
 #!/share09/home/skeiji/local/bin/perl
 #!/usr/local/bin/perl
 
@@ -74,9 +71,9 @@ sub main {
 
 	# 遅延コンストラクタ呼び出し（$ENVの値を書き換えるため）
 	my $cgi = new CGI();
-	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
-
 	my $results = &getRequestItems($queryString, $requestItems, $dids, $sids, $opt);
+
+	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
 
 	my $renderer = new Renderer();
 	$renderer->printRequestResult($dids, $results, $requestItems, $opt);
@@ -100,8 +97,9 @@ sub main {
 	    # binmode(STDOUT, ':utf8');
 	    # binmode(STDERR, ':utf8');
 
-	    my $highlight = $cgi->param('highlight');
-	    &provideDocumentInfo($cgi, $field, {highlight => $highlight});
+	    my $opt = RequestParser::parseAPIRequest($cgi);
+	    $opt->{discard_title} = 1;
+	    &provideDocumentInfo($cgi, $field, $opt);
 	}
 	# 2. 標準フォーマット、オリジナルページ取得
 	elsif ($fileType) {
@@ -143,7 +141,7 @@ sub getRequestItems {
 
 	my $sni_obj = new SnippetMakerAgent();
 	$sni_obj->create_snippets($query_obj, \@docs, $opt);
-	$did2snippets = ($opt->{kwic}) ? $sni_obj->makeKWICForAPICall() : $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}, usedSIDs => $sids});
+	$did2snippets = ($opt->{kwic}) ? $sni_obj->makeKWICForAPICall({usedSIDs => $sids}) : $sni_obj->get_snippets_for_each_did($query_obj, {highlight => $opt->{highlight}, usedSIDs => $sids});
     }
 
     my $searcher = new Searcher();
@@ -200,14 +198,14 @@ sub provideDocumentInfo {
 	$requestItems{$ri} = 1;
     }
 
-    my $did = $cgi->param('id');
+    my $did = $opt->{id};
     if ($did eq '') {
 	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
 	print "パラメータidの値が必要です。\n";
 	exit(1);
     }
 
-    my $queryString = $cgi->param('query');
+    my $queryString = $opt->{query};
     if (exists $requestItems{'Snippet'}) {
 	if ($queryString eq '') {
 	    print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
@@ -216,13 +214,13 @@ sub provideDocumentInfo {
 	}
     }
     my %sids = ();
-    foreach my $sid (split (",", $cgi->param('Sids'))){
+    foreach my $sid (split (",", $opt->{Sids})){
 	$sids{$did}->{$sid} = 1;
     }
 
+    print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
     my $results = &getRequestItems($queryString, \%requestItems, [$did], \%sids, $opt);
 
-    print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
     my $renderer = new Renderer();
     $renderer->printRequestResult([$did], $results, \%requestItems, $opt);
 }
