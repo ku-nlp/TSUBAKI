@@ -38,6 +38,7 @@ sub extract_sentences_from_ID {
 #	    $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
 	}
     }
+
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
 }
 
@@ -395,10 +396,13 @@ sub extract_sentences_from_content_for_kwic {
 		}
 	    }
 
+	    print $opt->{kwic_window_size}. "\n";
+
 	    # ソート用に逆右コンテキストを取得する
 	    my $InvertedContextL = reverse(join("", @contextsL));
 	    push(@sbuf, {title => $title->{rawstring},
 			 rawstring => $s->{rawstring},
+			 sid => $s->{id},
 			 contextR => join('', @contextsR),
 			 contextL => join('', @contextsL),
 			 contextsR => \@contextsR,
