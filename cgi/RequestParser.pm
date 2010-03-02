@@ -83,6 +83,9 @@ sub getDefaultValues {
     $params{use_of_huzokugo_for_kwic} = 0;
     $params{use_of_negation_for_kwic} = 1;
     $params{serverLog} = 0;
+    $params{field} = "";
+    $params{id} = -1;
+    $params{Sids} = "";
 
 
     # その他
