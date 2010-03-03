@@ -448,6 +448,26 @@ sub provideQueryParseResult {
     # 検索クエリの構造体を取得
     my $query = RequestParser::parseQuery($params, new Logger($THIS_IS_API_CALL));
     &Renderer::printJavascriptCode('canvas', $query, 1);
+    my $base_url = $CONFIG->{TSUBAKI_BASE_URL};
+    print << "END_OF_HTML";
+<TABLE cellpadding="0" cellspacing="0" border="0" id="baroon" style="display: none; z-index: 10; position: absolute;">
+<TR>
+  <TD><IMG width="24" height="24" src="$base_url/image/curve-top-left.png"></TD>
+  <TD style="background-color:#ffffcc;"></TD>
+  <TD><IMG width="24" height="24" src="$base_url/image/curve-top-right.png"></TD>
+</TR>
+<TR>
+  <TD style="background-color:#ffffcc;"></TD>
+  <TD style="background-color:#ffffcc;" id="canvas"></TD>
+  <TD style="background-color:#ffffcc;"></TD>
+</TR>
+<TR>
+  <TD><IMG width="24" height="24" src="$base_url/image/curve-bottom-left.png"></TD>
+  <TD style="background-color:#ffffcc;"></TD>
+  <TD><IMG width="24" height="24" src="$base_url/image/curve-bottom-right.png"></TD>
+</TR>
+</TABLE>
+END_OF_HTML
 }
 
 
