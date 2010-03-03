@@ -1209,6 +1209,7 @@ sub _printIPSJSearchResult {
     $output .= qq(<SPAN style="font-size:small;">);
     $output .= sprintf qq(<A href="http://ci.nii.ac.jp/lognavi?name=nels&lang=jp&type=pdf&id=%s" target="_blank">[PDF]</A>&nbsp;&nbsp;\n), $result->{artid} if ($result->{artid});
     $output .= sprintf qq(<A href="javascript:void($rank);" onclick="toggle_ipsj_verbose_view('test1_$rank', 'test2_$rank', 'test3_$rank', 'test4_$rank', this, '%s', '%s');">[ABST・本文の詳細]</A>\n), "[ABST・本文の詳細]", "[元に戻す]" if ($abstAll);
+    $output .= sprintf qq(<FONT color="white">%s</FONT>), $result->{did};
     $output .= "</SPAN>";
 
     $output .= qq(</TD></TR>\n);
@@ -1529,6 +1530,14 @@ sub printSearchResultForAPICall {
 	    $writer->startTag('Positions');
 	    $writer->characters(join(",", @posbuf));
 	    $writer->endTag('Positions');
+
+	    $writer->startTag('Start');
+	    $writer->characters($page->{start});
+	    $writer->endTag('Start');
+
+	    $writer->startTag('End');
+	    $writer->characters($page->{end});
+	    $writer->endTag('End');
 	}
 
 
@@ -1545,6 +1554,8 @@ sub printSearchResultForAPICall {
 	    if ($params->{Author} > 0) {
 		$writer->startTag('Authors');
 		foreach my $author (split (/，/, $authors)) {
+		    next if ($author eq '');
+
 		    $writer->startTag('Author');
 		    $writer->characters($author);
 		    $writer->endTag('Author');
@@ -1587,9 +1598,11 @@ sub printSearchResultForAPICall {
 
 
 	    if ($params->{Page} > 0) {
-		$writer->startTag('Page');
-		$writer->characters(sprintf ("%s-%s", $spage, $epage));
-		$writer->endTag('Page');
+		if (defined $spage && defined $epage) {
+		    $writer->startTag('Page');
+		    $writer->characters(sprintf ("%s-%s", $spage, $epage));
+		    $writer->endTag('Page');
+		}
 	    }
 
 
