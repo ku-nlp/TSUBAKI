@@ -314,6 +314,8 @@ CACHED_HTML_PATH_TEMPLATE	/common04/wisdom/HTMLs/h%03d/h%05d/%09d.html.gz
 # index.cgiのアドレス（★要変更）
 INDEX_CGI			http://www3.crawl.kclab.jgn2.jp/wisdom-lb/tsubaki/index.cgi
 
+TSUBAKI_BASE_URL	http://www3.crawl.kclab.jgn2.jp/wisdom-lb/tsubaki
+
 # キャッシュページへのリンクを生成する際に用いるテンプレート
 CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
 

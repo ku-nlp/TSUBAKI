@@ -189,6 +189,8 @@ CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
 # index.cgiのアドレス（★要変更）
 INDEX_CGI	http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/tsubaki-develop/index.cgi
 
+TSUBAKI_BASE_URL	http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/tsubaki-develop
+
 # キャッシュページへのリンクを生成する際に用いるテンプレート
 CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
 
