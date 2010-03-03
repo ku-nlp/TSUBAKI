@@ -1241,7 +1241,12 @@ sub _printIPSJSearchResult {
 	}
     }
 
-    $output .= sprintf qq(<BLOCKQUOTE class="bib">%s; %s %s（%s）), $_authors, $result->{booktitle}, $result->{volume}, $result->{number} if ($result->{number});
+    $output .= sprintf qq(<BLOCKQUOTE class="bib">);
+    $output .= "$_authors;" if ($_authors);
+    $output .= "$result->{booktitle} " if ($result->{booktitle});
+    $output .= "$result->{volume} " if ($result->{volume});
+    $output .= "($result->{number})" if ($result->{number});
+
     $output .= sprintf qq(, %s), $result->{page} if ($result->{page});
     $output .= sprintf qq(, %s年), $result->{year} if ($result->{year} =~ /^\d\d\d\d$/);
     $output .= sprintf qq(</BLOCKQUOTE>\n);
