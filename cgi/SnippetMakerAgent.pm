@@ -229,6 +229,8 @@ sub get_snippets_for_each_did {
 	    foreach my $reps (@{$qk->{words}}) {
 		foreach my $rep (@$reps) {
 		    foreach my $string (split (/\+/, $rep->{string})) {
+			# 論文検索モードであれば、領域タグを削除する
+			$string =~ s/^[A-Z][A-Z]:// if ($CONFIG->{IS_IPSJ_MODE});
 			$rep2style{$string} = $rep->{stylesheet};
 		    }
 		}
