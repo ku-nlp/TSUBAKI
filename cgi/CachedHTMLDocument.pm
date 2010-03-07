@@ -235,6 +235,12 @@ sub convertTimeFormat {
 	$_month++;
     }
 
+
+    if ($_month > 12) {
+	$year++;
+	$_month = 1;
+    }
+
     return sprintf ("%04d年%d月%d日 %d時%d分%d秒", $year,$_month, $day, $hour, $min, $sec);
 }
 
@@ -257,6 +263,11 @@ sub convertTimeFormatFromGMT {
 	($day > 30 && $month =~ /04|07|09|11/)) {
 	$day = 1;
 	$month++;
+    }
+
+    if ($month > 12) {
+	$year++;
+	$month = 1;
     }
 
     return sprintf ("%04d年%d月%d日 %d時%d分%d秒", $year,$month, $day, $hour, $min, $sec);
