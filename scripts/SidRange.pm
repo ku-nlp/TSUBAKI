@@ -2,7 +2,7 @@ package SidRange;
 
 # $Id$
 
-# 標準フォーマットを管理しているホスト情報を管理するクラス
+# �W���t�H�[�}�b�g���Ǘ����Ă���z�X�g�����Ǘ�����N���X
 
 use strict;
 use utf8;
@@ -21,12 +21,25 @@ sub new {
 	my ($host, $sid) = split(/\s+/, $_);
 	last unless (defined $sid);
 
-	# 00000-99 改訂番号を削除
+
+	# 00000-99��99���폜
 	$sid =~ s/\-\d+$//g;
 
 	$this->{SID2HOST}{$sid} = $host;
     }
     close (F);
+
+    if (-f $opt->{sids_on_update_node}) {
+	open (F, $opt->{sids_on_update_node}) or die "$!";
+	while (<F>) {
+	    chop;
+	    my ($host, $sid) = split(/\s+/, $_);
+	    last unless (defined $sid);
+
+	    $this->{SID2HOST_FOR_UPDATE_NODE}{$sid} = $host;
+	}
+	close (F);
+    }
 
     bless $this;
 }
@@ -37,10 +50,12 @@ sub DESTROY {
 sub lookup {
     my ($this, $did) = @_;
 
-    # 00000-99 改訂番号を削除
+    my $host = $this->{SID2HOST_FOR_UPDATE_NODE}{$did};
+    return $host if (defined $host);
+
+    # 00000-99��99���폜
     $did =~ s/\-\d+$//g;
 
-    my $host = undef;
     my $found = 0;
     foreach my $sid (sort {$a <=> $b} keys %{$this->{SID2HOST}}) {
 	$host = $this->{SID2HOST}{$sid};
