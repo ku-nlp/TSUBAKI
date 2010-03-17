@@ -10,7 +10,7 @@ use SidRange;
 use Getopt::Long;
 
 my (%opt);
-GetOptions(\%opt, 'flist=s', 'stdin', 'save', 'sid_range=s');
+GetOptions(\%opt, 'flist=s', 'stdin', 'save', 'suffix=s', 'sid_range=s', 'sids_on_update_node=s');
 
 &main();
 
@@ -46,7 +46,12 @@ sub main {
 
 	if ($opt{save}) {
 	    while (my ($host, $dids) = each %buf) {
-		open (WRITER, sprintf ("> %s.remove-sid", $host));
+		if ($opt{suffix}) {
+		    open (WRITER, sprintf ("> %s.remove-sid.%s", $host, $opt{suffix}));
+		} else {
+		    open (WRITER, sprintf ("> %s.remove-sid", $host));
+		}
+
 		foreach my $did (@{$buf{$host}}) {
 		    print WRITER $did . "\n";
 		}
