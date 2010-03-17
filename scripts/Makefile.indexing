@@ -492,11 +492,15 @@ mk_targetids: connect_node11
 # rmfile ¤Î¹¹¿·
 ###############
 
-update_rmfile: connect_node12
-	if [ -e $(REMOVEIDS) ]; then sh remove-sid.sh $(REMOVEIDS) ; fi
+update_rmfile: _update_rmfile connect_node12
 	gxpc e touch $(RMFILES)
 	gxpc e "perl $(scriptdir)/remove-old-data.perl -printid $(SF_DIR) >> $(RMFILES)"
+	gxpc e hostname
 	gxpc quit
+
+_update_rmfile:
+	if [ -e $(REMOVEIDS) ]; then sh remove-sid.sh -h $(HOST_FILE) -p iccc -c $(CONFIG) -d $(SF_DIR) $(REMOVEIDS) ; fi
+
  
 
 
