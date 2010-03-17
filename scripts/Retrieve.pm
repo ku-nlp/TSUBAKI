@@ -153,16 +153,17 @@ sub search_syngraph_test_for_new_format {
 
 		# 場所情報をインデックスデータから読み込む
  		read($this->{IN}[$f_num], $buf, $poss_size);
-		my @posdata = unpack('L*', $buf);
 
 		my $offset4positions = $total_byte;
 		my $offset4scores = $total_byte + $poss_size;
 		my $index4positions = 0;
 		my $pos = 0;
+		my $begin = 0;
 		foreach my $did (@dids) {
 
-		    my $num_of_positions = $posdata[$index4positions];
-		    $index4positions += (1 + $num_of_positions);
+ 		    my $_buf = substr($buf, $begin, 4);
+ 		    my $num_of_positions = unpack('L', $_buf);
+ 		    $begin += (($num_of_positions + 1)* 4);
 
 		    # 先のtermで検索された文書であれば登録（AND検索時）
 		    if (exists $already_retrieved_docs->{$did}) {
@@ -365,16 +366,17 @@ sub search_syngraph_test_for_new_format_with_add_flag {
 
 		# 場所情報をインデックスデータから読み込む
  		read($this->{IN}[$f_num], $buf, $poss_size);
-		my @posdata = unpack('L*', $buf);
 
 		my $offset4positions = $total_byte;
 		my $offset4scores = $total_byte + $poss_size;
 		my $index4positions = 0;
 		my $pos = 0;
+		my $begin = 0;
 		foreach my $did (@dids) {
 
-		    my $num_of_positions = $posdata[$index4positions];
-		    $index4positions += (1 + $num_of_positions);
+ 		    my $_buf = substr($buf, $begin, 4);
+ 		    my $num_of_positions = unpack('L', $_buf);
+ 		    $begin += (($num_of_positions + 1)* 4);
 
 		    my $offset_j_pos = $offset_j + $pos++;
 
