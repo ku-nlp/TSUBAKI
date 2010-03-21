@@ -28,6 +28,9 @@ sub extract_sentences_from_ID {
     if ($CONFIG->{IS_NICT_MODE}) {
 	my ($did) = ($did_w_version =~ /(^\d+)/);
 	$xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version);
+    } if ($CONFIG->{IS_NTCIR_MODE}) {
+	my ($did) = ($did_w_version =~ /(^\d+)/);
+	$xmlfile = sprintf("%s/%09d.xml.gz", $dir_prefix, $did);
     } else {
 	my $did = $did_w_version;
 	if ($CONFIG->{IS_IPSJ_MODE}) {
