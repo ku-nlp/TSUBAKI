@@ -21,7 +21,7 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 
 binmode(STDOUT, ':utf8');
-binmode(STDERR, ':utf8');
+binmode(STDERR, ':encoding(euc-jp)');
 
 use Logger;
 use Configure;
@@ -316,7 +316,7 @@ sub main {
 		    my $size = 0;
 		    for (my $i = 0; $size < $results && $i < $results; $i++) {
 			my $did;
-			if ($CONFIG->{IS_NICT_MODE}) {
+			if ($CONFIG->{IS_NICT_MODE} && !$CONFIG->{IS_NTCIR_MODE}) {
 			    $did = sprintf("%06d", $docs->[$i]{did});
 			    $did = $tid2sid{$did};
 			    $docs->[$i]{did} = $did;
