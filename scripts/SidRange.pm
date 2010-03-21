@@ -15,19 +15,21 @@ sub new {
 
     my $this;
     my $rangefile = ($opt->{sid_range}) ? $opt->{sid_range} : $CONFIG->{SID_RANGE};
-    open (F, $rangefile) or die "$!";
-    while (<F>) {
-	chop;
-	my ($host, $sid) = split(/\s+/, $_);
-	last unless (defined $sid);
+    if ($rangefile) {
+	open (F, $rangefile) or die "$!";
+	while (<F>) {
+	    chop;
+	    my ($host, $sid) = split(/\s+/, $_);
+	    last unless (defined $sid);
 
 
-	# 00000-99‚Ì99‚ğíœ
-	$sid =~ s/\-\d+$//g;
+	    # 00000-99‚Ì99‚ğíœ
+	    $sid =~ s/\-\d+$//g;
 
-	$this->{SID2HOST}{$sid} = $host;
+	    $this->{SID2HOST}{$sid} = $host;
+	}
+	close (F);
     }
-    close (F);
 
     if (-f $opt->{sids_on_update_node}) {
 	open (F, $opt->{sids_on_update_node}) or die "$!";
@@ -41,16 +43,29 @@ sub new {
 	close (F);
     }
 
+    if (-f $opt->{sids_for_ntcir}) {
+	require CDB_File;
+	tie %{$this->{SID2HOST_FOR_NTCIR}}, 'CDB_File', $opt->{sids_for_ntcir} or die "$0: can't tie to $opt->{sids_for_ntcir} $!\n";
+    }
+
     bless $this;
 }
 
 sub DESTROY {
+    my ($this) = @_;    
+
+    if ($this->{SID2HOST_FOR_NTCIR}) {
+	untie $this->{SID2HOST_FOR_NTCIR};
+    }
 }
 
 sub lookup {
     my ($this, $did) = @_;
 
     my $host = $this->{SID2HOST_FOR_UPDATE_NODE}{$did};
+    return $host if (defined $host);
+
+    my $host = $this->{SID2HOST_FOR_NTCIR}{$did};
     return $host if (defined $host);
 
     # 00000-99‚Ì99‚ğíœ
