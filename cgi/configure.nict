@@ -454,3 +454,10 @@ DISABLE_BLOCK_TYPE_DISPLAY	0
 
 # ブロックタイプに関する情報を定義したファイル
 # BLOCK_TYPE_DEFINITION		/somewhere/SearchEngine/data/blocktype.WEB
+
+
+# NTCIRモード
+# IS_NTCIR_MODE			1
+
+# どのホストがどのSIDを持つデータを管理しているかを表す対応表
+# SIDS_FOR_NTCIR	/home/skeiji/public_html/tsubaki-ntcir/SearchEngine/cgi/sid.range.cdb
