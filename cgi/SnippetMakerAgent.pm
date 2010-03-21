@@ -39,13 +39,17 @@ sub create_snippets {
     my $range = undef;
     if ($CONFIG->{IS_NICT_MODE}) {
 	require SidRange;
-	$range = new SidRange();
+	if ($CONFIG->{IS_NTCIR_MODE}) {
+	    $range = new SidRange({sids_for_ntcir => $CONFIG->{SIDS_FOR_NTCIR}});
+	} else {
+	    $range = new SidRange();
+	}
     }
 
     my $count = 0;
     foreach my $doc (@$docs) {
 	if ($CONFIG->{IS_NICT_MODE}) {
-	    my $did = $doc->{did};
+	    my $did = sprintf ("%09d", $doc->{did});
 	    my $host = $range->lookup($did);
 	    push(@{$host2dids{$host}}, $doc);
 	} elsif ($CONFIG->{IS_IPSJ_MODE}) {
