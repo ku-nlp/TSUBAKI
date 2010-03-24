@@ -1,4 +1,4 @@
-#!/share/usr/bin/perl
+#!/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -32,11 +32,11 @@ use Dumper;
 &main();
 
 sub main {
-    # cgiパラメタの取得
-    my $params = RequestParser::parseCGIRequest(new CGI());
-
     # HTTPヘッダ出力
     print header(-charset => 'utf-8');
+
+    # cgiパラメタの取得
+    my $params = RequestParser::parseCGIRequest(new CGI());
 
     if ($params->{debug}) {
 	print Dumper::dump_as_HTML($CONFIG);
