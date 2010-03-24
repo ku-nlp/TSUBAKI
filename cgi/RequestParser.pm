@@ -249,6 +249,11 @@ sub setParametersOfGetRequest {
 		exit(1);
 	    }
 	}
+
+	# クエリ文字列中の「<」「>」「&」をエスケープする
+	$params->{query} =~ s/&/&amp;/g;
+	$params->{query} =~ s/</&lt;/g;
+	$params->{query} =~ s/>/&gt;/g;
     } else {
 	# undef, '' の場合は、index.cgi, api.cgiでそれぞれエラーを出力する
 	$params->{query} = undef;
@@ -503,7 +508,7 @@ sub parseQuery {
 
 	$query->{results} = int(1 + $M * $alpha);
     }
-    $query->{results} = 1000 if ($CONFIG->{NTCIR_MODE});
+    $query->{results} = 1000 if ($CONFIG->{IS_NTCIR_MODE});
     $logger->setParameterAs('request_results_for_slave_server', $query->{results}) if ($logger);
 
     # 係り受けと近接のスコアを考慮するようにする
