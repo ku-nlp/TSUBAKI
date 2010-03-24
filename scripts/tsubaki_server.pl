@@ -45,8 +45,8 @@ my $ID;
 my @DOC_LENGTH_DBs;
 opendir(DIR, $opt{dlengthdbdir});
 foreach my $dbf (readdir(DIR)) {
-    if ($CONFIG->{IS_NICT_MODE}) {
-	next unless ($dbf =~ /(\d+).doc_length\.txt$/);
+    if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NTCIR_MODE}) {
+	next unless ($dbf =~ /(\d+).doc_length\.bin\.txt$/);
     
 	$ID = $1;
 	my $fp = "$opt{dlengthdbdir}/$dbf";
@@ -55,6 +55,7 @@ foreach my $dbf (readdir(DIR)) {
 	while (<READER>) {
 	    chop;
 	    my ($sid, $length) = split (/ /, $_);
+	    $sid += 0 if ($CONFIG->{IS_NTCIR_MODE});
 	    $dlength_db->{$sid} = $length;
 	}
 	close (READER);
