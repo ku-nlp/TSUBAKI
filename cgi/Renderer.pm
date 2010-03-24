@@ -1012,6 +1012,24 @@ sub printKwicView {
 sub printOrdinarySearchResult {
     my ($this, $logger, $params, $results, $query, $start, $end, $did2snippets) = @_;
 
+
+    my $evaldat = ();
+    my %evalmap = ();
+    if ($CONFIG->{IS_NTCIR_MODE}) {
+#	tie my %_cdb, 'CDB_File', $CONFIG->{NTCIR_EVAL_DAT} or die $!;
+	tie my %_cdb, 'CDB_File', "/home/skeiji/public_html/tsubaki-ntcir/SearchEngine/cgi/ntcir34-query-eval.cdb" or die $!;
+	require Storable;
+	$evaldat = Storable::thaw($_cdb{$query->{rawstring}});
+	untie %_cdb;
+
+	$evalmap{'H'} = '◎';
+	$evalmap{'S'} = '◎';
+	$evalmap{'A'} = '○';
+	$evalmap{'B'} = '△';
+	$evalmap{'C'} = 'Ｘ';
+    }
+
+
     ################
     # 検索結果を表示
     ################
@@ -1022,6 +1040,9 @@ sub printOrdinarySearchResult {
 	my $score = sprintf("%.4f", $results->[$rank]{score_total});
 	my $snippet = $did2snippets->{$did};
 	my $title = $results->[$rank]{title};
+	# タイトルが長い場合は ... で省略する
+	$title = substr($title, 0, $CONFIG->{MAX_LENGTH_OF_TITLE}) . "..." if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE});
+
 
 	my $output = qq(<DIV class="result">);
 
@@ -1033,8 +1054,14 @@ sub printOrdinarySearchResult {
 	$output .= qq(<TR><TD style="width: 1em; text-align: center;"><SPAN class="rank" nowrap>) . ($rank + 1) . "</SPAN></TD>\n";
 
 	$output .= qq(<TD>\n);
-	$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
-	$title = substr($title, 0, $CONFIG->{MAX_LENGTH_OF_TITLE}) . "..." if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE});
+	if ($CONFIG->{IS_NTCIR_MODE}) {
+	    $output .= qq(<A class="title" href="http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/skeiji/ntcir/ntcir-api.cgi?action=show_page&id=$did&format=html" class="ex">);
+	    my $judge = $evalmap{$evaldat->{sprintf("%09d", $did)}};
+	    $judge = '？' unless ($judge);
+	    $title = sprintf ("%s: %s", $judge, $title);
+	} else {
+	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
+	}
 	$output .= $title . "</a>";
 
 	if ($params->{from_portal}) {
