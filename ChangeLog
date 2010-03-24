@@ -1,3 +1,68 @@
+2010-03-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/RequestParser.pm: <, >, &をエスケープするように.
+
+2010-03-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl: NTCIRモードを追加.
+
+	* scripts/SidRange.pm: 全sidを引くオプションを追加.
+
+	* cgi/configure, cgi/configure.nict: パラメータ追加.
+
+	* cgi/SnippetMaker.pm: NTCIR用ディレクトリパスを追加.
+
+	* cgi/SnippetMakerAgent.pm:
+	SidRangeのオプションをモードによって切り換えるように.
+
+2010-03-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Retrieve.pm: posdataを一度にロードしないように.
+
+	* scripts/Makefile.indexing: update_rmfileターゲットの処理を変更.
+
+	* scripts/lookup-host-by-sid.perl:
+	suffix, sids_on_update_nodeオプションの追加.
+
+	* scripts/remove-sid.sh:
+	追加用ノードにおかれた改訂番号が新しいデータに関してもサーチの対象とするように
+
+	* scripts/SidRange.pm: sids_on_update_nodeオプションの追加.
+
+2010-03-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm: 日付の表示を修正.
+
+2010-03-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMakerAgent.pm: termの前についた領域タグを削除するように.
+
+2010-03-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: メタデータを項目ごとに出力するように.
+
+	* cgi/Renderer.pm:
+	文書IDを白字で描画するように, ページがない場合は<Page>要素を返さないように, 空文字の著者を返さないように.
+
+	* cgi/SnippetMaker.pm: Abstractタグに属性を許すように.
+
+	* cgi/configure, cgi/configure.nict: TSUBAKI_BASE_URLパラメータの追加.
+
+	* cgi/api.cgi: 解析結果表示用ボックスも返すように.
+
+2010-03-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: [TXT], [メタ情報]を表示しないように.
+
+	* cgi/RequestParser.pm: kwic表示用パラメータの追加.
+
+	* cgi/SnippetMakerAgent.pm, cgi/api.cgi:
+	kwic表示を得る際に文IDを指定できるように.
+
+	* cgi/SnippetMaker.pm: kwic表示用のデータを返す際, 文IDも返すように.
+
+	* cgi/SnippetMaker.pm: kwic表示用のデータを返す際,
+
 2010-03-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* cgi/RequestParser.pm, cgi/api.cgi:
