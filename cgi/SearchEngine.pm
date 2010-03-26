@@ -93,18 +93,11 @@ sub send_query_to_slave_servers {
 	    PeerPort => $this->{hosts}->[$i]->{port} + (($opt->{reference}) ? 1 : 0),
 	    Proto    => 'tcp' );
 
-	$query->{logger} = new Logger();
 	print "send query to " . $this->{hosts}[$i]{name} . ":" . $this->{hosts}[$i]{port} . "<BR>\n" if ($opt->{debug});
 	$selecter->add($socket) or die "Cannot connect to the server (host=$this->{hosts}->[$i]->{name}, port=$this->{hosts}->[$i]->{port})";
-	
- 	# 検索クエリの送信
- 	print $socket encode_base64(Storable::nfreeze($query), "") . "\n";
-	print $socket "EOQ\n";
 
-	# qid2dfの送信
- 	print $socket encode_base64(Storable::nfreeze($query->{qid2df}), "") . "\n";
-	print $socket "END\n";
-
+ 	# クエリの送信
+ 	print $socket $query . "\n";
 	$socket->flush();
     }
     $logger->setTimeAs('send_query_to_server', '%.3f');
@@ -119,8 +112,10 @@ sub recieve_result_from_slave_servers {
     my $num_of_sockets = scalar(@{$this->{hosts}});
     my %logbuf = ();
     my %host2log = ();
+
     while ($num_of_sockets > 0) {
 	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
+
 	foreach my $socket (@{$readable_sockets}) {
 	    my ($hitcount, $result_docs) = $this->parse_recieved_data($socket, $query, \%host2log, \%logbuf, $opt);
 
@@ -139,6 +134,78 @@ sub recieve_result_from_slave_servers {
 
 # 受信したデータのパース
 sub parse_recieved_data {
+    my ($this, $socket, $query, $host2log, $logbuf, $opt) = @_;
+
+    if ($CONFIG->{IS_CPP_MODE}) {
+	return $this->parse_recieved_data_for_cpp($socket, $query, $host2log, $logbuf, $opt);
+    } else {
+	return $this->parse_recieved_data_for_perl($socket, $query, $host2log, $logbuf, $opt);
+    }
+}
+
+# 受信したデータのパース(C++用)
+sub parse_recieved_data_for_cpp {
+    my ($this, $socket, $query, $host2log, $logbuf, $opt) = @_;
+
+    require Time::HiRes;
+
+    my @t_buf = ();
+    my $tbuf = 0;
+    my @results;
+    my $buff = undef;
+    my $hitcount = 0;
+    my $recieved_data;
+    while (<$socket>) {
+	chop;
+
+	if ($_ =~ /hitcount (\d+)/) {
+	    $hitcount = $1;
+	    push (@t_buf, sprintf ("hitc=%d", $hitcount));
+	} elsif ($_ =~ /COMEIN (\d+)/) {
+	    $tbuf = $1;
+	} elsif ($_ =~ /S_EXP_PARSE (.+)/) {
+	    push (@t_buf, sprintf ("sexp_parse=%s", $1 - $tbuf));
+	    $tbuf = $1;
+	} elsif ($_ =~ /MERGE_AND_OR (\d+)/) {
+	    push (@t_buf, sprintf ("merge_and_or=%d", $1 - $tbuf));
+	    $tbuf = $1;
+	} elsif ($_ =~ /WALK_AND_OR_1 (\d+)/) {
+	    push (@t_buf, sprintf ("walk_and_or_1=%d", $1 - $tbuf));
+	    $tbuf = $1;
+	} elsif ($_ =~ /WALK_AND_OR_2 (\d+)/) {
+	    push (@t_buf, sprintf ("walk_and_or_2=%d", $1 - $tbuf));
+	    $tbuf = $1;
+	} elsif ($_ =~ /SORT (\d+)/) {
+	    push (@t_buf, sprintf ("sort=%d", $1 - $tbuf));
+	    $tbuf = $1;
+	} elsif ($_ =~ /LEAVE (.+?) (.+)/) {
+	    my $slave_server_side_total = $1;
+	    my $leave_time = $2;
+	    push (@t_buf, sprintf ("slave_server_side_total=%.5f", $slave_server_side_total));
+	    my ($sec, $microsec) = Time::HiRes::gettimeofday;
+	    last;
+	} else {
+	    $recieved_data .= $_;
+
+	    my ($sid, $tid, $score, $start, $end, $title, $url, $score) = split (/ /, $_);
+	    my $doc;
+	    $doc->{did} = $sid;
+	    $doc->{start} = $start;
+	    $doc->{end} = $end;
+	    $doc->{title} = $title;
+	    $doc->{url} = $url;
+	    $doc->{score_total} = $score;
+
+	    push (@results, $doc);
+	}
+    }
+
+    return ($hitcount, [\@results]);
+}
+
+
+# 受信したデータのパース(perl用)
+sub parse_recieved_data_for_perl {
     my ($this, $socket, $query, $host2log, $logbuf, $opt) = @_;
 
     my $buff = undef;
@@ -233,7 +300,21 @@ sub broadcastSearch {
     # 検索クエリの送信
     ##################
     my $selecter = IO::Select->new();
-    $this->send_query_to_slave_servers($selecter, $query, $logger, $opt);
+
+    # 実際にサーバーに送信するデータ
+    my $query_dat;
+    if ($CONFIG->{IS_CPP_MODE}) {
+	$query_dat = $query->{s_exp};
+	$query_dat =~ s/\n//g;
+    } else {
+	$query->{logger} = new Logger();
+	my $_query = encode_base64(Storable::nfreeze($query), "") . "\n";
+	$_query .= "EOQ\n";
+ 	$_query .= encode_base64(Storable::nfreeze($query->{qid2df}), "") . "\n";
+	$_query .= "END\n";
+	$query_dat = $_query;
+    }
+    $this->send_query_to_slave_servers($selecter, $query_dat, $logger, $opt);
 
 
     ##################
