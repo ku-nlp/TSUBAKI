@@ -161,9 +161,11 @@ sub print_query {
 	my @buf;
 	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
 	    my $kwd = $query->{keywords}[$i];
-	    push(@buf, sprintf (qq(<A href="#" style="font-weight: 900;" id="query%d">%s</A>), $i, $kwd->{rawstring}));
+	    push(@buf, sprintf (qq(<SPAN style="color: blue; font-weight: 900;" id="query%d">%s</SPAN>), $i, $kwd->{rawstring}));
 	}
 	print join('&nbsp;', @buf);
+    } elsif ($query->{s_exp}) {
+	printf ("%s", $query->{s_exp});
     } else {
 	printf ("site:%s", $query->{option}{site});
     }
@@ -363,7 +365,7 @@ END_OF_HTML
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="image/info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[お知らせ・使い方]</A><BR>\n);
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方]</A><BR>\n);
 
     # 混雑具合を表示
     if ($CONFIG->{DISPLAY_CONGESTION}) {
@@ -503,7 +505,9 @@ my $host = `hostname`;
     # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="image/info-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
     # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[お知らせ・使い方]</A><BR>\n);
+    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/gs-eval/tutorial.html">[お知らせ・使い方]</A><BR>\n);
+    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/gs-eval/tutorial.html">[使い方]</A><BR>\n);
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方]</A><BR>\n);
 
     # 混雑具合を表示
     if ($CONFIG->{DISPLAY_CONGESTION}) {
@@ -761,7 +765,7 @@ sub get_snippets {
 	}
     } else {
 	# スニペッツを取得
-	my $did2snippets =  $sni_obj->get_snippets_for_each_did($query, {highlight => $opt->{highlight}});
+	my $did2snippets = $sni_obj->get_snippets_for_each_did($query, {highlight => $opt->{highlight}, debug => $opt->{debug}});
 	return $did2snippets;
     }
 }
@@ -1037,7 +1041,7 @@ sub printOrdinarySearchResult {
     for (my $rank = $start; $rank < $end; $rank++) {
 #	my $did = sprintf("%09d", $results->[$rank]{did});
 	my $did = $results->[$rank]{did};
-	my $score = sprintf("%.4f", $results->[$rank]{score_total});
+	my $score = sprintf("score = %.4f", $results->[$rank]{score_total});
 	my $snippet = $did2snippets->{$did};
 	my $title = $results->[$rank]{title};
 	# タイトルが長い場合は ... で省略する
@@ -1062,6 +1066,8 @@ sub printOrdinarySearchResult {
 	} else {
 	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	}
+	# 全角英数字を半角に
+	$title =~ tr/[Ａ-Ｚａ-ｚ０-９．／＠　]/[A-Za-z0-9.\/@ ]/;
 	$output .= $title . "</a>";
 
 	if ($params->{from_portal}) {
@@ -1080,7 +1086,6 @@ sub printOrdinarySearchResult {
 	$output .= qq(<DIV class="meta">\n);
 	# ポータルからのアクセスでなければ文書IDとスコアを表示する
 	if (!$params->{from_portal}) {
-#	    $output .= sprintf qq(id=%09d, score=%.3f), $did, $score;
 	    $output .= sprintf qq(id=%s, score=%.3f), $did, $score;
 	}
 
@@ -1093,19 +1098,19 @@ sub printOrdinarySearchResult {
 	    my $score_dw = $results->[$rank]{score_dpnd_anchor};
 	    my $score_pr = $results->[$rank]{pagerank};
 	    if ($CONFIG->{DISABLE_PAGERANK}) {
-		$output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
+		$output .= sprintf qq($score (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
 	    } else {
-		$output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f, pr=%s)), $score_w, $score_d, $score_n, $score_aw, $score_dw, $score_pr;
+		$output .= sprintf qq($score (w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f, pr=%s)), $score_w, $score_d, $score_n, $score_aw, $score_dw, $score_pr;
 	    }
 	}
 
 	# 類似・関連ページがあれば表示する
-	my $num_of_sim_pages = (defined $results->[$rank]{similar_pages}) ? scalar(@{$results->[$rank]{similar_pages}}) : 0;
-	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
-	    my $open_label = "類似・関連ページを表示 ($num_of_sim_pages 件)";
-	    my $close_label = "類似・関連ページを非表示 ($num_of_sim_pages 件)";
-	    $output .= sprintf qq(&nbsp;<A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '%s', '%s');">%s</A>\n), $open_label, $close_label, $open_label;
-	}
+  	my $num_of_sim_pages = (defined $results->[$rank]{similar_pages}) ? scalar(@{$results->[$rank]{similar_pages}}) : 0;
+  	if (defined $num_of_sim_pages && $num_of_sim_pages > 0) {
+  	    my $open_label = "類似・関連ページを表示 ($num_of_sim_pages 件)";
+  	    my $close_label = "類似・関連ページを非表示 ($num_of_sim_pages 件)";
+  	    $output .= sprintf qq(&nbsp;<A href="javascript:void(0);" onclick="toggle_simpage_view('simpages_$rank', this, '%s', '%s');">%s</A>\n), $open_label, $close_label, $open_label;
+ 	}
 	$output .= qq(</DIV>\n);
 
 
@@ -1115,6 +1120,8 @@ sub printOrdinarySearchResult {
 
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
 	$output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
+#	$output .= qq(<SPAN class="cache">$results->[$rank]{url}</SPAN>\n);
+#	$output .= qq(<A class="cache2" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank">キャッシュ</A>\n);
 
 	if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
 	    # ページの構造解析結果へのリンクを生成
