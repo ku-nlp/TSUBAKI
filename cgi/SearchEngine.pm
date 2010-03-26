@@ -4,16 +4,11 @@ package SearchEngine;
 
 use strict;
 use utf8;
-use Encode;
-use Getopt::Long;
 use Storable;
 use IO::Socket;
 use IO::Select;
 use MIME::Base64;
-use Time::HiRes;
-use CDB_File;
 use Configure;
-use QueryParser;
 use State;
 use Logger;
 use Tsubaki::CacheManager;
@@ -37,24 +32,6 @@ sub new {
     }
 
     bless $this;
-}
-
-sub init {
-    my ($this, $dir) = @_;
-    opendir(DIR, $dir) or die;
-    foreach my $cdbf (readdir(DIR)) {
-	next unless ($cdbf =~ /cdb/);
-	next if ($cdbf =~ /keymap/);
-
-	my $fp = "$dir/$cdbf";
-	tie my %dfdb, 'CDB_File', $fp or die "$0: can't tie to $fp $!\n";
-	if (index($cdbf, 'dpnd.cdb') > -1) {
-	    push(@{$this->{DF_DPND_DBs}}, \%dfdb);
-	} elsif (index($cdbf, 'word.cdb') > -1) {
-	    push(@{$this->{DF_WORD_DBs}}, \%dfdb);
-	}
-    }
-    closedir(DIR);
 }
 
 # デストラクタ
@@ -91,21 +68,7 @@ sub search {
     return ($result->{hitcount}, $result->{hitpages}, $status);
 }
 
-sub get_DF {
-    my ($this, $k) = @_;
-    my $k_utf8 = encode('utf8', $k);
-    my $gdf = -1;
-    my $DFDBs = (index($k, '->') > 0) ? $this->{DF_DPND_DBs} : $this->{DF_WORD_DBs};
-    foreach my $dfdb (@{$DFDBs}) {
- 	if (exists($dfdb->{$k_utf8})) {
- 	    $gdf = $dfdb->{$k_utf8};
- 	    last;
- 	}
-    }
-    return $gdf;
-}
-
-
+# 配列内の変数をランダムに並び変える
 sub fisher_yates_shuffle {
     my ($array) = @_;
 
@@ -117,19 +80,13 @@ sub fisher_yates_shuffle {
     }
 }
 
+# 検索クエリの送信
+sub send_query_to_slave_servers {
+    my($this, $selecter, $query, $logger, $opt) = @_;
 
-# 実際に検索を行うメソッド
-sub broadcastSearch {
-    my($this, $query, $logger, $opt) = @_;
-
-    $query->{sort_by_year} = $opt->{sort_by_year};
-    # $opt->{debug} = 1;
-    # $logger->clearTimer();
-
-    # 検索クエリの送信
-    my $selecter = IO::Select->new();
     # アクセスが集中しないようにランダムに並び変える
     &fisher_yates_shuffle($this->{hosts});
+
     for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
 	my $socket = IO::Socket::INET->new(
 	    PeerAddr => $this->{hosts}->[$i]->{name},
@@ -151,9 +108,12 @@ sub broadcastSearch {
 	$socket->flush();
     }
     $logger->setTimeAs('send_query_to_server', '%.3f');
+}
 
+# 検索結果の受信
+sub recieve_result_from_slave_servers {
+    my($this, $selecter, $query, $logger, $opt) = @_;
 
-    # 検索結果の受信
     my @results = ();
     my $total_hitcount = 0;
     my $num_of_sockets = scalar(@{$this->{hosts}});
@@ -162,97 +122,10 @@ sub broadcastSearch {
     while ($num_of_sockets > 0) {
 	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
 	foreach my $socket (@{$readable_sockets}) {
-	    my $buff = undef;
-	    # ホスト情報の取得
-	    while (<$socket>) {
-		last if ($_ eq "END_OF_HOST\n");
-		$buff .= $_;
-	    }
-	    my $hostinfo;
-	    $hostinfo = Storable::thaw(decode_base64($buff)) if (defined($buff));
+	    my ($hitcount, $result_docs) = $this->parse_recieved_data($socket, $query, \%host2log, \%logbuf, $opt);
 
-
-	    # ログ情報の取得
-	    $buff = undef;
-	    while (<$socket>) {
-		last if ($_ eq "END_OF_LOGGER\n");
-		$buff .= $_;
-	    }
-
-	    my $slave_logger = undef;
-	    if (defined $buff) {
-		$slave_logger = Storable::thaw(decode_base64($buff));
-		$slave_logger->setTimeAs('transfer_time_from', '%.3f');
-
-		# 検索に要した全時間
-		$slave_logger->setParameterAs('total_time', sprintf ("%.3f",
-								     $slave_logger->getParameter('transfer_time_to') +
-								     $slave_logger->getParameter('normal_search') +
-								     $slave_logger->getParameter('logical_condition') +
-								     $slave_logger->getParameter('near_condition') +
-								     $slave_logger->getParameter('merge_dids') +
-								     $slave_logger->getParameter('document_scoring') +
-								     $slave_logger->getParameter('transfer_time_from')));
-
-
-		foreach my $k ($slave_logger->keys()) {
-		    my $v = $slave_logger->getParameter($k);
-		    $logbuf{$k} += $v;
-
-		    if (exists $logbuf{"max_$k"}) {
-			$logbuf{"max_$k"} = $v if ($logbuf{"max_$k"} < $v);
-		    } else {
-			$logbuf{"max_$k"} = $v;
-		    }
-
-		    if (exists $logbuf{"min_$k"}) {
-			$logbuf{"min_$k"} = $v if ($logbuf{"mix_$k"} > $v);
-		    } else {
-			$logbuf{"min_$k"} = $v;
-		    }
-		}
-	    } else {
-		print "<EM>検索スレーブ側のログデータを受信できませんでした。</EM><BR>\n" if ($opt->{debug});
-	    }
-
-
-	    # ヒットカウントの取得
-	    $buff = undef;
-	    while (<$socket>) {
-		last if ($_ eq "END_OF_HITCOUNT\n");
-		$buff .= $_;
-	    }
-	    my $num = -1;
-	    if (defined($buff)) {
-		$num = decode_base64($buff);
-		$total_hitcount += $num;
-	    }
-
-
-	    # 検索により得られた文書情報の取得
-	    my $docs;
-	    unless ($query->{only_hitcount}) {
-		$buff = undef;
-		while (<$socket>) {
-		    last if ($_ eq "END\n");
-		    $buff .= $_;
-		}
-		if (defined($buff)) {
-		    $docs = Storable::thaw(decode_base64($buff));
-		    my $host = $hostinfo->{name};
-		    print "$host returned. ($num)<BR>\n" if ($opt->{debug});
-		    push(@results, $docs);
-		}
-	    }
-
-	    if ($slave_logger) {
-		$slave_logger->setParameterAs('data_size', sprintf ("%d", length($buff)));
-		$slave_logger->setParameterAs('hitcount', sprintf ("%d", $num));
-		$slave_logger->setParameterAs('port', sprintf ("%d", $hostinfo->{port}));
-
-		# ホストごとのログを保存
-		push(@{$host2log{$hostinfo->{name}}}, $slave_logger);
-	    }
+	    $total_hitcount += $hitcount;
+	    push (@results, @$result_docs);
 
 	    # ソケットの後処理
 	    $selecter->remove($socket);
@@ -260,42 +133,141 @@ sub broadcastSearch {
 	    $num_of_sockets--;
 	}
     }
-    $logger->setTimeAs('get_result_from_server', '%.3f');
-    if ($opt->{debug}) {
-	print "finish to harvest search results (" . $logger->getParameter('get_result_from_server') . " sec.)\n";
+
+    return ($total_hitcount, \@results, \%host2log, \%logbuf);
+}
+
+# 受信したデータのパース
+sub parse_recieved_data {
+    my ($this, $socket, $query, $host2log, $logbuf, $opt) = @_;
+
+    my $buff = undef;
+    # ホスト情報の取得
+    while (<$socket>) {
+	last if ($_ eq "END_OF_HOST\n");
+	$buff .= $_;
+    }
+    my $hostinfo = Storable::thaw(decode_base64($buff)) if (defined($buff));
+
+
+    # ログ情報の取得
+    $buff = undef;
+    while (<$socket>) {
+	last if ($_ eq "END_OF_LOGGER\n");
+	$buff .= $_;
     }
 
-    # 検索スレーブサーバー側でのログをセット
-    my $size = scalar(@results);
-    foreach my $k (keys %logbuf) {
+    my $slave_logger = undef;
+    unless (defined $buff) {
+	print "<EM>検索スレーブ側のログデータを受信できませんでした。</EM><BR>\n" if ($opt->{debug});
+    } else {
+	$slave_logger = Storable::thaw(decode_base64($buff));
+	$slave_logger->setTimeAs('transfer_time_from', '%.3f');
+
+	# 検索に要した全時間
+	my $total_time = $slave_logger->getParameter('transfer_time_to') + $slave_logger->getParameter('normal_search') + $slave_logger->getParameter('logical_condition') + $slave_logger->getParameter('near_condition')
+	    + $slave_logger->getParameter('merge_dids') + $slave_logger->getParameter('document_scoring') + $slave_logger->getParameter('transfer_time_from');
+	$slave_logger->setParameterAs('total_time', sprintf ("%.3f", $total_time));
+
+	# 各値の最大値、最小値を取得
+	foreach my $k ($slave_logger->keys()) {
+	    my $v = $slave_logger->getParameter($k);
+	    $logbuf->{$k} += $v;
+
+	    if (exists $logbuf->{"max_$k"}) {
+		$logbuf->{"max_$k"} = $v if ($logbuf->{"max_$k"} < $v);
+	    } else {
+		$logbuf->{"max_$k"} = $v;
+	    }
+
+	    if (exists $logbuf->{"min_$k"}) {
+		$logbuf->{"min_$k"} = $v if ($logbuf->{"mix_$k"} > $v);
+	    } else {
+		$logbuf->{"min_$k"} = $v;
+	    }
+	}
+    }
+
+
+    # ヒットカウントの取得
+    $buff = undef;
+    while (<$socket>) {
+	last if ($_ eq "END_OF_HITCOUNT\n");
+	$buff .= $_;
+    }
+    my $hitcount = (defined($buff)) ? decode_base64($buff) : 0;
+
+
+    # 検索により得られた文書情報の取得
+    my @results;
+    unless ($query->{only_hitcount}) {
+	$buff = undef;
+	while (<$socket>) {
+	    last if ($_ eq "END\n");
+	    $buff .= $_;
+	}
+	push (@results, Storable::thaw(decode_base64($buff))) if (defined($buff));
+	print "$hostinfo->{name} returned. ($hitcount)<BR>\n" if ($opt->{debug});
+    }
+
+    if ($slave_logger) {
+	$slave_logger->setParameterAs('data_size', sprintf ("%d", length($buff)));
+	$slave_logger->setParameterAs('hitcount', sprintf ("%d", $hitcount));
+	$slave_logger->setParameterAs('port', sprintf ("%d", $hostinfo->{port}));
+
+	# ホストごとのログを保存
+	push (@{$host2log->{$hostinfo->{name}}}, $slave_logger);
+    }
+
+    return ($hitcount, \@results);
+}
+
+
+# 実際に検索を行うメソッド
+sub broadcastSearch {
+    my($this, $query, $logger, $opt) = @_;
+
+    $query->{sort_by_year} = $opt->{sort_by_year};
+
+    ##################
+    # 検索クエリの送信
+    ##################
+    my $selecter = IO::Select->new();
+    $this->send_query_to_slave_servers($selecter, $query, $logger, $opt);
+
+
+    ##################
+    # 検索クエリの受信
+    ##################
+    my ($total_hitcount, $_results, $host2log, $logbuf) = $this->recieve_result_from_slave_servers($selecter, $query, $logger, $opt);
+
+
+    ##########
+    # ロギング
+    ##########
+    $logger->setTimeAs('get_result_from_server', '%.3f');
+    print "finish to harvest search results (" . $logger->getParameter('get_result_from_server') . " sec.)\n" if ($opt->{debug});
+
+    # 検索スレーブサーバー側でのログを保存
+    my $size = scalar(@$_results);
+    foreach my $k (keys %$logbuf) {
 	if ($k =~ /^(max|min)/) {
-	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf{$k}));
+	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf->{$k}));
 	} else {
-	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf{$k} / $size)) if ($size > 0);
+	    $logger->setParameterAs($k, sprintf ("%.3f", $logbuf->{$k} / $size)) if ($size > 0);
 	}
     }
 
     # 検索に要した時間をロギング
     $logger->setParameterAs('search', $logger->getParameter('send_query_to_server') + $logger->getParameter('get_result_from_server'));
 
-
     # 各サーバーからの返されたログを保持
-    $logger->setParameterAs('host2log', \%host2log);
+    $logger->setParameterAs('host2log', $host2log);
 
 
     # 受信した結果を揃える
-    @results = sort {$b->[0]{score_total} <=> $a->[0]{score_total}} @results;
+    my @results = sort {$b->[0]{score_total} <=> $a->[0]{score_total}} @$_results;
     return {hitcount => $total_hitcount, hitpages => \@results};
-}
-
-sub decodeResult {
-    my($result_str) = @_;
-    my @result_ary;
-    foreach (split(/\n/, $result_str)){
-	my($did,$score) = split(/,/, $_);
-	push(@result_ary, {did => $did, score => $score});
-    }
-    return \@result_ary;
 }
 
 1;
