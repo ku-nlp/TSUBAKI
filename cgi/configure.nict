@@ -289,9 +289,11 @@ NUMBER_OF_DOCUMENTS	100132750
 # 平均文書長
 AVERAGE_DOCUMENT_LENGTH	907.077
 
-
 # 強調表示に用いる色
 HIGHLIGHT_COLOR		ffffaa,ddffff,ddffdd,ffdddd,ffddff,dd0000,00dd00,dddd00,00dddd,dd00dd
+
+# 作業領域
+WORKSPACE	/tmp/tsubaki
 
 # ログファイル（★要変更）
 LOG_FILE_PATH		/share03/WISDOM/log/input.log
