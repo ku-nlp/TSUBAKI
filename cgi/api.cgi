@@ -38,6 +38,7 @@ use CGI qw/:standard/;
 use CGI::Carp qw(fatalsToBrowser);
 use File::stat;
 use Error qw(:try);
+# use Archive::Tar;
 
 # 以下TSUBAKIオリジナルクラス
 use Searcher;
@@ -252,9 +253,13 @@ sub provideDocumentData {
 	} elsif ($fileType eq 'xml') {
 	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
 	} elsif ($fileType eq 'html') {
-	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $did / 1000000, $did / 10000, $did);
-	}
+	    my $did_w_version = $did;
+	    my ($_did) = ($did_w_version =~ /(^\d+)/);
 
+	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE1}, $_did / 1000000, $_did / 1000, $did_w_version);
+	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE2}, $_did / 1000000, $_did / 1000, $did_w_version) unless (-f $filepath);
+	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE3}, $_did / 1000000, $_did / 1000, $did_w_version) unless (-f $filepath);
+	}
 
 	if (-e $filepath) {
 	    my $CAT_COMMAND = ($filepath =~ /gz$/) ? 'zcat' : 'cat';
@@ -313,7 +318,6 @@ sub getStandardFormdatDataFromSnippetServer {
     }
 
 
-
     my $selecter = IO::Select->new();
     for (my $i = 0; $i < scalar(@{$CONFIG->{SNIPPET_SERVERS}}); $i++) {
 	next if ($host ne $CONFIG->{SNIPPET_SERVERS}[$i]{name});
@@ -325,7 +329,7 @@ sub getStandardFormdatDataFromSnippetServer {
 		PeerAddr => $host,
 		PeerPort => $port,
 		Proto    => 'tcp' );
-	    $selecter->add($socket);# or die "Cannot connect to the server $host:$port. $!\n";
+	    $selecter->add($socket) or die "Cannot connect to the server $host:$port. $!\n";
 
 	    print $socket "GET_SFDAT $did\n";
 
@@ -523,12 +527,6 @@ sub provideSearchResult {
 
 
 
-    # HTTPヘッダの出力
-    my $type_value = ($params->{'only_hitcount'}) ? 'text/plain' : 'text/xml';
-    print $cgi->header(-type => $type_value, -charset => 'utf-8');
-    # print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
-
-
     # クロール日時の取得
     my $did2date = ();
     if ($params->{CrawledDate}) {
@@ -542,6 +540,9 @@ sub provideSearchResult {
 
 
     if ($params->{'only_hitcount'}) {
+	# HTTPヘッダの出力
+	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
+
 	# ヒットカウントを出力
 	printf ("%d\n", $logger->getParameter('hitcount'));
     } else {
@@ -557,7 +558,58 @@ sub provideSearchResult {
 		$ret->{crawled_date} = $did2date->{$ret->{did}};
 	    }
 	}
-	$renderer->printSearchResultForAPICall($logger, $params, $result, $query, $logger->getParameter('hitcount'));
+
+	unless ($params->{tarball}) {
+	    # HTTPヘッダの出力
+	    print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
+
+	    $renderer->printSearchResultForAPICall($logger, $params, $result, $query, $logger->getParameter('hitcount'));
+	} else {
+	    # HTTPヘッダの出力
+	    print $cgi->header(-type => 'application/x-compress');
+
+	    my $searchResult = $renderer->getSearchResultForAPICall($logger, $params, $result, $query, $logger->getParameter('hitcount'));
+	    my $date = `date +%m%d-%H%M%S`; chomp ($date);
+	    my $dirname = 'tsubaki-' . $date;
+	    my $workspace = "$CONFIG->{WORKSPACE}/$dirname";
+	    `mkdir -p $workspace`;
+
+	    # result.xml の出力
+	    open (F, '>:utf8', "$workspace/result.xml") or die $!;
+	    print F $searchResult;
+	    close (F);
+
+	    # 検索して得られた文書の標準フォーマットをコピー
+	    my $from = $params->{start};
+	    my $end = (scalar(@$result) < $params->{start} + $params->{results}) ?  scalar (@$result) : $params->{results};
+	    for (my $rank = $from; $rank < $end; $rank++) {
+		my $page = $result->[$rank];
+		my $did = sprintf("%s", $page->{did});
+		print STDERR $did . "\n";
+		my $content = &getStandardFormdatDataFromSnippetServer($did);
+		open (F, "> $workspace/$did.xml") or die $!;
+		print F $content;
+		close (F);
+	    }
+
+
+	    # tarファイルの作成
+	    `cd $CONFIG->{WORKSPACE} ; tar czf $dirname.tgz $dirname`;
+
+	    # tarファイルの転送
+	    my $buf;
+	    open (F, "$CONFIG->{WORKSPACE}/$dirname.tgz") or die $!;
+	    while (<F>) {
+		$buf .= $_;
+	    }
+	    close (F);
+
+	    # tarファイルの転送
+	    print encode_base64($buf);
+
+	    # tarファイル、ディレクトリの削除
+	    `rm -rf $CONFIG->{WORKSPACE}/$dirname $CONFIG->{WORKSPACE}/$dirname.tgz`;
+	}
     }
 
     $logger->setTimeAs('print_result', '%.3f');
