@@ -288,7 +288,7 @@ END_OF_HTML
     <script language="JavaScript" type="text/javascript">
 END_OF_HTML
 
-print "var jg;\n";
+    print "var jg;\n";
     print "function init () {\n";
     printf "jg = new jsGraphics('%s');\n", $canvasName;
 
@@ -380,7 +380,8 @@ END_OF_HTML
 	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
 	print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
     } else {
-	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A></TD>\n", $CONFIG->{INDEX_CGI});
+	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A></BR>\n", $CONFIG->{INDEX_CGI});
+#	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 情報爆発評価版 -</SPAN></TD>\n);
     }
 
     # フォーム出力
@@ -479,6 +480,7 @@ sub print_tsubaki_interface_init {
     my ($this, $params) = @_;
     my $title = "情報爆発プロジェクト 検索エンジン基盤 TSUBAKI";
     $title .= " (情報処理学会 論文検索版)" if ($CONFIG->{IS_IPSJ_MODE});
+#    $title .= "　（情報爆発評価版）";
     print << "END_OF_HTML";
     <html>
 	<head>
@@ -519,6 +521,8 @@ my $host = `hostname`;
     print qq(<CENTER style="maring:1em; padding:1em;">\n);
     printf ("<A href=%s><IMG border=0 src=image/logo.png></A><BR>\n", $CONFIG->{INDEX_CGI});
     print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
+#   print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 情報爆発評価版 -</SPAN>\n);
+
     print "<P>\n";
 
     # フォーム出力
@@ -1407,6 +1411,13 @@ sub printResult {
 sub printSearchResultForAPICall {
     my ($this, $logger, $params, $result, $query, $hitcount) = @_;
 
+    my $result = $this->getSearchResultForAPICall($logger, $params, $result, $query, $hitcount);
+
+    print $result;
+}
+
+sub getSearchResultForAPICall {
+    my ($this, $logger, $params, $result, $query, $hitcount) = @_;
 
     my $from = $params->{start};
     my $end = (scalar(@$result) < $params->{start} + $params->{results}) ?  scalar (@$result) : $params->{results};
@@ -1431,7 +1442,8 @@ sub printSearchResultForAPICall {
     require XML::Writer;
 
     my $search_time = $logger->getParameter('search') + $logger->getParameter('parse_query') +  $logger->getParameter('snippet_creation');
-    my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
+    my $search_result_string;
+    my $writer = new XML::Writer(OUTPUT => \$search_result_string, DATA_MODE => 'true', DATA_INDENT => 2);
     $writer->xmlDecl('utf-8');
     if ($params->{show_search_time}) {
 	my $etcmax =
@@ -1700,8 +1712,9 @@ sub printSearchResultForAPICall {
     }
     $writer->endTag('ResultSet');
     $writer->end();
-}
 
+    return $search_result_string;
+}
 
 sub printIPSJMetadata {
     my ($this, $metadata) = @_;
