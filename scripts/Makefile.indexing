@@ -360,7 +360,7 @@ trim_idxdat: connect_node7
 
 #	index に登録する term の選出
 	gxpc e 'for f in `ls dfdbs/df.word.cdb.?` ; do $(PERL) $(utildir)/scripts/cdb-dump $$f ; done > df.word.txt' 
-	gxpc e 'for f in `ls dfdbs/df.dpnd.cdb.* | grep -v keymap` ; do $(PERL) $(utildir)/scripts/cdb-dump $$f ; done > df.dpnd.txt' 
+	gxpc e 'for f in `ls dfdbs/df.dpnd.cdb.? dfdbs/df.dpnd.cdb.?? | grep -v keymap` ; do $(PERL) $(utildir)/scripts/cdb-dump $$f ; done > df.dpnd.txt' 
 	gxpc e '$(PERL) $(scriptdir)/remove-non-japanese-terms.perl -number -katakana -alphabet -symbol < $(workspace_mgidx)/df.word.txt | $(PERL) -I $(HOME)/cvs/Utils/perl $(HOME)/cvs/Utils/scripts/make-db.perl -dbname term.cdb -keymapfile term.cdb.keymap'
 	gxpc e '$(PERL) $(scriptdir)/remove-non-japanese-terms.perl -termdb term.cdb.0 -freq 9 < $(workspace_mgidx)/df.dpnd.txt | $(PERL) -I $(HOME)/cvs/Utils/perl $(HOME)/cvs/Utils/scripts/make-db.perl -dbname term.dpnd.cdb -keymapfile term.dpnd.cdb.keymap'
 
