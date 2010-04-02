@@ -10,6 +10,7 @@ use KNP::Result;
 use Indexer;
 use Configure;
 use StandardFormatData;
+use PerlIO::gzip;
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -55,7 +56,8 @@ sub extract_sentences_from_standard_format {
     }
 
     if ($opt->{z}) {
-	open(READER,"zcat $xmlfile |") or die "$!";
+	open (READER, '<:gzip', $xmlfile) || die $!;
+	binmode (READER, ':utf8');
     } else {
 	open(READER, $xmlfile) or die "$!";
     }
@@ -72,10 +74,14 @@ sub extract_sentences_from_standard_format {
 
 	return &extract_sentences_from_metadata($query, $content, $opt);
     } else {
-	while (<READER>) {
-	    $content .= $_;
-	}
+	my $_wk = $/;
+	$/ = undef;
+	$content = <READER>;
+# 	while (<READER>) {
+# 	    $content .= $_;
+# 	}
 	close(READER);
+	$/ = $_wk;
 
 	if ($opt->{kwic}) {
 	    return &extract_sentences_from_content_for_kwic($query, $content, $opt);
@@ -104,33 +110,31 @@ sub extract_sentences_from_content_using_position {
     my @linebuf;
     my @sentences = ();
     my $sid = -1;
-    foreach my $line (split (/\n/, $content)) {
 
-	$flag = 0 if ($line =~ /<InLinks>/);
-	$flag = 1 if ($line =~ /<\/InLinks>/);
-	$flag = 0 if ($line =~ /<OutLinks>/);
-	$flag = 1 if ($line =~ /<\/OutLinks>/);
-
-	next unless ($flag);
-
-	$sid = $1 if ($line =~ /<S.+?Id="(\d+)">/);
+    $content =~ s/<InLinks>(?:.|\n)+?<\/InLinks>//;
+    $content =~ s/<OutLinks>(?:.|\n)+?<\/OutLinks>//;
+    foreach my $line (split ("\n", $content)) {
 
 	if ($line =~ /<Annotation/) {
 	    $annotationFlag = 1;
 	    next;
 	}
+	$sid = $1 if ($line =~ /<S.+?Id="(\d+)">/);
 
-	if ($line =~ /<\/Annotation>/) {
+
+#	if ($line =~ /<\/Annotation>/) {
+	if ($line =~ /^EOS/) {
 	    my $showFlag = 0;
 	    my $number_of_included_queries = 0;
 	    my %included_query_types = ();
 	    my $start_pos = $pos;
 	    foreach my $ln (@linebuf) {
-		if ($ln =~ /^!! /) {
-		} elsif ($ln =~ /^! /) {
+		if ($ln =~ /^!/) {
+#		if ($ln =~ /^!! /) {
+#		} elsif ($ln =~ /^! /) {
 		} elsif ($ln =~ /^\+ /) {
 		} elsif ($ln =~ /^\* /) {
-		} elsif ($ln =~ /^EOS$/) {
+#		} elsif ($ln =~ /^EOS$/) {
 		} elsif ($ln =~ /^S\-ID:\d+$/) {
 		} else {
 		    $pos++;
@@ -1101,9 +1105,9 @@ sub make_word_list_syngraph {
 	} else {
 	    my ($dumy, $bnstId, $syn_node_str) = split(/ /, $line);
 
-	    if ($line =~ m!<SYNID:([^>]+)><スコア:((?:\d|\.)+)>((<[^>]+>)*)$!) {
+	    if ($line =~ /<SYNID:([^>]+)>/) {
 		my $sid = $1;
-		my $features = $3;
+		my ($features) = ($line =~ /<スコア:[^>]+>((<[^>]+>)*)$/);
 		$sid = $1 if ($sid =~ m!^([^/]+)/!);
 
 		# 文法素性の削除
