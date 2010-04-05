@@ -403,7 +403,7 @@ sub extract_sentences_from_content_for_kwic {
 		}
 	    }
 
-	    print $opt->{kwic_window_size}. "\n";
+#	    print $opt->{kwic_window_size}. "\n";
 
 	    # ソート用に逆右コンテキストを取得する
 	    my $InvertedContextL = reverse(join("", @contextsL));
@@ -461,26 +461,30 @@ sub makeMidasiAndRepnamesList {
 	    my ($midasiL_saki, $repnameL_saki, $posL_saki) = &getMidasiAndRepnames($kakarisaki, $opt);
 
 	    # 出現形について係り受けを生成
-	    # 基本句には、先頭にのみ内容語が現れると仮定
-	    foreach my $m_self (keys %{$midasiL_self->[0]}) {
+	    # 基本句内の先頭の内容語を探索
+	    my $_i = &get_postion_of_content_word ($midasiL_self);
+	    foreach my $m_self (keys %{$midasiL_self->[$_i]}) {
 		my %midasiDpnds;
-		foreach my $m_saki (keys %{$midasiL_saki->[0]}) {
+		my $_j = &get_postion_of_content_word ($midasiL_self);
+		foreach my $m_saki (keys %{$midasiL_saki->[$_j]}) {
 		    my $dpnd = sprintf("%s->%s", $m_self, $m_saki);
-		    $midasiDpnds{$dpnd}->{kakarimoto} = $posL_self->[0];
-		    $midasiDpnds{$dpnd}->{kakarisaki} = $posL_saki->[0];
+		    $midasiDpnds{$dpnd}->{kakarimoto} = $posL_self->[$_i];
+		    $midasiDpnds{$dpnd}->{kakarisaki} = $posL_saki->[$_j];
 
 		}
 		push(@midasiDpndList, \%midasiDpnds);
 	    }
 
 	    # 代表表記について係り受けを生成
-	    # 基本句には、先頭にのみ内容語が現れると仮定
-	    foreach my $r_self (keys %{$repnameL_self->[0]}) {
+	    # 基本句内の先頭の内容語を探索
+	    my $_i = &get_postion_of_content_word ($midasiL_self);
+	    foreach my $r_self (keys %{$repnameL_self->[$_i]}) {
 		my %repnameDpnds;
-		foreach my $r_saki (keys %{$repnameL_saki->[0]}) {
+		my $_j = &get_postion_of_content_word ($midasiL_self);
+		foreach my $r_saki (keys %{$repnameL_saki->[$_j]}) {
 		    my $dpnd = sprintf("%s->%s", $r_self, $r_saki);
-		    $repnameDpnds{$dpnd}->{kakarimoto} = $posL_self->[0];
-		    $repnameDpnds{$dpnd}->{kakarisaki} = $posL_saki->[0];
+		    $repnameDpnds{$dpnd}->{kakarimoto} = $posL_self->[$_i];
+		    $repnameDpnds{$dpnd}->{kakarisaki} = $posL_saki->[$_j];
 
 		}
 		push(@repnameDpndList, \%repnameDpnds);
@@ -491,6 +495,16 @@ sub makeMidasiAndRepnamesList {
     return (\@repnameList, \@midasiList, \@repnameDpndList, \@midasiDpndList);
 }
 
+sub get_postion_of_content_word {
+    my ($list) = @_;
+
+    my $i = 0;
+    foreach my $item (@$list) {
+	last if ($item ne '*');
+	$i++;
+    }
+    return $i;
+}
 
 sub getMidasiAndRepnames {
     my ($kihonku, $opt) = @_;
