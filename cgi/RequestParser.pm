@@ -66,7 +66,7 @@ sub getDefaultValues {
     $params{modifier_of_NE_process} = 1;
     $params{site} = undef;
     $params{blockTypes} = undef;
-
+    $params{disable_Zwhitespace_delimiter} = 0;
 
     # スニペット表示のデフォルト設定
     $params{no_snippets} = ($call_from_API) ? 1 : 0;
@@ -259,7 +259,7 @@ sub setParametersOfGetRequest {
 	# undef, '' の場合は、index.cgi, api.cgiでそれぞれエラーを出力する
 	$params->{query} = undef;
     }
-
+    $params->{no_use_of_Zwhitespace_as_delimiter} = $params->{disable_Zwhitespace_delimiter};
 
     # 取得する検索件数の設定
     if (defined($cgi->param('start'))) {
@@ -484,6 +484,7 @@ sub parseQuery {
 	      logger => $logger,
 	      site => $params->{site},
 	      blockTypes => $params->{blockTypes},
+	      no_use_of_Zwhitespace_as_delimiter => $params->{no_use_of_Zwhitespace_as_delimiter},
 	      debug => $params->{debug}
 	    });
     }
