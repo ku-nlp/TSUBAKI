@@ -265,13 +265,13 @@ sub parse {
 		  debug => $opt->{debug}
 		});
 	}
-	if (scalar(@qks) < 1) {
+	if ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
+  	    push (@{$qks[0]->{words}}, @{$q->{words}}) if (scalar(@{$q->{words}}) > 0);
+  	    push (@{$qks[0]->{dpnds}}, @{$q->{dpnds}}) if (scalar(@{$q->{dpnds}}) > 0);
+  	    $qks[0]->{rawstring} .= (" " . $q->{rawstring});
+  	} else {
 	    push(@qks, $q);
- 	} else {
- 	    push (@{$qks[0]->{words}}, @{$q->{words}}) if (scalar(@{$q->{words}}) > 0);
- 	    push (@{$qks[0]->{dpnds}}, @{$q->{dpnds}}) if (scalar(@{$q->{dpnds}}) > 0);
- 	    $qks[0]->{rawstring} .= (" " . $q->{rawstring});
- 	}
+  	}
     }
     # QueryKeyword作成にかかる時間を測定
     $opt->{logger}->setTimeAs('make_qks', '%.3f') if ($opt->{logger});
