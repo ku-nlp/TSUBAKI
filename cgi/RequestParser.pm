@@ -535,7 +535,6 @@ sub parseQuery {
     # 検索語にインターフェースより得られる検索制約を追加
     foreach my $qk (@{$query->{keywords}}) {
 	$qk->{force_dpnd} = 1 if ($params->{force_dpnd});
-	$qk->{logical_cond_qkw} = 'OR' if ($params->{logical_operator} eq 'OR');
     }
 
     # ポータルからのアクセスかどうかのログをとる
