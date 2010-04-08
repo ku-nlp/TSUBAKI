@@ -159,27 +159,25 @@ sub search_syngraph_test_for_new_format {
 		my $index4positions = 0;
 		my $pos = 0;
 		my $begin = 0;
-		foreach my $did (@dids) {
+		my $total_pos = 0;
+		foreach my $_i (0 .. $ldf - 1) {
 
- 		    my $_buf = substr($buf, $begin, 4);
+ 		    my $_buf = substr($buf, ($_i + $total_pos) * 4 , 4);
  		    my $num_of_positions = unpack('L', $_buf);
- 		    $begin += (($num_of_positions + 1)* 4);
 
 		    # 先のtermで検索された文書であれば登録（AND検索時）
-		    if (exists $already_retrieved_docs->{$did}) {
+		    if (exists $already_retrieved_docs->{$dids[$_i]}) {
 			my $offset_j_pos = $offset_j + $pos++;
 
-			$docs[$offset_j_pos]->[0] = $did;
+			$docs[$offset_j_pos]->[0] = $dids[$_i];
 			$docs[$offset_j_pos]->[1] = $f_num;
 			$docs[$offset_j_pos]->[2] = $num_of_positions;
 			# 場所情報のオフセットを保存
-			$docs[$offset_j_pos]->[3] = $offset4positions + 4;
+			$docs[$offset_j_pos]->[3] = $offset4positions + ($_i + $total_pos + 1) * 4;
 			# スコア情報のオフセットを保存
-			$docs[$offset_j_pos]->[4] = $offset4scores + 4;
+			$docs[$offset_j_pos]->[4] = $offset4scores + $total_pos * 2 + ($_i + 1) * 4;
 		    }
-
- 		    $offset4positions += (4 + $num_of_positions * 4);
-		    $offset4scores += (4 + $num_of_positions * 2);
+		    $total_pos += $num_of_positions;
 		}
 
 		$offset_j += (scalar @docs);
@@ -194,6 +192,126 @@ sub search_syngraph_test_for_new_format {
     }
 
     return \@docs;
+}
+
+sub convert_to_new_index_data {
+    my ($this, $keyword) = @_;
+
+    my $data;
+    # idxごとに検索
+    for (my $f_num = 0, my $num_of_offset_files = scalar(@{$this->{OFFSET}}); $f_num < $num_of_offset_files; $f_num++) {
+	my $offset;
+	for (my $i = 0, my $size = scalar(@{$this->{OFFSET}[$f_num]}); $i < $size; $i++) {
+	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword};
+	    last if (defined $offset);
+	}
+	# オフセットがあるかどうかのチェック
+	unless (defined($offset)) {
+	    next;
+	}
+
+	seek($this->{IN}[$f_num], $offset, 0);
+
+	my $buf;
+	while (read($this->{IN}[$f_num], $buf, 1)) {
+	    if (unpack('c', $buf) != 0) {
+	    }
+	    else {
+		# termの文書頻度（100万文書中）
+		read($this->{IN}[$f_num], $buf, 4);
+		my $ldf = unpack('L', $buf);
+		$data .= $buf;
+
+		# 文書IDの読み込み
+		read($this->{IN}[$f_num], $buf, 4 * $ldf);
+		my @dids = unpack("L$ldf", $buf);
+		$data .= $buf;
+
+		# 場所情報フィールドのバイト長を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $poss_size = unpack('L', $buf);
+		$data .= $buf;
+
+		# スコア情報フィールドのバイト長を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $scores_size = unpack('L', $buf);
+		$data .= $buf;
+
+		# 場所情報をインデックスデータから読み込む
+ 		read($this->{IN}[$f_num], $buf, $poss_size);
+		$data .= $buf;
+
+		# スコア情報をインデックスデータから読み込む
+ 		read($this->{IN}[$f_num], $buf, $scores_size);
+		$data .= $buf;
+		$data = (pack('L', length($data)) . $data);
+		last;
+	    }
+	}
+    }
+
+    return $data;
+}
+
+sub cut_data {
+    my ($this, $keyword) = @_;
+
+    my $data;
+    # idxごとに検索
+    for (my $f_num = 0, my $num_of_offset_files = scalar(@{$this->{OFFSET}}); $f_num < $num_of_offset_files; $f_num++) {
+	my $offset;
+	for (my $i = 0, my $size = scalar(@{$this->{OFFSET}[$f_num]}); $i < $size; $i++) {
+	    $offset = $this->{OFFSET}[$f_num][$i]->{$keyword->{string}};
+	    last if (defined $offset);
+	}
+	# オフセットがあるかどうかのチェック
+	unless (defined($offset)) {
+	    next;
+	}
+
+	seek($this->{IN}[$f_num], $offset, 0);
+
+	my $buf;
+	while (read($this->{IN}[$f_num], $buf, 1)) {
+	    if (unpack('c', $buf) != 0) {
+		$data .= $buf;
+	    }
+	    else {
+		$data .= $buf;
+
+		# termの文書頻度（100万文書中）
+		read($this->{IN}[$f_num], $buf, 4);
+		my $ldf = unpack('L', $buf);
+		$data .= $buf;
+
+		# 文書IDの読み込み
+		read($this->{IN}[$f_num], $buf, 4 * $ldf);
+		my @dids = unpack("L$ldf", $buf);
+		$data .= $buf;
+
+		# 場所情報フィールドのバイト長を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $poss_size = unpack('L', $buf);
+		$data .= $buf;
+
+		# スコア情報フィールドのバイト長を取得
+		read($this->{IN}[$f_num], $buf, 4);
+		my $scores_size = unpack('L', $buf);
+		$data .= $buf;
+
+		# 場所情報をインデックスデータから読み込む
+ 		read($this->{IN}[$f_num], $buf, $poss_size);
+		$data .= $buf;
+
+		# スコア情報をインデックスデータから読み込む
+ 		read($this->{IN}[$f_num], $buf, $scores_size);
+		$data .= $buf;
+		last;
+	    }
+	}
+    }
+
+    return $data;
 }
 
 sub search_syngraph_test_for_new_format2 {
@@ -391,7 +509,7 @@ sub search_syngraph_test_for_new_format_with_add_flag {
 
  		    $offset4positions += (4 + $num_of_positions * 4);
 		    $offset4scores += (4 + $num_of_positions * 2);
-
+		    
 		    last if ($CONFIG->{MAX_SIZE_OF_DOCS} > 0 && $pos >= $CONFIG->{MAX_SIZE_OF_DOCS});
 		}
 
