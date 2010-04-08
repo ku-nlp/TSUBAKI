@@ -52,7 +52,7 @@ sub new {
 }
 
 sub DESTROY {
-    my ($this) = @_;    
+    my ($this) = @_;
 
     if ($this->{SID2HOST_FOR_NTCIR}) {
 	untie $this->{SID2HOST_FOR_NTCIR};
@@ -60,6 +60,21 @@ sub DESTROY {
 }
 
 sub lookup {
+    my ($this, $did) = @_;
+
+    unless ($CONFIG->{USE_OF_HASH_FOR_SID_LOOKUP}) {
+	return $this->_lookup($did);
+    } else {
+	unless (defined $this->{hashobj}) {
+	    require nict_hash;
+	    $this->{hashobj} = new nict_hash();
+	}
+
+	return $this->{hashobj}->getnode($did);
+    }
+}
+
+sub _lookup {
     my ($this, $did) = @_;
 
     my $host = $this->{SID2HOST_FOR_UPDATE_NODE}{$did};
