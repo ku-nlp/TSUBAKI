@@ -848,7 +848,9 @@ sub getDrawingDependencyCodeForParaType1 {
     my $jscode;
     if (defined $kakarisaki && defined $kakarisaki->child) {
 	foreach my $child ($kakarisaki->child) {
-	    if ($child->dpndtype eq 'P') {
+	    # 係り受け関係を追加する際、係り元のノード以前は無視する
+	    # ex) 緑茶やピロリ菌
+	    if ($child->dpndtype eq 'P' && $child->id > $kakarimoto->id) {
 		my $mark = ($child->fstring() =~ /クエリ削除語/) ?  '×' : '△';
 		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $child, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos);
 
