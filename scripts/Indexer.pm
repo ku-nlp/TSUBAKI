@@ -638,7 +638,7 @@ sub expandAntonymAndNegationTerms {
 	} else {
 	    $node->{midasi} .= '<否定>';
 	}
-	print $node->{midasi} . "\n";
+#	print $node->{midasi} . "\n";
 
 	unless (exists $midasiBuf{$node->{midasi}}) {
 	    $node->{additional_node} = 1;
@@ -673,7 +673,10 @@ sub generateDependencyTermsForParaType1 {
 
     if (defined $kakarisaki->child) {
 	foreach my $child ($kakarisaki->child) {
-	    if ($child->dpndtype eq 'P') {
+
+	    # 係り受け関係を追加する際、係り元のノード以前は無視する
+	    # ex) 緑茶やピロリ菌
+	    if ($child->dpndtype eq 'P' && $child->id > $kakarimoto->id) {
 		my $terms = $this->get_dpnd_index($kakarimoto, $child, $option);
 		$this->addDependencyTerms($idxs, $terms, $kakarimoto, $child, $pos, $option);
 
