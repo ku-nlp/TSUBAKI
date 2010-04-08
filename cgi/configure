@@ -355,3 +355,6 @@ DISABLE_BLOCK_TYPE_DISPLAY	0
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
 # SIDS_FOR_NTCIR	/home/skeiji/public_html/tsubaki-ntcir/SearchEngine/cgi/sid.range.cdb
+
+# ハッシュ関数を利用して標準フォーマットが置いてあるノードを探すかどうか
+USE_OF_HASH_FOR_SID_LOOKUP	0
