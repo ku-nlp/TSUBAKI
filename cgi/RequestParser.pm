@@ -42,7 +42,7 @@ sub getDefaultValues {
     $params{dpnd} = 1;
     $params{results} = ($call_from_API) ? 10 : $CONFIG->{NUM_OF_SEARCH_RESULTS};
     $params{force_dpnd} = 0;
-    $params{filter_simpages} = ($CONFIG->{IS_IPSJ_MODE} || $CONFIG->{IS_KUHP_MODE}) ? 0 : 1;
+    $params{filter_simpages} = ($CONFIG->{IS_IPSJ_MODE} || $CONFIG->{IS_KUHP_MODE} || $CONFIG->{IS_NTCIR_MODE}) ? 0 : 1;
     $params{near} = -1;
     $params{syngraph} = 1;
     $params{only_hitcount} = 0;
@@ -99,6 +99,7 @@ sub getDefaultValues {
     $params{score_verbose} = 1;
     $params{tarball} = 0;
     $params{get_jscode_for_parse_result} = 0;
+    $params{ntcir_query} = undef;
 
 
     # NICT用 TSUBAKI用スコアとページランクの値の内訳を表示
