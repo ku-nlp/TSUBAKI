@@ -118,18 +118,23 @@ sub printFooter {
 	printf("<DIV class=\"bottom_message\">上の%d件と類似・関連したページは除外されています。</DIV>\n", $size) if ($last_page_flag && $size < $hitcount && $size < $CONFIG->{'NUM_OF_SEARCH_RESULTS'});
     }
 
+    # クレジットの出力
+    $this->print_copyright();
+}
 
-    # フッタ出力
+# copyrightの出力
+sub print_copyright {
+    my ($this) = @_;
+
     print << "END_OF_HTML";
-
-    <DIV style="text-align:center;padding:1em;">
+<DIV style="text-align:center;padding:1em;">
     TSUBAKI利用時の良かった点、問題点などご意見を頂けると幸いです。<br>
     ご意見は tsubaki-feedback あっと nlp.kuee.kyoto-u.ac.jp までお願い致します。
     <P>
     <DIV><B>&copy;2006 - 2010 黒橋研究室</B></DIV> 
-    </DIV>
-    </body>
-    </html>
+</DIV>
+</BODY>
+</HTML>
 END_OF_HTML
 }
 
@@ -235,29 +240,6 @@ sub print_query_verbose {
 		    }
 		}
 	    }
-	    
-#	    my $dpnds = $qk->{dpnds};
-# 	    foreach my $reps (sort {$a->[0]{pos} <=> $b->[0]{pos}} @{$dpnds}){
-# 		foreach my $rep (@{$reps}){
-# 		    my $k_tmp  = $rep->{string};
-# 		    $k_tmp =~ s/->/→/;
-# 		    my $k_utf8 = encode('utf8', $k_tmp);
-# 		    if(exists($cbuff{$rep->{string}})){
-# 			printf("<span style=\"margin:0.1em 0.25em;color=%s;background-color:%s;\">$k_utf8</span>", $cbuff{$rep->{string}}->{foreground}, $cbuff{$rep->{string}}->{background});
-# 		    }else{
-# 			if($color > 4){
-# 			    print "<span style=\"color:white;margin:0.1em 0.25em;background-color:#$HIGHLIGHT_COLOR[$color];\">$k_utf8</span>";
-# 			    $cbuff{$rep->{string}}->{foreground} = 'white';
-# 			    $cbuff{$rep->{string}}->{background} = "#$HIGHLIGHT_COLOR[$color]";
-# 			}else{
-# 			    print "<span style=\"margin:0.1em 0.25em;background-color:#$HIGHLIGHT_COLOR[$color];\">$k_utf8</span>";
-# 			    $cbuff{$rep->{string}}->{foreground} = 'black';
-# 			    $cbuff{$rep->{string}}->{background} = "#$HIGHLIGHT_COLOR[$color]";
-# 			}
-# 			$color = (++$color%scalar(@HIGHLIGHT_COLOR));
-# 		    }
-# 		}
-# 	    }
 	}
     }
 
@@ -322,282 +304,248 @@ END_OF_HTML
     print "</script>\n";
 }
 
+# TSUBAKIの初期画面
+sub print_initial_display {
+    my ($this) = @_;
+
+    $this->print_tsubaki_interface();
+    $this->print_copyright();
+}
+
+# TSUBAKIの画面
 sub print_tsubaki_interface {
     my ($this, $params, $query, $status) = @_;
+
+    # header の出力
+    $this->print_header($query);
+
+    # body の出力
+    $this->print_body($params, $query, $status);
+}
+
+# header の出力
+sub print_header {
+    my ($this, $query) = @_;
 
     my $canvasName = 'canvas';
     my $title = "情報爆発プロジェクト 検索エンジン基盤 TSUBAKI";
     $title .= " (情報処理学会 論文検索版)" if ($CONFIG->{IS_IPSJ_MODE});
 
     print << "END_OF_HTML";
-    <html>
-	<head>
-	<title>$title</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
-END_OF_HTML
-    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
-    &printJavascriptCode('canvas', $query);
-    print << "END_OF_HTML";
-    </head>
-	<body style="padding: 0em; margin:0em; z-index:1;" onload="javascript:init();">
-	  <TABLE cellpadding="0" cellspacing="0" border="0" id="baroon" style="display: none; z-index: 10; position: absolute; top: 100; left: 100;">
-	    <TR>
-	      <TD><IMG width="24" height="24" src="image/curve-top-left.png"></TD>
-	      <TD style="background-color:#ffffcc;"></TD>
-	      <TD><IMG width="24" height="24" src="image/curve-top-right.png"></TD>
-	    </TR>
-	    <TR>
-	      <TD style="background-color:#ffffcc;"></TD>
-	      <TD style="background-color:#ffffcc;" id="canvas"></TD>
-	      <TD style="background-color:#ffffcc;"></TD>
-	    </TR>
-	    <TR>
-	      <TD><IMG width="24" height="24" src="image/curve-bottom-left.png"></TD>
-	      <TD style="background-color:#ffffcc;"></TD>
-	      <TD><IMG width="24" height="24" src="image/curve-bottom-right.png"></TD>
-	    </TR>
-	  </TABLE>
+<HTML>
+    <HEAD>
+    <TITLE>$title</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <LINK rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
 END_OF_HTML
 
-    my $host = `hostname`;
+# クエリ解析結果を描画するjavascriptコードの出力
+    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
+    &printJavascriptCode('canvas', $query);
+    print "</HEAD>\n";
+}
+
+# body の出力
+sub print_body {
+    my ($this, $params, $query, $status) = @_;
+
+    print qq(<BODY style="padding: 0em; margin:0em; z-index:1;" onload="javascript:init();">\n);
+
     print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
-    # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="image/info-logo.png"></A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方]</A><BR>\n);
 
     # 混雑具合を表示
-    if ($CONFIG->{DISPLAY_CONGESTION}) {
-	my ($count, $foregroundColor, $backgroundColor) = &getCongestion();
-	print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$count クエリ/分</SPAN>);
-    }
+    $this->print_congestion() if ($CONFIG->{DISPLAY_CONGESTION});
+
     print qq(</DIV>\n);
 
-    # タイトル出力
-    print qq(<TABLE width="100%" border="0"><TR><TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
-    if ($CONFIG->{IS_IPSJ_MODE}) {
-	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
-	print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
-    } else {
-	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A></BR>\n", $CONFIG->{INDEX_CGI});
-#	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 情報爆発評価版 -</SPAN></TD>\n);
-    }
+    print qq(<TABLE width="100%" border="0"><TR>\n);
+
+    # logo出力
+    $this->print_logo($params);
 
     # フォーム出力
-    print qq(<TD width="*" align="left" valign="middle" style="border: 0px solid red; padding-top: 1em;">\n);
-    print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data">\n);
-    print qq(<INPUT type="hidden" name="start" value="1">\n);
-    print qq(<INPUT type="text" id=\"qbox\" name="query" value="$params->{'query'}" size="60">\n);
-    print qq(<INPUT type="submit" value="検索する"/>\n);
-    print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/>\n);
+    $this->print_form($params);
 
-
-    # 検索に利用するブロックタイプを選択するチェックボックスを表示
-    &printBlockTypeCheckbox();
-
-
-    if ($params->{develop_mode}) {
-	print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
-	if($params->{'logical_operator'} eq "OR"){
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/>全ての語を含む</LABEL></TD>\n";
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む</LABEL></TD>\n";
-	}elsif($params->{'logical_operator'} =~ /AND/){
-	    if($params->{'force_dpnd'} > 0){
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\" checked/>全ての係り受けを含む</LABEL></TD>\n";
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/> 全ての語を含む</LABEL></TD>\n";
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
-	    }else{
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\" checked/> 全ての語を含む</LABEL></TD>\n";
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
-	    }
-	}
-	print "</TR>";
-
-	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
-	if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-	    print "<LABEL><INPUT type=\"checkbox\" name=\"disable_synnode\" disabled></INPUT><FONT color=silver>同義表現を考慮しない</FONT></LABEL>";
-	} else {
-	    if ($params->{disable_synnode}) {
-		print "<LABEL><INPUT type=\"checkbox\" name=\"disable_synnode\" checked></INPUT><FONT color=black>同義表現を考慮しない</FONT></LABEL>";
-	    } else {
-		print "<INPUT type=\"checkbox\" name=\"disable_synnode\"></INPUT><LABEL><FONT color=black>同義表現を考慮しない</FONT></LABEL>";
-	    }
-	}
-
-	if ($params->{antonym_and_negation_expansion}) {
-	    print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion" checked></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
-	} else {
-	    print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion"></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
-	}
-
-	if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
-	    print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
-	} else {
-	    if ($params->{kwic}) {
-		print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
-	    } else {
-		print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
-	    }
-	}
-	print "</TD></TR></TABLE>\n";
-    }
-
-    print qq(</FORM>\n);
-    print qq(</TD>\n);
-
-    if ($CONFIG->{QUESTIONNAIRE} && $status ne 'busy') {
-	print qq(<TD id="questionnairePane" align="right" style="padding-right:0.5em;">\n);
-	print qq(<FORM name="questionnarieForm" onsubmit="javascript:send_questionnarie();">);
-
-	print qq(<TABLE id="questionnaire" border="0"><TR><TD nowrap style="color: red; font-weight: bold; padding-bottom:0.3em;">アンケートにご協力下さい。</TD>);
-	print qq(<TD align="right"><INPUT type="button" value="送信" style="margin-left: 1em;" onClick="javascript:send_questionnarie();"></TD></TR>);
-	print qq(<TR><TD nowrap>);
-
-	print qq(・質問に対して良い検索結果ですか？</TD><TD align="right">);
-	print qq(<LABEL><INPUT type="radio" name="question" value="1">YES</LABEL>);
-	print qq(<LABEL><INPUT type="radio" name="question" value="0">NO</LABEL></TD></TR>);
-
-	print qq(<TR><TD colspan="2">);
-	print qq(・自由記述　);
-	print qq(<INPUT size="42" id="message" type="text">);
-	print qq(</TD></TR></TABLE>);
-
-	print qq(</FORM>);
-	print qq(</TD>\n);
-    }
+    # アンケート用ボックスを表示
+    $this->print_questionnarie_box() if ($CONFIG->{QUESTIONNAIRE} && $status ne 'busy');
 
     print qq(</TR></TABLE>\n);
 
-    print "<CENTER>\n";
-    print ("<FONT color='red'>$CONFIG->{MESSAGE}</FONT>\n") if ($CONFIG->{MESSAGE});
-    print "</CENTER>\n";
+    # メッセージがあれば出力
+    print qq(<CENTER><FONT color="red">$CONFIG->{MESSAGE}</FONT></CENTER>\n) if ($CONFIG->{MESSAGE});
 }
 
-sub print_tsubaki_interface_init {
-    my ($this, $params) = @_;
-    my $title = "情報爆発プロジェクト 検索エンジン基盤 TSUBAKI";
-    $title .= " (情報処理学会 論文検索版)" if ($CONFIG->{IS_IPSJ_MODE});
-#    $title .= "　（情報爆発評価版）";
+# クエリ解析結果表示用の領域を確保
+sub print_canvas {
+    my ($this) = @_;
+
     print << "END_OF_HTML";
-    <html>
-	<head>
-	<title>$title</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<link rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
-	<script language="JavaScript">
-	var regexp = new RegExp("Gecko");
-    if (navigator.userAgent.match(regexp)) {
-	document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.gecko.css'>");
-    } else {
-	document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
-    }
-	</script>
-	<script type="text/javascript" src="javascript/tsubaki.js"></script>
-	</head>
-	<body style="margin:0em; padding:0em;">
+<TABLE cellpadding="0" cellspacing="0" border="0" id="baroon" style="display: none; z-index: 10; position: absolute; top: 100; left: 100;">
+    <TR>
+	<TD><IMG width="24" height="24" src="image/curve-top-left.png"></TD>
+	<TD style="background-color:#ffffcc;"></TD>
+	<TD><IMG width="24" height="24" src="image/curve-top-right.png"></TD>
+    </TR>
+    <TR>
+	<TD style="background-color:#ffffcc;"></TD>
+	<TD style="background-color:#ffffcc;" id="canvas"></TD>
+	<TD style="background-color:#ffffcc;"></TD>
+    </TR>
+    <TR>
+	<TD><IMG width="24" height="24" src="image/curve-bottom-left.png"></TD>
+	<TD style="background-color:#ffffcc;"></TD>
+	<TD><IMG width="24" height="24" src="image/curve-bottom-right.png"></TD>
+    </TR>
+</TABLE>
 END_OF_HTML
+}
 
-my $host = `hostname`;
-#    print "TSUBAKI on $host<BR>\n";
-    # タイトル出力
-    print qq(<DIV style="font-size:smaller; text-align:right;margin:0.5em 1em 0em 0em;">\n);
-    # print qq(<A href="http://www.infoplosion.nii.ac.jp/info-plosion/index.php"><IMG border="0" src="image/info-logo.png"></A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html"><IMG style="padding: 0.5em 0em;" border="0" src="image/tutorial-logo.png"></A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/whats.html">[おしらせ等]</A>\n); 
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/gs-eval/tutorial.html">[お知らせ・使い方]</A><BR>\n);
-    # print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/gs-eval/tutorial.html">[使い方]</A><BR>\n);
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方]</A><BR>\n);
+# logoの表示
+sub print_logo {
+    my ($this, $params) = @_;
 
-    # 混雑具合を表示
-    if ($CONFIG->{DISPLAY_CONGESTION}) {
-	my ($count, $foregroundColor, $backgroundColor) = &getCongestion();
-	print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$count クエリ/分</SPAN>);
+    if ($params->{query}) {
+	print qq(<TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
+	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
+	if ($CONFIG->{IS_IPSJ_MODE}) {
+	    print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
+	}
     }
-    print qq(</DIV>\n);
+    else {
+	print qq(<TD align="center">);
+	printf ("<A href=%s><IMG border=0 src=image/logo.png></A>\n", $CONFIG->{INDEX_CGI});
+	print qq(<BR><SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
+	print "</TD></TR>\n";
+	print "<TR>";
+    }
+}
 
-    print qq(<CENTER style="maring:1em; padding:1em;">\n);
-    printf ("<A href=%s><IMG border=0 src=image/logo.png></A><BR>\n", $CONFIG->{INDEX_CGI});
-    print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
-#   print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 情報爆発評価版 -</SPAN>\n);
+# formの表示
+sub print_form {
+    my ($this, $params) = @_;
 
-    print "<P>\n";
+    printf qq(<TD width="*" align="%s" valign="middle" style="border: 0px solid red; padding-top: 1em;">\n), (($params->{query}) ? 'left' : 'center');
 
-    # フォーム出力
-    print qq(<FORM name="search" method="GET" action="$CONFIG->{INDEX_CGI}">\n);
-    print "<INPUT type=\"hidden\" name=\"start\" value=\"1\">\n";
-    print "<INPUT type=\"text\" id=\"qbox\" name=\"query\" value=\'$params->{'query'}\' size=\"90\">\n";
+    print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data">\n);
+    print qq(<INPUT type="hidden" name="start" value="1">\n);
+    print qq(<INPUT type="text" id="qbox" name="query" value="$params->{'query'}" size="112">\n);
+
     print qq(<INPUT type="submit" value="検索する"/>\n);
     print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/>\n);
 
-    if ($params->{develop_mode}) {
-	print "<TABLE style=\"border=0px solid silver;padding: 0.25em;margin: 0.25em;\"><TR><TD>検索条件</TD>\n";
-	if ($params->{'logical_operator'} eq "OR") {
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/>全ての語を含む</LABEL></TD>\n";
-	    print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\" checked/>いずれかの語を含む</LABEL></TD>\n";
-	} elsif ($params->{'logical_operator'} eq "AND") {
-	    if ($params->{'force_dpnd'} > 0) {
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\" checked/>全ての係り受けを含む</LABEL></TD>\n";
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\"/> 全ての語を含む</LABEL></TD>\n";
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
-	    } else {
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"DPND_AND\"/>全ての係り受けを含む</LABEL></TD>\n";
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"WORD_AND\" checked/> 全ての語を含む</LABEL></TD>\n";
-		print "<TD><LABEL><INPUT type=\"radio\" name=\"logical\" value=\"OR\"/>いずれかの語を含む</LABEL></TD>\n";
-	    }
-	}
-	print "</TR>";
-
-	print "<TR><TD>オプション</TD><TD colspan=3 style=\"text-align:left;\">";
-	if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
-	    print "<LABEL><INPUT type=\"checkbox\" name=\"disable_synnode\" disabled></INPUT><FONT color=silver>同義表現を考慮しない</FONT></LABEL>";
-	} else {
-	    if ($params->{disable_synnode}) {
-		print "<LABEL><INPUT type=\"checkbox\" name=\"disable_synnode\" checked></INPUT><FONT color=black>同義表現を考慮しない</FONT></LABEL>";
-	    } else {
-		print "<INPUT type=\"checkbox\" name=\"disable_synnode\"></INPUT><LABEL><FONT color=black>同義表現を考慮しない</FONT></LABEL>";
-	    }
-	}
-
-	if ($params->{antonym_and_negation_expansion}) {
-	    print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion" checked></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
-	} else {
-	    print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion"></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
-	}
-
-	if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
-	    print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color=silver>KWIC表示</FONT></LABEL>);
-	} else {
-	    if ($params->{kwic}) {
-		print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
-	    } else {
-		print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
-	    }
-	}
-
-	print "</TD></TR></TABLE>\n";
-    }
+    # NTCIRモードの場合はクエリを表示
+    $this->print_ntcir_queries() if ($CONFIG->{IS_NTCIR_MODE});
 
     # 検索に利用するブロックタイプを選択するチェックボックスを表示
-    &printBlockTypeCheckbox();
+    $this->printBlockTypeCheckbox($params);
 
-    print "</FORM>\n";
+    # 開発モード用オプションを表示
+    $this->print_options_for_developmode($params) if ($params->{develop_mode});
 
-    print ("<FONT color='red'>$CONFIG->{MESSAGE}</FONT>\n") if ($CONFIG->{MESSAGE});
-
-    print "</CENTER>";
-
-    # フッターの表示
-    $this->printFooter($params, 0, 0, 0);
+    print qq(</FORM>\n);
+    print qq(</TD>\n);
 }
 
+# NTCIRのクエリを表示
+sub print_ntcir_queries {
+    my ($this) = @_;
+
+    print qq(<SELECT style="display: block;">\n);
+    open (READER, "<:encoding(euc-jp)", $CONFIG->{TSUBAKI_SCRIPT_PATH} . "/../data/qs-fml-ntcir34") or die "$!";
+    while (<READER>) {
+	chop;
+	my ($qid, $string) = split (/ /, $_);
+	printf qq(<OPTION value="%s">%s: %s\n), $qid, $qid, $string;
+    }
+    close (READER);
+    print "</SELECT>\n";
+}
+
+# 開発モード用オプションを表示
+sub print_options_for_developmode {
+    my ($this, $params) = @_;
+
+    print qq(<TABLE style="border=0px solid silver;padding: 0.25em;margin: 0.25em;"><TR><TD>検索条件</TD>\n);
+    if ($params->{'logical_operator'} eq "OR") {
+	print qq(<TD><LABEL><INPUT type="radio" name="logical" value="DPND_AND"/>全ての係り受けを含む</LABEL></TD>\n);
+	print qq(<TD><LABEL><INPUT type="radio" name="logical" value="WORD_AND"/>全ての語を含む</LABEL></TD>\n);
+	print qq(<TD><LABEL><INPUT type="radio" name="logical" value="OR" checked/>いずれかの語を含む</LABEL></TD>\n);
+    }
+    elsif ($params->{'logical_operator'} =~ /AND/) {
+	if ($params->{'force_dpnd'}) {
+	    print qq(<TD><LABEL><INPUT type="radio" name="logical" value="DPND_AND" checked/>全ての係り受けを含む</LABEL></TD>\n);
+	    print qq(<TD><LABEL><INPUT type="radio" name="logical" value="WORD_AND"/> 全ての語を含む</LABEL></TD>\n);
+	    print qq(<TD><LABEL><INPUT type="radio" name="logical" value="OR"/>いずれかの語を含む</LABEL></TD>\n);
+	} else {
+	    print qq(<TD><LABEL><INPUT type="radio" name="logical" value="DPND_AND"/>全ての係り受けを含む</LABEL></TD>\n);
+	    print qq(<TD><LABEL><INPUT type="radio" name="logical" value="WORD_AND" checked/> 全ての語を含む</LABEL></TD>\n);
+	    print qq(<TD><LABEL><INPUT type="radio" name="logical" value="OR"/>いずれかの語を含む</LABEL></TD>\n);
+	}
+    }
+    print "</TR>";
+
+    print qq(<TR><TD>オプション</TD><TD colspan="3" style="text-align:left;">);
+    if ($CONFIG->{DISABLE_SYNGRAPH_SEARCH}) {
+	print qq(<LABEL><INPUT type="checkbox" name="disable_synnode" disabled></INPUT><FONT color="silver">同義表現を考慮しない</FONT></LABEL>);
+    } else {
+	if ($params->{disable_synnode}) {
+	    print qq(<LABEL><INPUT type="checkbox" name="disable_synnode" checked></INPUT><FONT color="black">同義表現を考慮しない</FONT></LABEL>);
+	} else {
+	    print qq(<INPUT type="checkbox" name="disable_synnode"></INPUT><LABEL><FONT color="black">同義表現を考慮しない</FONT></LABEL>);
+	}
+    }
+
+    if ($params->{antonym_and_negation_expansion}) {
+	print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion" checked></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
+    } else {
+	print qq(<INPUT type="checkbox" name="antonym_and_negation_expansion"></INPUT><LABEL><FONT color="black">反義語・否定を考慮する</FONT></LABEL>);
+    }
+
+    if ($CONFIG->{DISABLE_KWIC_DISPLAY}) {
+	print qq(<INPUT type="checkbox" name="kwic" disabled></INPUT><FONT color="silver">KWIC表示</FONT></LABEL>);
+    } else {
+	if ($params->{kwic}) {
+	    print qq(<INPUT type="checkbox" name="kwic" checked></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	} else {
+	    print qq(<INPUT type="checkbox" name="kwic"></INPUT><LABEL><FONT color="black">KWIC表示</FONT></LABEL>);
+	}
+    }
+    print "</TD></TR></TABLE>\n";
+}
+
+
+# アンケートボックスの表示
+sub print_questionnarie_box {
+    my ($this) = @_;
+
+    print qq(<TD id="questionnairePane" align="right" style="padding-right:0.5em;">\n);
+    print qq(<FORM name="questionnarieForm" onsubmit="javascript:send_questionnarie();">);
+
+    print qq(<TABLE id="questionnaire" border="0"><TR><TD nowrap style="color: red; font-weight: bold; padding-bottom:0.3em;">アンケートにご協力下さい。</TD>);
+    print qq(<TD align="right"><INPUT type="button" value="送信" style="margin-left: 1em;" onClick="javascript:send_questionnarie();"></TD></TR>);
+    print qq(<TR><TD nowrap>);
+
+    print qq(・質問に対して良い検索結果ですか？</TD><TD align="right">);
+    print qq(<LABEL><INPUT type="radio" name="question" value="1">YES</LABEL>);
+    print qq(<LABEL><INPUT type="radio" name="question" value="0">NO</LABEL></TD></TR>);
+
+    print qq(<TR><TD colspan="2">);
+    print qq(・自由記述　);
+    print qq(<INPUT size="42" id="message" type="text">);
+    print qq(</TD></TR></TABLE>);
+
+    print qq(</FORM>);
+    print qq(</TD>\n);
+}
+
+# 領域タイプを選択するチェックボックスを表示
 sub printBlockTypeCheckbox {
+    my ($this, $params) = @_;
+
     if ($CONFIG->{USE_OF_BLOCK_TYPES} && !$CONFIG->{DISABLE_BLOCK_TYPE_DISPLAY}) {
 	print qq(<TR>\n);
-	print qq(<TD colspan=2>\n);
+	printf qq(<TD colspan="2" align="%s">\n), (($params->{query}) ? 'left' : 'center');
 	print qq(<DIV style="padding-top:1em; border: 0px solid green;">\n);
 	foreach my $key (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
 	    my $tag = $CONFIG->{BLOCK_TYPE_DATA}{$key}{tag};
@@ -609,6 +557,12 @@ sub printBlockTypeCheckbox {
     }
 }
 
+sub print_congestion {
+    my ($this) = @_;
+
+    my ($count, $foregroundColor, $backgroundColor) = &getCongestion();
+    print qq(<SPAN style="color: $foregroundColor; background-color: $backgroundColor;">&nbsp;混具合:&nbsp;$count クエリ/分</SPAN>);
+}
 
 sub getCongestion {
     my $logfile = $CONFIG->{DATA_DIR} . "/access_log";
