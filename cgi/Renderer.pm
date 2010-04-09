@@ -1127,7 +1127,7 @@ sub printOrdinarySearchResult {
 #	$output .= qq(<SPAN class="cache">$results->[$rank]{url}</SPAN>\n);
 #	$output .= qq(<A class="cache2" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank">キャッシュ</A>\n);
 
-	if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+	if ($CONFIG->{USE_OF_BLOCK_TYPES} && !$CONFIG->{IS_KUHP_MODE}) {
 	    # ページの構造解析結果へのリンクを生成
 	    my $block_type_detect_url = sprintf "http://orchid.kuee.kyoto-u.ac.jp/~funayama/ISA/index_dev.cgi?DetectBlocks_ROOT=%%2Fhome%%2Ffunayama%%2Fcvs%%2FDetectBlocks&DetectSender_ROOT=%%2Fhome%%2Ffunayama%%2Fcvs%%2FDetectSender&inputurl=%s?format=html\@id=%s&DetectSender_flag=&rel2abs=", "http://tsubaki.ixnlp.nii.ac.jp/api.cgi", $did;
 	    $output .= qq(&nbsp;<A class="cache" href="$block_type_detect_url" target="_blank"><SMALL>構造解析結果</SMALL></A>\n);
