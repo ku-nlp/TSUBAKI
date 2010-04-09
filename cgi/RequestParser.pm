@@ -262,6 +262,11 @@ sub setParametersOfGetRequest {
     }
     $params->{no_use_of_Zwhitespace_as_delimiter} = $params->{disable_Zwhitespace_delimiter};
 
+    # utf8フラグを立てる
+    $params->{ntcir_query} = decode('utf8', $params->{ntcir_query});
+
+
+
     # 取得する検索件数の設定
     if (defined($cgi->param('start'))) {
 	$params->{start} = $cgi->param('start') - 1;
