@@ -438,7 +438,7 @@ sub print_form {
     print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/>\n);
 
     # NTCIRモードの場合はクエリを表示
-    $this->print_ntcir_queries() if ($CONFIG->{IS_NTCIR_MODE});
+    $this->print_ntcir_queries($params) if ($CONFIG->{IS_NTCIR_MODE});
 
     # 検索に利用するブロックタイプを選択するチェックボックスを表示
     $this->printBlockTypeCheckbox($params);
@@ -452,14 +452,18 @@ sub print_form {
 
 # NTCIRのクエリを表示
 sub print_ntcir_queries {
-    my ($this) = @_;
+    my ($this, $params) = @_;
 
-    print qq(<SELECT name="ntcir_query" style="display: block;">\n);
+    print qq(<SELECT name="ntcir_query" style="display: block; margin-top: 0.2em;">\n);
     open (READER, "<:encoding(euc-jp)", $CONFIG->{TSUBAKI_SCRIPT_PATH} . "/../data/qs-fml-ntcir34") or die "$!";
     while (<READER>) {
 	chop;
 	my ($qid, $string) = split (/ /, $_);
-	printf qq(<OPTION value="%s">%s: %s\n), $string, $qid, $string;
+	if ($string eq $params->{ntcir_query}) {
+	    printf qq(<OPTION value="%s" selected>%s: %s\n), $string, $qid, $string;
+	} else {
+	    printf qq(<OPTION value="%s">%s: %s\n), $string, $qid, $string;
+	}
     }
     close (READER);
     print "</SELECT>\n";
