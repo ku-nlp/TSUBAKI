@@ -351,6 +351,9 @@ sub print_body {
 
     print qq(<BODY style="padding: 0em; margin:0em; z-index:1;" onload="javascript:init();">\n);
 
+    # クエリ解析結果表示用の領域を確保
+    $this->print_canvas();
+
     print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方]</A><BR>\n);
 
