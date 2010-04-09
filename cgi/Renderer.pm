@@ -451,12 +451,12 @@ sub print_form {
 sub print_ntcir_queries {
     my ($this) = @_;
 
-    print qq(<SELECT style="display: block;">\n);
+    print qq(<SELECT name="ntcir_query" style="display: block;">\n);
     open (READER, "<:encoding(euc-jp)", $CONFIG->{TSUBAKI_SCRIPT_PATH} . "/../data/qs-fml-ntcir34") or die "$!";
     while (<READER>) {
 	chop;
 	my ($qid, $string) = split (/ /, $_);
-	printf qq(<OPTION value="%s">%s: %s\n), $qid, $qid, $string;
+	printf qq(<OPTION value="%s">%s: %s\n), $string, $qid, $string;
     }
     close (READER);
     print "</SELECT>\n";
@@ -981,7 +981,7 @@ sub printOrdinarySearchResult {
 #	tie my %_cdb, 'CDB_File', $CONFIG->{NTCIR_EVAL_DAT} or die $!;
 	tie my %_cdb, 'CDB_File', "/home/skeiji/public_html/tsubaki-ntcir/SearchEngine/cgi/ntcir34-query-eval.cdb" or die $!;
 	require Storable;
-	$evaldat = Storable::thaw($_cdb{$query->{rawstring}});
+	$evaldat = Storable::thaw($_cdb{$params->{ntcir_query}});
 	untie %_cdb;
 
 	$evalmap{'H'} = '◎';
