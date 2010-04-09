@@ -38,6 +38,7 @@ sub main {
     # cgiパラメタの取得
     my $params = RequestParser::parseCGIRequest(new CGI());
 
+
     if ($params->{debug}) {
 	print Dumper::dump_as_HTML($CONFIG);
 	print "<HR>\n";
@@ -121,7 +122,7 @@ sub main {
 	$params->{query} = undef if ($CONFIG->{SERVICE_STOP_FLAG});
 	unless (defined $params->{query}) {
 	    # TSUBAKI のトップ画面を表示
-	    $renderer->print_tsubaki_interface_init($params);
+	    $renderer->print_initial_display($params);
 	}
 	# クエリが入力された場合は検索
 	else {
