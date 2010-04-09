@@ -47,7 +47,10 @@ sub main {
 	# キャッシュページの出力
 	my $id = $params->{'cache'};
 	my $file;
-	if ($CONFIG->{IS_NICT_MODE}) {
+	if ($CONFIG->{IS_KUHP_MODE}) {
+	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
+	}
+	elsif ($CONFIG->{IS_NICT_MODE}) {
 	    my $did_w_version = $id;
 	    my ($did) = ($did_w_version =~ /(^\d+)/);
 	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 1000, $did_w_version);
@@ -67,7 +70,29 @@ sub main {
 
 	# キャッシュされたページを表示
 	my $cachedHTML = new CachedHTMLDocument($query, { file => $file, debug => $params->{debug} });
-	if ($CONFIG->{IS_IPSJ_MODE}) {
+	if ($CONFIG->{IS_KUHP_MODE}) {
+	    my $htmldata = $cachedHTML->to_string();
+	    my ($findings) = ($htmldata =~ m!<DIV myblocktype="findings">(.+?)</DIV>!);
+	    my ($imp)      = ($htmldata =~ m!<DIV myblocktype="imp">(.+?)</DIV>!);
+	    my ($order)    = ($htmldata =~ m!<DIV myblocktype="order">(.+?)</DIV>!);
+
+	    print "<HTML><BODY><TABLE border=1><TR><TH>Findings</TH><TH>Imp.</TH><TH>Order</TH></TR>\n";
+
+	    print "<TR>\n";
+	    foreach my $text (($findings, $imp, $order)) {
+		print "<TD valign=top>\n";
+		print "<UL>\n";
+		foreach my $line (split (/。/, $text)) {
+		    print "<LI>$line。</LI>\n";
+		}
+		print "</UL>\n";
+		print "</TD>\n";
+	    }
+	    print "</TR>\n";
+
+	    print "</TABLE><BODY></HTML>";
+	}
+	elsif ($CONFIG->{IS_IPSJ_MODE}) {
 	    print $cachedHTML->to_string_for_ipsj();
 	} else {
 	    print $cachedHTML->to_string();
