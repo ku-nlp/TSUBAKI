@@ -33,7 +33,7 @@ KNP_COMMAND	/home/skeiji/local/080620/bin/knp
 JUMAN_COMMAND	/home/skeiji/local/080620/bin/juman
 SYNDB_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGraph_manual_DB5/syndb/i686
 MIDB_PATH	/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi
-KNP_OPTIONS	-postprocess,-tab,-dpnd,-ne-crf
+KNP_OPTIONS	-postprocess,-tab,-dpnd,-ne-crf,-ne-cache
 KNP_RCFILE	/home/skeiji/.knprc
 SYNGRAPH_PM_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts/tsubaki/SynGraph_manual_DB5/perl
 WWW2SF_PATH	/home/skeiji/cvs/WWW2sf/tool/perl

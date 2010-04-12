@@ -33,7 +33,7 @@ KNP_COMMAND	/opt/KNP/current/bin/knp
 JUMAN_COMMAND	/opt/JUMAN/current/bin/juman
 SYNDB_PATH	/opt/SYNGRAPH/SynGraph.20080929/syndb/x86_64
 MIDB_PATH	/share03/WISDOM/CalcSimilarityByCF/db/all-mi
-KNP_OPTIONS	-postprocess,-tab,-dpnd
+KNP_OPTIONS	-postprocess,-tab,-dpnd,-ne-crf,-ne-cache
 KNP_RCFILE	/opt/KNP/current/etc/knprc
 SYNGRAPH_PM_PATH	/opt/PERL_MODS/SYNGRAPH/SynGraph.20081107
 WWW2SF_PATH	/share03/WISDOM/WWW2sf/tool/perl
