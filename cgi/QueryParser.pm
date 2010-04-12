@@ -44,6 +44,7 @@ sub new {
 	# クエリに対して固有表現解析する際は、オプションを追加
 	if ($opts->{use_of_NE_tagger}) {
 	    push(@{$opts->{KNP_OPTIONS}}, '-ne-crf');
+	    push(@{$opts->{KNP_OPTIONS}}, '-ne-cache');
 	}
 
 	if ($opts->{debug}) {
