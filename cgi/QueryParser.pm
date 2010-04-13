@@ -196,9 +196,9 @@ sub parse {
 	}
 	# 指定なし
 	else {
-	    # クエリに制約(近接およびフレーズ)が指定されていなければ~100wをつける
+	    # クエリに制約(近接およびフレーズ)が指定されていなければ~$CONFIG->{DEFAULT_APPROXIMATE_DIST}wをつける
 	    $logical_cond_qkw = 'AND';
-	    $near = 100;
+	    $near = $CONFIG->{DEFAULT_APPROXIMATE_DIST};
 	    $sentence_flag = 0;
 	    $keep_order = 0;
 	}
