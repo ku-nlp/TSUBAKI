@@ -650,7 +650,6 @@ sub get_uri_escaped_query {
 		}
 
 		$buf1{$string}++;
-		last;
 	    }
 	    push(@buf2, join(";", sort {$a cmp $b} keys %buf1));
 	}
