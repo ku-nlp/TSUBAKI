@@ -304,6 +304,9 @@ SERVICE_STOP_FLAG	0
 # 検索画面に表示するメッセージ
 MESSAGE	0
 
+# 近接制約のデフォルト値
+DEFAULT_APPROXIMATE_DIST	100
+
 # スニペットの長さ（デフォルトは100単語）
 MAX_NUM_OF_WORDS_IN_SNIPPET	100
 
