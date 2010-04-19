@@ -37,22 +37,29 @@ sub create_snippets {
     # 文書IDを標準フォーマットを管理しているホストに割り振る
     my %host2dids = ();
     my $range = undef;
-    if ($CONFIG->{IS_NICT_MODE}) {
-	require SidRange;
-	if ($CONFIG->{IS_NTCIR_MODE}) {
-	    $range = new SidRange({sids_for_ntcir => $CONFIG->{SIDS_FOR_NTCIR}});
-	} else {
-	    $range = new SidRange();
-	}
+    if ($CONFIG->{IS_KUHP_MODE}) {
+	# nothing to do;
+    }
+    elsif ($CONFIG->{IS_NICT_MODE}) {
+ 	require SidRange;
+ 	if ($CONFIG->{IS_NTCIR_MODE}) {
+ 	    $range = new SidRange({sids_for_ntcir => $CONFIG->{SIDS_FOR_NTCIR}});
+ 	} else {
+ 	    $range = new SidRange();
+ 	}
     }
 
     my $count = 0;
     foreach my $doc (@$docs) {
-	if ($CONFIG->{IS_NICT_MODE}) {
-	    my $did = sprintf ("%09d", $doc->{did});
-	    my $host = $range->lookup($did);
-	    push(@{$host2dids{$host}}, $doc);
-	} elsif ($CONFIG->{IS_IPSJ_MODE}) {
+	if ($CONFIG->{IS_KUHP_MODE}) {
+	    push(@{$host2dids{$CONFIG->{IPSJ_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{IPSJ_SNIPPET_SERVERS}})]}}, $doc);
+	}
+ 	elsif ($CONFIG->{IS_NICT_MODE}) {
+ 	    my $did = sprintf ("%09d", $doc->{did});
+ 	    my $host = $range->lookup($did);
+ 	    push(@{$host2dids{$host}}, $doc);
+ 	}
+	elsif ($CONFIG->{IS_IPSJ_MODE}) {
 	    push(@{$host2dids{$CONFIG->{IPSJ_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{IPSJ_SNIPPET_SERVERS}})]}}, $doc);
 	} else {
 	    push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%03d", $doc->{did} / 1000000)}}}, $doc);
@@ -234,7 +241,7 @@ sub get_snippets_for_each_did {
 		foreach my $rep (@$reps) {
 		    foreach my $string (split (/\+/, $rep->{string})) {
 			# 論文検索モードであれば、領域タグを削除する
-			$string =~ s/^[A-Z][A-Z]:// if ($CONFIG->{IS_IPSJ_MODE});
+			$string =~ s/^[A-Z][A-Z]:// if ($CONFIG->{USE_OF_BLOCK_TYPES});
 			$rep2style{$string} = $rep->{stylesheet};
 		    }
 		}
