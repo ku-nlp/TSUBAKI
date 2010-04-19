@@ -241,6 +241,7 @@ sub parse {
 		  CN_process => $opt->{CN_process},
 		  NE_process => $opt->{NE_process},
 		  modifier_of_NE_process => $opt->{modifier_of_NE_process},
+		  blockTypes => $opt->{blockTypes},
 		  debug => $opt->{debug}
 		});
 	} else {
@@ -263,6 +264,7 @@ sub parse {
 		  CN_process => $opt->{CN_process},
 		  NE_process => $opt->{NE_process},
 		  modifier_of_NE_process => $opt->{modifier_of_NE_process},
+		  blockTypes => $opt->{blockTypes},
 		  debug => $opt->{debug}
 		});
 	}
@@ -330,6 +332,13 @@ sub parse {
 		push(@{$gid2qids{$rep->{gid}}}, $qid);
 		$qid2df{$qid} = $this->get_DF($rep->{string});
 		$qid2qtf{$qid} = $rep->{freq};
+
+		# ブロックタイプを考慮する場合は、ブロックの重みを考慮する
+		if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+		    foreach my $tag (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
+			$qid2qtf{$qid} *= $CONFIG->{BLOCK_TYPE_DATA}{$tag}{weight} if ($rep->{string} =~ /\Q$tag\E:/);
+		    }
+		}
 
 		$rep->{qid} = $qid;
 		$rep->{df} = $qid2df{$qid};
@@ -795,12 +804,35 @@ sub load_DFDBs {
 }
 
 sub get_DF {
-    my ($this, $k) = @_;
+    my ($this, $term_w_blocktag) = @_;
 
-    my $k_utf8 = encode('utf8', $k);
-    my $DFDBs = (index($k, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
+    # ブロックタイプを考慮しない場合
+    unless ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+	my $term_utf8 = encode('utf8', $term_w_blocktag);
+	my $DFDBs = (index($term_utf8, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
 
-    return (defined $DFDBs) ? $DFDBs->get($k_utf8) : 0;
+	return (defined $DFDBs) ? $DFDBs->get($term_utf8) : 0;
+    }
+    # ブロックタイプを考慮する場合
+    else {
+	my ($term) = ($term_w_blocktag =~ /^(?:..:)(.+)$/);
+	my $df = $this->{CACHED_DF}{$term};
+	if ($df) {
+	    return $df;
+	} else {
+	    my $term_utf8 = encode('utf8', $term);
+	    my $DFDBs = (index($term, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
+
+	    foreach my $tag (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
+		my $K = $tag . ":" . $term;
+		my $_df += $DFDBs->get($K);
+		$df += $_df;
+	    }
+
+	    $this->{CACHED_DF}{$term} = $df;
+	    return $df;
+	}
+    }
 }
 
 
