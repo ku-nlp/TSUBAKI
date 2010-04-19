@@ -972,6 +972,7 @@ sub get_repnames2 {
 	    foreach my $synnode ($synnodes->synnode) {
 		my $midasi = $synnode->synid;
 		next if ($midasi =~ /s\d+/);
+		next if ($synnode->feature =~ /<[^>]+>/);
 
 		# 読みの削除
 		$midasi = &remove_yomi($midasi)	if ($this->{ignore_yomi});
