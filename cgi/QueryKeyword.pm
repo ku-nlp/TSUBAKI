@@ -129,39 +129,41 @@ sub new {
 		$m->{optional} = 1;
 	    }
 
-	    if ($m->{midasi} =~ /\-\>/) {
-		push(@dpnd_reps, {
-		    string => $m->{midasi},
-		    gid => $group_id,
-		    qid => -1,
-		    weight => 1,
-		    freq => $m->{freq},
-		    requisite => $m->{requisite},
-		    optional => $m->{optional},
-		    isContentWord => $m->{isContentWord},
-		    isBasicNode => $m->{isBasicNode},
-		    isAdditionalNode => ($m->{additional_node}) ? 1 : 0
-		     });
-	    } else {
-		push(@word_reps, {
-		    surf => $m->{surf},
-		    string => $m->{midasi},
-		    midasi_with_yomi => $m->{midasi_with_yomi},
-		    gid => $group_id,
-		    qid => -1,
-		    weight => 1,
-		    freq => $m->{freq},
-		    requisite => $m->{requisite},
-		    optional =>  $m->{optional},
-		    isContentWord => $m->{isContentWord},
-		    question_type => $m->{question_type},
-		    NE => $m->{NE},
-		    isBasicNode => $m->{isBasicNode},
-		    fstring => $m->{fstring},
-		    isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
-		    katsuyou => $m->{katsuyou},
-		    POS => $m->{POS}
-		     });
+	    foreach my $blockType (keys %{$opt->{blockTypes}}) {
+		if ($m->{midasi} =~ /\-\>/) {
+		    push(@dpnd_reps, {
+			string => sprintf ("%s%s", $blockType, $m->{midasi}),
+			gid => $group_id,
+			qid => -1,
+			weight => 1,
+			freq => $m->{freq},
+			requisite => $m->{requisite},
+			optional => $m->{optional},
+			isContentWord => $m->{isContentWord},
+			isBasicNode => $m->{isBasicNode},
+			isAdditionalNode => ($m->{additional_node}) ? 1 : 0
+			 });
+		} else {
+		    push(@word_reps, {
+			surf => $m->{surf},
+			string => sprintf ("%s%s", $blockType, $m->{midasi}),
+			midasi_with_yomi => $m->{midasi_with_yomi},
+			gid => $group_id,
+			qid => -1,
+			weight => 1,
+			freq => $m->{freq},
+			requisite => $m->{requisite},
+			optional =>  $m->{optional},
+			isContentWord => $m->{isContentWord},
+			question_type => $m->{question_type},
+			NE => $m->{NE},
+			isBasicNode => $m->{isBasicNode},
+			fstring => $m->{fstring},
+			isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
+			katsuyou => $m->{katsuyou},
+			POS => $m->{POS}
+			 });
+		}
 		$flag = 1 if ($m->{midasi} =~ /\+/ && $m->{isBasicNode});
 		last if ($m->{midasi} =~ /\+/ && $m->{isBasicNode} && $is_phrasal_search > 0);
 	    }

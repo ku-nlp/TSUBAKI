@@ -219,7 +219,7 @@ sub setParametersOfGetRequest {
 	    }
 	}
     }
-    $types{""} = 1;
+    $types{""} = 1 unless ($CONFIG->{USE_OF_BLOCK_TYPES});
     $params->{blockTypes} = \%types;
 
     ###############################################################
