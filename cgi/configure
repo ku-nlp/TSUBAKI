@@ -342,6 +342,10 @@ IS_IPSJ_MODE	0
 IPSJ_METADB_PATH	/home/skeiji/ipsj/data3/org/meta.cdb
 
 
+# 京大病院モード
+IS_KUHP_MODE	0
+
+
 
 # ブロックタイプを検索で利用するかどうか
 USE_OF_BLOCK_TYPES		0
