@@ -55,7 +55,7 @@ sub main {
 	my ($client_port,$client_iaddr) = unpack_sockaddr_in($client_sockaddr);
 	my $client_hostname = gethostbyaddr($client_iaddr, AF_INET);
 	my $client_ip = inet_ntoa($client_iaddr);
-	
+
 	select($new_socket); $|=1; select(STDOUT);
 
 	my $pid;
@@ -102,6 +102,7 @@ sub main {
 		  logger => $logger,
 		  SYNGRAPH => $SYNGRAPH,
 		  site => $params->{site},
+		  blockTypes => $params->{blockTypes},
 		  debug => $params->{debug}
 		});
 
