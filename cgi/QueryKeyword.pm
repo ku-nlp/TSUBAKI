@@ -129,41 +129,17 @@ sub new {
 		$m->{optional} = 1;
 	    }
 
-	    foreach my $blockType (keys %{$opt->{blockTypes}}) {
-		if ($m->{midasi} =~ /\-\>/) {
-		    push(@dpnd_reps, {
-			string => sprintf ("%s%s", $blockType, $m->{midasi}),
-			gid => $group_id,
-			qid => -1,
-			weight => 1,
-			freq => $m->{freq},
-			requisite => $m->{requisite},
-			optional => $m->{optional},
-			isContentWord => $m->{isContentWord},
-			isBasicNode => $m->{isBasicNode},
-			isAdditionalNode => ($m->{additional_node}) ? 1 : 0
-			 });
-		} else {
-		    push(@word_reps, {
-			surf => $m->{surf},
-			string => sprintf ("%s%s", $blockType, $m->{midasi}),
-			midasi_with_yomi => $m->{midasi_with_yomi},
-			gid => $group_id,
-			qid => -1,
-			weight => 1,
-			freq => $m->{freq},
-			requisite => $m->{requisite},
-			optional =>  $m->{optional},
-			isContentWord => $m->{isContentWord},
-			question_type => $m->{question_type},
-			NE => $m->{NE},
-			isBasicNode => $m->{isBasicNode},
-			fstring => $m->{fstring},
-			isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
-			katsuyou => $m->{katsuyou},
-			POS => $m->{POS}
-			 });
+	    # ブロックタイプを考慮する場合
+	    if ($opt->{blockTypes} && %{$opt->{blockTypes}}) {
+		foreach my $blockType (keys %{$opt->{blockTypes}}) {
+		    &push_string_to_reps(\@dpnd_reps, \@word_reps, $m, sprintf ("%s%s", $blockType, $m->{midasi}), $group_id);
 		}
+	    }
+	    else {
+		&push_string_to_reps(\@dpnd_reps, \@word_reps, $m, $m->{midasi}, $group_id);
+	    }
+
+	    if ($m->{midasi} !~ /\-\>/) {
 		$flag = 1 if ($m->{midasi} =~ /\+/ && $m->{isBasicNode});
 		last if ($m->{midasi} =~ /\+/ && $m->{isBasicNode} && $is_phrasal_search > 0);
 	    }
@@ -189,6 +165,45 @@ sub new {
     bless $this;
 }
 
+# @dpnd_reps, \@word_repsに追加する関数
+sub push_string_to_reps {
+    my ($dpnd_reps_ar, $word_reps_ar, $m, $regist_string, $group_id) = @_;
+    if ($m->{midasi} =~ /\-\>/) {
+	push(@{$dpnd_reps_ar}, {
+				string => $regist_string,
+				gid => $group_id,
+				qid => -1,
+				weight => 1,
+				freq => $m->{freq},
+				requisite => $m->{requisite},
+				optional => $m->{optional},
+				isContentWord => $m->{isContentWord},
+				isBasicNode => $m->{isBasicNode},
+				isAdditionalNode => ($m->{additional_node}) ? 1 : 0
+			       });
+    }
+    else {
+	push(@{$word_reps_ar}, {
+				surf => $m->{surf},
+				string => $regist_string,
+				midasi_with_yomi => $m->{midasi_with_yomi},
+				gid => $group_id,
+				qid => -1,
+				weight => 1,
+				freq => $m->{freq},
+				requisite => $m->{requisite},
+				optional =>  $m->{optional},
+				isContentWord => $m->{isContentWord},
+				question_type => $m->{question_type},
+				NE => $m->{NE},
+				isBasicNode => $m->{isBasicNode},
+				fstring => $m->{fstring},
+				isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
+				katsuyou => $m->{katsuyou},
+				POS => $m->{POS}
+			       });
+    }
+}
 
 sub reduceSynnodes {
    my ($this, $use_of_antonym_expansion) = @_;

@@ -70,6 +70,7 @@ sub new {
 	OPTIONS => {trimming => $opts->{QUERY_TRIMMING},
 		    jyushi => (),
 		    keishi => (),
+		    use_of_block_types => defined($opts->{USE_OF_BLOCK_TYPES}) ? $opts->{USE_OF_BLOCK_TYPES} : $CONFIG->{USE_OF_BLOCK_TYPES}, # newに指定された設定は、CONFIGよりも優先
 		    syngraph => undef}
     };
 
@@ -334,7 +335,7 @@ sub parse {
 		$qid2qtf{$qid} = $rep->{freq};
 
 		# ブロックタイプを考慮する場合は、ブロックの重みを考慮する
-		if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+		if ($this->{OPTIONS}{use_of_block_types}) {
 		    foreach my $tag (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
 			$qid2qtf{$qid} *= $CONFIG->{BLOCK_TYPE_DATA}{$tag}{weight} if ($rep->{string} =~ /\Q$tag\E:/);
 		    }
@@ -807,7 +808,7 @@ sub get_DF {
     my ($this, $term_w_blocktag) = @_;
 
     # ブロックタイプを考慮しない場合
-    unless ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+    unless ($this->{OPTIONS}{use_of_block_types}) {
 	my $term_utf8 = encode('utf8', $term_w_blocktag);
 	my $DFDBs = (index($term_utf8, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
 
