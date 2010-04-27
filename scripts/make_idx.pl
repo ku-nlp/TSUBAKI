@@ -88,6 +88,7 @@ $prefixOfBlockType{maintext}        = 'MT';
 $prefixOfBlockType{unknown_block}   = 'UB';
 $prefixOfBlockType{title}           = 'TT';
 $prefixOfBlockType{keyword}         = 'KW';
+$prefixOfBlockType{inlink}          = 'AC';
 
 # 論文検索
 $prefixOfBlockType{author}          = 'AU';
@@ -404,6 +405,9 @@ sub extract_indices_wo_pm {
 		    $term->{score} *= $num_of_linked_pages;
 		    $term->{freq} *= $num_of_linked_pages;
 		}
+
+		# inlinkから抽出した場合は領域タグACを追加
+		$sid2blockType{$sid} = $prefixOfBlockType{inlink};
 	    }
 	    $indices{$sid} = $terms if (defined $terms);
 
