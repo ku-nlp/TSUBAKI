@@ -1,4 +1,138 @@
+2010-04-28  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Makefile.indexing: idx2df.shを呼ぶように変更.
+
+	* scripts/idx2df.pl: ブロックタイプを除いてマージするオプションの追加.
+
+2010-04-27  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* cgi/api.cgi: Set USE_OF_BLOCK_TYPES to 0 for snippet request to API.
+
+	* cgi/QueryKeyword.pm, cgi/QueryParser.pm:
+	Added an option of overwriting USE_OF_BLOCK_TYPES to the constructor.
+
+2010-04-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	インリンクから抽出したタームに領域ラベルを付与するように.
+
+2010-04-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/query_parse_server.pl: ブロック領域に対応.
+
+2010-04-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure.nict, cgi/configure: パラメータの追加.
+
+	* scripts/Indexer.pm:
+	係り受けタームを作成する際、文法素性が付いているノードを無視するように.
+
+	* cgi/QueryKeyword.pm, cgi/RequestParser.pm:
+	ブロックタイプを考慮するように.
+
+	* cgi/QueryParser.pm: ブロックタイプに対応.
+
+	* cgi/SnippetMakerAgent.pm:
+	kuhpモードの処理を追加, ハイライト処理を行う際、領域名タグを削除するように.
+
+2010-04-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: DEFAULT_APPROXIMATE_DISTの追加.
+
+	* cgi/QueryParser.pm: DEFAULT_APPROXIMATE_DISTを利用するように.
+
+2010-04-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: -ne-cacheオプションを追加.
+
+	* cgi/configure, cgi/configure.nict:
+	クエリ解析に用いるKNPのオプションを変更.
+
+2010-04-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	画面が遷移しても選択したクエリがセレクトボックスに表示されるように.
+
+	* cgi/RequestParser.pm:
+	類似ページフィルタを適用しないように(NTCIRモード時)
+
+	* cgi/Renderer.pm:
+	検索結果に評価データを付与するように(NTCIRモードの時)
+
+	* cgi/Renderer.pm: コード整理.
+
+	* cgi/RequestParser.pm:
+	kuhpモードの時、類似ページフィルタをはずすように.
+
+	* cgi/SnippetMaker.pm: kuhpモードに対応.
+
+	* cgi/index.cgi:
+	キャッシュページを整形してから表示するように（kuhpモードのみ）
+
+2010-04-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Retrieve.pm:
+	インデックスを引く部分のコードを修正（若干の高速化）
+
+	* cgi/configure, cgi/configure.nict: オプションの追加.
+
+	* scripts/SidRange.pm: ハッシュ関数を利用してノードを求めるように.
+
+	* cgi/QueryKeyword.pm: bug fixed. (並列句の描画方法)
+
+	* scripts/Indexer.pm: bug fixed. (並列句からの係り受けタームの抽出方法)
+
+2010-04-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure.nict, cgi/configure: パラメータの追加.
+
+	* cgi/RequestParser.pm:
+	全角空白をデリミタと見なさないオプションの追加(disable_Zwhitespace_delimiter)
+
+	* cgi/RequestParser.pm:
+	logical_operatorが指定されても検索表現の制約を変更しないように.
+
+	* cgi/QueryParser.pm: 検索表現間の近接制約をオプション化.
+
+2010-04-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	基本句の先頭が内容語でない場合に対応.(kwic生成処理)
+
+2010-04-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Makefile.indexing:
+	bug fixed. (df.dpnd.cdbのキーの順序が保たれるように)
+
+	* cgi/SnippetMaker.pm: 標準フォーマットを一度に読み込むように.
+
+2010-03-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: 作業領域の追加.
+
+	* cgi/Renderer.pm: printSearchResultForAPICallの中身を分けた.
+
+	* cgi/RequestParser.pm, cgi/api.cgi:
+	標準フォーマットをtgzして返すtarballオプションの追加.
+
+2010-03-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm: CPPモード用の処理を追加.
+
+	* cgi/SearchEngine.pm: broadcastSearchの中身を分けた.
+
+	* search/lisp/Makefile, search/lisp/lisp.c, search/lisp/lisp.h, search/Makefile, search/cdb-test.cc, search/cdb.h, search/cdbpp.h, search/common.h, search/dbm-test.cc, search/hash.h, search/make_db.cc, search/slave_server.cc, search/slave_server.h:
+	added.
+
+	* cgi/Renderer.pm: タイトル中の全角英数字を半角に変更.
+
 2010-03-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: ntcirの結果を表示する際の処理を追加.
+
+	* cgi/index.cgi: HTMLヘッダーの出力位置を変更.
+
+	* scripts/tsubaki_server.pl: ntcir用の処理を追加.
 
 	* cgi/RequestParser.pm: <, >, &をエスケープするように.
 
