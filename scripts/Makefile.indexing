@@ -190,7 +190,7 @@ binarize: connect_node5
 	gxpc e $(PERL) -I $(scriptdir) $(scriptdir)/binarize_idx.pl -z -quiet -syn $(IDXDAT)
 
 #	文書頻度の取得
-	gxpc e $(PERL) $(scriptdir)/idx2df.pl $(IDXDAT)
+	gxpc e sh $(scriptdir)/idx2df.sh -r $(IDXDAT)
 	gxpc e "cp $(workspace_mgidx)/$(IDXID).idx.df $(workspace_mgidx)/$(IDXID).idx.df.ORG"
 
 #	文書長データベースの作成
