@@ -186,7 +186,7 @@ sub parse_for_english {
 	      });
     $param{qid2gid} = \%qid2gid;
     $param{qid2qtf} = \%qid2qtf;
-    $query = new Query(\%param);
+    my $query = new Query(\%param);
 
     return $query;
 }
