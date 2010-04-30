@@ -7,10 +7,13 @@ confdir=`echo $0 | xargs dirname`/../conf
 . $confdir/indexing.conf
 
 remove_blocktype_tag=0
-while getopts r OPT
+workspace=$workspace_mgidx
+while getopts rT: OPT
 do
     case $OPT in
 	r) remove_blocktype_tag=1
+	    ;;
+	T) workspace=$OPTARG
 	    ;;
     esac
 done
@@ -24,14 +27,17 @@ then
     sfile=$idxf.sorted
     opt=-remove_tag
 
+    mkdir -p $workspace/_tmp 2> /dev/null
+
     # タームの抽出
-    zcat $idxf | head -1000000 | awk '{print $1}' | nkf -e | rev | nkf -w > $kfile
-    zcat $idxf | head -1000000 | paste $kfile - | nkf -e | sort | perl -pe 's/^.+\t//' | nkf -w > $sfile
+    zcat $idxf | awk '{print $1}' | perl -pe 's/^.*?://' > $kfile
+    zcat $idxf | paste $kfile - | sort -T $workspace/_tmp | perl -pe 's/^.+\t//' | nkf -w > $sfile
 
     perl $scriptdir/idx2df.pl $sfile $opt
 
     rm $kfile
     rm $sfile
+    rmdir $workspace/_tmp
 
     mv $sfile.df `echo $idxf | perl -pe 's/\.gz$//'`.df
 else
