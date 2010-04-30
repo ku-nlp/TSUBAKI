@@ -279,6 +279,7 @@ sub setParametersOfGetRequest {
 
     if (defined($cgi->param('results'))) {
 	$params->{results} = $cgi->param('results');
+	$params->{results} = 100000000 if ($params->{results} eq 'all');
 	if ($params->{results} < 1) {
 	    require Renderer;
 	    Renderer::printErrorMessage($cgi, 'resultsの値は1以上を指定して下さい.');
