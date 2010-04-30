@@ -117,9 +117,85 @@ sub new {
     bless $this;
 }
 
+# 検索クエリを解析(英語)
+sub parse_for_english {
+    my ($this, $qks_str, $opt) = @_;
+
+    my $isPhrasalSearch = 0;
+    # フレーズ検索かどうかのチェック
+    if ($qks_str =~ /^'.+'$/) {
+	$isPhrasalSearch = 1;
+	$qks_str =~ s/^\'//;
+	$qks_str =~ s/\'$//;
+    }
+
+    my %param = ();
+    my @words = ();
+    my $qid = 0;
+    my $gid = 0;
+    my $num_of_words = 0;
+    my %qid2gid = ();
+    my %qid2qtf = ();
+
+    my $lemmatizer;
+    if ($opt->{lemma}) {
+	require Lemmatize;
+	$lemmatizer = new Lemmatize();
+    }
+
+    foreach my $word (split (" ", $qks_str)) {
+	my @terms;
+
+	print $word . " -> " if ($opt->{debug});
+	if ($opt->{lemma}) {
+	    my $lemmatized_word = $lemmatizer->lemmatize($word, '');
+	    $word = (defined $lemmatized_word) ? $lemmatized_word : $word;
+	    $word .= "*";
+	    $word = lc($word);
+	}
+
+	print $word . "\n" if ($opt->{debug});
+
+	my $term = {
+	    requisite => 1,
+	    string => $word,
+	    qid => $qid,
+	    qid => $gid,
+	    syngraph => 1
+	    };
+	$qid2gid{$qid} = $gid;
+	$qid2qtf{$qid} = 1;
+
+	$param{qid2df}->{$qid++} = 1;
+	push (@terms, $term);
+
+	# 同義語を考慮したい場合は@termに追加する
+
+	push (@words, \@terms);
+	$gid++;
+	$num_of_words++;
+    }
+
+    push (@{$param{keywords}},
+	  {
+	      near => $num_of_words,
+	      logical_cond_qkw => 'AND',
+	      syngraph => 1,
+	      words => \@words,
+	      keep_order => 1
+	      });
+    $param{qid2gid} = \%qid2gid;
+    $param{qid2qtf} = \%qid2qtf;
+    $query = new Query(\%param);
+
+    return $query;
+}
+
 # 検索クエリを解析
 sub parse {
     my ($this, $qks_str, $opt) = @_;
+
+    return $this->parse_for_english if ($CONFIG->{IS_ENGLISH_VERSION});
 
     $this->{OPTIONS}{syngraph} = $opt->{syngraph};
 
