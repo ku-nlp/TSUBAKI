@@ -31,7 +31,7 @@ then
 
     # タームの抽出
     zcat $idxf | awk '{print $1}' | perl -pe 's/^.*?://' > $kfile
-    zcat $idxf | paste $kfile - | sort -T $workspace/_tmp | perl -pe 's/^.+\t//' | nkf -w > $sfile
+    zcat $idxf | paste $kfile - | sort -T $workspace/_tmp | perl -pe 's/^.+\t//' > $sfile
 
     perl $scriptdir/idx2df.pl $sfile $opt
 
