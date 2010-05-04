@@ -27,7 +27,7 @@ then
 fi
 id=$1
 flist=$2
-mapfile=$3
+mapfile=$workspace/$id.sid2tid
 
 # 作業ディレクトリの作成
 mkdir -p $workspace 2> /dev/null
@@ -45,6 +45,8 @@ do
 done
 cd ..
 
+# mapfile の作成
+perl $scriptdir/make-mapfile.perl $workspace/$id/* > $mapfile
 
 # ディスク上でマージ
 echo "perl -I $scriptdir $scriptdir/merge_sorted_idx.pl -dir $id -z -suffix idx.gz -mapfile $mapfile | gzip > $id.idx.gz"
