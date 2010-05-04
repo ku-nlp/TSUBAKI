@@ -19,7 +19,7 @@ host_file = hosts
 access_method = ssh
 
 
-start: init mk_mapfile mk_taskfile_for_mkidx run_taskfile_for_mkidx mk_taskfile_for_mgidx run_taskfile_for_mgidx run_mkdfdb
+start: init mk_taskfile_for_mkidx run_taskfile_for_mkidx mk_taskfile_for_mgidx run_taskfile_for_mgidx run_mkdfdb
 
 
 init: connect_node
