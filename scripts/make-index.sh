@@ -2,7 +2,7 @@
 
 # 1万ページ毎にtgzされた標準フォーマットの塊からインデックスを抽出するスクリプト
 
-# usage: sh make-index.sh [-knp|-syn] [-inlinks] iccc100:/data2/skeiji/embed_knp_and_syngraph_080512/s01573.tgz
+# usage: sh make-index.sh [-knp|-syn|-english] [-inlinks] iccc100:/data2/skeiji/embed_knp_and_syngraph_080512/s01573.tgz
 
 # 設定ファイルの読み込み
 confdir=`echo $0 | xargs dirname`/../conf
@@ -14,8 +14,17 @@ source $SHELL_RCFILE
 SLEEPTIME=`expr $RANDOM % 600`
 # sleep $SLEEPTIME
 
-# 作成するインデックスのタイプ(-knp/-syn)
+# 作成するインデックスのタイプ(-knp/-syn/-english)
 type=$1
+
+scheme=
+block_type=-use_block_type
+
+# -englishのときは、schemeをCoNLLにし、ブロックタイプはさしあたり使わない
+if [ $type = "-english" ]; then
+    scheme="-scheme CoNLL"
+    block_type=
+fi
 
 # インリンクインデックスの作成かどうかのチェック
 inlinks=
@@ -61,7 +70,7 @@ touch $LOGFILE
 
 # ファイル単位でインデックスの抽出
 # SYNノードを含む係り受け関係は除外、5MBを越える標準フォーマットからは抽出しない
-command="perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z $inlinks -logfile $LOGFILE $IPSJ -use_block_type"
+command="perl -I $scriptdir $scriptdir/make_idx.pl $type -in $xdir -out $idir -position -compress -ignore_hypernym -ignore_yomi -ignore_syn_dpnd -skip_large_file 5242880 -z $inlinks -logfile $LOGFILE $IPSJ $scheme $block_type"
 echo $command
 until [ `tail -1 $LOGFILE | grep finish` ] ;
 do
