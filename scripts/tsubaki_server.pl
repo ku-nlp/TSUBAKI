@@ -46,8 +46,8 @@ my @DOC_LENGTH_DBs;
 opendir(DIR, $opt{dlengthdbdir});
 foreach my $dbf (readdir(DIR)) {
     if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NTCIR_MODE}) {
-	next unless ($dbf =~ /(\d+).doc_length\.bin\.txt$/);
-    
+	next unless ($dbf =~ /(\d+).doc_length\.txt$/);
+
 	$ID = $1;
 	my $fp = "$opt{dlengthdbdir}/$dbf";
 	my $dlength_db;
@@ -63,10 +63,10 @@ foreach my $dbf (readdir(DIR)) {
 	push(@DOC_LENGTH_DBs, $dlength_db);
     } else {
 	next unless ($dbf =~ /(\d+).doc_length\.bin$/);
-    
+
 	$ID = $1;
 	my $fp = "$opt{dlengthdbdir}/$dbf";
-    
+
 	my $dlength_db;
 	if ($opt{dlengthdb_hash}) {
 	    require CDB_File;
