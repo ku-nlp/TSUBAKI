@@ -89,6 +89,10 @@ sub new {
     } else {
 	# SynGraph 結果から索引語を抽出
  	$knpresult->set_id(0);
+	# Wikipedia のエントリになっている表現に対しては同義語展開を行わない
+	$opt->{syngraph_option}{no_attach_synnode_in_wikipedia_entry} = 1;
+	$opt->{syngraph_option}{attach_wikipedia_info} = 1;
+	$opt->{syngraph_option}{wikipedia_entry_db} = $CONFIG->{WIKIPEDIA_ENTRY_DB};
  	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
 	$this->{syn_result} = new KNP::Result($synresult);
 	$this->{logger}->setTimeAs('SynGraph', '%.3f');
