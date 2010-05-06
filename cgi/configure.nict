@@ -41,6 +41,7 @@ UTILS_PATH	/share03/WISDOM/Utils/perl
 TSUBAKI_SCRIPT_PATH	/share03/WISDOM/TSUBAKI/SearchEngine/scripts
 TSUBAKI_MODULE_PATH	/share03/WISDOM/TSUBAKI/SearchEngine/perl
 PORTS_FILE_PATH		/share03/WISDOM/TSUBAKI/SearchEngine/data/PORTS.SYN.NICT
+WIKIPEDIA_ENTRY_DB	/share03/WISDOM/TSUBAKI/SearchEngine/data/wikipedia_entry_trie.db
 
 ##################################################
 # キャッシュページ／標準フォーマット関係の設定

@@ -41,7 +41,7 @@ UTILS_PATH	/home/skeiji/cvs/Utils/perl
 TSUBAKI_SCRIPT_PATH	/home/skeiji/tsubaki-develop/SearchEngine/scripts
 TSUBAKI_MODULE_PATH	/home/skeiji/tsubaki-develop/SearchEngine/perl
 PORTS_FILE_PATH		/home/skeiji/tsubaki/SearchEngine/data/PORTS.SYN
-
+WIKIPEDIA_ENTRY_DB	/home/skeijitsubaki/SearchEngine/data/wikipedia_entry_trie.db
 
 
 ##################################################
