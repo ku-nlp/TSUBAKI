@@ -443,6 +443,9 @@ sub print_form {
     # 検索に利用するブロックタイプを選択するチェックボックスを表示
     $this->printBlockTypeCheckbox($params);
 
+    # 省略解析結果を利用するかどうかのチェックボックスを表示
+    $this->printAnaphoraResolutionUseCheckbox($params) unless ($CONFIG->{DISABLE_ANAPHORA_RESOLUTION_DISPLAY});
+
     # 開発モード用オプションを表示
     $this->print_options_for_developmode($params) if ($params->{develop_mode});
 
@@ -562,6 +565,21 @@ sub printBlockTypeCheckbox {
 	}
 	print qq(</DIV>);
     }
+}
+
+# 省略解析結果を利用する／しないを選択するチェックボックスを表示
+sub printAnaphoraResolutionUseCheckbox {
+    my ($this, $params) = @_;
+
+    print qq(<DIV style="padding-top:1em;">省略解析結果　);
+    if ($params->{use_of_anaphora_resolution}) {
+	print qq(<LABEL><INPUT type="radio" name="use_of_anaphora_resolution" value="on" checked></INPUT><FONT color="black">利用する</FONT></LABEL>);
+	print qq(<LABEL><INPUT type="radio" name="use_of_anaphora_resolution" value="off"></INPUT><FONT color="black">利用しない</FONT></LABEL>);
+    } else {
+	print qq(<LABEL><INPUT type="radio" name="use_of_anaphora_resolution" value="on"></INPUT><FONT color="black">利用する</FONT></LABEL>);
+	print qq(<LABEL><INPUT type="radio" name="use_of_anaphora_resolution" value="off" checked></INPUT><FONT color="black">利用しない</FONT></LABEL>);
+    }
+    print qq(</DIV>\n);
 }
 
 sub print_congestion {
@@ -1418,8 +1436,8 @@ sub getSearchResultForAPICall {
 	    $logger->getParameter('document_scoring');
 
 	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
-			  totalResultsAvailable => $hitcount, 
-			  totalResultsReturned => $end - $from, 
+			  totalResultsAvailable => $hitcount,
+			  totalResultsReturned => $end - $from,
 			  firstResultPosition => $params->{'start'} + 1,
 			  logicalOperator => $params->{'logical_operator'},
 			  forceDpnd => $params->{'force_dpnd'},

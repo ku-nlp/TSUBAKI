@@ -99,6 +99,7 @@ sub getDefaultValues {
     $params{score_verbose} = 1;
     $params{tarball} = 0;
     $params{get_jscode_for_parse_result} = 0;
+    $params{use_of_anaphora_resolution} = 0;
     $params{ntcir_query} = undef;
 
 
@@ -470,6 +471,7 @@ sub parseQuery {
 	    }
 	}
 
+
 	# クエリの解析
 	# logical_cond_qk: クエリ間の論理演算
 	$query = $q_parser->parse(
@@ -491,6 +493,7 @@ sub parseQuery {
 	      logger => $logger,
 	      site => $params->{site},
 	      blockTypes => $params->{blockTypes},
+	      use_of_anaphora_resolution => $params->{use_of_anaphora_resolution},
 	      no_use_of_Zwhitespace_as_delimiter => $params->{no_use_of_Zwhitespace_as_delimiter},
 	      debug => $params->{debug}
 	    });

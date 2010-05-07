@@ -319,6 +319,7 @@ sub parse {
 		  NE_process => $opt->{NE_process},
 		  modifier_of_NE_process => $opt->{modifier_of_NE_process},
 		  blockTypes => $opt->{blockTypes},
+		  use_of_anaphora_resolution => $opt->{use_of_anaphora_resolution},
 		  debug => $opt->{debug}
 		});
 	} else {
@@ -342,6 +343,7 @@ sub parse {
 		  NE_process => $opt->{NE_process},
 		  modifier_of_NE_process => $opt->{modifier_of_NE_process},
 		  blockTypes => $opt->{blockTypes},
+		  use_of_anaphora_resolution => $opt->{use_of_anaphora_resolution},
 		  debug => $opt->{debug}
 		});
 	}

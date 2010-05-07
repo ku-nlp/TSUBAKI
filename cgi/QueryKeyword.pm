@@ -136,11 +136,11 @@ sub new {
 	    # ブロックタイプを考慮する場合
 	    if ($opt->{blockTypes} && %{$opt->{blockTypes}}) {
 		foreach my $blockType (keys %{$opt->{blockTypes}}) {
-		    &push_string_to_reps(\@dpnd_reps, \@word_reps, $m, sprintf ("%s%s", $blockType, $m->{midasi}), $group_id);
+		    &push_string_to_reps(\@dpnd_reps, \@word_reps, $m, sprintf ("%s%s", $blockType, $m->{midasi}), $group_id, $opt);
 		}
 	    }
 	    else {
-		&push_string_to_reps(\@dpnd_reps, \@word_reps, $m, $m->{midasi}, $group_id);
+		&push_string_to_reps(\@dpnd_reps, \@word_reps, $m, $m->{midasi}, $group_id, $opt);
 	    }
 
 	    if ($m->{midasi} !~ /\-\>/) {
@@ -171,20 +171,29 @@ sub new {
 
 # @dpnd_reps, \@word_repsに追加する関数
 sub push_string_to_reps {
-    my ($dpnd_reps_ar, $word_reps_ar, $m, $regist_string, $group_id) = @_;
+    my ($dpnd_reps_ar, $word_reps_ar, $m, $regist_string, $group_id, $opt) = @_;
     if ($m->{midasi} =~ /\-\>/) {
-	push(@{$dpnd_reps_ar}, {
-				string => $regist_string,
-				gid => $group_id,
-				qid => -1,
-				weight => 1,
-				freq => $m->{freq},
-				requisite => $m->{requisite},
-				optional => $m->{optional},
-				isContentWord => $m->{isContentWord},
-				isBasicNode => $m->{isBasicNode},
-				isAdditionalNode => ($m->{additional_node}) ? 1 : 0
-			       });
+	my @midasis = ();
+	push (@midasis, $regist_string);
+	if ($opt->{use_of_anaphora_resolution}) {
+	    $regist_string =~ s/\-/=/;
+	    push (@midasis, $regist_string);
+	}
+
+	foreach my $midasi (@midasis) {
+	    push(@{$dpnd_reps_ar}, {
+		string => $midasi,
+		gid => $group_id,
+		qid => -1,
+		weight => 1,
+		freq => $m->{freq},
+		requisite => $m->{requisite},
+		optional => $m->{optional},
+		isContentWord => $m->{isContentWord},
+		isBasicNode => $m->{isBasicNode},
+		isAdditionalNode => ($m->{additional_node}) ? 1 : 0
+		});
+	}
     }
     else {
 	push(@{$word_reps_ar}, {
@@ -712,7 +721,7 @@ sub getPaintingJavaScriptCode {
     push(@stylecolor, 'border: 2px solid #770077; background-color: #bb00bb; color: white;');
 
     my $removedcolor = 'border: 2px solid #9f9f9f; background-color: #e0e0e0; color: black;';
-    
+
 
     my $jscode .= qq(jg.clear();\n);
 
