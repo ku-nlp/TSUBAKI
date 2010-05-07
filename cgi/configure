@@ -368,3 +368,6 @@ DISABLE_BLOCK_TYPE_DISPLAY	0
 
 # ハッシュ関数を利用して標準フォーマットが置いてあるノードを探すかどうか
 USE_OF_HASH_FOR_SID_LOOKUP	0
+
+# 省略解析結果を利用する／しないを選択するチェックボックスの表示
+DISABLE_ANAPHORA_RESOLUTION_DISPLAY	1
