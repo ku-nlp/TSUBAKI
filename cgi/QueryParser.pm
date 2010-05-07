@@ -195,7 +195,7 @@ sub parse_for_english {
 sub parse {
     my ($this, $qks_str, $opt) = @_;
 
-    return $this->parse_for_english if ($CONFIG->{IS_ENGLISH_VERSION});
+    return $this->parse_for_english($qks_str, $opt) if ($CONFIG->{IS_ENGLISH_VERSION});
 
     $this->{OPTIONS}{syngraph} = $opt->{syngraph};
 
