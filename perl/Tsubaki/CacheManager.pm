@@ -34,7 +34,8 @@ sub new {
 sub save {
     my ($this, $query, $result) = @_;
 
-    if ($result->{hitcount} > 0) {
+    # 英語のときはキャッシュしない
+    if (!$CONFIG->{IS_ENGLISH_VERSION} && $result->{hitcount} > 0) {
 	my $timestamp = strftime("%Y-%m-%d-%T", localtime(time));
 	my $fname = $timestamp;
 	my $filepath = sprintf("%s/%s", $CONFIG->{CACHE_DIR}, $fname);
@@ -51,6 +52,9 @@ sub save {
 sub exists {
     my ($this, $query) = @_;
 
+    # 英語のときはキャッシュを使わない
+    return 0 if $CONFIG->{IS_ENGLISH_VERSION};
+
     my $normalizedQuery = $query->normalize();
 
     return exists $this->{cachedData}{$normalizedQuery};
@@ -58,6 +62,9 @@ sub exists {
 
 sub load {
     my ($this, $query) = @_;
+
+    # 英語のときはキャッシュを使わない
+    return undef if $CONFIG->{IS_ENGLISH_VERSION};
 
     my $normalizedQuery = $query->normalize();
     my $filepath = $this->{cachedData}{$normalizedQuery};
