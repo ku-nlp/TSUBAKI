@@ -13,7 +13,7 @@ my $CONFIG = Configure::get_instance();
 sub new {
     my($class, $opt) = @_;
 
-    my $this;
+    my $this = {};
     my $rangefile = ($opt->{sid_range}) ? $opt->{sid_range} : $CONFIG->{SID_RANGE};
     if ($rangefile) {
 	open (F, $rangefile) or die "$!";
