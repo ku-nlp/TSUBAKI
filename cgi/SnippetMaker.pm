@@ -624,6 +624,8 @@ sub extract_sentences_from_content {
 	$in_meta_tag = 0 if ($line =~ /<\/Keywords>/);
 	$in_meta_tag = 1 if ($line =~ /<Abstract/);
 	$in_meta_tag = 0 if ($line =~ /<\/Abstract>/);
+	$in_meta_tag = 1 if ($line =~ /<Author/);
+	$in_meta_tag = 0 if ($line =~ /<\/Author/);
 
 	next if ($in_link_tag || $in_meta_tag);
 
