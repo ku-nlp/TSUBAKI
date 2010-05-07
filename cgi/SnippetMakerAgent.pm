@@ -12,6 +12,7 @@ use MIME::Base64;
 use QueryParser;
 use Configure;
 use Data::Dumper;
+use Error qw(:try);
 {
     package Data::Dumper;
     sub qquote { return shift; }
@@ -151,10 +152,19 @@ sub create_snippets {
 	    $socket->close();
 	    $num_of_sockets--;
 
-	    my $results = Storable::thaw(decode_base64($buff));
-	    foreach my $did (keys %$results) {
-		$this->{did2snippets}{$did} = $results->{$did};
+	    try {
+		my $results = Storable::thaw(decode_base64($buff));
+		foreach my $did (keys %$results) {
+		    $this->{did2snippets}{$did} = $results->{$did};
+		}
 	    }
+	    catch Error with {
+		if ($opt->{debug}) {
+		    my $err = shift;
+		    print "Can't get snippets for socket ($num_of_sockets)<BR>\n";
+		    print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
+		}
+	    };
 	}
     }
 }
