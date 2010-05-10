@@ -337,6 +337,8 @@ sub print_header {
     <TITLE>$title</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=utf-8">
     <LINK rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
+    <LINK rel="icon" href="http://reed.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" type="image/x-icon" />  
+    <LINK rel="Shortcut Icon" type="img/x-icon" href="http://reed.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" />  
 END_OF_HTML
 
 # クエリ解析結果を描画するjavascriptコードの出力
@@ -371,7 +373,7 @@ sub print_body {
     $this->print_form($params);
 
     # アンケート用ボックスを表示
-    $this->print_questionnarie_box() if ($CONFIG->{QUESTIONNAIRE} && $status ne 'busy');
+    $this->print_questionnarie_box() if ($CONFIG->{QUESTIONNAIRE} && ($status eq 'search' || $status eq 'cache'));
 
     print qq(</TR></TABLE>\n);
 
