@@ -8,6 +8,7 @@
 #define WEIGHT_OF_PROXIMATE_F 50
 #define DEBUG 0
 #define TEST_MODE 0
+#define VERBOSE 0
 #define MAX_LENGTH_OF_DOCUMENT 1000000
 
 
@@ -15,6 +16,8 @@
 #include "hash.h"
 #include <string.h>
 #include <algorithm>
+# include <time.h>
+# include <sys/time.h>
 
 using std::cout;
 using std::cerr;
@@ -218,7 +221,7 @@ class Hashmap {
   public:
     Hashmap(int size) {
 	use_of_int_array = false;
-	if (size > 200000) {
+	if (size > 1000) {
 	    use_of_int_array = true;
 	    _map_int = (int *) malloc(sizeof(int) * 1000000);
 	    memset(_map_int, -1, sizeof(int) * 1000000);
@@ -289,6 +292,15 @@ class Documents {
     Documents(std::vector<std::ifstream *> *in_index_streams, std::vector<Dbm *> *in_offset_dbs) {
 
 	index_streams = in_index_streams;
+	// Set a large buffer for each stream
+
+	for (std::vector<std::ifstream *>::iterator it = in_index_streams->begin(), end = in_index_streams->end(); it != end; ++it) {
+	    const int M = 32 * 1024 * 1024;
+	    char* buf = new char[M];
+	    char* internal_buf = new char[M];
+	    (*it)->rdbuf()->pubsetbuf(internal_buf, M);
+	}
+
 	offset_dbs = in_offset_dbs;
 	retrievedByBasicNode = false;
     }
@@ -385,21 +397,6 @@ class Documents {
 	}
     }
 
-    /*
-    Document *get_doc (int doc_id) {
-	if (s_documents_index.find(doc_id) != s_documents_index.end()) {
-	    return s_documents[s_documents_index[doc_id]];
-	}
-	else if (l_documents_index.find(doc_id) != l_documents_index.end()) {
-	    return l_documents[l_documents_index[doc_id]];
-	}
-	else {
-	    // Not exists
-	    return NULL;
-	}
-    }
-    */
-
     bool setIsRetrievedByBasicNode(int flag) {
 	retrievedByBasicNode = (flag == 1) ? true : false;
 	return true;
@@ -408,35 +405,6 @@ class Documents {
 	return retrievedByBasicNode;
     }
 
-    /*
-
-    Documents(std::vector<std::istream *> *in_index_streams, std::vector<Dbm *> *in_offset_dbs, char *in_term) {
-	index_streams = in_index_streams;
-	offset_dbs = in_offset_dbs;
-	term = in_term;
-	retrievedByBasicNode = false;
-
-	// l_documents_inf = false;
-
-	// lookup term from term_db
-	std::string address_str = term_db->get(term);
-	int address = atoi(address_str);
-	if (DEBUG)
-	    cerr << "KEY: " << term << ", ADDRESS: " << address << std::endl;
-
-	index_stream->seekg(address, std::ios::beg);
-	read_index(1); // term is requisite
-    }
-
-    Documents(std::istream *in_index_stream, char *in_term, int address) {
-	index_stream = in_index_stream;
-	term = in_term;
-	retrievedByBasicNode = false;
-	// l_documents_inf = false;
-	index_stream->seekg(address, std::ios::beg);
-	read_index(1); // term is requisite
-    }
-    */
 
     bool and_operation(std::vector<Document *> *docs1, std::vector<Document *> *docs2, std::vector<Document *> *dest_documents) {
 	std::vector<Document *>::iterator it1 = docs1->begin();
@@ -482,56 +450,6 @@ class Documents {
     bool _ascending_order_sort_by_size (std::vector<Document *> *left, std::vector<Document *> *right) {
 	return (left->size() < right->size());
     }
-
-/*
-    bool and_operation2(std::vector<std::vector<Document *>> *docs, std::vector<Document *> *dest_documents) {
-
-
-	sort (docs->begin(), docs->end(), _ascending_order_sort_by_size);
-	
-	// collecting all iterators
-	int size = docs->size();
-	std::vector<std::vector<Document *>::iterator *> iterators;
-	for (int i = 0; i < size; i++) {
-	    std::vector<Document *>::iterator it = docs->at(i)->begin();
-	    if (it == docs->at(i)->end()) {
-		return false;
-	    } else {
-		iterators.push_back(it);
-	    }
-	}
-
-
-
-      LOOP: while ((*iterators[0])->get_id() != -1) {
-	    bool match = true;
-	    for (int i = 1; i < size; i++) {
-		std::vector<Document *>::iterator it = docs->at(i)->begin();
-		while ((*iterators[0])->get_id() > (*iterators[i])->get_id()) {
-		    if (++iterators[i] == iterators[i]->end()) {
-			// break whole while loop
-			break LOOP;
-		    }
-		}
-
-		if (match) {
-		    if ((*iterators[0])->get_id() != (*iterators[i])->get_id()) {
-			match = false;
-		    }
-		}
-	    }
-
-
-	    if (match) {
-		dest_documents->push_back(new Document((*iterators[0])->get_id()));
-	    }
-
-	    ++iterators[0];
-	}
-
-	return true;
-    }
-*/
 
     bool or_operation(std::vector<Document *> *docs1, std::vector<Document *> *docs2, std::vector<Document *> *dest_documents) {
 	std::vector<Document *>::iterator it1 = docs1->begin();
@@ -604,78 +522,19 @@ class Documents {
 	return true;
     }
 
-/*
-    bool or_operation2(std::vector<std::vector<Document *>> *docs, std::vector<Document *> *dest_documents) {
-
-	std::vector<Document *>::iterator it1 = docs1->begin();
-	std::vector<Document *>::iterator it2 = docs2->begin();
-
-	if (it1 == docs1->end() && it2 == docs2->end()) {
-	    return false;
-	}
-	else if (it1 == docs1->end()) {
-	    *dest_documents = *docs2;
-	    return false;
-	}
-	else if (it2 == docs2->end()) {
-	    *dest_documents = *docs1;
-	    return false;
-	}
-	else if (docs1->front()->get_id() == -1 || docs2->front()->get_id() == -1) {
-	    dest_documents->clear();
-	    dest_documents->push_back(new Document(-1));
-	    return true;
-	}
-
-	while (1) {
-	    if ((*it2)->get_id() < (*it1)->get_id()) {
-		dest_documents->push_back(new Document((*it2)->get_id()));
-		if (++it2 == docs2->end()) {
-		    for (; it1 != docs1->end(); it1++) {
-			dest_documents->push_back(new Document((*it1)->get_id()));
-		    }
-		    break;
-		}
-	    }
-	    else if ((*it1)->get_id() < (*it2)->get_id()) {
-		dest_documents->push_back(new Document((*it1)->get_id()));
-		if (++it1 == docs1->end()) {
-		    for (; it2 != docs2->end(); it2++) {
-			dest_documents->push_back(new Document((*it2)->get_id()));
-		    }
-		    break;
-		}
-	    }
-	    else { // id1 == id2
-		dest_documents->push_back(new Document((*it1)->get_id()));
-		if (it1 + 1 == docs1->end()) {
-		    for (it2++; it2 != docs2->end(); it2++) {
-			dest_documents->push_back(new Document((*it2)->get_id()));
-		    }
-		    break;
-		}
-		if (it2 + 1 == docs2->end()) {
-		    for (it1++; it1 != docs1->end(); it1++) {
-			dest_documents->push_back(new Document((*it1)->get_id()));
-		    }
-		    break;
-		}
-		it1++;
-		it2++;
-	    }
-	}
-	return true;
-    }
-*/
-
     bool merge_and(Documents *parent, CELL *cell, Hashmap *_already_retrieved_docs) {
 
 	Documents *current_documents = merge_and_or(car(cell), _already_retrieved_docs);
+	double start = (double) gettimeofday_sec();
 	Hashmap *already_retrieved_docs  = (_already_retrieved_docs == NULL) ? current_documents->getDocumentIDs() : _already_retrieved_docs;
 
 	parent->push_back_child_documents(current_documents);
 	s_documents = *(current_documents->get_s_documents());
 	l_documents = *(current_documents->get_l_documents());
+	double end = (double) gettimeofday_sec();
+
+	if (VERBOSE)
+	    cout << "  hashmap = " << 1000 * (end - start) << " [ms]" << endl;
 
 	while (!Lisp_Null(cdr(cell))) {
 	    Documents backup_documents = *this;
@@ -726,6 +585,9 @@ class Documents {
 			 &l_documents);
 	    cell = cdr(cell);
 	}
+	double _end = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "  while = " << 1000 * (_end - end) << " [ms]" << endl;
 
 	// inf nanode tyouhuku ga arieru
 	std::vector<Document *> backup_l_documents = l_documents;
@@ -737,7 +599,6 @@ class Documents {
 	    print();
 	    cout << endl;
 	}
-
 
 	// map index no sakusei
 	create_s_documents_index(s_documents.size());
@@ -810,10 +671,15 @@ class Documents {
 
     bool merge_or(Documents *parent, CELL *cell, Hashmap *_already_retrieved_docs) {
 
+	double _start = (double) gettimeofday_sec();
 	Documents *current_documents = merge_and_or(car(cell), _already_retrieved_docs);
 	parent->push_back_child_documents(current_documents);
 	s_documents = *(current_documents->get_s_documents());
 	l_documents = *(current_documents->get_l_documents());
+
+	double start = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "  pre-processing = " << 1000 * (start - _start) << " [ms]" << endl;
 
 	while (!Lisp_Null(cdr(cell))) {
 	    Documents backup_documents = *this;
@@ -837,6 +703,9 @@ class Documents {
 			 &l_documents);
 	    cell = cdr(cell);
 	}
+	double end = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "  while_or = " << 1000 * (end - start) << " [ms]" << endl;
 
 	std::vector<Document *> backup_l_documents = l_documents;
 	// l_documents.clear(); // *** FIX ME: clear the contents ***
@@ -867,6 +736,9 @@ class Documents {
 	    i++;
 	}
 
+	double _end = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "  map index sakusei = " << 1000 * (_end - end) << " [ms]" << endl;
 
 	return true;
     }
@@ -876,17 +748,33 @@ class Documents {
 
 	if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "ROOT")) {
 	    documents->set_type(DOCUMENTS_ROOT);
+	    double start = (double) gettimeofday_sec();
 	    documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
+	    double end = (double) gettimeofday_sec();
+	    if (VERBOSE) {
+		cout << "root = " << 1000 * (end - start) << " [ms]" << endl;
+		cout << "-----" << (char *)_Atom(car(cell)) << "-----" << endl;
+	    }
 	}
 	else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "AND")) {
 	    documents->set_type(DOCUMENTS_AND);
+	    double start = (double) gettimeofday_sec();
 	    documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
+	    double end = (double) gettimeofday_sec();
+	    if (VERBOSE)
+		cout << "merge_and = " << 1000 * (end - start) << " [ms]" << endl;
 	}
 	else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "OR")) {
 	    documents->set_type(DOCUMENTS_OR);
+	    double start = (double) gettimeofday_sec();
 	    documents->merge_or(documents, cdr(cell), _already_retrieved_docs);
+	    double end = (double) gettimeofday_sec();
+	    if (VERBOSE)
+		cout << "merge_or = " << 1000 * (end - start) << " [ms]" << endl;
 	}
 	else {
+	    double start = (double) gettimeofday_sec();
+
 	    char *current_term = (char *)_Atom(car(car(cell)));
 	    int term_type = atoi((char *)_Atom(car(cdr(car(cell)))));
 	    term_df = atof((char *)_Atom(car(cdr(cdr(car(cell))))));
@@ -907,7 +795,14 @@ class Documents {
 
 	    documents->setIsRetrievedByBasicNode(_isRetrievedByBasicNode);
 	    documents->set_gdf(term_df);
+	    double _start = (double) gettimeofday_sec();
+	    if (VERBOSE)
+		cout << "    before lookup = " << 1000 * (_start - start) << " [ms] file = " << file << endl;
+
 	    documents->lookup_index(current_term, term_type, index_streams->at(file), offset_dbs->at(file), _already_retrieved_docs);
+	    double end = (double) gettimeofday_sec();
+	    if (VERBOSE)
+		cout << "    lookup = " << 1000 * (end - _start) << " [ms] file = " << file << endl;
 	}
 
 	return documents;
@@ -923,6 +818,12 @@ class Documents {
     // lookup term from term_db
 
 
+    double gettimeofday_sec() {
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return tv.tv_sec + (double)tv.tv_usec*1e-6;
+    }
+
     bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, Hashmap *_already_retrieved_docs) {
 	std::string term_string = in_term;
 	std::string address_str = term_db->get(term_string);
@@ -932,7 +833,14 @@ class Documents {
 	    if (DEBUG)
 		cerr << "KEY: " << term_string << ", ADDRESS: " << address << endl;
 
+
+	    double start = (double) gettimeofday_sec();	
 	    index_stream->seekg(address, std::ios::beg);
+	    double end = (double) gettimeofday_sec();	
+
+	    if (VERBOSE)
+		cout << "      seek index = " << 1000 * (end - start) << " [ms]" <<  " " << address << " [byte]" << endl;
+
 	    return read_index(index_stream, term_type, _already_retrieved_docs);
 	}
 	else {
@@ -957,15 +865,21 @@ class Documents {
 	int index_size, offset = 0;
 	unsigned char *buffer;
 
+	double _start = (double) gettimeofday_sec();	
 	index_stream->read((char *) &index_size, sizeof(int));
 	if (DEBUG)
 	    cerr << "INDEX SIZE: " << index_size << std::endl;
 
 	buffer = new unsigned char[index_size];
 	index_stream->read((char *)buffer, index_size);
+	double _end = (double) gettimeofday_sec();	
 
 	int ldf;
 	ldf = intchar2int(buffer + offset);
+	if (VERBOSE)
+	    cout << "      read index = " << 1000 * (_end - _start) << " [ms]" <<  " " << index_size << " [byte]" << " ldf = " << ldf << endl;
+
+
 	offset += sizeof(int);
 	if (DEBUG)
 	    cerr << "LDF: " << ldf << endl;
@@ -974,13 +888,19 @@ class Documents {
 	    cerr << "DIDS:";
 
 
+	double start = (double) gettimeofday_sec();
 	// create s_document_index, l_document_index
 	create___documents_index(ldf);
 	create_s_documents_index(ldf);
 	create_l_documents_index(ldf);
 
+	double end = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "      create index = " << 1000 * (end - start) << " [ms]" <<  " " << ldf << endl;
+
 	bool flags[ldf];
 	int load_dids = 0;
+	double total = 0;
 	for (int i = 0; i < ldf; i++) {
 	    int did = intchar2int(buffer + offset);
 	    offset += sizeof(int);
@@ -988,7 +908,8 @@ class Documents {
 		flags[i] = false;
 		continue;
 	    }
-	    s_documents.push_back(new Document(did));
+	    Document* d = new Document(did);
+	    s_documents.push_back(d);
 
 	    // map index
 	    __documents_index->add(did, load_dids);
@@ -1000,6 +921,9 @@ class Documents {
 	    if (DEBUG > 1)
 		cerr << " i=" << i << " did=" << did;
 	}
+	double end1 = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "      read dids = " << 1000 * (end1 - end) << " [ms]" <<  " " << ldf << " load dids = " << load_dids << endl;
 
 	if (DEBUG > 1)
 	    cerr << std::endl;
@@ -1034,6 +958,11 @@ class Documents {
 	if (DEBUG > 1)
 	    cerr << endl;
 
+	double end2 = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "      read score = " << 1000 * (end2 - end1) << " [ms]" <<  " " << ldf << endl;
+
+
 	// pos list
 	it = s_documents.begin();
 	for (int i = 0; i < ldf; i++) {
@@ -1047,6 +976,9 @@ class Documents {
 	    }
 	    offset += (sizeof(int) * (pos_num + 1));
 	}
+	double end3 = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "      read pos = " << 1000 * (end3 - end2) << " [ms]" << " " << ldf << endl;
 
 	return true;
     }
