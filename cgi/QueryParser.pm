@@ -885,14 +885,14 @@ sub load_DFDBs {
 sub get_DF {
     my ($this, $term_w_blocktag) = @_;
 
-    # ブロックタイプを考慮しない場合
+    # ブロックタイプを考慮していない場合
     unless ($this->{OPTIONS}{use_of_block_types}) {
 	my $term_utf8 = encode('utf8', $term_w_blocktag);
 	my $DFDBs = (index($term_utf8, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
 
 	return (defined $DFDBs) ? $DFDBs->get($term_utf8) : 0;
     }
-    # ブロックタイプを考慮する場合
+    # ブロックタイプを考慮している場合
     else {
 	my ($term) = ($term_w_blocktag =~ /^(?:..:)(.+)$/);
 	my $df = $this->{CACHED_DF}{$term};
@@ -901,12 +901,7 @@ sub get_DF {
 	} else {
 	    my $term_utf8 = encode('utf8', $term);
 	    my $DFDBs = (index($term, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
-
-	    foreach my $tag (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
-		my $K = $tag . ":" . $term;
-		my $_df += $DFDBs->get($K);
-		$df += $_df;
-	    }
+	    my $df = $DFDBs->get($term_utf8);
 
 	    $this->{CACHED_DF}{$term} = $df;
 	    return $df;
