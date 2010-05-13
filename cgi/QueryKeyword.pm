@@ -11,7 +11,6 @@ use Data::Dumper;
 use Configure;
 use Error qw(:try);
 use KNP::Result;
-use Tsubaki::QueryAnalyzer;
 use Logger;
 
 
@@ -19,7 +18,8 @@ my $CONFIG = Configure::get_instance();
 
 # コンストラクタ
 sub new {
-    my ($class, $string, $sentence_flag, $is_phrasal_search, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $syngraph, $opt) = @_;
+    my ($class, $search_expression, $sentence_flag, $is_phrasal_search, $near, $keep_order, $force_dpnd, $logical_cond_qkw, $opt) = @_;
+
     my $this = {
 	words => [],
 	dpnds => [],
@@ -29,123 +29,199 @@ sub new {
 	keep_order => $keep_order,
 	force_dpnd => $force_dpnd,
 	logical_cond_qkw => $logical_cond_qkw,
-	rawstring => $string,
-	syngraph => $syngraph,
+	rawstring => $search_expression,
+	syngraph => $opt->{syngraph},
 	disable_dpnd => $opt->{disable_dpnd},
 	disable_synnode => $opt->{disable_synnode},
 	logger => new Logger(0)
     };
+    bless $this;
 
-    unless ($string) {
+    # 言語解析
+    my $result = $this->_linguisticAnalysis($search_expression, $opt);
+
+    # タームの抽出
+    my $terms = $this->_extractTerms($opt->{indexer}, $result, $opt);
+
+    # タームの抽出
+    $this->_setTerms($terms, $opt);
+
+    # ログを取る
+    $this->{logger}->setTimeAs('create_query', '%.3f');
+
+
+    return $this;
+}
+
+# 言語解析
+sub _linguisticAnalysis {
+    my ($this, $search_expression, $opt) = @_;
+
+    unless ($search_expression) {
 	print "Empty query !<BR>\n";
-	exit;
+	exit(1);
     }
+
+    if ($opt->{english}) {
+    } else {
+	# 検索表現を構文解析する
+	my $knpresult = $this->_runKNP($search_expression, $opt);
+
+	# クエリ処理を適用する
+	$this->_runQueryProcessing($knpresult, $opt) if ($opt->{telic_process} || $opt->{CN_process} || $opt->{NE_process} || $opt->{modifier_of_NE_process});
+	$this->{knp_result} = $knpresult;
+
+
+	if ($opt->{syngraph}) {
+	    # SynGraphで解析する
+	    return $this->_runSynGraph($knpresult, $opt);
+	} else {
+	    return $knpresult;
+	}
+    }
+}
+
+# 構文解析
+sub _runKNP {
+    my ($this, $search_expression, $opt) = @_;
 
     my $knpresult;
     try {
-	$knpresult = $opt->{knp}->parse($string);
+	$knpresult = $CONFIG->{KNP}->parse($search_expression);
     }
     catch Error with {
 	my $err = shift;
-	print "Bad query: $string<BR>\n";
+	print "Bad query: $search_expression<BR>\n";
 	print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
 	print "Dumpping messages of KNP object is following.<BR>\n";
 	print Dumper($opt->{knp}) . "<BR>\n";
-	exit;
+	exit(1);
     };
     $this->{logger}->setTimeAs('KNP', '%.3f');
 
-#   print Dumper::dump_as_HTML($opt->{knp}) . "<<< <BR>\n";
     unless (defined $knpresult) {
-	print "Can't parse the query: $string<BR>\n";
-	exit;
+	print "Can't parse the query: $search_expression<BR>\n";
+	exit(1);
     }
 
+    return $knpresult;
+}
 
+# SynGraphで解析
+sub _runSynGraph {
+    my ($this, $knpresult, $opt) = @_;
 
-    if ($opt->{telic_process} || $opt->{CN_process} || $opt->{NE_process} || $opt->{modifier_of_NE_process}) {
-	my $analyzer = new Tsubaki::QueryAnalyzer($opt);
-	$analyzer->analyze($knpresult,
-			   {
-			       end_of_sentence_process => $opt->{end_of_sentence_process},
-			       telic_process => $opt->{telic_process},
-			       CN_process => $opt->{CN_process},
-			       NE_process => $opt->{NE_process},
-			       modifier_of_NE_process => $opt->{modifier_of_NE_process}
-			   });
-    }
+    # SynGraphのオプションを設定
+    # Wikipedia のエントリになっている表現に対しては同義語展開を行わない
+    $opt->{syngraph_option}{no_attach_synnode_in_wikipedia_entry} = 1;
+    $opt->{syngraph_option}{attach_wikipedia_info} = 1;
+    $opt->{syngraph_option}{wikipedia_entry_db} = $CONFIG->{WIKIPEDIA_ENTRY_DB};
+    $opt->{syngraph_option}{regist_exclude_semi_contentword} = 1;
+    $opt->{syngraph_option}{relation} = 1;
+    $opt->{syngraph_option}{antonym} = 1;
+    $opt->{syngraph_option}{hypocut_attachnode} = 9;
+
+    $knpresult->set_id(0);
+    my $synresult = $CONFIG->{SYNGRAPH}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
+
+    $this->{syn_result} = new KNP::Result($synresult);
+    $this->{logger}->setTimeAs('SynGraph', '%.3f');
+
+    return $this->{syn_result};
+}
+
+# クエリ処理の適用
+sub _runQueryProcessing {
+    my ($this, $knpresult, $opt) = @_;
+
+    require Tsubaki::QueryAnalyzer;
+
+    my $analyzer = new Tsubaki::QueryAnalyzer($opt);
+    $analyzer->analyze($knpresult,
+		       {
+			   end_of_sentence_process => $opt->{end_of_sentence_process},
+			   telic_process => $opt->{telic_process},
+			   CN_process => $opt->{CN_process},
+			   NE_process => $opt->{NE_process},
+			   modifier_of_NE_process => $opt->{modifier_of_NE_process}
+		       });
     $this->{logger}->setTimeAs('QueryAnalyzer', '%.3f');
 
     $this->{knp_result} = $knpresult;
+}
 
-    my %buff;
-    my $indice;
+# タームの抽出
+sub _extractTerms {
+    my ($this, $indexer, $result, $opt) = @_;
 
+    my $terms;
     # WebClusteringではKNPの解析結果からtermを抜き出していることに注意
-    if (!$opt->{syngraph}) {
+    if ($opt->{english}) {
+	$terms = $indexer->makeIndexFromCONLLData();
+    }
+    elsif ($opt->{syngraph}) {
+	$terms = $indexer->makeIndexFromSynGraphResultObject(
+	    $result,
+	    {
+		use_of_syngraph_dependency => $CONFIG->{USE_OF_SYNGRAPH_DEPENDENCY},
+		use_of_hypernym => $CONFIG->{USE_OF_HYPERNYM},
+		disable_synnode => $opt->{disable_synnode},
+		force_dpnd => $this->{force_dpnd},
+		string_mode => 0,
+		use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM},
+		antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}
+	    });
+    }
+    else {
 	# KNP 結果から索引語を抽出
-	$indice = $opt->{indexer}->makeIndexFromKNPResult($knpresult->all);
-	$this->{logger}->setTimeAs('Indexer', '%.3f');
-    } else {
-	# SynGraph 結果から索引語を抽出
- 	$knpresult->set_id(0);
-	# Wikipedia のエントリになっている表現に対しては同義語展開を行わない
-	$opt->{syngraph_option}{no_attach_synnode_in_wikipedia_entry} = 1;
-	$opt->{syngraph_option}{attach_wikipedia_info} = 1;
-	$opt->{syngraph_option}{wikipedia_entry_db} = $CONFIG->{WIKIPEDIA_ENTRY_DB};
- 	my $synresult = $opt->{syngraph}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
-	$this->{syn_result} = new KNP::Result($synresult);
-	$this->{logger}->setTimeAs('SynGraph', '%.3f');
-
-	$indice = $opt->{indexer}->makeIndexFromSynGraphResultObject($this->{syn_result},
- 							 { use_of_syngraph_dependency => $CONFIG->{USE_OF_SYNGRAPH_DEPENDENCY},
- 							   use_of_hypernym => $CONFIG->{USE_OF_HYPERNYM},
- 							   disable_synnode => $opt->{disable_synnode},
-							   force_dpnd => $this->{force_dpnd},
-							   string_mode => 0,
- 							   use_of_negation_and_antonym => $CONFIG->{USE_OF_NEGATION_AND_ANTONYM},
-							   antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion}
- 							 });
-	$this->{logger}->setTimeAs('Indexer', '%.3f');
+	$terms = $indexer->makeIndexFromKNPResult($result->all);
     }
 
-
+    $this->{logger}->setTimeAs('Indexer', '%.3f');
 
     # Indexer.pm より返される索引語を同じ代表表記・SYNノードごとにまとめる
-    foreach my $idx (@{$indice}) {
-	$buff{$idx->{group_id}} = [] unless (exists($buff{$idx->{group_id}}));
-	push(@{$buff{$idx->{group_id}}}, $idx);
+    my %buf;
+    foreach my $term (@$terms) {
+	$buf{$term->{group_id}} = [] unless (exists($buf{$term->{group_id}}));
+	push(@{$buf{$term->{group_id}}}, $term);
     }
 
+    return \%buf;
+}
+
+# タームの保存
+sub _setTerms {
+    my ($this, $terms, $opt) = @_;
+
     my $num_of_semi_content_words = 0;
-    foreach my $group_id (sort {$buff{$a}->[0]{pos} <=> $buff{$b}->[0]{pos}} keys %buff) {
+    foreach my $group_id (sort {$terms->{$a}[0]{pos} <=> $terms->{$b}[0]{pos}} keys %$terms) {
 	my @word_reps;
 	my @dpnd_reps;
 
 	my $flag = 0;
-	foreach my $m (@{$buff{$group_id}}) {
+	foreach my $term (@{$terms->{$group_id}}) {
 	    # 近接条件が指定されていない かつ 機能語 の場合は検索に用いない
-	    next if ($m->{isContentWord} < 1 && $this->{is_phrasal_search} < 0);
+	    next if ($term->{isContentWord} < 1 && $this->{is_phrasal_search} < 0);
 
 	    # OR 検索が指定されていた場合の処理
 	    if ($this->{logical_cond_qkw} eq 'OR') {
-		$m->{requisite} = 0;
-		$m->{optional} = 1;
+		$term->{requisite} = 0;
+		$term->{optional} = 1;
 	    }
 
 	    # ブロックタイプを考慮する場合
 	    if ($opt->{blockTypes} && %{$opt->{blockTypes}}) {
 		foreach my $blockType (keys %{$opt->{blockTypes}}) {
-		    &push_string_to_reps(\@dpnd_reps, \@word_reps, $m, sprintf ("%s%s", $blockType, $m->{midasi}), $group_id, $opt);
+		    &push_string_to_reps(\@dpnd_reps, \@word_reps, $term, sprintf ("%s%s", $blockType, $term->{midasi}), $group_id, $opt);
 		}
 	    }
 	    else {
-		&push_string_to_reps(\@dpnd_reps, \@word_reps, $m, $m->{midasi}, $group_id, $opt);
+		&push_string_to_reps(\@dpnd_reps, \@word_reps, $term, $term->{midasi}, $group_id, $opt);
 	    }
 
-	    if ($m->{midasi} !~ /\-\>/) {
-		$flag = 1 if ($m->{midasi} =~ /\+/ && $m->{isBasicNode});
-		last if ($m->{midasi} =~ /\+/ && $m->{isBasicNode} && $is_phrasal_search > 0);
+	    if ($term->{midasi} !~ /\-\>/) {
+		$flag = 1 if ($term->{midasi} =~ /\+/ && $term->{isBasicNode});
+		last if ($term->{midasi} =~ /\+/ && $term->{isBasicNode} && $this->{is_phrasal_search} > 0);
 	    }
 	}
 	$num_of_semi_content_words++ if ($flag);
@@ -154,19 +230,9 @@ sub new {
 	push(@{$this->{dpnds}}, \@dpnd_reps) if (scalar(@dpnd_reps) > 0);
     }
 
-
-#     文レベルでの近接制約でない場合は、キーワード内の形態素数を考慮する
-#     if ($this->{near} > -1 && $this->{sentence_flag} < 0) {
-# 	$this->{near} += scalar(@{$this->{words}});
-#     }
-
-    if ($is_phrasal_search > 0) {
+    if ($this->{is_phrasal_search} > 0) {
 	$this->{near} = scalar(@{$this->{words}}) + $num_of_semi_content_words;
     }
-
-    $this->{logger}->setTimeAs('create_query', '%.3f');
-
-    bless $this;
 }
 
 # @dpnd_reps, \@word_repsに追加する関数
@@ -196,28 +262,30 @@ sub push_string_to_reps {
 	}
     }
     else {
-	push(@{$word_reps_ar}, {
-				surf => $m->{surf},
-				string => $regist_string,
-				midasi_with_yomi => $m->{midasi_with_yomi},
-				gid => $group_id,
-				qid => -1,
-				weight => 1,
-				freq => $m->{freq},
-				requisite => $m->{requisite},
-				optional =>  $m->{optional},
-				isContentWord => $m->{isContentWord},
-				question_type => $m->{question_type},
-				NE => $m->{NE},
-				isBasicNode => $m->{isBasicNode},
-				fstring => $m->{fstring},
-				isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
-				katsuyou => $m->{katsuyou},
-				POS => $m->{POS}
-			       });
+	push(@{$word_reps_ar},
+	     {
+		 surf => $m->{surf},
+		 string => $regist_string,
+		 midasi_with_yomi => $m->{midasi_with_yomi},
+		 gid => $group_id,
+		 qid => -1,
+		 weight => 1,
+		 freq => $m->{freq},
+		 requisite => $m->{requisite},
+		 optional =>  $m->{optional},
+		 isContentWord => $m->{isContentWord},
+		 question_type => $m->{question_type},
+		 NE => $m->{NE},
+		 isBasicNode => $m->{isBasicNode},
+		 fstring => $m->{fstring},
+		 isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
+		 katsuyou => $m->{katsuyou},
+		 POS => $m->{POS}
+	     });
     }
 }
 
+# SynNodeを減らす
 sub reduceSynnodes {
    my ($this, $use_of_antonym_expansion) = @_;
 
@@ -252,6 +320,7 @@ sub reduceSynnodes {
    $this->{words} = \@new_words;
 }
 
+# ブラウザ出力用
 sub print_for_web {
     my ($this) = @_;
 
@@ -365,9 +434,22 @@ sub print_for_XML {
     print qq(</TOOL_OUTPUT>\n);
 }
 
+# デバッグ用プリント
+sub debug_print {
+    my ($this) = @_;
 
-# デストラクタ
-sub DESTROY {}
+    use Dumper;
+    print "<TABLE border=1>\n";
+    foreach my $type ('words', 'dpnds') {
+	foreach my $words (@{$this->{$type}}) {
+	    foreach my $rep (@$words) {
+		my $flag = ($rep->{requisite}) ? '●' : (($rep->{optional}) ? '▲' : '×');
+		printf ("<TR><TD>%s</TD><TD>%s</TD><TD>%d</TD></TR>\n", $flag, $rep->{string}, $rep->{df});
+	    }
+	}
+    }
+    print "</TABLE>\n";
+}
 
 
 # 文字列表現を返すメソッド
@@ -404,7 +486,6 @@ sub to_string {
 	$dpnds_str .= " $reps";
     }
 
-#   my $ret = "STRING:\n$this->{midasi}\n";
     my $ret .= ($words_str . "\n");
     $ret .= ($dpnds_str . "\n");
     $ret .= "LOGICAL_COND: $this->{logical_cond_qkw}\n";
@@ -458,7 +539,6 @@ sub to_string_verbose {
 	my $weight_flag = '　　　';
 	my $reason;
 	foreach my $w (@{$ws}) {
-#	    $reps .= "$w->{string}\[qid=$w->{qid}, df=$w->{df}, rank_df=$w->{df_rank}";
 	    $reps .= "$w->{string}\[gid=$w->{gid}, qid=$w->{qid}, df=$w->{df}, weight=$w->{weight}, isContentWord=$w->{isContentWord}";
 	    $max_df = $w->{df} if ($w->{df} > $max_df);
 	    $max_dfrank = $w->{df_rank} if ($w->{df_rank} > $max_dfrank);
@@ -531,13 +611,6 @@ sub to_string_verbose {
     my $ret = "STRING:\n$this->{midasi}\n";
     $ret .= ($words_str . "\n");
     $ret .= ($dpnds_str . "\n");
-#     $ret .= "LOGICAL_COND: $this->{logical_cond_qkw}\n";
-#     if ($this->{sentence_flag} > 0) {
-# 	$ret .= "NEAR_SENT: $this->{near}\n";
-#     } else {
-# 	$ret .= "NEAR_WORD: $this->{near}\n";
-#     }
-#     $ret .= "FORCE_DPND: $this->{force_dpnd}";
 
     return $ret;
 }
@@ -937,21 +1010,7 @@ sub getDrawingDependencyCode {
     return $jscode;
 }
 
-
-sub debug_print {
-    my ($this) = @_;
-
-    use Dumper;
-    print "<TABLE border=1>\n";
-    foreach my $type ('words', 'dpnds') {
-	foreach my $words (@{$this->{$type}}) {
-	    foreach my $rep (@$words) {
-		my $flag = ($rep->{requisite}) ? '●' : (($rep->{optional}) ? '▲' : '×');
-		printf ("<TR><TD>%s</TD><TD>%s</TD><TD>%d</TD></TR>\n", $flag, $rep->{string}, $rep->{df});
-	    }
-	}
-    }
-    print "</TABLE>\n";
-}
+# デストラクタ
+sub DESTROY {}
 
 1;
