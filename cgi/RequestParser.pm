@@ -396,7 +396,6 @@ sub normalize_logical_operator {
 	if ($params->{logical_operator} eq 'WORD_AND') {
 	    $params->{logical_operator} = 'AND';
 	}
-	$params->{force_dpnd} = 0;
 	$params->{dpnd} = 1;
     }
 }
