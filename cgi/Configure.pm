@@ -152,6 +152,19 @@ sub _new {
     bless $this, $clazz;
 }
 
+sub getSynGraphObj {
+    my ($this) = @_;
+
+    unless (defined $instance->{SYNGRAPH}) {
+	push (@INC, $instance->{SYNGRAPH_PM_PATH});
+	require SynGraph;
+
+	$instance->{SYNGRAPH} = new SynGraph($instance->{SYNDB_PATH});
+    }
+
+    return $this->{SYNGRAPH};
+}
+
 sub get_instance {
     if ($instance) {
 	return $instance;
