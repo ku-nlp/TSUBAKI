@@ -86,7 +86,7 @@ sub create_snippets {
 
 
 	# debug表示用
-	if ($opt->{debug}) {
+	if ($opt->{debug} > 1) {
 	    print $CONFIG->{SNIPPET_SERVERS}[$i]{name} . "<BR>\n";
 
 	    my @dids = ();
@@ -283,7 +283,7 @@ sub get_snippets_for_each_did {
 	    # 単語の位置
 	    my $start_pos = $sentence->{start_pos} + 1;
 	    my $end_pos = $sentence->{end_pos};
-	    my $flag_of_underline = ($this->{did2region}{$did}{start} > 100 && $this->{did2region}{$did}{end} - $this->{did2region}{$did}{start} < 50) ? 1 : 0;
+	    my $flag_of_underline = ($this->{did2region}{$did}{start} > 50 && $this->{did2region}{$did}{end} - $this->{did2region}{$did}{start} < 50) ? 1 : 0;
 	    my $pos = $start_pos;
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		my $highlighted = -1;
@@ -311,12 +311,12 @@ sub get_snippets_for_each_did {
 		}
 
 		# ハイライトされなかった場合 or ハイライトオプションがオフの場合
-		if ($opt->{debug}) {
+		if ($opt->{debug} > 1) {
 		    $snippets{$sid} .= sprintf ("$surf<SUB>%s</SUB>", $pos) if ($highlighted < 0);
 		} else {
 		    $snippets{$sid} .= $surf if ($highlighted < 0);
 		}
-		print $did . " " . $sid . " " . $flag_of_underline . " " . $this->{did2region}{$did}{start} . " " . $pos . " " . $this->{did2region}{$did}{end} . "<BR>\n" if ($opt->{debug});
+		print $did . " " . $sid . " " . $flag_of_underline . " " . $this->{did2region}{$did}{start} . " " . $pos . " " . $this->{did2region}{$did}{end} . "<BR>\n" if ($opt->{debug} > 1);
 
 		$wordcnt++;
 		$pos++;
@@ -357,7 +357,7 @@ sub get_snippets_for_each_did {
 	}
 
 	$snippet =~ s/S\-ID:\d+//g;
-	if ($opt->{debug}) {
+	if ($opt->{debug} > 1) {
 	    $did2snippets{$did} = $did . " " . $this->{did2region}{$did}{start} . " " . $this->{did2region}{$did}{end} . " " . $snippet;
 	} else {
 	    $did2snippets{$did} = $snippet;

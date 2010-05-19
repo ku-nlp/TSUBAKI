@@ -39,7 +39,7 @@ sub main {
     my $params = RequestParser::parseCGIRequest(new CGI());
 
 
-    if ($params->{debug}) {
+    if ($params->{debug} > 1) {
 	print Dumper::dump_as_HTML($CONFIG);
 	print "<HR>\n";
     }
@@ -132,9 +132,9 @@ sub main {
 
 	    # 検索クエリの構造体を取得
 	    my $query = RequestParser::parseQuery($params, $logger);
-	    if ($params->{debug}) {
-		$query->{keywords}[0]->print_for_web() if (defined $query->{keywords}[0]);
+	    $query->{keywords}[0]->print_for_web() if ($params->{debug} && defined $query->{keywords}[0]);
 
+	    if ($params->{debug} > 1) {
 		print "<hr>\n";
 		print Dumper::dump_as_HTML($query) . "<br>\n";
 		print "<hr>\n";

@@ -93,7 +93,7 @@ sub send_query_to_slave_servers {
 	    PeerPort => $this->{hosts}->[$i]->{port} + (($opt->{reference}) ? 1 : 0),
 	    Proto    => 'tcp' );
 
-	print "send query to " . $this->{hosts}[$i]{name} . ":" . $this->{hosts}[$i]{port} . "<BR>\n" if ($opt->{debug});
+	print "send query to " . $this->{hosts}[$i]{name} . ":" . $this->{hosts}[$i]{port} . "<BR>\n" if ($opt->{debug} > 1);
 	$selecter->add($socket) or die "Cannot connect to the server (host=$this->{hosts}->[$i]->{name}, port=$this->{hosts}->[$i]->{port})";
 
  	# クエリの送信
@@ -274,7 +274,7 @@ sub parse_recieved_data_for_perl {
 	    $buff .= $_;
 	}
 	push (@results, Storable::thaw(decode_base64($buff))) if (defined($buff));
-	print "$hostinfo->{name} returned. ($hitcount)<BR>\n" if ($opt->{debug});
+	print "$hostinfo->{name} returned. ($hitcount)<BR>\n" if ($opt->{debug} > 1);
     }
 
     if ($slave_logger) {
@@ -288,7 +288,6 @@ sub parse_recieved_data_for_perl {
 
     return ($hitcount, \@results);
 }
-
 
 # 実際に検索を行うメソッド
 sub broadcastSearch {
@@ -327,7 +326,7 @@ sub broadcastSearch {
     # ロギング
     ##########
     $logger->setTimeAs('get_result_from_server', '%.3f');
-    print "finish to harvest search results (" . $logger->getParameter('get_result_from_server') . " sec.)\n" if ($opt->{debug});
+    print "finish to harvest search results (" . $logger->getParameter('get_result_from_server') . " sec.)\n" if ($opt->{debug} > 1);
 
     # 検索スレーブサーバー側でのログを保存
     my $size = scalar(@$_results);
