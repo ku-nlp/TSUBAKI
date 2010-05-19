@@ -88,6 +88,7 @@ $prefixOfBlockType{maintext}        = 'MT';
 $prefixOfBlockType{unknown_block}   = 'UB';
 $prefixOfBlockType{title}           = 'TT';
 $prefixOfBlockType{keyword}         = 'KW';
+$prefixOfBlockType{description}     = 'DS';
 $prefixOfBlockType{inlink}          = 'AC';
 
 # 論文検索
@@ -357,7 +358,16 @@ sub extract_indices_wo_pm {
 
 	    # 領域判定結果の取得
 	    $blockType = 'unknown_block' unless ($opt{ipsj});
-	    if (/\<.*? BlockType="(.+?)"/) {
+	    if ($tagName eq 'Title') {
+		$blockType = 'title';
+	    }
+	    elsif ($tagName eq 'Description') {
+		$blockType = 'description';
+	    }
+	    elsif ($tagName eq 'Keywords') {
+		$blockType = 'keyword';
+	    } 
+	    elsif (/\<.*? BlockType="(.+?)"/) {
 		$blockType = $1;
 	    }
 
