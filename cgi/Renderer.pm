@@ -437,7 +437,7 @@ sub print_form {
     print qq(<INPUT type="text" id="qbox" name="query" value="$params->{'query'}" size="112">\n);
 
     print qq(<INPUT type="submit" value="検索する"/>\n);
-    print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/>\n);
+    print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/><BR>\n);
 
     # NTCIRモードの場合はクエリを表示
     $this->print_ntcir_queries($params) if ($CONFIG->{IS_NTCIR_MODE});
@@ -459,7 +459,7 @@ sub print_form {
 sub print_ntcir_queries {
     my ($this, $params) = @_;
 
-    print qq(<SELECT name="ntcir_query" style="display: block; margin-top: 0.2em;">\n);
+    print qq(<SELECT name="ntcir_query" style="display: inline; margin-top: 0.2em;">\n);
     open (READER, "<:encoding(euc-jp)", $CONFIG->{TSUBAKI_SCRIPT_PATH} . "/../data/qs-fml-ntcir34") or die "$!";
     while (<READER>) {
 	chop;
@@ -471,7 +471,8 @@ sub print_ntcir_queries {
 	}
     }
     close (READER);
-    print "</SELECT>\n";
+    print "</SELECT> ";
+    print qq(<INPUT type="button" value="入力" onclick="document.search.qbox.value = document.search.ntcir_query.options[document.search.ntcir_query.selectedIndex].value;"/><BR>\n);
 }
 
 # 開発モード用オプションを表示
@@ -1018,6 +1019,26 @@ sub printOrdinarySearchResult {
     }
 
 
+    if ($CONFIG->{IS_NTCIR_MODE}) {
+	my %num_of_judges = ();
+	for (my $rank = $start; $rank < $end; $rank++) {
+	    my $did = $results->[$rank]{did};
+	    my $judge = $evalmap{$evaldat->{sprintf("%09d", $did)}};
+	    $judge = '？' unless ($judge);
+	    $num_of_judges{$judge}++;
+	}
+
+	print qq(<DIV style="font-size:small; text-align: left; background-color:#f1f4ff; mergin:0px; margin-top:-0.2em; padding-left:1em;">\n);
+	print "評価結果：";
+	foreach my $judge (('◎', '○', '△', 'Ｘ', '？')) {
+	    my $num = $num_of_judges{$judge};
+	    $num = 0 unless (defined $num);
+
+	    printf "%s %s　", $judge, $num;
+	}
+	print "</DIV>\n";
+    }
+
     ################
     # 検索結果を表示
     ################
@@ -1097,6 +1118,42 @@ sub printOrdinarySearchResult {
  	}
 	$output .= qq(</DIV>\n);
 
+	if ($params->{debug}) {
+	    my $terms = $results->[$rank]{terminfo}{terms};
+	    my $dleng = $results->[$rank]{terminfo}{length};
+	    my %buff;
+	    foreach my $gid (sort {$a <=> $b} keys %$terms) {
+		my $frq = $terms->{$gid}{frq};
+		my $tff = $terms->{$gid}{tff};
+		my $gdf = $terms->{$gid}{gdf};
+		my $idf = $terms->{$gid}{idf};
+		my $okp = $terms->{$gid}{okp};
+
+		my @_buf;
+		foreach my $qid (sort {$terms->{$gid}{qinfo}{$b} <=> $terms->{$gid}{qinfo}{$a}} keys %{$terms->{$gid}{qinfo}}) {
+		    my $string = $query->{qid2rep}{$qid};
+		    $string =~ s/</&lt;/g;
+		    $string =~ s/>/&gt;/g;
+		    push (@_buf, sprintf("%s %s", $string, $terms->{$gid}{qinfo}{$qid}));
+		}
+
+		my $line = sprintf "<TR><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%s</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='left' style='padding-left:1em;'>%s</TD></TR>\n", $okp, $frq, $tff, $gdf, $idf, (join (" ", @_buf));
+		if ($gid =~ /\//) {
+		    push (@{$buff{dpnds}}, $line);
+		} else {
+		    push (@{$buff{words}}, $line);
+		}
+	    }
+	    $output .= sprintf "length=%.2f<BR>\n", $dleng;
+	    $output .= "<TABLE>\n";
+	    $output .= "<TR><TH>okp</TH><TH>frq</TH><TH>tff</TH><TH>gdf</TH><TH>idf</TH><TH>terms</TH></TR>\n";
+	    foreach my $type (('words', 'dpnds')) {
+		foreach my $line (@{$buff{$type}}) {
+		    $output .= $line;
+		}
+	    }
+	    $output .= "</TABLE>\n";
+	}
 
 	###############################################################################
 	# スニペット
@@ -1109,7 +1166,10 @@ sub printOrdinarySearchResult {
 
 	if ($CONFIG->{USE_OF_BLOCK_TYPES} && !$CONFIG->{IS_KUHP_MODE}) {
 	    # ページの構造解析結果へのリンクを生成
-	    my $block_type_detect_url = sprintf "http://orchid.kuee.kyoto-u.ac.jp/~funayama/ISA/index_dev.cgi?DetectBlocks_ROOT=%%2Fhome%%2Ffunayama%%2Fcvs%%2FDetectBlocks&DetectSender_ROOT=%%2Fhome%%2Ffunayama%%2Fcvs%%2FDetectSender&inputurl=%s?format=html\@id=%s&DetectSender_flag=&rel2abs=", "http://tsubaki.ixnlp.nii.ac.jp/api.cgi", $did;
+	    my $basecgi = 'http://orchid.kuee.kyoto-u.ac.jp/~funayama/ISA/index_dev.cgi?';
+	    my $pageurl = "http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/skeiji/ntcir/ntcir-api.cgi?action=show_page\@id=$did\@format=html";
+	    my $block_type_detect_url = sprintf ("%sDetectBlocks_ROOT=%%2Fhome%%2Ffunayama%%2FDetectBlocks&DetectSender_ROOT=%%2Fhome%%2Ffunayama%%2FDetectSender&inputurl=%s&DetectSender_flag=&rel2abs=&input_type=url", $basecgi, $pageurl);
+
 	    $output .= qq(&nbsp;<A class="cache" href="$block_type_detect_url" target="_blank"><SMALL>構造解析結果</SMALL></A>\n);
 	}
 	$output .= "</DIV>";
