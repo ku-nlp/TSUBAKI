@@ -41,8 +41,8 @@ sub new {
 	KNP => $CONFIG->{KNP},
 	INDEXER => $indexer,
 	INDEXER_GENKEI => $indexer_genkei,
-	DFDBS_WORD => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR})) : (),
-	DFDBS_DPND => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR})) : (),
+	DFDBS_WORD => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR})) : undef,
+	DFDBS_DPND => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR})) : undef,
 	OPTIONS => {
 	    trimming => $opts->{QUERY_TRIMMING},
 	    use_of_block_types => defined($opts->{USE_OF_BLOCK_TYPES}) ? $opts->{USE_OF_BLOCK_TYPES} : $CONFIG->{USE_OF_BLOCK_TYPES}, # newに指定された設定は、CONFIGよりも優先
