@@ -57,8 +57,11 @@ sub extract_sentences_from_standard_format {
 	print Dumper($opt) . "\n";
     }
 
+    # XMLファイルがない場合
+    return () unless (-e $xmlfile);
+
     if ($opt->{z}) {
-	open (READER, '<:gzip', $xmlfile) || die $!;
+	open (READER, '<:gzip', $xmlfile) or die $!;
 	binmode (READER, ':utf8');
     } else {
 	open(READER, $xmlfile) or die "$!";
@@ -79,9 +82,6 @@ sub extract_sentences_from_standard_format {
 	my $_wk = $/;
 	$/ = undef;
 	$content = <READER>;
-# 	while (<READER>) {
-# 	    $content .= $_;
-# 	}
 	close(READER);
 	$/ = $_wk;
 
