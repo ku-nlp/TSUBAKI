@@ -845,33 +845,7 @@ sub makeIndexFromKNPResultObject {
     foreach my $bnst ($result->bnst) {
 	foreach my $kihonku ($bnst->tag) {
 	    if (defined $kihonku->parent && !$option->{disable_dpnd}) {
-
-		# 並列句の処理
-		my $kakarimoto = $kihonku;
-		my $buf = $kakarimoto;
-		my $kakarisaki = $kihonku->parent;
-		while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
-		    $buf = $kakarisaki;
-		    $kakarisaki = $kakarisaki->parent;
-		}
-
-		my $dpnd_idx = $this->get_dpnd_index($kakarimoto, $kakarisaki, $option);
-		foreach my $i (@$dpnd_idx) {
-		    $i->{pos} = $pos;
-		    $i->{_pos} = $_pos;
-		    $i->{absolute_pos} = $pos;
-		    $i->{isBasicNode} = 1;
-		    $i->{group_id} = $gid;
-		    # $i->{group_id} = $kakarimoto->id . "/" . $kakarisaki->id;
-		    if ($i->{fstring} =~ /クエリ必須係り受け/ || $option->{force_dpnd}) {
-			$i->{requisite} = 1;
-			$i->{optional}  = 0;
-		    } else {
-			$i->{requisite} = 0;
-			$i->{optional}  = 1;
-		    }
-		}
-		push(@idx, @$dpnd_idx);
+		$this->extractDependencyTerms(\@idx, $kihonku, \$gid, \$pos, $option);
 	    }
 	    $gid++;
 
