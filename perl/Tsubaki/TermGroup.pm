@@ -12,6 +12,50 @@ use Data::Dumper;
 use Configure;
 use CDB_Reader;
 
+
+
+my $font_size = 12;
+my $arrow_size = 3;
+
+my @color = ();
+push(@color, '#ffa500;');
+push(@color, '#000080;');
+push(@color, '#779977;');
+push(@color, '#800000;');
+push(@color, '#997799;');
+push(@color, '#770000;');
+push(@color, '#007700;');
+push(@color, '#777700;');
+push(@color, '#007777;');
+push(@color, '#770077;');
+
+my @bgcolor = ();
+push(@bgcolor, '#ffff99;');
+push(@bgcolor, '#bbffff;');
+push(@bgcolor, '#bbffbb;');
+push(@bgcolor, '#ffbbbb;');
+push(@bgcolor, '#ffbbff;');
+push(@bgcolor, '#bb0000;');
+push(@bgcolor, '#00bb00;');
+push(@bgcolor, '#bbbb00;');
+push(@bgcolor, '#00bbbb;');
+push(@bgcolor, '#bb00bb;');
+
+my @stylecolor = ();
+push(@stylecolor, 'border: 2px solid #ffa500; background-color: #ffff99;');
+push(@stylecolor, 'border: 2px solid #000080; background-color: #bbffff;');
+push(@stylecolor, 'border: 2px solid #779977; background-color: #bbffbb;');
+push(@stylecolor, 'border: 2px solid #800000; background-color: #ffbbbb;');
+push(@stylecolor, 'border: 2px solid #997799; background-color: #ffbbff;');
+push(@stylecolor, 'border: 2px solid #770000; background-color: #bb0000; color: white;');
+push(@stylecolor, 'border: 2px solid #007700; background-color: #00bb00; color: white;');
+push(@stylecolor, 'border: 2px solid #777700; background-color: #bbbb00; color: white;');
+push(@stylecolor, 'border: 2px solid #007777; background-color: #00bbbb; color: white;');
+push(@stylecolor, 'border: 2px solid #770077; background-color: #bb00bb; color: white;');
+
+my $removedcolor = 'border: 2px solid #9f9f9f; background-color: #e0e0e0; color: black;';
+
+
 sub getBasicNode {
     my ($synnodes) = @_;
 
@@ -39,8 +83,6 @@ sub remove_yomi {
 sub new {
     my ($class, $gid, $parentGroup, $synnodes, $tagids, $children, $parent, $opt) = @_;
 
-    my $CONFIG = Configure::get_instance();
-
     my $this;
     $this->{children} = $children;
     $this->{hasChild} = ($children) ? 1 : 0;
@@ -51,8 +93,9 @@ sub new {
     if ($opt->{isRoot}) {
 	$this->{optionals} = $opt->{optionals};
     }
+    my $CONFIG = Configure::get_instance();
 
-    # 基本句配列中での位置
+    # 蝓ｺ譛ｬ蜿･驟榊�荳ｭ縺ｧ縺ｮ菴咲ｽｮ
     $this->{position} = $tagids;
 
     my $basic_node = &getBasicNode($synnodes);
@@ -65,11 +108,17 @@ sub new {
 	$this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($synnodes->[0]->synid))) if (defined $synnodes);
     }
 
-
     my $cnt = 0;
     my %alreadyPushedTexts = ();
     foreach my $synnode (@$synnodes) {
 	my $text_wo_yomi = sprintf ("%s%s", &remove_yomi($synnode->synid), $synnode->feature);
+
+	# 文法素性の削除
+	$text_wo_yomi =~ s/<可能>//;
+	$text_wo_yomi =~ s/<尊敬>//;
+	$text_wo_yomi =~ s/<受身>//;
+	$text_wo_yomi =~ s/<使役>//;
+
 	next if (exists $alreadyPushedTexts{$text_wo_yomi});
 	$alreadyPushedTexts{$text_wo_yomi} = 1;
 
@@ -77,7 +126,8 @@ sub new {
 	    tid => sprintf ("%s-%s", $gid, $cnt++),
 	    text => $text_wo_yomi,
 	    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
-	    node_type => ($synnode eq $basic_node) ? 'basic' : 'syn'
+	    node_type => ($synnode eq $basic_node) ? 'basic' : 'syn',
+	    gdf => $this->{gdf}
 				      });
 	push (@{$this->{terms}}, $term);
     }
@@ -158,10 +208,20 @@ sub to_string {
 	print "\n";
     }
 
-    foreach my $child (@{$this->{children}}) {
+    foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
 	$child->to_string($space . "\t");
     }
     print "\n";
+}
+
+sub get_term_type {
+    my ($this) = @_;
+
+    if (defined $this->{terms}[0]) {
+	return $this->{terms}[0]->get_term_type();
+    } else {
+	return 10;
+    }
 }
 
 sub to_S_exp {
@@ -170,22 +230,29 @@ sub to_S_exp {
     my $S_exp;
     if ($this->{isRoot}) {
 	my $_S_exp;
+	my $_S_exp_for_anchor;
 	my $num_of_children = 0;
-	foreach my $child (@{$this->{children}}) {
+	foreach my $child (sort {$a->get_term_type() <=> $b->get_term_type() || $a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
 	    $_S_exp .= $child->to_S_exp($space);
+	    $_S_exp_for_anchor .= $child->to_S_exp_for_anchor($space);
 	    $num_of_children++;
 	}
-	$_S_exp = sprintf ("(AND %s)", $_S_exp) if ($num_of_children > 1);
+	if ($num_of_children > 1) {
+	    $_S_exp = sprintf ("(AND %s)", $_S_exp);
+	}	    
+
+
 
 	my @buf;
 	while (my ($k, $v) = each %{$this->{optionals}}) {
 	    push (@buf, $v->to_S_exp());
 	}
 
+#	$_S_exp_for_anchor = '';
 	if (scalar(@buf)) {
-	    $S_exp = sprintf ("( (ROOT %s %s ) )", $_S_exp, join (" ", @buf));
+	    $S_exp = sprintf ("( (ROOT %s %s %s ) )", $_S_exp, join (" ", @buf), $_S_exp_for_anchor);
 	} else {
-	    $S_exp = sprintf ("( (ROOT %s) )", $_S_exp);
+	    $S_exp = sprintf ("( (ROOT %s %s ) )", $_S_exp, $_S_exp_for_anchor);
 	}
     } else {
 	my $is_single_node = (!$this->{hasChild} && scalar(@{$this->{terms}}) < 2);
@@ -198,7 +265,7 @@ sub to_S_exp {
 	if ($this->{hasChild}) {
 	    $S_exp .= (($is_single_node) ? "$space(AND\n" : "\t$space(AND\n");
 	    my $_space = ($is_single_node) ? $space . "\t" : $space . "\t\t";
-	    foreach my $child (@{$this->{children}}) {
+	    foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
 		$S_exp .= $child->to_S_exp($_space);
 	    }
 	    $S_exp .= (($is_single_node) ? "$space)\n" : "\t$space)\n");
@@ -210,462 +277,102 @@ sub to_S_exp {
 }
 
 
+sub show_query_structure {
+    my ($this) = @_;
 
 
-#     $this->{kihonku} = $kihonkus->[$j];
-#     $this->{synNodes} = $SYNNODES;
-#     $this->{hasSynNodes} = (defined $SYNNODES) ? 1 : 0;
-#     $this->{basicNodes} = undef;
-#     $this->{hasBasicNodes} = 0;
-#     $this->{synnodeInfo} = $SYN_INFO;
-#     $this->{df} = -1;
-#     $this->{requisite} = 1;
-#     $this->{optional} = 0;
-
-#     # HTMLコード生成用
-#     $this->{x} = 0;
-#     $this->{y} = 0;
-
-#     if ($i == $j) {
-# 	$this->{hasChild} = 0;
-# 	$this->{children} = [];
-# 	$this->{hasBasicNodes} = 1;
-
-# 	# 基本ノードとSYNノードに分解する
-# 	my @basicNodes;
-# 	my @synNodes;
-# 	foreach my $synnode (@$SYNNODES) {
-# 	    if ($synnode->synid =~ /s\d+/) {
-# 		push(@synNodes, $synnode);
-# 	    } else {
-# 		push(@basicNodes, $synnode);
-# 	    }		
-# 	}
-# 	$this->{basicNodes} = \@basicNodes;
-# 	$this->{synNodes} = \@synNodes;
-#     } else {
-# 	my @child_nodes;
-# 	for (my $k = $j; $k > $i - 1; $k--) {
-# 	    next if (defined $CHILD_NODE_IDS && !exists $CHILD_NODE_IDS->{$k});
-
-# 	    # $k番目の基本句を末尾にもつ、もっとも大きなSYNノードを探索
-# 	    my $buf = &seekTheLargestSynNode($kihonkus->[$k], $ANCESTOR_IDS, $i);
-
-# 	    # $k番目の基本句を末尾にもつ、複数ノードにまたがるSYNノードがない
-# 	    if ($buf->{num} == 1) {
-# 		unshift (@child_nodes, new Tsubaki::QTerm($kihonkus, $k, $k, undef, undef, $buf->{synnodeInfo}, $buf->{synnodes}));
-# 	    }
-# 	    # $k番目の基本句を末尾にもつ、複数ノードにまたがるSYNノードがある
-# 	    else {
-# 		# SYNノードでカバーされるSYNIDの取得
-# 		my %child_ids = ();
-# 		foreach my $id (@{$buf->{ids}}) {
-# 		    $child_ids{$id} = 1;
-# 		}
-
-# 		# 自身がカバーしているノードをTERMオブジェクトにする
-# 		$ANCESTOR_IDS->{$buf->{id}} = 1;
-# 		unshift (@child_nodes, new Tsubaki::QTerm($kihonkus, $buf->{ids}[0], $buf->{ids}[-1], \%child_ids, $ANCESTOR_IDS, $buf->{synnodeInfo}, $buf->{synnodes}));
-# 		delete($ANCESTOR_IDS->{$buf->{id}});
-
-# 		# $k-- の分を足す
-# 		$k = $k - $buf->{num} + 1;
-# 	    }
-# 	}
-
-# 	# 子供を持っていることを記録
-# 	$this->{hasChild} = 1;
-# 	$this->{children} = \@child_nodes;
-#     }
-
-#     bless $this;
-# }
-
-# sub DESTROY {
-# }
-
-
-# # 		# ids の値が連続してない場合は、飛んでる部分の Term を作成（このTermは兄弟ノード）
-# # 		for (my $k = scalar(@{$buf->{ids}}) - 1; $k > 0; $k--) {
-# # 		    if ($buf->{ids}[$k] - $buf->{ids}[$k - 1] > 1) {
-# # 			my $l = $buf->$buf->{ids}[$k - 1] + 1;
-# # 			my $m = $buf->$buf->{ids}[$k];
-
-# # 			unshift (@child_nodes, new Term($kihonkus, $l, $m, $ANCESTOR_IDS, undef));
-# # 		    }
-# # 		}
-
-# sub getDF {
-#     my ($this) = @_;
-
-#     return $this->{df};
-# }
-
-# sub setDF {
-#     my ($this, $dfdb) = @_;
-
-#     if ($this->hasChild) {
-# 	my @buf;
-# 	foreach my $child ($this->childNodes) {
-# 	    $child->setDF($dfdb);
-# 	}
-#     }
-
-#     if ($this->hasBasicNodes) {
-# 	foreach my $node ($this->basicNodes) {
-# 	    $this->{df} = &get_DF($node->synid, $dfdb);
-# 	    last;
-# 	}
-#     }
-#     elsif ($this->hasSynNodes) {
-# 	foreach my $node ($this->synNodes) {
-# 	    $this->{df} = &get_DF($node->synid, $dfdb);
-# 	    last;
-# 	}
-#     }	
-# }
-
-
-# sub get_DF {
-#     my ($k, $DFDBs) = @_;
-
-#     $k =~ s/\/.+$//;
-#     print $k . "<BR>\n";
-
-#     my $k_utf8 = encode('utf8', $k);
-#     my $gdf = 0;
-# #   my $DFDBs = (index($k, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
-#     foreach my $dfdb (@{$DFDBs}) {
-# 	my $val = $dfdb->{$k_utf8};
-# 	if (defined $val) {
-# 	    $gdf += $val;
-#  	    last;
-#  	}
-#     }
-#     return $gdf;
-# }
-
-# sub seekTheLargestSynNode {
-#     my ($kihonku, $ANCESTOR_IDS, $front) = @_;
-
-#     my $buf = undef;
-#     foreach my $synnodes ($kihonku->synnodes) {
-# 	next if (exists $ANCESTOR_IDS->{$synnodes->tagid});
-
-# 	my @ids = split(/,/, $synnodes->tagid);
-# 	next if ($ids[0] < $front);
-
-# 	my $num = scalar(@ids);
-# 	unless (defined $buf) {
-# 	    push(@{$buf->{synnodes}}, $synnodes->synnode);
-# 	    $buf->{num} = $num;
-# 	    $buf->{ids} = \@ids;
-# 	    $buf->{id} = $synnodes->tagid;
-# 	    $buf->{synnodeInfo} = $synnodes;
-# 	} else {
-# 	    if ($num > $buf->{num}) {
-# 		$buf->{synnodes} = [];
-# 		push(@{$buf->{synnodes}}, $synnodes->synnode);
-# 		$buf->{num} = $num;
-# 		$buf->{ids} = \@ids;
-# 		$buf->{id} = $synnodes->tagid;
-# 		$buf->{synnodeInfo} = $synnodes;
-# 	    }
-# 	}
-#     }
-
-#     return $buf;
-# }
-
-
-# sub toString {
-#     my ($this, $level) = @_;
-
-#     if ($this->{hasChild}) {
-# 	foreach my $child (@{$this->{children}}) {
-# 	    $child->toString($level + 1);
-# 	}
-#     }
-
-#     if (defined $this->synNodes) {
-# 	my $indent;
-# 	for (my $i = 0; $i < $level; $i++) {
-# 	    $indent .=  "  ";
-# 	}
-# 	print $indent . $this->{kihonku}->fstring . "\n";
-# 	print $indent . $this->{synnodeInfo}->tagid . ' ' . $this->{synnodeInfo}->parent . $this->{synnodeInfo}->dpndtype . ' ' . $this->{synnodeInfo}->midasi . ' ' . $this->{synnodeInfo}->feature . "\n";
-# 	foreach my $synnode ($this->synNodes) {
-# 	    print $indent;
-# 	    foreach my $k (sort keys %$synnode) {
-# 		my $v = ((ref $synnode->{$k}) =~ /ARRAY/) ? join(",", @{$synnode->{$k}}) : $synnode->{$k};
-# 		next if ($v eq '');
-
-# 		print $k . "=" . $v . ",";
-# 	    }
-# 	    print "\n";
-# 	}
-# 	print "\n";
-#     }
-# }
-
-# sub hasChild {
-#     my ($this) = @_;
-#     return $this->{hasChild};
-# }
-
-# sub childNodes {
-#     my ($this) = @_;
-
-#     return @{$this->{children}};
-# }
-
-# sub hasSynNodes {
-#     my ($this) = @_;
-
-#     return $this->{hasSynNodes};
-# }
-
-# sub synNodes {
-#     my ($this) = @_;
-
-#     if (defined $this->{synNodes}) {
-# 	return @{$this->{synNodes}};
-#     } else {
-# 	return undef;
-#     }
-# }
-
-# sub hasBasicNodes {
-#     my ($this) = @_;
-
-#     return $this->{hasBasicNodes};
-# }
-
-# sub basicNodes {
-#     my ($this) = @_;
-
-#     return @{$this->{basicNodes}};
-# }
-
-# sub isRequisiteNode {
-#     my ($this) = @_;
-
-#     return $this->{requisite};
-# }
-
-# sub isOptionalNode {
-#     my ($this) = @_;
-
-#     return $this->{optional};
-# }
-
-# sub toHTMLCode {
-#     my ($this) = @_;
-
-#     if ($this->hasChild) {
-# 	foreach my $child ($this->childNodes) {
-# 	    $child->toHTMLCode();
-# 	}
-#     }
-
-#     # 見出し（出現形）
-#     my $midasi;
-#     if ($this->hasBasicNodes) {
-# 	my $buf = $this->{synnodeInfo}->midasi;
-# 	$midasi = sprintf qq(<DIV class="midasi">%s</DIV>), $buf;
-#     }
-
-#     # 基本ノード
-#     my $basicNodeString;
-#     if ($this->hasBasicNodes) {
-# 	my @buf = ();
-# 	foreach my $node ($this->basicNodes) {
-# 	    push (@buf, sprintf qq(<DIV class="basicNode">%s</DIV>), $node->synid);
-# 	}
-# 	$basicNodeString = join ("\n", @buf);
-#     }
-
-#     # SYNノード
-#     my $synNodeString;
-#     if ($this->hasSynNodes) {
-# 	my @synnodes = ();
-# 	foreach my $synnode ($this->synNodes) {
-# 	    push (@synnodes, sprintf qq(<DIV class="synNode">%s</DIV>), $synnode->synid);
-# 	}
-# 	$synNodeString = join ("\n", @synnodes);
-#     }
-
-
-#     # HTMLコードを生成
-#     my $color = ($this->isRequisiteNode) ? "blue" : "red";
-#     printf qq(<DIV style="width: %sem; border: 1px solid $color; position: absolute; top: %sem; left: %sem;" class="group">\n), $this->{width}, $this->{y}, $this->{x};
-#     print $midasi . "\n";
-#     print $basicNodeString . "\n";
-#     print $synNodeString . "\n";
-#     print $this->getDF;
-#     print "</DIV>\n";
-# }
-
-# sub calculatePosition {
-#     my ($this, $offsetX, $offsetY, $PROPERTY) = @_;
-
-#     my ($max_width, $max_height) = (0, 0);
-#     if ($this->hasChild) {
-# 	my $off_x = $offsetX;
-# 	foreach my $child ($this->childNodes) {
-# 	    my ($w, $h) = $child->calculatePosition($off_x, $offsetY, $PROPERTY);
-# 	    $max_width += $w;
-# 	    $off_x += $w;
-# 	    $max_height = $h if ($max_height < $h);
-# 	}
-# #	$max_width -= $PROPERTY->{margin};
-#     }
-#     $offsetY += $max_height;
-
-
-
-#     ##############
-#     # 自身について
-#     ##############
-
-#     my $num_of_lines = 0;
-
-#     # 見出し（出現形）
-#     if ($this->hasBasicNodes) {
-# 	my $buf = $this->{synnodeInfo}->midasi;
-# 	my $length_of_string = length($buf);
-# 	$max_width = length($buf) if ($max_width < length($buf));
-# 	$num_of_lines++;
-#     }
-
-#     # 基本ノード
-#     if ($this->hasBasicNodes) {
-# 	foreach my $node ($this->basicNodes) {
-# 	    $max_width = length($node->synid) if ($max_width < length($node->synid));
-# 	    $num_of_lines++;
-# 	}
-#     }
-
-#     # SYNノード
-#     if ($this->hasSynNodes) {
-# 	foreach my $synnode ($this->synNodes) {
-# 	    $max_width = length($synnode->synid) if ($max_width < length($synnode->synid));
-# 	    $num_of_lines++;
-# 	}
-#     }
-
-#     $max_width += $PROPERTY->{margin};
-#     $max_height += ($num_of_lines + ($num_of_lines * $PROPERTY->{line_height}) + $PROPERTY->{margin});
-
-
-#     # 座標の保存2
-#     # 座標の保存1
-#     $this->{x} = $offsetX;
-#     $this->{y} = $offsetY;
-#     $this->{width} = $max_width;
-#     $this->{height} = $max_height;
-
-#     return ($max_width, $max_height);
-# }
-
-
-# sub toQList {
-#     my ($this, $INDENT) = @_;
-
-#     my $str_of_childnodes;
-#     if ($this->hasChild) {
-# 	my @buf;
-# 	foreach my $child (sort {$a->getDF() <=> $b->getDF()} $this->childNodes) {
-# 	    push(@buf, $child->toQList($INDENT));
-# 	}
-
-# 	$str_of_childnodes .= sprintf "<DIV style='padding-left:${INDENT}em; border: 0px solid red;'>AND ( " . join(',', @buf) . " )</DIV>";
-# 	$str_of_childnodes =~ s!</DIV>,!,</DIV>!g;
-#     }
-
-
-#     my @buf;
-#     if (defined $this->{basicNodes}) {
-# 	foreach my $node (@{$this->{basicNodes}}) {
-# 	    push (@buf, $node->synid);
-# 	}
-#     }
-
-#     if (defined $this->{synNodes}) {
-# 	foreach my $synnode (@{$this->{synNodes}}) {
-# 	    push (@buf, $synnode->synid);
-# 	}
-#     }
-
-#     my $df = $this->getDF();
-#     my $str_of_self = sprintf "<DIV style='padding-left:${INDENT}em; border: 0px solid red;'>";
-#     if (scalar(@buf) > 1) {
-# 	$str_of_self .= "OR ( " . (join (",&nbsp;", @buf)) . " )";
-#     } else {
-# 	$str_of_self .= (join (",&nbsp;", @buf));
-#     }
-#     $str_of_self .= sprintf "[$df]</DIV>";
-
-#     if ($str_of_childnodes ne '') {
-# 	$str_of_self =~ s!</DIV>$!,</DIV>!;
-# 	return "<DIV style='padding-left:${INDENT}em; border: 0px solid red;'>OR ( $str_of_self $str_of_childnodes )</DIV>";
-#     } else {
-# 	return $str_of_self;
-#     }
-# }
-
-
-# sub toQList2 {
-#     my ($this, $INDENT) = @_;
-
-#     my $str;
-#     if ($this->hasChild) {
-# 	my @buf;
-# 	foreach my $child ($this->childNodes) {
-# 	    push(@buf, $INDENT . $child->toQList());
-# 	}
-
-# 	$str .= (join ($INDENT . "AND\n", @buf));
-#     }
-
-#     if (defined $this->{synnodes}) {
-# 	my @buf;
-# 	foreach my $synnode (@{$this->{synnodes}}) {
-# 	    push (@buf, $synnode->synid);
-# 	}
-# 	$str .= sprintf "[" . (join ("&nbsp;OR&nbsp;", @buf)) . "]";
-# 	return "($str)<P>";
-#     } else {
-# 	return "$str<P>\n";
-#     }
-
-# }
-
-# sub toQList_bak {
-#     my ($this) = @_;
-
-#     my $str;
-#     if ($this->hasChild) {
-# 	my @buf;
-# 	foreach my $child (@{$this->childNodes}) {
-# 	    push(@buf, $child->toQList());
-# 	}
-
-# 	$str .= (scalar(@buf) > 1) ? sprintf "(" . (join ("&nbsp;AND&nbsp;", @buf)) . ")" : sprintf "(" . (join ('', @buf)) . ")";
-# 	$str .= sprintf "&nbsp;OR&nbsp;" if (defined $this->{synnodes});
-#     }
-
-#     if (defined $this->{synnodes}) {
-# 	my @buf;
-# 	foreach my $synnode (@{$this->{synnodes}}) {
-# 	    push (@buf, $synnode->synid);
-# 	}
-# 	$str .= sprintf "[" . (join ("&nbsp;OR&nbsp;", @buf)) . "]";
-# 	return "($str)<P>";
-#     } else {
-# 	return "$str<P>\n";
-#     }
-
-# }
+
+    if ($this->{isRoot}) {
+	foreach my $child (@{$this->{children}}) {
+	    $child->show_query_structure();
+	}
+    } else {
+	foreach my $term (@{$this->{terms}}) {
+	    print $term->{text} . "<BR>\n";
+	}
+
+	if ($this->{hasChild}) {
+	    foreach my $child (@{$this->{children}}) {
+		$child->show_query_structure();
+	    }
+	}
+    }
+
+    return "";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    my $buf;
+    my $num = ($this->{hasChild}) ? scalar (@{$this->{children}}) : 0;
+
+    my $CONFIG = Configure::get_instance();
+    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
+
+    foreach my $term (@{$this->{terms}}) {
+	my ($id) = ($term->{groupID} =~ /^\d+\-(\d+)/);
+	my $string = $term->show_query_structure();
+	if ($term->{node_type} eq 'syn') {
+	    my $_string = decode('utf8', $synonyms{$string});
+	    next if ($_string eq '');
+	    $string = $_string;
+	}
+	foreach my $_string (split (/\|/, $string)) {
+	    $_string =~ s/\[.+?\]//g;
+	    if ($num > 1) {
+		$buf .= ("<TR><TD colspan='$num' align=center style='vertical-align:top; padding:0.5em; border: 1px solid green;$stylecolor[$id];'>" . $_string . "</TD></TR>\n");
+	    } else {
+		$buf .= ("<TR><TD align=center style='vertical-align:top; padding:0.5em; border: 1px solid green;$stylecolor[$id];'>" . $_string . "</TD></TR>\n");
+	    }
+	}
+    }
+
+    if ($this->{hasChild}) {
+	my $_buf = "<TR>";
+	my $rate = 100 / $num;
+	foreach my $child (sort {$a->{tid} <=> $b->{tid}} @{$this->{children}}) {
+	    $_buf .= ("<TD valign='top' align='center' width='$rate\%'>" . $child->show_query_structure() . "</TD>");
+	}
+	$_buf .= "</TR>";
+	$buf = $_buf . $buf;
+    }
+
+
+    my ($id) = ($this->{groupID} =~ /^\d+\-(\d+)/);
+    return sprintf qq(<TABLE style="vertical-align:top; padding:0.5em; border: 1px solid red; %s">($id) $buf</TABLE>\n), $stylecolor[$id];
+}
+
+sub to_S_exp_for_anchor {
+    my ($this, $space) = @_;
+
+    my $S_exp;
+    foreach my $term (@{$this->{terms}}) {
+	$S_exp .= $term->to_S_exp_for_anchor (" ");
+    }
+
+    if ($this->{hasChild}) {
+#	$S_exp .= (($is_single_node) ? "$space(AND\n" : "\t$space(AND\n");
+#	my $_space = ($is_single_node) ? $space . "\t" : $space . "\t\t";
+	foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
+	    $S_exp .= $child->to_S_exp_for_anchor(" ");
+	}
+#	$S_exp .= (($is_single_node) ? "$space)\n" : "\t$space)\n");
+    }
+#    $S_exp .= "$space)\n" unless ($is_single_node);
+
+    return $S_exp;
+}
 
 -1;
