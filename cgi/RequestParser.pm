@@ -68,6 +68,9 @@ sub getDefaultValues {
     $params{blockTypes} = undef;
     $params{disable_Zwhitespace_delimiter} = 0;
 
+    # 英語用
+    $params{lemma} = 0;
+
     # スニペット表示のデフォルト設定
     $params{no_snippets} = ($call_from_API) ? 1 : 0;
     $params{highlight} = ($call_from_API) ? 0 : 1;
