@@ -27,6 +27,17 @@ init: connect_node
 	gxpc quit
 	mkdir -p $(basedir) 2> /dev/null
 
+mk_url_title_db: connect_node3
+	gxpc e 'find $(SF_DIR) -type f -name "*xml.gz" | grep -v inlink 2> /dev/null | perl $(scriptdir)/select-targetids.perl $(TARGETIDS) > $(XMLFILES)'
+	gxpc e '$(PERL) $(scriptdir)/extract-url-title.perl -files $(XMLFILES) > $(URL_TITLE_TXT)'
+	gxpc e mkdir -p $(workspace_mkdb) 2> /dev/null
+	gxpc cd $(workspace_mkdb)
+	gxpc e "perl -pe 's/ +/ /g' $(URL_TITLE_TXT) | awk '{print \$$1, \$$2}' | $(PERL) -I$(utildir)/perl $(utildir)/scripts/make-db.perl -dbname did2url.cdb -keymapfile did2url.cdb.keymap"
+	gxpc e "perl -pe 's/ +/ /g' $(URL_TITLE_TXT) | awk '{print \$$1, \$$3}' | $(PERL) -I$(utildir)/perl $(utildir)/scripts/make-db.perl -dbname did2title.cdb -keymapfile did2title.cdb.keymap"
+	gxpc e "perl -pe 's/ +/ /g' $(URL_TITLE_TXT) | awk '{print \$$1, \$$4}' > $(IDXID).doc_length.txt"
+	gxpc quit
+
+
 mk_mapfile:
 	sh $(scriptdir)/make-mapfile.sh $(SFLIST) > $(mapfile)
 
@@ -80,6 +91,15 @@ connect_node1:
 	gxpc e hostname
 
 connect_node2:
+	echo make connection
+	for h in `cat $(host_file) | cut -f 1 -d . | perl -pe 's/\d+\$$//' | sort -u` ; do gxpc use $(access_method) $$HOSTNAME $$h ; done
+	gxpc explore --children_hard_limit 1000 -t $(host_file)
+	gxpc e "hostname | grep -v $$HOSTNAME\\$$"
+	gxpc smask
+	echo "*** USED HOSTS ***"
+	gxpc e hostname
+
+connect_node3:
 	echo make connection
 	for h in `cat $(host_file) | cut -f 1 -d . | perl -pe 's/\d+\$$//' | sort -u` ; do gxpc use $(access_method) $$HOSTNAME $$h ; done
 	gxpc explore --children_hard_limit 1000 -t $(host_file)
