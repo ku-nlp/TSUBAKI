@@ -10,7 +10,9 @@ use Encode;
 
 our %TYPE2INT;
 $TYPE2INT{word} = 1;
-$TYPE2INT{dpnd} = 2;
+$TYPE2INT{optional_word} = 3;
+$TYPE2INT{dpnd} = 3;
+$TYPE2INT{force_dpnd} = 2;
 
 sub new {
     my ($class, $params) = @_;
@@ -21,6 +23,16 @@ sub new {
     }
 
     bless $this;
+}
+
+sub show_query_structure {
+    my ($this) = @_;
+
+    if ($this->{term_type} eq 'word') {
+	return $this->{text};
+    } else {
+	return "";
+    }
 }
 
 sub appendChild {
@@ -86,10 +98,21 @@ sub to_string {
     }
 }
 
+sub get_term_type {
+    my ($this) = @_;
+    return $TYPE2INT{$this->{term_type}};
+}
+
 sub to_S_exp {
     my ($this, $space) = @_;
 
-    return sprintf("%s((%s %d %d %d))\n", $space, $this->{text}, $TYPE2INT{$this->{term_type}}, 10,(($this->{node_type} eq 'basic')? 1 : 0));
+    return sprintf("%s((%s %d %d %d %d))\n", $space, lc($this->{text}), $TYPE2INT{$this->{term_type}}, $this->{gdf},(($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 0 : 1));
+}
+
+sub to_S_exp_for_anchor {
+    my ($this, $space) = @_;
+
+    return sprintf("%s((%s %d %d %d %d))\n", $space, lc($this->{text}), 3, $this->{gdf}, 1, (($this->{term_type} =~ /word/) ? 2 : 3));
 }
 
 
