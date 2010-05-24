@@ -5,7 +5,12 @@ package Tsubaki::TermGroupCreater;
 use strict;
 use utf8;
 use Indexer;
+use Configure;
+use CDB_File;
+use Encode;
 use Tsubaki::TermGroup;
+
+my $CONFIG = Configure::get_instance();
 
 sub create {
     my ($result) = @_;
@@ -92,21 +97,25 @@ sub _create {
 	if ($optional_flag) {
 	    $optionals{$term->{text}} = $term unless (defined ($optionals{$term->{text}}));
 	} else {
-	    push (@terms, $term);
+	    unshift (@terms, $term);
 	}
 
 	# 係り受けを追加
 	my $indexer = new Indexer({ignore_yomi => 1});
 	if (defined $kihonku->{parent}) {
+	    my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 	    my $kakarimoto = $indexer->get_repnames2($kihonku);
 	    my $kakarisaki = $indexer->get_repnames2($kihonku->{parent});
 	    my $optional_flag = ($kihonku->{fstring} =~ /<クエリ必須係り受け>/) ? 0 : 1;
 	    foreach my $moto (@$kakarimoto) {
 		foreach my $saki (@$kakarisaki) {
+		    my $midasi = sprintf ("%s->%s", $moto, $saki);
+		    my $gdf = $DFDBS_DPND->get(encode ('utf8', $midasi));
 		    my $term = new Tsubaki::Term ({
 			    tid => sprintf ("%s-%s", $gid, $count++),
-			    text => sprintf ("%s->%s", $moto, $saki),
+			    text => $midasi,
 			    term_type => (($optional_flag) ? 'dpnd' : 'force_dpnd'),
+			    gdf => $gdf,
 			    node_type => 'basic' });
 
 		    if ($optional_flag) {
