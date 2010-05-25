@@ -177,37 +177,39 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 
     init (index_dir, anchor_index_dir,TSUBAKI_SLAVE_PORT, HOSTNAME);
 
-    std::vector<Document *> docs;
-    double search_bgn = (double) gettimeofday_sec();
     char buf[102400];
-    gets(buf);
-    string _query = buf;
-    std::vector<double> *logdata = search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
-    double search_end = (double) gettimeofday_sec();
 
-    int count = 0;
-    std::ostringstream sbuf;
-    for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
-	std::string sid = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
-	std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
-	std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
-	sbuf << sid << " " << ((*it)->to_string()) << " " << title << " " << url << " " << (*it)->get_final_score() << endl;
-	sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
+    while (fgets(buf, 102400, stdin)) {
+	std::vector<Document *> docs;
+	double search_bgn = (double) gettimeofday_sec();
+	string _query = buf;
+	std::vector<double> *logdata = search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
+	double search_end = (double) gettimeofday_sec();
 
-	if (++count > NUM_OF_RETURN_DOCUMENTS)
-	    break;
+	int count = 0;
+	std::ostringstream sbuf;
+	for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
+	    std::string sid = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
+	    std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
+	    std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
+	    sbuf << sid << " " << ((*it)->to_string()) << " " << title << " " << url << " " << (*it)->get_final_score() << endl;
+	    sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
+
+	    if (++count > NUM_OF_RETURN_DOCUMENTS)
+		break;
+	}
+	double _end = (double) gettimeofday_sec();
+	int hitcount = docs.size();
+
+	sbuf << "hitcount " << hitcount << endl;
+	sbuf << "HOSTNAME " << HOSTNAME << " " << TSUBAKI_SLAVE_PORT << endl;
+	sbuf << "SEARCH_TIME " << logdata->at(0) << endl;
+	sbuf << "SCORE_TIME " << logdata->at(1) << " " << logdata->at(2) << endl;
+	sbuf << "SORT_TIME " << logdata->at(3) << endl;
+	sbuf << "TOTAL_TIME " << 1000 * (search_end - search_bgn) << endl;
+
+	cout << sbuf.str() << endl;
     }
-    double _end = (double) gettimeofday_sec();
-    int hitcount = docs.size();
-
-    sbuf << "hitcount " << hitcount << endl;
-    sbuf << "HOSTNAME " << HOSTNAME << " " << TSUBAKI_SLAVE_PORT << endl;
-    sbuf << "SEARCH_TIME " << logdata->at(0) << endl;
-    sbuf << "SCORE_TIME " << logdata->at(1) << " " << logdata->at(2) << endl;
-    sbuf << "SORT_TIME " << logdata->at(3) << endl;
-    sbuf << "TOTAL_TIME " << 1000 * (search_end - search_bgn) << endl;
-
-    cout << sbuf.str() << endl;
     return true;
 }
 
