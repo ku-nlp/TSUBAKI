@@ -6,11 +6,11 @@
 #define AVERAGE_DOC_LENGTH 907
 #define WEIGHT_OF_STRICT_TERM_F 100
 #define WEIGHT_OF_PROXIMATE_F 50
-#define DEBUG 0
+// #define DEBUG 0
 #define TEST_MODE 0
 #define VERBOSE 0
 #define MAX_LENGTH_OF_DOCUMENT 1000000
-
+#define SIZEOFINT sizeof(int)
 
 #include "common.h"
 #include "hash.h"
@@ -594,11 +594,11 @@ class Documents {
 	l_documents.clear(); // *** FIX ME: clear the contents ***
 	dup_check_operation(&backup_l_documents, &s_documents, &l_documents);
 
-	if (DEBUG) {
+#ifdef DEBUG
 	    cout << "AND result:";
 	    print();
 	    cout << endl;
-	}
+#endif
 
 	// map index no sakusei
 	create_s_documents_index(s_documents.size());
@@ -711,12 +711,11 @@ class Documents {
 	// l_documents.clear(); // *** FIX ME: clear the contents ***
 	dup_check_operation(&backup_l_documents, &s_documents, &l_documents);
 
-	if (DEBUG) {
+#ifdef DEBUG
 	    cout << "OR result:";
 	    print();
 	    cout << endl;
-	}
-
+#endif
 
 	// map index no sakusei
 	int i = 0;
@@ -824,15 +823,42 @@ class Documents {
 	return tv.tv_sec + (double)tv.tv_usec*1e-6;
     }
 
+    bool read_dids(unsigned char *buffer, int &offset, int ldf, int term_type, Hashmap *_already_retrieved_docs, bool *flags) {
+	int load_dids = 0;
+	double total = 0;
+	bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
+	s_documents.reserve(ldf);
+	for (int i = 0; i < ldf; i++, offset += SIZEOFINT) {
+	    int did = intchar2int(buffer + offset);
+	    if (already_retrieved_docs_exists && _already_retrieved_docs->get(did) < 0) {
+		*(flags + i) = false;
+		continue;
+	    }
+	    s_documents.push_back(new Document(did));
+
+	    // map index
+	    __documents_index->add(did, load_dids);
+	    s_documents_index->add(did, load_dids);
+
+	    load_dids++;
+	    *(flags + i) = true;
+
+#ifdef DEBUG
+		cerr << " i=" << i << " did=" << did;
+#endif
+	}
+	return true;
+    }
+
     bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, Hashmap *_already_retrieved_docs) {
 	std::string term_string = in_term;
 	std::string address_str = term_db->get(term_string);
 
 	if (address_str.size() != 0) {
 	    long long address = atoll(address_str);
-	    if (DEBUG)
+#ifdef DEBUG
 		cerr << "KEY: " << term_string << ", ADDRESS: " << address << endl;
-
+#endif
 
 	    double start = (double) gettimeofday_sec();	
 	    index_stream->seekg(address, std::ios::beg);
@@ -844,8 +870,9 @@ class Documents {
 	    return read_index(index_stream, term_type, _already_retrieved_docs);
 	}
 	else {
-	    if (DEBUG)
+#ifdef DEBUG
 		cerr << "KEY: " << term_string << " is not found." << std::endl;
+#endif
 
 	    if (term_type == 2) {
 	      set_l_documents_inf();
@@ -866,9 +893,10 @@ class Documents {
 	unsigned char *buffer;
 
 	double _start = (double) gettimeofday_sec();	
-	index_stream->read((char *) &index_size, sizeof(int));
-	if (DEBUG)
+	index_stream->read((char *) &index_size, SIZEOFINT);
+#ifdef DEBUG
 	    cerr << "INDEX SIZE: " << index_size << std::endl;
+#endif
 
 	buffer = new unsigned char[index_size];
 	index_stream->read((char *)buffer, index_size);
@@ -880,13 +908,11 @@ class Documents {
 	    cout << "      read index = " << 1000 * (_end - _start) << " [ms]" <<  " " << index_size << " [byte]" << " ldf = " << ldf << endl;
 
 
-	offset += sizeof(int);
-	if (DEBUG)
+	offset += SIZEOFINT;
+#ifdef DEBUG
 	    cerr << "LDF: " << ldf << endl;
-
-	if (DEBUG > 1)
 	    cerr << "DIDS:";
-
+#endif
 
 	double start = (double) gettimeofday_sec();
 	// create s_document_index, l_document_index
@@ -899,34 +925,16 @@ class Documents {
 	    cout << "      create index = " << 1000 * (end - start) << " [ms]" <<  " " << ldf << endl;
 
 	bool flags[ldf];
-	int load_dids = 0;
-	double total = 0;
-	for (int i = 0; i < ldf; i++) {
-	    int did = intchar2int(buffer + offset);
-	    offset += sizeof(int);
-	    if (_already_retrieved_docs != NULL && term_type == 1 && _already_retrieved_docs->get(did) < 0) {
-		flags[i] = false;
-		continue;
-	    }
-	    Document* d = new Document(did);
-	    s_documents.push_back(d);
+	read_dids(buffer, offset, ldf, term_type, _already_retrieved_docs, flags);
 
-	    // map index
-	    __documents_index->add(did, load_dids);
-	    s_documents_index->add(did, load_dids);
-
-	    load_dids++;
-	    flags[i] = true;
-
-	    if (DEBUG > 1)
-		cerr << " i=" << i << " did=" << did;
-	}
 	double end1 = (double) gettimeofday_sec();
 	if (VERBOSE)
-	    cout << "      read dids = " << 1000 * (end1 - end) << " [ms]" <<  " " << ldf << " load dids = " << load_dids << endl;
+	    // cout << "      read dids = " << 1000 * (end1 - end) << " [ms]" <<  " " << ldf << " load dids = " << load_dids << endl;
+	    cout << "      read dids = " << 1000 * (end1 - end) << " [ms]" <<  " " << ldf << endl;
 
-	if (DEBUG > 1)
+#ifdef DEBUG
 	    cerr << std::endl;
+#endif
 
 	// l_documents is infinite for lenient term
 	if (term_type == 2) {
@@ -935,8 +943,9 @@ class Documents {
 
 
 	// load scores
-	if (DEBUG > 1)
+#ifdef DEBUG
 	    cerr << "SCORES:";
+#endif
 
 
 	std::vector<Document *>::iterator it = s_documents.begin();
@@ -948,15 +957,17 @@ class Documents {
 		(*it)->set_freq(score);
 		(*it)->set_gdf(term_df);
 
-		if (DEBUG > 1)
+#ifdef DEBUG
 		    cerr << " " << i << " " << score << "(" << term_df << ")";
+#endif
 
 		it++;
 	    }
-	    offset += sizeof(int);
+	    offset += SIZEOFINT;
 	}
-	if (DEBUG > 1)
+#ifdef DEBUG
 	    cerr << endl;
+#endif
 
 	double end2 = (double) gettimeofday_sec();
 	if (VERBOSE)
@@ -968,13 +979,13 @@ class Documents {
 	for (int i = 0; i < ldf; i++) {
 	    int pos_num = intchar2int(buffer + offset);
 	    if (flags[i] == true) {
-		unsigned char *__buf = (unsigned char*) malloc(sizeof(int) * (pos_num + 1));
-		memcpy (__buf, (buffer + offset), sizeof(int) * (pos_num + 1));
+		unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
+		memcpy (__buf, (buffer + offset), SIZEOFINT * (pos_num + 1));
 
 		(*it)->set_pos_char(__buf);
 		it++;
 	    }
-	    offset += (sizeof(int) * (pos_num + 1));
+	    offset += (SIZEOFINT * (pos_num + 1));
 	}
 	double end3 = (double) gettimeofday_sec();
 	if (VERBOSE)
@@ -1036,8 +1047,9 @@ class Documents {
 		    basic_node_freq_list.push_back(doc->get_freq());
 		    gdf = (*it)->get_gdf();
 
-		    if (DEBUG)
+#ifdef DEBUG
 			cerr << "GDF: " << gdf << endl;
+#endif
 		} else {
 		    syn_node_score_list.push_back(doc->get_score());
 		    syn_node_freq_list.push_back(doc->get_freq());
@@ -1051,18 +1063,21 @@ class Documents {
 	if (!include_non_terminal_documents) {
 	    double basic_node_freq = (basic_node_freq_list.size() > 0) ? basic_node_freq_list.front() : syn_node_freq_list.front();
 	    double freq = basic_node_freq;
-	    if (DEBUG)
+#ifdef DEBUG
 		cerr << "NODE FREQ " << freq;
+#endif
 	    for (std::vector<double>::iterator it = syn_node_freq_list.begin(), end = syn_node_freq_list.end(); it != end; ++it) {
 		double diff = (*it) - basic_node_freq;
 		if (diff > 0) {
 		    freq += diff;
-		    if (DEBUG)
+#ifdef DEBUG
 			cerr << " + " << diff;
+#endif
 		}
 	    }
-	    if (DEBUG)
+#ifdef DEBUG
 		cerr << endl;
+#endif
 
 	    score = doc_ptr->calc_okapi(freq, gdf);
 	}
@@ -1082,9 +1097,9 @@ class Documents {
 	    }
 	}
 	document->set_score(score);
-	if (DEBUG)
+#ifdef DEBUG
 	    cerr << "OR DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
-
+#endif
 
 
 	int target_num = pos_list_list.size();
@@ -1129,14 +1144,14 @@ class Documents {
 	} // end of while
 	pos_list.push_back(-1);
 
-	if (DEBUG > 1) {
-	  cerr << "OR DID: " << doc_ptr->get_id();
-	  cerr << " POS LIST: ";
-	  for (int i = 0; i < pos_list.size(); i++) {
-	    cerr << i << ":" << pos_list[i] << " ";
-	  }
-	  cerr << endl;
-	}
+#ifdef DEBUG
+	    cerr << "OR DID: " << doc_ptr->get_id();
+	    cerr << " POS LIST: ";
+	    for (int i = 0; i < pos_list.size(); i++) {
+		cerr << i << ":" << pos_list[i] << " ";
+	    }
+	    cerr << endl;
+#endif
 
 	document->set_term_pos("OR", pos_list);
 	document->set_best_pos(best_pos);
@@ -1164,33 +1179,33 @@ class Documents {
 		}
 		score += doc->get_score();
 
-		if (DEBUG) {
+#ifdef DEBUG
 		    if (get_type() == DOCUMENTS_ROOT) {
 			cerr << "ROOT DID: " << doc_ptr->get_id() << " SCORE: " << doc->get_score() << endl;
 		    } else {
 			cerr << "AND DID: " << doc_ptr->get_id() << " SCORE: " << doc->get_score() << endl;
 		    }
-		}
+#endif
 	    }
 	}
 
 	document->set_score(score);
-	if (DEBUG) {
+#ifdef DEBUG
 	    if (get_type() == DOCUMENTS_ROOT) {
 		cerr << "ROOT DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
 	    } else {
 		cerr << "AND DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
 	    }
-	}
+#endif
 
 	if (get_type() == DOCUMENTS_ROOT) {
-	    if (DEBUG > 1) {
+#ifdef DEBUG
 		cerr << "ROOT DID: " << doc_ptr->get_id() << " POS LIST";
 		for (std::vector<int>::iterator it = pos_list_list[0]->begin(), end = pos_list_list[0]->end(); it != end; ++it) {
 		    cerr << " " << (*it);
 		}
 		cerr << endl;
-	    }
+#endif
 
 	    if (*(pos_list_list[0]->begin()) != -1) {
 		document->set_proximate_feature();
@@ -1256,14 +1271,14 @@ class Documents {
 		total += pos_record[i];
 	    }
 
-	    if (DEBUG > 1) {
+#ifdef DEBUG
 		cerr << "DID " << doc_ptr->get_id();
 		cerr << " POS RECORD: ";
 		for (int i = 0; i < target_num; i++) {
 		    cerr << i << ":" << pos_record[i] << " ";
 		}
 		cerr << endl;
-	    }
+#endif
 
 	    if (flag && ((end - begin) <= region)) {
 		best_begin = begin;
