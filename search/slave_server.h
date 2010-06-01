@@ -6,7 +6,7 @@
 #define AVERAGE_DOC_LENGTH 907
 #define WEIGHT_OF_STRICT_TERM_F 100
 #define WEIGHT_OF_PROXIMATE_F 50
-// #define DEBUG 0
+//#define DEBUG 0
 #define TEST_MODE 0
 #define VERBOSE 0
 #define MAX_LENGTH_OF_DOCUMENT 1000000
@@ -56,6 +56,7 @@ class Document {
     int length;
     int strict_term_feature;
     int proximate_feature;
+    int phrase_feature;
     int best_pos;
     int best_begin;
     int best_end;
@@ -68,7 +69,6 @@ class Document {
     std::vector<Term *> terms;
   public:
     Document(int in_id) {
-//	cout << "call new document " << in_id << endl;
 	id = in_id;
 	score = -1;
 	length = 10;
@@ -78,8 +78,18 @@ class Document {
 
 	proximate_feature = 0;
 	strict_term_feature = 0;
+	phrase_feature = 0;
 	pos_list = NULL;
     }
+
+
+    ~Document () {
+	if (pos_list != NULL) {
+	    delete pos_list;
+	}
+    }
+
+
     int get_id() {
 	return id;
     }
@@ -130,6 +140,15 @@ class Document {
     bool set_strict_term_feature() {
       strict_term_feature = 1;
       return true;
+    }
+
+    bool set_phrase_feature() {
+      phrase_feature = 1;
+      return true;
+    }
+
+    bool get_phrase_feature() {
+	return phrase_feature;
     }
 
     bool calc_score();
@@ -264,6 +283,46 @@ class Hashmap {
     }
 };
 
+class DocumentBuffer {
+    std::vector<int> *buffer;
+
+  public:
+    DocumentBuffer(int size) {
+	buffer = new std::vector<int>();
+	// buffer->reserve(size);
+    }
+
+
+    ~DocumentBuffer() {
+	if (buffer != NULL) {
+	    delete buffer;
+	}
+    }
+
+
+    bool add (int v) {
+	buffer->push_back(v);
+	return true;
+    }
+
+    bool add (int k, int v) {
+	return add(k);
+    }
+
+    /*
+    int get (int key) {
+	if (buffer->find(key) != buffer->end) {
+	    return buffer->at(key);
+	}
+    }
+    */
+    std::vector<int> *get_list () {
+	std::sort(buffer->begin(), buffer->end());
+	return buffer;
+    }
+
+};
+
 class Documents {
     documents_type type;
     std::string term;
@@ -277,7 +336,7 @@ class Documents {
     std::vector<Document *> l_documents;
     // std::vector<int> s_documents_index;
     // std::vector<int> l_documents_index;
-    Hashmap *__documents_index;
+    DocumentBuffer *__documents_index;
     Hashmap *s_documents_index;
     Hashmap *l_documents_index;
     // __gnu_cxx::hash_map<int, int> s_documents_index;
@@ -301,14 +360,34 @@ class Documents {
 	    (*it)->rdbuf()->pubsetbuf(internal_buf, M);
 	}
 
+	__documents_index = NULL;
+	s_documents_index = NULL;
+	l_documents_index = NULL;
+
 	offset_dbs = in_offset_dbs;
 	retrievedByBasicNode = false;
     }
 
 
+    ~Documents() {
+	if (__documents_index != NULL) {
+	    delete __documents_index;
+	}
+	if (s_documents_index != NULL) {
+	    delete s_documents_index;
+	}
+	if (l_documents_index != NULL) {
+	    delete l_documents_index;
+	}
+/*
+	for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
+	    delete (*it);
+	}
+*/
+    }
 
     bool create___documents_index (int size) {
-	__documents_index = new Hashmap(size);
+	__documents_index = new DocumentBuffer(size);
     }
 
     bool create_s_documents_index (int size) {
@@ -320,7 +399,7 @@ class Documents {
     }
 
     bool add___documents_index (int key, int value) {
-	__documents_index->add(key, value);
+	__documents_index->add(key);
     }
 
     bool add_s_documents_index (int key, int value) {
@@ -331,9 +410,11 @@ class Documents {
 	l_documents_index->add(key, value);
     }
 
+    /*
     int get___documents_index (int key) {
 	return __documents_index->get(key);
     }
+    */
 
     int get_s_documents_index (int key) {
 	return s_documents_index->get(key);
@@ -380,7 +461,7 @@ class Documents {
 	return true;
     }
 
-    Hashmap *getDocumentIDs() {
+    DocumentBuffer *getDocumentIDs() {
 	return __documents_index;
     }
 
@@ -522,11 +603,11 @@ class Documents {
 	return true;
     }
 
-    bool merge_and(Documents *parent, CELL *cell, Hashmap *_already_retrieved_docs) {
+    bool merge_and(Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 
 	Documents *current_documents = merge_and_or(car(cell), _already_retrieved_docs);
 	double start = (double) gettimeofday_sec();
-	Hashmap *already_retrieved_docs  = (_already_retrieved_docs == NULL) ? current_documents->getDocumentIDs() : _already_retrieved_docs;
+	DocumentBuffer *already_retrieved_docs  = (_already_retrieved_docs == NULL) ? current_documents->getDocumentIDs() : _already_retrieved_docs;
 
 	parent->push_back_child_documents(current_documents);
 	s_documents = *(current_documents->get_s_documents());
@@ -669,7 +750,7 @@ class Documents {
 	return true;
     }
 
-    bool merge_or(Documents *parent, CELL *cell, Hashmap *_already_retrieved_docs) {
+    bool merge_or(Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 
 	double _start = (double) gettimeofday_sec();
 	Documents *current_documents = merge_and_or(car(cell), _already_retrieved_docs);
@@ -742,7 +823,7 @@ class Documents {
 	return true;
     }
 
-    Documents *merge_and_or(CELL *cell, Hashmap *_already_retrieved_docs) {
+    Documents *merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 	Documents *documents = new Documents(index_streams, offset_dbs);
 
 	if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "ROOT")) {
@@ -754,6 +835,14 @@ class Documents {
 		cout << "root = " << 1000 * (end - start) << " [ms]" << endl;
 		cout << "-----" << (char *)_Atom(car(cell)) << "-----" << endl;
 	    }
+	}
+	else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "PHRASE")) {
+	    documents->set_type(DOCUMENTS_PHRASE);
+	    double start = (double) gettimeofday_sec();
+	    documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
+	    double end = (double) gettimeofday_sec();
+	    if (VERBOSE)
+		cout << "merge_phr = " << 1000 * (end - start) << " [ms]" << endl;
 	}
 	else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "AND")) {
 	    documents->set_type(DOCUMENTS_AND);
@@ -823,34 +912,100 @@ class Documents {
 	return tv.tv_sec + (double)tv.tv_usec*1e-6;
     }
 
-    bool read_dids(unsigned char *buffer, int &offset, int ldf, int term_type, Hashmap *_already_retrieved_docs, bool *flags) {
+    bool read_dids(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs) {
 	int load_dids = 0;
 	double total = 0;
 	bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
 	s_documents.reserve(ldf);
-	for (int i = 0; i < ldf; i++, offset += SIZEOFINT) {
-	    int did = intchar2int(buffer + offset);
-	    if (already_retrieved_docs_exists && _already_retrieved_docs->get(did) < 0) {
-		*(flags + i) = false;
-		continue;
+	buffer += offset;
+	unsigned char *head_of_offdat = buffer + ldf * SIZEOFINT * 1;
+	unsigned char *head_of_posdat = buffer + ldf * SIZEOFINT * 2;
+	if (already_retrieved_docs_exists) {
+	    // load dids with conversion
+	    int *docids = new int[ldf];
+	    for (int i = 0; i < ldf; i++) {
+		*(docids + i) = intchar2int(buffer + i * SIZEOFINT);
 	    }
-	    s_documents.push_back(new Document(did));
 
-	    // map index
-	    __documents_index->add(did, load_dids);
-	    s_documents_index->add(did, load_dids);
-
-	    load_dids++;
-	    *(flags + i) = true;
+	    // binary search
+	    int i = 0, j = 0;
+	    int head = 0;
+	    std::vector<int> *did_list = _already_retrieved_docs->get_list();
+	    for (std::vector<int>::iterator it = did_list->begin(), end = did_list->end(); it != end; ++it) {
+		int tail = ldf - 1;
+		while (head <= tail) {
+		    if (*(docids + ((head + tail) >> 1)) - (*it) > 0) {
+			tail = ((head + tail) >> 1) - 1;
+		    }
+		    else if (*(docids + ((head + tail) >> 1)) - (*it) < 0) {
+			head = ((head + tail) >> 1) + 1;
+		    }
+		    else {
+			int i = (head + tail) >> 1;
+			Document *doc = new Document(*it);
+			int pos_offset = intchar2int(head_of_offdat + i * SIZEOFINT);
+			int pos_num = intchar2int(head_of_posdat + pos_offset);
 
 #ifdef DEBUG
-		cerr << " i=" << i << " did=" << did;
+			cerr << " " << (*it);
 #endif
+
+			doc->set_freq(pos_num);
+			doc->set_gdf(term_df);
+
+			unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
+			memcpy (__buf, (head_of_posdat + pos_offset), SIZEOFINT * (pos_num + 1));
+			doc->set_pos_char(__buf);
+
+			s_documents.push_back(doc);
+
+			// map index
+			__documents_index->add(*it, load_dids);
+			s_documents_index->add(*it, load_dids);
+			load_dids++;
+
+			head = ((head + tail) >> 1) + 1;
+			break;
+		    }
+		} // end of while
+	    }
+	} else {
+	    for (int i = 0; i < ldf; i++) {
+		int did = intchar2int(buffer + i * SIZEOFINT);
+
+#ifdef DEBUG
+		cerr << " " << did;
+#endif
+		Document *doc = new Document(did);
+		int pos_offset = intchar2int(buffer + ldf * SIZEOFINT + i * SIZEOFINT);
+		int pos_num = intchar2int(buffer + ldf * 2 * SIZEOFINT + pos_offset);
+
+		doc->set_freq(pos_num);
+		doc->set_gdf(term_df);
+			  
+//		cerr << "i=" << i << " did=" << did << " off=" << offset << " ldf=" << ldf << " posN=" << pos_num << " posOffset=" << pos_offset << endl;
+
+		unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
+		memcpy (__buf, (buffer + ldf * 8 + pos_offset), SIZEOFINT * (pos_num + 1));
+		doc->set_pos_char(__buf);
+
+		s_documents.push_back(doc);
+
+		// map index
+		__documents_index->add(did, load_dids);
+		s_documents_index->add(did, load_dids);
+
+		load_dids++;
+
+#ifdef DEBUG
+//		cerr << " i=" << i << " did=" << did << endl;
+#endif
+	    }
 	}
 	return true;
     }
 
-    bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, Hashmap *_already_retrieved_docs) {
+    bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs) {
 	std::string term_string = in_term;
 	std::string address_str = term_db->get(term_string);
 
@@ -859,7 +1014,6 @@ class Documents {
 #ifdef DEBUG
 		cerr << "KEY: " << term_string << ", ADDRESS: " << address << endl;
 #endif
-
 	    double start = (double) gettimeofday_sec();	
 	    index_stream->seekg(address, std::ios::beg);
 	    double end = (double) gettimeofday_sec();	
@@ -887,13 +1041,16 @@ class Documents {
 	}
     }
 
-    bool read_index(std::istream *index_stream, int term_type, Hashmap *_already_retrieved_docs) {
+    bool read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs) {
 
-	int index_size, offset = 0;
-	unsigned char *buffer;
+	int index_size = 0, offset = 0;
+	unsigned char *buffer, *_buf;
 
 	double _start = (double) gettimeofday_sec();	
-	index_stream->read((char *) &index_size, SIZEOFINT);
+	_buf = new unsigned char[SIZEOFINT];
+	index_stream->read((char *) _buf, SIZEOFINT);
+
+	index_size = intchar2int(_buf);
 #ifdef DEBUG
 	    cerr << "INDEX SIZE: " << index_size << std::endl;
 #endif
@@ -924,8 +1081,7 @@ class Documents {
 	if (VERBOSE)
 	    cout << "      create index = " << 1000 * (end - start) << " [ms]" <<  " " << ldf << endl;
 
-	bool flags[ldf];
-	read_dids(buffer, offset, ldf, term_type, _already_retrieved_docs, flags);
+	read_dids(buffer, offset, ldf, term_type, _already_retrieved_docs);
 
 	double end1 = (double) gettimeofday_sec();
 	if (VERBOSE)
@@ -940,56 +1096,6 @@ class Documents {
 	if (term_type == 2) {
 	    set_l_documents_inf();
 	}
-
-
-	// load scores
-#ifdef DEBUG
-	    cerr << "SCORES:";
-#endif
-
-
-	std::vector<Document *>::iterator it = s_documents.begin();
-	for (int i = 0; i < ldf; i++) {
-
-	    if (flags[i] == true) {
-		double score = ((double)(intchar2int(buffer + offset)*0.001));
-
-		(*it)->set_freq(score);
-		(*it)->set_gdf(term_df);
-
-#ifdef DEBUG
-		    cerr << " " << i << " " << score << "(" << term_df << ")";
-#endif
-
-		it++;
-	    }
-	    offset += SIZEOFINT;
-	}
-#ifdef DEBUG
-	    cerr << endl;
-#endif
-
-	double end2 = (double) gettimeofday_sec();
-	if (VERBOSE)
-	    cout << "      read score = " << 1000 * (end2 - end1) << " [ms]" <<  " " << ldf << endl;
-
-
-	// pos list
-	it = s_documents.begin();
-	for (int i = 0; i < ldf; i++) {
-	    int pos_num = intchar2int(buffer + offset);
-	    if (flags[i] == true) {
-		unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
-		memcpy (__buf, (buffer + offset), SIZEOFINT * (pos_num + 1));
-
-		(*it)->set_pos_char(__buf);
-		it++;
-	    }
-	    offset += (SIZEOFINT * (pos_num + 1));
-	}
-	double end3 = (double) gettimeofday_sec();
-	if (VERBOSE)
-	    cout << "      read pos = " << 1000 * (end3 - end2) << " [ms]" << " " << ldf << endl;
 
 	return true;
     }
@@ -1036,7 +1142,7 @@ class Documents {
 		pos_list_list.push_back(doc->get_pos());
 
 
-		if ((*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_OR) {
+		if ((*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR) {
 		    include_non_terminal_documents = true;
 		}
 
@@ -1173,7 +1279,7 @@ class Documents {
 
 	    // for TERM_OPTIONAL documents
 	    if (doc) {
-		if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT) {
+		if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT) {
 		    pos_list_list.push_back(doc->get_pos());
 		    document->set_best_pos(doc->get_best_pos());
 		}
@@ -1272,26 +1378,29 @@ class Documents {
 	    }
 
 #ifdef DEBUG
-		cerr << "DID " << doc_ptr->get_id();
-		cerr << " POS RECORD: ";
-		for (int i = 0; i < target_num; i++) {
-		    cerr << i << ":" << pos_record[i] << " ";
-		}
-		cerr << endl;
+            cerr << "DID " << doc_ptr->get_id();
+	    cerr << " POS RECORD: ";
+            for (int i = 0; i < target_num; i++) {
+		cerr << i << ":" << pos_record[i] << " ";
+            }
+	    cerr << endl;
 #endif
 
+//          cerr << "flag=" << flag << " begin=" <<  begin << " end=" << end << " region=" << region << endl;
 	    if (flag && ((end - begin) <= region)) {
+//	    if (flag && ((end - begin) == target_num)) {
 		best_begin = begin;
 		region = end - begin;
 
-		int ave = (int)(total / target_num);
+		int ave = (end + begin) >> 1;
 		best_pos = ave;
+
+	        document->set_phrase_feature();
 
 		if ((end - begin) < PROXIMATE_LENGTH) {
 		    pos_list.push_back(ave);
 		}
 	    }
-
 
 	    // std::sort(&(sorted_int[0]), &(sorted_int[pos_list_list.size()]), sort_by_term_pos);
 	    for (int i = 0; i < target_num - 1; i++) {
@@ -1313,25 +1422,149 @@ class Documents {
 	return true;
     }
 
+
+
+    bool check_phrase (Document *doc_ptr) {
+
+	Document *document = get_doc(doc_ptr->get_id());
+	if (document == NULL) {
+	    return false;
+	}
+
+	double score = 0;
+	std::vector<std::vector<int> *> pos_list_list;
+	for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
+	    Document *doc = (*it)->get_doc(doc_ptr->get_id());
+
+	    // for TERM_OPTIONAL documents
+	    if (doc) {
+		if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT) {
+		    pos_list_list.push_back(doc->get_pos());
+		    document->set_best_pos(doc->get_best_pos());
+		}
+		score += doc->get_score();
+	    }
+	}
+	document->set_score(score);
+
+
+	int target_num = pos_list_list.size();
+	int sorted_int[target_num], pos_record[target_num];
+	for (int i = 0; i < target_num; i++) {
+	    sorted_int[i] = i;
+	    pos_record[i] = -1;
+	}
+
+	for (int i = 0; i < target_num - 1; i++) {
+	    for (int j = 0; j < target_num - i - 1; j++) {
+		if (pos_list_list[sorted_int[i]]->front() == -1 ||
+		    (pos_list_list[sorted_int[i + 1]]->front() != -1 &&
+		     (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
+		    int temp = sorted_int[i];
+		    sorted_int[i] = sorted_int[i + 1];
+		    sorted_int[i + 1] = temp;
+		}
+	    }
+	}
+
+	std::vector<int> pos_list;
+	while (1) {
+	    int cur_pos = pos_list_list[sorted_int[0]]->front();
+
+	    pos_list_list[sorted_int[0]]->erase(pos_list_list[sorted_int[0]]->begin());
+	    if (cur_pos == -1) {
+		break;
+	    }
+	    pos_record[sorted_int[0]] = cur_pos;
+
+
+	    bool flag = true;
+	    int begin = pos_record[0], end = 0;
+	    for (int i = 0; i < target_num; i++) {
+		if (pos_record[i] == -1) {
+		    flag = false;
+		    break;
+		}
+	    }
+
+
+
+	    if (doc_ptr->get_id() == 962783) {
+		cerr << "POS RECORD: ";
+		for (int i = 0; i < target_num; i++) {
+		    cerr << pos_record[i] << " ";
+		}
+		cerr << endl;
+	    }
+
+	    if (flag) {
+
+		if (doc_ptr->get_id() == 962783) {
+		    cerr << "flag = " << flag << endl;
+		}
+
+
+		bool phrasal_flag = true;
+		for (int i = 0; i < target_num - 1; i++) {
+		    if (pos_record[i + 1] - pos_record[i] != 1) {
+			phrasal_flag = false;
+			break;
+		    }
+		}
+
+		if (phrasal_flag) {
+		    if (doc_ptr->get_id() == 962783) {
+			cerr << "match." << endl;
+		    }
+		    return true;
+		}
+	    }
+
+	    for (int i = 0; i < target_num - 1; i++) {
+		if (pos_list_list[sorted_int[i]]->front() == -1 ||
+		    (pos_list_list[sorted_int[i + 1]]->front() != -1 &&
+		     (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
+		    int temp = sorted_int[i];
+		    sorted_int[i] = sorted_int[i + 1];
+		    sorted_int[i + 1] = temp;
+		}
+	    }
+	} // end of while
+	pos_list.push_back(-1);
+
+	if (doc_ptr->get_id() == 962783) {
+	    cerr << "missmatch." << endl;
+	}
+	return false;
+    }
+
+
     bool walk_and_or(Document *doc_ptr) {
 
 	for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
-	    if ((*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_OR) {
-		(*it)->walk_and_or(doc_ptr);
+	    if ((*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE  || (*it)->get_type() == DOCUMENTS_OR) {
+		bool flag = (*it)->walk_and_or(doc_ptr);
+		if (get_type() == DOCUMENTS_AND || get_type() == DOCUMENTS_ROOT) {
+		    if (!flag)
+			return false;
+		}
 	    }
 	    else if ((*it)->get_type() == DOCUMENTS_ROOT) {
-		(*it)->walk_and_or(doc_ptr);
+		return (*it)->walk_and_or(doc_ptr);
 	    }
 	}
 
 	if (type == DOCUMENTS_ROOT) {
-	    walk_and(doc_ptr);
+//	    walk_and(doc_ptr);
 	}
 	else if (type == DOCUMENTS_AND) {
 	    walk_and(doc_ptr);
 	}
 	else if (type == DOCUMENTS_OR) {
 	    walk_or(doc_ptr);
+	}
+	else if (type == DOCUMENTS_PHRASE) {
+	    return check_phrase(doc_ptr);
 	}
 
 
