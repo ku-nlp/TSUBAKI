@@ -70,10 +70,12 @@ std::vector<double> *search (std::string *query,
 
 	doc->set_length(length);
 
-	result_docs->walk_and_or(*it);
-	doc->set_strict_term_feature();
-	docs->push_back(doc);
-	count++;
+	bool flag = result_docs->walk_and_or(*it);
+	if (flag) {
+	    doc->set_strict_term_feature();
+	    docs->push_back(doc);
+	    count++;
+	}
     }
     double score_end1 = (double) gettimeofday_sec();
 
@@ -92,9 +94,11 @@ std::vector<double> *search (std::string *query,
 
 	doc->set_length(length);
 
-	result_docs->walk_and_or(*it);
-	docs->push_back(doc);
-	count++;
+	bool flag = result_docs->walk_and_or(*it);
+	if (flag) {
+	    docs->push_back(doc);
+	    count++;
+	}
     }
     double score_end2 = (double) gettimeofday_sec();
 
@@ -111,6 +115,9 @@ std::vector<double> *search (std::string *query,
 }
 
 bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
+
+    /** 従来のインデックスフォーマット*/
+    /*
     std::string index_word_file         = index_dir + "/index000.word.conv.data";
     std::string index_dpnd_file         = index_dir + "/index000.dpnd.conv.data";
     std::string offset_word_file        = index_dir + "/offset000.word.conv.txt.cdb.0";
@@ -123,6 +130,21 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     std::string anchor_index_dpnd_file  = anchor_index_dir + "/index000.dpnd.conv.data";
     std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.conv.txt.cdb.0";
     std::string anchor_offset_dpnd_file = anchor_index_dir + "/offset000.dpnd.conv.txt.cdb.0";
+    */
+
+    /* 新しいインデックスフォーマット */
+    std::string index_word_file         = index_dir + "/idx000.word.dat.conv";
+    std::string index_dpnd_file         = index_dir + "/idx000.dpnd.dat.conv";
+    std::string offset_word_file        = index_dir + "/offset000.word.cdb.conv";
+    std::string offset_dpnd_file        = index_dir + "/offset000.dpnd.cdb.conv";
+    std::string tid2sid_file            = index_dir + "/sid2tid";
+    std::string sid2url_file            = index_dir + "/did2url.cdb";
+    std::string sid2title_file          = index_dir + "/did2title.cdb";
+    std::string tid2length_file         = index_dir + "/000.doc_length.txt";
+    std::string anchor_index_word_file  = anchor_index_dir + "/idx000.word.dat.conv";
+    std::string anchor_index_dpnd_file  = anchor_index_dir + "/idx000.dpnd.dat.conv";
+    std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.cdb.conv";
+    std::string anchor_offset_dpnd_file = anchor_index_dir + "/offset000.dpnd.cdb.conv";
 
     index_streams.push_back(new std::ifstream(index_word_file.c_str()));
     index_streams.push_back(new std::ifstream(index_dpnd_file.c_str()));
@@ -151,6 +173,15 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
 	string url = sid2url_cdb->get(sid);
 	string title = sid2title_cdb->get(sid);
 
+	if (url.find("%") != string::npos) {
+	    string::size_type pos;
+	    string find_str = "%";
+	    string rep_str = "@";
+	    for(pos = url.find(find_str); pos != string::npos; pos = url.find(find_str, rep_str.length() + pos)) {
+		url.replace(pos, find_str.length(), rep_str);
+	    }
+	}
+
 	tid2url.insert(pair<int, string>(_tid, url));
 	tid2title.insert(pair<int, string>(_tid, title));
     }
@@ -170,6 +201,7 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
 }
 
 bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
+
     int i, status;
     struct sockaddr_in sin;
     int sfd, fd;
@@ -183,17 +215,25 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 	std::vector<Document *> docs;
 	double search_bgn = (double) gettimeofday_sec();
 	string _query = buf;
+
 	std::vector<double> *logdata = search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
 	double search_end = (double) gettimeofday_sec();
 
 	int count = 0;
 	std::ostringstream sbuf;
 	for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
+	    // テスト時はコメントアウトすること
 	    std::string sid = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
 	    std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
 	    std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
+
 	    sbuf << sid << " " << ((*it)->to_string()) << " " << title << " " << url << " " << (*it)->get_final_score() << endl;
-	    sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
+	    /*
+	     * フレーズ検索
+	    if ((*it)->get_phrase_feature() > 0) {
+		sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
+	    }
+	    */
 
 	    if (++count > NUM_OF_RETURN_DOCUMENTS)
 		break;
@@ -303,6 +343,8 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 	    std::vector<Document *> docs;
 	    double search_bgn = (double) gettimeofday_sec();
 	    std::vector<double> *logdata = search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
+
+
 	    // search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
 	    double search_end = (double) gettimeofday_sec();
 
@@ -312,6 +354,7 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 		std::string sid = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
 		std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
 		std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
+
 		sbuf << sid << " " << ((*it)->to_string()) << " " << title << " " << url << " " << (*it)->get_final_score() << endl;
 
 		if (++count > NUM_OF_RETURN_DOCUMENTS)
@@ -352,8 +395,7 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 }
 
 int main (int argc, char** argv) {
-
-    if (strcmp(argv[5], "-standalone") == 0) {
+    if (strcmp(argv[argc - 1], "-standalone") == 0) {
 	standalone_mode (argv[1], argv[2], (int)atoi(argv[3]), argv[4]);
     } else {
 	if (server_mode(argv[1], argv[2], (int)atoi(argv[3]), argv[4])) {
