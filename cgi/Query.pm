@@ -24,7 +24,8 @@ sub new {
 	gid2qids => $params->{gid2qids},
 	dpnd_map => $params->{dpnd_map},
 	antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
-	option => $params->{option}
+	option => $params->{option},
+	s_exp => $params->{s_exp}
     };
 
     bless $this;
