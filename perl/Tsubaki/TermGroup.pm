@@ -122,14 +122,29 @@ sub new {
 	next if (exists $alreadyPushedTexts{$text_wo_yomi});
 	$alreadyPushedTexts{$text_wo_yomi} = 1;
 
-	my $term = new Tsubaki::Term ({
-	    tid => sprintf ("%s-%s", $gid, $cnt++),
-	    text => $text_wo_yomi,
-	    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
-	    node_type => ($synnode eq $basic_node) ? 'basic' : 'syn',
-	    gdf => $this->{gdf}
-				      });
-	push (@{$this->{terms}}, $term);
+	if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+	    foreach my $tag (keys %{$opt->{option}{blockTypes}}) {
+		my $term = new Tsubaki::Term ({
+		    tid => sprintf ("%s-%s", $gid, $cnt++),
+		    text => $text_wo_yomi,
+		    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
+		    node_type => ($synnode eq $basic_node) ? 'basic' : 'syn',
+		    gdf => $this->{gdf},
+		    blockType => $tag
+					      });
+		push (@{$this->{terms}}, $term);
+	    }
+
+	} else {
+	    my $term = new Tsubaki::Term ({
+		tid => sprintf ("%s-%s", $gid, $cnt++),
+		text => $text_wo_yomi,
+		term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
+		node_type => ($synnode eq $basic_node) ? 'basic' : 'syn',
+		gdf => $this->{gdf}
+					  });
+	    push (@{$this->{terms}}, $term);
+	}
     }
 
     bless $this;

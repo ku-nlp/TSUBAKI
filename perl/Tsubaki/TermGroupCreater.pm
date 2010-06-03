@@ -13,7 +13,7 @@ use Tsubaki::TermGroup;
 my $CONFIG = Configure::get_instance();
 
 sub create {
-    my ($result) = @_;
+    my ($result, $option) = @_;
 
     my @kihonkus = $result->tag;
 
@@ -22,7 +22,7 @@ sub create {
 	push (@ids, $i);
     }
 
-    my ($terms, $optionals) = &_create (0, \@kihonkus, \@ids, undef, "");
+    my ($terms, $optionals) = &_create (0, \@kihonkus, \@ids, undef, "", $option);
 
     my $root = new Tsubaki::TermGroup (
 	-1,
@@ -91,7 +91,8 @@ sub _create {
 	    $children,
 	    $kihonku,
 	    {
-		optional_flag => $optional_flag
+		optional_flag => $optional_flag,
+		option => $option
 	    });
 
 	if ($optional_flag) {
@@ -117,6 +118,12 @@ sub _create {
 			    term_type => (($optional_flag) ? 'dpnd' : 'force_dpnd'),
 			    gdf => $gdf,
 			    node_type => 'basic' });
+
+		    if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+			foreach my $tag (keys %{$option->{blockTypes}}) {
+			    $term->{blockType} = $tag;
+			}
+		    }
 
 		    if ($optional_flag) {
 			$optionals{$term->{text}} = $term unless (defined ($optionals{$term->{text}}));

@@ -106,13 +106,15 @@ sub get_term_type {
 sub to_S_exp {
     my ($this, $space) = @_;
 
-    return sprintf("%s((%s %d %d %d %d))\n", $space, lc($this->{text}), $TYPE2INT{$this->{term_type}}, $this->{gdf},(($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 0 : 1));
+    my $midasi = sprintf ("%s%s", $this->{blockType}, lc($this->{text}));
+    return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, $TYPE2INT{$this->{term_type}}, $this->{gdf},(($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 0 : 1));
 }
 
 sub to_S_exp_for_anchor {
     my ($this, $space) = @_;
 
-    return sprintf("%s((%s %d %d %d %d))\n", $space, lc($this->{text}), 3, $this->{gdf}, 1, (($this->{term_type} =~ /word/) ? 2 : 3));
+    my $midasi = ($this->{blockType}) ? sprintf ("AC:%s", lc($this->{text})) : lc($this->{text});
+    return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, 3, $this->{gdf}, 1, (($this->{term_type} =~ /word/) ? 2 : 3));
 }
 
 
