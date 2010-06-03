@@ -159,10 +159,15 @@ sub getSynGraphObj {
 	push (@INC, $instance->{SYNGRAPH_PM_PATH});
 	require SynGraph;
 
-	$instance->{SYNGRAPH} = new SynGraph($instance->{SYNDB_PATH});
+	$instance->{SYNGRAPH} = new SynGraph(
+	    $instance->{SYNDB_PATH},
+	    undef, # KNPのオプション
+	    {
+		syndbcdb => sprintf "%s/../cgi/syndb.cdb", $instance->{SYNDB_PATH}
+	    });
     }
 
-    return $this->{SYNGRAPH};
+    return $instance->{SYNGRAPH};
 }
 
 sub get_instance {
