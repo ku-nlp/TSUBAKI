@@ -4,6 +4,7 @@ package SearchEngine;
 
 use strict;
 use utf8;
+use Encode;
 use Storable;
 use IO::Socket;
 use IO::Select;
@@ -150,11 +151,8 @@ sub parse_recieved_data_for_cpp {
     require Time::HiRes;
 
     my @t_buf = ();
-    my $tbuf = 0;
     my @results;
-    my $buff = undef;
-    my $hitcount = 0;
-    my $recieved_data;
+    my ($tbuf, $buff, $hitcount, $recieved_data, $slave_server_side_total, $hostname, $port, $search_time, $score_time, $sort_time);
     while (<$socket>) {
 	chop;
 
@@ -166,6 +164,12 @@ sub parse_recieved_data_for_cpp {
 	} elsif ($_ =~ /S_EXP_PARSE (.+)/) {
 	    push (@t_buf, sprintf ("sexp_parse=%s", $1 - $tbuf));
 	    $tbuf = $1;
+	} elsif ($_ =~ /SEARCH_TIME (.+)/) {
+	    $search_time = $1;
+	} elsif ($_ =~ /SCORE_TIME (.+) (.+)$/) {
+	    $score_time = $1 + $2;
+	} elsif ($_ =~ /SORT_TIME (.+)$/) {
+	    $sort_time = $1;
 	} elsif ($_ =~ /MERGE_AND_OR (\d+)/) {
 	    push (@t_buf, sprintf ("merge_and_or=%d", $1 - $tbuf));
 	    $tbuf = $1;
@@ -178,11 +182,13 @@ sub parse_recieved_data_for_cpp {
 	} elsif ($_ =~ /SORT (\d+)/) {
 	    push (@t_buf, sprintf ("sort=%d", $1 - $tbuf));
 	    $tbuf = $1;
+	} elsif ($_ =~ /HOSTNAME (.+?) (\d+)$/) {
+	    $hostname = $1;
+	    $port = $2;
 	} elsif ($_ =~ /LEAVE (.+?) (.+)/) {
-	    my $slave_server_side_total = $1;
+	    $slave_server_side_total = $1;
 	    my $leave_time = $2;
 	    push (@t_buf, sprintf ("slave_server_side_total=%.5f", $slave_server_side_total));
-	    my ($sec, $microsec) = Time::HiRes::gettimeofday;
 	    last;
 	} else {
 	    $recieved_data .= $_;
@@ -199,6 +205,18 @@ sub parse_recieved_data_for_cpp {
 	    push (@results, $doc);
 	}
     }
+
+    my $slave_logger = new Logger();
+#   $slave_logger->setParameterAs('data_size', sprintf ("%d", length($buff)));
+    $slave_logger->setParameterAs('normal_search', sprintf ("%.3f", $search_time));
+    $slave_logger->setParameterAs('hitcount', sprintf ("%d", $hitcount));
+    $slave_logger->setParameterAs('port', sprintf ("%d", $port));
+    $slave_logger->setParameterAs('total_time', sprintf ("%.3f", $slave_server_side_total));
+    $slave_logger->setParameterAs('document_scoring', sprintf ("%.3f", $score_time));
+    $slave_logger->setParameterAs('merge_dids', sprintf ("%.3f", $sort_time));
+
+    # ホストごとのログを保存
+    push (@{$host2log->{$hostname}}, $slave_logger);
 
     return ($hitcount, [\@results]);
 }
@@ -298,8 +316,8 @@ sub broadcastSearch {
     ##################
     # 検索クエリの送信
     ##################
+    my $_logger = new Logger();
     my $selecter = IO::Select->new();
-
     # 実際にサーバーに送信するデータ
     my $query_dat;
     if ($CONFIG->{IS_CPP_MODE}) {
@@ -325,7 +343,8 @@ sub broadcastSearch {
     ##########
     # ロギング
     ##########
-    $logger->setTimeAs('get_result_from_server', '%.3f');
+    $_logger->setTimeAs('get_result_from_server', '%.3f');
+    print "slave_server_access " . $_logger->getParameter('get_result_from_server') . "<BR>\n";
     print "finish to harvest search results (" . $logger->getParameter('get_result_from_server') . " sec.)\n" if ($opt->{debug} > 1);
 
     # 検索スレーブサーバー側でのログを保存
