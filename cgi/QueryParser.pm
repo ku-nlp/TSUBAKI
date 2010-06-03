@@ -16,6 +16,7 @@ use CDB_File;
 use Query;
 use Dumper;
 use CDB_Reader;
+use Tsubaki::TermGroupCreater;
 
 
 my $CONFIG = Configure::get_instance();
@@ -41,8 +42,8 @@ sub new {
 	KNP => $CONFIG->{KNP},
 	INDEXER => $indexer,
 	INDEXER_GENKEI => $indexer_genkei,
-	DFDBS_WORD => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR})) : undef,
-	DFDBS_DPND => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR})) : undef,
+	DFDBS_WORD => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR})) : (),
+	DFDBS_DPND => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR})) : (),
 	OPTIONS => {
 	    trimming => $opts->{QUERY_TRIMMING},
 	    use_of_block_types => defined($opts->{USE_OF_BLOCK_TYPES}) ? $opts->{USE_OF_BLOCK_TYPES} : $CONFIG->{USE_OF_BLOCK_TYPES}, # newに指定された設定は、CONFIGよりも優先
@@ -279,18 +280,115 @@ sub _normalizeSearchExpression {
     $search_expression = Unicode::Japanese->new($search_expression)->h2z->getu;
 
     # 記号等の正規化
-    $search_expression =~ s/－/−/g; # FULLWIDTH HYPHEN-MINUS (U+ff0d) -> MINUS SIGN (U+2212)
-    $search_expression =~ s/～/〜/g; # FULLWIDTH TILDE (U+ff5e) -> WAVE DASH (U+301c)
-    $search_expression =~ s/∥/‖/g; # PARALLEL TO (U+2225) -> DOUBLE VERTICAL LINE (U+2016)
-    $search_expression =~ s/￠/¢/g;  # FULLWIDTH CENT SIGN (U+ffe0) -> CENT SIGN (U+00a2)
-    $search_expression =~ s/￡/£/g;  # FULLWIDTH POUND SIGN (U+ffe1) -> POUND SIGN (U+00a3)
-    $search_expression =~ s/￢/¬/g;  # FULLWIDTH NOT SIGN (U+ffe2) -> NOT SIGN (U+00ac)
-    $search_expression =~ s/—/―/g; # EM DASH (U+2014) -> HORIZONTAL BAR (U+2015)
-    $search_expression =~ s/¥/￥/g;  # YEN SIGN (U+00a5) -> FULLWIDTH YEN SIGN (U+ffe5)
+    $search_expression =~ s/−/−/g; # FULLWIDTH HYPHEN-MINUS (U+ff0d) -> MINUS SIGN (U+2212)
+    $search_expression =~ s/〜/〜/g; # FULLWIDTH TILDE (U+ff5e) -> WAVE DASH (U+301c)
+    $search_expression =~ s/‖/‖/g; # PARALLEL TO (U+2225) -> DOUBLE VERTICAL LINE (U+2016)
+    $search_expression =~ s/¢/¢/g;  # FULLWIDTH CENT SIGN (U+ffe0) -> CENT SIGN (U+00a2)
+    $search_expression =~ s/£/£/g;  # FULLWIDTH POUND SIGN (U+ffe1) -> POUND SIGN (U+00a3)
+    $search_expression =~ s/¬/¬/g;  # FULLWIDTH NOT SIGN (U+ffe2) -> NOT SIGN (U+00ac)
+    $search_expression =~ s/—/—/g; # EM DASH (U+2014) -> HORIZONTAL BAR (U+2015)
+    $search_expression =~ s/¥/¥/g;  # YEN SIGN (U+00a5) -> FULLWIDTH YEN SIGN (U+ffe5)
 
     return $search_expression;
 }
 
+
+# 言語解析
+sub _linguisticAnalysis {
+    my ($this, $search_expression, $opt) = @_;
+
+    unless ($search_expression) {
+	print "Empty query !<BR>\n";
+	exit(1);
+    }
+
+    if ($opt->{english}) {
+    } else {
+	# 検索表現を構文解析する
+	my $knpresult = $this->_runKNP($search_expression, $opt);
+
+	# クエリ処理を適用する
+	$this->_runQueryProcessing($knpresult, $opt) if ($opt->{telic_process} || $opt->{CN_process} || $opt->{NE_process} || $opt->{modifier_of_NE_process});
+	$this->{knp_result} = $knpresult;
+
+
+	if ($opt->{syngraph}) {
+	    # SynGraphで解析する
+	    return $this->_runSynGraph($knpresult, $opt);
+	} else {
+	    return $knpresult;
+	}
+    }
+}
+
+# 構文解析
+sub _runKNP {
+    my ($this, $search_expression, $opt) = @_;
+
+    my $knpresult;
+#    try {
+	$knpresult = $CONFIG->{KNP}->parse($search_expression);
+#    }
+#    catch Error with {
+# 	my $err = shift;
+# 	print "Bad query: $search_expression<BR>\n";
+# 	print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
+# 	print "Dumpping messages of KNP object is following.<BR>\n";
+# 	print Dumper::dump_as_HTML($CONFIG->{KNP}) . "<BR>\n";
+#	exit(1);
+#    };
+    $this->{logger}->setTimeAs('KNP', '%.3f') if (defined $this->{logger});
+
+    unless (defined $knpresult) {
+	print "Can't parse the query: $search_expression<BR>\n";
+	exit(1);
+    }
+
+    return $knpresult;
+}
+
+# SynGraphで解析
+sub _runSynGraph {
+    my ($this, $knpresult, $opt) = @_;
+
+    # SynGraphのオプションを設定
+    # Wikipedia のエントリになっている表現に対しては同義語展開を行わない
+    $opt->{syngraph_option}{no_attach_synnode_in_wikipedia_entry} = 1;
+    $opt->{syngraph_option}{attach_wikipedia_info} = 1;
+    $opt->{syngraph_option}{wikipedia_entry_db} = $CONFIG->{WIKIPEDIA_ENTRY_DB};
+    $opt->{syngraph_option}{regist_exclude_semi_contentword} = 1;
+    $opt->{syngraph_option}{relation} = 0;
+    $opt->{syngraph_option}{antonym} = 1;
+    $opt->{syngraph_option}{hypocut_attachnode} = 9;
+
+    $knpresult->set_id(0);
+    my $synresult = $CONFIG->{SYNGRAPH}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
+
+    $this->{syn_result} = new KNP::Result($synresult);
+    $this->{logger}->setTimeAs('SynGraph', '%.3f') if (defined $this->{logger});
+
+    return $this->{syn_result};
+}
+
+# クエリ処理の適用
+sub _runQueryProcessing {
+    my ($this, $knpresult, $opt) = @_;
+
+    require Tsubaki::QueryAnalyzer;
+
+    my $analyzer = new Tsubaki::QueryAnalyzer($opt);
+    $analyzer->analyze($knpresult,
+		       {
+			   end_of_sentence_process => $opt->{end_of_sentence_process},
+			   telic_process => $opt->{telic_process},
+			   CN_process => $opt->{CN_process},
+			   NE_process => $opt->{NE_process},
+			   modifier_of_NE_process => $opt->{modifier_of_NE_process}
+		       });
+    $this->{logger}->setTimeAs('QueryAnalyzer', '%.3f') if (defined $this->{logger});
+
+    $this->{knp_result} = $knpresult;
+}
 
 # QueryKeywordオブジェクトの構築
 sub createQueryKeywordObj {
@@ -309,21 +407,34 @@ sub createQueryKeywordObj {
     # 検索表現の正規化
     $search_expression = $this->_normalizeSearchExpression($search_expression);
 
-    $opt->{indexer} = $used_indexer;
-    if ($CONFIG->{IS_ENGLISH_VERSION}) {
-	return $this->parse_for_english($search_expression, $opt);
-    } else {
-	my $qk = new QueryKeyword(
-	    $search_expression,
-	    $sentence_flag,
-	    $is_phrasal_search,
-	    $approximate_dist,
-	    $approximate_order,
-	    $force_dpnd,
-	    $logical_cond_qkw,
-	    $opt);
+    # フレーズ検索の場合はSynGraphを適用しない
+    $opt->{syngraph} = 1 if ($is_phrasal_search);
 
-	return $qk;
+
+    # 言語解析
+    my $result = $this->_linguisticAnalysis($search_expression, $opt);
+
+
+    if ($CONFIG->{IS_CPP_MODE}) {
+	return &Tsubaki::TermGroupCreater::create($result, $opt);
+    }
+    else {
+	$opt->{indexer} = $used_indexer;
+	if ($CONFIG->{IS_ENGLISH_VERSION}) {
+	    return $this->parse_for_english($search_expression, $opt);
+	} else {
+	    my $qk = new QueryKeyword(
+		$search_expression,
+		$sentence_flag,
+		$is_phrasal_search,
+		$approximate_dist,
+		$approximate_order,
+		$force_dpnd,
+		$logical_cond_qkw,
+		$opt);
+	    
+	    return $qk;
+	}
     }
 }
 
@@ -476,6 +587,7 @@ sub parse {
     $this->_setSynGraphObj() if ($opt->{syngraph});
 
     my @qks = ();
+    my @sexps = ();
     my $delim = ($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+";
     # $delimで区切る
     foreach my $search_expression (split(/$delim/, $qks_str)) {
@@ -491,7 +603,10 @@ sub parse {
 	# QueryKeywordオブジェクトの構築
 	my $qk = $this->createQueryKeywordObj($search_expression, $opt);
 
-	if ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
+	if ($CONFIG->{IS_CPP_MODE}) {
+	    push (@sexps, $qk->to_S_exp());
+	}
+	elsif ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
   	    push (@{$qks[0]->{words}}, @{$qk->{words}}) if (scalar(@{$qk->{words}}) > 0);
   	    push (@{$qks[0]->{dpnds}}, @{$qk->{dpnds}}) if (scalar(@{$qk->{dpnds}}) > 0);
   	    $qks[0]->{rawstring} .= (" " . $qk->{rawstring});
@@ -518,7 +633,8 @@ sub parse {
 	gid2qids => $properties->{gid2qids},
 	dpnd_map => $properties->{dpnd_map},
 	antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
-	option => $opt
+	option => $opt,
+	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0]))
 			});
 
 
