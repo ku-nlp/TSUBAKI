@@ -117,9 +117,7 @@ sub _runSynGraph {
     $opt->{syngraph_option}{attach_wikipedia_info} = 1;
     $opt->{syngraph_option}{wikipedia_entry_db} = $CONFIG->{WIKIPEDIA_ENTRY_DB};
     $opt->{syngraph_option}{regist_exclude_semi_contentword} = 1;
-    $opt->{syngraph_option}{relation} = 1;
     $opt->{syngraph_option}{antonym} = 1;
-    $opt->{syngraph_option}{hypocut_attachnode} = 9;
 
     $knpresult->set_id(0);
     my $synresult = $CONFIG->{SYNGRAPH}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
@@ -238,9 +236,10 @@ sub _setTerms {
 # @dpnd_reps, \@word_repsに追加する関数
 sub push_string_to_reps {
     my ($dpnd_reps_ar, $word_reps_ar, $m, $regist_string, $group_id, $opt) = @_;
+
+    my @midasis = ();
+    push (@midasis, $regist_string);
     if ($m->{midasi} =~ /\-\>/) {
-	my @midasis = ();
-	push (@midasis, $regist_string);
 	if ($opt->{use_of_anaphora_resolution}) {
 	    $regist_string =~ s/\-/=/;
 	    push (@midasis, $regist_string);
@@ -262,26 +261,30 @@ sub push_string_to_reps {
 	}
     }
     else {
-	push(@{$word_reps_ar},
-	     {
-		 surf => $m->{surf},
-		 string => $regist_string,
-		 midasi_with_yomi => $m->{midasi_with_yomi},
-		 gid => $group_id,
-		 qid => -1,
-		 weight => 1,
-		 freq => $m->{freq},
-		 requisite => $m->{requisite},
-		 optional =>  $m->{optional},
-		 isContentWord => $m->{isContentWord},
-		 question_type => $m->{question_type},
-		 NE => $m->{NE},
-		 isBasicNode => $m->{isBasicNode},
-		 fstring => $m->{fstring},
-		 isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
-		 katsuyou => $m->{katsuyou},
-		 POS => $m->{POS}
-	     });
+	push (@midasis, sprintf ("%s<上位語>", $regist_string)) if ($opt->{use_of_hyponym});
+	foreach my $midasi (@midasis) {
+
+	    push(@{$word_reps_ar},
+		 {
+		     surf => $m->{surf},
+		     string => $midasi,
+		     midasi_with_yomi => $m->{midasi_with_yomi},
+		     gid => $group_id,
+		     qid => -1,
+		     weight => 1,
+		     freq => $m->{freq},
+		     requisite => $m->{requisite},
+		     optional =>  $m->{optional},
+		     isContentWord => $m->{isContentWord},
+		     question_type => $m->{question_type},
+		     NE => $m->{NE},
+		     isBasicNode => $m->{isBasicNode},
+		     fstring => $m->{fstring},
+		     isAdditionalNode => ($m->{additional_node}) ? 1 : 0,
+		     katsuyou => $m->{katsuyou},
+		     POS => $m->{POS}
+		 });
+	}
     }
 }
 
@@ -348,10 +351,10 @@ sub print_for_web {
 
     my $count = 0;
     my @colors = ('white', '#efefef');
-    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
 
     printf(qq(<H4 style="background-color:black; color: white;"><A name="query">クエリの解析結果</A></H4>\n));
     print qq(<TABLE border="1" width="100%">\n);
+    my $syngraph = Configure::getSynGraphObj();
     foreach my $T ('words', 'dpnds') {
 	foreach my $reps (@{$this->{$T}}) {
 	    my $flag = ($reps->[0]{requisite}) ? '<FONT color="red">必</FONT>' : (($reps->[0]{optional}) ? '<FONT color="blue">オ</FONT>' : '?');
@@ -378,7 +381,7 @@ sub print_for_web {
 		}
 
 		if ($this->{syn_result}) {
-		    my @synonymous_exps = split(/\|+/, decode('utf8', $synonyms{$str_w_yomi}));
+		    my @synonymous_exps = split(/\|+/, decode('utf8', $syngraph->{syndb}{$str_w_yomi}));
 		    unshift (@synonymous_exps, '<BR>') if (scalar(@synonymous_exps) < 1);
 
 		    printf("<TD width=10%>%s</TD><TD width=10%>gid=%s</TD><TD width=10%>qid=%s</TD><TD width=10%>gdf=%.2f</TD><TD width=10%>qtf=%.2f</TD><TD width=*>%s</TD></TR>\n",
@@ -402,7 +405,6 @@ sub print_for_web {
     }
 
     print "</TABLE>\n";
-    untie %synonyms;
 }
 
 sub print_for_XML {
@@ -749,8 +751,6 @@ sub getPaintingJavaScriptCode {
 
 
 
-    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
-
     my $font_size = 12;
     my $offsetX = 10 + 24;
     my $offsetY = $font_size * (scalar(@{$this->{words}}) + 3);
@@ -803,6 +803,8 @@ sub getPaintingJavaScriptCode {
     my %gid2pos = ();
     my %gid2num = ();
     my @kihonkus = $this->{syn_result}->tag;
+    my $syngraph = Configure::getSynGraphObj();
+
     for (my $i = 0; $i < scalar(@kihonkus); $i++) {
 	my $tag = $kihonkus[$i];
 
@@ -828,8 +830,8 @@ sub getPaintingJavaScriptCode {
 
 		    # 同義グループに属す表現を取得
 		    unless ($this->{disable_synnode}) {
-			foreach my $w (split('\|', $synonyms{$str})) {
-			    $w = decode('utf8', $w);
+			my @synonymous_exps = split(/\|+/, decode('utf8', $syngraph->{syndb}{$str}));
+			foreach my $w (@synonymous_exps) {
 			    $w =~ s/\[.+?\]//;
 			    $w =~ s/(\/|:).+//;
 			    $synbuf{$w} = 1;
@@ -939,8 +941,6 @@ sub getPaintingJavaScriptCode {
 
     $jscode .= qq(jg.setFont(\'ＭＳゴシック\', \'$font_size\', 0);\n);
     $jscode .= qq(jg.paint();\n);
-
-    untie %synonyms;
 
     return ($width, $height, $colorOffset, $jscode);
 }
