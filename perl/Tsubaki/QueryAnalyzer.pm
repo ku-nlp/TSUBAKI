@@ -31,6 +31,20 @@ sub analyze {
 
     print qq(<H4 style="background-color:black; color:white;">クエリ処理</H4>\n) if ($this->{option}{debug});
 
+    # つながりの強い複合名詞を検出する
+    if ($opt->{CN_process}) {
+	unless (defined $this->{DFDB_OF_CNS}) {
+	    my $cdbfp = $CONFIG->{COMPOUND_NOUN_DFDB_PATH};
+	    tie %{$this->{DFDB_OF_CNS}}, 'CDB_File', $cdbfp or die "$0: can't tie file $cdbfp $!\n";
+	}
+
+	print qq(<H4 style="border-bottom: 2px solid black;">複合名詞処理</H4>\n) if ($this->{option}{debug});
+
+	$opt->{threshold_of_CN_process} = 5 unless (defined $opt->{threshold_of_CN_process});
+	$this->annotateCompoundNounFeature($knpresult, {th => $opt->{threshold_of_CN_process}});
+    }
+
+
     # 不要な動詞を検出する
     if ($opt->{telic_process}) {
 	unless (defined $this->{cscf}) {
@@ -48,19 +62,6 @@ sub analyze {
 
 	$opt->{threshold_of_telic_process} = 10 unless (defined $opt->{threshold_of_telic_process});
 	$this->annotateTelicFeature($knpresult, {th => $opt->{threshold_of_telic_process}});
-    }
-
-    # つながりの強い複合名詞を検出する
-    if ($opt->{CN_process}) {
-	unless (defined $this->{DFDB_OF_CNS}) {
-	    my $cdbfp = $CONFIG->{COMPOUND_NOUN_DFDB_PATH};
-	    tie %{$this->{DFDB_OF_CNS}}, 'CDB_File', $cdbfp or die "$0: can't tie file $cdbfp $!\n";
-	}
-
-	print qq(<H4 style="border-bottom: 2px solid black;">複合名詞処理</H4>\n) if ($this->{option}{debug});
-
-	$opt->{threshold_of_CN_process} = 5 unless (defined $opt->{threshold_of_CN_process});
-	$this->annotateCompoundNounFeature($knpresult, {th => $opt->{threshold_of_CN_process}});
     }
 
 
@@ -138,7 +139,7 @@ sub annotateTelicFeature {
 
 	# 動詞 or サ変名詞かつ肯定表現のみ
 	# 朝食を食べない子供の増加 -> 朝食の子供の増加 X
-	if (($t->fstring =~ /<用言:動>/ || $t->fstring =~ /<サ変>/) && $t->fstring !~ /<否定表現>/) {
+	if (($t->fstring =~ /<用言:動>/ || $t->fstring =~ /<サ変>/) && $t->fstring !~ /<否定表現>/ && $t->fstring !~ /<クエリ必須係り受け>/) {
 	    my ($verb) = ($t->fstring =~ /<正規化代表表記:([^>]+?)>/);
 	    # 可能動詞の場合は原型を取得する
 	    foreach my $mrph ($t->mrph) {
@@ -163,6 +164,7 @@ sub annotateTelicFeature {
 		# 体育 -> 教える
 		foreach my $moto ($t->child) {
 #		    next unless ($moto->fstring =~ /連用要素/);
+		    next if ($moto->fstring =~ /<クエリ必須係り受け>/);
 
 		    foreach my $m ($moto->mrph) {
 			next unless (defined $m->repname);
