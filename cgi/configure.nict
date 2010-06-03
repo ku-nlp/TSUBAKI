@@ -483,3 +483,6 @@ USE_OF_HASH_FOR_SID_LOOKUP	0
 
 # 省略解析結果を利用する／しないを選択するチェックボックスの表示
 DISABLE_ANAPHORA_RESOLUTION_DISPLAY	1
+
+# C++版かどうか
+IS_CPP_MODE		0
