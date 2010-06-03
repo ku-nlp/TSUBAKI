@@ -81,7 +81,10 @@ sub create_snippets {
 	foreach my $doc (@$dids) {
 	    $this->{did2region}{$doc->{did}}{start} = $doc->{start};
 	    $this->{did2region}{$doc->{did}}{end} = $doc->{end};
+#	    print $doc->{did} . " " . $doc->{start} . " " . $doc->{end}. "<BR>\n";
 	    push(@{$port2docs{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}[$count++ % $num_of_ports]}}, $doc);
+
+	    print Dumper ($doc) . "<BR>\n";
 	}
 
 
@@ -106,6 +109,7 @@ sub create_snippets {
 		print join(", ", @dids2);
 		print "]<BR>\n";
 	    }
+	    print Dumper ($opt) . "<BR>\n";
 	}
 
 
@@ -268,6 +272,7 @@ sub get_snippets_for_each_did {
 	# スコアの高い順に処理（同点の場合は、sidの若い順）
 	my %sbuf = ();
 
+	my $flag_of_drawline = 0;
 	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score} || $a->{sid} <=> $b->{sid}} @{$sentences}) {
 	    next if (exists($sbuf{$sentence->{rawstring}}));
 	    $sbuf{$sentence->{rawstring}} = 1;
@@ -284,6 +289,7 @@ sub get_snippets_for_each_did {
 	    my $start_pos = $sentence->{start_pos} + 1;
 	    my $end_pos = $sentence->{end_pos};
 	    my $flag_of_underline = ($this->{did2region}{$did}{start} > 50 && $this->{did2region}{$did}{end} - $this->{did2region}{$did}{start} < 50) ? 1 : 0;
+
 	    my $pos = $start_pos;
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		my $highlighted = -1;
@@ -293,14 +299,17 @@ sub get_snippets_for_each_did {
 		    foreach my $rep (@{$sentence->{reps}[$i]}) {
 			if (exists $rep2style{lc($rep)}) {
 			    # ハイライトされる単語からのみ線を引く
-			    $snippets{$sid} .= qq(<SPAN class="matched_region">) if ($flag_of_underline && $pos == $this->{did2region}{$did}{start});
+			    if (!$flag_of_drawline && $flag_of_underline && $this->{did2region}{$did}{start} - $pos < 3) {
+				$snippets{$sid} .= qq(<SPAN class="matched_region">);
+				$flag_of_drawline = 1;
+			    }
 
 			    # 代表表記レベルでマッチしたらハイライト
 			    if ($opt->{debug}) {
 				$snippets{$sid} .= sprintf qq(<span style="%s">%s<SUB>%s</SUB></span>), $rep2style{lc($rep)}, $surf, $pos;
-			    } else {
-				$snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{lc($rep)}, $surf;
-			    }
+ 			    } else {
+ 				$snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{lc($rep)}, $surf;
+ 			    }
 			    $highlighted = 1;
 
 			    # ハイライトされる単語まで線を引く

@@ -71,6 +71,8 @@ sub search {
 	my $se_obj = new SearchEngine($opt->{syngraph});
 	($hitcount, $results, $status) = $se_obj->search($query, $logger, $opt);
     }
+    # 検索に要した時間をロギング
+    $logger->setTimeAs('search', '%.3f');
 
     # ヒット件数をロギング
     $logger->setParameterAs('hitcount', $hitcount);
