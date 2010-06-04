@@ -6,7 +6,7 @@
 #define AVERAGE_DOC_LENGTH 907
 #define WEIGHT_OF_STRICT_TERM_F 100
 #define WEIGHT_OF_PROXIMATE_F 50
-//#define DEBUG 0
+// #define DEBUG 0
 #define TEST_MODE 0
 #define VERBOSE 0
 #define MAX_LENGTH_OF_DOCUMENT 1000000
@@ -676,9 +676,9 @@ class Documents {
 	dup_check_operation(&backup_l_documents, &s_documents, &l_documents);
 
 #ifdef DEBUG
-	    cout << "AND result:";
-	    print();
-	    cout << endl;
+	cout << "AND result:";
+	print();
+	cout << endl;
 #endif
 
 	// map index no sakusei
@@ -699,6 +699,161 @@ class Documents {
 	    __documents_index->add((*it)->get_id(), i); // map index
 	    i++;
 	}
+
+	return true;
+    }
+
+
+    /*
+     * フレーズ制約を満たすかどうかをチェックし、s_documents を絞る
+     */
+    bool merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs) {
+	
+	Documents *current_documents = merge_and_or(car(cell), _already_retrieved_docs);
+	double start = (double) gettimeofday_sec();
+	DocumentBuffer *already_retrieved_docs  = (_already_retrieved_docs == NULL) ? current_documents->getDocumentIDs() : _already_retrieved_docs;
+
+	parent->push_back_child_documents(current_documents);
+	s_documents = *(current_documents->get_s_documents());
+	l_documents = *(current_documents->get_l_documents());
+	double end = (double) gettimeofday_sec();
+
+	if (VERBOSE)
+	    cout << "  hashmap = " << 1000 * (end - start) << " [ms]" << endl;
+
+	/*
+	 * AND search
+	 */
+	while (!Lisp_Null(cdr(cell))) {
+	    Documents backup_documents = *this;
+	    Documents *next_documents = merge_and_or(car(cdr(cell)), already_retrieved_docs);
+	    parent->push_back_child_documents(next_documents);
+
+	    already_retrieved_docs = next_documents->getDocumentIDs();
+
+	    // s: s and s
+	    s_documents.clear();
+	    and_operation(backup_documents.get_s_documents(),
+			  next_documents->get_s_documents(),
+			  &s_documents);
+
+	    cell = cdr(cell);
+	}
+	double _end = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "  while = " << 1000 * (_end - end) << " [ms]" << endl;
+
+	// map index no sakusei
+	create_s_documents_index(s_documents.size());
+	create___documents_index(s_documents.size());
+	create_l_documents_index(l_documents.size());
+
+
+	int i = 0;
+	for (std::vector<Document *>::iterator it = s_documents.begin(), end = s_documents.end(); it != end; ++it) {
+	    s_documents_index->add((*it)->get_id(), i); // map index
+	    __documents_index->add((*it)->get_id(), i); // map index
+	    i++;
+	}
+
+
+	/*
+	 * check phrase
+	 */
+	int count = 0;
+
+	std::vector<Document *> new_s_documents;
+	for (std::vector<Document *>::iterator it = s_documents.begin(), end = s_documents.end(); it != end; ++it) {
+	    bool notFound = false;
+	    std::vector<std::vector<int> *> pos_list_list;
+	    Document *doc = get_doc((*it)->get_id());
+	    for (std::vector<Documents *>::iterator _it = children.begin(), end = children.end(); _it != end; ++_it) {
+		Document *_doc = (*_it)->get_doc(doc->get_id());
+		if (_doc == NULL) {
+		    ++it;
+		    notFound = true;
+		    break;
+		}
+
+		pos_list_list.push_back(_doc->get_pos());
+	    }
+	    if (notFound)
+		continue;
+
+	    int target_num = pos_list_list.size();
+	    int sorted_int[target_num], pos_record[target_num];
+	    for (int i = 0; i < target_num; i++) {
+		sorted_int[i] = i;
+		pos_record[i] = -1;
+	    }
+
+
+	    for (int i = 0; i < target_num - 1; i++) {
+		for (int j = 0; j < target_num - i - 1; j++) {
+		    if (pos_list_list[sorted_int[i]]->front() == -1 ||
+			(pos_list_list[sorted_int[i + 1]]->front() != -1 &&
+			 (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
+			int temp = sorted_int[i];
+			sorted_int[i] = sorted_int[i + 1];
+			sorted_int[i + 1] = temp;
+		    }
+		}
+	    }
+
+    
+	    bool phrasal_flag = false;
+	    while (1) {
+		int cur_pos = pos_list_list[sorted_int[0]]->front();
+		pos_list_list[sorted_int[0]]->erase(pos_list_list[sorted_int[0]]->begin());
+		if (cur_pos == -1) {
+		    break;
+		}
+		pos_record[sorted_int[0]] = cur_pos;
+
+		bool flag = true;
+		int begin = pos_record[0], end = 0;
+		for (int i = 0; i < target_num; i++) {
+		    if (pos_record[i] == -1) {
+			flag = false;
+			break;
+		    }
+		}
+
+		if (flag) {
+		    phrasal_flag = true;
+		    for (int i = 0; i < target_num - 1; i++) {
+			if (pos_record[i + 1] - pos_record[i] != 1) {
+			    phrasal_flag = false;
+			    break;
+			}
+		    }
+
+		    if (phrasal_flag) {
+			break;
+		    }
+		}
+
+		for (int i = 0; i < target_num - 1; i++) {
+		    if (pos_list_list[sorted_int[i]]->front() == -1 ||
+			(pos_list_list[sorted_int[i + 1]]->front() != -1 &&
+			 (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
+			int temp = sorted_int[i];
+			sorted_int[i] = sorted_int[i + 1];
+			sorted_int[i + 1] = temp;
+		    }
+		}
+	    } // end of while
+
+	    if (phrasal_flag) {
+		new_s_documents.push_back(doc);
+		s_documents_index->add(doc->get_id(), count); // map index
+		__documents_index->add(doc->get_id(), count); // map index
+		count++;
+
+	    }
+	}
+
+	s_documents = new_s_documents;
 
 	return true;
     }
@@ -839,7 +994,7 @@ class Documents {
 	else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "PHRASE")) {
 	    documents->set_type(DOCUMENTS_PHRASE);
 	    double start = (double) gettimeofday_sec();
-	    documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
+	    documents->merge_phrase(documents, cdr(cell), _already_retrieved_docs);
 	    double end = (double) gettimeofday_sec();
 	    if (VERBOSE)
 		cout << "merge_phr = " << 1000 * (end - start) << " [ms]" << endl;
@@ -1286,31 +1441,31 @@ class Documents {
 		score += doc->get_score();
 
 #ifdef DEBUG
-		    if (get_type() == DOCUMENTS_ROOT) {
-			cerr << "ROOT DID: " << doc_ptr->get_id() << " SCORE: " << doc->get_score() << endl;
-		    } else {
-			cerr << "AND DID: " << doc_ptr->get_id() << " SCORE: " << doc->get_score() << endl;
-		    }
+		if (get_type() == DOCUMENTS_ROOT) {
+		    cerr << "ROOT DID: " << doc_ptr->get_id() << " SCORE: " << doc->get_score() << endl;
+		} else {
+		    cerr << "AND DID: " << doc_ptr->get_id() << " SCORE: " << doc->get_score() << endl;
+		}
 #endif
 	    }
 	}
 
 	document->set_score(score);
 #ifdef DEBUG
-	    if (get_type() == DOCUMENTS_ROOT) {
-		cerr << "ROOT DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
-	    } else {
-		cerr << "AND DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
-	    }
+	if (get_type() == DOCUMENTS_ROOT) {
+	    cerr << "ROOT DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
+	} else {
+	    cerr << "AND DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
+	}
 #endif
 
 	if (get_type() == DOCUMENTS_ROOT) {
 #ifdef DEBUG
-		cerr << "ROOT DID: " << doc_ptr->get_id() << " POS LIST";
-		for (std::vector<int>::iterator it = pos_list_list[0]->begin(), end = pos_list_list[0]->end(); it != end; ++it) {
-		    cerr << " " << (*it);
-		}
-		cerr << endl;
+	    cerr << "ROOT DID: " << doc_ptr->get_id() << " POS LIST";
+	    for (std::vector<int>::iterator it = pos_list_list[0]->begin(), end = pos_list_list[0]->end(); it != end; ++it) {
+		cerr << " " << (*it);
+	    }
+	    cerr << endl;
 #endif
 
 	    if (*(pos_list_list[0]->begin()) != -1) {
@@ -1563,10 +1718,6 @@ class Documents {
 	else if (type == DOCUMENTS_OR) {
 	    walk_or(doc_ptr);
 	}
-	else if (type == DOCUMENTS_PHRASE) {
-	    return check_phrase(doc_ptr);
-	}
-
 
 	return true;
     }
