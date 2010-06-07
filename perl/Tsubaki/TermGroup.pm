@@ -134,7 +134,6 @@ sub new {
 					      });
 		push (@{$this->{terms}}, $term);
 	    }
-
 	} else {
 	    my $term = new Tsubaki::Term ({
 		tid => sprintf ("%s-%s", $gid, $cnt++),
@@ -265,9 +264,9 @@ sub to_S_exp {
 
 #	$_S_exp_for_anchor = '';
 	if (scalar(@buf)) {
-	    $S_exp = sprintf ("( (ROOT %s %s %s ) )", $_S_exp, join (" ", @buf), $_S_exp_for_anchor);
+	    $S_exp = sprintf ("(ROOT %s %s %s )", $_S_exp, join (" ", @buf), $_S_exp_for_anchor);
 	} else {
-	    $S_exp = sprintf ("( (ROOT %s %s ) )", $_S_exp, $_S_exp_for_anchor);
+	    $S_exp = sprintf ("(ROOT %s %s )", $_S_exp, $_S_exp_for_anchor);
 	}
     } else {
 	my $is_single_node = (!$this->{hasChild} && scalar(@{$this->{terms}}) < 2);
@@ -373,8 +372,12 @@ sub to_S_exp_for_anchor {
     my ($this, $space) = @_;
 
     my $S_exp;
+    my %buf;
     foreach my $term (@{$this->{terms}}) {
-	$S_exp .= $term->to_S_exp_for_anchor (" ");
+	unless (exists $buf{$term->{text}}) {
+	    $S_exp .= $term->to_S_exp_for_anchor (" ");
+	    $buf{$term->{text}} = 1;
+	}
     }
 
     if ($this->{hasChild}) {
