@@ -55,7 +55,7 @@ class Dbm {
 		string filename;
 		fin >> key;
 		fin >> filename;
-		if (key == "\n")
+		if (filename.find("cdb") == string::npos)
 		    break;
 
 		struct cdb *_db = tieCDB(dirname + "/" + filename);
@@ -202,7 +202,7 @@ class Dbm {
 
     string _get (string key) {
 	cdb *db = k2db[0].second;
-	for (std::vector<std::pair<string, cdb*> >::iterator it = k2db.begin(); it != k2db.end(); it++) {
+	for (std::vector<std::pair<string, cdb*> >::iterator it = k2db.begin(); it != k2db.end(); ++it) {
 	    if (key < (string)(*it).first) {
 		break;
 	    }
