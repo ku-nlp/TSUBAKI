@@ -26,7 +26,7 @@ sub main {
     open (my $idxfile, $opt{idxfile}) or die $!;
 
     open (my $new_idxfile, "> $opt{idxfile}.conv") or die $!;
-    open (my $new_offfile, "> $opt{offset}.conv.txt") or die $!;
+    open (my $new_offfile, "> $opt{offset}") or die $!;
     my $new_offset = 0;
     foreach my $offsetf (@ARGV) {
 	tie my %offsetdb, 'CDB_File', $offsetf or die $!;
