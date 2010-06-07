@@ -19,7 +19,9 @@ using std::endl;
 class Dbm {
     bool available;
     string dbname;
+    bool defined_keymap;
     struct cdb *_cdb;
+    std::vector< std::pair<string, cdb*> > k2db;
     int fd;
     // cdbpp::cdbpp *db;
   public:
@@ -34,37 +36,70 @@ class Dbm {
     }
     */
     Dbm() {
+	defined_keymap = false;
 	;
     }
 
-    Dbm(const string &in_dbname) {
-	dbname = in_dbname;
-	_cdb = (cdb*)malloc(sizeof(cdb));
-	if (!_cdb) {
-	    cerr << "Can't allocate memory @ hash.h." << endl;
-	    exit(-1);
+    Dbm(string &in_dbname) {
+	if (in_dbname.find("keymap") != string::npos) {
+	    defined_keymap = true;
+	    string dirname = getDirName(in_dbname);
+
+	    std::ifstream fin(in_dbname.c_str());
+	    while (!fin.eof()) {
+		string key;
+		string filename;
+		fin >> key;
+		fin >> filename;
+		if (key == "\n")
+		    break;
+
+		string filepath = dirname + "/" + filename;
+		struct cdb *_db = (cdb*)malloc(sizeof(cdb));
+		if (!_db) {
+		    cerr << "Can't allocate memory @ hash.h." << endl;
+		    exit(-1);
+		}
+
+		int _fd;
+		if ((_fd = open(filepath.c_str(), O_RDONLY)) < 0) {
+		    cerr << "Can't open file: " << filepath << endl;
+		}
+		cdb_init(_db, _fd);
+
+		k2db.push_back(std::pair<string, cdb*>(key, _db));
+	    }
+	    fin.close();
+
 	}
+	else {
+	    defined_keymap = false;
+	    dbname = in_dbname;
+	    _cdb = (cdb*)malloc(sizeof(cdb));
+	    if (!_cdb) {
+		cerr << "Can't allocate memory @ hash.h." << endl;
+		exit(-1);
+	    }
 	
-	if ((fd = open(in_dbname.c_str(), O_RDONLY)) < 0) {
-	    cerr << "Can't open file: " << in_dbname << endl;
+	    if ((fd = open(in_dbname.c_str(), O_RDONLY)) < 0) {
+		cerr << "Can't open file: " << in_dbname << endl;
+	    }
+	    cdb_init(_cdb, fd);
 	}
-	cdb_init(_cdb, fd);
     }
 
+    string getDirName (string filepath) {
+	unsigned int loc = filepath.find_last_of("/");
+	string dirname = string(filepath, 0, loc);
+	return dirname;
+    }
+
+/*
     Dbm(char *in_dbname) {
-	dbname = in_dbname;
-	_cdb = (cdb*)malloc(sizeof(cdb));
-	if (!_cdb) {
-	    cerr << "Can't allocate memory @ hash.h." << endl;
-	    exit(-1);
-	}
-	
-	if ((fd = open(in_dbname, O_RDONLY)) < 0) {
-	    cerr << "Can't open file: " << in_dbname << endl;
-	}
-	cdb_init(_cdb, fd);
+	std::string _file = in_dbname;
+	Dbm(_file);
     }
-
+*/
 
 
 
@@ -131,19 +166,32 @@ class Dbm {
     }
 */
 
-    string get(const string &key) {
-	return get(key.c_str());
+    string get (string key) {
+	if (defined_keymap) {
+	    return _get(key);
+	} else {
+	    return get((const char*)key.c_str(), _cdb);
+	}
     }
 
-    string get(const char *key) {
+    string get (const char *key) {
+	if (defined_keymap) {
+	    const string k = key;
+	    return _get(k);
+	} else {
+	    return get(key, _cdb);
+	}
+    }
+
+    string get (const char *key, cdb* db) {
 	string ret_value;
 	unsigned vlen, vpos;
-	if (cdb_find(_cdb, key, strlen(key)) > 0) {
-	    vpos = cdb_datapos(_cdb);
-	    vlen = cdb_datalen(_cdb);
+	if (cdb_find(db, key, strlen(key)) > 0) {
+	    vpos = cdb_datapos(db);
+	    vlen = cdb_datalen(db);
 	    // for \0
 	    char *val = (char*)malloc(vlen + 1);
-	    cdb_read(_cdb, val, vlen, vpos);
+	    cdb_read(db, val, vlen, vpos);
 	    *(val + vlen) = '\0';
 	    // cout << key << " is found. val = " << val << endl;
 	    ret_value = val;
@@ -152,6 +200,19 @@ class Dbm {
 	}
 	return ret_value;
     }
+
+    string _get (string key) {
+	cdb *db = k2db[0].second;
+	for (std::vector<std::pair<string, cdb*> >::iterator it = k2db.begin(); it != k2db.end(); it++) {
+	    if (key < (string)(*it).first) {
+		break;
+	    }
+	    db = (*it).second;
+	}
+
+	return get ((const char*)key.c_str(), db);
+    }
+
 };
 
 #endif
