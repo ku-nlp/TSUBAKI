@@ -112,23 +112,28 @@ sub _create {
 		foreach my $saki (@$kakarisaki) {
 		    my $midasi = sprintf ("%s->%s", $moto, $saki);
 		    my $gdf = $DFDBS_DPND->get(encode ('utf8', $midasi));
-		    my $term = new Tsubaki::Term ({
+
+		    my $blockTypes;
+		    if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+			$blockTypes = $option->{blockTypes};
+		    } else {
+			$blockTypes->{""} = 1;
+		    }
+
+		    foreach my $tag (keys %{$blockTypes}) {
+			my $term = new Tsubaki::Term ({
 			    tid => sprintf ("%s-%s", $gid, $count++),
 			    text => $midasi,
 			    term_type => (($optional_flag) ? 'dpnd' : 'force_dpnd'),
 			    gdf => $gdf,
+			    blockType => (($tag eq '') ? undef : $tag),
 			    node_type => 'basic' });
 
-		    if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
-			foreach my $tag (keys %{$option->{blockTypes}}) {
-			    $term->{blockType} = $tag;
+			if ($optional_flag) {
+			    $optionals{$term->get_id()} = $term unless (exists $optionals{$term->get_id()});
+			} else {
+			    push (@terms, $term);
 			}
-		    }
-
-		    if ($optional_flag) {
-			$optionals{$term->{text}} = $term unless (defined ($optionals{$term->{text}}));
-		    } else {
-			push (@terms, $term);
 		    }
 		}
 	    }

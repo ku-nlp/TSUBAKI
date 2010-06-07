@@ -117,7 +117,11 @@ sub to_S_exp_for_anchor {
     return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, 3, $this->{gdf}, 1, (($this->{term_type} =~ /word/) ? 2 : 3));
 }
 
+sub get_id {
+    my ($this) = @_;
 
+    return sprintf "%s%s", $this->{blockType}, $this->{text};
+}
 
 
 #     $this->{kihonku} = $kihonkus->[$j];
