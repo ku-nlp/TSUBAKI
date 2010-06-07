@@ -22,24 +22,27 @@ GetOptions(\%opt, 'offset=s', 'idxfile=s');
 
 sub main {
 
-    tie my %offsetdb, 'CDB_File', $opt{offset} or die $!;
+
     open (my $idxfile, $opt{idxfile}) or die $!;
 
     open (my $new_idxfile, "> $opt{idxfile}.conv") or die $!;
     open (my $new_offfile, "> $opt{offset}.conv.txt") or die $!;
-#   my $new_offsetdb = new CDB_File ("$opt{offset}.conv", "$opt{offset}.conv.tmp") or die $!;
     my $new_offset = 0;
-    while (my ($term, $offset) = each %offsetdb) {
-	my $byte_data = &convert($idxfile, $offset);
-	print $new_idxfile $byte_data;
-	print $new_offfile "$term  $new_offset\n" ;
-#	$new_offsetdb->insert($term, $new_offset);
-	$new_offset += length($byte_data);
+    foreach my $offsetf (@ARGV) {
+	tie my %offsetdb, 'CDB_File', $offsetf or die $!;
+	# my $new_offsetdb = new CDB_File ("$opt{offset}.conv", "$opt{offset}.conv.tmp") or die $!;
+	while (my ($term, $offset) = each %offsetdb) {
+	    my $byte_data = &convert($idxfile, $offset);
+	    print $new_idxfile $byte_data;
+	    print $new_offfile "$term  $new_offset\n" ;
+	    # $new_offsetdb->insert($term, $new_offset);
+	    $new_offset += length($byte_data);
 
-#	last if ($new_offset > 10000);
+	    # last if ($new_offset > 10000);
+	}
     }
     close ($new_idxfile);
-#   $new_offsetdb->finish(); 
+    # $new_offsetdb->finish(); 
     close ($new_offfile);
 }
 
