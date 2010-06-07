@@ -135,16 +135,16 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     /* 新しいインデックスフォーマット */
     std::string index_word_file         = index_dir + "/idx000.word.dat.conv";
     std::string index_dpnd_file         = index_dir + "/idx000.dpnd.dat.conv";
-    std::string offset_word_file        = index_dir + "/offset000.word.cdb.conv";
-    std::string offset_dpnd_file        = index_dir + "/offset000.dpnd.cdb.conv";
+    std::string offset_word_file        = index_dir + "/offset000.word.conv.cdb.keymap";
+    std::string offset_dpnd_file        = index_dir + "/offset000.dpnd.conv.cdb.keymap";
     std::string tid2sid_file            = index_dir + "/sid2tid";
     std::string sid2url_file            = index_dir + "/did2url.cdb";
     std::string sid2title_file          = index_dir + "/did2title.cdb";
     std::string tid2length_file         = index_dir + "/000.doc_length.txt";
     std::string anchor_index_word_file  = anchor_index_dir + "/idx000.word.dat.conv";
     std::string anchor_index_dpnd_file  = anchor_index_dir + "/idx000.dpnd.dat.conv";
-    std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.cdb.conv";
-    std::string anchor_offset_dpnd_file = anchor_index_dir + "/offset000.dpnd.cdb.conv";
+    std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.conv.cdb.keymap";
+    std::string anchor_offset_dpnd_file = anchor_index_dir + "/offset000.dpnd.conv.cdb.keymap";
 
     index_streams.push_back(new std::ifstream(index_word_file.c_str()));
     index_streams.push_back(new std::ifstream(index_dpnd_file.c_str()));
@@ -156,8 +156,8 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     offset_dbs.push_back(new Dbm(anchor_offset_word_file));
     offset_dbs.push_back(new Dbm(anchor_offset_dpnd_file));
 
-    sid2url_cdb    = new Dbm(sid2url_file.c_str());
-    sid2title_cdb  = new Dbm(sid2title_file.c_str());
+    sid2url_cdb    = new Dbm(sid2url_file);
+    sid2title_cdb  = new Dbm(sid2title_file);
 
     ifstream fin(tid2sid_file.c_str());
     while (!fin.eof()) {
@@ -227,7 +227,8 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 	    std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
 	    std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
 
-	    sbuf << sid << " " << ((*it)->to_string()) << " " << title << " " << url << " " << (*it)->get_final_score() << endl;
+//	    sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
+	    cerr << (*it)->get_id() << " " << ((*it)->to_string()) << " " << (*it)->get_final_score() << endl;
 	    /*
 	     * フレーズ検索
 	    if ((*it)->get_phrase_feature() > 0) {
@@ -238,6 +239,8 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 	    if (++count > NUM_OF_RETURN_DOCUMENTS)
 		break;
 	}
+	cerr << endl;
+
 	double _end = (double) gettimeofday_sec();
 	int hitcount = docs.size();
 
