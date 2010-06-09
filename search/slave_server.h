@@ -353,12 +353,12 @@ class Documents {
 	index_streams = in_index_streams;
 	// Set a large buffer for each stream
 
-	for (std::vector<std::ifstream *>::iterator it = in_index_streams->begin(), end = in_index_streams->end(); it != end; ++it) {
-	    const int M = 32 * 1024 * 1024;
-	    char* buf = new char[M];
-	    char* internal_buf = new char[M];
-	    (*it)->rdbuf()->pubsetbuf(internal_buf, M);
-	}
+	/* for (std::vector<std::ifstream *>::iterator it = in_index_streams->begin(), end = in_index_streams->end(); it != end; ++it) { */
+	/*     const int M = 32 * 1024 * 1024; */
+	/*     char* buf = new char[M]; */
+	/*     char* internal_buf = new char[M]; */
+	/*     (*it)->rdbuf()->pubsetbuf(internal_buf, M); */
+	/* } */
 
 	__documents_index = NULL;
 	s_documents_index = NULL;
