@@ -25,6 +25,7 @@ __gnu_cxx::hash_map<int, string> tid2sid;
 __gnu_cxx::hash_map<int, string> tid2url;
 __gnu_cxx::hash_map<int, string> tid2title;
 __gnu_cxx::hash_map<int, int> tid2len;
+std::map<string, int> rmsids;
 
 double gettimeofday_sec() {
     struct timeval tv;
@@ -58,17 +59,19 @@ std::vector<double> *search (std::string *query,
     for (std::vector<Document *>::iterator it = result_docs->get_s_documents()->begin(); it != result_docs->get_s_documents()->end(); it++) {
 	Document *doc = result_docs->get_doc((*it)->get_id());
 
+	// 文書長の取得
 	int length = 10000;
 	__gnu_cxx::hash_map<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
 	if (_sid != tid2sid->end()) {
 	    __gnu_cxx::hash_map<int, int>::iterator _length = tid2len->find((*it)->get_id());
-	    if (_length != tid2len->end()) {
-		std::string _val = (*_sid).second;
-		length = (int)atoi(_val);
-	    }
+	    if (_length != tid2len->end())
+		length = (*_length).second;
 	}
-
 	doc->set_length(length);
+
+	// rmfilesにあればスキップ
+	if (rmsids.find((*_sid).second) != rmsids.end())
+	    continue;
 
 	bool flag = result_docs->walk_and_or(*it);
 	if (flag) {
@@ -82,17 +85,20 @@ std::vector<double> *search (std::string *query,
     for (std::vector<Document *>::iterator it = result_docs->get_l_documents()->begin(); it != result_docs->get_l_documents()->end(); it++) {
 	Document *doc = result_docs->get_doc((*it)->get_id());
 
+	// 文書長の取得
 	int length = 10000;
 	__gnu_cxx::hash_map<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
 	if (_sid != tid2sid->end()) {
 	    __gnu_cxx::hash_map<int, int>::iterator _length = tid2len->find((*it)->get_id());
-	    if (_length != tid2len->end()) {
-		std::string _val = (*_sid).second;
-		length = (int)atoi(_val);
-	    }
+	    if (_length != tid2len->end())
+		length = (*_length).second;
 	}
-
 	doc->set_length(length);
+
+	// rmfilesにあればスキップ
+	if (rmsids.find((*_sid).second) != rmsids.end())
+	    continue;
+
 
 	bool flag = result_docs->walk_and_or(*it);
 	if (flag) {
@@ -141,6 +147,7 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     std::string sid2url_file            = index_dir + "/did2url.cdb";
     std::string sid2title_file          = index_dir + "/did2title.cdb";
     std::string tid2length_file         = index_dir + "/000.doc_length.txt";
+    std::string rmfiles                 = index_dir + "/rmfiles";
     std::string anchor_index_word_file  = anchor_index_dir + "/idx000.word.dat.conv";
     std::string anchor_index_dpnd_file  = anchor_index_dir + "/idx000.dpnd.dat.conv";
     std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.conv.cdb.keymap";
@@ -198,6 +205,18 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
 	tid2len.insert(pair<int, int>(_tid, _length));
     }
     fin1.close();
+
+    ifstream fin2(rmfiles.c_str());
+    if (fin2) {
+        while (!fin2.eof()) {
+            string _sid;
+            fin2 >> _sid;
+            rmsids.insert(pair<string,int>(_sid, 1));
+        }
+    } else {
+        cerr << "Not found: " << rmfiles << endl;
+    }
+    fin2.close();
 }
 
 bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
@@ -224,11 +243,11 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 	for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
 	    // テスト時はコメントアウトすること
 	    std::string sid = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
-	    std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
-	    std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
+//	    std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
+//	    std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
 
 //	    sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
-	    cerr << (*it)->get_id() << " " << ((*it)->to_string()) << " " << (*it)->get_final_score() << endl;
+	    cerr << sid << " " << ((*it)->to_string()) << " " << (*it)->get_final_score() << endl;
 	    /*
 	     * フレーズ検索
 	    if ((*it)->get_phrase_feature() > 0) {
