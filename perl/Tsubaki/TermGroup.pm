@@ -12,7 +12,7 @@ use Data::Dumper;
 use Configure;
 use CDB_Reader;
 
-
+my $CONFIG = Configure::get_instance();
 
 my $font_size = 12;
 my $arrow_size = 3;
@@ -80,6 +80,28 @@ sub remove_yomi {
 }
 
 
+sub reduceSynNode {
+    my ($basic_node, $synnodes, $dfdb, $opt) = @_;
+
+    next unless (defined $synnodes);
+
+    my $N = ($opt->{use_of_antonym_expansion}) ? int (0.5 * ($CONFIG->{MAX_NUMBER_OF_SYNNODES} + 1)) : $CONFIG->{MAX_NUMBER_OF_SYNNODES};
+
+    # 各ノードのgdfを得る
+    my $count = 0;
+    my @newNodes = ();
+
+    push (@newNodes, $basic_node);
+    foreach my $node (sort {$dfdb->get(&remove_yomi($b->synid)) <=> $dfdb->get(&remove_yomi($a->synid)) } @$synnodes) {
+	next if ($basic_node == $node);
+
+	push (@newNodes, $node);
+	last if (++$count >= $N);
+    }
+
+    return \@newNodes;
+}
+
 sub new {
     my ($class, $gid, $parentGroup, $synnodes, $tagids, $children, $parent, $opt) = @_;
 
@@ -92,61 +114,108 @@ sub new {
     $this->{isRoot} = $opt->{isRoot};
     if ($opt->{isRoot}) {
 	$this->{optionals} = $opt->{optionals};
-    }
-    my $CONFIG = Configure::get_instance();
-
-    # 蝓ｺ譛ｬ蜿･驟榊�荳ｭ縺ｧ縺ｮ菴咲ｽｮ
-    $this->{position} = $tagids;
-
-    my $basic_node = &getBasicNode($synnodes);
-
-    # $UTIL->getGDF($basic_node->synid);
-    my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
-    if ($basic_node) {
-	$this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($basic_node->synid)));
     } else {
-	$this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($synnodes->[0]->synid))) if (defined $synnodes);
+	$this->{position} = $tagids;
+
+	my $basic_node = &getBasicNode($synnodes);
+
+	# $UTIL->getGDF($basic_node->synid);
+	my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
+
+	$synnodes = &reduceSynNode($basic_node, $synnodes, $DFDBS_WORD, $opt) if ($CONFIG->{MAX_NUMBER_OF_SYNNODES});
+
+	if ($basic_node) {
+	    $this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($basic_node->synid)));
+	} else {
+	    $this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($synnodes->[0]->synid))) if (defined $synnodes);
+	}
+
+	&pushbackTerms ($this, $basic_node, $synnodes, $gid, $opt);
     }
+
+    bless $this;
+}
+
+sub removeSyntacticFeatures {
+    my ($midasi) = @_;
+
+    $midasi =~ s/<可能>//;
+    $midasi =~ s/<尊敬>//;
+    $midasi =~ s/<受身>//;
+    $midasi =~ s/<使役>//;
+
+    return $midasi;
+}
+
+sub pushbackTerms {
+    my ($this, $basic_node, $synnodes, $gid, $opt) = @_;
 
     my $cnt = 0;
     my %alreadyPushedTexts = ();
     foreach my $synnode (@$synnodes) {
-	my $text_wo_yomi = sprintf ("%s%s", &remove_yomi($synnode->synid), $synnode->feature);
+	my $_midasi = sprintf ("%s%s", &remove_yomi($synnode->synid), $synnode->feature);
+
+	# <反義語><否定>を利用するかどうか
+	if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
+	    next unless ($opt->{option}{use_of_negation_and_antonym});
+	}
+
+	# SYNノードを利用しない場合
+	next if ($_midasi =~ /s\d+/ && $opt->{option}{disable_synnode});
 
 	# 文法素性の削除
-	$text_wo_yomi =~ s/<可能>//;
-	$text_wo_yomi =~ s/<尊敬>//;
-	$text_wo_yomi =~ s/<受身>//;
-	$text_wo_yomi =~ s/<使役>//;
+	$_midasi = &removeSyntacticFeatures($_midasi);
 
-	next if (exists $alreadyPushedTexts{$text_wo_yomi});
-	$alreadyPushedTexts{$text_wo_yomi} = 1;
+	# 反義語を使ってタームを拡張する
+	my $midasis = &expandAntonymAndNegationTerms($_midasi, $opt);
 
+	# 利用するブロックタイプの取得
+	my $blockTypes = ();
 	if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
-	    foreach my $tag (keys %{$opt->{option}{blockTypes}}) {
+	    $blockTypes = $opt->{option}{blockTypes};
+	} else {
+	    $blockTypes->{UNDEF} = 1;
+	}
+
+	foreach my $midasi (@$midasis) {
+	    next if (exists $alreadyPushedTexts{$midasi});
+	    $alreadyPushedTexts{$midasi} = 1;
+
+	    foreach my $tag (keys %$blockTypes) {
 		my $term = new Tsubaki::Term ({
 		    tid => sprintf ("%s-%s", $gid, $cnt++),
-		    text => $text_wo_yomi,
+		    text => $midasi,
 		    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
 		    node_type => ($synnode eq $basic_node) ? 'basic' : 'syn',
 		    gdf => $this->{gdf},
-		    blockType => $tag
+		    blockType => (($tag eq 'UNDEF') ? undef : $tag)
 					      });
 		push (@{$this->{terms}}, $term);
 	    }
-	} else {
-	    my $term = new Tsubaki::Term ({
-		tid => sprintf ("%s-%s", $gid, $cnt++),
-		text => $text_wo_yomi,
-		term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
-		node_type => ($synnode eq $basic_node) ? 'basic' : 'syn',
-		gdf => $this->{gdf}
-					  });
-	    push (@{$this->{terms}}, $term);
 	}
     }
+}
 
-    bless $this;
+sub expandAntonymAndNegationTerms {
+    my ($midasi, $opt) = @_;
+
+    my @buf;
+    push (@buf, $midasi);
+    # 拡張するタームを最後のものに限定する必要あり
+    if ($opt->{option}{antonym_and_negation_expansion}) {
+	# 反義情報の削除
+	$midasi =~ s/<反義語>//;
+
+	# <否定>の付け変え
+	if ($midasi =~ /<否定>/) {
+	    $midasi =~ s/<否定>//;
+	} else {
+	    $midasi .= '<否定>';
+	}
+	push (@buf, $midasi);
+    }
+
+    return \@buf;
 }
 
 sub terms {
