@@ -42,11 +42,12 @@ sub new {
 	KNP => $CONFIG->{KNP},
 	INDEXER => $indexer,
 	INDEXER_GENKEI => $indexer_genkei,
-	DFDBS_WORD => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR})) : (),
-	DFDBS_DPND => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR})) : (),
+	DFDBS_WORD => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $opts->{DFDB_DIR})) : undef,
+	DFDBS_DPND => (-e $opts->{DFDB_DIR}) ? new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $opts->{DFDB_DIR})) : undef,
 	OPTIONS => {
 	    trimming => $opts->{QUERY_TRIMMING},
 	    use_of_block_types => defined($opts->{USE_OF_BLOCK_TYPES}) ? $opts->{USE_OF_BLOCK_TYPES} : $CONFIG->{USE_OF_BLOCK_TYPES}, # newに指定された設定は、CONFIGよりも優先
+	    is_cpp_mode => defined($opts->{IS_CPP_MODE}) ? $opts->{IS_CPP_MODE} : $CONFIG->{IP_CPP_MODE}, # newに指定された設定は、CONFIGよりも優先
 	    syngraph => undef
 	}
     };
@@ -313,6 +314,7 @@ sub _linguisticAnalysis {
 
 
 	if ($opt->{syngraph}) {
+	    $this->_setSynGraphObj();
 	    # SynGraphで解析する
 	    return $this->_runSynGraph($knpresult, $opt);
 	} else {
@@ -362,7 +364,7 @@ sub _runSynGraph {
     $opt->{syngraph_option}{hypocut_attachnode} = 9;
 
     $knpresult->set_id(0);
-    my $synresult = $CONFIG->{SYNGRAPH}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
+    my $synresult = $this->{SYNGRAPH}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
 
     $this->{syn_result} = new KNP::Result($synresult);
     $this->{logger}->setTimeAs('SynGraph', '%.3f') if (defined $this->{logger});
@@ -415,7 +417,7 @@ sub createQueryKeywordObj {
     my $result = $this->_linguisticAnalysis($search_expression, $opt);
 
 
-    if ($CONFIG->{IS_CPP_MODE}) {
+    if ($this->{OPTIONS}{is_cpp_mode}) {
 	return &Tsubaki::TermGroupCreater::create($result, $opt);
     }
     else {
@@ -603,7 +605,7 @@ sub parse {
 	# QueryKeywordオブジェクトの構築
 	my $qk = $this->createQueryKeywordObj($search_expression, $opt);
 
-	if ($CONFIG->{IS_CPP_MODE}) {
+	if ($this->{OPTIONS}{is_cpp_mode}) {
 	    push (@sexps, $qk->to_S_exp());
 	}
 	elsif ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
