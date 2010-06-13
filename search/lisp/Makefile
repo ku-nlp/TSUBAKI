@@ -1,4 +1,4 @@
-CFLAGS = -fPIC -O3 -Wall
+CFLAGS = -fPIC -O3
 
 all: lisp.a
 

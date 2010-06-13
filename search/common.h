@@ -18,6 +18,20 @@
 #include "lisp.h"
 #include "cdb.h"
 
+#define MAP_IMPL __gnu_cxx::hash_map
+
+#define PROXIMATE_LENGTH 100
+#define WEIGHT_OF_STRICT_TERM_F 100
+#define WEIGHT_OF_PROXIMATE_F 50
+#define TOTAL_NUMBUER_OF_DOCS 100132750
+#define AVERAGE_DOC_LENGTH 907
+// #define DEBUG 0
+#define TEST_MODE 0
+#define VERBOSE 0
+#define MAX_LENGTH_OF_DOCUMENT 1000000
+#define SIZEOFINT sizeof(int)
+#define NUM_OF_RETURN_DOCUMENTS 30
+
 enum documents_type {
     DOCUMENTS_ROOT, 
     DOCUMENTS_AND, 
@@ -72,22 +86,6 @@ template<class T>
 inline int split_string(const std::string &src, const std::string &key, T &result)
 {
     return split_string(src, key, result, 0);
-}
-
-// join function
-inline std::string join_string(const std::vector<std::string> &str, const std::string &key)
-{
-    std::string dst;
-
-    for (std::vector<std::string>::const_iterator i = str.begin(); i != str.end(); i++) {
-        if (i == str.begin()) {
-            dst += *i;
-        }
-        else {
-            dst += key + *i;
-        }
-    }
-    return dst;
 }
 
 inline bool is_blank_line(const std::string &str)

@@ -1,8 +1,8 @@
 CXX = g++4
 # CXXFLAGS = -I lisp -g -Wall -pg -I /usr/local/include/ -I /home/skeiji/local/include/
 CXXFLAGS = -I lisp -O3 -Wall -I /usr/local/include/ -I /home/skeiji/local/include/
-OBJECTS = slave_server.o
-HEADERS = slave_server.h hash.h
+OBJECTS = slave_server.o document.o documents.o
+HEADERS = hash.h common.h term.h document.h documents.h
 MAKE_DB_OBJECTS = make_db.cc
 LISP_LIB = lisp/lisp.a
 CDB_LIB = -lcdb

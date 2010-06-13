@@ -1,30 +1,20 @@
-# include <iostream>
-# include <stdio.h>
-# include <unistd.h>
-# include <sys/socket.h>
-# include <sys/wait.h>
-# include <arpa/inet.h>
-# include <signal.h>
-# include <errno.h>
-# include "slave_server.h"
-# include <fstream>
-# include <iostream>
-# include <algorithm>
-# include <time.h>
-# include <sys/time.h>
-
-# define NUM_OF_RETURN_DOCUMENTS 30
-
-using namespace std;
+#include <sys/wait.h>
+#include <arpa/inet.h>
+#include <errno.h>
+#include "common.h"
+#include "hash.h"
+#include "term.h"
+#include "document.h"
+#include "documents.h"
 
 std::vector<std::ifstream *> index_streams;
 std::vector<Dbm *> offset_dbs;
 Dbm *sid2url_cdb;
 Dbm *sid2title_cdb;
-__gnu_cxx::hash_map<int, string> tid2sid;
-__gnu_cxx::hash_map<int, string> tid2url;
-__gnu_cxx::hash_map<int, string> tid2title;
-__gnu_cxx::hash_map<int, int> tid2len;
+MAP_IMPL<int, string> tid2sid;
+MAP_IMPL<int, string> tid2url;
+MAP_IMPL<int, string> tid2title;
+MAP_IMPL<int, int> tid2len;
 std::map<string, int> rmsids;
 
 double gettimeofday_sec() {
@@ -41,8 +31,8 @@ bool sort_by_final_score (Document *left, Document *right) {
 std::vector<double> *search (std::string *query,
 	     std::vector<std::ifstream*> *index_streams,
 	     std::vector<Dbm *> *offset_dbs,
-	     __gnu_cxx::hash_map<int, string> *tid2sid,
-	     __gnu_cxx::hash_map<int, int> *tid2len,
+	     MAP_IMPL<int, string> *tid2sid,
+	     MAP_IMPL<int, int> *tid2len,
 	     std::vector<Document *> *docs) {
 
     char *_query = (char*)query->c_str();
@@ -61,9 +51,9 @@ std::vector<double> *search (std::string *query,
 
 	// 文書長の取得
 	int length = 10000;
-	__gnu_cxx::hash_map<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
+	MAP_IMPL<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
 	if (_sid != tid2sid->end()) {
-	    __gnu_cxx::hash_map<int, int>::iterator _length = tid2len->find((*it)->get_id());
+	    MAP_IMPL<int, int>::iterator _length = tid2len->find((*it)->get_id());
 	    if (_length != tid2len->end())
 		length = (*_length).second;
 	}
@@ -87,9 +77,9 @@ std::vector<double> *search (std::string *query,
 
 	// 文書長の取得
 	int length = 10000;
-	__gnu_cxx::hash_map<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
+	MAP_IMPL<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
 	if (_sid != tid2sid->end()) {
-	    __gnu_cxx::hash_map<int, int>::iterator _length = tid2len->find((*it)->get_id());
+	    MAP_IMPL<int, int>::iterator _length = tid2len->find((*it)->get_id());
 	    if (_length != tid2len->end())
 		length = (*_length).second;
 	}
@@ -166,7 +156,7 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     sid2url_cdb    = new Dbm(sid2url_file);
     sid2title_cdb  = new Dbm(sid2title_file);
 
-    ifstream fin(tid2sid_file.c_str());
+    std::ifstream fin(tid2sid_file.c_str());
     while (!fin.eof()) {
 	string sid;
 	string tid;
@@ -174,7 +164,7 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
 	fin >> tid;
 
 	int _tid = (int)atoi(tid);
-	tid2sid.insert(pair<int, string>(_tid, sid));
+	tid2sid.insert(std::pair<int, string>(_tid, sid));
 
 	// cdb -> map
 	string url = sid2url_cdb->get(sid);
@@ -189,12 +179,12 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
 	    }
 	}
 
-	tid2url.insert(pair<int, string>(_tid, url));
-	tid2title.insert(pair<int, string>(_tid, title));
+	tid2url.insert(std::pair<int, string>(_tid, url));
+	tid2title.insert(std::pair<int, string>(_tid, title));
     }
     fin.close();
 
-    ifstream fin1(tid2length_file.c_str());
+    std::ifstream fin1(tid2length_file.c_str());
     while (!fin1.eof()) {
 	string tid;
 	string length;
@@ -202,29 +192,26 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
 	fin1 >> length;
 	int _tid = (int)atoi(tid);
 	int _length = (int)atoi(length);
-	tid2len.insert(pair<int, int>(_tid, _length));
+	tid2len.insert(std::pair<int, int>(_tid, _length));
     }
     fin1.close();
 
-    ifstream fin2(rmfiles.c_str());
+    std::ifstream fin2(rmfiles.c_str());
     if (fin2) {
         while (!fin2.eof()) {
             string _sid;
             fin2 >> _sid;
-            rmsids.insert(pair<string,int>(_sid, 1));
+            rmsids.insert(std::pair<string,int>(_sid, 1));
         }
     } else {
         cerr << "Not found: " << rmfiles << endl;
     }
     fin2.close();
+
+    return true;
 }
 
 bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
-
-    int i, status;
-    struct sockaddr_in sin;
-    int sfd, fd;
-    FILE *Infp, *Outfp;
 
     init (index_dir, anchor_index_dir,TSUBAKI_SLAVE_PORT, HOSTNAME);
 
@@ -242,9 +229,9 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 	std::ostringstream sbuf;
 	for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
 	    // テスト時はコメントアウトすること
-	    std::string sid = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
-//	    std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
-//	    std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
+	    std::string sid = (*(MAP_IMPL<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
+//	    std::string title = (*(MAP_IMPL<int, string>::iterator)tid2title.find((*it)->get_id())).second;
+//	    std::string url = (*(MAP_IMPL<int, string>::iterator)tid2url.find((*it)->get_id())).second;
 
 //	    sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
 	    cerr << sid << " " << ((*it)->to_string()) << " " << (*it)->get_final_score() << endl;
@@ -260,7 +247,6 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 	}
 	cerr << endl;
 
-	double _end = (double) gettimeofday_sec();
 	int hitcount = docs.size();
 
 	sbuf << "hitcount " << hitcount << endl;
@@ -363,28 +349,23 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 	    // string _query_str = "( (ROOT (OR ((京大 1 1000 1 0)) (AND ((京都 1 100 1 0)) ((駅 1 500 1 0)) ) ) ((アクセス 2 200 1 0)) ))";
 	    string _query = buf;
 	    std::vector<Document *> docs;
-	    double search_bgn = (double) gettimeofday_sec();
 	    std::vector<double> *logdata = search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
 
-
 	    // search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
-	    double search_end = (double) gettimeofday_sec();
 
 	    int count = 0;
 	    for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
 
-		std::string sid = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
-		std::string title = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2title.find((*it)->get_id())).second;
-		std::string url = (*(__gnu_cxx::hash_map<int, string>::iterator)tid2url.find((*it)->get_id())).second;
+		std::string sid = (*(MAP_IMPL<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
+		std::string title = (*(MAP_IMPL<int, string>::iterator)tid2title.find((*it)->get_id())).second;
+		std::string url = (*(MAP_IMPL<int, string>::iterator)tid2url.find((*it)->get_id())).second;
 
 		sbuf << sid << " " << ((*it)->to_string()) << " " << title << " " << url << " " << (*it)->get_final_score() << endl;
 
 		if (++count > NUM_OF_RETURN_DOCUMENTS)
 		    break;
 	    }
-	    double scornd = (double) gettimeofday_sec();
 	    int hitcount = docs.size();
-
 
 	    sbuf << "hitcount " << hitcount << endl;
 	    sbuf << "HOSTNAME " << HOSTNAME << " " << TSUBAKI_SLAVE_PORT << endl;
@@ -393,12 +374,8 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 	    sbuf << "SORT_TIME " << logdata->at(3) << endl;
 	    sbuf << "LEAVE " << (gettimeofday_sec() - arrive_time) << " " << gettimeofday_sec();
 
-	    fprintf(Outfp, sbuf.str().c_str());
-	    fprintf(Outfp, "\n");
+	    fprintf(Outfp, "%s\n", sbuf.str().c_str());
 	    fflush(Outfp);
-
-
-
 
 	    // 後処理
 	    shutdown(fd, 2);
