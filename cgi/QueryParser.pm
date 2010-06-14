@@ -47,7 +47,7 @@ sub new {
 	OPTIONS => {
 	    trimming => $opts->{QUERY_TRIMMING},
 	    use_of_block_types => defined($opts->{USE_OF_BLOCK_TYPES}) ? $opts->{USE_OF_BLOCK_TYPES} : $CONFIG->{USE_OF_BLOCK_TYPES}, # newに指定された設定は、CONFIGよりも優先
-	    is_cpp_mode => defined($opts->{IS_CPP_MODE}) ? $opts->{IS_CPP_MODE} : $CONFIG->{IP_CPP_MODE}, # newに指定された設定は、CONFIGよりも優先
+	    is_cpp_mode => defined($opts->{IS_CPP_MODE}) ? $opts->{IS_CPP_MODE} : $CONFIG->{IS_CPP_MODE}, # newに指定された設定は、CONFIGよりも優先
 	    syngraph => undef
 	}
     };
@@ -636,7 +636,7 @@ sub parse {
 	dpnd_map => $properties->{dpnd_map},
 	antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
 	option => $opt,
-	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0]))
+	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("%s", $sexps[0]))
 			});
 
 
