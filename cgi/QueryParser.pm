@@ -410,7 +410,7 @@ sub createQueryKeywordObj {
     $search_expression = $this->_normalizeSearchExpression($search_expression);
 
     # フレーズ検索の場合はSynGraphを適用しない
-    $opt->{syngraph} = 1 if ($is_phrasal_search);
+    $opt->{syngraph} = 1 if ($is_phrasal_search > 0);
 
 
     # 言語解析
