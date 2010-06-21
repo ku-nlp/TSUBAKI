@@ -15,7 +15,11 @@ NICE=-4
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 CGI_DIR=$TSUBAKI_DIR/cgi
 MODULE_DIR=$TSUBAKI_DIR/perl
+SLAVE_SERVER_DIR=$TSUBAKI_DIR/search
 COMMAND=tsubaki_server.pl
+EXEC_COMMAND="$PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND"
+# COMMAND=slave_server
+# EXEC_COMMAND=$SLAVE_SERVER_DIR/$COMMAND
 USE_OF_SYNGRAPH="-syngraph"
 MEM=4194304
 
@@ -24,9 +28,9 @@ LOGFILE=`grep SERVER_LOG_FILE $CONFIG_FILE | awk '{print $2}'`
 
 
 start() {
-    num=`ps auxww | grep tusbaki-server-manager.sh | grep -v share | grep start | grep -v grep | wc -l`
+    num=`ps auxww | grep tsubaki-server-manager.sh | grep -v share | grep start | grep -v grep | wc -l`
     if [ $num -gt 2 ] ; then
-	echo Aleady running TSUBAKI SERVER MANAGER.
+	echo Already running TSUBAKI SERVER MANAGER.
 	exit
     fi
 
@@ -43,16 +47,29 @@ start() {
 		    idxdir=`echo $LINE | cut -f 1 -d ' '`
 		    anchor_idxdir=`echo $LINE | cut -f 2 -d ' '`
 		    dlengthdbdir=$idxdir
-		    if [ $anchor_idxdir == "none" ]; then
-			OPTION="-idxdir $idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
+		    if [ $anchor_idxdir = "none" ]; then
+			if [ $COMMAND = "slave_server" ]; then
+			    echo anchor_idxdir is not specified.
+			    exit
+			else
+			    OPTION="-idxdir $idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
+			fi
 		    else
-			OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
+			if [ $COMMAND = "slave_server" ]; then
+			    OPTION="$idxdir $anchor_idxdir $PORT `hostname`"
+			else
+			    OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
+			fi
 		    fi
 
-		    if [ -e $idxdir ]; then
+		    if [ -d $idxdir ]; then
 			echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\)
 			echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
-			ulimit -Ss $MEM ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $OPTION &
+			if [ $COMMAND = "slave_server" ]; then
+			    ulimit -Ss $MEM ; nice $NICE $EXEC_COMMAND $OPTION
+			else
+			    ulimit -Ss $MEM ; nice $NICE $EXEC_COMMAND $OPTION &
+			fi
 		    fi
  		fi
 	    fi
