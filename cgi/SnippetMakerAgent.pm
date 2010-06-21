@@ -84,7 +84,7 @@ sub create_snippets {
 #	    print $doc->{did} . " " . $doc->{start} . " " . $doc->{end}. "<BR>\n";
 	    push(@{$port2docs{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}[$count++ % $num_of_ports]}}, $doc);
 
-	    print Dumper ($doc) . "<BR>\n";
+#	    print Dumper ($doc) . "<BR>\n";
 	}
 
 
