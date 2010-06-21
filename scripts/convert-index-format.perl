@@ -29,6 +29,7 @@ sub main {
     open (my $new_offfile, "> $opt{offset}") or die $!;
     my $new_offset = 0;
     foreach my $offsetf (@ARGV) {
+	next unless -f $offsetf;
 	tie my %offsetdb, 'CDB_File', $offsetf or die $!;
 	# my $new_offsetdb = new CDB_File ("$opt{offset}.conv", "$opt{offset}.conv.tmp") or die $!;
 	while (my ($term, $offset) = each %offsetdb) {
@@ -40,6 +41,7 @@ sub main {
 
 	    # last if ($new_offset > 10000);
 	}
+	untie %offsetdb;
     }
     close ($new_idxfile);
     # $new_offsetdb->finish(); 
