@@ -344,8 +344,8 @@ sub broadcastSearch {
     # ロギング
     ##########
     $_logger->setTimeAs('get_result_from_server', '%.3f');
-    print "slave_server_access " . $_logger->getParameter('get_result_from_server') . "<BR>\n";
-    print "finish to harvest search results (" . $logger->getParameter('get_result_from_server') . " sec.)\n" if ($opt->{debug} > 1);
+#    print "slave_server_access " . $_logger->getParameter('get_result_from_server') . "<BR>\n";
+#    print "finish to harvest search results (" . $logger->getParameter('get_result_from_server') . " sec.)\n" if ($opt->{debug} > 1);
 
     # 検索スレーブサーバー側でのログを保存
     my $size = scalar(@$_results);
