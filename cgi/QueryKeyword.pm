@@ -849,9 +849,11 @@ sub getPaintingJavaScriptCode {
 			$_str =~ s/(\/|:).+//;
 			$_str = lc($_str);
 			push (@basicNodes, $_str);
+			$tid2syns{$i}->{$_str} = 1;
 			$tid2syns{$i}->{"$_str$joshi"} = 1;
 			if ($_yomi) {
 			    push (@basicNodes, $_yomi);
+			    $tid2syns{$i}->{$_yomi} = 1;
 			    $tid2syns{$i}->{"$_yomi$joshi"} = 1;
 			}
 		    }
@@ -867,6 +869,7 @@ sub getPaintingJavaScriptCode {
 				$w = lc($w);
 				$w =~ s/人」/人/;
 				$_buf{$w} = 1;
+				$tid2syns{$i}->{$w} = 1;
 				$tid2syns{$i}->{"$w$joshi"} = 1;
 			    }
 
@@ -884,6 +887,7 @@ sub getPaintingJavaScriptCode {
 				} else {
 				    my ($remain) = ($w =~ /^$matched_exp(.+)$/);
 				    # 「景気が冷える」と「冷える」は別のSynNodeのため
+				    # 費用対効果は要検討
 				    unless (exists $tid2syns{$lastTid}->{$remain}) {
 					$w =~ s/$matched_exp/（$matched_exp）/g;
 					$synbuf{$w} = 1;
@@ -989,12 +993,13 @@ sub getPaintingJavaScriptCode {
 
 	    # 係り先の係り先への係り受けを描画
 	    if (defined $_kakarisaki) {
-		my $mark = ($kakarisaki->fstring() =~ /クエリ削除語/) ?  'Ｘ' : '△';
+		my $mark = ($_kakarisaki->fstring() =~ /クエリ削除語/) ?  'Ｘ' : '△';
 		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $_kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
 	    }
 	}
 
 	my $mark = ($kakarimoto->fstring() =~ /クエリ必須係り受け/) ?  '〇' : (($kakarimoto->fstring() =~ /クエリ削除係り受け/) ? 'Ｘ' : '△');
+	$mark = 'Ｘ' if (defined $kakarisaki && $kakarisaki->fstring() =~ /<クエリ削除語>/);
 	$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
     }
 
@@ -1045,7 +1050,7 @@ sub getDrawingDependencyCode {
 
     # 係り受けの線をひく
 
-    if ($mark eq '×') {
+    if ($mark eq 'Ｘ') {
 	$jscode .= qq(jg.setStroke(Stroke.DOTTED);\n);
     } else {
 	$jscode .= qq(jg.setStroke(1);\n);
