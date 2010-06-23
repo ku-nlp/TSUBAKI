@@ -741,9 +741,138 @@ sub normalize {
     return join(',', @buf);
 }
 
+sub _getNormalizedString {
+    my ($str) = @_;
+
+    my ($yomi) = ($str =~ m!/(.+?)(?:v|a)?$!);
+    $str =~ s/\[.+?\]//g;
+    $str =~ s/(\/|:).+//;
+    $str = lc($str);
+    $str =~ s/人」/人/;
+
+    return ($str, $yomi);
+}
+
+sub _pushbackBuf {
+    my ($i, $tid2syns, $string, $yomi, $functional_word) = @_;
+
+    foreach my $e (($string, $yomi)) {
+	next unless ($e);
+
+	$tid2syns->{$i}{$e} = 1;
+	$tid2syns->{$i}{sprintf ("%s%s", $e, $functional_word)} = 1;
+    }
+}
+
+sub _getPackedExpressions {
+    my ($i, $synbuf, $tid2syns, $tids, $str, $functional_word, $syngraph) = @_;
+
+    my %buf = ();
+    my @synonymous_exps = split(/\|+/, decode('utf8', $syngraph->{syndb}{$str}));
+    my $max_num_of_words = 0;
+    if (scalar(@synonymous_exps) > 1) {
+	foreach my $_string (@synonymous_exps) {
+	    my ($string, $yomi) = &_getNormalizedString($_string);
+	    &_pushbackBuf($i, $tid2syns, $string, undef, $functional_word);
+	    $buf{$string} = 1;
+	}
+
+	foreach my $string (keys %buf) {
+	    my $matched_exp = undef;
+	    if (scalar(@$tids) > 1) {
+		my $_string = $string;
+		foreach my $tid (@$tids) {
+		    my $isMatched = 0;
+		    foreach my $_prev (sort {length($b) <=> length($a)} keys %{$tid2syns->{$tid}}) {
+			if ($_string =~ /^$_prev/) {
+			    $matched_exp .= $_prev;
+			    $_string = "$'";
+			    $isMatched = 1;
+			    last;
+			}
+		    }
+
+		    # 先行する語とマッチしなければ終了
+		    last unless ($isMatched);
+		}
+	    }
+
+	    unless ($matched_exp) {
+		$synbuf->{$string} = 1;
+	    } else {
+		if ($string ne $matched_exp) {
+		    $string =~ s/$matched_exp/（$matched_exp）/;
+		    $synbuf->{$string} = 1;
+		}
+	    }
+	    $max_num_of_words = length($string) if ($max_num_of_words < length($string));
+	}
+    }
+
+    return $max_num_of_words;
+}
+
+
+# 同義グループに属す表現の取得と幅（文字数）の取得
+sub _getExpressions {
+    my ($this, $i, $tag, $tid2syns, $syngraph) = @_;
+
+
+    my $surf = ($tag->synnodes)[0]->midasi;
+    my $surf_contentW = ($tag->mrph)[0]->midasi;
+    my @repnames_contentW = ($tag->mrph)[0]->repnames;
+    my $max_num_of_words = length($surf);
+    my $functional_word = (($tag->mrph)[-1]->fstring !~ /<内容語>/) ? ($tag->mrph)[-1]->midasi : '';
+    $functional_word =~ s!/.*$!!;
+
+    my @basicNodes = ();
+    my %synbuf;
+    unless ($tag->fstring() =~ /<クエリ削除語>/) {
+	foreach my $synnodes ($tag->synnodes) {
+	    foreach my $node ($synnodes->synnode) {
+		next if ($node->feature =~ /<上位語>/ || $node->feature =~ /<反義語>/ || $node->feature =~ /<否定>/);
+
+		# 基本ノードの獲得
+		my $str = $node->synid;
+		if ($str !~ /s\d+/) {
+		    my ($_str, $_yomi) = &_getNormalizedString($str);
+		    push (@basicNodes, $_str);
+		    push (@basicNodes, $_yomi) if ($_yomi);
+		    &_pushbackBuf($i, $tid2syns, $_str, $_yomi, $functional_word);
+		}
+
+
+		# 同義グループに属す表現の取得
+		unless ($this->{disable_synnode}) {
+		    my @tids = $synnodes->tagids;
+		    my $max_num_of_w = &_getPackedExpressions($i, \%synbuf, $tid2syns, \@tids, $str, $functional_word, $syngraph);
+		    $max_num_of_words = $max_num_of_w if ($max_num_of_words < $max_num_of_w);
+		}
+	    }
+	}
+
+	# 出現形、基本ノードと同じ表現は削除する
+	delete ($synbuf{$surf});
+	delete ($synbuf{$surf_contentW});
+	foreach my $basicNode (@basicNodes) {
+	    delete ($synbuf{$basicNode});
+	}
+	foreach my $rep (@repnames_contentW) {
+	    foreach my $word_w_yomi (split (/\?/, $rep)) {
+		my ($hyouki, $yomi) = split (/\//, $word_w_yomi);
+		delete ($synbuf{$hyouki});
+	    }
+	}
+    }
+
+    return (\%synbuf, $max_num_of_words);
+}
+
+
 sub getPaintingJavaScriptCode {
     my ($this, $colorOffset) = @_;
 
+    ###### 変数の初期化 #####
 
     my $REQUISITE = '<クエリ必須語>';
     my $OPTIONAL  = '<クエリ不要語>';
@@ -796,6 +925,8 @@ sub getPaintingJavaScriptCode {
 
     my $removedcolor = 'border: 2px solid #9f9f9f; background-color: #e0e0e0; color: black;';
 
+    #########################
+
 
     my $jscode .= qq(jg.clear();\n);
 
@@ -810,111 +941,10 @@ sub getPaintingJavaScriptCode {
     for (my $i = 0; $i < scalar(@kihonkus); $i++) {
 	my $tag = $kihonkus[$i];
 
-	# 同義グループに属す表現を取得と幅（文字数）の取得
-
-	my @basicNodes = ();
-	my %synbuf;
-	my $surf = ($tag->synnodes)[0]->midasi;
-	my $surf_contentW = ($tag->mrph)[0]->midasi;
-	my @repnames_contentW = ($tag->mrph)[0]->repnames;
-	my $max_num_of_words = length($surf);
 	my $gid = ($tag->synnodes)[0]->tagid;
 	$gid2num{$gid} = $i;
-	my $joshi = (($tag->mrph)[-1]->fstring !~ /<内容語>/) ? ($tag->mrph)[-1]->midasi : '';
-	$joshi =~ s!/.*$!!;
-	unless ($tag->fstring() =~ /<クエリ削除語>/) {
-	    foreach my $synnodes ($tag->synnodes) {
-		# 同義句の場合、先行する表現を括弧で囲う
-		my %replace_cands = ();
-		my @tagids = $synnodes->tagids();
-		my $lastTid = pop @tagids;
-		foreach my $tagid (@tagids) {
-		    foreach my $w (keys %{$tid2syns{$tagid}}) {
-			$replace_cands{$w} = 1;
-		    }
-		}
 
-
-		foreach my $node ($synnodes->synnode) {
-		    next if ($node->feature =~ /<上位語>/);
-		    next if ($node->feature =~ /<反義語>/);
-		    next if ($node->feature =~ /<否定>/);
-
-		    my $str = $node->synid;
-
-		    # 基本ノードの獲得
-		    if ($str !~ /s\d+/) {
-			my $_str = $str;
-			my ($_yomi) = ($_str =~ m!/(.+?)(?:v|a)?$!);
-			$_str =~ s/(\/|:).+//;
-			$_str = lc($_str);
-			push (@basicNodes, $_str);
-			$tid2syns{$i}->{$_str} = 1;
-			$tid2syns{$i}->{"$_str$joshi"} = 1;
-			if ($_yomi) {
-			    push (@basicNodes, $_yomi);
-			    $tid2syns{$i}->{$_yomi} = 1;
-			    $tid2syns{$i}->{"$_yomi$joshi"} = 1;
-			}
-		    }
-
-		    # 同義グループに属す表現を取得
-		    unless ($this->{disable_synnode}) {
-			my %_buf = ();
-			my @synonymous_exps = split(/\|+/, decode('utf8', $syngraph->{syndb}{$str}));
-			if (scalar(@synonymous_exps) > 1) {
-			    foreach my $w (@synonymous_exps) {
-				$w =~ s/\[.+?\]//;
-				$w =~ s/(\/|:).+//;
-				$w = lc($w);
-				$w =~ s/人」/人/;
-				$_buf{$w} = 1;
-				$tid2syns{$i}->{$w} = 1;
-				$tid2syns{$i}->{"$w$joshi"} = 1;
-			    }
-
-			    foreach my $w (keys %_buf) {
-				my $matched_exp = undef;
-				foreach my $_w (keys %replace_cands) {
-				    if ($w =~ /^$_w/) {
-					$matched_exp = $_w;
-					last;
-				    }
-				}
-
-				unless ($matched_exp) {
-				    $synbuf{$w} = 1;
-				} else {
-				    my ($remain) = ($w =~ /^$matched_exp(.+)$/);
-				    # 「景気が冷える」と「冷える」は別のSynNodeのため
-				    # 費用対効果は要検討
-				    unless (exists $tid2syns{$lastTid}->{$remain}) {
-					$w =~ s/$matched_exp/（$matched_exp）/g;
-					$synbuf{$w} = 1;
-				    }
-				}
-				$max_num_of_words = length($w) if ($max_num_of_words < length($w));
-			    }
-			}
-			elsif (scalar(@synonymous_exps) == 1) {
-			    # nothing to do.
-			}
-		    }
-		}
-	    }
-	}
-	# 出現形、基本ノードと同じ表現は削除する
-	delete($synbuf{$surf});
-	delete($synbuf{$surf_contentW});
-	foreach my $basicNode (@basicNodes) {
-	    delete($synbuf{$basicNode});
-	}
-	foreach my $rep (@repnames_contentW) {
-	    foreach my $word_w_yomi (split (/\?/, $rep)) {
-		my ($hyouki, $yomi) = split (/\//, $word_w_yomi);
-		delete($synbuf{$hyouki});
-	    }
-	}
+	my ($synbuf, $max_num_of_words) = $this->_getExpressions($i, $tag, \%tid2syns, $syngraph);
 
 	my $width = $font_size * (1.5 + $max_num_of_words);
 	# 同義グループのX軸の中心座標を保持（係り受けの線を描画する際に利用する）
@@ -923,7 +953,6 @@ sub getPaintingJavaScriptCode {
 	$gid2pos{$gid}->{num_parent} = 1;
 
 	# 下に必須・オプショナルのフラグを取得
-#	my $rep = $this->{words}[$i][0];
 	my $mark = ($tag->fstring() =~ /クエリ削除語/) ? 'Ｘ' : (($tag->fstring() =~ /クエリ不要語/) ?  '△' : '〇');
 	my $colorIndex = ($i + $colorOffset) % scalar(@stylecolor);
 
@@ -934,7 +963,8 @@ sub getPaintingJavaScriptCode {
 	    $synbox .= sprintf(qq(<TABLE style=\\'font-size: $font_size; margin: 0px;text-align: center; $stylecolor[$colorIndex]\\' width=%dpx>), $width);
 	}
 
-	if (scalar(keys %synbuf) > 0) {
+	my $surf = ($tag->synnodes)[0]->midasi;
+	if (scalar(keys %$synbuf) > 0) {
 	    my $rate = 36;
 	    my ($r, $g, $b) = ($bgcolor[$colorIndex] =~ /#(..)(..)(..);/);
 	    $r = (hex($r) + $rate > 255) ? 'ff' : sprintf ("%x", hex($r) + $rate);
@@ -943,13 +973,13 @@ sub getPaintingJavaScriptCode {
 	    my $dilutedColor = sprintf("#%s%s%s", $r, $g, $b);
 
 	    $synbox .= sprintf(qq(<TR><TD style=\\'border-bottom: 1px solid %s;\\'>%s</TD></TR>), $color[$colorIndex], $surf);
-	    $synbox .= sprintf(qq(<TR><TD style=\\'background-color: %s;\\'>%s</TD></TR>), $dilutedColor, join("<BR>", sort keys %synbuf));
+	    $synbox .= sprintf(qq(<TR><TD style=\\'background-color: %s;\\'>%s</TD></TR>), $dilutedColor, join("<BR>", sort keys %$synbuf));
 	} else {
 	    $synbox .= sprintf(qq(<TR><TD>%s</TD></TR>), $surf);
 	}
 	$synbox .= "</TABLE>";
 
-	$max_num_of_synonyms = scalar(keys %synbuf) if ($max_num_of_synonyms < scalar(keys %synbuf));
+	$max_num_of_synonyms = scalar(keys %$synbuf) if ($max_num_of_synonyms < scalar(keys %$synbuf));
 
 	$jscode .= qq(jg.drawStringRect(\'$synbox\', $offsetX, $offsetY, $width, 'left');\n);
 	$jscode .= qq(jg.drawStringRect(\'$mark\', $offsetX, $offsetY - 1.5 * $font_size, $font_size, 'left');\n);
