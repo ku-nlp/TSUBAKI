@@ -920,7 +920,7 @@ sub getPaintingJavaScriptCode {
 
 	# 下に必須・オプショナルのフラグを取得
 #	my $rep = $this->{words}[$i][0];
-	my $mark = ($tag->fstring() =~ /クエリ削除語/) ? '×' : (($tag->fstring() =~ /クエリ不要語/) ?  '△' : '○');
+	my $mark = ($tag->fstring() =~ /クエリ削除語/) ? 'Ｘ' : (($tag->fstring() =~ /クエリ不要語/) ?  '△' : '〇');
 	my $colorIndex = ($i + $colorOffset) % scalar(@stylecolor);
 
 	my $synbox;
@@ -989,12 +989,12 @@ sub getPaintingJavaScriptCode {
 
 	    # 係り先の係り先への係り受けを描画
 	    if (defined $_kakarisaki) {
-		my $mark = ($kakarisaki->fstring() =~ /クエリ削除語/) ?  '×' : '△';
+		my $mark = ($kakarisaki->fstring() =~ /クエリ削除語/) ?  'Ｘ' : '△';
 		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $_kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
 	    }
 	}
 
-	my $mark = ($kakarimoto->fstring() =~ /クエリ必須係り受け/) ?  '○' : (($kakarimoto->fstring() =~ /クエリ削除係り受け/) ? '×' : '△');
+	my $mark = ($kakarimoto->fstring() =~ /クエリ必須係り受け/) ?  '〇' : (($kakarimoto->fstring() =~ /クエリ削除係り受け/) ? 'Ｘ' : '△');
 	$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
     }
 
@@ -1014,7 +1014,7 @@ sub getDrawingDependencyCodeForParaType1 {
 	    # 係り受け関係を追加する際、係り元のノード以前は無視する
 	    # ex) 緑茶やピロリ菌
 	    if ($child->dpndtype eq 'P' && $child->id > $kakarimoto->id) {
-		my $mark = ($child->fstring() =~ /クエリ削除語/) ?  '×' : '△';
+		my $mark = ($child->fstring() =~ /クエリ削除語/) ?  'Ｘ' : '△';
 		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $child, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos);
 
 		# 子の子についても処理する
