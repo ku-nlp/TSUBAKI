@@ -118,6 +118,7 @@ sub _runSynGraph {
     $opt->{syngraph_option}{wikipedia_entry_db} = $CONFIG->{WIKIPEDIA_ENTRY_DB};
     $opt->{syngraph_option}{regist_exclude_semi_contentword} = 1;
     $opt->{syngraph_option}{antonym} = 1;
+    $opt->{syngraph_option}{force_match}{fuzoku} = 1;
 
     $knpresult->set_id(0);
     my $synresult = $CONFIG->{SYNGRAPH}->OutputSynFormat($knpresult, $opt->{syngraph_option}, $opt->{syngraph_option});
@@ -804,13 +805,14 @@ sub getPaintingJavaScriptCode {
     my %gid2num = ();
     my @kihonkus = $this->{syn_result}->tag;
     my $syngraph = Configure::getSynGraphObj();
-
+    
+    my %tid2syns = ();
     for (my $i = 0; $i < scalar(@kihonkus); $i++) {
 	my $tag = $kihonkus[$i];
 
 	# 同義グループに属す表現を取得と幅（文字数）の取得
 
-	my $basicNode = undef;
+	my @basicNodes = ();
 	my %synbuf;
 	my $surf = ($tag->synnodes)[0]->midasi;
 	my $surf_contentW = ($tag->mrph)[0]->midasi;
@@ -818,24 +820,80 @@ sub getPaintingJavaScriptCode {
 	my $max_num_of_words = length($surf);
 	my $gid = ($tag->synnodes)[0]->tagid;
 	$gid2num{$gid} = $i;
+	my $joshi = (($tag->mrph)[-1]->fstring !~ /<内容語>/) ? ($tag->mrph)[-1]->midasi : '';
+	$joshi =~ s!/.*$!!;
 	unless ($tag->fstring() =~ /<クエリ削除語>/) {
 	    foreach my $synnodes ($tag->synnodes) {
+		# 同義句の場合、先行する表現を括弧で囲う
+		my %replace_cands = ();
+		my @tagids = $synnodes->tagids();
+		my $lastTid = pop @tagids;
+		foreach my $tagid (@tagids) {
+		    foreach my $w (keys %{$tid2syns{$tagid}}) {
+			$replace_cands{$w} = 1;
+		    }
+		}
+
+
 		foreach my $node ($synnodes->synnode) {
 		    next if ($node->feature =~ /<上位語>/);
 		    next if ($node->feature =~ /<反義語>/);
 		    next if ($node->feature =~ /<否定>/);
 
 		    my $str = $node->synid;
-		    $basicNode = $str if ($str !~ /s\d+/ && !defined $basicNode);
+
+		    # 基本ノードの獲得
+		    if ($str !~ /s\d+/) {
+			my $_str = $str;
+			my ($_yomi) = ($_str =~ m!/(.+?)(?:v|a)?$!);
+			$_str =~ s/(\/|:).+//;
+			$_str = lc($_str);
+			push (@basicNodes, $_str);
+			$tid2syns{$i}->{"$_str$joshi"} = 1;
+			if ($_yomi) {
+			    push (@basicNodes, $_yomi);
+			    $tid2syns{$i}->{"$_yomi$joshi"} = 1;
+			}
+		    }
 
 		    # 同義グループに属す表現を取得
 		    unless ($this->{disable_synnode}) {
+			my %_buf = ();
 			my @synonymous_exps = split(/\|+/, decode('utf8', $syngraph->{syndb}{$str}));
-			foreach my $w (@synonymous_exps) {
-			    $w =~ s/\[.+?\]//;
-			    $w =~ s/(\/|:).+//;
-			    $synbuf{$w} = 1;
-			    $max_num_of_words = length($w) if ($max_num_of_words < length($w));
+			if (scalar(@synonymous_exps) > 1) {
+			    foreach my $w (@synonymous_exps) {
+				$w =~ s/\[.+?\]//;
+				$w =~ s/(\/|:).+//;
+				$w = lc($w);
+				$w =~ s/人」/人/;
+				$_buf{$w} = 1;
+				$tid2syns{$i}->{"$w$joshi"} = 1;
+			    }
+
+			    foreach my $w (keys %_buf) {
+				my $matched_exp = undef;
+				foreach my $_w (keys %replace_cands) {
+				    if ($w =~ /^$_w/) {
+					$matched_exp = $_w;
+					last;
+				    }
+				}
+
+				unless ($matched_exp) {
+				    $synbuf{$w} = 1;
+				} else {
+				    my ($remain) = ($w =~ /^$matched_exp(.+)$/);
+				    # 「景気が冷える」と「冷える」は別のSynNodeのため
+				    unless (exists $tid2syns{$lastTid}->{$remain}) {
+					$w =~ s/$matched_exp/（$matched_exp）/g;
+					$synbuf{$w} = 1;
+				    }
+				}
+				$max_num_of_words = length($w) if ($max_num_of_words < length($w));
+			    }
+			}
+			elsif (scalar(@synonymous_exps) == 1) {
+			    # nothing to do.
 			}
 		    }
 		}
@@ -844,7 +902,9 @@ sub getPaintingJavaScriptCode {
 	# 出現形、基本ノードと同じ表現は削除する
 	delete($synbuf{$surf});
 	delete($synbuf{$surf_contentW});
-	delete($synbuf{$basicNode});
+	foreach my $basicNode (@basicNodes) {
+	    delete($synbuf{$basicNode});
+	}
 	foreach my $rep (@repnames_contentW) {
 	    foreach my $word_w_yomi (split (/\?/, $rep)) {
 		my ($hyouki, $yomi) = split (/\//, $word_w_yomi);
@@ -879,7 +939,7 @@ sub getPaintingJavaScriptCode {
 	    my $dilutedColor = sprintf("#%s%s%s", $r, $g, $b);
 
 	    $synbox .= sprintf(qq(<TR><TD style=\\'border-bottom: 1px solid %s;\\'>%s</TD></TR>), $color[$colorIndex], $surf);
-	    $synbox .= sprintf(qq(<TR><TD style=\\'background-color: %s;\\'>%s</TD></TR>), $dilutedColor, join("<BR>", keys %synbuf));
+	    $synbox .= sprintf(qq(<TR><TD style=\\'background-color: %s;\\'>%s</TD></TR>), $dilutedColor, join("<BR>", sort keys %synbuf));
 	} else {
 	    $synbox .= sprintf(qq(<TR><TD>%s</TD></TR>), $surf);
 	}
