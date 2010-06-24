@@ -982,7 +982,7 @@ sub getPaintingJavaScriptCode {
 	$max_num_of_synonyms = scalar(keys %$synbuf) if ($max_num_of_synonyms < scalar(keys %$synbuf));
 
 	$jscode .= qq(jg.drawStringRect(\'$synbox\', $offsetX, $offsetY, $width, 'left');\n);
-	$jscode .= qq(jg.drawStringRect(\'$mark\', $offsetX, $offsetY - 1.5 * $font_size, $font_size, 'left');\n);
+	$jscode .= qq(jg.drawStringRect(\'$mark\', $offsetX, $offsetY - 1.05 * $font_size, $font_size, 'left');\n);
 	$offsetX += ($width + $synbox_margin);
     }
     $colorOffset += scalar(@{$this->{words}});
@@ -1100,7 +1100,7 @@ sub getDrawingDependencyCode {
 
 
     # 線の上に必須・オプショナルのフラグを描画する
-    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1, $y - 1.5 * $font_size, $font_size, 'left');\n);
+    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1, $y - 1.05 * $font_size, $font_size, 'left');\n);
 
     return $jscode;
 }
