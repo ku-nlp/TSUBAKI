@@ -353,7 +353,12 @@ sub get_snippets_for_each_did {
 		    $snippet .= " ... " unless ($snippet =~ /\.\.\.$/);
 		}
 	    }
-	    $snippet .= $snippets{$sid};
+	    if ($snippet =~ /。$/) {
+		$snippet .= ($snippets{$sid});
+	    } else {
+		$snippet .= ("&nbsp;&nbsp;" . $snippets{$sid});
+	    }		
+
 	    $prev_sid = $sid;
 	}
 
