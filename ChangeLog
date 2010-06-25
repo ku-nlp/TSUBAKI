@@ -1,3 +1,219 @@
+2010-06-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	max_num_of_indicesオプションをIndexer.pmをnewする際に渡すように.
+
+	* scripts/Indexer.pm: 1文から抽出されるタームの数を制限.
+
+2010-06-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm: ラベルの位置を変更.
+
+2010-06-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm:
+	クエリ解析結果を表示する際, 複数ノードにまたがる表現（e.g, 費用対効果）を削除するように.
+
+	* cgi/QueryKeyword.pm: 係り受け関係の表示部分を修正.
+
+	* cgi/SearchEngine.pm: small bug fixed.
+
+	* cgi/QueryKeyword.pm: 必須、削除のラベルを変更（大きく見えるように）
+
+	* cgi/QueryKeyword.pm: 先行する名詞を括弧で括るように.
+
+2010-06-21  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* scripts/convert-index-format.perl:
+	Modified to check the existence of DB and to untie it.
+
+	* scripts/tsubaki-server-manager.sh:
+	Bug fix and support of C++ version.
+
+	* cgi/SnippetMakerAgent.pm: Suppressed a debug message.
+
+2010-06-17  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* cgi/QueryParser.pm: Fixed a bug in createQueryKeywordObj.
+
+2010-06-16  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* cgi/api.cgi: Set IS_CPP_MODE to 0 for snippet request to API.
+
+2010-06-14  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* cgi/QueryParser.pm: Bug fix for sexp.
+
+2010-06-13  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* cgi/QueryParser.pm:
+	Added an option of overwriting IS_CPP_MODE to the constructor. Some fixes for WebClustering.
+
+2010-06-10  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroup.pm: SYNノード数を制限できるように.
+
+2010-06-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroup.pm: bug fixed.
+
+	* scripts/convert-index-format.perl: small changes.
+
+	* scripts/convert-index-format.perl:
+	複数個のoffset.dbを受け付けるように.
+
+	* perl/Tsubaki/TermGroup.pm:
+	ACタグのついた同名のタームが複数出力されないように.
+
+	* perl/Tsubaki/Term.pm, perl/Tsubaki/TermGroupCreater.pm:
+	係り受けタームにブロックタイプタグが複数個つくように.
+
+2010-06-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: パラメータの追加.
+
+	* cgi/QueryKeyword.pm:
+	SYNノードの中身を得る際、sid2wordを利用するように.
+
+	* perl/Tsubaki/QueryAnalyzer.pm: クエリ処理を適用する順序を変更.
+
+	* cgi/Configure.pm: SynGraphをnewする際のオプションを変更.
+
+	* cgi/Searcher.pm, cgi/SnippetMakerAgent.pm: small changes.
+
+	* perl/Tsubaki/Term.pm, perl/Tsubaki/TermGroup.pm, perl/Tsubaki/TermGroupCreater.pm:
+	ブロックタイプを考慮するように.
+
+2010-06-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/convert-index-format.perl: added.
+
+2010-05-27  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* data/test-queries.desc.selected: added.
+
+2010-05-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* data/50topic.txt: added.
+
+2010-05-24  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	makeIndexFromKNPResultObjectメソッド内でextractDependencyTermsを呼ぶように.
+
+	* perl/Tsubaki/TermGroup.pm: 不要コードの削除.
+
+	* perl/Tsubaki/Term.pm: S式内にterm_typeを出力するように.
+
+	* perl/Tsubaki/TermGroupCreater.pm: termのgdfを持たせるように.
+
+	* scripts/test-query-parser.perl: added.
+
+	* scripts/Makefile: mk_url_title_dbの追加.
+
+	* cgi/RequestParser.pm: small changes.
+
+2010-05-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm: XMLファイルがない場合は空のリストを返すように.
+
+2010-05-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: DFDBがない場合はundefにするように.
+
+2010-05-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/TsubakiEngine4SynGraphSearch.pm:
+	検索に利用したターム情報を返すように.
+
+	* cgi/Renderer.pm:
+	構造解析行うcgiへ渡すパラメータを変更, 検索に利用したタームを出力するように, NTCIR_MODEの際、正解数を出力するように.
+
+	* cgi/SearchEngine.pm, cgi/SnippetMakerAgent.pm, cgi/index.cgi:
+	debugモードに段階を設けた.
+
+	* scripts/make_idx.pl:
+	Title, Description, Keywordsを領域として利用するように.
+
+2010-05-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* data/blocktype.WEB: タイトル、キーワードを追加.
+
+2010-05-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryKeyword.pm, cgi/QueryParser.pm: コード整理.
+
+	* cgi/RequestParser.pm: bug fixed.
+
+	* cgi/Configure.pm: SynGraphのインスタンスを持つように.
+
+2010-05-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: 領域タグを削除してDFDBを引くように.
+
+2010-05-10  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: iconを表示するように.
+
+2010-05-07  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* cgi/SnippetMakerAgent.pm:
+	Modified to survive empty results of snippets.
+
+	* scripts/SidRange.pm:
+	Modified to endure unspecified SID_RANGE in configure.
+
+	* perl/Tsubaki/CacheManager.pm:
+	Turned off caching for the English version.
+
+2010-05-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: パラメータの追加.
+
+	* cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/Renderer.pm, cgi/RequestParser.pm:
+	省略解析結果を利用するための処理を追加.
+
+	* cgi/SnippetMaker.pm: Authorタグを無視するように.
+
+2010-05-07  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* cgi/QueryParser.pm: Bug fix for the English version.
+
+2010-05-06  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki_server.pl: small changes.
+
+	* cgi/configure, cgi/configure.nict: パラメータの追加.
+
+	* cgi/QueryKeyword.pm:
+	wikipediaエントリに対しては同義語展開を行わないように.
+
+2010-05-05  Daisuke Kawahara  <dk@nict.go.jp>
+
+	* scripts/make-index.sh: Added -english option.
+
+2010-05-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Makefile: mk_mapfileを実行しないように.
+
+	* scripts/merge-index.sh: mapfileを生成するように.
+
+	* scripts/make-mapfile.perl: added.
+
+2010-04-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: small bug fixed.
+
+	* scripts/idx2df.sh: very small changes.
+
+	* scripts/idx2df.sh: rev, nkfを利用しないように.
+
+	* cgi/RequestParser.pm: 全ての検索結果を得られるように.
+
+	* cgi/configure, cgi/configure.nict: パラメータの追加.
+
+	* cgi/QueryParser.pm: 英語解析用処理を追加.
+
 2010-04-28  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
 
 	* scripts/Makefile.indexing: idx2df.shを呼ぶように変更.
