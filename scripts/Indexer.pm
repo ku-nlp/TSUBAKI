@@ -20,6 +20,8 @@ $Data::Dumper::Useperl = 1;
 use KNP;
 use KNP::Result;
 
+our $DEFAULT_MAX_NUM_OF_TERMS_FROM_SENTENCE = 1000;
+
 sub new {
     my($class, $opt) = @_;
     my $this = {
@@ -31,6 +33,12 @@ sub new {
 
     if ($opt->{STOP_WORDS}) {
 	$this->{STOP_WORDS} = $opt->{STOP_WORDS};
+    }
+
+    if ($opt->{MAX_NUM_OF_TERMS_FROM_SENTENCE}) {
+	$this->{MAX_NUM_OF_TERMS_FROM_SENTENCE} = $opt->{MAX_NUM_OF_TERMS_FROM_SENTENCE};
+    } else {
+	$this->{MAX_NUM_OF_TERMS_FROM_SENTENCE} = $DEFAULT_MAX_NUM_OF_TERMS_FROM_SENTENCE;
     }
 
     bless $this;
@@ -288,6 +296,11 @@ sub makeIndexfromSynGraph {
 # 		    }
 		    if ($freq[-1]->{midasi} !~ /s\d+/) {
 			$freq[-1]->{isBasicNode} = 1
+		    }
+
+		    if (scalar(@freq) > $this->{MAX_NUM_OF_TERMS_FROM_SENTENCE}) {
+			$this->printErrorMessage("[SKIPPED THIS SENTENCE] Too much terms! (# of extracted tems > $this->{MAX_NUM_OF_TERMS_FROM_SENTENCE})");
+			return ();
 		    }
 		}
 	    }
@@ -1218,6 +1231,11 @@ sub makeIndexfromSynGraph4Indexing {
 			isContentWord => 1
 		    };
 		    push(@indice, $index_dpnd);
+
+		    if (scalar(@indice) > $this->{MAX_NUM_OF_TERMS_FROM_SENTENCE}) {
+			$this->printErrorMessage("[SKIPPED THIS SENTENCE] Too much terms! (# of extracted tems > $this->{MAX_NUM_OF_TERMS_FROM_SENTENCE})");
+			return ();
+		    }
 		}
 	    }
 	    # $this->{absolute_pos} = $pos;
@@ -1225,6 +1243,13 @@ sub makeIndexfromSynGraph4Indexing {
     }
 
     return \@indice;
+}
+
+
+sub printErrorMessage {
+    my ($this, $msg) = @_;
+
+    print STDERR $msg . "\n";
 }
 
 1;
