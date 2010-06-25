@@ -104,6 +104,12 @@ sub _new {
 	    }
 	    close (FILE);
 	}
+	elsif ($_ =~ /STOP_TERMS/) {
+	    my ($key, $terms) = split (/\s+/, $_);
+	    foreach my $term (split(/,/, $terms)) {
+		$this->{STOP_TERMS}{$term} = 1;
+	    }
+	}
 	else {
 	    my ($key, $value) = split(/\s+/, $_);
 
@@ -159,12 +165,13 @@ sub getSynGraphObj {
 	push (@INC, $instance->{SYNGRAPH_PM_PATH});
 	require SynGraph;
 
+	my $option = ();
+	$option->{syndbcdb} = sprintf ("%s/../x86_64/syndb.cdb", $instance->{SYNDB_PATH});
 	$instance->{SYNGRAPH} = new SynGraph(
 	    $instance->{SYNDB_PATH},
 	    undef, # KNPのオプション
-	    {
-		syndbcdb => sprintf "%s/../cgi/syndb.cdb", $instance->{SYNDB_PATH}
-	    });
+	    $option
+	    );
     }
 
     return $instance->{SYNGRAPH};
