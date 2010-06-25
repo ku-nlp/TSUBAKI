@@ -181,7 +181,7 @@ sub extract_sentences_from_content_using_position {
 		foreach my $w (@{$word_list}) {
 		    my $surf = $w->{surf};
 		    my $reps = $w->{reps};
-		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
+		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
 
 		    $sentence->{rawstring} .= $surf;
 		    push(@{$sentence->{surfs}}, $surf);
@@ -698,7 +698,7 @@ sub extract_sentences_from_content {
 		foreach my $w (@{$word_list}) {
 		    my $surf = $w->{surf};
 		    my $reps = $w->{reps};
-		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
+		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
 
 		    $sentence->{rawstring} .= $surf;
 		    push(@{$sentence->{surfs}}, $surf);
@@ -833,7 +833,7 @@ sub extract_sentences_from_metadata {
 		    foreach my $w (@{$word_list}) {
 			my $surf = $w->{surf};
 			my $reps = $w->{reps};
-			$num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
+			$num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
 
 			push(@{$sentence->{surfs}}, $surf);
 			push(@{$sentence->{reps}}, $w->{reps});
@@ -919,7 +919,7 @@ sub extract_sentences_from_content_old {
 		foreach my $w (@{$word_list}) {
 		    my $surf = $w->{surf};
 		    my $reps = $w->{reps};
-		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／/);
+		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
 
 		    $sentence->{rawstring} .= $surf;
 		    push(@{$sentence->{surfs}}, $surf);
