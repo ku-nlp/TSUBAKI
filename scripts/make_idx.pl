@@ -280,10 +280,12 @@ sub extract_indices_wo_pm {
 
     my $indexer = new Indexer({
 	ignore_yomi => $opt{ignore_yomi},
+	MAX_NUM_OF_TERMS_FROM_SENTENCE => $opt{max_num_of_indices},
 	without_using_repname => $opt{genkei} });
 
     my $indexer_genkei = new Indexer({
 	ignore_yomi => $opt{ignore_yomi},
+	MAX_NUM_OF_TERMS_FROM_SENTENCE => $opt{max_num_of_indices},
 	genkei => 1 });
 
     if ($my_opt->{gzipped}) {
@@ -501,8 +503,7 @@ sub extractIndices {
 # 	    push(@contentWordFeatures, $m);
 # 	}
 
-	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation, \@contentWordFeatures, { max_num_of_indices => $opt{max_num_of_indices},
-											      use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
+	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation, \@contentWordFeatures, { use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
 											      use_of_hypernym => !$opt{ignore_hypernym},
 											      use_of_negation_and_antonym => 1,
 											      verbose => $opt{verbose}} );
@@ -642,7 +643,8 @@ sub extract_indices {
     my $annotationFlag = 0;
     my $result;
     my $indexer = new Indexer({ignore_yomi => $opt{ignore_yomi},
-			       without_using_repname => $opt{genkei}
+			       without_using_repname => $opt{genkei},
+			       MAX_NUM_OF_TERMS_FROM_SENTENCE => $opt{max_num_of_indices}
 			      });
 
     # オプションにしたがって各データフィールドから索引表現を抽出
