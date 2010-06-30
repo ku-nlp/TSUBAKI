@@ -204,6 +204,8 @@ class Documents {
 	return type = in_type;
     }
 
+    bool update_sorted_int (int *sorted_int, int *tid2idx, std::vector<std::vector<int> *> *pos_list_list, int target_num, bool skip_first);
+
     documents_type get_type() {
 	return type;
     }
