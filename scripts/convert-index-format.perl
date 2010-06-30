@@ -85,24 +85,33 @@ sub convert {
     my $scrdata;
     read($idxfile, $scrdata, $scores_size);
 
+    my $_offset_of_scr = 0;
+    foreach my $_i (1..$ldf) {
+	my $size = unpack ('L', substr ($scrdata, $_offset_of_scr, 4));
+	my $score = 0;
+	foreach my $s (unpack ('S*', substr ($scrdata, $_offset_of_scr + 4, $size * 2))) {
+	    $score += $s;
+	}
+	$data .= pack ('L', $score);
+	$_offset_of_scr += (4 + $size * 2);
+    }
 
     my $_offset_of_pos = 0;
-    my $_offset_of_scr = 0;
     my $offs_of_pos_and_score = 0;
     my $data_of_pos_and_score;
     foreach my $_i (1..$ldf) {
 	my $num_of_pos = unpack('L', substr ($posdata, $_offset_of_pos, 4));
 	my $psize = $num_of_pos * 4 + 4;
-	my $ssize = $num_of_pos * 2;
+#	my $ssize = $num_of_pos * 2;
 	my $_data = substr ($posdata, $_offset_of_pos, $psize);
-	$_data .= substr ($scrdata, $_offset_of_scr + 4, $ssize);
+#	$_data .= substr ($scrdata, $_offset_of_scr + 4, $ssize);
 
 	$data_of_pos_and_score .= $_data;
 	$data .= pack('L', $offs_of_pos_and_score);
 
 	$offs_of_pos_and_score += length($_data);
 	$_offset_of_pos += $psize;
-	$_offset_of_scr += ($ssize + 4);
+#	$_offset_of_scr += ($ssize + 4);
     }
     $data .= $data_of_pos_and_score;
     my $size = pack('L', length($data));
