@@ -1,15 +1,42 @@
-
 package nict_hash;
 
 use strict;
 use warnings;
 
+my $node_start = 11;
 my $node_num = 120;
+
+=head1 NAME
+
+nict_hash - 検索対象/XML保持ノードの取得(ハッシュ関数)
+
+=head1 SYNOPSIS
+
+ use nict_hash;
+ my $hash = nict_hash->new() or die;
+ $hash->getnode("0000000001-1");
+
+ perl -Mnict_hash -e '$hash=nict_hash->new(); print $hash->getnode("0000000001-1")."\n";'
+
+=head1 METHOD
+
+=over 4
+
+=item getnode( STRING )
+
+ * STRING に指定した sid から対象ノードを求める。
+ * 入力: sid     (例) "0000000001-1"
+ * 出力:ノード名 (例) "iccc011.crawl.kclab.jgn2.jp"
+   ただし sid が不正な場合は "none" を出力
+
+=back
+
+=cut
 
 sub id2node(){
     my @id2node;
     for (my $i = 0 ; $i < $node_num ; $i++){
-	$id2node[$i] = sprintf("iccc%03d", $i+11);
+	$id2node[$i] = sprintf("iccc%03d.crawl.kclab.jgn2.jp", $i+$node_start);
     }
     return \@id2node;
 }
