@@ -264,9 +264,9 @@ END_OF_HTML
     }
 
     print << "END_OF_HTML";
-    <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
-    <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
-    <script type="text/javascript" src="http://reed.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
+    <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
+    <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
+    <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
 
     <script language="JavaScript" type="text/javascript">
 END_OF_HTML
@@ -362,9 +362,10 @@ sub print_header {
     <TITLE>$title</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=utf-8">
     <LINK rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
-    <LINK rel="icon" href="http://reed.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" type="image/x-icon" />  
-    <LINK rel="Shortcut Icon" type="img/x-icon" href="http://reed.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" />  
+    <LINK rel="icon" href="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" type="image/x-icon" />  
+    <LINK rel="Shortcut Icon" type="img/x-icon" href="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" />  
 END_OF_HTML
+
 
 # クエリ解析結果を描画するjavascriptコードの出力
     my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
