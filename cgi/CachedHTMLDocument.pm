@@ -18,12 +18,18 @@ sub new {
     my ($class, $query, $opts) = @_;
 
     my $filename = $opts->{file};
+    my $READER;
     if ($filename =~ /\.gz$/) {
-	open(READER, "zcat $filename |");
+	open($READER, "zcat $filename |");
+    } elsif ($filename =~ /^(.*[0-9]+):([0-9]+):([0-9-]+)$/) {
+	use IO::Socket;
+	$READER = IO::Socket::INET->new(PeerAddr => $1, PeerPort => $2, Proto => 'tcp') or die "cannot connect:$1:$2 $!\n";
+	printf $READER "html ".$3."\n";
+	$READER->flush();
     } else {
-	open(READER, $filename);
+	open($READER, $filename);
     }
-#   binmode(READER, ':utf8');
+#   binmode($READER, ':utf8');
 
     my $flag = -1;
     my $crawler_html = 0;
@@ -31,7 +37,7 @@ sub new {
     my $url;
     my $crawled_date;
 
-    while (<READER>) {
+    while (<$READER>) {
 	if (!$buf && /^HTML (\S+)/) {
 	    $url = $1;
 	    $crawler_html = 1;
@@ -50,6 +56,7 @@ sub new {
 	    }
 	}
     }
+    close $READER;
 
     my $encoding;
     if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_IPSJ_MODE}) {
