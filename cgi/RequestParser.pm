@@ -197,7 +197,12 @@ sub setParametersOfGetRequest {
 		}
 
 		foreach my $tag (@values) {
-		    $types{$tag . ":"} = 1;
+		    if ($CONFIG->{IS_NICT_MODE}) { # attach blocktype backward if NICT
+			$types{":" . $tag} = 1;
+		    }
+		    else {
+			$types{$tag . ":"} = 1;
+		    }
 		    $CONFIG->{BLOCK_TYPE_DATA}{$tag}{isChecked} = 1;
 		}
 	    } else {

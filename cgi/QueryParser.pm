@@ -736,7 +736,13 @@ sub get_DF {
     }
     # ブロックタイプを考慮している場合
     else {
-	my ($term) = ($term_w_blocktag =~ /^(?:..:)(.+)$/);
+	my ($term);
+	if ($CONFIG->{IS_NICT_MODE}) { # blocktype is attached backward if NICT
+	    ($term) = ($term_w_blocktag =~ /^(.+):..$/);
+	}
+	else {
+	    ($term) = ($term_w_blocktag =~ /^(?:..:)(.+)$/);
+	}
 	my $df = $this->{CACHED_DF}{$term};
 	if ($df) {
 	    return $df;

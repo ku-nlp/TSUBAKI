@@ -211,7 +211,12 @@ sub _setTerms {
 	    # ブロックタイプを考慮する場合
 	    if ($opt->{blockTypes} && %{$opt->{blockTypes}}) {
 		foreach my $blockType (keys %{$opt->{blockTypes}}) {
-		    &push_string_to_reps(\@dpnd_reps, \@word_reps, $term, sprintf ("%s%s", $blockType, $term->{midasi}), $group_id, $opt);
+		    if ($CONFIG->{IS_NICT_MODE}) { # attach blocktype backward if NICT
+			&push_string_to_reps(\@dpnd_reps, \@word_reps, $term, sprintf ("%s%s", $term->{midasi}, $blockType), $group_id, $opt);
+		    }
+		    else {
+			&push_string_to_reps(\@dpnd_reps, \@word_reps, $term, sprintf ("%s%s", $blockType, $term->{midasi}), $group_id, $opt);
+		    }
 		}
 	    }
 	    else {

@@ -7,6 +7,9 @@ package Tsubaki::Term;
 use strict;
 use utf8;
 use Encode;
+use Configure;
+
+my $CONFIG = Configure::get_instance();
 
 our %TYPE2INT;
 $TYPE2INT{word} = 1;
@@ -106,14 +109,32 @@ sub get_term_type {
 sub to_S_exp {
     my ($this, $space) = @_;
 
-    my $midasi = sprintf ("%s%s", $this->{blockType}, lc($this->{text}));
+    my ($midasi);
+    if ($CONFIG->{IS_NICT_MODE}) { # attach blocktype backward if NICT
+	$midasi = sprintf ("%s%s", lc($this->{text}), $this->{blockType});
+    }
+    else {
+	$midasi = sprintf ("%s%s", $this->{blockType}, lc($this->{text}));
+    }
     return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, $TYPE2INT{$this->{term_type}}, $this->{gdf},(($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 0 : 1));
 }
 
 sub to_S_exp_for_anchor {
     my ($this, $space) = @_;
 
-    my $midasi = ($this->{blockType}) ? sprintf ("AC:%s", lc($this->{text})) : lc($this->{text});
+    my ($midasi);
+    if ($this->{blockType}) {
+	if ($CONFIG->{IS_NICT_MODE}) { # attach blocktype backward if NICT
+	    $midasi = sprintf ("%s:AC", lc($this->{text}));
+	}
+	else {
+	    $midasi = sprintf ("AC:%s", lc($this->{text}));
+	}
+    }
+    else {
+	$midasi = lc($this->{text});
+    }
+
     return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, 3, $this->{gdf}, 1, (($this->{term_type} =~ /word/) ? 2 : 3));
 }
 
