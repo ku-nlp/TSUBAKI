@@ -12,6 +12,7 @@ use XML::Writer;
 use SnippetMakerAgent;
 use CDB_File;
 use Data::Dumper;
+use Tsubaki::TermGroupCreater;
 
 our $CONFIG = Configure::get_instance();
 
@@ -170,7 +171,7 @@ sub print_query {
 	}
 	print join('&nbsp;', @buf);
     } elsif ($query->{s_exp}) {
-	printf ("%s", $query->{s_exp});
+	printf qq(<SPAN style="color: blue; font-weight: 900;" id="query%d">%s</SPAN>), 0, $query->{rawstring};
     } else {
 	printf ("site:%s", $query->{option}{site});
     }
@@ -274,18 +275,14 @@ END_OF_HTML
     print "function init () {\n";
     printf "jg = new jsGraphics('%s');\n", $canvasName;
 
-    for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
-	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", $i;
-	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", $i, $i;
-    }
-    print "}\n";
 
-    my $colorOffset = 0;
-    for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
-	my ($width, $height, $coffset, $jscode) = $query->{keywords}[$i]->getPaintingJavaScriptCode($colorOffset);
-	$colorOffset = $coffset;
+    if ($CONFIG->{IS_CPP_MODE}) {
+	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", 0;
+	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", 0, 0;
+	print "}\n";
 
-	printf "function show_query_result%d (e) {\n", $i;
+	my ($width, $height, $coffset, $jscode) = &Tsubaki::TermGroupCreater::getPaintingJavaScriptCode($query->{result}, 0);
+	printf "function show_query_result%d (e) {\n", 0;
 	print "var x = Event.pointerX(e);\n";
 	print "var y = Event.pointerY(e);\n";
 
@@ -300,6 +297,34 @@ END_OF_HTML
 
 	print $jscode;
 	print "}\n";
+    } else {
+	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
+	    printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", $i;
+	    printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", $i, $i;
+	}
+	print "}\n";
+
+	my $colorOffset = 0;
+	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
+	    my ($width, $height, $coffset, $jscode) = $query->{keywords}[$i]->getPaintingJavaScriptCode($colorOffset);
+	    $colorOffset = $coffset;
+
+	    printf "function show_query_result%d (e) {\n", $i;
+	    print "var x = Event.pointerX(e);\n";
+	    print "var y = Event.pointerY(e);\n";
+
+	    print "var baroon = document.getElementById('baroon');\n";
+	    print "baroon.style.display = 'block';\n";
+	    print "baroon.style.left = (x + 'px');";
+	    print "baroon.style.top = ((y + 20) + 'px');";
+
+	    print "var canvas = document.getElementById('canvas');\n";
+	    print "canvas.style.width = $width + 'px';\n";
+	    print "canvas.style.height = $height + 'px';\n";
+
+	    print $jscode;
+	    print "}\n";
+	}
     }
     print "</script>\n";
 }

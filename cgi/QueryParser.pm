@@ -591,6 +591,9 @@ sub parse {
     my @qks = ();
     my @sexps = ();
     my $delim = ($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+";
+    my $rawstring;
+    my $rep2style;
+    my $result;
     # $delimで区切る
     foreach my $search_expression (split(/$delim/, $qks_str)) {
 	# 空文字はスキップ
@@ -607,6 +610,11 @@ sub parse {
 
 	if ($this->{OPTIONS}{is_cpp_mode}) {
 	    push (@sexps, $qk->to_S_exp());
+	    $rawstring = $qks_str;
+	    $result = $qk->{result};
+	    while (my ($k, $v) = each %{$qk->{rep2style}}) {
+		$rep2style->{$k} = $v;
+	    }
 	}
 	elsif ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
   	    push (@{$qks[0]->{words}}, @{$qk->{words}}) if (scalar(@{$qk->{words}}) > 0);
@@ -636,7 +644,10 @@ sub parse {
 	dpnd_map => $properties->{dpnd_map},
 	antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
 	option => $opt,
-	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("%s", $sexps[0]))
+	rawstring => $rawstring,
+	result    => $result,
+	rep2style => $rep2style,
+	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("(%s)", $sexps[0]))
 			});
 
 

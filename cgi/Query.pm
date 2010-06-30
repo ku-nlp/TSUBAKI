@@ -25,7 +25,10 @@ sub new {
 	dpnd_map => $params->{dpnd_map},
 	antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
 	option => $params->{option},
-	s_exp => $params->{s_exp}
+	result => $params->{result},
+	s_exp => $params->{s_exp},
+	rawstring => $params->{rawstring},
+	rep2style => $params->{rep2style}
     };
 
     bless $this;
