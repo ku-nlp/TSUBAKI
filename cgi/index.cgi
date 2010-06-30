@@ -51,10 +51,8 @@ sub main {
 	if ($CONFIG->{IS_KUHP_MODE}) {
 	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
 	}
-	elsif ($CONFIG->{IS_NICT_MODE}) {
-	    my $did_w_version = $id;
-	    my ($did) = ($did_w_version =~ /(^\d+)/);
-	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id / 1000000, $id / 1000, $did_w_version);
+	elsif ($CONFIG->{IS_NICT_MODE}) { # e.g., "icccmm010:31056:$did_w_version"
+	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
 	}
 	elsif ($CONFIG->{IS_IPSJ_MODE}) {
  	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
