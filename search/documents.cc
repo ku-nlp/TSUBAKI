@@ -561,8 +561,9 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
     bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
     s_documents.reserve(ldf);
     buffer += offset;
-    unsigned char *head_of_offdat = buffer + ldf * SIZEOFINT * 1;
-    unsigned char *head_of_posdat = buffer + ldf * SIZEOFINT * 2;
+    unsigned char *head_of_scrdat = buffer + ldf * SIZEOFINT * 1;
+    unsigned char *head_of_offdat = buffer + ldf * SIZEOFINT * 2;
+    unsigned char *head_of_posdat = buffer + ldf * SIZEOFINT * 3;
     if (already_retrieved_docs_exists) {
 	// load dids with conversion
 	int *docids = new int[ldf];
@@ -592,7 +593,8 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 		    cerr << " " << (*it);
 #endif
 
-		    doc->set_freq(pos_num);
+		    double score = 0.001 * intchar2int(head_of_scrdat);
+		    doc->set_freq(score);
 		    doc->set_gdf(term_df);
 
 		    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
@@ -619,14 +621,13 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 	    cerr << " " << did;
 #endif
 	    Document *doc = new Document(did);
-	    int pos_offset = intchar2int(buffer + ldf * SIZEOFINT + i * SIZEOFINT);
-	    int pos_num = intchar2int(buffer + ldf * 2 * SIZEOFINT + pos_offset);
+	    double score = 0.001 * intchar2int(buffer + ldf * 1 * SIZEOFINT + i * SIZEOFINT);
+	    int pos_offset = intchar2int(buffer + ldf * 2 * SIZEOFINT + i * SIZEOFINT);
+	    int pos_num = intchar2int(buffer + ldf * 3 * SIZEOFINT + pos_offset);
 
 	    doc->set_freq(pos_num);
 	    doc->set_gdf(term_df);
 			  
-//		cerr << "i=" << i << " did=" << did << " off=" << offset << " ldf=" << ldf << " posN=" << pos_num << " posOffset=" << pos_offset << endl;
-
 	    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
 	    memcpy (__buf, (buffer + ldf * 8 + pos_offset), SIZEOFINT * (pos_num + 1));
 	    doc->set_pos_char(__buf);
@@ -726,7 +727,6 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
 
     double end1 = (double) gettimeofday_sec();
     if (VERBOSE)
-	// cout << "      read dids = " << 1000 * (end1 - end) << " [ms]" <<  " " << ldf << " load dids = " << load_dids << endl;
 	cout << "      read dids = " << 1000 * (end1 - end) << " [ms]" <<  " " << ldf << endl;
 
 #ifdef DEBUG
