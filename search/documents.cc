@@ -846,6 +846,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     }
 
     int best_pos = -1;
+    int prev_pos = -1;
     std::vector<int> pos_list;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->front();
@@ -855,7 +856,10 @@ bool Documents::walk_or(Document *doc_ptr) {
 	}
 	best_pos = cur_pos;
 
-	pos_list.push_back(cur_pos);
+	// remove duplicate position
+	if (cur_pos > prev_pos)
+	    pos_list.push_back(cur_pos);
+	prev_pos = cur_pos;
 
 	// std::sort(&(sorted_int[0]), &(sorted_int[pos_list_list.size()]), sort_by_term_pos);
 	for (int i = 0; i < target_num - 1; i++) {
@@ -940,37 +944,43 @@ bool Documents::walk_and(Document *doc_ptr) {
 	return true;
     }
 
+    // pos_record ... tid2pos
+    // sorted_int ... pos2tid
     int target_num = pos_list_list.size();
-    int sorted_int[target_num], pos_record[target_num];
+    int sorted_int[target_num], pos_record[target_num], tid2idx[target_num];
     for (int i = 0; i < target_num; i++) {
 	sorted_int[i] = i;
-	pos_record[i] = -1;
+	pos_record[i] = -2; // Initailized by -2 because -1 means the end of pos_list.
+	tid2idx[i] = 0;
     }
 
-    // std::sort(&(sorted_int[0]), &(sorted_int[pos_list_list.size()]), sort_by_term_pos);
-    for (int i = 0; i < target_num - 1; i++) {
-	for (int j = 0; j < target_num - i - 1; j++) {
-	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
-		(pos_list_list[sorted_int[i + 1]]->front() != -1 &&
-		 (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
-		int temp = sorted_int[i];
-		sorted_int[i] = sorted_int[i + 1];
-		sorted_int[i + 1] = temp;
-	    }
-	}
-    }
+    update_sorted_int(sorted_int, tid2idx, &pos_list_list, target_num, false);
 
     int best_pos = -1;
     int best_begin = -1;
     int region = MAX_LENGTH_OF_DOCUMENT;
+    int backup_tid2idx[target_num];
     std::vector<int> pos_list;
+    bool force_approximate = false;
+    bool skip_first = false;
     while (1) {
-	int cur_pos = pos_list_list[sorted_int[0]]->front();
-
-	pos_list_list[sorted_int[0]]->erase(pos_list_list[sorted_int[0]]->begin());
-	if (cur_pos == -1) {
+	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
+	if (cur_pos == -1)
 	    break;
+
+	// 向き考慮 && pos_record[0] に具体的な値 && pos_record[0] 以外に値が入るならば...
+	if (force_approximate &&
+	    pos_record[0] != -2 &&
+	    sorted_int[0] != 0) {
+	    skip_first = true;
+
+	    // backup current tid2idx
+	    for (int i = 0; i < target_num; i++) {
+		backup_tid2idx[i] = tid2idx[i];
+	    }
+	    backup_tid2idx[0]++;
 	}
+	tid2idx[sorted_int[0]]++;
 	pos_record[sorted_int[0]] = cur_pos;
 
 
@@ -978,21 +988,35 @@ bool Documents::walk_and(Document *doc_ptr) {
 	int begin = pos_record[0];
 	int end = 0;
 	int total = 0;
-	for (int i = 0; i < target_num; i++) {
-	    if (pos_record[i] == -1) {
-		flag = false;
-		break;
-	    }
 
-	    if (begin > pos_record[i]) {
-		begin = pos_record[i];
+	if (force_approximate) {
+	    for (int i = 0; i < target_num; i++) {
+		if (pos_record[i] < 0) {
+		    flag = false;
+		    break;
+		}
+		else if (i + 1 < target_num && pos_record[i + 1] < pos_record[i]) {
+		    flag = false;
+		    break;
+		}
 	    }
+	    begin = pos_record[0];
+	    end = pos_record[target_num - 1];
+	} else {
+	    for (int i = 0; i < target_num; i++) {
+		if (pos_record[i] < 0) {
+		    flag = false;
+		    break;
+		}
 
-	    if (end < pos_record[i]) {
-		end = pos_record[i];
+		if (begin > pos_record[i])
+		    begin = pos_record[i];
+
+		if (end < pos_record[i])
+		    end = pos_record[i];
+
+		total += pos_record[i];
 	    }
-
-	    total += pos_record[i];
 	}
 
 #ifdef DEBUG
@@ -1004,9 +1028,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	cerr << endl;
 #endif
 
-//          cerr << "flag=" << flag << " begin=" <<  begin << " end=" << end << " region=" << region << endl;
 	if (flag && ((end - begin) <= region)) {
-//	    if (flag && ((end - begin) == target_num)) {
 	    best_begin = begin;
 	    region = end - begin;
 
@@ -1020,17 +1042,24 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    }
 	}
 
-	// std::sort(&(sorted_int[0]), &(sorted_int[pos_list_list.size()]), sort_by_term_pos);
-	for (int i = 0; i < target_num - 1; i++) {
-	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
-		(pos_list_list[sorted_int[i + 1]]->front() != -1 &&
-		 (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
-		int temp = sorted_int[i];
-		sorted_int[i] = sorted_int[i + 1];
-		sorted_int[i + 1] = temp;
+
+	if (flag && force_approximate) {
+	    for (int i = 0; i < target_num; i++) {
+		tid2idx[i] = backup_tid2idx[i];
+		pos_record[i] = -2;
 	    }
+	    skip_first = false;
+
+	    if (pos_list_list[0]->size() >= tid2idx[0])
+		break;
 	}
+
+	update_sorted_int(sorted_int, tid2idx, &pos_list_list, target_num, skip_first);
     } // end of while
+
+    if (region == MAX_LENGTH_OF_DOCUMENT) {
+	return false;
+    }
 
     pos_list.push_back(-1);
     document->set_term_pos("AND", pos_list);
@@ -1039,6 +1068,28 @@ bool Documents::walk_and(Document *doc_ptr) {
 
     return true;
 }
+
+
+bool Documents::update_sorted_int (int *sorted_int, int *tid2idx, std::vector<std::vector<int> *> *pos_list_list, int target_num, bool skip_first) {
+    for (int i = 0; i < target_num - 1; i++) {
+	if (pos_list_list->at(sorted_int[i])->at(tid2idx[sorted_int[i]]) == -1 ||
+	    (pos_list_list->at(sorted_int[i + 1])->at(tid2idx[sorted_int[i + 1]]) != -1 &&
+	     (pos_list_list->at(sorted_int[i])->at(tid2idx[sorted_int[i]]) > pos_list_list->at(sorted_int[i + 1])->at(tid2idx[sorted_int[i + 1]])))) {
+	    int temp = sorted_int[i];
+	    sorted_int[i] = sorted_int[i + 1];
+	    sorted_int[i + 1] = temp;
+	}
+    }
+
+    if (skip_first && sorted_int[0] == 0 && tid2idx[0] + 1 < pos_list_list->at(0)->size()) {
+	tid2idx[0]++;
+	return update_sorted_int (sorted_int, tid2idx, pos_list_list, target_num, skip_first);
+    } else {
+	return true;
+    }
+}
+
+
 
 bool Documents::check_phrase (Document *doc_ptr) {
     Document *document = get_doc(doc_ptr->get_id());
@@ -1099,20 +1150,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 	    }
 	}
 
-	if (doc_ptr->get_id() == 962783) {
-	    cerr << "POS RECORD: ";
-	    for (int i = 0; i < target_num; i++) {
-		cerr << pos_record[i] << " ";
-	    }
-	    cerr << endl;
-	}
-
 	if (flag) {
-
-	    if (doc_ptr->get_id() == 962783) {
-		cerr << "flag = " << flag << endl;
-	    }
-
 	    bool phrasal_flag = true;
 	    for (int i = 0; i < target_num - 1; i++) {
 		if (pos_record[i + 1] - pos_record[i] != 1) {
@@ -1141,34 +1179,49 @@ bool Documents::check_phrase (Document *doc_ptr) {
     } // end of while
     pos_list.push_back(-1);
 
-    if (doc_ptr->get_id() == 962783) {
-	cerr << "missmatch." << endl;
-    }
     return false;
 }
 
 bool Documents::walk_and_or(Document *doc_ptr) {
+
+    // 終端記号ならば true を返す
+    if (get_type() != DOCUMENTS_AND &&
+	get_type() != DOCUMENTS_OR &&
+	get_type() != DOCUMENTS_PHRASE  &&
+	get_type() != DOCUMENTS_OR &&
+	get_type() != DOCUMENTS_ROOT) {
+	return true;
+    }
+
+
+    bool approximate_check_for_children = (get_type() == DOCUMENTS_OR) ? false : true;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
-	if ((*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE  || (*it)->get_type() == DOCUMENTS_OR) {
-	    bool flag = (*it)->walk_and_or(doc_ptr);
-	    if (get_type() == DOCUMENTS_AND || get_type() == DOCUMENTS_ROOT) {
-		if (!flag)
-		    return false;
+	bool ret = (*it)->walk_and_or(doc_ptr);
+
+	// 自分が OR ならば...
+	if (get_type() == DOCUMENTS_OR) {
+	    if (ret) {
+		approximate_check_for_children = true;
 	    }
-	}
-	else if ((*it)->get_type() == DOCUMENTS_ROOT) {
-	    return (*it)->walk_and_or(doc_ptr);
+	} else {
+	    if (!ret) {
+		approximate_check_for_children = false;
+	    }
 	}
     }
 
+    if (!approximate_check_for_children) {
+	return false;
+    }
+
     if (type == DOCUMENTS_ROOT) {
-//	    walk_and(doc_ptr);
+	return walk_and(doc_ptr);
     }
     else if (type == DOCUMENTS_AND) {
-	walk_and(doc_ptr);
+	return walk_and(doc_ptr);
     }
     else if (type == DOCUMENTS_OR) {
-	walk_or(doc_ptr);
+	return walk_or(doc_ptr);
     }
 
     return true;
