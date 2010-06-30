@@ -114,6 +114,7 @@ sub new {
     $this->{isRoot} = $opt->{isRoot};
     if ($opt->{isRoot}) {
 	$this->{optionals} = $opt->{optionals};
+	$this->{result} = $opt->{result};
     } else {
 	$this->{position} = $tagids;
 
