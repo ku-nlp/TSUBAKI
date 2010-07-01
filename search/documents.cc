@@ -586,14 +586,16 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 		else {
 		    int i = (head + tail) >> 1;
 		    Document *doc = new Document(*it);
+		    double score = 0.001 * intchar2int(buffer + ldf * 1 * SIZEOFINT + i * SIZEOFINT);
+
 		    int pos_offset = intchar2int(head_of_offdat + i * SIZEOFINT);
 		    int pos_num = intchar2int(head_of_posdat + pos_offset);
+
 
 #ifdef DEBUG
 		    cerr << " " << (*it);
 #endif
 
-		    double score = 0.001 * intchar2int(head_of_scrdat);
 		    doc->set_freq(score);
 		    doc->set_gdf(term_df);
 
@@ -622,14 +624,15 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 #endif
 	    Document *doc = new Document(did);
 	    double score = 0.001 * intchar2int(buffer + ldf * 1 * SIZEOFINT + i * SIZEOFINT);
+
 	    int pos_offset = intchar2int(buffer + ldf * 2 * SIZEOFINT + i * SIZEOFINT);
 	    int pos_num = intchar2int(buffer + ldf * 3 * SIZEOFINT + pos_offset);
-
 	    doc->set_freq(pos_num);
 	    doc->set_gdf(term_df);
 			  
+	    // cerr << "score = "<< score << " pos_off = " << pos_offset << " pos_num = " << pos_num << endl;
 	    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
-	    memcpy (__buf, (buffer + ldf * 8 + pos_offset), SIZEOFINT * (pos_num + 1));
+	    memcpy (__buf, (buffer + ldf * 12 + pos_offset), SIZEOFINT * (pos_num + 1));
 	    doc->set_pos_char(__buf);
 
 	    s_documents.push_back(doc);
