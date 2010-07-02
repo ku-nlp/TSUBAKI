@@ -13,12 +13,46 @@ use Getopt::Long;
 use strict;
 
 my (%opt);
-GetOptions(\%opt, 'query=s', 'start=i', 'results=i', 'download=s', 'proxy', 'proxy_server=s', 'format=s', 'verbose');
+GetOptions(\%opt, 'query=s', 'start=i', 'results=i', 'download=s', 'proxy', 'proxy_server=s', 'format=s', 'verbose', 'getdoc');
 
 $opt{proxy_server} = 'http://proxy.kuins.net:8080' if ($opt{proxy} && !$opt{proxy_server});
 $opt{format} = 'xml' unless ($opt{format});
 
-&main();
+if ($opt{getdoc}) {
+    &main4getdoc();
+} else {
+    &main();
+}
+
+sub main4getdoc {
+    # リクエストURLを作成
+    my $base_url = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi';
+    my $req_url = "$base_url?format=xml";
+    while (<STDIN>) {
+	chop;
+
+	my $sid = $_;
+	my $_req_url = sprintf ("%s&id=%s", $req_url, $sid);
+
+	# UserAgent の作成
+	my $ua = new LWP::UserAgent();
+
+	# リクエストの送信
+	my $req = HTTP::Request->new(GET => $_req_url);
+	$req->header('Accept' => 'text/xml');
+	my $response = $ua->request($req);
+
+	# TSUBAKI APIの結果を取得
+	my $xmldat;
+	if ($response->is_success()) {
+	    $xmldat = $response->content();
+	    open (F, "> $sid.xml") or die $!;
+	    print F $xmldat;
+	    close (F);
+	}
+    }
+}
+
 
 sub main {
     # 検索したいキーワード (utf8)をURIエンコードする
