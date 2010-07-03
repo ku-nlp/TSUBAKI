@@ -504,6 +504,28 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 	if (VERBOSE)
 	    cout << "merge_phr = " << 1000 * (end - start) << " [ms]" << endl;
     }
+    else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "PROX")) {
+	int prox_dist = atoi((char *)_Atom(car(cdr(cell))));
+	documents->set_type(DOCUMENTS_PROX);
+	documents->set_prox_dist(prox_dist);
+
+	double start = (double) gettimeofday_sec();
+	documents->merge_and(documents, cdr(cdr(cell)), _already_retrieved_docs);
+	double end = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "merge_and = " << 1000 * (end - start) << " [ms]" << endl;
+    }
+    else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "ORDERED_PROX")) {
+	int prox_dist = atoi((char *)_Atom(car(cdr(cell))));
+	documents->set_type(DOCUMENTS_ORDERED_PROX);
+	documents->set_prox_dist(prox_dist);
+
+	double start = (double) gettimeofday_sec();
+	documents->merge_and(documents, cdr(cdr(cell)), _already_retrieved_docs);
+	double end = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "merge_and = " << 1000 * (end - start) << " [ms]" << endl;
+    }
     else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "AND")) {
 	documents->set_type(DOCUMENTS_AND);
 	double start = (double) gettimeofday_sec();
@@ -904,7 +926,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 
 	// for TERM_OPTIONAL documents
 	if (doc) {
-	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT) {
+	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		pos_list_list.push_back(doc->get_pos());
 		document->set_best_pos(doc->get_best_pos());
 	    }
@@ -947,6 +969,11 @@ bool Documents::walk_and(Document *doc_ptr) {
 	return true;
     }
 
+
+    /*
+     * 近接のチェック
+     */
+
     // pos_record ... tid2pos
     // sorted_int ... pos2tid
     int target_num = pos_list_list.size();
@@ -964,15 +991,14 @@ bool Documents::walk_and(Document *doc_ptr) {
     int region = MAX_LENGTH_OF_DOCUMENT;
     int backup_tid2idx[target_num];
     std::vector<int> pos_list;
-    bool force_approximate = false;
     bool skip_first = false;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
 	if (cur_pos == -1)
 	    break;
 
-	// 向き考慮 && pos_record[0] に具体的な値 && pos_record[0] 以外に値が入るならば...
-	if (force_approximate &&
+	// 近接向き考慮 && pos_record[0] に具体的な値 && pos_record[0] 以外に値が入るならば...
+	if (get_type() == DOCUMENTS_ORDERED_PROX &&
 	    pos_record[0] != -2 &&
 	    sorted_int[0] != 0) {
 	    skip_first = true;
@@ -992,7 +1018,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	int end = 0;
 	int total = 0;
 
-	if (force_approximate) {
+	if (get_type() == DOCUMENTS_ORDERED_PROX) {
 	    for (int i = 0; i < target_num; i++) {
 		if (pos_record[i] < 0) {
 		    flag = false;
@@ -1031,22 +1057,19 @@ bool Documents::walk_and(Document *doc_ptr) {
 	cerr << endl;
 #endif
 
-	if (flag && ((end - begin) <= region)) {
+	if (flag && ((end - begin) <= get_prox_dist())) {
 	    best_begin = begin;
 	    region = end - begin;
 
 	    int ave = (end + begin) >> 1;
 	    best_pos = ave;
 
+	    pos_list.push_back(ave);
 	    document->set_phrase_feature();
-
-	    if ((end - begin) < PROXIMATE_LENGTH) {
-		pos_list.push_back(ave);
-	    }
 	}
 
 
-	if (flag && force_approximate) {
+	if (flag && get_type() == DOCUMENTS_ORDERED_PROX) {
 	    for (int i = 0; i < target_num; i++) {
 		tid2idx[i] = backup_tid2idx[i];
 		pos_record[i] = -2;
@@ -1060,9 +1083,8 @@ bool Documents::walk_and(Document *doc_ptr) {
 	update_sorted_int(sorted_int, tid2idx, &pos_list_list, target_num, skip_first);
     } // end of while
 
-    if (region == MAX_LENGTH_OF_DOCUMENT) {
+    if (region == MAX_LENGTH_OF_DOCUMENT && (get_type() == DOCUMENTS_ORDERED_PROX || get_type() == DOCUMENTS_PROX))
 	return false;
-    }
 
     pos_list.push_back(-1);
     document->set_term_pos("AND", pos_list);
@@ -1107,7 +1129,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 
 	// for TERM_OPTIONAL documents
 	if (doc) {
-	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT) {
+	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		pos_list_list.push_back(doc->get_pos());
 		document->set_best_pos(doc->get_best_pos());
 	    }
@@ -1192,6 +1214,8 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 	get_type() != DOCUMENTS_OR &&
 	get_type() != DOCUMENTS_PHRASE  &&
 	get_type() != DOCUMENTS_OR &&
+	get_type() != DOCUMENTS_PROX &&
+	get_type() != DOCUMENTS_ORDERED_PROX &&
 	get_type() != DOCUMENTS_ROOT) {
 	return true;
     }
@@ -1220,7 +1244,9 @@ bool Documents::walk_and_or(Document *doc_ptr) {
     if (type == DOCUMENTS_ROOT) {
 	return walk_and(doc_ptr);
     }
-    else if (type == DOCUMENTS_AND) {
+    else if (type == DOCUMENTS_AND ||
+	     type == DOCUMENTS_PROX ||
+	     type == DOCUMENTS_ORDERED_PROX) {
 	return walk_and(doc_ptr);
     }
     else if (type == DOCUMENTS_OR) {
