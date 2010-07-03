@@ -254,6 +254,7 @@ sub _analyzeSearchCondition {
 	# 論理条件制約
 	elsif ($constraint_tag =~ /(AND|OR)/) {
 	    $logical_cond_qkw = $1;
+	    $approximate_dist = 0;
 	}
 	# 係り受け強制制約
 	elsif ($constraint_tag =~ /FD/) {
@@ -418,7 +419,17 @@ sub createQueryKeywordObj {
 
 
     if ($this->{OPTIONS}{is_cpp_mode}) {
-	return &Tsubaki::TermGroupCreater::create($result, $opt);
+	my %condition = ();
+	$condition{force_dpnd}        = $force_dpnd;
+	$condition{is_phrasal_search} = $is_phrasal_search;
+	$condition{approximate_order} = $approximate_order;
+	$condition{approximate_dist}  = $approximate_dist;
+	$condition{logical_cond_qkw}  = $logical_cond_qkw;
+
+	return &Tsubaki::TermGroupCreater::create(
+	    $result,
+	    \%condition,
+	    $opt);
     }
     else {
 	$opt->{indexer} = $used_indexer;
@@ -647,7 +658,7 @@ sub parse {
 	rawstring => $rawstring,
 	result    => $result,
 	rep2style => $rep2style,
-	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("(%s)", $sexps[0]))
+	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("%s", $sexps[0]))
 			});
 
 
