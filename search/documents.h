@@ -113,6 +113,7 @@ class Documents {
     // MAP_IMPL<int, int> s_documents_index;
     // MAP_IMPL<int, int> l_documents_index;
     // bool l_documents_inf;
+    int prox_dist;
 
     std::vector<Documents *> children;
 
@@ -127,6 +128,8 @@ class Documents {
 
 	offset_dbs = in_offset_dbs;
 	retrievedByBasicNode = false;
+
+	prox_dist = PROXIMATE_LENGTH;
     }
 
     ~Documents() {
@@ -144,6 +147,10 @@ class Documents {
 	    delete (*it);
 	}
 */
+    }
+
+    void set_prox_dist (int dist) {
+	prox_dist = dist;
     }
 
     void create___documents_index (int size) {
@@ -258,6 +265,10 @@ class Documents {
     bool dup_check_operation(std::vector<Document *> *docs1, std::vector<Document *> *docs2, std::vector<Document *> *dest_documents);
     bool merge_or(Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs);
     Documents *merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs);
+
+    int get_prox_dist() {
+	return prox_dist;
+    }
 
     bool calc_score() {
 	for (std::vector<Document *>::iterator it = s_documents.begin(), end = s_documents.end(); it != end; ++it) {
