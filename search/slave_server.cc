@@ -110,25 +110,17 @@ std::vector<double> *search (std::string *query,
     return logdata;
 }
 
+bool pushback_file_handle (string file) {
+    std::ifstream *fin = new std::ifstream(file.c_str());
+    if (fin) {
+	index_streams.push_back(fin);
+    } else {
+	cerr << "Not found! (" << file << ")" << endl;
+	exit(1);
+    }
+}
+
 bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
-
-    /** 従来のインデックスフォーマット*/
-    /*
-    std::string index_word_file         = index_dir + "/index000.word.conv.data";
-    std::string index_dpnd_file         = index_dir + "/index000.dpnd.conv.data";
-    std::string offset_word_file        = index_dir + "/offset000.word.conv.txt.cdb.0";
-    std::string offset_dpnd_file        = index_dir + "/offset000.dpnd.conv.txt.cdb.0";
-    std::string tid2sid_file            = index_dir + "/sid2tid";
-    std::string sid2url_file            = index_dir + "/did2url.cdb";
-    std::string sid2title_file          = index_dir + "/did2title.cdb";
-    std::string tid2length_file         = index_dir + "/000.doc_length.txt";
-    std::string anchor_index_word_file  = anchor_index_dir + "/index000.word.conv.data";
-    std::string anchor_index_dpnd_file  = anchor_index_dir + "/index000.dpnd.conv.data";
-    std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.conv.txt.cdb.0";
-    std::string anchor_offset_dpnd_file = anchor_index_dir + "/offset000.dpnd.conv.txt.cdb.0";
-    */
-
-    /* 新しいインデックスフォーマット */
     std::string index_word_file         = index_dir + "/idx000.word.dat.conv";
     std::string index_dpnd_file         = index_dir + "/idx000.dpnd.dat.conv";
     std::string offset_word_file        = index_dir + "/offset000.word.conv.cdb.keymap";
@@ -143,10 +135,10 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.conv.cdb.keymap";
     std::string anchor_offset_dpnd_file = anchor_index_dir + "/offset000.dpnd.conv.cdb.keymap";
 
-    index_streams.push_back(new std::ifstream(index_word_file.c_str()));
-    index_streams.push_back(new std::ifstream(index_dpnd_file.c_str()));
-    index_streams.push_back(new std::ifstream(anchor_index_word_file.c_str()));
-    index_streams.push_back(new std::ifstream(anchor_index_dpnd_file.c_str()));
+    pushback_file_handle (index_word_file);
+    pushback_file_handle (index_dpnd_file);
+    pushback_file_handle (anchor_index_word_file);
+    pushback_file_handle (anchor_index_dpnd_file);
 
     offset_dbs.push_back(new Dbm(offset_word_file));
     offset_dbs.push_back(new Dbm(offset_dpnd_file));
@@ -227,14 +219,15 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 
 	int count = 0;
 	std::ostringstream sbuf;
+	cerr << "--- RESULT ---" << endl;
 	for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
 	    // テスト時はコメントアウトすること
-	    std::string sid = (*(MAP_IMPL<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
+//	    std::string sid = (*(MAP_IMPL<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
 //	    std::string title = (*(MAP_IMPL<int, string>::iterator)tid2title.find((*it)->get_id())).second;
 //	    std::string url = (*(MAP_IMPL<int, string>::iterator)tid2url.find((*it)->get_id())).second;
 
 //	    sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
-	    cerr << sid << " " << ((*it)->to_string()) << " " << (*it)->get_final_score() << endl;
+	    cerr << ((*it)->to_string()) << " " << (*it)->get_final_score() << endl;
 	    /*
 	     * フレーズ検索
 	    if ((*it)->get_phrase_feature() > 0) {
@@ -350,8 +343,6 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 	    string _query = buf;
 	    std::vector<Document *> docs;
 	    std::vector<double> *logdata = search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
-
-	    // search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
 
 	    int count = 0;
 	    for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
