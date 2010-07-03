@@ -116,7 +116,7 @@ sub to_S_exp {
     else {
 	$midasi = sprintf ("%s%s", $this->{blockType}, lc($this->{text}));
     }
-    return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, $TYPE2INT{$this->{term_type}}, $this->{gdf},(($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 0 : 1));
+    return sprintf("%s((%s %d %d %d %d %d))\n", $space, $midasi, $TYPE2INT{$this->{term_type}}, $this->{gdf}, (($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 0 : 1), $this->{pos});
 }
 
 sub to_S_exp_for_anchor {
