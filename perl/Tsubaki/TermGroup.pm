@@ -56,6 +56,44 @@ push(@stylecolor, 'border: 2px solid #770077; background-color: #bb00bb; color: 
 my $removedcolor = 'border: 2px solid #9f9f9f; background-color: #e0e0e0; color: black;';
 
 
+sub new {
+    my ($class, $gid, $pos, $parentGroup, $synnodes, $tagids, $children, $parent, $opt) = @_;
+
+    my $this;
+    $this->{children} = $children;
+    $this->{hasChild} = ($children) ? 1 : 0;
+    $this->{parentGroup} = $parentGroup;
+    $this->{groupID} = $gid;
+    $this->{discrete_level} = 1;
+    $this->{search_type} = $opt->{search_type};
+    $this->{proximity_size} = $opt->{proximity_size};
+    if ($opt->{isRoot}) {
+	$this->{optionals} = $opt->{optionals};
+	$this->{result} = $opt->{result};
+	$this->{isRoot} = $opt->{isRoot};
+	$this->{condition} = $opt->{condition};
+    } else {
+	$this->{position} = $tagids;
+
+	my $basic_node = &getBasicNode($synnodes);
+
+	# $UTIL->getGDF($basic_node->synid);
+	my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
+
+	$synnodes = &reduceSynNode($basic_node, $synnodes, $DFDBS_WORD, $opt) if ($CONFIG->{MAX_NUMBER_OF_SYNNODES});
+
+	if ($basic_node) {
+	    $this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($basic_node->synid)));
+	} else {
+	    $this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($synnodes->[0]->synid))) if (defined $synnodes);
+	}
+
+	&pushbackTerms ($this, $basic_node, $synnodes, $gid, $pos, $opt);
+    }
+
+    bless $this;
+}
+
 sub getBasicNode {
     my ($synnodes) = @_;
 
@@ -91,50 +129,14 @@ sub reduceSynNode {
     my $count = 0;
     my @newNodes = ();
 
-    push (@newNodes, $basic_node);
+    push (@newNodes, $basic_node) if (defined $basic_node);
     foreach my $node (sort {$dfdb->get(&remove_yomi($b->synid)) <=> $dfdb->get(&remove_yomi($a->synid)) } @$synnodes) {
 	next if ($basic_node == $node);
-
-	push (@newNodes, $node);
+	push (@newNodes, $node) if (defined $node);
 	last if (++$count >= $N);
     }
 
     return \@newNodes;
-}
-
-sub new {
-    my ($class, $gid, $parentGroup, $synnodes, $tagids, $children, $parent, $opt) = @_;
-
-    my $this;
-    $this->{children} = $children;
-    $this->{hasChild} = ($children) ? 1 : 0;
-    $this->{parentGroup} = $parentGroup;
-    $this->{groupID} = $gid;
-    $this->{discrete_level} = 1;
-    $this->{isRoot} = $opt->{isRoot};
-    if ($opt->{isRoot}) {
-	$this->{optionals} = $opt->{optionals};
-	$this->{result} = $opt->{result};
-    } else {
-	$this->{position} = $tagids;
-
-	my $basic_node = &getBasicNode($synnodes);
-
-	# $UTIL->getGDF($basic_node->synid);
-	my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
-
-	$synnodes = &reduceSynNode($basic_node, $synnodes, $DFDBS_WORD, $opt) if ($CONFIG->{MAX_NUMBER_OF_SYNNODES});
-
-	if ($basic_node) {
-	    $this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($basic_node->synid)));
-	} else {
-	    $this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($synnodes->[0]->synid))) if (defined $synnodes);
-	}
-
-	&pushbackTerms ($this, $basic_node, $synnodes, $gid, $opt);
-    }
-
-    bless $this;
 }
 
 sub removeSyntacticFeatures {
@@ -149,7 +151,7 @@ sub removeSyntacticFeatures {
 }
 
 sub pushbackTerms {
-    my ($this, $basic_node, $synnodes, $gid, $opt) = @_;
+    my ($this, $basic_node, $synnodes, $gid, $pos, $opt) = @_;
 
     my $cnt = 0;
     my %alreadyPushedTexts = ();
@@ -185,6 +187,7 @@ sub pushbackTerms {
 	    foreach my $tag (keys %$blockTypes) {
 		my $term = new Tsubaki::Term ({
 		    tid => sprintf ("%s-%s", $gid, $cnt++),
+		    pos => $pos,
 		    text => $midasi,
 		    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
 		    node_type => ($synnode eq $basic_node) ? 'basic' : 'syn',
@@ -308,56 +311,91 @@ sub get_term_type {
     }
 }
 
-sub to_S_exp {
-    my ($this, $space) = @_;
+sub _to_S_exp_for_ROOT {
+    my ($this, $indent) = @_;
 
-    my $S_exp;
-    if ($this->{isRoot}) {
-	my $_S_exp;
-	my $_S_exp_for_anchor;
-	my $num_of_children = 0;
-	foreach my $child (sort {$a->get_term_type() <=> $b->get_term_type() || $a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
-	    $_S_exp .= $child->to_S_exp($space);
-	    $_S_exp_for_anchor .= $child->to_S_exp_for_anchor($space);
-	    $num_of_children++;
-	}
-	if ($num_of_children > 1) {
-	    $_S_exp = sprintf ("(AND %s)", $_S_exp);
-	}	    
+    my ($S_exp, $_S_exp, $_S_exp_for_anchor, $num_of_children);
+    foreach my $child (sort {$a->get_term_type() <=> $b->get_term_type() || $a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
+	$_S_exp .= $child->to_S_exp($indent);
+	$_S_exp_for_anchor .= $child->to_S_exp_for_anchor($indent);
+	$num_of_children++;
+    }
 
+    if ($num_of_children > 1) {
+	$_S_exp = sprintf ("(%s %s)", &_getOperationTag($this->{condition}), $_S_exp);
+    }
 
+    # optional要素の書き出し
+    my @buf;
+    while (my ($key, $node) = each %{$this->{optionals}}) {
+	push (@buf, $node->to_S_exp($indent, $this->{condition}));
+    }
 
-	my @buf;
-	while (my ($k, $v) = each %{$this->{optionals}}) {
-	    push (@buf, $v->to_S_exp());
-	}
-
-#	$_S_exp_for_anchor = '';
-	if (scalar(@buf)) {
-	    $S_exp = sprintf ("( (ROOT %s %s %s ) )", $_S_exp, join (" ", @buf), $_S_exp_for_anchor);
-	} else {
-	    $S_exp = sprintf ("( (ROOT %s %s ) )", $_S_exp, $_S_exp_for_anchor);
-	}
+    if (scalar(@buf)) {
+	$S_exp = sprintf ("( (ROOT %s %s %s ) )", $_S_exp, join (" ", @buf), $_S_exp_for_anchor);
     } else {
-	my $is_single_node = (!$this->{hasChild} && scalar(@{$this->{terms}}) < 2);
-	$S_exp .= "$space(OR\n" unless ($is_single_node);
-	my $_space = ($is_single_node) ? $space : $space . "\t";
-	foreach my $term (@{$this->{terms}}) {
-	    $S_exp .= $term->to_S_exp ($_space);
-	}
-
-	if ($this->{hasChild}) {
-	    $S_exp .= (($is_single_node) ? "$space(AND\n" : "\t$space(AND\n");
-	    my $_space = ($is_single_node) ? $space . "\t" : $space . "\t\t";
-	    foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
-		$S_exp .= $child->to_S_exp($_space);
-	    }
-	    $S_exp .= (($is_single_node) ? "$space)\n" : "\t$space)\n");
-	}
-	$S_exp .= "$space)\n" unless ($is_single_node);
+	$S_exp = sprintf ("( (ROOT %s %s ) )", $_S_exp, $_S_exp_for_anchor);
     }
 
     return $S_exp;
+}
+
+sub _to_S_exp {
+    my ($this, $indent, $condition) = @_;
+
+    my $is_single_node = (!$this->{hasChild} && scalar(@{$this->{terms}}) < 2);
+    my $_indent = ($is_single_node) ? $indent : $indent . "\t";
+
+    my $S_exp;
+    $S_exp .= "$indent(OR\n" unless ($is_single_node);
+    foreach my $term (@{$this->{terms}}) {
+	$S_exp .= $term->to_S_exp ($_indent, $condition);
+    }
+
+    if ($this->{hasChild}) {
+	my $operationTag = &_getOperationTag ($condition);
+	$S_exp .= (($is_single_node) ? "$indent($operationTag\n" : "\t$indent($operationTag\n");
+
+	my $_indent = ($is_single_node) ? $indent . "\t" : $indent . "\t\t";
+	foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
+	    $S_exp .= $child->to_S_exp($_indent);
+	}
+
+	$S_exp .= (($is_single_node) ? "$indent)\n" : "\t$indent)\n");
+    }
+    $S_exp .= "$indent)\n" unless ($is_single_node);
+
+    return $S_exp;
+}
+
+sub _getOperationTag {
+    my ($condition) = @_;
+
+    my $operationTag;
+    if ($condition->{is_phrasal_search} > 0) {
+	$operationTag = 'PHRASE';
+    } elsif ($condition->{approximate_dist} > 0) {
+	if ($condition->{approximate_order}) {
+	    $operationTag = sprintf ("ORDERED_PROX %d", $condition->{approximate_dist});
+	} else {
+	    $operationTag = sprintf ("PROX %d", $condition->{approximate_dist});
+	}
+    } else {
+	$operationTag = 'AND';
+    }
+
+    return $operationTag;
+}
+
+sub to_S_exp {
+    my ($this, $indent, $condition) = @_;
+
+    my $S_exp;
+    if ($this->{isRoot}) {
+	return $this->_to_S_exp_for_ROOT ($indent);
+    } else {
+	return $this->_to_S_exp ($indent, $condition);
+    }
 }
 
 
@@ -439,7 +477,7 @@ sub show_query_structure {
 }
 
 sub to_S_exp_for_anchor {
-    my ($this, $space) = @_;
+    my ($this, $indent) = @_;
 
     my $S_exp;
     my %buf;
@@ -451,14 +489,14 @@ sub to_S_exp_for_anchor {
     }
 
     if ($this->{hasChild}) {
-#	$S_exp .= (($is_single_node) ? "$space(AND\n" : "\t$space(AND\n");
-#	my $_space = ($is_single_node) ? $space . "\t" : $space . "\t\t";
+#	$S_exp .= (($is_single_node) ? "$indent(AND\n" : "\t$indent(AND\n");
+#	my $_indent = ($is_single_node) ? $indent . "\t" : $indent . "\t\t";
 	foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
 	    $S_exp .= $child->to_S_exp_for_anchor(" ");
 	}
-#	$S_exp .= (($is_single_node) ? "$space)\n" : "\t$space)\n");
+#	$S_exp .= (($is_single_node) ? "$indent)\n" : "\t$indent)\n");
     }
-#    $S_exp .= "$space)\n" unless ($is_single_node);
+#    $S_exp .= "$indent)\n" unless ($is_single_node);
 
     return $S_exp;
 }
