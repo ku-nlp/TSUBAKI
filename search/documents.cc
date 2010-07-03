@@ -281,7 +281,6 @@ bool Documents::merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_al
 		notFound = true;
 		break;
 	    }
-
 	    pos_list_list.push_back(_doc->get_pos());
 	}
 	if (notFound)
@@ -355,7 +354,6 @@ bool Documents::merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_al
 	    s_documents_index->add(doc->get_id(), count); // map index
 	    __documents_index->add(doc->get_id(), count); // map index
 	    count++;
-
 	}
     }
 
@@ -1245,6 +1243,7 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 	return walk_and(doc_ptr);
     }
     else if (type == DOCUMENTS_AND ||
+	     type == DOCUMENTS_PHRASE ||
 	     type == DOCUMENTS_PROX ||
 	     type == DOCUMENTS_ORDERED_PROX) {
 	return walk_and(doc_ptr);
