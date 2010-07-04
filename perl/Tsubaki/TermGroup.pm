@@ -57,11 +57,11 @@ my $removedcolor = 'border: 2px solid #9f9f9f; background-color: #e0e0e0; color:
 
 
 sub new {
-    my ($class, $gid, $pos, $parentGroup, $synnodes, $tagids, $children, $parent, $opt) = @_;
+    my ($class, $gid, $pos, $gdf, $parentGroup, $basic_node, $synnodes, $parent, $children, $opt) = @_;
 
     my $this;
+    $this->{hasChild} = (defined $children) ? 1 : 0;
     $this->{children} = $children;
-    $this->{hasChild} = ($children) ? 1 : 0;
     $this->{parentGroup} = $parentGroup;
     $this->{groupID} = $gid;
     $this->{discrete_level} = 1;
@@ -73,81 +73,11 @@ sub new {
 	$this->{isRoot} = $opt->{isRoot};
 	$this->{condition} = $opt->{condition};
     } else {
-	$this->{position} = $tagids;
-
-	my $basic_node = &getBasicNode($synnodes);
-
-	# $UTIL->getGDF($basic_node->synid);
-	my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
-
-	$synnodes = &reduceSynNode($basic_node, $synnodes, $DFDBS_WORD, $opt) if ($CONFIG->{MAX_NUMBER_OF_SYNNODES});
-
-	if ($basic_node) {
-	    $this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($basic_node->synid)));
-	} else {
-	    $this->{gdf} = $DFDBS_WORD->get(encode ('utf8', &remove_yomi($synnodes->[0]->synid))) if (defined $synnodes);
-	}
-
+	$this->{gdf} = $gdf;
 	&pushbackTerms ($this, $basic_node, $synnodes, $gid, $pos, $opt);
     }
 
     bless $this;
-}
-
-sub getBasicNode {
-    my ($synnodes) = @_;
-
-    foreach my $synnode (@$synnodes) {
-	if ($synnode->synid !~ /^s\d+/ && $synnode->feature eq '') {
-	    return $synnode;
-	}
-    }
-    return undef;
-}
-
-sub remove_yomi {
-    my ($text) = @_;
-
-    my @buf;
-    foreach my $word (split /\+/, $text) {
-	my ($hyouki, $yomi) = split (/\//, $word);
-	push (@buf, $hyouki);
-    }
-
-    return join ("+", @buf)
-}
-
-
-sub reduceSynNode {
-    my ($basic_node, $synnodes, $dfdb, $opt) = @_;
-
-    next unless (defined $synnodes);
-
-    my $N = ($opt->{use_of_antonym_expansion}) ? int (0.5 * ($CONFIG->{MAX_NUMBER_OF_SYNNODES} + 1)) : $CONFIG->{MAX_NUMBER_OF_SYNNODES};
-
-    # 各ノードのgdfを得る
-    my $count = 0;
-    my @newNodes = ();
-
-    push (@newNodes, $basic_node) if (defined $basic_node);
-    foreach my $node (sort {$dfdb->get(&remove_yomi($b->synid)) <=> $dfdb->get(&remove_yomi($a->synid)) } @$synnodes) {
-	next if ($basic_node == $node);
-	push (@newNodes, $node) if (defined $node);
-	last if (++$count >= $N);
-    }
-
-    return \@newNodes;
-}
-
-sub removeSyntacticFeatures {
-    my ($midasi) = @_;
-
-    $midasi =~ s/<可能>//;
-    $midasi =~ s/<尊敬>//;
-    $midasi =~ s/<受身>//;
-    $midasi =~ s/<使役>//;
-
-    return $midasi;
 }
 
 sub pushbackTerms {
@@ -155,71 +85,32 @@ sub pushbackTerms {
 
     my $cnt = 0;
     my %alreadyPushedTexts = ();
-    foreach my $synnode (@$synnodes) {
-	my $_midasi = sprintf ("%s%s", &remove_yomi($synnode->synid), $synnode->feature);
 
-	# <反義語><否定>を利用するかどうか
-	if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
-	    next unless ($opt->{option}{use_of_negation_and_antonym});
-	}
+    # 利用するブロックタイプの取得
+    my $blockTypes = ();
+    if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+	$blockTypes = $opt->{option}{blockTypes};
+    } else {
+	$blockTypes->{UNDEF} = 1;
+    }
 
-	# SYNノードを利用しない場合
-	next if ($_midasi =~ /s\d+/ && $opt->{option}{disable_synnode});
+    foreach my $midasi (@$synnodes) {
+	next if (exists $alreadyPushedTexts{$midasi});
+	$alreadyPushedTexts{$midasi} = 1;
 
-	# 文法素性の削除
-	$_midasi = &removeSyntacticFeatures($_midasi);
-
-	# 反義語を使ってタームを拡張する
-	my $midasis = &expandAntonymAndNegationTerms($_midasi, $opt);
-
-	# 利用するブロックタイプの取得
-	my $blockTypes = ();
-	if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
-	    $blockTypes = $opt->{option}{blockTypes};
-	} else {
-	    $blockTypes->{UNDEF} = 1;
-	}
-
-	foreach my $midasi (@$midasis) {
-	    next if (exists $alreadyPushedTexts{$midasi});
-	    $alreadyPushedTexts{$midasi} = 1;
-
-	    foreach my $tag (keys %$blockTypes) {
-		my $term = new Tsubaki::Term ({
-		    tid => sprintf ("%s-%s", $gid, $cnt++),
-		    pos => $pos,
-		    text => $midasi,
-		    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
-		    node_type => ($synnode eq $basic_node) ? 'basic' : 'syn',
-		    gdf => $this->{gdf},
-		    blockType => (($tag eq 'UNDEF') ? undef : $tag)
+	foreach my $tag (keys %$blockTypes) {
+	    my $term = new Tsubaki::Term ({
+		tid => sprintf ("%s-%s", $gid, $cnt++),
+		pos => $pos,
+		text => $midasi,
+		term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
+		node_type => ($midasi eq $basic_node) ? 'basic' : 'syn',
+		gdf => $this->{gdf},
+		blockType => (($tag eq 'UNDEF') ? undef : $tag)
 					      });
-		push (@{$this->{terms}}, $term);
-	    }
+	    push (@{$this->{terms}}, $term);
 	}
     }
-}
-
-sub expandAntonymAndNegationTerms {
-    my ($midasi, $opt) = @_;
-
-    my @buf;
-    push (@buf, $midasi);
-    # 拡張するタームを最後のものに限定する必要あり
-    if ($opt->{option}{antonym_and_negation_expansion}) {
-	# 反義情報の削除
-	$midasi =~ s/<反義語>//;
-
-	# <否定>の付け変え
-	if ($midasi =~ /<否定>/) {
-	    $midasi =~ s/<否定>//;
-	} else {
-	    $midasi .= '<否定>';
-	}
-	push (@buf, $midasi);
-    }
-
-    return \@buf;
 }
 
 sub terms {
@@ -289,7 +180,6 @@ sub to_string {
     print $space . "* gdf = " . $this->{gdf} . "\n";
     print $space . "* group id = " . $this->{groupID} . "\n";
     print $space . "* discrete level = " . $this->{discrete_level} . "\n";
-    print $space . "* position = " . join(", ", @{$this->{position}}) . "\n";
     foreach my $term (@{$this->{terms}}) {
 	$term->to_string ($space . "  ");
 	print "\n";
@@ -315,7 +205,14 @@ sub _to_S_exp_for_ROOT {
     my ($this, $indent) = @_;
 
     my ($S_exp, $_S_exp, $_S_exp_for_anchor, $num_of_children);
-    foreach my $child (sort {$a->get_term_type() <=> $b->get_term_type() || $a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
+    my @_children = ();
+    if ($this->{condition}{is_phrasal_search} > 0) {
+	@_children = sort {$a->get_term_type() <=> $b->get_term_type() || $a->{pos} <=> $b->{pos}} @{$this->{children}};
+    } else {
+	@_children = sort {$a->get_term_type() <=> $b->get_term_type() || $a->{gdf} <=> $b->{gdf}} @{$this->{children}};
+    }
+
+    foreach my $child (@_children) {
 	$_S_exp .= $child->to_S_exp($indent);
 	$_S_exp_for_anchor .= $child->to_S_exp_for_anchor($indent);
 	$num_of_children++;

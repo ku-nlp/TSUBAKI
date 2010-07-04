@@ -13,6 +13,8 @@ use KNP::Result;
 
 my $CONFIG = Configure::get_instance();
 
+my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
+my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 
 sub create {
     my ($result, $condition, $option) = @_;
@@ -25,15 +27,21 @@ sub create {
     while (my ($k, $v) = each %$condition) {
 	print $k . " " . $v . "<BR>\n";
     }
-    my ($terms, $optionals) = &_create (0, \@kihonkus, \@ids, undef, "", $option);
+
+    my ($terms, $optionals) =
+	(($condition->{is_phrasal_search} > 0) ?
+	 &_create4phrase (\@kihonkus, \@ids, "", $option) :
+	 &_create (0, \@kihonkus, \@ids, undef, "", $option));
+
     my $root = new Tsubaki::TermGroup (
 	-1,
 	-1,
+	-1,
+	undef,
 	undef,
 	undef,
 	undef,
 	$terms,
-	undef,
 	{
 	    isRoot => 1,
 	    optionals => $optionals,
@@ -46,14 +54,47 @@ sub create {
     return $root;
 }
 
+sub _create4phrase {
+    my ($kihonkus, $tids, $space, $opt) = @_;
+
+    my ($gid, $count, @terms, %optionals, %visitedKihonkus) = (0, 0, (), (), ());
+    foreach my $tid (@$tids) {
+	my $kihonku = $kihonkus->[$tid];
+	foreach my $mrph ($kihonku->mrph) {
+	    my $midasi = sprintf ("%s*", &remove_yomi($mrph->midasi));
+	    my $gdf = $DFDBS_WORD->get(encode ('utf8', $midasi));
+
+	    # タームグループの作成
+	    my @midasis = ();
+	    push (@midasis, $midasi);
+	    push (@terms, new Tsubaki::TermGroup (
+		      $gid++,
+		      $tid,
+		      $gdf,
+		      undef,
+		      undef,
+		      \@midasis,
+		      undef,
+		      undef,
+		      $opt
+		  ));
+	}
+
+	# 係り受けタームの追加
+	&_pushbackDependencyTerms(\@terms, \%optionals, $kihonku, $gid, $count, $opt);
+    }
+
+    return (\@terms, \%optionals);
+}
+
 sub _create {
     my ($gid, $kihonkus, $tids, $parent, $space, $option) = @_;
 
     my ($count, @terms, %optionals, %visitedKihonkus) = (0, (), (), ());
     foreach my $tid (reverse @$tids) {
 	next if (exists $visitedKihonkus{$tid});
-
 	my $kihonku = $kihonkus->[$tid];
+
 	my $is_optional_node = (defined $kihonku && $kihonku->fstring =~ /クエリ不要語/) ? 1 : 0;
 	my $broadest_synnodes = &_getBroadestSynNode ($parent, $kihonku, $tids);
 	my @synnodes = $broadest_synnodes->synnode;
@@ -69,7 +110,7 @@ sub _create {
 	my $children = &_getChildNodes (\%optionals, $group_id, $kihonkus, \@tagids, $broadest_synnodes, $space, $option);
 
 	# タームグループの作成
-	my $termGroup = new Tsubaki::TermGroup ($group_id, $tid, undef, \@synnodes, \@tagids, $children, $kihonku, { optional_flag => $is_optional_node, option => $option });
+	my $termGroup = &_createTermGroup ($group_id, $tid, \@synnodes, $kihonku, $children, { optional_flag => $is_optional_node, option => $option });
 
 	if ($is_optional_node) {
 	    $optionals{$termGroup->{text}} = $termGroup unless (defined ($optionals{$termGroup->{text}}));
@@ -82,6 +123,135 @@ sub _create {
     }
 
     return (\@terms, \%optionals);
+}
+
+sub reduceSynNode {
+    my ($basic_node, $synnodes, $opt) = @_;
+
+    next unless (defined $synnodes);
+
+    my $N = ($opt->{use_of_antonym_expansion}) ? int (0.5 * ($CONFIG->{MAX_NUMBER_OF_SYNNODES} + 1)) : $CONFIG->{MAX_NUMBER_OF_SYNNODES};
+
+    # 各ノードのgdfを得る
+    my $count = 0;
+    my @newNodes = ();
+
+    push (@newNodes, $basic_node) if (defined $basic_node);
+    foreach my $node (sort {$DFDBS_WORD->get(&remove_yomi($b->synid)) <=> $DFDBS_WORD->get(&remove_yomi($a->synid)) } @$synnodes) {
+	next if ($basic_node == $node);
+	push (@newNodes, $node) if (defined $node);
+	last if (++$count >= $N);
+    }
+
+    return \@newNodes;
+}
+
+sub _getDF {
+    my ($basicNd, $synNds) = @_;
+
+    if ($basicNd) {
+	return $DFDBS_WORD->get(encode ('utf8', &remove_yomi($basicNd->synid)));
+    } else {
+	return $DFDBS_WORD->get(encode ('utf8', &remove_yomi($synNds->[0]->synid))) if (defined $synNds);
+    }
+}
+
+sub remove_yomi {
+    my ($text) = @_;
+
+    my @buf;
+    foreach my $word (split /\+/, $text) {
+	my ($hyouki, $yomi) = split (/\//, $word);
+	push (@buf, $hyouki);
+    }
+
+    return join ("+", @buf)
+}
+
+sub getBasicNode {
+    my ($synnodes) = @_;
+
+    foreach my $synnode (@$synnodes) {
+	if ($synnode->synid !~ /^s\d+/ && $synnode->feature eq '') {
+	    return $synnode;
+	}
+    }
+    return undef;
+}
+
+sub removeSyntacticFeatures {
+    my ($midasi) = @_;
+
+    $midasi =~ s/<可能>//;
+    $midasi =~ s/<尊敬>//;
+    $midasi =~ s/<受身>//;
+    $midasi =~ s/<使役>//;
+
+    return $midasi;
+}
+
+sub expandAntonymAndNegationTerms {
+    my ($midasi, $opt) = @_;
+
+    my @buf;
+    push (@buf, $midasi);
+    # 拡張するタームを最後のものに限定する必要あり
+    if ($opt->{option}{antonym_and_negation_expansion}) {
+	# 反義情報の削除
+	$midasi =~ s/<反義語>//;
+
+	# <否定>の付け変え
+	if ($midasi =~ /<否定>/) {
+	    $midasi =~ s/<否定>//;
+	} else {
+	    $midasi .= '<否定>';
+	}
+	push (@buf, $midasi);
+    }
+
+    return \@buf;
+}
+
+sub _createTermGroup {
+    my ($gid, $tid, $synNds, $parent, $children, $opt) = @_;
+
+    my $basicNd = &getBasicNode($synNds);
+    $synNds = &reduceSynNode($basicNd, $synNds, $opt) if ($CONFIG->{MAX_NUMBER_OF_SYNNODES});
+    my $gdf = &_getDF ($basicNd, $synNds);
+
+    my @midasis = ();
+    foreach my $synNd (@$synNds) {
+	my $_midasi = sprintf ("%s%s", &remove_yomi($synNd->synid), $synNd->feature);
+
+	# <反義語><否定>を利用するかどうか
+	if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
+	    next unless ($opt->{option}{use_of_negation_and_antonym});
+	}
+
+	# SYNノードを利用しない場合
+	next if ($_midasi =~ /s\d+/ && $opt->{option}{disable_synnode});
+
+	# 文法素性の削除
+	$_midasi = &removeSyntacticFeatures($_midasi);
+
+	# 反義語を使ってタームを拡張する
+	my $_midasis = &expandAntonymAndNegationTerms($_midasi, $opt);
+
+	push (@midasis, @$_midasis);
+    }
+
+    # タームグループの作成
+    return new Tsubaki::TermGroup (
+	$gid,
+	$tid,
+	$gdf,
+	undef,
+	$basicNd,
+	\@midasis,
+	$parent,
+	$children,
+	$opt
+	);
 }
 
 # もっとも大きいsynnodeを獲得
