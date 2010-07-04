@@ -24,10 +24,6 @@ sub create {
     foreach my $i (0 .. scalar (@kihonkus) - 1) {
 	push (@ids, $i);
     }
-    while (my ($k, $v) = each %$condition) {
-	print $k . " " . $v . "<BR>\n";
-    }
-
     my ($terms, $optionals) =
 	(($condition->{is_phrasal_search} > 0) ?
 	 &_create4phrase (\@kihonkus, \@ids, "", $option) :
@@ -49,7 +45,7 @@ sub create {
 	    condition => $condition
 	});
 
-    print $root->to_S_exp() . "<BR>\n";
+    print "<!-- " . $root->to_S_exp() . " -->\n";
 
     return $root;
 }
