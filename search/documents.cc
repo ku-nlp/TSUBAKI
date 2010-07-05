@@ -784,7 +784,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    pos_list_list.push_back(doc->get_pos());
 
 
-	    if ((*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR) {
+	    if ((*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		include_non_terminal_documents = true;
 	    }
 
@@ -907,6 +907,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 
     document->set_term_pos("OR", pos_list);
     document->set_best_pos(best_pos);
+    document->set_best_region(best_pos, best_pos);
 
     return true;
 }
@@ -1081,8 +1082,11 @@ bool Documents::walk_and(Document *doc_ptr) {
 	update_sorted_int(sorted_int, tid2idx, &pos_list_list, target_num, skip_first);
     } // end of while
 
-    if (region == MAX_LENGTH_OF_DOCUMENT && (get_type() == DOCUMENTS_ORDERED_PROX || get_type() == DOCUMENTS_PROX))
+    if (region == MAX_LENGTH_OF_DOCUMENT && (get_type() == DOCUMENTS_ORDERED_PROX || get_type() == DOCUMENTS_PROX)) {
+	// remove
+	remove_doc(doc_ptr->get_id());
 	return false;
+    }
 
     pos_list.push_back(-1);
     document->set_term_pos("AND", pos_list);
@@ -1207,7 +1211,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 
 bool Documents::walk_and_or(Document *doc_ptr) {
 
-    // 終端記号ならば true を返す
+    // 終端記号ならば有無をチェック
     if (get_type() != DOCUMENTS_AND &&
 	get_type() != DOCUMENTS_OR &&
 	get_type() != DOCUMENTS_PHRASE  &&
@@ -1215,7 +1219,11 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 	get_type() != DOCUMENTS_PROX &&
 	get_type() != DOCUMENTS_ORDERED_PROX &&
 	get_type() != DOCUMENTS_ROOT) {
-	return true;
+	Document *document = get_doc(doc_ptr->get_id());
+	if (document == NULL)
+	    return false;
+	else
+	    return true;
     }
 
 

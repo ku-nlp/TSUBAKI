@@ -245,6 +245,20 @@ class Documents {
 	}
     }
 
+    bool remove_doc (int doc_id) {
+	if (s_documents_index->get(doc_id) > -1) {
+	    s_documents_index->add(doc_id, -1);
+	}
+	else if (l_documents_index->get(doc_id) > -1) {
+	    l_documents_index->add(doc_id, -1);
+	}
+	else {
+	    // Not ists
+	    return false;
+	}
+	return true;
+    }
+
     bool setIsRetrievedByBasicNode(int flag) {
 	retrievedByBasicNode = (flag == 1) ? true : false;
 	return true;
