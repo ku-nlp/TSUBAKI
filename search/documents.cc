@@ -647,7 +647,7 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 
 	    int pos_offset = intchar2int(buffer + ldf * 2 * SIZEOFINT + i * SIZEOFINT);
 	    int pos_num = intchar2int(buffer + ldf * 3 * SIZEOFINT + pos_offset);
-	    doc->set_freq(pos_num);
+	    doc->set_freq(score);
 	    doc->set_gdf(term_df);
 			  
 	    // cerr << "score = "<< score << " pos_off = " << pos_offset << " pos_num = " << pos_num << endl;
@@ -790,10 +790,10 @@ bool Documents::walk_or(Document *doc_ptr) {
 
 
 	    // load scores
+	    gdf = (*it)->get_gdf();
 	    if ((*it)->isRetrievedByBasicNode()) {
 		basic_node_score_list.push_back(doc->get_score());
 		basic_node_freq_list.push_back(doc->get_freq());
-		gdf = (*it)->get_gdf();
 
 #ifdef DEBUG
 		cerr << "GDF: " << gdf << endl;
