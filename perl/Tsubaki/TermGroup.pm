@@ -213,7 +213,7 @@ sub _to_S_exp_for_ROOT {
     }
 
     foreach my $child (@_children) {
-	$_S_exp .= $child->to_S_exp($indent);
+	$_S_exp .= $child->to_S_exp($indent, $this->{condition});
 	$_S_exp_for_anchor .= $child->to_S_exp_for_anchor($indent);
 	$num_of_children++;
     }
@@ -255,7 +255,7 @@ sub _to_S_exp {
 
 	my $_indent = ($is_single_node) ? $indent . "\t" : $indent . "\t\t";
 	foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
-	    $S_exp .= $child->to_S_exp($_indent);
+	    $S_exp .= $child->to_S_exp($_indent, $condition);
 	}
 
 	$S_exp .= (($is_single_node) ? "$indent)\n" : "\t$indent)\n");
