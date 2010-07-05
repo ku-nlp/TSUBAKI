@@ -2,11 +2,6 @@
 #include "document.h"
 
 std::string Document::to_string () {
-    if (best_begin < 0) {
-	best_begin = (int)(best_pos - 0.5 * PROXIMATE_LENGTH);
-	best_end   = (int)(best_pos + 0.5 * PROXIMATE_LENGTH);
-    }
-
     std::ostringstream _str;
     _str << id << " " << get_final_score() << " " << best_begin << " " << best_end;
 
