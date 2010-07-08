@@ -729,7 +729,6 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
     if (VERBOSE)
 	cout << "      read index = " << 1000 * (_end - _start) << " [ms]" <<  " " << index_size << " [byte]" << " ldf = " << ldf << endl;
 
-
     offset += SIZEOFINT;
 #ifdef DEBUG
     cerr << "LDF: " << ldf << endl;
@@ -1211,19 +1210,17 @@ bool Documents::check_phrase (Document *doc_ptr) {
 
 bool Documents::walk_and_or(Document *doc_ptr) {
 
-    // 終端記号ならば有無をチェック
-    if (get_type() != DOCUMENTS_AND &&
-	get_type() != DOCUMENTS_OR &&
-	get_type() != DOCUMENTS_PHRASE  &&
-	get_type() != DOCUMENTS_OR &&
-	get_type() != DOCUMENTS_PROX &&
-	get_type() != DOCUMENTS_ORDERED_PROX &&
-	get_type() != DOCUMENTS_ROOT) {
+    // TERM_STRICT ならば有無をチェック
+    if (get_type() == DOCUMENTS_TERM_STRICT) {
 	Document *document = get_doc(doc_ptr->get_id());
 	if (document == NULL)
 	    return false;
 	else
 	    return true;
+    }
+    else if (get_type() == DOCUMENTS_TERM_LENIENT || get_type() == DOCUMENTS_TERM_OPTIONAL) {
+	// あってもなくてもよい
+	return true;
     }
 
 
