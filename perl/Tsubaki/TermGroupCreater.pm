@@ -242,7 +242,7 @@ sub _createTermGroup {
 	$tid,
 	$gdf,
 	undef,
-	$basicNd,
+	&remove_yomi($basicNd->synid),
 	\@midasis,
 	$parent,
 	$children,
