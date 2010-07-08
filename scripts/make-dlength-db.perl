@@ -1,10 +1,12 @@
 #!/usr/bin/env perl
 
-# $Id;$
+# $Id$
 
 ##################################################################
 # インデックスデータから文書長DB(Storable形式)を作成するプログラム
 ##################################################################
+
+# -txt: Storable形式ではなくtxt形式で出力
 
 use strict;
 use utf8;
@@ -13,11 +15,11 @@ use Storable;
 
 binmode(STDOUT, ':encoding(euc-jp)');
 
-my (%opt); GetOptions(\%opt, 'z');
+my (%opt); GetOptions(\%opt, 'z', 'txt');
 
 foreach my $fp (@ARGV) {
     if (!$fp) {
-	print "Usage $0 idxfile [z]\n";
+	print "Usage $0 idxfile [-z] [-txt]\n";
 	exit;
     }
 
@@ -47,6 +49,16 @@ foreach my $fp (@ARGV) {
 	}
     }
     close(READER);
+
     $fp =~ s/.idx(.gz)?$//;
-    store(\%doc_length, "$fp.doc_length.bin") or die;
+    if ($opt{txt}) { # txt形式
+	open(OUT, "> $fp.doc_length.txt") or die;
+	foreach my $did (keys %doc_length) {
+	    printf OUT "%s %d\n", $did, $doc_length{$did};
+	}
+	close(OUT);
+    }
+    else { # Storable形式
+	store(\%doc_length, "$fp.doc_length.bin") or die;
+    }
 }
