@@ -135,7 +135,7 @@ sub to_S_exp_for_anchor {
 	$midasi = lc($this->{text});
     }
 
-    return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, 3, $this->{gdf}, 1, (($this->{term_type} =~ /word/) ? 2 : 3));
+    return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, 3, $this->{gdf}, (($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 2 : 3));
 }
 
 sub get_id {
