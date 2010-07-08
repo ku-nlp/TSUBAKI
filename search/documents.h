@@ -92,6 +92,10 @@ class DocumentBuffer {
 	std::sort(buffer->begin(), buffer->end());
 	return buffer;
     }
+
+    int size () {
+	return buffer->size();
+    }
 };
 
 class Documents {
