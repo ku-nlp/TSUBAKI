@@ -751,10 +751,9 @@ sub get_DF {
 
     # ブロックタイプを考慮していない場合
     unless ($this->{OPTIONS}{use_of_block_types}) {
-	my $term_utf8 = encode('utf8', $term_w_blocktag);
-	my $DFDBs = (index($term_utf8, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
+	my $DFDBs = (index($term_w_blocktag, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
 
-	return (defined $DFDBs) ? $DFDBs->get($term_utf8) : 0;
+	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag) : 0;
     }
     # ブロックタイプを考慮している場合
     else {
@@ -769,9 +768,8 @@ sub get_DF {
 	if ($df) {
 	    return $df;
 	} else {
-	    my $term_utf8 = encode('utf8', $term);
 	    my $DFDBs = (index($term, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
-	    my $df = $DFDBs->get($term_utf8);
+	    my $df = $DFDBs->get($term);
 
 	    $this->{CACHED_DF}{$term} = $df;
 	    return $df;
