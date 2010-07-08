@@ -633,6 +633,7 @@ sub parse {
   	    $qks[0]->{rawstring} .= (" " . $qk->{rawstring});
   	} else {
 	    push(@qks, $qk);
+  	    $rawstring .= (" " . $qk->{rawstring});
   	}
     }
     # QueryKeyword作成にかかる時間を測定
@@ -660,6 +661,7 @@ sub parse {
 	rep2style => $rep2style,
 	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("%s", $sexps[0]))
 			});
+
 
 
     ############
