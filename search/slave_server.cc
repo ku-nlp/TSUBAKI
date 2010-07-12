@@ -14,7 +14,8 @@ Dbm *sid2title_cdb;
 MAP_IMPL<int, string> tid2sid;
 MAP_IMPL<int, string> tid2url;
 MAP_IMPL<int, string> tid2title;
-MAP_IMPL<int, int> tid2len;
+MAP_IMPL<int, int>    tid2len;
+MAP_IMPL<int, double> tid2prnk;
 std::map<string, int> rmsids;
 
 double gettimeofday_sec() {
@@ -65,6 +66,13 @@ std::vector<double> *search (std::string *query,
 
 	bool flag = result_docs->walk_and_or(*it);
 	if (flag) {
+	    // pagerank の取得
+	    double pagerank = 0;
+	    MAP_IMPL<int, double>::iterator _pagerank = tid2prnk.find((*it)->get_id());
+	    if (_pagerank != tid2prnk.end())
+		pagerank = (*_pagerank).second;
+
+	    doc->set_pagerank(pagerank);
 	    doc->set_strict_term_feature();
 	    docs->push_back(doc);
 	    count++;
@@ -92,6 +100,13 @@ std::vector<double> *search (std::string *query,
 
 	bool flag = result_docs->walk_and_or(*it);
 	if (flag) {
+	    // pagerank の取得
+	    double pagerank = 0;
+	    MAP_IMPL<int, double>::iterator _pagerank = tid2prnk.find((*it)->get_id());
+	    if (_pagerank != tid2prnk.end())
+		pagerank = (*_pagerank).second;
+
+	    doc->set_pagerank(pagerank);
 	    docs->push_back(doc);
 	    count++;
 	}
@@ -130,6 +145,7 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     std::string sid2title_file          = index_dir + "/did2title.cdb";
     std::string tid2length_file         = index_dir + "/000.doc_length.txt";
     std::string rmfiles                 = index_dir + "/rmfiles";
+    std::string pagerank_file           = index_dir + "/pagerank.txt";
     std::string anchor_index_word_file  = anchor_index_dir + "/idx000.word.dat.conv";
     std::string anchor_index_dpnd_file  = anchor_index_dir + "/idx000.dpnd.dat.conv";
     std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.conv.cdb.keymap";
@@ -199,6 +215,22 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
         cerr << "Not found: " << rmfiles << endl;
     }
     fin2.close();
+
+    std::ifstream fin3(pagerank_file.c_str());
+    if (fin3) {
+        while (!fin3.eof()) {
+            string _tid;
+            string _rnk;
+            fin3 >> _tid;
+            fin3 >> _rnk;
+	    int tid = atoi (_tid);
+	    double rank = atof (_rnk);
+            tid2prnk.insert(std::pair<int,double>(tid, rank));
+        }
+    } else {
+        cerr << "Not found: " << pagerank_file << endl;
+    }
+    fin3.close();
 
     return true;
 }

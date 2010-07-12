@@ -15,6 +15,7 @@ class Document {
     double freq;
     double gdf;
     double score;
+    double pagerank;
     unsigned char *pos_buf;
 
     std::vector<int> *pos_list;
@@ -113,9 +114,15 @@ class Document {
 	return true;
     }
 
+    bool set_pagerank (double _pagerank) {
+	pagerank = _pagerank;
+    }
+
     double get_final_score() {
 	double _score = get_score();
-	return _score + (WEIGHT_OF_STRICT_TERM_F * strict_term_feature) + (WEIGHT_OF_PROXIMATE_F * proximate_feature);
+	double tsubakiScore = _score + (WEIGHT_OF_STRICT_TERM_F * strict_term_feature) + (WEIGHT_OF_PROXIMATE_F * proximate_feature);
+	double pagerankScore = (-1 * C_PAGERANK) / log(pagerank);
+	return (WEIGHT_OF_TSUBAKI_SCORE * tsubakiScore) + ((1 - WEIGHT_OF_TSUBAKI_SCORE) * pagerankScore);
     }
 
     double get_score() {
