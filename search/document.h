@@ -121,7 +121,7 @@ class Document {
     double get_final_score() {
 	double _score = get_score();
 	double tsubakiScore = _score + (WEIGHT_OF_STRICT_TERM_F * strict_term_feature) + (WEIGHT_OF_PROXIMATE_F * proximate_feature);
-	double pagerankScore = (-1 * C_PAGERANK) / log(pagerank);
+	double pagerankScore = C_PAGERANK * pagerank;
 	return (WEIGHT_OF_TSUBAKI_SCORE * tsubakiScore) + ((1 - WEIGHT_OF_TSUBAKI_SCORE) * pagerankScore);
     }
 
