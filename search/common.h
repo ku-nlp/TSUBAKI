@@ -31,7 +31,7 @@
 #define MAX_LENGTH_OF_DOCUMENT 3
 #define SIZEOFINT sizeof(int)
 #define NUM_OF_RETURN_DOCUMENTS 30
-#define C_PAGERANK 100
+#define C_PAGERANK 10
 #define WEIGHT_OF_TSUBAKI_SCORE 0.5
 
 enum documents_type {
