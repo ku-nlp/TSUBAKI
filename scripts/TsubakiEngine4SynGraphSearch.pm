@@ -336,7 +336,12 @@ sub merge_docs {
 
 	# PageRankを考慮する
 	if ($pagerank_on) {
-	    $e->{pagerank} = (1 - $weight_of_tsubaki_score) * (-1 * $c_pagerank) / log($this->{PAGERANK_DB}->{sprintf ("%09d", $e->{did})});
+	    if (exists($this->{PAGERANK_DB}->{sprintf ("%06d", $e->{did})})) { # TID -> pagerank
+		$e->{pagerank} = (1 - $weight_of_tsubaki_score) * $c_pagerank * $this->{PAGERANK_DB}->{sprintf ("%06d", $e->{did})};
+	    }
+	    else {
+		$e->{pagerank} = 0; # default pagerank
+	    }
 	    $e->{tsubaki_score} = $weight_of_tsubaki_score * $score;
 	    $score = $e->{tsubaki_score} + $e->{pagerank};
 	}
