@@ -58,7 +58,7 @@ sub _create4phrase {
 	my $kihonku = $kihonkus->[$tid];
 	foreach my $mrph ($kihonku->mrph) {
 	    my $midasi = sprintf ("%s*", &remove_yomi($mrph->midasi));
-	    my $gdf = $DFDBS_WORD->get(encode ('utf8', $midasi));
+	    my $gdf = $DFDBS_WORD->get($midasi);
 
 	    # タームグループの作成
 	    my @midasis = ();
@@ -146,9 +146,9 @@ sub _getDF {
     my ($basicNd, $synNds) = @_;
 
     if ($basicNd) {
-	return $DFDBS_WORD->get(encode ('utf8', &remove_yomi($basicNd->synid)));
+	return $DFDBS_WORD->get(&remove_yomi($basicNd->synid));
     } else {
-	return $DFDBS_WORD->get(encode ('utf8', &remove_yomi($synNds->[0]->synid))) if (defined $synNds);
+	return $DFDBS_WORD->get(&remove_yomi($synNds->[0]->synid)) if (defined $synNds);
     }
 }
 
@@ -298,7 +298,7 @@ sub _pushbackDependencyTerms {
 	foreach my $moto (@$kakarimoto) {
 	    foreach my $saki (@$kakarisaki) {
 		my $midasi = sprintf ("%s->%s", $moto, $saki);
-		my $gdf = $DFDBS_DPND->get(encode ('utf8', $midasi));
+		my $gdf = $DFDBS_DPND->get($midasi);
 		my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
 
 		foreach my $tag (keys %{$blockTypes}) {
