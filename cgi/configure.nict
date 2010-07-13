@@ -34,6 +34,7 @@ JUMAN_COMMAND	/opt/JUMAN/juman.20100126/bin/juman
 SYNDB_PATH	/opt/SYNGRAPH/SynGraph.20100201/syndb/x86_64
 MIDB_PATH	/share03/WISDOM/CalcSimilarityByCF/db/all-mi
 KNP_OPTIONS	-postprocess,-tab,-dpnd,-ne-crf,-ne-cache
+JUMAN_RCFILE	/opt/JUMAN/juman.20100126/etc/jumanrc
 KNP_RCFILE	/opt/KNP/knp.20100126/etc/knprc
 SYNGRAPH_PM_PATH	/opt/SYNGRAPH/SynGraph.20100201/perl
 WWW2SF_PATH	/share03/WISDOM/WWW2sf/tool/perl
