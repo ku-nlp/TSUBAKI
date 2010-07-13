@@ -481,10 +481,24 @@ sub setGroupID {
 
 	foreach my $reps (@{$qk->{dpnds}}) {
 	    foreach my $rep (@{$reps}) {
-		my ($saki, $moto) = ($rep->{string} =~ /^(.+?)\-\>(.+?)$/);
-		my $saki_gid = $str2gid{$saki};
+		my ($moto, $saki);
+		if ($this->{OPTIONS}{use_of_block_types}) {
+		    my ($blocktag);
+		    if ($CONFIG->{IS_NICT_MODE}) { # blocktype is attached backward if NICT
+			($moto, $saki, $blocktag) = ($rep->{string} =~ /^(.+?)\-\>(.+(:..))$/);
+			$moto .= $blocktag; # add blocktype to also moto
+		    }
+		    else {
+			($moto, $blocktag, $saki) = ($rep->{string} =~ /^((..:).+?)\-\>(.+)$/);
+			$saki = $blocktag . $saki; # add blocktype to also saki
+		    }
+		}
+		else {
+		    ($moto, $saki) = ($rep->{string} =~ /^(.+?)\-\>(.+)$/);
+		}
 		my $moto_gid = $str2gid{$moto};
-		$rep->{gid} = sprintf ("%d/%d", $saki_gid, $moto_gid);
+		my $saki_gid = $str2gid{$saki};
+		$rep->{gid} = sprintf ("%d/%d", $moto_gid, $saki_gid);
 	    }
 	}
     }
