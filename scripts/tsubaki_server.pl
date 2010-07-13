@@ -55,7 +55,7 @@ foreach my $dbf (readdir(DIR)) {
 	while (<READER>) {
 	    chop;
 	    my ($sid, $length) = split (/ /, $_);
-	    $sid += 0 if ($CONFIG->{IS_NTCIR_MODE});
+	    $sid += 0 if ($CONFIG->{IS_NTCIR_MODE} || $CONFIG->{IS_NICT_MODE}); # express numerically
 	    $dlength_db->{$sid} = $length;
 	}
 	close (READER);
