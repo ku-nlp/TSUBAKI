@@ -45,8 +45,6 @@ sub create {
 	    condition => $condition
 	});
 
-    print "<!-- " . $root->to_S_exp() . " -->\n";
-
     return $root;
 }
 
