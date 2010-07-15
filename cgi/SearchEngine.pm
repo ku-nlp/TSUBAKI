@@ -323,6 +323,9 @@ sub broadcastSearch {
     if ($CONFIG->{IS_CPP_MODE}) {
 	$query_dat = $query->{s_exp};
 	$query_dat =~ s/\n//g;
+
+	# utf8フラグを落とす
+	$query_dat = encode ('utf8', $query_dat);
     } else {
 	$query->{logger} = new Logger();
 	my $_query = encode_base64(Storable::nfreeze($query), "") . "\n";
@@ -331,6 +334,7 @@ sub broadcastSearch {
 	$_query .= "END\n";
 	$query_dat = $_query;
     }
+
     $this->send_query_to_slave_servers($selecter, $query_dat, $logger, $opt);
 
 
