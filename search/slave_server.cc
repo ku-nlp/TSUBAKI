@@ -410,7 +410,7 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 
 	/* parent */
 	close(fd);
-	waitpid(-1, &status, WNOHANG); /* wait for a dead child */
+	waitpid(-1, &status, 0); /* wait for a dead child */
     }
 
     return false;
