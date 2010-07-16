@@ -240,7 +240,7 @@ sub _createTermGroup {
 	$tid,
 	$gdf,
 	undef,
-	&remove_yomi($basicNd->synid),
+	((defined $basicNd) ? &remove_yomi($basicNd->synid) : ''),
 	\@midasis,
 	$parent,
 	$children,
