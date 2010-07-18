@@ -302,129 +302,6 @@ sub isMatch2 {
     return (1, $start, $end + 1);
 }
 
-
-sub extract_sentences_from_content_for_kwic {
-    my ($query, $content, $opt) = @_;
-
-    my $sfdat = new StandardFormatData(\$content, $opt);
-
-    my @sbuf;
-    my $title = $sfdat->getTitle();
-    my $queryString = $query->[$opt->{kwic_keyword_index}]{rawstring}; # kwic_keyword_index番目のqueryをkeywordとして用いる  (定義されていない場合は0番目、つまり初期クエリになる)
-
-    my ($repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q) = &makeMidasiAndRepnamesList($query->[$opt->{kwic_keyword_index}]{knp_result}->all(), $opt);
-    $opt->{use_of_huzokugo_for_kwic} = 1;
-
-    my $sentences = $sfdat->getSentences();
-    for (my $i = 0; $i < scalar(@$sentences); $i++) {
-	my $s = $sentences->[$i];
-	my ($repnameList_s, $surfList_s, $repnameDpndList_s, $surfDpndList_s) = &makeMidasiAndRepnamesList($s->{annotation}, $opt);
-	my ($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch($repnameList_q, $repnameList_s) : &isMatch($surfList_q, $surfList_s);
-
-	# 単語レベルでダメなら係り受けでチェックする
-	if (!$flag && $opt->{use_of_dpnd_for_kwic}) {
-	    ($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch2($repnameDpndList_q, $repnameDpndList_s) : &isMatch2($surfDpndList_q, $surfDpndList_s);
-	    if ($flag && $opt->{debug}) {
-		print Dumper($repnameDpndList_q) . "\n";
-		print "-----\n";
-		print Dumper($repnameDpndList_s) . "\n";
-		print "=====\n";
-	    }
-	}
-
-	if ($flag) {
-	    my $keyword;
-	    my $contextL;
-	    my $contextR;
-	    for (my $j = 0; $j < scalar(@$surfList_s); $j++) {
-		my $surf = (keys %{$surfList_s->[$j]})[0];
-		# 活用形の情報を削除
-		$surf =~ s/:.+$//;
-
-		if ($j < $from) {
-		    $contextL .= $surf;
-		}
-		elsif ($j > $end - 1) {
-		    $contextR .= $surf;
-		}
-		else {
-		    $keyword .=  $surf;
-		}
-	    }
-
-	    # 左右のコンテキストを指定された幅に縮める
-
-	    my @contextsR;
-	    my $lengthR = length($contextR);
-	    if ($lengthR > $opt->{kwic_window_size}) {
-		push(@contextsR, substr($contextR, 0, $opt->{kwic_window_size}));
-	    } else {
-		push(@contextsR, $contextR);
-
-		# $opt->{kwic_window_size} に満たない場合は、後続の文を取得する
-		my $j = $i + 1;
-		while ($j < scalar(@$sentences)) {
-		    my $afterS = $sentences->[$j++]->{rawstring};
-		    my $length = length($afterS);
-		    if ($length + $lengthR > $opt->{kwic_window_size}) {
-			my $diff = $opt->{kwic_window_size} - $lengthR;
-			push(@contextsR, substr($afterS, 0, $diff));
-			last;
-		    } else {
-			$lengthR += $length;
-			push(@contextsR, $afterS);
-		    }
-		}
-	    }
-
-	    my @contextsL;
-	    my $lengthL = length($contextL);
-	    if ($lengthL > $opt->{kwic_window_size}) {
-		my $offset = length($contextL) - $opt->{kwic_window_size};
-		$offset = 0 if ($offset < 0);
-		push(@contextsL, substr($contextL, $offset, $opt->{kwic_window_size}));
-	    } else {
-		push(@contextsL, $contextL);
-
-		# $opt->{kwic_window_size} に満たない場合は、前方の文を取得する
-		my $j = $i - 1;
-		while ($j > -1) {
-		    my $beforeS = $sentences->[$j]->{rawstring};
-		    $j--;
-
-		    my $length = length($beforeS);
-		    if ($length + $lengthL > $opt->{kwic_window_size}) {
-			my $diff = $opt->{kwic_window_size} - $lengthL;
-			my $offset = $length - $diff;
-			unshift(@contextsL, substr($beforeS, $offset, $diff));
-			last;
-		    } else {
-			$lengthL += $length;
-			unshift(@contextsL, $beforeS);
-		    }
-		}
-	    }
-
-#	    print $opt->{kwic_window_size}. "\n";
-
-	    # ソート用に逆右コンテキストを取得する
-	    my $InvertedContextL = reverse(join("", @contextsL));
-	    push(@sbuf, {title => $title->{rawstring},
-			 rawstring => $s->{rawstring},
-			 sid => $s->{id},
-			 contextR => join('', @contextsR),
-			 contextL => join('', @contextsL),
-			 contextsR => \@contextsR,
-			 contextsL => \@contextsL,
-			 keyword => $keyword,
-			 InvertedContextL => $InvertedContextL
-		 });
-	}
-    }
-
-    return \@sbuf;
-}
-
 # 見出しと代表表記の列を作成する
 sub makeMidasiAndRepnamesList {
     my ($knpresult, $opt) = @_;
@@ -1167,6 +1044,195 @@ sub toUpperCase_utf8 {
 	}
     }
     return pack("U0U*",@cbuff);
+}
+
+
+
+
+
+
+################
+# KWIC関連の関数
+################
+
+sub extract_sentences_from_content_for_kwic {
+    my ($query, $content, $opt) = @_;
+
+    my $sfdat = new StandardFormatData(\$content, $opt);
+
+    my @sbuf;
+    my $title = $sfdat->getTitle();
+    # kwic_keyword_index番目のqueryをkeywordとして用いる  (定義されていない場合は0番目、つまり初期クエリになる)
+    my $queryString = $query->[$opt->{kwic_keyword_index}]{rawstring};
+
+    my ($repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q) = &makeMidasiAndRepnamesList($query->[$opt->{kwic_keyword_index}]{knp_result}->all(), $opt);
+    $opt->{use_of_huzokugo_for_kwic} = 1;
+
+    my $sentences = $sfdat->getSentences();
+    for (my $i = 0; $i < scalar(@$sentences); $i++) {
+	my $s = $sentences->[$i];
+	my $kwic = &makeKWIC ($title, $s, $sentences, $i, $repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q, $s->{annotation}, $opt);
+	push (@sbuf, $kwic) if ($kwic);
+    }
+
+    return \@sbuf;
+}
+
+# クエリを含む1文からKWICを作成（クラスタリングで利用）
+sub makeKWIC4WebClustering {
+    my ($query, $annotation, $opt) = @_;
+
+    my ($repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q) = &makeMidasiAndRepnamesList($query->[$opt->{kwic_keyword_index}]{knp_result}->all(), $opt);
+    $opt->{use_of_huzokugo_for_kwic} = 1;
+
+    my ($repnameList_s, $surfList_s, $repnameDpndList_s, $surfDpndList_s) = &makeMidasiAndRepnamesList($annotation, $opt);
+    my ($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch($repnameList_q, $repnameList_s) : &isMatch($surfList_q, $surfList_s);
+
+    # 単語レベルでダメなら係り受けでチェックする
+    if (!$flag && $opt->{use_of_dpnd_for_kwic}) {
+	($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch2($repnameDpndList_q, $repnameDpndList_s) : &isMatch2($surfDpndList_q, $surfDpndList_s);
+	if ($flag && $opt->{debug}) {
+	    print Dumper($repnameDpndList_q) . "\n";
+	    print "-----\n";
+	    print Dumper($repnameDpndList_s) . "\n";
+	    print "=====\n";
+	}
+    }
+
+    unless ($flag) {
+	return undef;
+    } else {
+	return &makeLRContext (-1, $from, $end, $surfList_s, undef, $opt);
+    }
+}
+
+sub makeKWIC {
+    my ($title, $s, $sentences, $i, $repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q, $annotation, $opt) = @_;
+
+    my ($repnameList_s, $surfList_s, $repnameDpndList_s, $surfDpndList_s) = &makeMidasiAndRepnamesList($annotation, $opt);
+    my ($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch($repnameList_q, $repnameList_s) : &isMatch($surfList_q, $surfList_s);
+
+    # 単語レベルでダメなら係り受けでチェックする
+    if (!$flag && $opt->{use_of_dpnd_for_kwic}) {
+	($flag, $from, $end) = ($opt->{use_of_repname_for_kwic}) ? &isMatch2($repnameDpndList_q, $repnameDpndList_s) : &isMatch2($surfDpndList_q, $surfDpndList_s);
+	if ($flag && $opt->{debug}) {
+	    print Dumper($repnameDpndList_q) . "\n";
+	    print "-----\n";
+	    print Dumper($repnameDpndList_s) . "\n";
+	    print "=====\n";
+	}
+    }
+
+    unless ($flag) {
+	return undef;
+    } else {
+	my ($keyword, $contextL, $contextR) = &makeLRContext ($i, $from, $end, $surfList_s, $sentences, $opt);
+	# ソート用に逆右コンテキストを取得する
+	my $InvertedContextL = reverse(join("", @$contextL));
+	my $kwic = {title => ((defined $title) ? $title->{rawstring} : ''),
+		    rawstring => $s->{rawstring},
+		    sid => $s->{id},
+		    contextR => join('', @$contextR),
+		    contextL => join('', @$contextL),
+		    contextsR => $contextR,
+		    contextsL => $contextL,
+		    keyword => $keyword,
+		    InvertedContextL => $InvertedContextL
+	};
+	return $kwic;
+    } 
+}
+
+# 左右のコンテキストを作成
+sub makeLRContext {
+    my ($i, $from, $end, $surfList_s, $sentences, $opt) = @_;
+
+    my ($keyword, $_contextL, $_contextR);
+    for (my $j = 0; $j < scalar(@$surfList_s); $j++) {
+	my $surf = (keys %{$surfList_s->[$j]})[0];
+	# 活用形の情報を削除
+	$surf =~ s/:.+$//;
+
+	if ($j < $from) {
+	    $_contextL .= $surf;
+	} elsif ($j > $end - 1) {
+	    $_contextR .= $surf;
+	} else {
+	    $keyword .=  $surf;
+	}
+    }
+
+    # 左右のコンテキストを指定された幅に縮める
+    my $contextL = ($i < 0) ? $_contextL : &makeContextL($i, $sentences, $_contextL, $opt);
+    my $contextR = ($i < 0) ? $_contextR : &makeContextR($i, $sentences, $_contextR, $opt);
+
+    return ($keyword, $contextL, $contextR);
+}
+
+# 左のコンテキストを作成
+sub makeContextL {
+    my ($i, $sentences, $contextL, $opt) = @_;
+
+    my @contextsL;
+    my $lengthL = length($contextL);
+    if ($lengthL > $opt->{kwic_window_size}) {
+	my $offset = length($contextL) - $opt->{kwic_window_size};
+	$offset = 0 if ($offset < 0);
+	push(@contextsL, substr($contextL, $offset, $opt->{kwic_window_size}));
+    } else {
+	push(@contextsL, $contextL);
+
+	# $opt->{kwic_window_size} に満たない場合は、前方の文を取得する
+	my $j = $i - 1;
+	while ($j > -1) {
+	    my $beforeS = $sentences->[$j]->{rawstring};
+	    $j--;
+
+	    my $length = length($beforeS);
+	    if ($length + $lengthL > $opt->{kwic_window_size}) {
+		my $diff = $opt->{kwic_window_size} - $lengthL;
+		my $offset = $length - $diff;
+		unshift(@contextsL, substr($beforeS, $offset, $diff));
+		last;
+	    } else {
+		$lengthL += $length;
+		unshift(@contextsL, $beforeS);
+	    }
+	}
+    }
+
+    return \@contextsL;
+}
+
+# 右のコンテキストを作成
+sub makeContextR {
+    my ($i, $sentences, $contextR, $opt) = @_;
+
+    # 右のコンテキストを指定された幅に縮める
+    my @contextsR;
+    my $lengthR = length($contextR);
+    if ($lengthR > $opt->{kwic_window_size}) {
+	push(@contextsR, substr($contextR, 0, $opt->{kwic_window_size}));
+    } else {
+	push(@contextsR, $contextR);
+
+	# $opt->{kwic_window_size} に満たない場合は、後続の文を取得する
+	my $j = $i + 1;
+	while ($j < scalar(@$sentences)) {
+	    my $afterS = $sentences->[$j++]->{rawstring};
+	    my $length = length($afterS);
+	    if ($length + $lengthR > $opt->{kwic_window_size}) {
+		my $diff = $opt->{kwic_window_size} - $lengthR;
+		push(@contextsR, substr($afterS, 0, $diff));
+		last;
+	    } else {
+		$lengthR += $length;
+		push(@contextsR, $afterS);
+	    }
+	}
+    }
+
+    return \@contextsR;
 }
 
 1;
