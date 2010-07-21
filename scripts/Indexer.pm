@@ -187,7 +187,7 @@ sub makeIndexfromSynGraph {
 	} else {
 	    $knpbuf .= ($line . "\n");
 	    $position = $word_num if (index ($line, '<内容語>') > -1);
-	    $word_num++;
+	    $word_num++ if ($line !~ /^\+/ && $line !~ /^\@/);
 	}
     }
     $this->{absolute_pos} += $word_num;
