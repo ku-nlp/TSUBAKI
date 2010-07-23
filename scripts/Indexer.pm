@@ -82,19 +82,25 @@ sub extractTerms {
 
     my $pos = $position + $this->{absolute_pos};
     my $midasi = lc($sid) . $features;
-    my $syn_node = {
-	surf => $surf,
-	midasi => $midasi,
-	score => $score,
-	grpId => $bnstId,
-	fstring => $fstring,
-	pos => $pos,
-	_pos => $position,
-	question_type => undef,
-	absolute_pos => []};
 
-    push (@{$synNodes->{$bnstId}}, $syn_node);
-    $lastBnstIds->{$bnstId} = 1;
+    # 音訓解消できてないターム（社/しゃ, 社/やしろ）が連続して登録されるのを防ぐ
+    unless (defined $synNodes->{$bnstId}[-1] &&
+	    $synNodes->{$bnstId}[-1]{midasi} eq $midasi &&
+	    $synNodes->{$bnstId}[-1]{pos} == $pos) {
+	my $syn_node = {
+	    surf => $surf,
+	    midasi => $midasi,
+	    score => $score,
+	    grpId => $bnstId,
+	    fstring => $fstring,
+	    pos => $pos,
+	    _pos => $position,
+	    question_type => undef,
+	    absolute_pos => []};
+
+	push (@{$synNodes->{$bnstId}}, $syn_node);
+	$lastBnstIds->{$bnstId} = 1;
+    }
 }
 
 sub remove_yomi {
@@ -146,7 +152,7 @@ sub processCoordinateStructure {
 }
 
 sub makeIndexfromSynGraph {
-    my($this, $syngraph, $kihonkus, $opt) = @_;
+    my($this, $syngraph, $kihonkus, $midasi2hypernym, $hypernym2info, $opt) = @_;
 
     if ($opt->{string_mode}) {
 	return $this->makeIndexfromSynGraph4Indexing($syngraph, $opt);
@@ -188,6 +194,14 @@ sub makeIndexfromSynGraph {
 	    $knpbuf .= ($line . "\n");
 	    $position = $word_num if (index ($line, '<内容語>') > -1);
 	    $word_num++ if ($line !~ /^\+/ && $line !~ /^\@/);
+
+	    if ($line =~ m!上位語:(.+?)/主辞:(.+?):!) {
+		my $hypernym = $1;
+		my $head = $2;
+		my $pos = $position + $this->{absolute_pos};
+		$midasi2hypernym->{$head} = $hypernym;
+		push (@{$hypernym2info->{$hypernym}}, {midasi => $head, pos => $pos});
+	    }
 	}
     }
     $this->{absolute_pos} += $word_num;

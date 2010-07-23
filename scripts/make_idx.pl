@@ -6,6 +6,8 @@
 # JUMAN.KNP/SynGraphの解析結果を読み込み、ドキュメントごとに単語頻度を計数するプログラム
 #########################################################################################
 
+# perl -I $HOME/cvs/Utils/perl make_idx.pl -in s -out i -syn -z -ignore_syn_dpnd -position -coordinate -hypernym_and_head_db hypernym.repname.head.db
+
 use strict;
 use utf8;
 use Encode;
@@ -60,11 +62,22 @@ GetOptions(\%opt,
 	   'use_pm',
 	   'use_block_type',
 	   'ipsj',
+	   'hypernym_and_head_db=s',
+	   'coordinate',
 	   'verbose',
 	   'help');
 
+my $HYPERNYM_AND_HEAD_DB;
+if ($opt{coordinate}) {
+    require Trie;
+    $HYPERNYM_AND_HEAD_DB = new Trie({usejuman => 1, userepname => 1});
+    $HYPERNYM_AND_HEAD_DB->RetrieveDB($opt{hypernym_and_head_db});
+}
 
 # デフォルト値の設定
+
+# 同位語をもとに係り受けタームを作成する際の閾値
+my $DIST_FOR_MAKING_COORD_DPND = 200;
 
 # タイムアウトの設定(30秒)
 $opt{timeout} = 30 unless ($opt{timeout});
@@ -72,6 +85,7 @@ $opt{timeout} = 30 unless ($opt{timeout});
 # 指定がない場合は、標準フォーマットにSYNGRAPHの解析結果が埋め込まれていると見なす
 $opt{scheme} = "SynGraph" unless ($opt{scheme});
 $opt{ignore_syn_dpnd} = 0 unless ($opt{ignore_syn_dpnd});
+
 
 
 ###################################
@@ -323,6 +337,8 @@ sub extract_indices_wo_pm {
     my %sid2blockType = ();
     my %results_of_istvan = ();
     my $blockType;
+    my %midasi2hypernym = ();
+    my %hypernym2info = ();
     LOOP:
     while (<READER>) {
 	last if ($_ =~ /<Text / && $opt{only_inlinks});
@@ -368,7 +384,7 @@ sub extract_indices_wo_pm {
 	    }
 	    elsif ($tagName eq 'Keywords') {
 		$blockType = 'keyword';
-	    } 
+	    }
 	    elsif (/\<.*? BlockType="(.+?)"/) {
 		$blockType = $1;
 	    }
@@ -404,7 +420,7 @@ sub extract_indices_wo_pm {
  	elsif (/(.*\<\/($pattern)\>)/o) {
 	    $content .= $1;
 
-	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei);
+	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei, \%midasi2hypernym, \%hypernym2info);
 
 	    # インリンクの場合は披リンク数分を考慮する
 	    if ($tagName eq 'InLink') {
@@ -435,18 +451,14 @@ sub extract_indices_wo_pm {
     }
     close(READER);
 
-
-#    use Data::Dumper;
-#    print Dumper(\%results_of_istvan) . "\n";
-
     # 索引のマージ
-    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan);
+    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan, \%midasi2hypernym, \%hypernym2info);
 }
 
 
 
 sub extractIndices {
-    my ($content, $indexer, $file, $indexer_genkei) = @_;
+    my ($content, $indexer, $file, $indexer_genkei, $midasi2hypernym, $hypernym2info) = @_;
 
     my ($annotation) = ($content =~ /<Annotation[^>]+?>\<\!\[CDATA\[((.|\n)+)\]\]\><\/Annotation>/);
 
@@ -489,24 +501,16 @@ sub extractIndices {
 	    }
 	}
 
-# 	my $knp_result_obj = new KNP::Result($knp_result);
-# 	foreach my $tag ($knp_result_obj->tag) {
-# 	    my @mrphs = $tag->mrph;
-# 	    my $m = $mrphs[-1];
-# 	    foreach my $mrph (@mrphs) {
-# 		print $mrph->fstring . "\n";
-# 		if ($mrph->fstring =~ /<意味有|内容語>/) {
-# 		    $m = $mrph;
-# 		    last;
-# 		}
-# 	    }
-# 	    push(@contentWordFeatures, $m);
-# 	}
+	$annotation = &annotateCoordinateInfo ($annotation) if ($opt{coordinate});
 
-	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation, \@contentWordFeatures, { use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
-											      use_of_hypernym => !$opt{ignore_hypernym},
-											      use_of_negation_and_antonym => 1,
-											      verbose => $opt{verbose}} );
+	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation,
+							\@contentWordFeatures,
+							$midasi2hypernym,
+							$hypernym2info,
+							{ use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
+							  use_of_hypernym => !$opt{ignore_hypernym},
+							  use_of_negation_and_antonym => 1,
+							  verbose => $opt{verbose}} );
 	my ($rawstring) = ($content =~ m!<RawString>(.+?)</RawString>!);
 
 	unless (defined $terms_syn) {
@@ -546,6 +550,15 @@ sub extractIndices {
     }
 
     return $terms;
+}
+
+sub annotateCoordinateInfo {
+    my ($annotation) = @_;
+
+    my $resultObj = new KNP::Result ($annotation);
+    my @mrph = $resultObj->mrph;
+    $HYPERNYM_AND_HEAD_DB->DetectString(\@mrph, undef, { output_juman => 1 });
+    return $resultObj->all_dynamic;
 }
 
 sub extract_indice_from_single_file {
@@ -681,10 +694,11 @@ sub extract_indices {
 }
 
 sub merge_indices {
-    my ($indices, $sid2blockType, $results_of_istvan) = @_;
+    my ($indices, $sid2blockType, $results_of_istvan, $midasi2hypernym, $hypernym2info) = @_;
 
     # 索引のマージ
     my %ret;
+    my %coords = ();
     foreach my $sid (sort {$a <=> $b} keys %$indices) {
 	my $blockType = $prefixOfBlockType{$sid2blockType->{$sid}};
 	foreach my $index (@{$indices->{$sid}}) {
@@ -713,6 +727,26 @@ sub merge_indices {
 		my $midasi = sprintf ("%s%s", $tag, $index->{midasi});
 		next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
 
+		# 同位語から係り受けを作る
+		if ($opt{coordinate}) {
+		    if ($index->{midasi} =~ /^(.+?)\->(.+?)$/) {
+			my ($moto, $saki) = ($1, $2);
+			my $_dpnd1 = &makeDpndTermFromCoordinate ($moto, $saki, $index->{pos}, $midasi2hypernym, $hypernym2info, 1);
+			my $_dpnd2 = &makeDpndTermFromCoordinate ($moto, $saki, $index->{pos}, $midasi2hypernym, $hypernym2info, 0);
+
+			foreach my $_dpnd (($_dpnd1, $_dpnd2)) {
+			    next unless (defined $_dpnd);
+
+			    my $__dpnd = sprintf ("%s%s", $tag, $_dpnd);
+			    push (@{$coords{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}});
+			    $coords{$__dpnd}->{score} -= $index->{score};
+			    $coords{$__dpnd}->{sids}{$sid} = 1;
+
+			    print $index->{midasi} . " >>> " . $__dpnd . " " . (-1 * $index->{score}) . "\n" if ($_dpnd !~ /\*$/);
+			}
+		    }
+		}
+
 		print $midasi . "\n" if ($opt{verbose});
 		$ret{$midasi}->{sids}{$sid} = 1;
 		if ($opt{knp} || $opt{syn} || $opt{english}) {
@@ -726,7 +760,46 @@ sub merge_indices {
 	}
     }
 
+
+    # 同位語から作成した係り受けを追加
+    foreach my $term (keys %coords) {
+	unless (exists $ret{$term}) {
+	    $ret{$term} = $coords{$term};
+	}
+    }
+
     return \%ret;
+}
+
+# 同位語をもとに係り受けタームを作成する
+sub makeDpndTermFromCoordinate {
+    my ($moto, $saki, $pos, $midasi2hypernym, $hypernym2info, $forMoto) = @_;
+
+    my $_term = undef;
+    my $_moto = $moto;
+    my $_saki = $saki;
+
+    # 原形かどうかのチェック
+    $_moto =~ s/\*$//;
+    $_saki =~ s/\*$//;
+    my $isGenkei = ($moto =~ /\*$/ || $saki =~ /\*$/) ? 1 : 0;
+
+    my $hypernym = ($forMoto) ? $midasi2hypernym->{$_moto} : $midasi2hypernym->{$_saki};
+    if (defined $hypernym) {
+	foreach my $info (@{$hypernym2info->{$hypernym}}) {
+	    next if ($_moto eq $info->{midasi} && $forMoto);
+	    next if ($_saki eq $info->{midasi} && !$forMoto);
+
+	    if (($pos - $info->{pos}) ** 2 < $DIST_FOR_MAKING_COORD_DPND ** 2) {
+		my $coord = ($isGenkei) ? sprintf ("%s*", $info->{midasi}) : $info->{midasi};
+		$_term = ($forMoto) ? sprintf ("%s->%s", $coord, $saki) : sprintf ("%s->%s", $moto, $coord);
+	    } else {
+		last if ($info->{pos} - $pos > $DIST_FOR_MAKING_COORD_DPND);
+	    }
+	}
+    }
+
+    return $_term;
 }
 
 # Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
