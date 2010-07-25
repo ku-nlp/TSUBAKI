@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <ios>
 #include <iomanip>
+#include <unistd.h>
 #include <stdlib.h>
 #include <math.h>
 #include "lisp.h"
