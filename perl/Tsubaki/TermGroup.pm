@@ -229,9 +229,9 @@ sub _to_S_exp_for_ROOT {
     }
 
     if (scalar(@buf)) {
-	$S_exp = sprintf ("( (ROOT %s %s %s ) )", $_S_exp, join (" ", @buf), $_S_exp_for_anchor);
+	$S_exp = sprintf ("(ROOT %s %s %s )", $_S_exp, join (" ", @buf), $_S_exp_for_anchor);
     } else {
-	$S_exp = sprintf ("( (ROOT %s %s ) )", $_S_exp, $_S_exp_for_anchor);
+	$S_exp = sprintf ("(ROOT %s %s )", $_S_exp, $_S_exp_for_anchor);
     }
 
     return $S_exp;
