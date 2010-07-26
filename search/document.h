@@ -116,6 +116,7 @@ class Document {
 
     bool set_pagerank (double _pagerank) {
 	pagerank = _pagerank;
+	return true;
     }
 
     double get_final_score() {

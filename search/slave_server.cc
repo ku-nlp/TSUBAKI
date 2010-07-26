@@ -133,6 +133,7 @@ bool pushback_file_handle (string file) {
 	cerr << "Not found! (" << file << ")" << endl;
 	exit(1);
     }
+    return true;
 }
 
 bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
