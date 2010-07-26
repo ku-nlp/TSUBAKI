@@ -673,10 +673,8 @@ sub parse {
 	rawstring => $rawstring,
 	result    => $result,
 	rep2style => $rep2style,
-	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("%s", $sexps[0]))
+	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0]))
 			});
-
-
 
     ############
     # ログの取得
