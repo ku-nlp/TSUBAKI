@@ -40,10 +40,14 @@ class Dbm {
     }
 
     Dbm(string &in_dbname) {
-	Dbm(in_dbname, "none");
+	init(in_dbname, "none");
     }
 
     Dbm(string &in_dbname, string _hostname) {
+	init(in_dbname, _hostname);
+    }
+
+    bool init(string &in_dbname, string _hostname) {
 	hostname = _hostname;
 	if (in_dbname.find("keymap") != string::npos) {
 	    defined_keymap = true;
@@ -88,6 +92,7 @@ class Dbm {
 	    dbname = in_dbname;
 	    _cdb = tieCDB(dbname);
 	}
+	return true;
     }
 
     cdb* tieCDB (string dbfile) {
