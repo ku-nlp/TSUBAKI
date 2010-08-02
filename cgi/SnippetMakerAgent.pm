@@ -246,8 +246,9 @@ sub makeKWICForBrowserAccess {
 sub get_snippets_for_each_did {
     my ($this, $query, $opt) = @_;
 
-    my %rep2style;
+    my $rep2style;
     if ($opt->{highlight}) {
+	$rep2style = $query->{rep2style};
 	foreach my $qk (@{$query->{keywords}}) {
 	    next if ($qk->{is_phrasal_search} > 0);
 
@@ -256,7 +257,7 @@ sub get_snippets_for_each_did {
 		    foreach my $string (split (/\+/, $rep->{string})) {
 			# 論文検索モードであれば、領域タグを削除する
 			$string =~ s/^[A-Z][A-Z]:// if ($CONFIG->{USE_OF_BLOCK_TYPES});
-			$rep2style{$string} = $rep->{stylesheet};
+			$rep2style->{$string} = $rep->{stylesheet};
 		    }
 		}
 	    }
@@ -297,7 +298,7 @@ sub get_snippets_for_each_did {
 
 		if ($opt->{highlight}) {
 		    foreach my $rep (@{$sentence->{reps}[$i]}) {
-			if (exists $rep2style{lc($rep)}) {
+			if (exists $rep2style->{lc($rep)}) {
 			    # ハイライトされる単語からのみ線を引く
 			    if (!$flag_of_drawline && $flag_of_underline && $this->{did2region}{$did}{start} - $pos < 3) {
 				$snippets{$sid} .= qq(<SPAN class="matched_region">);
@@ -306,9 +307,9 @@ sub get_snippets_for_each_did {
 
 			    # 代表表記レベルでマッチしたらハイライト
 			    if ($opt->{debug}) {
-				$snippets{$sid} .= sprintf qq(<span style="%s">%s<SUB>%s</SUB></span>), $rep2style{lc($rep)}, $surf, $pos;
+				$snippets{$sid} .= sprintf qq(<span style="%s">%s<SUB>%s</SUB></span>), $rep2style->{lc($rep)}, $surf, $pos;
  			    } else {
- 				$snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style{lc($rep)}, $surf;
+ 				$snippets{$sid} .= sprintf qq(<span style="%s">%s</span>), $rep2style->{lc($rep)}, $surf;
  			    }
 			    $highlighted = 1;
 
