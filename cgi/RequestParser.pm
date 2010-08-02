@@ -67,6 +67,7 @@ sub getDefaultValues {
     $params{site} = undef;
     $params{blockTypes} = undef;
     $params{disable_Zwhitespace_delimiter} = 0;
+    $params{call_from_api} = $call_from_API;
 
     # 英語用
     $params{lemma} = 0;
