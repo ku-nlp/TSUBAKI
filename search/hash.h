@@ -9,44 +9,59 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
-// #include "cdbpp.h"
 
 using std::string;
 using std::cout;
 using std::cerr;
 using std::endl;
 
+double gettimeofday_sec();
+
 class Dbm {
     bool available;
     string dbname;
+    string hostname;
     bool defined_keymap;
-    struct cdb *_cdb;
+    bool IS_32BIT_CPU_MODE;
     std::vector< std::pair<string, cdb*> > k2db;
+    std::vector< std::pair<string, string> > k2dbfile;
     int fd;
-    // cdbpp::cdbpp *db;
+    struct cdb *_cdb;
+
   public:
-    /*
-    Dbm(const string &in_dbname) {
-	dbname = in_dbname;
-	open();
-    }
-    Dbm(const char *in_dbname) {
-	dbname = in_dbname;
-	open();
-    }
-    */
     Dbm() {
 	defined_keymap = false;
-	;
+
+#ifdef _32BIT_CPU_MODE_FLAG
+	IS_32BIT_CPU_MODE = true;
+#else
+	IS_32BIT_CPU_MODE = false;
+#endif
     }
 
     Dbm(string &in_dbname) {
+	Dbm(in_dbname, "none");
+    }
+
+    Dbm(string &in_dbname, string _hostname) {
+	hostname = _hostname;
 	if (in_dbname.find("keymap") != string::npos) {
 	    defined_keymap = true;
+
+#ifdef _32BIT_CPU_MODE_FLAG
+	    IS_32BIT_CPU_MODE = true;
+#else
+	    IS_32BIT_CPU_MODE = false;
+#endif
+
 	    unsigned int loc = in_dbname.find_last_of("keymap");
 	    string file0 = string(in_dbname, 0, loc - 6) + ".0";
-	    struct cdb *_db = tieCDB(file0);
-	    k2db.push_back(std::pair<string, cdb*>("", _db));
+	    if (!IS_32BIT_CPU_MODE) {
+		struct cdb *_db = tieCDB(file0);
+		k2db.push_back(std::pair<string, cdb*>("", _db));
+	    } else {
+		k2dbfile.push_back(std::pair<string, string>("", file0));
+	    }
 
 	    string dirname = getDirName(in_dbname);
 	    std::ifstream fin(in_dbname.c_str());
@@ -58,8 +73,12 @@ class Dbm {
 		if (filename.find("cdb") == string::npos)
 		    break;
 
-		struct cdb *_db = tieCDB(dirname + "/" + filename);
-		k2db.push_back(std::pair<string, cdb*>(key, _db));
+		if (!IS_32BIT_CPU_MODE) {
+		    struct cdb *_db = tieCDB(dirname + "/" + filename);
+		    k2db.push_back(std::pair<string, cdb*>(key, _db));
+		} else {
+		    k2dbfile.push_back(std::pair<string, string>(key, dirname + "/" + filename));
+		}
 	    }
 	    fin.close();
 
@@ -78,11 +97,19 @@ class Dbm {
 	    exit(-1);
 	}
 
+	double start = (double) gettimeofday_sec();
 	int _fd;
 	if ((_fd = open(dbfile.c_str(), O_RDONLY)) < 0) {
 	    cerr << "Can't open file: " << dbfile << endl;
 	}
-	cdb_init(db, _fd);
+	int ret = cdb_init(db, _fd);
+
+	double end = (double) gettimeofday_sec();
+
+	if (ret < 0) {
+	    cerr << "Can't tie! " << dbfile << " " << ret << " time=" << (end - start) << " hostname=" << hostname << endl;
+	} else {
+	}
 
 	return db;
     }
@@ -93,77 +120,9 @@ class Dbm {
 	return dirname;
     }
 
-/*
-    Dbm(char *in_dbname) {
-	std::string _file = in_dbname;
-	Dbm(_file);
-    }
-*/
-
-
-
-
-/*
-    bool open(const string &in_dbname) {
-	dbname = in_dbname;
-	return open();
-    }
-
-
-    bool Dbm::open() {
-	available = true;
-	return available;
-    }
-
-
-*/
-
-/*
-    bool Dbm::open() {
-	// Open the database file for reading (with binary mode)
-	std::ifstream ifs(dbname.c_str(), std::ios_base::binary);
-	if (ifs.fail()) {
-	    cerr << "ERROR: Failed to open a database file for reading." << endl;
-	    available = false;
-	    return false;
-	}
-
-	try {
-	    // Open the database from the input stream
-	    db = new cdbpp::cdbpp(ifs);
-	    if (!db->is_open()) {
-		cerr << "ERROR: Failed to read a database file." << endl;
-		available = false;
-	    }
-	} catch (const cdbpp::cdbpp_exception& e) {
-	    // Abort if something went wrong...
-	    cerr << "ERROR: " << e.what() << endl;
-	    available = false;
-	}
-	available = true;
-	return available;
-    }
-*/
-
     bool is_open() {
 	return available;
     }
-
-/*
-    string Dbm::get(const string &key) {
-	size_t vsize;
-	string ret_value;
-	const char *value = (const char *)db->get(key.c_str(), key.length(), &vsize);
-	if (value == NULL) {
-	    // cerr << "ERROR: The key <" << key << "> is not found." << endl;
-	}
-	else {
-	    ret_value = value;
-	    // cerr << "FOUND: The key <" << key << "> is found: " << ret_value << endl;
-	}
-	return ret_value;
-    }
-*/
 
     string get (string key) {
 	if (defined_keymap) {
@@ -188,6 +147,7 @@ class Dbm {
 	if (cdb_find(db, key, strlen(key)) > 0) {
 	    vpos = cdb_datapos(db);
 	    vlen = cdb_datalen(db);
+
 	    // for \0
 	    char *val = (char*)malloc(vlen + 1);
 	    cdb_read(db, val, vlen, vpos);
@@ -201,6 +161,9 @@ class Dbm {
     }
 
     string _get (string key) {
+	if (IS_32BIT_CPU_MODE)
+	    return _get_for_32bit_mode (key);
+	
 	cdb *db = k2db[0].second;
 	for (std::vector<std::pair<string, cdb*> >::iterator it = k2db.begin(); it != k2db.end(); ++it) {
 	    if (key < (string)(*it).first) {
@@ -209,9 +172,25 @@ class Dbm {
 	    db = (*it).second;
 	}
 
-	return get ((const char*)key.c_str(), db);
+	string ret = get ((const char*)key.c_str(), db);
+
+	return ret;
     }
 
+    string _get_for_32bit_mode (string key) {
+	string file = k2dbfile[0].second;
+	for (std::vector<std::pair<string, string> >::iterator it = k2dbfile.begin(); it != k2dbfile.end(); ++it) {
+	    if (key < (string)(*it).first) {
+		break;
+	    }
+	    file = (*it).second;
+	}
+	cdb *db = tieCDB(file);
+	string ret = get ((const char*)key.c_str(), db);
+	cdb_free(db);
+
+	return ret;
+    }
 };
 
 #endif
