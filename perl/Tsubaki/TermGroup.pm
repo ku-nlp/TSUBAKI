@@ -72,6 +72,7 @@ sub new {
 	$this->{result} = $opt->{result};
 	$this->{isRoot} = $opt->{isRoot};
 	$this->{condition} = $opt->{condition};
+	$this->{rep2style} = $opt->{rep2style};
     } else {
 	$this->{gdf} = $gdf;
 	&pushbackTerms ($this, $basic_node, $synnodes, $gid, $pos, $opt);

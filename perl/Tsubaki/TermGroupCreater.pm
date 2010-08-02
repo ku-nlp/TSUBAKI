@@ -21,8 +21,15 @@ sub create {
 
     my @ids = ();
     my @kihonkus = $result->tag;
+    my %rep2style = ();
     foreach my $i (0 .. scalar (@kihonkus) - 1) {
 	push (@ids, $i);
+	my $j = $i % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
+	foreach my $synnodes ($kihonkus[$i]->synnodes) {
+	    foreach my $synnode ($synnodes->synnode) {
+		$rep2style{&remove_yomi(lc($synnode->synid))} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
+	    }
+	}
     }
     my ($terms, $optionals) =
 	(($condition->{is_phrasal_search} > 0) ?
@@ -42,7 +49,8 @@ sub create {
 	    isRoot => 1,
 	    optionals => $optionals,
 	    result => $result,
-	    condition => $condition
+	    condition => $condition,
+	    rep2style => \%rep2style
 	});
 
     return $root;
@@ -144,9 +152,9 @@ sub _getDF {
     my ($basicNd, $synNds) = @_;
 
     if ($basicNd) {
-	return $DFDBS_WORD->get(&remove_yomi($basicNd->synid));
+	return $DFDBS_WORD->get(&remove_yomi($basicNd->synid), {exhaustive => 1});
     } else {
-	return $DFDBS_WORD->get(&remove_yomi($synNds->[0]->synid)) if (defined $synNds);
+	return $DFDBS_WORD->get(&remove_yomi($synNds->[0]->synid), {exhaustive => 1}) if (defined $synNds);
     }
 }
 
@@ -296,7 +304,7 @@ sub _pushbackDependencyTerms {
 	foreach my $moto (@$kakarimoto) {
 	    foreach my $saki (@$kakarisaki) {
 		my $midasi = sprintf ("%s->%s", $moto, $saki);
-		my $gdf = $DFDBS_DPND->get($midasi);
+		my $gdf = $DFDBS_DPND->get($midasi, {exhaustive => 1});
 		my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
 
 		foreach my $tag (keys %{$blockTypes}) {
