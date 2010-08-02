@@ -20,6 +20,7 @@
 #include "cdb.h"
 
 #define MAP_IMPL __gnu_cxx::hash_map
+//#define _32BIT_CPU_MODE_FLAG 1
 
 #define PROXIMATE_LENGTH 100
 #define WEIGHT_OF_STRICT_TERM_F 100
@@ -34,6 +35,7 @@
 #define NUM_OF_RETURN_DOCUMENTS 30
 #define C_PAGERANK 5
 #define WEIGHT_OF_TSUBAKI_SCORE 0.9
+
 
 enum documents_type {
     DOCUMENTS_ROOT, 
