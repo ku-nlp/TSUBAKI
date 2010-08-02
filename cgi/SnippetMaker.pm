@@ -306,19 +306,25 @@ sub isMatch2 {
 sub makeMidasiAndRepnamesList {
     my ($knpresult, $opt) = @_;
 
-    # SYNGRAPHの情報を除く
-    my $buf = undef;
-    foreach my $line (split(/\n/, $knpresult)) {
-	next if ($line =~ /^!/);
-	$buf .= ($line . "\n");
+    my $knpresultObj;
+    if (ref($knpresult)) { # KNP::Resultオブジェクト
+	$knpresultObj = $knpresult;
     }
-    $knpresult = $buf if (defined $buf);
+    else { # 文字列
+	# SYNGRAPHの情報を除く
+	my $buf = undef;
+	foreach my $line (split(/\n/, $knpresult)) {
+	    next if ($line =~ /^!/);
+	    $buf .= ($line . "\n");
+	}
+	$knpresult = $buf if (defined $buf);
+	$knpresultObj = new KNP::Result($knpresult);
+    }
 
     my @midasiList;
     my @midasiDpndList;
     my @repnameList;
     my @repnameDpndList;
-    my $knpresultObj = new KNP::Result($knpresult);
     if (defined $knpresultObj) {
 	# 各単語の出現位置を素性としてに付ける
 	my $p = 0;
@@ -342,31 +348,39 @@ sub makeMidasiAndRepnamesList {
 	    # 出現形について係り受けを生成
 	    # 基本句内の先頭の内容語を探索
 	    my $_i = &get_postion_of_content_word ($midasiL_self);
-	    foreach my $m_self (keys %{$midasiL_self->[$_i]}) {
-		my %midasiDpnds;
-		my $_j = &get_postion_of_content_word ($midasiL_self);
-		foreach my $m_saki (keys %{$midasiL_saki->[$_j]}) {
-		    my $dpnd = sprintf("%s->%s", $m_self, $m_saki);
-		    $midasiDpnds{$dpnd}->{kakarimoto} = $posL_self->[$_i];
-		    $midasiDpnds{$dpnd}->{kakarisaki} = $posL_saki->[$_j];
+	    if (ref($midasiL_self->[$_i])) { # '*'以外
+		foreach my $m_self (keys %{$midasiL_self->[$_i]}) {
+		    my %midasiDpnds;
+		    my $_j = &get_postion_of_content_word ($midasiL_self);
+		    if (ref($midasiL_saki->[$_j])) {
+			foreach my $m_saki (keys %{$midasiL_saki->[$_j]}) {
+			    my $dpnd = sprintf("%s->%s", $m_self, $m_saki);
+			    $midasiDpnds{$dpnd}->{kakarimoto} = $posL_self->[$_i];
+			    $midasiDpnds{$dpnd}->{kakarisaki} = $posL_saki->[$_j];
 
+			}
+			push(@midasiDpndList, \%midasiDpnds);
+		    }
 		}
-		push(@midasiDpndList, \%midasiDpnds);
 	    }
 
 	    # 代表表記について係り受けを生成
 	    # 基本句内の先頭の内容語を探索
 	    my $_i = &get_postion_of_content_word ($midasiL_self);
-	    foreach my $r_self (keys %{$repnameL_self->[$_i]}) {
-		my %repnameDpnds;
-		my $_j = &get_postion_of_content_word ($midasiL_self);
-		foreach my $r_saki (keys %{$repnameL_saki->[$_j]}) {
-		    my $dpnd = sprintf("%s->%s", $r_self, $r_saki);
-		    $repnameDpnds{$dpnd}->{kakarimoto} = $posL_self->[$_i];
-		    $repnameDpnds{$dpnd}->{kakarisaki} = $posL_saki->[$_j];
+	    if (ref($repnameL_self->[$_i])) { # '*' 以外
+		foreach my $r_self (keys %{$repnameL_self->[$_i]}) {
+		    my %repnameDpnds;
+		    my $_j = &get_postion_of_content_word ($midasiL_self);
+		    if (ref($repnameL_saki->[$_j])) {
+			foreach my $r_saki (keys %{$repnameL_saki->[$_j]}) {
+			    my $dpnd = sprintf("%s->%s", $r_self, $r_saki);
+			    $repnameDpnds{$dpnd}->{kakarimoto} = $posL_self->[$_i];
+			    $repnameDpnds{$dpnd}->{kakarisaki} = $posL_saki->[$_j];
 
+			}
+			push(@repnameDpndList, \%repnameDpnds);
+		    }
 		}
-		push(@repnameDpndList, \%repnameDpnds);
 	    }
 	}
     }
@@ -1080,9 +1094,9 @@ sub extract_sentences_from_content_for_kwic {
 
 # クエリを含む1文からKWICを作成（クラスタリングで利用）
 sub makeKWIC4WebClustering {
-    my ($query, $annotation, $opt) = @_;
+    my ($query_knp_result, $annotation, $opt) = @_;
 
-    my ($repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q) = &makeMidasiAndRepnamesList($query->[$opt->{kwic_keyword_index}]{knp_result}->all(), $opt);
+    my ($repnameList_q, $surfList_q, $repnameDpndList_q, $surfDpndList_q) = &makeMidasiAndRepnamesList($query_knp_result, $opt);
     $opt->{use_of_huzokugo_for_kwic} = 1;
 
     my ($repnameList_s, $surfList_s, $repnameDpndList_s, $surfDpndList_s) = &makeMidasiAndRepnamesList($annotation, $opt);
