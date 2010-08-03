@@ -535,7 +535,17 @@ sub extractIndices {
 	}
     }
     elsif ($opt{knp}) {
-	$terms = $indexer->makeIndexFromKNPResult($knp_result, \%opt);
+	my $terms_knp = $indexer->makeIndexFromKNPResult($knp_result, \%opt);
+
+	# 出現形インデックスを抽出しマージする
+	if (!$opt{ignore_genkei}) {
+	    my $knp_result_obj = new KNP::Result($knp_result);
+	    my $terms_genkei = $indexer_genkei->makeIndexFromKNPResultObject($knp_result_obj);
+	    push(@$terms, @$terms_genkei) if (defined $terms_genkei);
+	    push(@$terms, @$terms_knp) if (defined $terms_knp);
+	} else {
+	    $terms = $terms_knp;
+	}
     }
     else {
 	$terms = $indexer->makeIndexfromJumanResult($annotation);
