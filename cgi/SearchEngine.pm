@@ -13,6 +13,7 @@ use Configure;
 use State;
 use Logger;
 use Tsubaki::CacheManager;
+use Error qw(:try);
 
 my $CONFIG = Configure::get_instance();
 
@@ -88,6 +89,7 @@ sub send_query_to_slave_servers {
     # アクセスが集中しないようにランダムに並び変える
     &fisher_yates_shuffle($this->{hosts});
 
+    my $num_of_sockets = 0;
     for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
 	my $socket = IO::Socket::INET->new(
 	    PeerAddr => $this->{hosts}->[$i]->{name},
@@ -95,22 +97,30 @@ sub send_query_to_slave_servers {
 	    Proto    => 'tcp' );
 
 	print "send query to " . $this->{hosts}[$i]{name} . ":" . $this->{hosts}[$i]{port} . "<BR>\n" if ($opt->{debug} > 1);
-	$selecter->add($socket) or die "Cannot connect to the server (host=$this->{hosts}->[$i]->{name}, port=$this->{hosts}->[$i]->{port})";
 
- 	# クエリの送信
- 	print $socket $query . "\n";
-	$socket->flush();
+	try {
+	    $selecter->add($socket) or die "Cannot connect to the server (host=$this->{hosts}->[$i]->{name}, port=$this->{hosts}->[$i]->{port})";
+
+	    # クエリの送信
+	    print $socket $query . "\n";
+	    $socket->flush();
+	    $num_of_sockets++;
+	} catch Error with {
+	    my $err = shift;
+	    print "<FONT color=gray>ERROR ", $err->{-text}, "</FONT><BR>\n";
+	};
     }
     $logger->setTimeAs('send_query_to_server', '%.3f');
+
+    return $num_of_sockets;
 }
 
 # 検索結果の受信
 sub recieve_result_from_slave_servers {
-    my($this, $selecter, $query, $logger, $opt) = @_;
+    my($this, $selecter, $query, $logger, $num_of_sockets, $opt) = @_;
 
     my @results = ();
     my $total_hitcount = 0;
-    my $num_of_sockets = scalar(@{$this->{hosts}});
     my %logbuf = ();
     my %host2log = ();
 
@@ -335,13 +345,13 @@ sub broadcastSearch {
 	$query_dat = $_query;
     }
 
-    $this->send_query_to_slave_servers($selecter, $query_dat, $logger, $opt);
+    my $num_of_sockets = $this->send_query_to_slave_servers($selecter, $query_dat, $logger, $opt);
 
 
     ##################
     # 検索クエリの受信
     ##################
-    my ($total_hitcount, $_results, $host2log, $logbuf) = $this->recieve_result_from_slave_servers($selecter, $query, $logger, $opt);
+    my ($total_hitcount, $_results, $host2log, $logbuf) = $this->recieve_result_from_slave_servers($selecter, $query, $logger, $num_of_sockets, $opt);
 
 
     ##########
