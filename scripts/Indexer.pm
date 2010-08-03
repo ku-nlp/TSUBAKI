@@ -859,6 +859,8 @@ sub makeIndexFromKNPResultObject {
 
 		my $num_of_words = scalar(@$words);
 		foreach my $word (@$words) {
+		    $word = &remove_yomi($word) if ($this->{ignore_yomi});
+
 		    push(@idx, {midasi => &toLowerCase_utf8($word)});
 		    $idx[-1]->{group_id} = $gid;
 		    $idx[-1]->{freq} = (1 / $num_of_words);
