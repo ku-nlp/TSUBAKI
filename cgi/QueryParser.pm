@@ -49,7 +49,7 @@ sub new {
 	    use_of_block_types => defined($opts->{USE_OF_BLOCK_TYPES}) ? $opts->{USE_OF_BLOCK_TYPES} : $CONFIG->{USE_OF_BLOCK_TYPES}, # newに指定された設定は、CONFIGよりも優先
 	    is_cpp_mode => defined($opts->{IS_CPP_MODE}) ? $opts->{IS_CPP_MODE} : $CONFIG->{IS_CPP_MODE}, # newに指定された設定は、CONFIGよりも優先
 	    syngraph => undef,
-	    call_from_api => $opts->{call_from_api}
+	    call_from_api => $opts->{option}{call_from_api}
 	}
     };
 
@@ -677,7 +677,7 @@ sub parse {
 	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0]))
 			});
 
-    print "<!-- " . $ret->{s_exp} . " -->\n" unless ($this->{OPTION}{call_from_api});
+    print "<!-- " . $ret->{s_exp} . " -->\n" unless ($this->{OPTIONS}{call_from_api});
 
     ############
     # ログの取得
