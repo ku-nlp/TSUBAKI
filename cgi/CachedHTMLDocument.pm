@@ -86,7 +86,11 @@ sub new {
 	    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>);
 	}
     }
-    $message .= "次の単語とその同義語がハイライトされています:&nbsp;";
+    if ($CONFIG->{IS_NICT_MODE}) {
+	$message .= "次の表現がハイライトされています:&nbsp;";
+    } else {
+	$message .= "次の単語とその同義語がハイライトされています:&nbsp;";
+    }
 
     foreach my $reps (split(/,/, $query)) {
 	foreach my $word (split(/;/,  $reps)) {
