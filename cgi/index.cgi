@@ -138,11 +138,14 @@ sub main {
 		print "<hr>\n";
 	    }
 
-
 	    # 検索スレーブサーバーへの問い合わせ
 	    my $searcher = new Searcher(0);
 	    my ($results, $size, $status) = $searcher->search($query, $logger, $params);
 
+	    # エラーを出力
+	    foreach my $errObj (@{$logger->getParameter('ERROR_MSGS')}) {
+		print "<FONT color='silver'>ERROR: $errObj->{msg} @ $errObj->{owner}</FONT>\n";
+	    }
 
 	    # 検索結果の表示
 	    $params->{query} =~ s/~100w$//g;

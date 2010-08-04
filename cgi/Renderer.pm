@@ -1568,6 +1568,22 @@ sub getSearchResultForAPICall {
     }
 
 
+    # エラーメッセージを出力
+    if (scalar($logger->getParameter('ERROR_MSGS')) > 0) {
+	my $eid = 1;
+	$writer->startTag('ErrorMessages');
+	foreach my $errObj (@{$logger->getParameter('ERROR_MSGS')}) {
+	    my $owner = $errObj->{owner};
+	    my $msg = $errObj->{msg};
+
+	    $writer->startTag('ErrorMessage', id => $eid++, owner => $owner);
+	    $writer->characters($msg);
+	    $writer->endTag('ErrorMessage');
+	}
+	$writer->endTag('ErrorMessages');
+    }
+
+
     # 検索スレーブサーバーのログを表示
     if ($params->{serverLog}) {
 	$writer->startTag('ServerLog');

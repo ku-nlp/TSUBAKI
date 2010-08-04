@@ -84,12 +84,13 @@ sub fisher_yates_shuffle {
 
 # 検索クエリの送信
 sub send_query_to_slave_servers {
-    my($this, $selecter, $query, $logger, $opt) = @_;
+    my ($this, $selecter, $query, $logger, $opt) = @_;
 
     # アクセスが集中しないようにランダムに並び変える
     &fisher_yates_shuffle($this->{hosts});
 
     my $num_of_sockets = 0;
+    my @errMsgs;
     for (my $i = 0; $i < scalar(@{$this->{hosts}}); $i++) {
 	my $socket = IO::Socket::INET->new(
 	    PeerAddr => $this->{hosts}->[$i]->{name},
@@ -107,10 +108,11 @@ sub send_query_to_slave_servers {
 	    $num_of_sockets++;
 	} catch Error with {
 	    my $err = shift;
-	    print "<FONT color=gray>ERROR ", $err->{-text}, "</FONT><BR>\n";
+	    push (@errMsgs, {owner => 'SearchEngine.pm', msg => $err->{-text}});
 	};
     }
     $logger->setTimeAs('send_query_to_server', '%.3f');
+    $logger->setParameterAs('ERROR_MSGS', \@errMsgs);
 
     return $num_of_sockets;
 }
