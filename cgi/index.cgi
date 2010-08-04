@@ -143,8 +143,10 @@ sub main {
 	    my ($results, $size, $status) = $searcher->search($query, $logger, $params);
 
 	    # エラーを出力
+	    my $eid = 1;
 	    foreach my $errObj (@{$logger->getParameter('ERROR_MSGS')}) {
-		print "<FONT color='silver'>ERROR: $errObj->{msg} @ $errObj->{owner}</FONT>\n";
+		print "<FONT color='silver'>ERROR$eid: $errObj->{msg} @ $errObj->{owner}</FONT><BR>\n";
+		$eid++;
 	    }
 
 	    # 検索結果の表示
