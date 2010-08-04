@@ -8,18 +8,20 @@ package SynGraphBinarizer;
 
 use strict;
 use CDB_File;
+use CDB_Writer;
 use Encode;
 use FileHandle;
 
 sub new {
-    my($class, $th, $datfp, $cdbfp, $position, $verbose) = @_;
+    my($class, $th, $datfp, $cdbfp, $position, $is_legacy_mode, $verbose) = @_;
     my $dat = new FileHandle;
     open($dat, "> $datfp") || die "$!\n";
-    my $offset_cdb = new CDB_File ("$cdbfp", "$cdbfp.$$") or die;
-
+    my $offset_cdb1 = ($is_legacy_mode) ? undef : (new CDB_Writer ("$cdbfp", "$cdbfp.keymap", 2500000000) or die);
+    my $offset_cdb2 = ($is_legacy_mode) ? (new CDB_File ("$cdbfp", "$cdbfp.$$") or die) : undef;
     my $this = {
 	offset => 0,
-	odb => $offset_cdb,
+	odb => $offset_cdb1,
+	odb_for_legacy => $offset_cdb2,
 	dat => $dat,
 	odbfp => $cdbfp,
 	datfp => $datfp,
@@ -27,6 +29,7 @@ sub new {
 	totalbytes => 0,
 	odbcnt => 0,
 	position => $position,
+	is_legacy_mode => $is_legacy_mode,
 	verbose => $verbose,
     };
     bless $this;
@@ -34,7 +37,8 @@ sub new {
 
 sub close {
     my ($this) = @_;
-    $this->{odb}->finish();
+    $this->{odb_for_legacy}->finish() if (defined $this->{odb_for_legacy});
+    $this->{odb}->close() if (defined $this->{odb});
     $this->{dat}->close();
 }
 
@@ -43,6 +47,16 @@ sub DESTROY {
 }
 
 sub add {
+    my ($this, $term, $docs) = @_;
+
+    if ($this->{is_legacy_mode}) {
+	$this->_add_for_legacy ($term, $docs);
+    } else {
+	$this->_add ($term, $docs);
+    }
+}
+
+sub _add_for_legacy {
     my($this, $index, $docs) = @_;
 
     my $dlength = scalar(@{$docs});
@@ -130,13 +144,13 @@ sub add {
     # オフセットを保存し、下の処理で書き込むバイト数分増やす
     $this->{totalbytes} += (length($index_utf8) + length("$this->{offset}"));
     if($this->{totalbytes} > 1800000000){
-	$this->{odb}->finish();
+	$this->{odb_for_legacy}->finish();
 	$this->{odbcnt}++;
-	$this->{odb} = new CDB_File ("$this->{odbfp}.$this->{odbcnt}", "$this->{odbfp}.$this->{odbcnt}.$$") or die;
+	$this->{odb_for_legacy} = new CDB_File ("$this->{odbfp}.$this->{odbcnt}", "$this->{odbfp}.$this->{odbcnt}.$$") or die;
 	$this->{totalbytes} = 0;
     }
 
-    $this->{odb}->insert($index, $this->{offset});
+    $this->{odb_for_legacy}->insert($index, $this->{offset});
 
     $this->{offset} += length($index_utf8); # 索引語
     $this->{offset} += 1; # デリミタ0
@@ -149,5 +163,78 @@ sub add {
 	$this->{offset} += length($frq_bytes); # 頻度情報
     }
 }
+
+sub _add {
+    my($this, $term, $docs) = @_;
+
+    my $num_of_docs = scalar(@{$docs});
+    return if($num_of_docs < $this->{threshold});
+
+    my $bindat = $this->text2binary ($term, $num_of_docs, $docs);
+
+    # 各バイナリデータの書き込み
+    print {$this->{dat}} $bindat;
+
+    # オフセットを保存し、下の処理で書き込むバイト数分増やす
+    $this->{odb}->add($term, $this->{totalbytes});
+    $this->{totalbytes} += length($bindat);
+}
+
+# merge_sorted_idx.pl の出力ファイルをバイナリ化
+# 京都 002795673:1@1#0&1 007988825:2@1,2#5&1,10&1
+sub text2binary {
+    my ($this, $term, $num_of_docs, $docs) = @_;
+    
+    my ($bindat_dids, $bindat_offs, $bindat_frqs, $bindat_poss);
+    for (my $i = 0; $i < $num_of_docs; $i++) {
+
+	########################################################
+	# テキストデータをデリミタを手掛かりに各データに分解する
+	########################################################
+
+ 	my ($did, $totalfreq_sid_pos_freq) = split (/:/, $docs->[$i]);
+	my ($totalfreq, $sid_pos_freq, @sids, @pos_frqs, $sids_size, $poss_size, $frqs_size);
+	if ($totalfreq_sid_pos_freq =~ /@/) {
+	    ($totalfreq, $sid_pos_freq) = split (/@/, $totalfreq_sid_pos_freq);
+	    my ($sids_str, $pos_freq_str) = split(/\#/, $sid_pos_freq);
+
+	    @sids = split (/,/, $sids_str);
+	    @pos_frqs = split (/,/, $pos_freq_str);
+
+	    $sids_size = scalar(@sids);
+	    $poss_size = scalar(@pos_frqs);
+	    $frqs_size = $poss_size;
+	} else {
+	    # position が指定されているのにインデックスの位置情報がない場合
+	    print STDERR "\nOption error!\n";
+	    print STDERR "Not found the locations of indexed terms.\n";
+	    print STDERR encode('euc-jp', "$term $docs->[$i]") . "\n";
+	    exit(1);
+	}
+
+
+	######################
+	# バイナリデータの作成
+	######################
+
+	$bindat_dids .= pack('L', $did);
+	$bindat_frqs .= pack('L', int(1000 * $totalfreq));
+	if ($this->{position}) {
+	    my ($cnt, $buf) = (0, '');
+	    foreach my $pos_frq (@pos_frqs) {
+		my ($pos, $freq) = split(/\&/, $pos_frq);
+		$buf .= pack('L', $pos);
+		$cnt++;
+	    }
+	    $bindat_offs .= pack('L', length($bindat_poss));
+	    $bindat_poss .= pack('L', $cnt);
+	    $bindat_poss .= $buf;
+	}
+    }
+
+    my $bindat = ((pack('L', $num_of_docs)) . $bindat_dids . $bindat_frqs . $bindat_offs . $bindat_poss);
+    return (pack('L', length($bindat)) . $bindat);
+}
+
 
 1;

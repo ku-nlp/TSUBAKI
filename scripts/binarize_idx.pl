@@ -14,7 +14,7 @@ use Getopt::Long;
 use Encode;
 
 my (%opt);
-GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'wordpos', 'dpndpos', 'verbose', 'cdbdir=s', 'z', 'syn', 'quiet');
+GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'wordpos', 'dpndpos', 'legacy_mode', 'verbose', 'cdbdir=s', 'z', 'syn', 'quiet');
 
 # 足切りの閾値
 my $wordth = $opt{wordth} ? $opt{wordth} : 0;
@@ -60,7 +60,7 @@ if ($opt{cdbdir}) {
 sub main {
     my $fp = $ARGV[0];
     unless ($fp =~ /(.*?)([^\/]+)\.(idx.*)$/) {
-	die "file name is not *.idx\n"
+	die "file name is not *.idx ($fp)\n"
     } else {
 	# 引数として*.idxファイルをとる
 	my $DIR = $1;
@@ -70,9 +70,13 @@ sub main {
 	my $lcnt = 0;
 	my $bins;
 	if ($opt{syn}) {
+	    my $idxf_w = ($opt{legacy_mode}) ? "${DIR}/idx$NAME.word.dat" : "${DIR}/idx$NAME.word.dat.conv";
+	    my $idxf_d = ($opt{legacy_mode}) ? "${DIR}/idx$NAME.dpnd.dat" : "${DIR}/idx$NAME.dpnd.dat.conv";
+	    my $offf_w = ($opt{legacy_mode}) ? "${DIR}/offset$NAME.word.cdb" : "${DIR}/offset$NAME.word.conv.cdb";
+	    my $offf_d = ($opt{legacy_mode}) ? "${DIR}/offset$NAME.dpnd.cdb" : "${DIR}/offset$NAME.dpnd.conv.cdb";
 	    $bins = {
-		word => new SynGraphBinarizer($wordth, "${DIR}/idx$NAME.word.dat", "${DIR}/offset$NAME.word.cdb", 1, $opt{verbose}),
-		dpnd => new SynGraphBinarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb", 1, $opt{verbose})
+		word => new SynGraphBinarizer($wordth, $idxf_w, $offf_w, 1, $opt{legacy_mode}, $opt{verbose}),
+		dpnd => new SynGraphBinarizer($dpndth, $idxf_d, $offf_d, 1, $opt{legacy_mode}, $opt{verbose})
 	    };
 	} else {
 	    $bins = {
