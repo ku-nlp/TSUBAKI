@@ -136,7 +136,7 @@ sub getRequestItems {
 
 	unless ($query_obj) {
 	    # parse query
-	    my $q_parser = new QueryParser({ignore_yomi => $CONFIG->{IGNORE_YOMI}, USE_OF_BLOCK_TYPES => 0, IS_CPP_MODE => 0});
+	    my $q_parser = new QueryParser({ignore_yomi => $CONFIG->{IGNORE_YOMI}, USE_OF_BLOCK_TYPES => 0, IS_CPP_MODE => 0, option => {call_from_api => 1}});
 	    $query_obj = $q_parser->parse($queryString, {logical_cond_qk => 'AND', syngraph => $opt->{syngraph}});
 	}
 
@@ -162,7 +162,7 @@ sub getRequestItems {
 	if (exists $requestItems->{'Cache'}) {
 	    unless ($query_obj) {
 		# parse query
-		my $q_parser = new QueryParser({ignore_yomi => $CONFIG->{IGNORE_YOMI}, USE_OF_BLOCK_TYPES => 0, IS_CPP_MODE => 0});
+		my $q_parser = new QueryParser({ignore_yomi => $CONFIG->{IGNORE_YOMI}, USE_OF_BLOCK_TYPES => 0, IS_CPP_MODE => 0, option => {call_from_api => 1}});
 		$query_obj = $q_parser->parse($queryString, {logical_cond_qk => 'AND', syngraph => $opt->{syngraph}});
 	    }
 
