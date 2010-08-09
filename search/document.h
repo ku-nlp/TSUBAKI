@@ -72,6 +72,10 @@ class Document {
       return true;
     }
 
+    int get_length() {
+	return length;
+    }
+
     bool set_proximate_feature() {
       proximate_feature = 1;
       return true;
@@ -140,6 +144,7 @@ class Document {
 	    double tf = 1 * (3 * freq) / ((0.5 + 1.5 * length / AVERAGE_DOC_LENGTH) + freq);
 	    double idf = log((TOTAL_NUMBUER_OF_DOCS - gdf + 0.5) / (gdf + 0.5));
 	    score = tf * idf;
+//	    std::cerr << "did = " << id << " length = " << length << std::endl;
 	}
 	return score;
     }

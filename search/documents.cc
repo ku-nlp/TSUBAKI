@@ -649,8 +649,8 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 	    int pos_num = intchar2int(buffer + ldf * 3 * SIZEOFINT + pos_offset);
 	    doc->set_freq(score);
 	    doc->set_gdf(term_df);
-			  
-	    // cerr << "score = "<< score << " pos_off = " << pos_offset << " pos_num = " << pos_num << endl;
+	    
+//	    cerr << "score = "<< score << " pos_off = " << pos_offset << " pos_num = " << pos_num << endl;
 	    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
 	    memcpy (__buf, (buffer + ldf * 12 + pos_offset), SIZEOFINT * (pos_num + 1));
 	    doc->set_pos_char(__buf);
@@ -678,10 +678,10 @@ bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_s
     if (address_str.size() != 0) {
 	long long address = atoll(address_str);
 #ifdef DEBUG
-	cerr << "KEY: " << term_string << ", ADDRESS: " << address << endl;
+	cerr << "KEY: " << term_string << ", ADDRESS: " << address << " (" << address_str << ")" << endl;
 #endif
 	double start = (double) gettimeofday_sec();	
-	index_stream->seekg(address, std::ios::beg);
+	index_stream->seekg((std::ios::off_type)address, std::ios::beg);
 	double end = (double) gettimeofday_sec();	
 
 	if (VERBOSE)
@@ -778,7 +778,11 @@ bool Documents::walk_or(Document *doc_ptr) {
     bool include_non_terminal_documents = false;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	Document *doc = (*it)->get_doc(doc_ptr->get_id());
+
 	if (doc) {
+	    // set document length
+	    doc->set_length(doc_ptr->get_length());
+
 	    // load positions
 	    pos_list_list.push_back(doc->get_pos());
 
@@ -924,11 +928,15 @@ bool Documents::walk_and(Document *doc_ptr) {
 
 	// for TERM_OPTIONAL documents
 	if (doc) {
+	    // set document length
+	    doc->set_length(doc_ptr->get_length());
+
 	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		pos_list_list.push_back(doc->get_pos());
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
+//	    cerr << doc->get_score() << " + ";
 
 #ifdef DEBUG
 	    if (get_type() == DOCUMENTS_ROOT) {
@@ -939,6 +947,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 #endif
 	}
     }
+//    cerr << "0 = " << score << endl;
 
     document->set_score(score);
 #ifdef DEBUG
