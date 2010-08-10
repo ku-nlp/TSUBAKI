@@ -551,6 +551,7 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 	int file = atoi((char *)_Atom(car(cdr(cdr(cdr(cdr(car(cell))))))));
 
 	term = current_term;
+	documents->set_label(term, file);
 	if (term_type == 1) {
 	    documents->set_type(DOCUMENTS_TERM_STRICT);
 	}
@@ -787,17 +788,37 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    pos_list_list.push_back(doc->get_pos());
 
 
-	    if ((*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
+	    string term = (*it)->get_label();
+	    if ((*it)->get_type() == DOCUMENTS_ROOT ||
+		(*it)->get_type() == DOCUMENTS_AND ||
+		(*it)->get_type() == DOCUMENTS_OR ||
+		(*it)->get_type() == DOCUMENTS_PHRASE ||
+		(*it)->get_type() == DOCUMENTS_PROX ||
+		(*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		include_non_terminal_documents = true;
-	    }
 
+		switch ((*it)->get_type()) {
+		case DOCUMENTS_ROOT:
+		    term = "ROOT"; break;
+		case DOCUMENTS_AND:
+		    term = "AND"; break;
+		case DOCUMENTS_PHRASE:
+		    term = "PHRASE"; break;
+		case DOCUMENTS_OR:
+		    term = "OR"; break;
+		case DOCUMENTS_PROX:
+		    term = "PROX"; break;
+		case DOCUMENTS_ORDERED_PROX:
+		    term = "ORDERED_PROX"; break;
+		}
+	    }
+	    doc_ptr->pushbackTerm (new Term(&term, doc->get_score(), doc->get_freq(), doc->get_gdf()));
 
 	    // load scores
 	    gdf = (*it)->get_gdf();
 	    if ((*it)->isRetrievedByBasicNode()) {
 		basic_node_score_list.push_back(doc->get_score());
 		basic_node_freq_list.push_back(doc->get_freq());
-
 #ifdef DEBUG
 		cerr << "GDF: " << gdf << endl;
 #endif
@@ -807,7 +828,6 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    }
 	}
     }
-
 
     // calculate scores
     double score = 0;
@@ -931,12 +951,34 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    // set document length
 	    doc->set_length(doc_ptr->get_length());
 
-	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
+	    string term = (*it)->get_label();
+	    switch ((*it)->get_type()) {
+	    case DOCUMENTS_ROOT:
+		term = "ROOT"; break;
+	    case DOCUMENTS_AND:
+		term = "AND"; break;
+	    case DOCUMENTS_PHRASE:
+		term = "PHRASE"; break;
+	    case DOCUMENTS_OR:
+		term = "OR"; break;
+	    case DOCUMENTS_PROX:
+		term = "PROX"; break;
+	    case DOCUMENTS_ORDERED_PROX:
+		term = "ORDERED_PROX"; break;
+	    }
+
+	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT ||
+		(*it)->get_type() == DOCUMENTS_AND ||
+		(*it)->get_type() == DOCUMENTS_OR ||
+		(*it)->get_type() == DOCUMENTS_ROOT ||
+		(*it)->get_type() == DOCUMENTS_PHRASE ||
+		(*it)->get_type() == DOCUMENTS_PROX ||
+		(*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		pos_list_list.push_back(doc->get_pos());
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
-//	    cerr << doc->get_score() << " + ";
+	    doc_ptr->pushbackTerm (new Term(&term, doc->get_score(), doc->get_freq(), doc->get_gdf()));
 
 #ifdef DEBUG
 	    if (get_type() == DOCUMENTS_ROOT) {
@@ -947,7 +989,6 @@ bool Documents::walk_and(Document *doc_ptr) {
 #endif
 	}
     }
-//    cerr << "0 = " << score << endl;
 
     document->set_score(score);
 #ifdef DEBUG

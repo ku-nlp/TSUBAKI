@@ -118,7 +118,8 @@ class Documents {
     // MAP_IMPL<int, int> l_documents_index;
     // bool l_documents_inf;
     int prox_dist;
-
+    string label;
+    std::vector<Term *> terms;
     std::vector<Documents *> children;
 
   public:
@@ -134,6 +135,7 @@ class Documents {
 	retrievedByBasicNode = false;
 
 	prox_dist = PROXIMATE_LENGTH;
+	label = "none";
     }
 
     ~Documents() {
@@ -151,6 +153,20 @@ class Documents {
 	    delete (*it);
 	}
 */
+    }
+
+
+    bool set_label (string _label, int type) {
+	if (type > 1) {
+	    _label += "_LK";
+	}
+
+	label = _label;
+	return true;
+    }
+
+    string get_label () {
+	return label;
     }
 
     void set_prox_dist (int dist) {
