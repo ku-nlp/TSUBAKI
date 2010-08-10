@@ -383,6 +383,7 @@ sub print_body {
     $this->print_canvas();
 
     print qq(<DIV style="font-size:smaller; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
+    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">[2007年度版はこちら]</A>&nbsp;\n) unless ($CONFIG->{IS_NICT_MODE});
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">[使い方]</A><BR>\n);
 
     # 混雑具合を表示
@@ -1156,11 +1157,18 @@ sub printOrdinarySearchResult {
 		my $okp = $terms->{$gid}{okp};
 
 		my @_buf;
-		foreach my $qid (sort {$terms->{$gid}{qinfo}{$b} <=> $terms->{$gid}{qinfo}{$a}} keys %{$terms->{$gid}{qinfo}}) {
-		    my $string = $query->{qid2rep}{$qid};
+		if ($CONFIG->{IS_CPP_MODE}) {
+		    my $string = $terms->{$gid}{str};
 		    $string =~ s/</&lt;/g;
 		    $string =~ s/>/&gt;/g;
-		    push (@_buf, sprintf("%s %s", $string, $terms->{$gid}{qinfo}{$qid}));
+		    push (@_buf, $string);
+		} else {
+		    foreach my $qid (sort {$terms->{$gid}{qinfo}{$b} <=> $terms->{$gid}{qinfo}{$a}} keys %{$terms->{$gid}{qinfo}}) {
+			my $string = $query->{qid2rep}{$qid};
+			$string =~ s/</&lt;/g;
+			$string =~ s/>/&gt;/g;
+			push (@_buf, sprintf("%s %s", $string, $terms->{$gid}{qinfo}{$qid}));
+		    }
 		}
 
 		my $line = sprintf "<TR><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%s</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='left' style='padding-left:1em;'>%s</TD></TR>\n", $okp, $frq, $tff, $gdf, $idf, (join (" ", @_buf));
