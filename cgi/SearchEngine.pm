@@ -204,8 +204,9 @@ sub parse_recieved_data_for_cpp {
 	    last;
 	} else {
 	    $recieved_data .= $_;
+	    my ($sid, $title, $url, $tid, $score, $length, $start, $end, @logdata) = split (/ /, $_);
+	    $url =~ s/@/%/g;
 
-	    my ($sid, $tid, $score, $start, $end, $title, $url, $score) = split (/ /, $_);
 	    my $doc;
 	    $doc->{did} = $sid;
 	    $doc->{start} = $start;
@@ -214,6 +215,20 @@ sub parse_recieved_data_for_cpp {
 	    $doc->{url} = $url;
 	    $doc->{score_total} = $score;
 
+	    # Set log data
+	    my $gid = 0;
+	    my $_logdata = join (" ", @logdata);
+	    $_logdata =~ s/^\[//;
+	    $_logdata =~ s/,\]$//;
+	    foreach my $__data (split (",", $_logdata)) {
+		my ($term, $score, $freq, $gdf) = split (' ', $__data);
+		$doc->{terminfo}{terms}{$gid}{str} = decode ('utf8', $term);
+		$doc->{terminfo}{terms}{$gid}{okp} = $score;
+		$doc->{terminfo}{terms}{$gid}{frq} = $freq;
+		$doc->{terminfo}{terms}{$gid}{gdf} = $gdf;
+		$gid++;
+	    }
+	    $doc->{terminfo}{length} = $length;
 	    push (@results, $doc);
 	}
     }
