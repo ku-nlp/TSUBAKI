@@ -3,7 +3,7 @@
 #include <errno.h>
 #include "common.h"
 #include "hash.h"
-#include "term.h"
+//#include "term.h"
 #include "document.h"
 #include "documents.h"
 
@@ -79,9 +79,13 @@ std::vector<double> *search (std::string *query,
 	}
     }
     double score_end1 = (double) gettimeofday_sec();
-
-    for (std::vector<Document *>::iterator it = result_docs->get_l_documents()->begin(); it != result_docs->get_l_documents()->end(); it++) {
+    int prev = -1;
+    for (std::vector<Document *>::iterator it = result_docs->get_l_documents()->begin(); it != result_docs->get_l_documents()->end(); ++it) {
 	Document *doc = result_docs->get_doc((*it)->get_id());
+	if (doc->get_id() < prev)
+	    break;
+
+	prev = doc->get_id();
 
 	// 文書長の取得
 	int length = 10000;
@@ -96,7 +100,6 @@ std::vector<double> *search (std::string *query,
 	// rmfilesにあればスキップ
 	if (rmsids.find((*_sid).second) != rmsids.end())
 	    continue;
-
 
 	bool flag = result_docs->walk_and_or(*it);
 	if (flag) {
@@ -157,13 +160,13 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     pushback_file_handle (anchor_index_word_file);
     pushback_file_handle (anchor_index_dpnd_file);
 
-    offset_dbs.push_back(new Dbm(offset_word_file));
-    offset_dbs.push_back(new Dbm(offset_dpnd_file));
-    offset_dbs.push_back(new Dbm(anchor_offset_word_file));
-    offset_dbs.push_back(new Dbm(anchor_offset_dpnd_file));
+    offset_dbs.push_back(new Dbm(offset_word_file, HOSTNAME));
+    offset_dbs.push_back(new Dbm(offset_dpnd_file, HOSTNAME));
+    offset_dbs.push_back(new Dbm(anchor_offset_word_file, HOSTNAME));
+    offset_dbs.push_back(new Dbm(anchor_offset_dpnd_file, HOSTNAME));
 
-    sid2url_cdb    = new Dbm(sid2url_file);
-    sid2title_cdb  = new Dbm(sid2title_file);
+    sid2url_cdb    = new Dbm(sid2url_file, HOSTNAME);
+    sid2title_cdb  = new Dbm(sid2title_file, HOSTNAME);
 
     std::ifstream fin(tid2sid_file.c_str());
     while (!fin.eof()) {
@@ -384,7 +387,7 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 		std::string title = (*(MAP_IMPL<int, string>::iterator)tid2title.find((*it)->get_id())).second;
 		std::string url = (*(MAP_IMPL<int, string>::iterator)tid2url.find((*it)->get_id())).second;
 
-		sbuf << sid << " " << ((*it)->to_string()) << " " << title << " " << url << " " << (*it)->get_final_score() << endl;
+		sbuf << sid << " " << title << " " << url << " " << ((*it)->to_string()) << endl;
 
 		if (++count > NUM_OF_RETURN_DOCUMENTS)
 		    break;
@@ -418,6 +421,7 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 }
 
 int main (int argc, char** argv) {
+
     if (strcmp(argv[argc - 1], "-standalone") == 0) {
 	standalone_mode (argv[1], argv[2], (int)atoi(argv[3]), argv[4]);
     } else {
