@@ -5,29 +5,22 @@ using std::cout;
 
 class Term {
     std::string term;
-    std::vector<int> pos_list;
+    double freq;
     double score;
-    int type;
-    int df;
+    int gdf;
+
   public:
-    Term(std::string in_term, std::vector<int> &in_pos_list) {
-	term = in_term;
-	pos_list = in_pos_list;
+    Term (std::string *_term, double _score, double _freq, int _gdf) {
+	term = (*_term);
+	score = _score;
+	freq = _freq;
+	gdf  = _gdf;
     }
-    bool print() {
-	cout << term << " (";
-	for (std::vector<int>::iterator it = pos_list.begin(), end = pos_list.end(); it != end; ++it) {
-	    cout << *it << ", ";
-	}
-	cout << ")";
-	return true;
-    }
-    bool set_score(double in_score) {
-	score = in_score;
-	return true;
-    }
-    std::vector<int> *get_pos() {
-	return &pos_list;
+
+    std::string to_string () {
+	std::ostringstream _str;
+	_str << term << " " << score << " " << freq << " " << gdf;
+	return _str.str();
     }
 };
 
