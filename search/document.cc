@@ -3,7 +3,11 @@
 
 std::string Document::to_string () {
     std::ostringstream _str;
-    _str << id << " " << get_final_score() << " " << best_begin << " " << best_end;
+    _str << id << " " << get_final_score() << " " << get_length() << " " << best_begin << " " << best_end << " [";
+    for (std::vector<Term*>::iterator it = terms.begin(); it != terms.end(); it++) {
+	_str << (*it)->to_string() << ",";
+    }
+    _str << "]";
 
     return _str.str();
 }

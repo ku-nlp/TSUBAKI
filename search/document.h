@@ -19,6 +19,7 @@ class Document {
     unsigned char *pos_buf;
 
     std::vector<int> *pos_list;
+//  std::vector<std::string *> terms;
     std::vector<Term *> terms;
   public:
     Document(int in_id) {
@@ -28,6 +29,8 @@ class Document {
 	best_pos = -1;
 	best_begin = -1;
 	best_end = -1;
+	freq = -1;
+	gdf = -1;
 
 	proximate_feature = 0;
 	strict_term_feature = 0;
@@ -144,9 +147,17 @@ class Document {
 	    double tf = 1 * (3 * freq) / ((0.5 + 1.5 * length / AVERAGE_DOC_LENGTH) + freq);
 	    double idf = log((TOTAL_NUMBUER_OF_DOCS - gdf + 0.5) / (gdf + 0.5));
 	    score = tf * idf;
-//	    std::cerr << "did = " << id << " length = " << length << std::endl;
 	}
 	return score;
+    }
+
+    bool pushbackTerm (Term *term) {
+	terms.push_back(term);
+	return true;
+    }
+
+    std::vector<Term *>* getTerms () {
+	return &terms;
     }
 
     bool print() {
