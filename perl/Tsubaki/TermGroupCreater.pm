@@ -94,8 +94,10 @@ sub _create {
 
     my ($count, @terms, %optionals, %visitedKihonkus) = (0, (), (), ());
     foreach my $tid (reverse @$tids) {
-	next if (exists $visitedKihonkus{$tid});
 	my $kihonku = $kihonkus->[$tid];
+
+	next if (exists $visitedKihonkus{$tid});
+	next if ($kihonku->fstring =~ /クエリ削除語/);
 
 	my $is_optional_node = (defined $kihonku && $kihonku->fstring =~ /クエリ不要語/) ? 1 : 0;
 	my $broadest_synnodes = &_getBroadestSynNode ($parent, $kihonku, $tids);
