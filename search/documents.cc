@@ -135,6 +135,14 @@ bool Documents::merge_and(Documents *parent, CELL *cell, DocumentBuffer *_alread
 	    cell = cdr(cell);
 	    continue;
 	}
+	// get_type() == DOCUMENTS_ROOT でここに来る場合は、オプショナル or アンカーに関するターム
+	else if (get_type() == DOCUMENTS_ROOT) {
+	    if (next_documents->get_type() == DOCUMENTS_OR)
+		next_documents->set_type (DOCUMENTS_OR_OPTIONAL);
+	    cell = cdr(cell);
+	    continue;
+	}
+
 	already_retrieved_docs = next_documents->getDocumentIDs();
 
 	// s: s and s
@@ -551,6 +559,7 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 	int file = atoi((char *)_Atom(car(cdr(cdr(cdr(cdr(car(cell))))))));
 
 	term = current_term;
+	// cerr << term << endl;
 	documents->set_label(term, file);
 	if (term_type == 1) {
 	    documents->set_type(DOCUMENTS_TERM_STRICT);
@@ -792,6 +801,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    if ((*it)->get_type() == DOCUMENTS_ROOT ||
 		(*it)->get_type() == DOCUMENTS_AND ||
 		(*it)->get_type() == DOCUMENTS_OR ||
+		(*it)->get_type() == DOCUMENTS_OR_OPTIONAL ||
 		(*it)->get_type() == DOCUMENTS_PHRASE ||
 		(*it)->get_type() == DOCUMENTS_PROX ||
 		(*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
@@ -806,6 +816,8 @@ bool Documents::walk_or(Document *doc_ptr) {
 		    term = "PHRASE"; break;
 		case DOCUMENTS_OR:
 		    term = "OR"; break;
+		case DOCUMENTS_OR_OPTIONAL:
+		    term = "OR_OPTIONAL"; break;
 		case DOCUMENTS_PROX:
 		    term = "PROX"; break;
 		case DOCUMENTS_ORDERED_PROX:
@@ -961,6 +973,8 @@ bool Documents::walk_and(Document *doc_ptr) {
 		term = "PHRASE"; break;
 	    case DOCUMENTS_OR:
 		term = "OR"; break;
+	    case DOCUMENTS_OR_OPTIONAL:
+		term = "OR_OPTIONAL"; break;
 	    case DOCUMENTS_PROX:
 		term = "PROX"; break;
 	    case DOCUMENTS_ORDERED_PROX:
@@ -970,6 +984,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT ||
 		(*it)->get_type() == DOCUMENTS_AND ||
 		(*it)->get_type() == DOCUMENTS_OR ||
+		(*it)->get_type() == DOCUMENTS_OR_OPTIONAL ||
 		(*it)->get_type() == DOCUMENTS_ROOT ||
 		(*it)->get_type() == DOCUMENTS_PHRASE ||
 		(*it)->get_type() == DOCUMENTS_PROX ||
@@ -1180,7 +1195,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 
 	// for TERM_OPTIONAL documents
 	if (doc) {
-	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
+	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_OR_OPTIONAL || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		pos_list_list.push_back(doc->get_pos());
 		document->set_best_pos(doc->get_best_pos());
 	    }
@@ -1268,7 +1283,7 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 	else
 	    return true;
     }
-    else if (get_type() == DOCUMENTS_TERM_LENIENT || get_type() == DOCUMENTS_TERM_OPTIONAL) {
+    else if (get_type() == DOCUMENTS_TERM_LENIENT || get_type() == DOCUMENTS_TERM_OPTIONAL || get_type() == DOCUMENTS_OR_OPTIONAL) {
 	// あってもなくてもよい
 	return true;
     }
@@ -1303,7 +1318,8 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 	     type == DOCUMENTS_ORDERED_PROX) {
 	return walk_and(doc_ptr);
     }
-    else if (type == DOCUMENTS_OR) {
+    else if (type == DOCUMENTS_OR ||
+	     type == DOCUMENTS_OR_OPTIONAL) {
 	return walk_or(doc_ptr);
     }
 
