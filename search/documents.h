@@ -25,7 +25,7 @@ class Hashmap {
 
     bool add (int key, int value) {
 	if (use_of_int_array) {
-	    _map_int[key] = value;
+	    _map_int[key%1000000] = value;
 	} else {
 	    _map_map[key] = value;
 	}
@@ -42,7 +42,7 @@ class Hashmap {
 
     int get (int key) {
 	if (use_of_int_array) {
-	    return _map_int[key];
+	    return _map_int[key%1000000];
 	} else {
 	    if ((int)_map_map.size() < 1 || (int)_map_map.size() > 200000) {
 		return -1;
