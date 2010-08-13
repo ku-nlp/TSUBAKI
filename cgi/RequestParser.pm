@@ -479,32 +479,13 @@ sub parseQuery {
 	    }
 	}
 
+	# set parameters
+	$params->{logger} = $logger;
+	$params->{logical_cond_qk} = $params->{logical_operator};
 
 	# クエリの解析
 	# logical_cond_qk: クエリ間の論理演算
-	$query = $q_parser->parse(
-	    $params->{query},
-	    { logical_cond_qk => $params->{logical_operator},
-	      syngraph => $params->{syngraph},
-	      near => $params->{near},
-	      force_dpnd => $params->{force_dpnd},
-	      trimming => $params->{trimming},
-	      antonym_and_negation_expansion => $params->{antonym_and_negation_expansion},
-	      detect_requisite_dpnd => $params->{detect_requisite_dpnd},
-	      query_filtering => $params->{query_filtering},
-	      disable_dpnd => $params->{disable_dpnd},
-	      disable_synnode => $params->{disable_synnode},
-	      telic_process => $params->{telic_process},
-	      CN_process => $params->{CN_process},
-	      NE_process => $params->{NE_process},
-	      modifier_of_NE_process => $params->{modifier_of_NE_process},
-	      logger => $logger,
-	      site => $params->{site},
-	      blockTypes => $params->{blockTypes},
-	      use_of_anaphora_resolution => $params->{use_of_anaphora_resolution},
-	      no_use_of_Zwhitespace_as_delimiter => $params->{no_use_of_Zwhitespace_as_delimiter},
-	      debug => $params->{debug}
-	    });
+	$query = $q_parser->parse($params->{query}, $params);
     }
 
     # クエリ解析時間のログをとる

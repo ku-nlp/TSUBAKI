@@ -630,6 +630,10 @@ sub parse {
 	    $opt->{site} = $1;
 	    next;
 	}
+	if ($search_expression =~ /^debug=(.+)$/) {
+	    $opt->{debug} = $1;
+	    next;
+	}
 
 	# QueryKeywordオブジェクトの構築
 	my $qk = $this->createQueryKeywordObj($search_expression, $opt);
