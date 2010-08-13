@@ -232,17 +232,6 @@ sub setParametersOfGetRequest {
     $types{""} = 1 unless ($CONFIG->{USE_OF_BLOCK_TYPES});
     $params->{blockTypes} = \%types;
 
-    ###############################################################
-    # disable_query_processing が指定されていたらフラグをオフにする
-    ###############################################################
-
-    if ($params->{disable_query_processing}) {
-	$params->{telic_process} = 0;
-	$params->{CN_process} = 0;
-	$params->{NE_process} = 0;
-	$params->{modifier_of_NE_process} = 0;
-    }
-
 
     ######################################
     # パラメータの値が不正でないかチェック

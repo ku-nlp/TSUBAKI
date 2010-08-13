@@ -310,6 +310,14 @@ sub _linguisticAnalysis {
 	# 検索表現を構文解析する
 	my $knpresult = $this->_runKNP($search_expression, $opt);
 
+	# disable_query_processing が指定されていたらフラグをオフにする
+	if ($opt->{disable_query_processing}) {
+	    $opt->{telic_process} = 0;
+	    $opt->{CN_process} = 0;
+	    $opt->{NE_process} = 0;
+	    $opt->{modifier_of_NE_process} = 0;
+	}
+
 	# クエリ処理を適用する
 	$this->_runQueryProcessing($knpresult, $opt) if ($opt->{telic_process} || $opt->{CN_process} || $opt->{NE_process} || $opt->{modifier_of_NE_process});
 	$this->{knp_result} = $knpresult;
@@ -630,8 +638,13 @@ sub parse {
 	    $opt->{site} = $1;
 	    next;
 	}
-	if ($search_expression =~ /^debug=(.+)$/) {
-	    $opt->{debug} = $1;
+	if ($search_expression =~ /^opt:(.+)=(.+)$/) {
+	    my ($key, $val) = ($1, $2);
+	    if (exists $opt->{$key}) {
+		$opt->{$key} = $val;
+	    } else {
+		print "Not defined: $key<BR>\n";
+	    }
 	    next;
 	}
 
