@@ -16,7 +16,14 @@ sub new {
     my($class, $th, $datfp, $cdbfp, $position, $is_legacy_mode, $verbose) = @_;
     my $dat = new FileHandle;
     open($dat, "> $datfp") || die "$!\n";
-    my $offset_cdb1 = ($is_legacy_mode) ? undef : (new CDB_Writer ("$cdbfp", "$cdbfp.keymap", 2500000000) or die);
+    my $cdbfp_base;
+    if ($cdbfp =~ m|([^/]+)$|) {
+	$cdbfp_base = $1; # basename
+    }
+    else {
+	$cdbfp_base = $cdbfp;
+    }
+    my $offset_cdb1 = ($is_legacy_mode) ? undef : (new CDB_Writer ("$cdbfp", "$cdbfp_base.keymap", 2500000000) or die);
     my $offset_cdb2 = ($is_legacy_mode) ? (new CDB_File ("$cdbfp", "$cdbfp.$$") or die) : undef;
     my $this = {
 	offset => 0,
