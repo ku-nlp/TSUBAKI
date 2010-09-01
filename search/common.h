@@ -30,7 +30,7 @@
 //#define DEBUG 0
 #define TEST_MODE 0
 #define VERBOSE 0
-#define MAX_LENGTH_OF_DOCUMENT 3
+#define MAX_LENGTH_OF_DOCUMENT 10000
 #define SIZEOFINT sizeof(int)
 #define NUM_OF_RETURN_DOCUMENTS 30
 #define C_PAGERANK 5
