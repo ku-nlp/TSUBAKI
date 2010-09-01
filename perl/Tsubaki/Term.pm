@@ -15,7 +15,7 @@ our %TYPE2INT;
 $TYPE2INT{word} = 1;
 $TYPE2INT{optional_word} = 3;
 $TYPE2INT{dpnd} = 3;
-$TYPE2INT{force_dpnd} = 2;
+$TYPE2INT{force_dpnd} = 1;
 
 sub new {
     my ($class, $params) = @_;

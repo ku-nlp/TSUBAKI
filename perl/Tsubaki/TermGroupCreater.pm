@@ -302,7 +302,7 @@ sub _pushbackDependencyTerms {
 	my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 	my $kakarimoto = $indexer->get_repnames2($kihonku);
 	my $kakarisaki = $indexer->get_repnames2($kihonku->parent);
-	my $is_optional_node = ($kihonku->fstring =~ /<クエリ必須係り受け>/) ? 0 : 1;
+	my $is_optional_node = ($kihonku->fstring =~ /<クエリ必須係り受け>/) ? 0 : (($option->{force_dpnd}) ? 0 : 1);
 	foreach my $moto (@$kakarimoto) {
 	    foreach my $saki (@$kakarisaki) {
 		my $midasi = sprintf ("%s->%s", $moto, $saki);
