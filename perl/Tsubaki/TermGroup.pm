@@ -377,7 +377,10 @@ sub show_query_structure {
 sub to_S_exp_for_anchor {
     my ($this, $indent) = @_;
 
+
+    my $is_single_node = (!$this->{hasChild} && scalar(@{$this->{terms}}) < 2);
     my $S_exp;
+    $S_exp .= "$indent(OR\n" unless ($is_single_node);
     my %buf;
     foreach my $term (@{$this->{terms}}) {
 	unless (exists $buf{$term->{text}}) {
@@ -385,6 +388,7 @@ sub to_S_exp_for_anchor {
 	    $buf{$term->{text}} = 1;
 	}
     }
+    $S_exp .= "$indent)\n" unless ($is_single_node);
 
     if ($this->{hasChild}) {
 #	$S_exp .= (($is_single_node) ? "$indent(AND\n" : "\t$indent(AND\n");
