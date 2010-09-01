@@ -27,6 +27,7 @@ sub create {
 	my $j = $i % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
 	foreach my $synnodes ($kihonkus[$i]->synnodes) {
 	    foreach my $synnode ($synnodes->synnode) {
+		next if ($synnode->synid =~ /s\d+/ && $option->{disable_synnode});
 		$rep2style{&remove_yomi(lc($synnode->synid))} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
 	    }
 	}
@@ -331,7 +332,7 @@ sub _pushbackDependencyTerms {
 
 
 sub getPaintingJavaScriptCode {
-    my ($result, $colorOffset) = @_;
+    my ($result, $colorOffset, $opt) = @_;
 
     ###### 変数の初期化 #####
 
@@ -403,7 +404,7 @@ sub getPaintingJavaScriptCode {
 	my $gid = ($tag->synnodes)[0]->tagid;
 	$gid2num{$gid} = $i;
 
-	my ($synbuf, $max_num_of_words) = &_getExpressions($i, $tag, \%tid2syns, $syngraph);
+	my ($synbuf, $max_num_of_words) = &_getExpressions($i, $tag, \%tid2syns, $syngraph, $opt);
 
 	my $width = $font_size * (1.5 + $max_num_of_words);
 	# 同義グループのX軸の中心座標を保持（係り受けの線を描画する際に利用する）
@@ -638,7 +639,7 @@ sub _getPackedExpressions {
 
 # 同義グループに属す表現の取得と幅（文字数）の取得
 sub _getExpressions {
-    my ($i, $tag, $tid2syns, $syngraph) = @_;
+    my ($i, $tag, $tid2syns, $syngraph, $opt) = @_;
 
 
     my $surf = ($tag->synnodes)[0]->midasi;
@@ -666,11 +667,11 @@ sub _getExpressions {
 
 
 		# 同義グループに属す表現の取得
-#		unless ($this->{disable_synnode}) {
+		unless ($opt->{disable_synnode}) {
 		    my @tids = $synnodes->tagids;
 		    my $max_num_of_w = &_getPackedExpressions($i, \%synbuf, $tid2syns, \@tids, $str, $functional_word, $syngraph);
 		    $max_num_of_words = $max_num_of_w if ($max_num_of_words < $max_num_of_w);
-#		}
+		}
 	    }
 	}
 
