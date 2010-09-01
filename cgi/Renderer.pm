@@ -248,7 +248,7 @@ sub print_query_verbose {
 }
 
 sub printJavascriptCode {
-    my ($canvasName, $query, $disable_css_loading_code) = @_;
+    my ($canvasName, $query, $opt, $disable_css_loading_code) = @_;
 
     unless ($disable_css_loading_code) {
 	print << "END_OF_HTML";
@@ -281,7 +281,7 @@ END_OF_HTML
 	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", 0, 0;
 	print "}\n";
 
-	my ($width, $height, $coffset, $jscode) = &Tsubaki::TermGroupCreater::getPaintingJavaScriptCode($query->{result}, 0);
+	my ($width, $height, $coffset, $jscode) = &Tsubaki::TermGroupCreater::getPaintingJavaScriptCode($query->{result}, 0, $opt);
 	printf "function show_query_result%d (e) {\n", 0;
 	print "var x = Event.pointerX(e);\n";
 	print "var y = Event.pointerY(e);\n";
@@ -342,7 +342,7 @@ sub print_tsubaki_interface {
     my ($this, $params, $query, $status) = @_;
 
     # header の出力
-    $this->print_header($query);
+    $this->print_header($query, $params);
 
     # body の出力
     $this->print_body($params, $query, $status);
@@ -350,7 +350,7 @@ sub print_tsubaki_interface {
 
 # header の出力
 sub print_header {
-    my ($this, $query) = @_;
+    my ($this, $query, $opt) = @_;
 
     my $canvasName = 'canvas';
     my $title = "情報爆発プロジェクト 検索エンジン基盤 TSUBAKI";
@@ -369,7 +369,7 @@ END_OF_HTML
 
 # クエリ解析結果を描画するjavascriptコードの出力
     my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
-    &printJavascriptCode('canvas', $query) if ($query->{rawstring});
+    &printJavascriptCode('canvas', $query, $opt) if ($query->{rawstring});
     print "</HEAD>\n";
 }
 
@@ -443,7 +443,7 @@ sub print_logo {
     if ($params->{query}) {
 	print qq(<TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
 	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
-	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 2007年度版 -</SPAN></TD>\n);
+	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 2009年度版 -</SPAN></TD>\n);
 	if ($CONFIG->{IS_IPSJ_MODE}) {
 	    print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
 	}
@@ -451,7 +451,7 @@ sub print_logo {
     else {
 	print qq(<TD align="center">);
 	printf ("<A href=%s><IMG border=0 src=image/logo.png></A>\n", $CONFIG->{INDEX_CGI});
-	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">2007年度版</SPAN>\n);
+	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">2009年度版</SPAN>\n);
 	print qq(<BR><SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
 	print "</TD></TR>\n";
 	print "<TR>";
