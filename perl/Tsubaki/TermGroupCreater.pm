@@ -124,7 +124,7 @@ sub _create {
 	}
 
 	# 係り受けタームの追加
-	&_pushbackDependencyTerms(\@terms, \%optionals, $kihonku, $gid, $count, $option);
+	&_pushbackDependencyTerms (\@terms, \%optionals, $kihonku, $gid, $count, $option);
     }
 
     return (\@terms, \%optionals);
@@ -304,6 +304,7 @@ sub _pushbackDependencyTerms {
 	my $kakarimoto = $indexer->get_repnames2($kihonku);
 	my $kakarisaki = $indexer->get_repnames2($kihonku->parent);
 	my $is_optional_node = ($kihonku->fstring =~ /<クエリ必須係り受け>/) ? 0 : (($option->{force_dpnd}) ? 0 : 1);
+	my @_terms;
 	foreach my $moto (@$kakarimoto) {
 	    foreach my $saki (@$kakarisaki) {
 		my $midasi = sprintf ("%s->%s", $moto, $saki);
@@ -322,10 +323,16 @@ sub _pushbackDependencyTerms {
 		    if ($is_optional_node) {
 			$optionals->{$term->get_id()} = $term unless (exists $optionals->{$term->get_id()});
 		    } else {
-			push (@$terms, $term);
+			push (@_terms, $term);
 		    }
 		}
 	    }
+	}
+
+	unless ($is_optional_node) {
+	    my $termG = new Tsubaki::TermGroup();
+	    $termG->{terms} = \@_terms;
+	    push (@$terms, $termG);
 	}
     }
 }
