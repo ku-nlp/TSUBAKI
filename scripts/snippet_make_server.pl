@@ -81,7 +81,7 @@ sub main {
 		    $new_socket->close();
 		    exit;
 		}
-		elsif ($_ =~ /GET_SFDAT (\d+)$/) {
+		elsif ($_ =~ /GET_SFDAT ((\d|\-)+)$/) {
 		    my $did_w_version = $1;
 		    my ($did) = ($did_w_version =~ /(^\d+)/);
 
