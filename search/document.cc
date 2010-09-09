@@ -21,13 +21,10 @@ bool Document::set_term_pos(std::string term, std::vector<int> *in_pos_list) {
 	    delete pos_list;
 	}
 
-	std::cerr << "! copying pos_list: ";
 	pos_list = new std::vector<int>;
 	for (std::vector<int>::iterator it = in_pos_list->begin(); it != in_pos_list->end(); it++) {
 	    pos_list->push_back(*it);
-	    std::cerr << *it << " ";
 	}
-	std::cerr << std::endl;
 
 	return true;
     }
