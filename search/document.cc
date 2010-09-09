@@ -13,14 +13,15 @@ std::string Document::to_string () {
 }
 
 bool Document::set_term_pos(std::string term, std::vector<int> &in_pos_list) {
-    if (pos_list == NULL) {
-	pos_list = new std::vector<int>;
-	for (std::vector<int>::iterator it = in_pos_list.begin(); it != in_pos_list.end(); it++) {
-	    pos_list->push_back(*it);
-	}
-    } else {
-	pos_list = &in_pos_list;
+    if (pos_list) { // delete pos_list if available
+	delete pos_list;
     }
+
+    pos_list = new std::vector<int>;
+    for (std::vector<int>::iterator it = in_pos_list.begin(); it != in_pos_list.end(); it++) {
+	pos_list->push_back(*it);
+    }
+
     return true;
 }
 
