@@ -940,7 +940,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     cerr << endl;
 #endif
 
-    document->set_term_pos("OR", pos_list);
+    document->set_term_pos("OR", &pos_list);
     document->set_best_pos(best_pos);
     document->set_best_region(best_pos, best_pos);
 
@@ -1027,7 +1027,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    document->set_proximate_feature();
 	}
 
-	document->set_term_pos("ROOT", *(pos_list_list[0]));
+	document->set_term_pos("ROOT", pos_list_list[0]);
 
 	return true;
     }
@@ -1153,7 +1153,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     }
 
     pos_list.push_back(-1);
-    document->set_term_pos("AND", pos_list);
+    document->set_term_pos("AND", &pos_list);
     document->set_best_pos(best_pos);
     document->set_best_region(best_begin, best_begin + region);
 

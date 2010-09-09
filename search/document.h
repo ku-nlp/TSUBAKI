@@ -99,7 +99,7 @@ class Document {
     }
 
     bool calc_score();
-    bool set_term_pos(std::string term, std::vector<int> &in_pos_list);
+    bool set_term_pos(std::string term, std::vector<int> *in_pos_list);
     std::vector<int> *get_pos();
 
     bool set_freq(double in_freq) {

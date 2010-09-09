@@ -12,17 +12,25 @@ std::string Document::to_string () {
     return _str.str();
 }
 
-bool Document::set_term_pos(std::string term, std::vector<int> &in_pos_list) {
-    if (pos_list) { // delete pos_list if available
-	delete pos_list;
+bool Document::set_term_pos(std::string term, std::vector<int> *in_pos_list) {
+    if (pos_list == in_pos_list) { // do nothing if input is the pointer of this->pos_list
+	return true;
     }
+    else {
+	if (pos_list) { // delete pos_list if available
+	    delete pos_list;
+	}
 
-    pos_list = new std::vector<int>;
-    for (std::vector<int>::iterator it = in_pos_list.begin(); it != in_pos_list.end(); it++) {
-	pos_list->push_back(*it);
+	std::cerr << "! copying pos_list: ";
+	pos_list = new std::vector<int>;
+	for (std::vector<int>::iterator it = in_pos_list->begin(); it != in_pos_list->end(); it++) {
+	    pos_list->push_back(*it);
+	    std::cerr << *it << " ";
+	}
+	std::cerr << std::endl;
+
+	return true;
     }
-
-    return true;
 }
 
 std::vector<int> *Document::get_pos() {
