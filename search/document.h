@@ -36,6 +36,7 @@ class Document {
 	strict_term_feature = 0;
 	phrase_feature = 0;
 	pos_list = NULL;
+	pos_buf = NULL;
     }
 
     ~Document () {

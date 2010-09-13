@@ -32,14 +32,17 @@ bool Document::set_term_pos(std::string term, std::vector<int> *in_pos_list) {
 
 std::vector<int> *Document::get_pos() {
     if (pos_list == NULL) {
-	int pos_num = intchar2int(pos_buf);
-	pos_buf += sizeof (int);
-
 	pos_list = new std::vector<int>;
-	for (int i = 0; i < pos_num; i++) {
-	    int p = intchar2int(pos_buf);
-	    pos_list->push_back(p);
+
+	if (pos_buf) {
+	    int pos_num = intchar2int(pos_buf);
 	    pos_buf += sizeof (int);
+
+	    for (int i = 0; i < pos_num; i++) {
+		int p = intchar2int(pos_buf);
+		pos_list->push_back(p);
+		pos_buf += sizeof (int);
+	    }
 	}
 	pos_list->push_back(-1);
     }
