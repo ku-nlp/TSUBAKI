@@ -115,12 +115,14 @@ sub _create {
 	my $children = &_getChildNodes (\%optionals, $group_id, $kihonkus, \@tagids, $broadest_synnodes, $space, $option);
 
 	# タームグループの作成
-	my $termGroup = &_createTermGroup ($group_id, $tid, \@synnodes, $kihonku, $children, { optional_flag => $is_optional_node, option => $option });
+	my $termGroups = &_createTermGroup ($group_id, $tid, \@synnodes, $kihonku, $children, { optional_flag => $is_optional_node, option => $option });
 
-	if ($is_optional_node) {
-	    $optionals{$termGroup->{text}} = $termGroup unless (defined ($optionals{$termGroup->{text}}));
-	} else {
-	    unshift (@terms, $termGroup);
+	foreach my $termGroup (@$termGroups) {
+	    if ($is_optional_node) {
+		$optionals{$termGroup->{text}} = $termGroup unless (defined ($optionals{$termGroup->{text}}));
+	    } else {
+		unshift (@terms, $termGroup);
+	    }
 	}
 
 	# 係り受けタームの追加
@@ -246,17 +248,24 @@ sub _createTermGroup {
     }
 
     # タームグループの作成
-    return new Tsubaki::TermGroup (
-	$gid,
-	$tid,
-	$gdf,
-	undef,
-	((defined $basicNd) ? &remove_yomi($basicNd->synid) : ''),
-	\@midasis,
-	$parent,
-	$children,
-	$opt
-	);
+    if (scalar (@midasis) < 1) {
+	return $children;
+    } else {
+	my $tg = new Tsubaki::TermGroup (
+	    $gid,
+	    $tid,
+	    $gdf,
+	    undef,
+	    ((defined $basicNd) ? &remove_yomi($basicNd->synid) : ''),
+	    \@midasis,
+	    $parent,
+	    $children,
+	    $opt
+	    );
+
+	my @__buf = (); push (@__buf, $tg);
+	return \@__buf;
+    }
 }
 
 # もっとも大きいsynnodeを獲得
@@ -331,8 +340,10 @@ sub _pushbackDependencyTerms {
 
 	unless ($is_optional_node) {
 	    my $termG = new Tsubaki::TermGroup();
-	    $termG->{terms} = \@_terms;
-	    push (@$terms, $termG);
+	    if (scalar (@_terms) > 0) {
+		$termG->{terms} = \@_terms;
+		push (@$terms, $termG);
+	    }
 	}
     }
 }
