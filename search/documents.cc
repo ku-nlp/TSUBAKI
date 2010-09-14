@@ -1306,6 +1306,7 @@ bool Documents::walk_and_or(Document *doc_ptr) {
     }
 
     if (!approximate_check_for_children) {
+	remove_doc (doc_ptr->get_id());
 	return false;
     }
 
