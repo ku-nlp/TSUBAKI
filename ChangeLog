@@ -2,7 +2,7 @@
 
 	* perl/Tsubaki/TermGroupCreater.pm: bug fixed(<クエリ削除係り受け>をスコアリングで利用しないように).
 
-2010-09-13  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-09-13  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* search/document.cc, search/document.h:
 	Added an existence check of pos_buf.
@@ -12,7 +12,7 @@
 	* perl/Tsubaki/TermGroupCreater.pm:
 	オプションにより中間ノードが生成されない場合、その子供を利用するように.
 
-2010-09-09  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-09-09  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* search/document.cc: Suppressed redundant messages.
 
@@ -44,7 +44,7 @@
 
 	* search/common.h: small changes.
 
-2010-08-20  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-08-20  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* scripts/SynGraphBinarizer.pm:
 	Modified the path of keymap to construct CDB_Writer.
@@ -89,7 +89,7 @@
 	* search/documents.cc, search/document.h:
 	bag fixed (文書長の値が伝搬されるように.)
 
-2010-08-05  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-08-05  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/api.cgi: Specified call_from_api option to QueryParser.
 
@@ -118,7 +118,7 @@
 	* cgi/SearchEngine.pm:
 	スレーブサーバーが応答しない場合、例外として扱うように.
 
-2010-08-02  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-08-02  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* search/hash.h: Modified an overloaded constructor.
 
@@ -135,7 +135,7 @@
 
 	* search/hash.h: 32bit環境ではCDBをその都度tie/untieするように.
 
-2010-08-02  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-08-02  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/SnippetMaker.pm:
 	Increased robustness of makeMidasiAndRepnamesList().
@@ -147,7 +147,7 @@
 	* perl/Tsubaki/TermGroupCreater.pm, perl/Tsubaki/TermGroup.pm:
 	ハイライトする色の情報を持つように.
 
-2010-07-26  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-26  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* search/document.h, search/slave_server.cc: Suppressed warnings.
 
@@ -157,7 +157,7 @@
 
 	* perl/Tsubaki/TermGroup.pm: small chanes.
 
-2010-07-25  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-25  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* search/common.h: Added an include file.
 
@@ -170,7 +170,7 @@
 
 	* scripts/Indexer.pm: bug fixed.
 
-2010-07-20  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-20  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* search/common.h:
 	Modified default pagerank parameters: C = 5, alpha = 0.9
@@ -179,7 +179,7 @@
 
 	* cgi/SnippetMaker.pm: コード整理, 一文からkwicを生成できるように.
 
-2010-07-16  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-16  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* search/slave_server.cc: Modified to wait for a child process.
 
@@ -187,7 +187,7 @@
 
 	* perl/Tsubaki/TermGroupCreater.pm: 基本句がない場合に対応.
 
-2010-07-16  shibata  <shibata@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-16  Tomohide Shibata  <shibata@i.kyoto-u.ac.jp>
 
 	* utils/Utils/perl/CDB_Reader.pm: repeated_keysオプションを追加
 
@@ -202,7 +202,7 @@
 
 	* perl/Tsubaki/TermGroupCreater.pm: S式を出力しないように.
 
-2010-07-13  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-13  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* perl/Tsubaki/TermGroupCreater.pm:
 	Fixed encoding problem to look up DFDBs
@@ -216,7 +216,7 @@
 
 	* cgi/configure, cgi/configure.nict: パラメータの追加.
 
-2010-07-12  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-12  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* search/common.h, cgi/configure, cgi/configure.nict:
 	Changed the default value of C_PAGERANK to 10.
@@ -233,7 +233,7 @@
 
 	* cgi/QueryParser.pm: rawstringを保持するように.
 
-2010-07-08  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-08  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/QueryParser.pm: Modified encoding problem to look up DFDBs.
 
@@ -243,7 +243,7 @@
 
 	* search/documents.h: サイズを返すメソッドの追加.
 
-2010-07-08  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-07-08  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* scripts/make-dlength-db.perl: Added an option to output txt file.
 
@@ -323,7 +323,7 @@
 	* cgi/Query.pm, cgi/QueryParser.pm, cgi/Renderer.pm:
 	IS_CPP_MODE時もクエリの解析結果が表示されるように.
 
-2010-06-30  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+2010-06-30  Daisuke Kawahara  <dk@nict.go.jp>
 
 	* perl/Tsubaki/Term.pm, cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/RequestParser.pm:
 	Modification of blocktype handling for NICT.
@@ -366,7 +366,7 @@
 
 	* cgi/QueryKeyword.pm: 先行する名詞を括弧で括るように.
 
-2010-06-21  Daisuke Kawahara  <dk@nict.go.jp>
+2010-06-21  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* scripts/convert-index-format.perl:
 	Modified to check the existence of DB and to untie it.
@@ -376,19 +376,19 @@
 
 	* cgi/SnippetMakerAgent.pm: Suppressed a debug message.
 
-2010-06-17  Daisuke Kawahara  <dk@nict.go.jp>
+2010-06-17  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/QueryParser.pm: Fixed a bug in createQueryKeywordObj.
 
-2010-06-16  Daisuke Kawahara  <dk@nict.go.jp>
+2010-06-16  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/api.cgi: Set IS_CPP_MODE to 0 for snippet request to API.
 
-2010-06-14  Daisuke Kawahara  <dk@nict.go.jp>
+2010-06-14  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/QueryParser.pm: Bug fix for sexp.
 
-2010-06-13  Daisuke Kawahara  <dk@nict.go.jp>
+2010-06-13  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/QueryParser.pm:
 	Added an option of overwriting IS_CPP_MODE to the constructor. Some fixes for WebClustering.
@@ -499,7 +499,7 @@
 
 	* cgi/Renderer.pm: iconを表示するように.
 
-2010-05-07  Daisuke Kawahara  <dk@nict.go.jp>
+2010-05-07  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/SnippetMakerAgent.pm:
 	Modified to survive empty results of snippets.
@@ -519,7 +519,7 @@
 
 	* cgi/SnippetMaker.pm: Authorタグを無視するように.
 
-2010-05-07  Daisuke Kawahara  <dk@nict.go.jp>
+2010-05-07  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/QueryParser.pm: Bug fix for the English version.
 
@@ -532,7 +532,7 @@
 	* cgi/QueryKeyword.pm:
 	wikipediaエントリに対しては同義語展開を行わないように.
 
-2010-05-05  Daisuke Kawahara  <dk@nict.go.jp>
+2010-05-05  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* scripts/make-index.sh: Added -english option.
 
@@ -564,7 +564,7 @@
 
 	* scripts/idx2df.pl: ブロックタイプを除いてマージするオプションの追加.
 
-2010-04-27  Daisuke Kawahara  <dk@nict.go.jp>
+2010-04-27  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/api.cgi: Set USE_OF_BLOCK_TYPES to 0 for snippet request to API.
 
@@ -1682,7 +1682,7 @@
 	* scripts/Indexer.pm:
 	反義語でクエリを拡張する処理をmakeIndexFromSynGraphResultObjectメソッドに追加，並列句の処理, 固有表現・複合名詞処理をmakeIndexFromKNPResultObjectメソッド内に追加
 
-2009-01-17  shibata  <shibata@nlpc02.kuro.nii-chiba.ac.jp>
+2009-01-17  Tomohide Shibata  <shibata@nlpc02.kuro.nii-chiba.ac.jp>
 
 	* cgi/SnippetMaker.pm:
 	段落の先頭文かどうかの情報を保持するオプションを追加
@@ -2230,7 +2230,7 @@
 	* scripts/tsubaki_server.pl:
 	特定の文書IDを持つ文書の検索結果だけ得るオプションに対応
 
-2008-08-19  shibata  <shibata@nlpc01.kuro.nii-chiba.ac.jp>
+2008-08-19  Tomohide Shibata  <shibata@i.kyoto-u.ac.jp>
 
 	* cgi/Renderer.pm: fixed typo.
 
@@ -3806,7 +3806,7 @@
 	* cgi/Retrieve.pm:
 	intersect_wo_hash関数で、全ての検索クエリを含まない文書が選択されるバグを修正.
 
-2006-09-20  Daisuke Kawahara  <dk@nict.go.jp>
+2006-09-20  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/index.cgi:
 	modified to use Retrieve.pm:
@@ -3819,12 +3819,12 @@
 	* cgi/index.cgi:
 	added.
 
-2006-09-11  Daisuke Kawahara  <dk@nict.go.jp>
+2006-09-11  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* scripts/Retrieve.pm:
 	closedirしていなかったのを修正
 
-2006-09-08  Daisuke Kawahara  <dk@nict.go.jp>
+2006-09-08  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* cgi/api.cgi:
 	added.
@@ -3839,7 +3839,7 @@
 	* sample_dat:
 	added.
 
-2006-09-08  Daisuke Kawahara  <dk@nict.go.jp>
+2006-09-08  Daisuke Daisuke Kawahara  <dk@nict.go.jp>
 
 	* scripts/retrieve.pl:
 	retrieve.plをモジュール化
