@@ -1,4 +1,348 @@
+2010-09-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroupCreater.pm: bug fixed(<クエリ削除係り受け>をスコアリングで利用しないように).
+
+2010-09-13  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* search/document.cc, search/document.h:
+	Added an existence check of pos_buf.
+
+2010-09-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroupCreater.pm:
+	オプションにより中間ノードが生成されない場合、その子供を利用するように.
+
+2010-09-09  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* search/document.cc: Suppressed redundant messages.
+
+	* search/document.cc, search/document.h, search/documents.cc:
+	Fixed a bug of set_term_pos.
+
+2010-09-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/snippet_make_server.pl:
+	GET_SFDAT が呼ばれた際, 改訂番号を考慮するように.
+
+	* perl/Tsubaki/TermGroupCreater.pm:
+	ブロックタイプ考慮時に、必須係り受けをグルーピングするように.
+
+2010-09-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: small changes.
+
+	* perl/Tsubaki/TermGroupCreater.pm:
+	disable_synnode指定時に同義語をレンダリングしないように.
+
+	* cgi/index.cgi: エラーを白字で出力するように.
+
+	* perl/Tsubaki/TermGroup.pm:
+	アンカーインデックスを引く際に OR 演算を行うように.
+
+	* perl/Tsubaki/Term.pm, perl/Tsubaki/TermGroupCreater.pm:
+	force_dpndオプションを実装.
+
+	* search/common.h: small changes.
+
+2010-08-20  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* scripts/SynGraphBinarizer.pm:
+	Modified the path of keymap to construct CDB_Writer.
+
+2010-08-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/documents.h: sid2tidに対応していないバージョンに対応.
+
+	* search/documents.cc, search/common.h: DOCUMENTS_OR_OPTIONALの追加.
+
+	* cgi/QueryParser.pm, cgi/RequestParser.pm:
+	任意のオプションをテキストボックスから渡せるように.
+
+	* cgi/RequestParser.pm, cgi/QueryParser.pm:
+	debugオプションをテキストボックスから与えられるように.
+
+2010-08-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroupCreater.pm: bug fixed.
+
+2010-08-10  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/slave_server.cc:
+	マスターサーバーへの転送データのフォーマットを変更.
+
+	* cgi/SearchEngine.pm:
+	スレーブサーバーからのデータを解析する部分を変更（C++版）
+
+	* cgi/Renderer.pm:
+	debug 表示を変更(C++版), 2007年度版への案内を出すように.
+
+	* search/document.cc, search/document.h:
+	スコアリングの際、タームのスコアを文書毎に保持するように, to_string() メソッドの内容を変更.
+
+	* search/documents.cc, search/documents.h:
+	スコアリングの際、タームのスコアを文書毎に保持するように.
+
+	* search/term.h: クラスの仕様を変更.
+
+2010-08-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/documents.cc, search/document.h:
+	bag fixed (文書長の値が伝搬されるように.)
+
+2010-08-05  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* cgi/api.cgi: Specified call_from_api option to QueryParser.
+
+2010-08-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm: 出力されるメッセージの変更.
+
+	* cgi/index.cgi: エラー番号をを出力するように.
+
+	* cgi/Renderer.pm, cgi/SearchEngine.pm, cgi/index.cgi:
+	エラーメッセージをRenderer.pmで出力するように.
+
+	* scripts/SynGraphBinarizer.pm, scripts/binarize_idx.pl:
+	新しいインデックスフォーマットで出力するように（旧フォーマットはlegacy_modeオプションを指定）
+
+2010-08-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: small bug fixed.
+
+	* scripts/make_idx.pl:
+	KNPの解析結果からタームを抽出する際も出現形タームを抽出するように.
+
+	* scripts/Indexer.pm:
+	KNPの解析結果からタームを抽出する際、ignore_yomiオプションを有効に.
+
+	* cgi/SearchEngine.pm:
+	スレーブサーバーが応答しない場合、例外として扱うように.
+
+2010-08-02  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* search/hash.h: Modified an overloaded constructor.
+
+2010-08-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/Makefile: 32bitマシンでmakeする際のオプションを追加.
+
+	* cgi/QueryParser.pm:
+	ブラウザアクセス時にS式をコメントとして出力するように.
+
+	* cgi/RequestParser.pm: API呼び出しかどうかを保持するように.
+
+	* search/common.h: 32bit環境を表すフラグを追加.
+
+	* search/hash.h: 32bit環境ではCDBをその都度tie/untieするように.
+
+2010-08-02  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* cgi/SnippetMaker.pm:
+	Increased robustness of makeMidasiAndRepnamesList().
+
+2010-08-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMakerAgent.pm: C++版でスニペットがハイライトされるように.
+
+	* perl/Tsubaki/TermGroupCreater.pm, perl/Tsubaki/TermGroup.pm:
+	ハイライトする色の情報を持つように.
+
+2010-07-26  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* search/document.h, search/slave_server.cc: Suppressed warnings.
+
+2010-07-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: 外側の括弧を出力するように.
+
+	* perl/Tsubaki/TermGroup.pm: small chanes.
+
+2010-07-25  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* search/common.h: Added an include file.
+
+2010-07-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm, scripts/make_idx.pl:
+	ペナルティを与える係り受けタームを抽出するオプションの追加.
+
+2010-07-21  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm: bug fixed.
+
+2010-07-20  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* search/common.h:
+	Modified default pagerank parameters: C = 5, alpha = 0.9
+
+2010-07-18  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMaker.pm: コード整理, 一文からkwicを生成できるように.
+
+2010-07-16  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* search/slave_server.cc: Modified to wait for a child process.
+
+2010-07-16  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroupCreater.pm: 基本句がない場合に対応.
+
+2010-07-16  shibata  <shibata@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* utils/Utils/perl/CDB_Reader.pm: repeated_keysオプションを追加
+
+2010-07-15  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm: コード整理.
+
+	* cgi/SearchEngine.pm:
+	スレーブサーバーへ送信する前にS式のutf8フラグを落とすように.
+
+2010-07-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroupCreater.pm: S式を出力しないように.
+
+2010-07-13  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* perl/Tsubaki/TermGroupCreater.pm:
+	Fixed encoding problem to look up DFDBs
+
+	* cgi/QueryParser.pm: Fixed a bug of setGroupID when using blocktype.
+
+	* scripts/tsubaki_server.pl:
+	Modified the reading routine of document length for IS_NICT_MODE.
+
+2010-07-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure, cgi/configure.nict: パラメータの追加.
+
+2010-07-12  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* search/common.h, cgi/configure, cgi/configure.nict:
+	Changed the default value of C_PAGERANK to 10.
+
+	* search/document.h, scripts/TsubakiEngine4SynGraphSearch.pm:
+	Modified the summing formula of pagerank.
+
+2010-07-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/common.h, search/document.h, search/slave_server.cc:
+	スコアにPageRankを考慮するように.
+
+2010-07-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: rawstringを保持するように.
+
+2010-07-08  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* cgi/QueryParser.pm: Modified encoding problem to look up DFDBs.
+
+2010-07-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/documents.cc: オプショナル要素が近接演算処理に回らないように.
+
+	* search/documents.h: サイズを返すメソッドの追加.
+
+2010-07-08  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* scripts/make-dlength-db.perl: Added an option to output txt file.
+
+	* scripts/sid2tid.perl: added.
+
+2010-07-08  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/Term.pm:
+	AC要素についても基本ノード判定フラグを立てるように.
+
+	* perl/Tsubaki/TermGroupCreater.pm: 基本ノード判定部分を修正.
+
+2010-07-05  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroup.pm: small changes.
+
+	* search/documents.cc, search/documents.h:
+	近接条件を満たさない文書をMAPから削除するように.
+
+	* search/document.cc: 場所情報の出力を修正.
+
+	* search/documents.cc: small bug fixed.
+
+2010-07-04  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroupCreater.pm: small changes.
+
+	* perl/Tsubaki/TermGroupCreater.pm, perl/Tsubaki/TermGroup.pm:
+	TermGroupのメソッドをTermGroupCreaterに移した.
+
+2010-07-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/documents.cc: フレーズ検索を有効に.
+
+	* cgi/QueryParser.pm: small changes.
+
+	* perl/Tsubaki/TermGroupCreater.pm, perl/Tsubaki/TermGroup.pm:
+	コード整理.
+
+	* perl/Tsubaki/Term.pm: クエリ中での位置をS式に書き込むように.
+
+	* search/common.h: 文書タイプの追加.
+
+	* search/documents.h: 近接の値を保持する変数の追加.
+
+	* search/slave_server.cc: インデックスファイルを開く部分を関数化.
+
+	* search/documents.cc: 近接制約の条件をS式から受け取るように.
+
+2010-07-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/api_req.pl:
+	標準フォーマットデータをダウンロードするオプションの追加.
+
+	* cgi/Renderer.pm: small bug fixed.
+
+2010-07-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/documents.cc: small bug fixed.
+
+2010-06-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/convert-index-format.perl:
+	スコアの総和をインデックスに書き込むように.
+
+	* search/documents.cc: インデックスフォーマットの変更に対応.
+
+	* search/documents.h: update_sorted_intの追加.
+
+	* search/documents.cc: 近接検索の実装を追加.
+
+	* cgi/Renderer.pm: *.js, favicon.icoファイルのURLを変更
+
+	* perl/Tsubaki/TermGroupCreater.pm, perl/Tsubaki/TermGroup.pm:
+	クエリの解析結果を保持するように, 描画スクリプトを生成する関数の追加.
+
+	* cgi/Query.pm, cgi/QueryParser.pm, cgi/Renderer.pm:
+	IS_CPP_MODE時もクエリの解析結果が表示されるように.
+
+2010-06-30  kawahara  <kawahara@nlpc01.kuro.nii-chiba.ac.jp>
+
+	* perl/Tsubaki/Term.pm, cgi/QueryKeyword.pm, cgi/QueryParser.pm, cgi/RequestParser.pm:
+	Modification of blocktype handling for NICT.
+
+	* cgi/CachedHTMLDocument.pm: Modified to be able to use siddata_server.
+
+	* data/PORTS.SYN.NICT: Updated to the current version.
+
+	* cgi/index.cgi: Modified of cache retrieval for NICT.
+
+	* cgi/configure.nict: Updated to the current version.
+
 2010-06-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Configure.pm: STOP_TERMSを指定できるように.
+
+	* cgi/SnippetMaker.pm: 不要文を判定する際に用いる記号を増やした.
+
+	* cgi/SnippetMakerAgent.pm: 文間に半角空白を挿入するように.
 
 	* scripts/make_idx.pl:
 	max_num_of_indicesオプションをIndexer.pmをnewする際に渡すように.
