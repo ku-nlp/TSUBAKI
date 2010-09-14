@@ -77,7 +77,7 @@ if ($opt{coordinate}) {
 # デフォルト値の設定
 
 # 同位語をもとに係り受けタームを作成する際の閾値
-my $DIST_FOR_MAKING_COORD_DPND = 200;
+my $DIST_FOR_MAKING_COORD_DPND = 100;
 
 # タイムアウトの設定(30秒)
 $opt{timeout} = 30 unless ($opt{timeout});
@@ -452,7 +452,7 @@ sub extract_indices_wo_pm {
     close(READER);
 
     # 索引のマージ
-    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan, \%midasi2hypernym, \%hypernym2info);
+    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan, \%midasi2hypernym, \%hypernym2info, $file);
 }
 
 
@@ -704,7 +704,7 @@ sub extract_indices {
 }
 
 sub merge_indices {
-    my ($indices, $sid2blockType, $results_of_istvan, $midasi2hypernym, $hypernym2info) = @_;
+    my ($indices, $sid2blockType, $results_of_istvan, $midasi2hypernym, $hypernym2info, $file) = @_;
 
     # 索引のマージ
     my %ret;
@@ -751,8 +751,6 @@ sub merge_indices {
 			    push (@{$coords{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}});
 			    $coords{$__dpnd}->{score} -= $index->{score};
 			    $coords{$__dpnd}->{sids}{$sid} = 1;
-
-			    print $index->{midasi} . " >>> " . $__dpnd . " " . (-1 * $index->{score}) . "\n" if ($_dpnd !~ /\*$/);
 			}
 		    }
 		}
