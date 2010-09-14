@@ -283,7 +283,7 @@ sub _normalizeSearchExpression {
     $search_expression = Unicode::Japanese->new($search_expression)->h2z->getu;
 
     # 記号等の正規化
-    $search_expression =~ s/−/−/g; # FULLWIDTH HYPHEN-MINUS (U+ff0d) -> MINUS SIGN (U+2212)
+    $search_expression =~ s/－/−/g; # FULLWIDTH HYPHEN-MINUS (U+ff0d) -> MINUS SIGN (U+2212)
     $search_expression =~ s/〜/〜/g; # FULLWIDTH TILDE (U+ff5e) -> WAVE DASH (U+301c)
     $search_expression =~ s/‖/‖/g; # PARALLEL TO (U+2225) -> DOUBLE VERTICAL LINE (U+2016)
     $search_expression =~ s/¢/¢/g;  # FULLWIDTH CENT SIGN (U+ffe0) -> CENT SIGN (U+00a2)
