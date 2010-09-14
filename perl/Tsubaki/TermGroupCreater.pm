@@ -21,17 +21,7 @@ sub create {
 
     my @ids = ();
     my @kihonkus = $result->tag;
-    my %rep2style = ();
-    foreach my $i (0 .. scalar (@kihonkus) - 1) {
-	push (@ids, $i);
-	my $j = $i % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
-	foreach my $synnodes ($kihonkus[$i]->synnodes) {
-	    foreach my $synnode ($synnodes->synnode) {
-		next if ($synnode->synid =~ /s\d+/ && $option->{disable_synnode});
-		$rep2style{&remove_yomi(lc($synnode->synid))} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
-	    }
-	}
-    }
+    my $rep2style = &_getRep2Style (\@kihonkus, \@ids, $option);
     my ($terms, $optionals) =
 	(($condition->{is_phrasal_search} > 0) ?
 	 &_create4phrase (\@kihonkus, \@ids, "", $option) :
@@ -51,10 +41,31 @@ sub create {
 	    optionals => $optionals,
 	    result => $result,
 	    condition => $condition,
-	    rep2style => \%rep2style
+	    rep2style => $rep2style
 	});
 
     return $root;
+}
+
+# スニペット表示の際に利用するタームのスタイルシートを生成
+sub _getRep2Style {
+    my ($kihonkus, $ids, $option) = @_;
+
+    my %rep2style = ();
+    foreach my $i (0 .. scalar (@$kihonkus) - 1) {
+	next if ($kihonkus->[$i]->fstring =~ /クエリ削除語/);
+
+	push (@$ids, $i);
+	my $j = $i % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
+	foreach my $synnodes ($kihonkus->[$i]->synnodes) {
+	    foreach my $synnode ($synnodes->synnode) {
+		next if ($synnode->synid =~ /s\d+/ && $option->{disable_synnode});
+		$rep2style{&remove_yomi(lc($synnode->synid))} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
+	    }
+	}
+    }
+
+    return \%rep2style;
 }
 
 sub _create4phrase {
