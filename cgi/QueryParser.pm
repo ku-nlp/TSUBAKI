@@ -284,13 +284,13 @@ sub _normalizeSearchExpression {
 
     # 記号等の正規化
     $search_expression =~ s/－/−/g; # FULLWIDTH HYPHEN-MINUS (U+ff0d) -> MINUS SIGN (U+2212)
-    $search_expression =~ s/〜/〜/g; # FULLWIDTH TILDE (U+ff5e) -> WAVE DASH (U+301c)
-    $search_expression =~ s/‖/‖/g; # PARALLEL TO (U+2225) -> DOUBLE VERTICAL LINE (U+2016)
-    $search_expression =~ s/¢/¢/g;  # FULLWIDTH CENT SIGN (U+ffe0) -> CENT SIGN (U+00a2)
-    $search_expression =~ s/£/£/g;  # FULLWIDTH POUND SIGN (U+ffe1) -> POUND SIGN (U+00a3)
-    $search_expression =~ s/¬/¬/g;  # FULLWIDTH NOT SIGN (U+ffe2) -> NOT SIGN (U+00ac)
+    $search_expression =~ s/～/〜/g; # FULLWIDTH TILDE (U+ff5e) -> WAVE DASH (U+301c)
+    $search_expression =~ s/∥/‖/g; # PARALLEL TO (U+2225) -> DOUBLE VERTICAL LINE (U+2016)
+    $search_expression =~ s/￠/¢/g;  # FULLWIDTH CENT SIGN (U+ffe0) -> CENT SIGN (U+00a2)
+    $search_expression =~ s/￡/£/g;  # FULLWIDTH POUND SIGN (U+ffe1) -> POUND SIGN (U+00a3)
+    $search_expression =~ s/￢/¬/g;  # FULLWIDTH NOT SIGN (U+ffe2) -> NOT SIGN (U+00ac)
     $search_expression =~ s/—/—/g; # EM DASH (U+2014) -> HORIZONTAL BAR (U+2015)
-    $search_expression =~ s/¥/¥/g;  # YEN SIGN (U+00a5) -> FULLWIDTH YEN SIGN (U+ffe5)
+    $search_expression =~ s/¥/￥/g;  # YEN SIGN (U+00a5) -> FULLWIDTH YEN SIGN (U+ffe5)
 
     return $search_expression;
 }
