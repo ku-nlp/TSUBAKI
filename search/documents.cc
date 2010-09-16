@@ -494,12 +494,14 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 
     if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "ROOT")) {
 	documents->set_type(DOCUMENTS_ROOT);
-	double start = (double) gettimeofday_sec();
-	documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
-	double end = (double) gettimeofday_sec();
-	if (VERBOSE) {
-	    cout << "root = " << 1000 * (end - start) << " [ms]" << endl;
-	    cout << "-----" << (char *)_Atom(car(cell)) << "-----" << endl;
+	if (!Lisp_Null(cdr(cell))) { // requires term
+	    double start = (double) gettimeofday_sec();
+	    documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
+	    double end = (double) gettimeofday_sec();
+	    if (VERBOSE) {
+		cout << "root = " << 1000 * (end - start) << " [ms]" << endl;
+		cout << "-----" << (char *)_Atom(car(cell)) << "-----" << endl;
+	    }
 	}
     }
     else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "PHRASE")) {
