@@ -121,22 +121,28 @@ sub create_snippets {
 		PeerPort => $port,
 		Proto    => 'tcp' );
 
-	    $selecter->add($socket) or die "Cannot connect to the server (host=$CONFIG->{SNIPPET_SERVERS}[$i]{name}, port=$port)";
+	    try {
+		$selecter->add($socket) or die "Cannot connect to the server (host=$CONFIG->{SNIPPET_SERVERS}[$i]{name}, port=$port)";
 
-	    # 検索クエリの送信
-	    print $socket encode_base64(Storable::nfreeze($query), "") . "\n";
-	    print $socket "EOQ\n";
+		# 検索クエリの送信
+		print $socket encode_base64(Storable::nfreeze($query), "") . "\n";
+		print $socket "EOQ\n";
 
-	    # 文書IDの送信
-	    print $socket encode_base64(Storable::nfreeze($port2docs{$port}), "") . "\n";
-	    print $socket "EOD\n";
+		# 文書IDの送信
+		print $socket encode_base64(Storable::nfreeze($port2docs{$port}), "") . "\n";
+		print $socket "EOD\n";
 
-	    # スニペット生成のオプションを送信
-	    print $socket encode_base64(Storable::nfreeze($opt), "") . "\n";
-	    print $socket "EOO\n";
+		# スニペット生成のオプションを送信
+		print $socket encode_base64(Storable::nfreeze($opt), "") . "\n";
+		print $socket "EOO\n";
 
-	    $socket->flush();
-	    $num_of_sockets++;
+		$socket->flush();
+		$num_of_sockets++;
+	    } catch Error with {
+		# エラーメッセージの出力
+ 		my $err = shift;
+ 		print "<FONT color=white>$err->{-text}</FONT>\n";
+	    };
 	}
     }
 
