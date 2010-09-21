@@ -77,64 +77,66 @@ sub new {
     my $color;
     my @patterns;
     my %already_printed = ();
-    my $message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
+    my $message;
 
-    if ($url) {
-	if ($crawled_date) {
-	    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。（$crawled_date に取得）<BR>);
-	} else {
-	    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>);
-	}
-    }
-    if ($CONFIG->{IS_NICT_MODE}) {
-	$message .= "次の表現がハイライトされています:&nbsp;";
-    } else {
-	$message .= "次の単語とその同義語がハイライトされています:&nbsp;";
-    }
+    if (!$CONFIG->{IS_NICT_MODE}) { # NICT以外ではmessageを表示
+	$message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
 
-    foreach my $reps (split(/,/, $query)) {
-	foreach my $word (split(/;/,  $reps)) {
-	    next unless ($word);
-
-	    if ($word =~ /^s\d+/) {
-		foreach my $synonym (sort {length($b) <=> length($a)} split('\|', decode('utf8', $synonyms{$word}))) {
-		    # 読みの削除
-		    if ($synonym =~ m!^([^/]+)/!) {
-			$synonym = $1;
-		    }
-
-		    # 情報源を削除
-		    $synonym =~ s/\[.+?\]//;
-
-		    $synonym =~ s/<[^>]+>//g;
-		    push(@patterns, {key => $synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$synonym<\/span>)});
-		    my $h_synonym = Unicode::Japanese->new($synonym)->z2h->get;
-		    push(@patterns, {key => $h_synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$h_synonym<\/span>)});
-		}
+	if ($url) {
+	    if ($crawled_date) {
+		$message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。（$crawled_date に取得）<BR>);
 	    }
-	    # 単語はヘッダーには表示
 	    else {
-		my @buff = ();
-		foreach my $w (split (/\+/, $word)) {
-		    # 読みの削除
-		    $w = $1 if ($w =~ m!^([^/]+)/!);
-		    push (@buff, $w);
-		}
-		$word = join ("", @buff);
-		next if (exists $already_printed{$word});
-		$already_printed{$word} = 1;
-
-		$message .= sprintf qq(<span style="background-color:#%s;">), $CONFIG->{HIGHLIGHT_COLOR}[$color];
-		$message .= sprintf qq(%s</span>&nbsp;), $word;
-		push(@patterns, {key => $word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$word<\/span>)});
-
-		my $h_word = Unicode::Japanese->new($word)->z2h->get;
-		push(@patterns, {key => $h_word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$h_word<\/span>)});
+		$message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>);
 	    }
 	}
-	$color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
+
+	$message .= "次の単語とその同義語がハイライトされています:&nbsp;";
+
+	foreach my $reps (split(/,/, $query)) {
+	    foreach my $word (split(/;/,  $reps)) {
+		next unless ($word);
+
+		if ($word =~ /^s\d+/) {
+		    foreach my $synonym (sort {length($b) <=> length($a)} split('\|', decode('utf8', $synonyms{$word}))) {
+			# 読みの削除
+			if ($synonym =~ m!^([^/]+)/!) {
+			    $synonym = $1;
+			}
+
+			# 情報源を削除
+			$synonym =~ s/\[.+?\]//;
+
+			$synonym =~ s/<[^>]+>//g;
+			push(@patterns, {key => $synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$synonym<\/span>)});
+			my $h_synonym = Unicode::Japanese->new($synonym)->z2h->get;
+			push(@patterns, {key => $h_synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$h_synonym<\/span>)});
+		    }
+		}
+		# 単語はヘッダーには表示
+		else {
+		    my @buff = ();
+		    foreach my $w (split (/\+/, $word)) {
+			# 読みの削除
+			$w = $1 if ($w =~ m!^([^/]+)/!);
+			push (@buff, $w);
+		    }
+		    $word = join ("", @buff);
+		    next if (exists $already_printed{$word});
+		    $already_printed{$word} = 1;
+
+		    $message .= sprintf qq(<span style="background-color:#%s;">), $CONFIG->{HIGHLIGHT_COLOR}[$color];
+		    $message .= sprintf qq(%s</span>&nbsp;), $word;
+		    push(@patterns, {key => $word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$word<\/span>)});
+
+		    my $h_word = Unicode::Japanese->new($word)->z2h->get;
+		    push(@patterns, {key => $h_word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$h_word<\/span>)});
+		}
+	    }
+	    $color = (++$color%scalar(@{$CONFIG->{HIGHLIGHT_COLOR}}));
+	}
+	$message .= "</DIV>";
     }
-    $message .= "</DIV>";
 
     @patterns = sort {length($b->{key}) <=> length($a->{key})} @patterns;
 
