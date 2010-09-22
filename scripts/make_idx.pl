@@ -771,7 +771,9 @@ sub merge_indices {
 
     # 同位語から作成した係り受けを追加
     foreach my $term (keys %coords) {
-	unless (exists $ret{$term}) {
+	my $_term = $term;
+	$_term =~ s/.$//;
+	unless (exists $ret{$_term}) {
 	    $ret{$term} = $coords{$term};
 	}
     }
@@ -800,7 +802,7 @@ sub makeDpndTermFromCoordinate {
 
 	    if (($pos - $info->{pos}) ** 2 < $DIST_FOR_MAKING_COORD_DPND ** 2) {
 		my $coord = ($isGenkei) ? sprintf ("%s*", $info->{midasi}) : $info->{midasi};
-		$_term = ($forMoto) ? sprintf ("%s->%s", $coord, $saki) : sprintf ("%s->%s", $moto, $coord);
+		$_term = ($forMoto) ? sprintf ("%s->%s\$", $coord, $saki) : sprintf ("%s->%s\$", $moto, $coord);
 	    } else {
 		last if ($info->{pos} - $pos > $DIST_FOR_MAKING_COORD_DPND);
 	    }
