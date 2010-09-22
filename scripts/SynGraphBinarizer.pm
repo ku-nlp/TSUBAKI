@@ -13,7 +13,7 @@ use Encode;
 use FileHandle;
 
 sub new {
-    my($class, $th, $datfp, $cdbfp, $position, $is_legacy_mode, $verbose) = @_;
+    my($class, $th, $datfp, $cdbfp, $position, $is_legacy_mode, $verbose, $is_32_bit_mode) = @_;
     my $dat = new FileHandle;
     open($dat, "> $datfp") || die "$!\n";
     my $cdbfp_base;
@@ -23,7 +23,8 @@ sub new {
     else {
 	$cdbfp_base = $cdbfp;
     }
-    my $offset_cdb1 = ($is_legacy_mode) ? undef : (new CDB_Writer ("$cdbfp", "$cdbfp_base.keymap", 2500000000) or die);
+    my $MAX_DB_SIZE = ($is_32_bit_mode) ? 700000000 : 2500000000;
+    my $offset_cdb1 = ($is_legacy_mode) ? undef : (new CDB_Writer ("$cdbfp", "$cdbfp_base.keymap", $MAX_DB_SIZE) or die);
     my $offset_cdb2 = ($is_legacy_mode) ? (new CDB_File ("$cdbfp", "$cdbfp.$$") or die) : undef;
     my $this = {
 	offset => 0,

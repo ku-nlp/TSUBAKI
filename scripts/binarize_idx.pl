@@ -14,7 +14,7 @@ use Getopt::Long;
 use Encode;
 
 my (%opt);
-GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'wordpos', 'dpndpos', 'legacy_mode', 'verbose', 'cdbdir=s', 'z', 'syn', 'quiet');
+GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'wordpos', 'dpndpos', 'legacy_mode', 'verbose', 'cdbdir=s', 'z', 'syn', '32bit', 'quiet');
 
 # 足切りの閾値
 my $wordth = $opt{wordth} ? $opt{wordth} : 0;
@@ -75,8 +75,8 @@ sub main {
 	    my $offf_w = ($opt{legacy_mode}) ? "${DIR}/offset$NAME.word.cdb" : "${DIR}/offset$NAME.word.conv.cdb";
 	    my $offf_d = ($opt{legacy_mode}) ? "${DIR}/offset$NAME.dpnd.cdb" : "${DIR}/offset$NAME.dpnd.conv.cdb";
 	    $bins = {
-		word => new SynGraphBinarizer($wordth, $idxf_w, $offf_w, 1, $opt{legacy_mode}, $opt{verbose}),
-		dpnd => new SynGraphBinarizer($dpndth, $idxf_d, $offf_d, 1, $opt{legacy_mode}, $opt{verbose})
+		word => new SynGraphBinarizer($wordth, $idxf_w, $offf_w, 1, $opt{legacy_mode}, $opt{verbose}, $opt{32bit}),
+		dpnd => new SynGraphBinarizer($dpndth, $idxf_d, $offf_d, 1, $opt{legacy_mode}, $opt{verbose}, $opt{32bit})
 	    };
 	} else {
 	    $bins = {
