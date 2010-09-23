@@ -75,8 +75,8 @@ sub main {
 	    my $offf_w = ($opt{legacy_mode}) ? "${DIR}/offset$NAME.word.cdb" : "${DIR}/offset$NAME.word.conv.cdb";
 	    my $offf_d = ($opt{legacy_mode}) ? "${DIR}/offset$NAME.dpnd.cdb" : "${DIR}/offset$NAME.dpnd.conv.cdb";
 	    $bins = {
-		word => new SynGraphBinarizer($wordth, $idxf_w, $offf_w, 1, $opt{legacy_mode}, $opt{verbose}, $opt{32bit}),
-		dpnd => new SynGraphBinarizer($dpndth, $idxf_d, $offf_d, 1, $opt{legacy_mode}, $opt{verbose}, $opt{32bit})
+		word => new SynGraphBinarizer($wordth, $idxf_w, $offf_w, 1, $opt{legacy_mode}, $opt{verbose}, $opt{'32bit'}),
+		dpnd => new SynGraphBinarizer($dpndth, $idxf_d, $offf_d, 1, $opt{legacy_mode}, $opt{verbose}, $opt{'32bit'})
 	    };
 	} else {
 	    $bins = {
