@@ -86,6 +86,8 @@ $opt{timeout} = 30 unless ($opt{timeout});
 $opt{scheme} = "SynGraph" unless ($opt{scheme});
 $opt{ignore_syn_dpnd} = 0 unless ($opt{ignore_syn_dpnd});
 
+# regexp for inlink counting
+our $INLINK_PATTERN = qr/<DocID[^>]+>(?:NW)?\d+<\/DocID>/o;
 
 
 ###################################
@@ -324,7 +326,8 @@ sub extract_indices_wo_pm {
 
 
     my $pattern = join("|", @buf);
-
+    my $pattern_start = qr/^\s*(<($pattern)(?: |\>).*\n)/o;
+    my $pattern_end   = qr/^(.*\<\/($pattern)\>)/o;
 
     # Title, Keywords, Description, Inlink には文IDがないため、-100000からカウントする
     my $sid;
@@ -352,7 +355,7 @@ sub extract_indices_wo_pm {
 		$content .= $_;
 	    }
 	}
-	elsif ($_ =~ /^\s*(<($pattern)(?: |\>).*\n)/o) {
+	elsif ($_ =~ $pattern_start) {
 	    $isIndexingTarget = 1;
 	    $content = $1;
 	    $tagName = $2;
@@ -417,7 +420,7 @@ sub extract_indices_wo_pm {
 
 	    $sid2blockType{$sid} = $blockType;
  	}
- 	elsif (/(.*\<\/($pattern)\>)/o) {
+	elsif ($_ =~ $pattern_end) {
 	    $content .= $1;
 
 	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei, \%midasi2hypernym, \%hypernym2info);
@@ -425,8 +428,10 @@ sub extract_indices_wo_pm {
 	    # インリンクの場合は披リンク数分を考慮する
 	    if ($tagName eq 'InLink') {
 		my $num_of_linked_pages = 0;
-		while ($content =~ m!<DocID[^>]+>(NW)?\d+</DocID>!go) {
-		    $num_of_linked_pages++;
+		for my $line (split(/\n/, $content)) {
+		    if ($line =~ /<\/DocID>$/) {
+			$num_of_linked_pages++;
+		    }
 		}
 
 		foreach my $term (@$terms) {
