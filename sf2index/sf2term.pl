@@ -44,7 +44,7 @@ for my $sentence_node ($doc->getElementsByTagName('S')) {
 	    }
 	    my $id = $result_child_node->getAttribute('id');
 	    my $word_head_num = &get_phrase_head_num(\@words);
-	    $phrases{$id} = {head_id => $result_child_node->getAttribute('head'), 
+	    $phrases{$id} = {head_ids => [split('/', $result_child_node->getAttribute('head'))], 
 			     words => \@words, 
 			     word_head_num => $word_head_num, # head word in this phrase
 			     str => $words[$word_head_num]{str}, 
@@ -55,11 +55,14 @@ for my $sentence_node ($doc->getElementsByTagName('S')) {
 
     # dpnd terms
     for my $id (sort {$phrases{$a} <=> $phrases{$b}} keys %phrases) {
-	next if $phrases{$id}{head_id} == -1; # skip roots
-	my $dpnd_term = sprintf('%s->%s', $phrases{$id}{str}, $phrases{$phrases{$id}{head_id}}{str});
-	$dpnd_terms{$dpnd_term}{freq}++;
-	$dpnd_terms{$dpnd_term}{sentence_ids}{$sentence_id}++;
-	$dpnd_terms{$dpnd_term}{pos}{$phrases{$id}{pos}} = 1; # value = score
+	next if !$phrases{$id}{head_ids}; # skip roots of English (undef)
+	for my $head_id (@{$phrases{$id}{head_ids}}) {
+	    next if $head_id == -1; # skip roots of Japanese (-1)
+	    my $dpnd_term = sprintf('%s->%s', $phrases{$id}{str}, $phrases{$head_id}{str});
+	    $dpnd_terms{$dpnd_term}{freq}++;
+	    $dpnd_terms{$dpnd_term}{sentence_ids}{$sentence_id}++;
+	    $dpnd_terms{$dpnd_term}{pos}{$phrases{$id}{pos}} = 1; # value = score
+	}
     }
 }
 
