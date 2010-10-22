@@ -16,7 +16,6 @@ use CDB_File;
 use Query;
 use Dumper;
 use CDB_Reader;
-use Tsubaki::TermGroupCreater;
 
 
 my $CONFIG = Configure::get_instance();
@@ -435,6 +434,7 @@ sub createQueryKeywordObj {
 	$condition{approximate_dist}  = $approximate_dist;
 	$condition{logical_cond_qkw}  = $logical_cond_qkw;
 
+	require Tsubaki::TermGroupCreater;
 	return &Tsubaki::TermGroupCreater::create(
 	    $result,
 	    \%condition,
