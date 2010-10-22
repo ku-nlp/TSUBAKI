@@ -20,8 +20,8 @@ use Storable;
 
 
 binmode(STDIN,  ':utf8');
-binmode(STDOUT, ':encoding(euc-jp)');
-binmode(STDERR, ':encoding(euc-jp)');
+binmode(STDOUT, ':encoding(utf8)');
+binmode(STDERR, ':encoding(utf8)');
 
 my (%opt);
 GetOptions(\%opt,
@@ -129,7 +129,7 @@ closedir(DIR);
 sub main {
     my $params = RequestParser::getDefaultValues(0);
 
-    $params->{query} = decode('euc-jp', $opt{query});
+    $params->{query} = decode('utf8', $opt{query});
     $params->{syngraph} = $opt{syngraph};
     $params->{disable_synnode} = $opt{disable_synnode};
     $params->{verbose} = $opt{verbose};
@@ -187,7 +187,7 @@ sub search {
 sub printLog {
     my ($hitcount, $merge, $logger, $loggerAll, $LOGGER) = @_;
 
-    print "query: " . decode('euc-jp', $opt{query}) . "\n";
+    print "query: " . decode('utf8', $opt{query}) . "\n";
     print "hitcount: " . $hitcount . "\n";
     print "query parse time: " . $loggerAll->getParameter('query_parse_time') . "\n";
     print "create TSUBAKI instance time: " . $loggerAll->getParameter('create_TSUBAKI_instance_time') . "\n";
