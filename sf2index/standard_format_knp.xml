@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<StandardFormat>
+<Text>
+<S id="1">
+<RawString>温泉旅館に一番近い駅</RawString>
+<Annotation tool="KNP:3.1-20100115/SynGraph:1.19-20100726">
+ <result score="-40.58619">
+    <phrase id="0" head="1" category="体言" feature="&lt;係:文節内&gt;&lt;文節:0-1&gt;...">
+      <synnodes head="1" phraseid="0">
+        <synnode synid="温泉/おんせん" score="1" />
+      </synnodes>
+      <word id="0" lem="温泉" read="おんせん" pos="名詞:普通名詞" repname="温泉/おんせん" conj="" feature="&lt;自立&gt;...">温泉</word>
+    </phrase>
+    <phrase id="1" head="3" category="体言" feature="&lt;係:ニ格&gt;...">
+      <synnodes head="2,3/3" phraseid="1">
+        <synnode synid="旅館/りょかん" score="1" />
+        <synnode synid="s259:宿/やど" score="0.99" />
+      </synnodes>
+      <word id="1" lem="旅館" read="りょかん" pos="名詞:普通名詞" repname="旅館/りょかん" conj="" feature="&lt;自立&gt;...">旅館</word>
+      <word id="2" lem="に" read="に" pos="助詞:格助詞" repname="に/に" conj="" feature="&lt;付属&gt;...">に</word>
+    </phrase>
+    <phrase id="2" head="3" category="用言弱修飾" feature="&lt;係:連用&gt;&lt;文節:2-2&gt;...">
+      <synnodes head="3" phraseid="2">
+        <synnode synid="一番/いちばん" score="1" />
+        <synnode synid="s2308:何より/なにより" score="0.99" />
+        <synnode synid="s585:トップ/とっぷ" score="0.99" />
+        <synnode synid="s2099:一番/いちばん" score="0.99" />
+        <synnode synid="s2098:一番/いちばん" score="0.99" />
+      </synnodes>
+      <word id="3" lem="一番" read="いちばん" pos="副詞" repname="一番/いちばん" conj="" feature="&lt;自立&gt;...">一番</word>
+    </phrase>
+    <phrase id="3" head="4" category="用言:形" feature="&lt;係:連格&gt;&lt;文節:3-3&gt;...">
+      <synnodes head="4" phraseid="3">
+        <synnode synid="近い/ちかい" score="1" />
+        <synnode synid="s468:近い/ちかい" score="0.99" />
+        <synnode synid="s13:付近/ふきん" score="0.99" />
+        <synnode synid="s206:親しい/したしい" score="0.99" />
+        <synnode synid="近く/ちかく" score="0.99" />
+      </synnodes>
+      <synnodes head="4" phraseid="2,3">
+        <synnode synid="s13:付近/ふきん" score="0.99" />
+      </synnodes>
+      <word id="4" lem="近い" read="ちかい" pos="形容詞" repname="近い/ちかい" conj="イ形容詞アウオ段:基本形" feature="&lt;自立&gt;...">近い</word>
+    </phrase>
+    <phrase id="4" head="-1" category="用言:判" feature="&lt;文節:4-4&gt;...">
+      <synnodes head="-1" phraseid="4">
+        <synnode synid="駅/えき" score="1" />
+        <synnode synid="s2358:停車場/ていしゃば" score="0.99" />
+      </synnodes>
+      <word id="5" lem="駅" read="えき" pos="名詞:普通名詞" repname="駅/えき" conj="" feature="&lt;自立&gt;...">駅</word>
+    </phrase>
+</result>
+</Annotation>
+</S>
+</Text>
+</StandardFormat>
