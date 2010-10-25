@@ -46,7 +46,7 @@ sub create_snippets {
  	if ($CONFIG->{IS_NTCIR_MODE}) {
  	    $range = new SidRange({sids_for_ntcir => $CONFIG->{SIDS_FOR_NTCIR}});
  	} else {
- 	    $range = new SidRange();
+ 	    $range = new SidRange({nict2nii => $CONFIG->{NICT2NII}});
  	}
     }
 
