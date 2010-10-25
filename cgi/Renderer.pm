@@ -1153,6 +1153,9 @@ sub printOrdinarySearchResult {
 	if ($params->{debug}) {
 	    my $terms = $results->[$rank]{terminfo}{terms};
 	    my $dleng = $results->[$rank]{terminfo}{length};
+	    my $pgrnk = $results->[$rank]{terminfo}{pagerank};
+	    my $flagOfStrictTerm = $results->[$rank]{terminfo}{flagOfStrictTerm};
+	    my $flagOfProxConst = $results->[$rank]{terminfo}{flagOfProxConst};
 	    my %buff;
 	    foreach my $gid (sort {$a <=> $b} keys %$terms) {
 		my $frq = $terms->{$gid}{frq};
@@ -1183,7 +1186,7 @@ sub printOrdinarySearchResult {
 		    push (@{$buff{words}}, $line);
 		}
 	    }
-	    $output .= sprintf "length=%.2f<BR>\n", $dleng;
+	    $output .= sprintf "length=%.2f, pageRank=%s, strictTerm=%s, proxConst=%s<BR>\n", $dleng, $pgrnk, $flagOfStrictTerm, $flagOfProxConst;
 	    $output .= "<TABLE>\n";
 	    $output .= "<TR><TH>okp</TH><TH>frq</TH><TH>tff</TH><TH>gdf</TH><TH>idf</TH><TH>terms</TH></TR>\n";
 	    foreach my $type (('words', 'dpnds')) {
