@@ -85,9 +85,17 @@ class Document {
       return true;
     }
 
+    bool get_proximate_feature() {
+      return proximate_feature;
+    }
+
     bool set_strict_term_feature() {
       strict_term_feature = 1;
       return true;
+    }
+
+    bool get_strict_term_feature() {
+      return strict_term_feature;
     }
 
     bool set_phrase_feature() {
@@ -125,6 +133,10 @@ class Document {
     bool set_pagerank (double _pagerank) {
 	pagerank = _pagerank;
 	return true;
+    }
+
+    double get_pagerank () {
+	return pagerank;
     }
 
     double get_final_score() {
