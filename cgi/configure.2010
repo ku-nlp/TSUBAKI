@@ -1,0 +1,406 @@
+#################################################
+# TSUBAKIの環境変数(★utf8で保存すること)
+# $Id$
+#
+#
+#
+# 主な設定項目
+# * 基本ツールのパス
+# * キャッシュページ／標準フォーマット関係のパス
+# * データベースのパス
+# * 検索サーバー／スニペットサーバー関係（ホスト名、ポート番号等）
+# * その他の設定
+#
+#
+#
+# 書式
+# * KEY\tVALUE
+# * KEY\tVALUE1,VALUE2,...（値が複数の時）
+#   - サーバー関係の設定は特別な書式なので、各項目を参照のこと
+# * 行頭が`#' の行はコメント
+#
+##################################################
+
+
+
+##################################################
+# 基本ツールの設定（★要変更）
+##################################################
+
+PERL	/home/skeiji/local/bin/perl
+TOOL_HOME	/home/skeiji/local/bin
+KNP_COMMAND	/home/skeiji/local/090416/bin/knp
+JUMAN_COMMAND	/home/skeiji/local/090416/bin/juman
+SYNDB_PATH	/home/skeiji/tsubaki-2010/SynGraph/syndb/i686
+MIDB_PATH	/home/skeiji/cvs/CalcSimilarityByCF/db/all-mi
+KNP_OPTIONS	-postprocess,-tab,-dpnd,-ne-crf,-ne-cache
+KNP_RCFILE	/home/skeiji/local/090416/etc/knprc
+JUMAN_RCFILE	/home/skeiji/local/090416/etc/jumanrc
+SYNGRAPH_PM_PATH	/home/skeiji/tsubaki-2010/SynGraph/perl
+WWW2SF_PATH	/home/skeiji/cvs/WWW2sf/tool/perl
+UTILS_PATH	/home/skeiji/cvs/Utils/perl
+TSUBAKI_SCRIPT_PATH	/home/skeiji/tsubaki-2010/SearchEngine/scripts
+TSUBAKI_MODULE_PATH	/home/skeiji/tsubaki-2010/SearchEngine/perl
+PORTS_FILE_PATH		/home/skeiji/tsubaki-2010/SearchEngine/data/PORTS.SYN
+WIKIPEDIA_ENTRY_DB	/home/skeiji/wikipedia_entry_trie.db
+
+
+##################################################
+# キャッシュページ／標準フォーマット関係の設定
+##################################################
+
+# キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
+ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
+
+# スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス
+DIR_PREFIX_FOR_SFS_W_SYNGRAPH	/work2/skeiji/xmls
+
+
+
+##################################################
+# データベース関係の設定
+##################################################
+
+# TITLEDB/URLDBを納めたディレクトリへのパス（★要変更）
+TITLE_DB_PATH	/work/skeiji/titledb
+URL_DB_PATH	/work/skeiji/urldb
+
+# 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
+SYNGRAPH_DFDB_PATH	/home/skeiji/work/tsubaki-eval-091119/SearchEngine/data/dfdbs
+COMPOUND_NOUN_DFDB_PATH	/home/skeiji/work/tsubaki-eval-091119/SearchEngine/data/cns.100M.cls.df1000.cdb
+
+NICT2NII		../data/nict2nii
+
+
+
+##################################################
+# 検索サーバー/スニペットサーバー関係の設定
+##################################################
+
+# TSUBAKIを起動するホストの情報 (conf/tsubaki.confが参照する)
+HOSTS_PREFIX	nlpc
+HOSTS_START	12
+HOSTS_END	85
+HOSTS_DEGIT	2
+
+# サーバーの状態のログを保存するファイルの指定
+# サーバーの設定に入る前に設定すること（サーバーの設定後では反映されません）
+SERVER_STATUS_LOG	/home/skeiji/tsubaki/SearchEngine/data/server_status
+
+# SYNGRAPH検索用サーバー（★要変更）
+# SEARCH_SERVERS_FOR_SYNGRAPH ホスト名 ポート番号1,...
+
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc12 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc13 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc14 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc15 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc16 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc17 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc18 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc19 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc20 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc21 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc22 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc23 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc24 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc25 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc26 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc27 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc28 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc29 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc30 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc31 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc32 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc33 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc34 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc35 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc36 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc37 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc38 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc39 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc40 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc41 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc42 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc43 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc44 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc45 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc46 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc47 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc48 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc60 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc61 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc62 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc63 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc64 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc65 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc66 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc67 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc68 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc69 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc73 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc74 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc75 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc76 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc77 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc78 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc79 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc80 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc81 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc82 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc83 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc84 45501,45502
+SEARCH_SERVERS_FOR_SYNGRAPH      nlpc85 45501,45502
+
+# どのホストがどのSIDを持つデータを管理しているかを表す対応表
+SID_RANGE	/home/skeiji/work/tsubaki-eval-091119/SearchEngine/data/sid.range.091118
+
+# スニペットサーバーの設定（★要変更）
+# STANDARD_FORMAT_LOCATION ホスト名 ポート番号 ディスクにおいてある標準フォーマットのID1,...
+
+STANDARD_FORMAT_LOCATION        nlpc49	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc50	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc51	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc52	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc53	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc54	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc56	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc57	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc58	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc59	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc60	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc61	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc62	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc63	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc64	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc65	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc66	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc67	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc68	       45511,45512
+STANDARD_FORMAT_LOCATION        nlpc69	       45511,45512
+
+
+##################################################
+# その他の設定
+##################################################
+
+# 総文書数
+NUMBER_OF_DOCUMENTS	94002227
+
+# 平均文書長
+AVERAGE_DOCUMENT_LENGTH	524.4507
+
+# 強調表示に用いる色
+HIGHLIGHT_COLOR		ffffaa,ddffff,ddffdd,ffdddd,ffddff,dd0000,00dd00,dddd00,00dddd,dd00dd
+
+# 作業領域
+WORKSPACE	/tmp/tsubaki
+
+# ログファイル（★要変更）
+LOG_FILE_PATH	/home/skeiji/work/tsubaki-eval-091119/SearchEngine/data/input.log
+
+# マシンの故障等でサービスを停止する場合は1
+SERVICE_STOP_FLAG	0
+
+# 検索画面に表示するメッセージ
+# MESSAGE	12月24日16:00〜12月25日10:00の間、接続できない状態が続いておりましたが現在は復旧しております。
+# MESSAGE	9月12日（終日）、停電のため検索・APIともにご利用いただけません.
+
+# 近接制約のデフォルト値
+DEFAULT_APPROXIMATE_DIST	100
+
+# スニペットの長さ（デフォルトは100単語）
+MAX_NUM_OF_WORDS_IN_SNIPPET	200
+
+# タイトルの長さ（デフォルトは15文字）
+MAX_LENGTH_OF_TITLE		30
+
+# IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
+CACHED_HTML_PATH_TEMPLATE1	/net2/nlpcf34/disk10/skeiji/htmls/htmls1/h%04d/h%07d/%s.html.gz
+CACHED_HTML_PATH_TEMPLATE2	/net2/nlpcf34/disk10/skeiji/htmls/htmls2/h%04d/h%07d/%s.html.gz
+CACHED_HTML_PATH_TEMPLATE3	/net2/nlpcf34/disk10/skeiji/htmls/htmls3/h%04d/h%07d/%s.html.gz
+
+# index.cgiのアドレス（★要変更）
+# INDEX_CGI	http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/tsubaki-C/index.cgi
+INDEX_CGI	http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/2010/index.cgi
+
+TSUBAKI_BASE_URL	http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/2010
+
+# キャッシュページへのリンクを生成する際に用いるテンプレート
+CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
+
+# 1ページに含まれる検索結果の数
+
+NUM_OF_RESULTS_PER_PAGE	10
+
+# ユーザが見れる検索結果数
+
+NUM_OF_PROVIDE_SEARCH_RESULTS	200
+
+# 通常検索で検索するページ数
+
+NUM_OF_SEARCH_RESULTS	500
+
+# 近接ボーナスを考慮する際の単語数
+
+NEAR_DISTANCE	30
+
+# 検索表現同士に近接制約を適用するかどうか
+FORCE_APPROXIMATE_BTW_EXPRESSIONS 0
+
+# SYNGRAPH検索のON(0)/OFF(1)
+
+DISABLE_SYNGRAPH_SEARCH	0
+
+# SYNGRAPH検索においてSYNノードの係り受けを考慮するかどうか　しない(0)/する(1)
+
+USE_OF_SYNGRAPH_DEPENDENCY	0
+
+# SYNGRAPH検索において<上位語>を考慮するかどうか　しない(0)/する(1)
+
+USE_OF_HYPERNYM	0
+
+# SYNGRAPH検索において<反義語><否定>を考慮するかどうか　しない(0)/する(1)
+# 朝ごはんに対する<s230:ディナー><反義語><否定>
+
+USE_OF_NEGATION_AND_ANTONYM	1
+
+# KWIC表示のON(0)/OFF(1)
+
+DISABLE_KWIC_DISPLAY	0
+
+KWIC_WINDOW_SIZE	20
+
+CACHE_DIR		/home/skeiji/work/tsubaki-eval-091119/SearchEngine/cache
+
+DUMY_LOCK_FILE		/tmp/lockfile.out
+
+LOCK_FILE		/tmp/lockfile.in
+
+# マスターサーバーが検索中の時、後続するリクエストがRETRYする回数
+# 0を指定すると処理されるまでマスターサーバーにリトライしつづける 
+MAX_NUM_OF_RETRY	5
+
+# マスターサーバーが検索中の時、その終了を待たすに新しいリクエストを処理するかどうか(0: 処理しない, 1: 処理する)
+DISABLE_REQUEST_SCHEDULING	0
+
+# 索引表現に読みを考慮するかどうか（0:読みを考慮する, 1:読みを考慮しない）
+IGNORE_YOMI			1
+
+# 開発モードとして起動するか(0: サービスモード, 1: 開発モード)
+DEVELOP_MODE	0
+
+# アンケート収集を行う場合は1, そうでない場合は0
+QUESTIONNAIRE	1
+
+# アンケート収集CGIのアドレス
+QUESTIONNARIE_CGI	http://tsubaki.ixnlp.nii.ac.jp/questionnarie.cgi
+
+# スニペットサーバー上の標準フォーマットデータをAPIで配布するかどうか（0:配布しない, 1:配布する）
+
+PROVIDE_SFDAT_ON_SNIPPET_SERVERS	1
+
+# キャッシュを利用しないようにする場合は1
+DISABLE_CACHE	0
+
+# アンカーインデックスを利用しないようにする場合は1
+DISABLE_ANCHOR_INDEX	0
+
+# 検索結果から除外すページの指定
+# STOP_PAGE_LIST	/somewhere/stoppagelist
+
+
+#######################################################################
+# 混み具合を表示する場合は1, そうでない場合は0
+# 1 の場合、LOADBALANCER_NAME, APACHE_ACCESS_LOG, DATA_DIR 設定すること
+#######################################################################
+
+DISPLAY_CONGESTION	     0
+
+# apache のロードバランサーが起動しているサーバー
+LOADBALANCER_NAME	nlpc01.ixnlp.nii.ac.jp
+
+# apache の access_log ファイルの保存先
+APACHE_ACCESS_LOG      /var/log/apache2/access_log
+
+# SearchEngine/data ディレクトリの場所
+DATA_DIR	       /home/skeiji/tsubaki/SearchEngine/data
+
+# SynGraph/dic/rsk_iwanami 以下にある antonym.txt へのパス
+ANTONYM_DIC_PATH	/home/skeiji/work/tsubaki-eval-091119/SynGraph/dic/rsk_iwanami/antonym.txt
+
+# クエリ処理用サーバーを利用するかどうか（1：利用する，0：利用しない，デフォルト1）
+USE_OF_QUERY_PARSE_SERVER	0
+
+# クエリ処理用サーバーのホスト名（マスターサーバー上で解析する。マスターサーバーが分散化されていれば分散可）
+HOST_OF_QUERY_PARSE_SERVER	localhost
+
+# クエリ処理用サーバーのポート番号
+PORT_OF_QUERY_PARSE_SERVER	60000
+
+# 検索に利用するSynNodeの上限（0の場合は制限なし）
+MAX_NUMBER_OF_SYNNODES		5
+
+# メモリ監視サーバー用変数
+# tsubaki_server.plがメモリを何%以上利用したらkillを行うか
+MAX_RATE_OF_MEMORY_USE	20
+
+# スレーブサーバーの状態のログ
+SERVER_LOG_FILE	/tmp/tsubaki-slave-server.log
+
+# インデックスデータからロードする文書データの最大数（0で全部,デフォルト0）
+MAX_SIZE_OF_DOCS	0
+
+# NICTで起動しているかどうか
+IS_NICT_MODE	1
+
+# PAGERANKを利用しない場合は1
+DISABLE_PAGERANK	1
+
+# スコアリング時のパラメータ
+# score = WEIGHT_OF_TSUBAKI_SCORE * tsubaki_socre + (1 - WEIGHT_OF_TSUBAKI_SCORE) * pagerank * C_PAGERANK
+
+WEIGHT_OF_TSUBAKI_SCORE	0.5
+
+C_PAGERANK		10
+
+
+
+# 論文検索モード
+IS_IPSJ_MODE	0
+
+# 論文検索で利用する論文のメタ情報DB
+IPSJ_METADB_PATH	/home/skeiji/ipsj/data3/org/meta.cdb
+
+
+# 京大病院モード
+IS_KUHP_MODE	0
+
+
+# 英語版かどうか
+IS_ENGLISH_VERSION	0
+
+
+# ブロックタイプを検索で利用するかどうか
+USE_OF_BLOCK_TYPES		1
+
+# ブロックタイプを選択するcheckboxを表示するかどうか
+DISABLE_BLOCK_TYPE_DISPLAY	0
+
+# ブロックタイプに関する情報を定義したファイル
+BLOCK_TYPE_DEFINITION		/home/skeiji/tsubaki-2010/SearchEngine/data/blocktype.WEB
+
+
+# NTCIRモード
+# IS_NTCIR_MODE			1
+
+# どのホストがどのSIDを持つデータを管理しているかを表す対応表
+# SIDS_FOR_NTCIR	/home/skeiji/public_html/tsubaki-ntcir/SearchEngine/cgi/sid.range.cdb
+
+# ハッシュ関数を利用して標準フォーマットが置いてあるノードを探すかどうか
+USE_OF_HASH_FOR_SID_LOOKUP	1
+
+# 省略解析結果を利用する／しないを選択するチェックボックスの表示
+DISABLE_ANAPHORA_RESOLUTION_DISPLAY	1
+
+# C++版かどうか
+IS_CPP_MODE		1
