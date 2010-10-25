@@ -384,7 +384,7 @@ sub print_body {
 
     print qq(<DIV style="font-size:11pt; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
     if ($status eq 'search' || $status eq 'cache') {
-	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/2009/index.cgi">2009年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
+	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/2010/index.cgi">2010年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
 	print qq(&nbsp;|&nbsp;);
     }
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">使い方</A><BR>\n);
@@ -443,7 +443,7 @@ sub print_logo {
     if ($params->{query}) {
 	print qq(<TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
 	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
-	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 2009年度版 -</SPAN></TD>\n);
+	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 2010年度版 -</SPAN></TD>\n);
 	if ($CONFIG->{IS_IPSJ_MODE}) {
 	    print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
 	}
@@ -451,7 +451,7 @@ sub print_logo {
     else {
 	print qq(<TD align="center">);
 	printf ("<A href=%s><IMG border=0 src=image/logo.png></A>\n", $CONFIG->{INDEX_CGI});
-	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">2009年度版</SPAN>\n);
+	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">2010年度版</SPAN>\n);
 	print qq(<BR><SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
 	print "</TD></TR>\n";
 	print "<TR>";
