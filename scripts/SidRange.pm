@@ -48,6 +48,17 @@ sub new {
 	tie %{$this->{SID2HOST_FOR_NTCIR}}, 'CDB_File', $opt->{sids_for_ntcir} or die "$0: can't tie to $opt->{sids_for_ntcir} $!\n";
     }
 
+    if (-f $opt->{nict2nii}) {
+	open (F, $opt->{nict2nii}) or die "$!";	
+	while (<F>) {
+	    chop;
+	    my ($nictNode, $niiNode) = split(/\s+/, $_);
+
+	    $this->{nict2nii}{sprintf ("%s.crawl.kclab.jgn2.jp", $nictNode)} = $niiNode;
+	}
+	close (F);
+    }
+
     bless $this;
 }
 
@@ -70,7 +81,11 @@ sub lookup {
 	    $this->{hashobj} = new nict_hash();
 	}
 
-	return $this->{hashobj}->getnode($did);
+	if (defined $this->{nict2nii}) {
+	    return $this->{nict2nii}{$this->{hashobj}->getnode($did)};
+	} else {
+	    return $this->{hashobj}->getnode($did);
+	}
     }
 }
 
