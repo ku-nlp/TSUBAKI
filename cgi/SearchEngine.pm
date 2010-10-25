@@ -167,6 +167,7 @@ sub parse_recieved_data_for_cpp {
     my ($tbuf, $buff, $hitcount, $recieved_data, $slave_server_side_total, $hostname, $port, $search_time, $score_time, $sort_time);
     while (<$socket>) {
 	chop;
+#	print Encode::decode('utf8', $_) . "<BR>\n";
 
 	if ($_ =~ /hitcount (\d+)/) {
 	    $hitcount = $1;
@@ -204,7 +205,7 @@ sub parse_recieved_data_for_cpp {
 	    last;
 	} else {
 	    $recieved_data .= $_;
-	    my ($sid, $title, $url, $tid, $score, $length, $start, $end, @logdata) = split (/ /, $_);
+	    my ($sid, $title, $url, $tid, $score, $length, $pagerank, $flagOfStrictTerm, $flagOfProxConst, $start, $end, @logdata) = split (/ /, $_);
 	    $url =~ s/@/%/g;
 
 	    my $doc;
@@ -229,6 +230,9 @@ sub parse_recieved_data_for_cpp {
 		$gid++;
 	    }
 	    $doc->{terminfo}{length} = $length;
+	    $doc->{terminfo}{pagerank} = $pagerank;
+	    $doc->{terminfo}{flagOfStrictTerm} = $flagOfStrictTerm;
+	    $doc->{terminfo}{flagOfProxConst} = $flagOfProxConst;
 	    push (@results, $doc);
 	}
     }
