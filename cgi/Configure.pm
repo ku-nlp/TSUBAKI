@@ -18,7 +18,7 @@ $Data::Dumper::Useperl = 1;
 my $HOSTNAME = `hostname`;
 my $DIRNAME = dirname($INC{'Configure.pm'});
 # 環境によってパスを変える
-my $CONFIG_FILE_PATH =  $DIRNAME . '/' . (($HOSTNAME =~ /nlpc/) ? 'configure' : 'configure.nict');
+my $CONFIG_FILE_PATH =  $DIRNAME . '/' . (($HOSTNAME =~ /iccc/) ? 'configure.nict' : 'configure');
 
 my %titledbs = ();
 my %urldbs = ();
