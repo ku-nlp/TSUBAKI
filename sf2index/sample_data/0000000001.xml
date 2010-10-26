@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<StandardFormat>
+  <Text>
+    <S id="1">
+      <Rawstring>旅館に泊まると吉田拓郎の歌を思い出すんだよ。</Rawstring>
+      <AnnotationTool tool="KNP:3.1-20100115">
+        <result score="-18.27700">
+          <phrase id="0" dpnd="1" cat="体言" f="&lt;SM-主体&gt;&lt;SM-場所&gt;&lt;SM-組織&gt;&lt;BGH:旅館/りょかん&gt;&lt;文頭&gt;&lt;ニ&gt;&lt;助詞&gt;&lt;係:ニ格&gt;&lt;区切:0-0&gt;&lt;RID:1180&gt;&lt;格要素&gt;&lt;連用要素&gt;&lt;名詞項候補&gt;&lt;先行詞候補&gt;&lt;正規化代表表記:旅館/りょかん&gt;&lt;解析格:ニ&gt;&lt;文節:0-0&gt;...">
+            <synnodes dpnd="1" phraseid="0">
+              <synnode synid="旅館/りょかん" score="1" />
+              <synnode synid="s259:宿/やど" score="0.99" />
+            </synnodes>
+            <word id="0" lem="旅館" read="りょかん" pos="名詞:普通名詞" repname="旅館/りょかん" conj="" f="&lt;代表表記:旅館/りょかん&gt;&lt;カテゴリ:場所-施設&gt;&lt;ドメイン:レクリエーション&gt;&lt;正規化代表表記:旅館/りょかん&gt;&lt;文頭&gt;&lt;漢字&gt;&lt;かな漢字&gt;&lt;名詞相当語&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;&lt;文節主辞&gt;">旅館</word>
+            <word id="1" lem="に" read="に" pos="助詞:格助詞" repname="に/に" conj="" f="&lt;かな漢字&gt;&lt;ひらがな&gt;&lt;付属&gt;">に</word>
+          </phrase>
+          <phrase id="1" dpnd="5" cat="用言:動" f="&lt;BGH:泊まる/とまる&gt;&lt;ト&gt;&lt;助詞&gt;&lt;係:ト格&gt;&lt;レベル:C&gt;&lt;区切:3-5&gt;&lt;ID:〜と（引用）&gt;&lt;補文&gt;&lt;RID:231&gt;&lt;提題受:25&gt;&lt;連体並列条件&gt;&lt;格要素&gt;&lt;連用要素&gt;&lt;節機能-補文&gt;&lt;正規化代表表記:泊まる/とまる&gt;&lt;用言代表表記:泊まる/とまる&gt;&lt;格要素-ガ:＃一人称優位&gt;&lt;格要素-ヲ:NIL&gt;&lt;格要素-ニ:旅館&gt;&lt;格要素-ト:NIL&gt;&lt;格要素-デ:NIL&gt;&lt;格要素-カラ:NIL&gt;&lt;格要素-ヨリ:NIL&gt;&lt;格要素-マデ:NIL&gt;&lt;格要素-ヘ:NIL&gt;&lt;格要素-時間:NIL&gt;&lt;格要素-ノ:NIL&gt;&lt;格要素-修飾:NIL&gt;&lt;格要素-トイウ:NIL&gt;&lt;格要素-外の関係:NIL&gt;&lt;格フレーム-ガ-主体&gt;&lt;格フレーム-ニ-主体&gt;&lt;格フレーム-ト-主体&gt;&lt;格フレーム-デ-主体&gt;&lt;格フレーム-カラ-主体&gt;&lt;格フレーム-ヨリ-主体&gt;&lt;格フレーム-修飾-主体&gt;&lt;格フレーム-ガ-主体ｏｒ主体準&gt;&lt;格フレーム-ニ-主体ｏｒ主体準&gt;&lt;動態述語&gt;&lt;時制-未来&gt;&lt;主題格:一人称優位&gt;&lt;格関係0:ニ:旅館&gt;&lt;格解析結果:泊まる/とまる:動1:ガ/U/-/-/-/-;ヲ/U/-/-/-/-;ニ/C/旅館/0/0/1;ト/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ/U/-/-/-/-;ヘ/U/-/-/-/-;時間/U/-/-/-/-;ノ/U/-/-/-/-;修飾/U/-/-/-/-;トイウ/U/-/-/-/-;外の関係/U/-/-/-/-&gt;&lt;正規化格解析結果-0:泊める/とめる:動1:ニ/C/旅館/0/0/1&gt;&lt;解析格:ト&gt;&lt;文節:1-1&gt;...">
+            <synnodes dpnd="5" phraseid="1">
+              <synnode synid="泊まる/とまる" score="1" />
+            </synnodes>
+            <synnodes dpnd="5" phraseid="0,1">
+              <synnode synid="s32155:宿泊/しゅくはく" score="0.9801495" />
+            </synnodes>
+            <word id="2" lem="泊まる" read="とまる" pos="動詞" repname="泊まる/とまる" conj="子音動詞ラ行:基本形" f="&lt;代表表記:泊まる/とまる&gt;&lt;ドメイン:レクリエーション;家庭・暮らし&gt;&lt;自他動詞:他:泊める/とめる&gt;&lt;正規化代表表記:泊まる/とまる&gt;&lt;かな漢字&gt;&lt;活用語&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;&lt;文節主辞&gt;">泊まる</word>
+            <word id="3" lem="と" read="と" pos="助詞:格助詞" repname="と/と" conj="" f="&lt;品曖&gt;&lt;ALT-と-と-と-9-3-0-0-NIL&gt;&lt;品曖-格助詞&gt;&lt;品曖-接続助詞&gt;&lt;かな漢字&gt;&lt;ひらがな&gt;&lt;付属&gt;">と</word>
+          </phrase>
+          <phrase id="2" dpnd="3" cat="体言" f="&lt;文節内&gt;&lt;係:文節内&gt;&lt;人名疑&gt;&lt;地名疑&gt;&lt;名詞項候補&gt;&lt;先行詞候補&gt;&lt;正規化代表表記:吉田/よしだ&gt;&lt;文節:2-3&gt;...">
+            <synnodes dpnd="3" phraseid="2">
+              <synnode synid="吉田/よしだ" score="1" />
+            </synnodes>
+            <word id="4" lem="吉田" read="よしだ" pos="名詞:人名" repname="吉田/よしだ" conj="" f="&lt;人名:日本:姓:14:0.00529&gt;&lt;疑似代表表記&gt;&lt;代表表記:吉田/よしだ&gt;&lt;正規化代表表記:吉田/よしだ&gt;&lt;品曖&gt;&lt;ALT-吉田-よしだ-吉田-6-4-0-0-&quot;代表表記:吉田/よしだ 地名:日本:静岡県:町&quot;&gt;&lt;地名:日本:静岡県:町&gt;&lt;品曖-人名&gt;&lt;品曖-地名&gt;&lt;漢字&gt;&lt;かな漢字&gt;&lt;名詞相当語&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;&lt;固有キー&gt;">吉田</word>
+          </phrase>
+          <phrase id="3" dpnd="4" cat="体言" f="&lt;人名疑&gt;&lt;助詞&gt;&lt;連体修飾&gt;&lt;係:ノ格&gt;&lt;区切:0-4&gt;&lt;RID:1072&gt;&lt;名詞項候補&gt;&lt;先行詞候補&gt;&lt;係チ:非用言格解析||用言&amp;&amp;文節内:Ｔ解析格-ヲ&gt;&lt;正規化代表表記:拓郎/たくお?拓郎/たくろう&gt;...">
+            <synnodes dpnd="4" phraseid="3">
+              <synnode synid="拓郎/たくお" score="1" />
+              <synnode synid="拓郎/たくろう" score="1" />
+            </synnodes>
+            <word id="5" lem="拓郎" read="たくお" pos="名詞:人名" repname="拓郎/たくお" conj="" f="&lt;人名:日本:名:1495:0.00012&gt;&lt;疑似代表表記&gt;&lt;代表表記:拓郎/たくお&gt;&lt;正規化代表表記:拓郎/たくお?拓郎/たくろう&gt;&lt;品曖&gt;&lt;ALT-拓郎-たくろう-拓郎-6-5-0-0-&quot;人名:日本:名:1495:0.00012 疑似代表表記 代表表記:拓郎/たくろう&quot;&gt;&lt;品曖-人名&gt;&lt;原形曖昧&gt;&lt;漢字&gt;&lt;かな漢字&gt;&lt;名詞相当語&gt;&lt;自立&gt;&lt;複合←&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;固有キー&gt;&lt;文節主辞&gt;">拓郎</word>
+            <word id="6" lem="の" read="の" pos="助詞:接続助詞" repname="の/の" conj="" f="&lt;かな漢字&gt;&lt;ひらがな&gt;&lt;付属&gt;">の</word>
+          </phrase>
+          <phrase id="4" dpnd="5" cat="体言" f="&lt;BGH:歌/うた|歌/か&gt;&lt;ヲ&gt;&lt;助詞&gt;&lt;一文字漢字&gt;&lt;係:ヲ格&gt;&lt;区切:0-0&gt;&lt;RID:1121&gt;&lt;格要素&gt;&lt;連用要素&gt;&lt;名詞項候補&gt;&lt;先行詞候補&gt;&lt;正規化代表表記:歌/うた?歌/か&gt;&lt;解析格:ヲ&gt;&lt;文節:4-4&gt;...">
+            <synnodes dpnd="5" phraseid="4">
+              <synnode synid="歌/うた" score="1" />
+              <synnode synid="s12147:歌" score="0.99" />
+            </synnodes>
+            <word id="7" lem="歌" read="うた" pos="名詞:普通名詞" repname="歌/うた" conj="" f="&lt;代表表記:歌/うた&gt;&lt;漢字読み:訓&gt;&lt;カテゴリ:抽象物&gt;&lt;ドメイン:文化・芸術;レクリエーション&gt;&lt;正規化代表表記:歌/うた?歌/か&gt;&lt;品曖&gt;&lt;ALT-歌-か-歌-6-1-0-0-&quot;代表表記:歌/か 漢字読み:音 カテゴリ:抽象物 ドメイン:文化・芸術&quot;&gt;&lt;品曖-普通名詞&gt;&lt;原形曖昧&gt;&lt;漢字&gt;&lt;かな漢字&gt;&lt;名詞相当語&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;&lt;文節主辞&gt;&lt;名詞曖昧性解消&gt;">歌</word>
+            <word id="8" lem="を" read="を" pos="助詞:格助詞" repname="を/を" conj="" f="&lt;かな漢字&gt;&lt;ひらがな&gt;&lt;付属&gt;">を</word>
+          </phrase>
+          <phrase id="5" dpnd="-1" cat="用言:動" f="&lt;BGH:思い出す/おもいだす&gt;&lt;文末&gt;&lt;補文ト&gt;&lt;句点&gt;&lt;助詞&gt;&lt;レベル:C&gt;&lt;区切:5-5&gt;&lt;ID:（文末）&gt;&lt;RID:1498&gt;&lt;係:文末&gt;&lt;提題受:30&gt;&lt;主節&gt;&lt;格要素&gt;&lt;連用要素&gt;&lt;定義文主辞&gt;&lt;正規化代表表記:思い出す/おもいだす&gt;&lt;用言代表表記:思い出す/おもいだす&gt;&lt;格要素-ガ:＃一人称優位&gt;&lt;格要素-ヲ:歌&gt;&lt;格要素-ニ:NIL&gt;&lt;格要素-ト:泊まる&gt;&lt;格要素-デ:NIL&gt;&lt;格要素-カラ:NIL&gt;&lt;格要素-ヨリ:NIL&gt;&lt;格要素-マデ:NIL&gt;&lt;格要素-ヘ:NIL&gt;&lt;格要素-時間:NIL&gt;&lt;格要素-ノ:NIL&gt;&lt;格要素-修飾:NIL&gt;&lt;格要素-トイウ:NIL&gt;&lt;格要素-外の関係:NIL&gt;&lt;格フレーム-ガ-主体準&gt;&lt;格フレーム-ニ-主体&gt;&lt;格フレーム-ト-主体&gt;&lt;格フレーム-デ-主体&gt;&lt;格フレーム-ヘ-主体&gt;&lt;格フレーム-ガ-主体ｏｒ主体準&gt;&lt;格フレーム-ニ-主体ｏｒ主体準&gt;&lt;動態述語&gt;&lt;時制-未来&gt;&lt;主題格:一人称優位&gt;&lt;格関係1:ト:泊まる&gt;&lt;格関係4:ヲ:歌&gt;&lt;格解析結果:思い出す/おもいだす:動3:ガ/U/-/-/-/-;ヲ/C/歌/4/0/1;ニ/U/-/-/-/-;ト/C/泊まる/1/0/1;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ/U/-/-/-/-;ヘ/U/-/-/-/-;時間/U/-/-/-/-;ノ/U/-/-/-/-;修飾/U/-/-/-/-;トイウ/U/-/-/-/-;外の関係/U/-/-/-/-&gt;&lt;文節:5-5&gt;...">
+            <synnodes dpnd="-1" phraseid="5">
+              <synnode synid="思い出す/おもいだす" score="1" />
+              <synnode synid="s1113:想起/そうき" score="0.99" />
+            </synnodes>
+            <word id="9" lem="思い出す" read="おもいだす" pos="動詞" repname="思い出す/おもいだす" conj="子音動詞サ行:基本形" f="&lt;代表表記:思い出す/おもいだす&gt;&lt;補文ト&gt;&lt;正規化代表表記:思い出す/おもいだす&gt;&lt;かな漢字&gt;&lt;活用語&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;&lt;文節主辞&gt;">思い出す</word>
+            <word id="10" lem="んだ" read="んだ" pos="助動詞" repname="んだ/んだ" conj="ナ形容詞:基本形" f="&lt;かな漢字&gt;&lt;ひらがな&gt;&lt;活用語&gt;&lt;付属&gt;">んだ</word>
+            <word id="11" lem="よ" read="よ" pos="助詞:終助詞" repname="よ/よ" conj="" f="&lt;表現文末&gt;&lt;かな漢字&gt;&lt;ひらがな&gt;&lt;付属&gt;">よ</word>
+            <word id="12" lem="。" read="。" pos="特殊:句点" repname="。/。" conj="" f="&lt;文末&gt;&lt;英記号&gt;&lt;記号&gt;&lt;付属&gt;">。</word>
+          </phrase>
+        </result>
+      </AnnotationTool>
+    </S>
+  </Text>
+</StandardFormat>
