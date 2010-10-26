@@ -694,7 +694,7 @@ sub parse {
 	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0]))
 			});
 
-    print "<!-- " . $ret->{s_exp} . " -->\n" unless ($this->{OPTIONS}{call_from_api});
+    print "<!-- " . $ret->{s_exp} . " -->\n" if ($this->{OPTIONS}{is_cpp_mode} && !$this->{OPTIONS}{call_from_api});
 
     ############
     # ログの取得
