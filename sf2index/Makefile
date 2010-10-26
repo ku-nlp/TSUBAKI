@@ -8,7 +8,7 @@ UtilsDir = ../../Utils
 all: idx_bin idx_length
 
 $(IDXS): $(XMLS)
-	perl ../scripts/convert_sf2term.pl -suffix $(IDX_SUFFIX) $(XMLS)
+	perl ./sf2term.pl -suffix $(IDX_SUFFIX) $(XMLS)
 
 $(MERGED_IDX): $(IDXS)
 	perl ../scripts/merge_idx.pl -dir . -suffix $(IDX_SUFFIX) > $@
