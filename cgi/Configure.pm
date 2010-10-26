@@ -49,7 +49,9 @@ sub _new {
 		}
 		close (F);
 	    } else {
-		print STDERR "[WARNING] $logfile is * NOT * found!\n";
+		if ($opts->{debug}) {
+		    print STDERR "[WARNING] $logfile is * NOT * found!\n";
+		}
 	    }
 	}
 
@@ -141,17 +143,19 @@ sub _new {
 	print "* create knp object...";
     }
 
-    try {
-	$this->{KNP} = new KNP(
-			       -Command => $this->{KNP_COMMAND},
-			       -Option => join(' ', @{$this->{KNP_OPTIONS}}),
-			       -Rcfile => $this->{KNP_RCFILE},
-			       -JumanRcfile => $this->{JUMAN_RCFILE},
-			       -JumanCommand => $this->{JUMAN_COMMAND});
-    } catch Error with {
-	printf STDERR (qq([ERROR] Can\'t create a KNP object!\n));
-	exit;
-    };
+    unless ($this->{IS_ENGLISH_VERSION}) { # 英語モード以外ではKNPオブジェクトを作る
+	try {
+	    $this->{KNP} = new KNP(
+				   -Command => $this->{KNP_COMMAND},
+				   -Option => join(' ', @{$this->{KNP_OPTIONS}}),
+				   -Rcfile => $this->{KNP_RCFILE},
+				   -JumanRcfile => $this->{JUMAN_RCFILE},
+				   -JumanCommand => $this->{JUMAN_COMMAND});
+	} catch Error with {
+	    printf STDERR (qq([ERROR] Can\'t create a KNP object!\n));
+	    exit;
+	};
+    }
 
     print " done.\n" if ($opts->{debug});
 
