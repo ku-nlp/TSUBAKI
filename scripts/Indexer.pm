@@ -152,7 +152,7 @@ sub processCoordinateStructure {
 }
 
 sub makeIndexfromSynGraph {
-    my($this, $syngraph, $kihonkus, $midasi2hypernym, $hypernym2info, $opt) = @_;
+    my($this, $syngraph, $kihonkus, $poslist, $pos2info, $opt) = @_;
 
     if ($opt->{string_mode}) {
 	return $this->makeIndexfromSynGraph4Indexing($syngraph, $opt);
@@ -195,12 +195,17 @@ sub makeIndexfromSynGraph {
 	    $position = $word_num if (index ($line, '<内容語>') > -1);
 	    $word_num++ if ($line !~ /^\+/ && $line !~ /^\@/);
 
-	    if ($line =~ m!上位語:(.+?)/主辞:(.+?):!) {
-		my $hypernym = $1;
-		my $head = $2;
-		my $pos = $position + $this->{absolute_pos};
-		$midasi2hypernym->{$head} = $hypernym;
-		push (@{$hypernym2info->{$hypernym}}, {midasi => $head, pos => $pos});
+	    if ($line =~ m!情報:(.+?)/主辞:(.+?):!) {
+		my ($info, $head, $pos, $log) = ($1, $2, $position + $this->{absolute_pos}, $&);
+		$pos2info->{$pos}{midasi} = $head;
+		$pos2info->{$pos}{log} = $log;
+		foreach my $_info (split (/@/, $info)) {
+		    if ($_info =~ /id=(\d+),off=(\d+),len=(\d+)/) {
+			$pos2info->{$pos}{tid} = $1;
+			push (@{$pos2info->{$pos}{offset}}, $2);
+			push (@{$pos2info->{$pos}{length}}, $3);
+		    }
+		}
 	    }
 	}
     }

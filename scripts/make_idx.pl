@@ -67,11 +67,18 @@ GetOptions(\%opt,
 	   'verbose',
 	   'help');
 
-my $HYPERNYM_AND_HEAD_DB;
+my $ECTS;
 if ($opt{coordinate}) {
-    require Trie;
-    $HYPERNYM_AND_HEAD_DB = new Trie({usejuman => 1, userepname => 1});
-    $HYPERNYM_AND_HEAD_DB->RetrieveDB($opt{hypernym_and_head_db});
+    require ECTS;
+    my %opt;
+   $opt{bin_file}           = '../data/ecs.db';
+   $opt{triedb}             = '../data/offset.db';
+   $opt{term2id}            = '../data/term2id';
+#    $opt{bin_file}           = '/home/skeiji/coord.dat';
+#    $opt{triedb}             = '/home/skeiji/hypernym.head.x86.db';
+#    $opt{term2id}            = '/home/skeiji/term2id';
+    $opt{size_of_on_memory}  = 1000000000;
+    $ECTS = new ECTS(\%opt);
 }
 
 # デフォルト値の設定
@@ -182,7 +189,6 @@ $opt{ignore_genkei} = 0 unless ($opt{ignore_genkei});
 # <RawString>タグの要素が5000byteを越える場合（文字化け・英数字の羅列など）はインデックス抽出を行わない
 $opt{max_length_of_rawstring} = 5000 unless ($opt{max_length_of_rawstring});
 
-my %CACHE = ();
 
 
 
@@ -270,6 +276,7 @@ sub main {
 	    $opt{out} = sprintf (qq(%s/i%04d/i%07d), $opt{outdir_prefix}, $fid / 1000000, $fid / 1000);
 	    `mkdir -p $opt{out}` unless (-e $opt{out});
 	    &extract_indice_from_single_file($file, $fname);
+	    $ECTS->clear();
 	}
 	close (FILE);
     }
@@ -286,6 +293,7 @@ sub main {
 		next unless ($file =~ /([^\/]+?)(\.link)?\.xml/);
 		&extract_indice_from_single_file("$opt{in}/$file", $1);
 	    }
+	    $ECTS->clear();
 	}
 	closedir(DIR);
     }
@@ -340,8 +348,8 @@ sub extract_indices_wo_pm {
     my %sid2blockType = ();
     my %results_of_istvan = ();
     my $blockType;
-    my %midasi2hypernym = ();
-    my %hypernym2info = ();
+    my @poslist = ();
+    my %pos2info = ();
     LOOP:
     while (<READER>) {
 	last if ($_ =~ /<Text / && $opt{only_inlinks});
@@ -423,7 +431,7 @@ sub extract_indices_wo_pm {
 	elsif ($_ =~ $pattern_end) {
 	    $content .= $1;
 
-	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei, \%midasi2hypernym, \%hypernym2info);
+	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei, \@poslist, \%pos2info);
 
 	    # インリンクの場合は披リンク数分を考慮する
 	    if ($tagName eq 'InLink') {
@@ -457,13 +465,13 @@ sub extract_indices_wo_pm {
     close(READER);
 
     # 索引のマージ
-    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan, \%midasi2hypernym, \%hypernym2info, $file);
+    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan, \@poslist, \%pos2info, $file);
 }
 
 
 
 sub extractIndices {
-    my ($content, $indexer, $file, $indexer_genkei, $midasi2hypernym, $hypernym2info) = @_;
+    my ($content, $indexer, $file, $indexer_genkei, $poslist, $pos2info) = @_;
 
     my ($annotation) = ($content =~ /<Annotation[^>]+?>\<\!\[CDATA\[((.|\n)+)\]\]\><\/Annotation>/);
 
@@ -506,12 +514,13 @@ sub extractIndices {
 	    }
 	}
 
-	$annotation = &annotateCoordinateInfo ($annotation) if ($opt{coordinate});
+#	$annotation = &annotateCoordinateInfo ($annotation) if ($opt{coordinate});
+	$annotation = $ECTS->annotateDBInfo($annotation, {knp_result => 1}) if ($opt{coordinate});
 
 	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation,
 							\@contentWordFeatures,
-							$midasi2hypernym,
-							$hypernym2info,
+							$poslist,
+							$pos2info,
 							{ use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
 							  use_of_hypernym => !$opt{ignore_hypernym},
 							  use_of_negation_and_antonym => 1,
@@ -565,15 +574,6 @@ sub extractIndices {
     }
 
     return $terms;
-}
-
-sub annotateCoordinateInfo {
-    my ($annotation) = @_;
-
-    my $resultObj = new KNP::Result ($annotation);
-    my @mrph = $resultObj->mrph;
-    $HYPERNYM_AND_HEAD_DB->DetectString(\@mrph, undef, { output_juman => 1 });
-    return $resultObj->all_dynamic;
 }
 
 sub extract_indice_from_single_file {
@@ -709,7 +709,7 @@ sub extract_indices {
 }
 
 sub merge_indices {
-    my ($indices, $sid2blockType, $results_of_istvan, $midasi2hypernym, $hypernym2info, $file) = @_;
+    my ($indices, $sid2blockType, $results_of_istvan, $poslist, $pos2info, $file) = @_;
 
     # 索引のマージ
     my %ret;
@@ -746,8 +746,8 @@ sub merge_indices {
 		if ($opt{coordinate}) {
 		    if ($index->{midasi} =~ /^(.+?)\->(.+?)$/) {
 			my ($moto, $saki) = ($1, $2);
-			my $_dpnd1 = &makeDpndTermFromCoordinate ($moto, $saki, $index->{pos}, $midasi2hypernym, $hypernym2info, 1);
-			my $_dpnd2 = &makeDpndTermFromCoordinate ($moto, $saki, $index->{pos}, $midasi2hypernym, $hypernym2info, 0);
+			my $_dpnd1 = &makeDpndTermFromCoordinate ($moto, $saki, $index->{pos}, $poslist, $pos2info, 1, $file);
+			my $_dpnd2 = &makeDpndTermFromCoordinate ($moto, $saki, $index->{pos}, $poslist, $pos2info, 0, $file);
 
 			foreach my $_dpnd (($_dpnd1, $_dpnd2)) {
 			    next unless (defined $_dpnd);
@@ -788,7 +788,7 @@ sub merge_indices {
 
 # 同位語をもとに係り受けタームを作成する
 sub makeDpndTermFromCoordinate {
-    my ($moto, $saki, $pos, $midasi2hypernym, $hypernym2info, $forMoto) = @_;
+    my ($moto, $saki, $pos, $poslist, $pos2info, $forMoto, $file) = @_;
 
     my $_term = undef;
     my $_moto = $moto;
@@ -799,22 +799,43 @@ sub makeDpndTermFromCoordinate {
     $_saki =~ s/\*$//;
     my $isGenkei = ($moto =~ /\*$/ || $saki =~ /\*$/) ? 1 : 0;
 
-    my $hypernym = ($forMoto) ? $midasi2hypernym->{$_moto} : $midasi2hypernym->{$_saki};
-    if (defined $hypernym) {
-	foreach my $info (@{$hypernym2info->{$hypernym}}) {
-	    next if ($_moto eq $info->{midasi} && $forMoto);
-	    next if ($_saki eq $info->{midasi} && !$forMoto);
+    my $tid = ($forMoto) ? $ECTS->term2id($_moto) : $ECTS->term2id($_saki);
+    if (defined $tid) {
+	my $bgn = $pos - $DIST_FOR_MAKING_COORD_DPND; $bgn = 0 if ($bgn < 0);
+	my $end = $pos + $DIST_FOR_MAKING_COORD_DPND;
+	foreach my $_pos ($bgn..$end) {
+	    next unless (exists $pos2info->{$_pos});
+	    my $info = $pos2info->{$_pos};
+	    unless (defined $info->{offset}) {
+		foreach my $k (keys %$info) {
+		    print $k . " " . $info->{$k} . "\n";
+		}
+		next;
+	    }
 
-	    if (($pos - $info->{pos}) ** 2 < $DIST_FOR_MAKING_COORD_DPND ** 2) {
-		my $coord = ($isGenkei) ? sprintf ("%s*", $info->{midasi}) : $info->{midasi};
+	    my $near_coords = &get_near_coords($tid, $info);
+	    foreach my $coord (@$near_coords) {
+		next unless ($_moto ne $coord && $_saki ne $coord);
+
+		my $_coord = ($isGenkei) ? sprintf ("%s*", $coord) : $coord;
 		$_term = ($forMoto) ? sprintf ("%s->%s\$", $coord, $saki) : sprintf ("%s->%s\$", $moto, $coord);
-	    } else {
-		last if ($info->{pos} - $pos > $DIST_FOR_MAKING_COORD_DPND);
 	    }
 	}
     }
 
     return $_term;
+}
+
+sub get_near_coords {
+    my ($tid, $info) = @_;
+
+    my @coords = ();
+    foreach my $i (0..(scalar(@{$info->{offset}}) - 1)) {
+	my $tids = $ECTS->read($info->{offset}[$i], $info->{length}[$i]);
+	push (@coords, $info->{midasi}) if (exists $tids->{$tid});
+    }
+
+    return \@coords;
 }
 
 # Juman / Knp / SynGraph の解析結果を使ってインデックスを作成
