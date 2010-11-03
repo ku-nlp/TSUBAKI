@@ -1,0 +1,640 @@
+\section{ウェブ標準フォーマット}
+\label{wsf}
+
+ウェブ標準フォーマットとは，ウェブページの解析結果の共有を目的に，我々
+が提案したXML形式のフォーマットであり，ウェブページを対象とした研究を行
+う上で頻繁に利用される情報を埋め込むことができる．
+以下では，ウェブ標準フォーマットに従って保存されたXML文書を{\bf 標準フォー
+マットデータ}と呼ぶ．
+
+表\ref{tagset_of_wsf}にウェブ標準フォーマットのタグセットを示す．ウェブ
+標準フォーマットでは，ウェブページのタイトルやURL，リンク情報などのメタ
+情報に加え，ウェブページを扱うシステムで多くの場合利用される文情報，さ
+らにオプションとして，文を既存の自然言語処理ツールにより解析した結果が
+埋め込まれる．
+
+\begin{table*}[t]
+\caption{ウェブ標準フォーマットのタグセット}
+\begin{center}
+\scriptsize
+\label{tagset_of_wsf}
+\begin{tabular}{l|p{0.6\columnwidth}}
+\hline
+タグ名&概要 \\ \hline
+StandardFormat&
+\begin{minipage}{\columnwidth}
+標準フォーマットのルートタグ．
+
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Url:] 元となるウェブページのURL
+\item [OriginalEncoding:] 元となるウェブページの文字コード
+\item [Time:] ページが取得された日時（「yyyy-mm-dd hh:mm:ss」形式）
+\end{description}
+\item [子要素:] Header，Text
+\end{description}
+
+\end{minipage}
+\\ \hline \hline
+
+Header&
+\begin{minipage}{0.8\columnwidth}
+ヘッダー要素を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] Title，InLinks，OutLinks
+\end{description}
+\end{minipage}
+\\ \hline
+
+Title&
+\begin{minipage}{0.8\columnwidth}
+元となるページのタイトルを表すタグ．
+
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Offset:] ファイル先頭からのオフセット
+\item [Length:] タイトルの長さ（バイト長）
+\item [Id:] 文ID
+\end{description}
+\item [子要素:] RawString，Annotation
+\end{description}
+
+\end{minipage}
+\\ \hline
+
+InLinks&
+\begin{minipage}{0.8\columnwidth}
+元となるページへのインリンクの集合を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] InLink
+\end{description}
+\end{minipage}
+\\ \hline
+
+InLink&
+\begin{minipage}{0.8\columnwidth}
+元となるページへのインリンクを表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] RawString，Annotation，DocIDs
+\end{description}
+\end{minipage}
+\\ \hline
+
+OutLinks&
+\begin{minipage}{0.8\columnwidth}
+元となるページからのアウトリンクの集合を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] OutLink
+\end{description}
+\end{minipage}
+\\ \hline
+
+OutLink&
+\begin{minipage}{0.8\columnwidth}
+元となるページからのアウトリンクを表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] RawString，Annotation，DocIDs
+\end{description}
+\end{minipage}
+\\ \hline
+
+DocIDs&
+\begin{minipage}{0.8\columnwidth}
+文書IDの集合を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] DocID
+\end{description}
+\end{minipage}
+\\ \hline
+
+DocID&
+\begin{minipage}{0.8\columnwidth}
+文書IDを表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] 文書IDを表す数字列
+\end{description}
+\end{minipage}
+\\ \hline
+
+Keywords&
+\begin{minipage}{0.8\columnwidth}
+METAタグのkeywords属性の値を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] RawString, Annotation
+\end{description}
+\end{minipage}
+\\ \hline
+
+Description&
+\begin{minipage}{0.8\columnwidth}
+METAタグのdescription属性の値を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:]  RawString, Annotation
+\end{description}
+\end{minipage}
+\\ \hline \hline
+
+Text&
+\begin{minipage}{0.8\columnwidth}
+元となるページの本文の内容を表すタグ．
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Type:] ウェブページのタイプ（通常のページ，ブログのエントリなど）
+\end{description}
+\item [子要素:] S
+\end{description}
+\end{minipage}
+\\ \hline
+
+S&
+\begin{minipage}{0.8\columnwidth}
+ページに含まれる一文を表すタグ．
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Offset:] ファイル先頭からのオフセット
+\item [Length:] タイトルの長さ（バイト長）
+\item [Id:] 文ID
+\end{description}
+\item [子要素:] RawString，Annotation
+\end{description}
+\end{minipage}
+\\ \hline
+
+RawString&
+\begin{minipage}{0.8\columnwidth}
+一文として抽出された文字列を表すタグ．
+\begin{description}
+\item [属性:] なし
+\item [子要素:] 一文として抽出された文字列
+\end{description}
+\end{minipage}
+\\ \hline
+
+Annotation&
+\begin{minipage}{0.8\columnwidth}
+一文として抽出された文字列の解析結果を表すタグ．
+\begin{description}
+\item [属性:]
+\begin{description}
+\item [Scheme:] 解析に用いたツール名(e.x., Juman，Knpなど)
+\end{description}
+\item [子要素:] ツールの解析結果
+\end{description}
+\end{minipage}
+\\ \hline
+
+
+\end{tabular}
+\end{center}
+\end{table*}
+
+%
+%今後，標準フォーマットに埋め込まれる情報は，若干変更される可能性があることに注意されたい．
+%
+% ウェブ文書中に現れる文章の区切りを認識し文を抽出することは，ウェブ文書を処理する上で最も基本となる操作である．
+% しかしながら，ウェブ文書には砕けた表現が頻出し，通常であれば文区切りを意
+% 味する句点等が文区切り以外の意味で用いらることも多々あるため，文区切りを
+% 適切に認識し，ウェブ文書から文を抽出することは簡単ではない．
+%
+% それにも関わらず，文抽出処理，または文区切りの認識処理については，その標準と
+% なるツールは存在しないため，ウェブ文書から抽出された文を共有するこ
+% とは重要であると考えられる．
+
+%
+% そのため，TSUBAKI APIを用いているシステムでは，APIを利用して標準フォー
+% マット化されたウェブ文書を得ることで，ウェブ文書からの文抽出や，抽出され
+% た文の解析などの前処理を行うことなく，即座にシステム特有の処理に移ること
+% が可能である．このことは，例えば検索結果をオンデマンドに分類するクラスタ
+% リングシステムのような動的に検索結果を処理するシステムにおいて重要である．
+
+%なぜ共通のフォーマットが必要か？
+%→一機関が単独で集められるデータの量・解析できるデータの量に限界がある
+%→→ウェブ文書が大量にあるため
+%→→計算機資源は有限
+
+%シームレスに異なる機関で解析された文書を利用可能　→ 機関単独では利用できない量のデータを扱える
+
+% 何をフォーマットに埋め込むか？
+% ウェブ文書を扱う場合は，文区切り，文抽出，文解析が行われる
+% →文区切りを適切に認識することは，文抽出・解析を行ううえで重要
+% →文区切りの認識は新聞記事コーパスのように簡単ではない．句点だけが手がかりではなく，手がかりとならない句点も存在する
+% →→ウェブ文書は新聞記事とは異なり，砕けた表現が頻繁に現れるため
+% 文，解析結果，メタ情報は多くの場合使われる
+% これらのデータを埋め込むことで，即座にシステム特有の処理を行うことができる
+% 
+% ウェブ文書を扱うシステムでは，大量のウェブ文書から文を抽出し，それらを既
+% 存の言語処理ツールを用いて解析することがしばしば行われており，これらの処
+% 理は，システムの開発者または機関が独自に行っているのが現状である．しかし
+% ながら，WWW上には膨大な量のウェブ文書が存在することを考えると，現在のよ
+% うに，機関が単独で，ウェブ文書を管理するよりも，集中的に管理し，その解析
+% 結果を誰でも使えるような形で管理するような大規模なリポジトリを作成した方
+% が望ましい場合が多い．
+
+
+%
+% そこで我々は，大規模なウェブ文書の解析結果を共有するためのフォーマットとして，ウェブ標準フォーマットを提案している．
+% ウェブ標準フォーマットで用いられるタグセットのDTDを表に示す．
+% %ウェブ標準フォーマットとは，図~\ref{dtd}に示したDTDで定義されるフォーマ
+% %ットであり，表~\ref{tagset}に示す情報を含んでいる．
+% ウェブ標準フォーマットには，ウェブ文書を用いた研究を行う上で必要となるで
+% あろう，文書のタイトルやアンカー情報などのメタ情報に加え，ウェブ文書から
+% 抽出された日本語文，さらには，タイトルやアンカーテキスト，抽出された日本
+% 語文の形態素／構文解析結果を埋め込み可能である．
+% 
+% %
+
+図\ref{sample}(a)にオリジナルのウェブページを，同図(b)に標準フォーマッ
+トに変換された文書
+（KNP\footnote{http://nlp.kuee.kyoto-u.ac.jp/nl-resource/knp.html}の解
+析結果付き）をそれぞれ示す．標準フォーマット化されたウェブページは大き
+く分けると，\texttt{<Header>}タグで囲まれるヘッダー部と\texttt{<Text>}
+タグで囲まれるテキスト部から構成される．
+%
+ヘッダー部は，対応するウェブページのタイトル(\texttt{<Title>})，ウェブペ
+ージへのインリンク情報(\texttt{<InLink>})および，ウェブページからのアウ
+トリンク情報(\texttt{<OutLink>})などのメタ情報を含んでいる．
+%
+例えば，図\ref{link}に示したID 300のウェブページを標準フォーマット化すると，
+図\ref{meta}に示すヘッダー部が得られる．
+%
+
+テキスト部には，対応するウェブページから抽出された日本語文およ
+び，日本語文を自然言語処理ツールを使って解析した結果が含まれる．テキス
+ト部の例を図\ref{text}に示す．
+%
+\texttt{<S>}タグで囲まれた範囲が，以下で述べる日本語文抽出処理により，
+オリジナルのウェブページから抽出された日本語文1文に相当する．その子要素
+である\texttt{<RawString>}タグには実際に抽出された日本語文が，
+\texttt{<Annotation>}タグには日本語文を自然言語処理ツールで解析した結果
+がそれぞれ囲まれている．
+%
+同一の日本語文を複数の自然言語処理ツールで解析する場合を考慮して，
+\texttt{<Annotation>}タグの\texttt{Scheme}属性の値を異なる値(基本的には
+ツール名)にすることで，複数の解析結果を同一の標準フォーマットに埋め込め
+るようになっている．
+
+以下では，ウェブ標準フォーマット化において重要である日本語文の抽出処理
+について述べる．
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=\columnwidth,clip,angle=-90]{figs/html_sf.eps}
+\caption{標準フォーマット化されたウェブページの例}
+\label{sample}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=0.6\columnwidth,clip,angle=-90]{figs/link.eps}
+\caption{インリンク，アウトリンクの例}
+\label{link}
+\end{center}
+\end{figure}
+
+\begin{figure}[t]
+\footnotesize
+\begin{center}
+\begin{tabular}{|c|}
+\hline
+\begin{minipage}{0.5\columnwidth}
+\begin{verbatim}
+<Header>
+  <Title>
+    <RawString>京都大学ホームページ</RawString>
+  </Title>
+  <OutLinks>
+    <OutLink>
+      <RawString>受験生の方へ</RawString>
+      <DocIDs>
+        <DocID>400</DocID>
+      </DocIDs>
+    </OutLink>
+  </OutLinks>
+  <InLinks>
+    <InLink>
+      <RawString>京大</RawString>
+      <DocIDs>
+        <DocID>300</DocID>
+        <DocID>500</DocID>
+      </DocIDs>
+    </InLink>
+    <InLink>
+      <RawString>トップへ戻る</RawString>
+      <DocIDs>
+        <DocID>300</DocID>
+      </DocIDs>
+    </InLink>
+  </InLinks>
+</Header>
+\end{verbatim}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\caption{ヘッダー部の例}
+\end{center}
+\label{sf-example-2}
+\end{figure}
+
+\begin{figure}[t]
+\footnotesize
+\begin{center}
+\begin{tabular}{|c|}
+\hline
+\begin{minipage}{.8\columnwidth}
+\begin{verbatim}
+<Text Type="default">
+<S Id="1" Length="70" Offset="525">
+  <RawString>小泉総理の好きな格言のひとつに「無信不立(信無くば立たず)」があります．</RawString>
+  <Annotation Scheme="KNP">
+    <![CDATA[* 1D <文頭><サ変><人名><助詞><連体修飾><体言><係:ノ格><区切:0-4><RID:1056>
+小泉 こいずみ 小泉 名詞 6 人名 5 * 0 * 0 NIL <文頭><漢字><かな漢字><名詞相当語><自立><タグ単位始><文節始><固有キー>
+ ...中略...
+ます ます ます 接尾辞 14 動詞性接尾辞 7 動詞性接尾辞ます型 31 基本形 2 NIL <表現文末><かな漢字><ひらがな><活用語><付属><非独立無意味接尾辞>
+． ． ． 特殊 1 句点 1 * 0 * 0 NIL <文末><英記号><記号><付属>
+    EOS]]>
+  </Annotation>
+</S>
+<S Id="2" Length="160" Offset="595">
+  <RawString>論語の下篇「顔淵」の言葉で，弟子の子貢（しこう）が政治について尋ねたところ，孔子は「食料を十分にし軍備を十分にして，人民には信頼を持たせることだ」と答えました．</RawString>
+  <Annotation Scheme="KNP">
+    <![CDATA[* 1D <文頭><助詞><連体修飾><体言><係:ノ格><区切:0-4><RID:1056>
+論 ろん 論 名詞 6 普通名詞 1 * 0 * 0 "漢字読み:音 代表表記:論" <漢字読み:音><代表表記:論><文頭><漢字><かな漢字><名詞相当語><自立><タグ単位始><文節始>
+ ...中略...
+ました ました ます 接尾辞 14 動詞性接尾辞 7 動詞性接尾辞ます型 31 タ形 5 NIL <表現文末><かな漢字><ひらがな><活用語><付属><非独立無意味接尾辞>
+． ． ． 特殊 1 句点 1 * 0 * 0 NIL <文末><英記号><記号><付属>
+EOS]]>
+  </Annotation>
+</S>
+...中略...
+</Text>
+\end{verbatim}
+\end{minipage}
+\\ \hline
+\end{tabular}
+\end{center}
+\caption{テキスト部の例 (KNPによる解析結果有)}
+\label{text}
+\end{figure}
+
+
+\subsection{日本語文の抽出}
+
+%% \begin{description}
+%% \setlength{\itemsep}{-2pt}
+%% \item {Step 1:} 日本語ウェブページかどうかの判定（オプション）
+%% \item {Step 2:} ウェブページのutf8化
+%% \item {Step 3:} ウェブページからの日本語文抽出
+%% % \item {Step 4:} 抽出された日本語文の解析（オプション）
+%% % \item {Step 5:} ウェブ標準フォーマット形式に変換
+%% \end{description}
+
+%% \noindent
+%% ここでは各ステップについて述べる．
+
+
+%% \paragraph {Step 3: ウェブページからの日本語文抽出}
+
+日本語文の境界を認識し，ウェブページの本文を文単位に区切る．この処理は以
+下のステップからなる．
+
+\begin{description}
+\item [Step 1.] HTMLタグ、改行を利用した段落の認識
+\item [Step 2.] 句点、顔文字を利用した段落内の文分割
+\item [Step 3.] 文分割の後処理
+\item [Step 4.] 箇条書きの処理
+\end{description}
+
+
+% HTMLタグおよび句点を利用する．文認識のための手かが
+% りとして用いるHTMLタグとして，\texttt{<br>}と\texttt{<p>}を利
+% 用する．また\texttt{<pre>}タグ中の改行は，そのまま改行として扱う．
+
+
+\subsubsection{HTMLタグ、改行を利用した段落の認識}
+
+ブロックタグで囲まれたテキストを段落として抽出し，抽出されたテキスト中で
+改行が2連続以上ある場合は、段落の切れ目と見なし段落を分割する．
+%
+段落として抽出されたテキストに対して以下の処理を行う．
+
+\begin{itemize}
+\item アンカー処理★
+\item HTMLタグの消去とHTMLエンティティのデコード(HTML::Entity::decodeentities関数を利用)
+\item 全角に変換
+\item 漢字間の空白を詰める
+\item 文字の正規化
+\item カタカナに後続するハイフンの統一
+\item UTF8からeuc-jpにマップできない文字の置換
+\item 波ダッシュ問題への対処
+\end{itemize}
+
+\subsubsection{句点、顔文字を利用した段落内の文分割}
+
+以下の文字（列）を手がかりに、段落内のテキストを文に分割する．
+
+\begin{description}
+\item 「。」「？」「！」「♪」「…」「・・・」
+\end{description}
+
+\noindent
+ただし、括弧内の文区切り文字は無視する．
+
+
+
+\subsubsection{文分割の後処理}
+
+抽出された文の列に対し、以下のルールを適用して、誤分割を修正する．
+
+\begin{description}
+\item [ルール1.] 「\"」が注目している文と直前の文に奇数個含まれている場
+	    合は、注目している文を直前の文と連結
+\item [ルール2.] 注目している文が「A.」のような箇条書きの見出しを表す文字列のみの場合は、直後の文と連結
+\item [ルール3.] 注目している文の文頭が「と」「っ」「です」であり、直前の文の文末が「閉じ括弧」「！」「？」の場合は直前の文と連結
+\end{description}
+
+\noindent
+誤分割修正後、顔文字、（笑）（汗）などの感情を表す表記を手がかりに文を再
+度分割する．
+
+\subsubsection{箇条書き処理}
+
+テキストベースの箇条書きを1文に変換する． 例えば、以下の箇条書きは、
+文「次のお店＿・さえずり＿・のら酒房＿・串カツ屋＿は美味しいです」
+として認識される（＿は全角空白）．
+
+\begin{tabular}{cl}
+S1 & 以下のお店、\\
+S2 &~~・さえずり\\
+S3 &~~・のら酒房\\
+S4 &~~・串カツ屋\\
+S5 & は美味しいです。\\
+\end{tabular}
+
+
+その一方で、以下のような箇条書き
+
+\begin{tabular}{cl}
+S1 & 以下にお店を列挙します。\\
+S2 &~~・さえずり\\
+S3 &~~・のら酒房\\
+S4 &~~・串カツ屋\\
+S5 &これらのお店は ...\\
+\end{tabular}
+
+\noindent
+は各項目を別々の文として認識する．
+
+\begin{tabular}{cl}
+S1 & 以下にお店を列挙します。\\
+S2 &~~・さえずり\\
+S3 &~~・のら酒房\\
+S4 &~~・串カツ屋\\
+S5 &これらのお店は ...       
+\end{tabular}
+
+% ★文の連結、分解
+% ★箇条書きの扱い
+% ★連続するアンカーテキストの処理
+
+% % \paragraph {Step 4: 抽出された日本語文の解析（オプション）}
+
+% % 抽出された日本語文を既存の言語処理ツールを用いて解析する．
+
+% % \paragraph {Step 5: ウェブ標準フォーマット形式に変換}
+
+% % 抽出された日本語文，日本語文の解析結果（オプション）を標準フォーマット形
+% % 式で保存する．文書取得日時，URLなどウェブページのメタ情報は，クローラよ
+% % り得られる情報を利用する．
+
+
+%\subsection{Webページから日本語文の抽出}
+%
+%各Webページを以下のように処理し，日本語文を抽出する．
+%
+%\begin{enumerate}
+% \item エンコーディング情報を用いた日本語ページ候補の抽出
+%
+%       \begin{tabular}{@{}l@{ }p{6.1cm}@{}}
+%	(a) & ページにcharset情報\footnote{HTMLのmetaタグ中に記述されて
+%	      いるcharset属性}が明示されており，それが日本語を表すた
+%	      めに使われるエンコーディング(euc-jp, x-euc-jp,
+%	      iso-2022-jp, shift\_jis, windows-932, x-sjis, shift-jp,
+%	      utf-8)であれば，そのページを選択する．utf-8以外は日本語固
+%	      有のエンコーディングであるが，utf-8はUnicodeのエンコーディ
+%	      ング形式であり他言語も含まれる．utf-8のページはここで選択
+%	      しておき，2の処理で日本語のページのみを選択する．\\
+%	(b) & charset情報が明示されていなければ，perlの
+%	      Encode::guess\_encoding()関数\footnote{perl 5.8以上に同梱
+%	      されているEncodeモジュールに含まれている．}を用いてエンコー
+%	      ディングを推定する．この関数は，各エンコーディングの特徴的
+%	      なバイト列を手がかりにしてエンコーディングを判定している．
+%	      エンコーディングがeuc-jp, shiftjis, 7bit-jis, utf8のいずれ
+%	      かに判定されれば，そのページを選択する．\\
+%       \end{tabular}
+%       \footnotetext[2]{HTMLのmetaタグ中に記述されているcharset属性}
+%%%%%%%%       \footnotetext[3]{perl 5.8以上に同梱されているEncodeモジュールに含まれている．}
+
+% \item 言語情報を用いた日本語ページ判定
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%       1の抽出において，明示されているエンコーディングが誤っている場合や
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       utf-8の場合，明示されていないときのperlによる自動判定が誤っている
+%       場合に，日本語ではないページが抽出される可能性がある．そこで，日
+%       本語の助詞の含有率を用いて日本語のページかどうかをチェックする．
+%       以下に示す助詞の文字を0.5\%以上含むページのみ用いる．
+%
+%       \begin{quote}
+%	が, を, に, は, の, で
+%       \end{quote}
+%
+%       この結果，日本語と判定された約1億ページを得た．
+%
+% \item ページからの文抽出
+%
+%       ページのHTMLをパースし，HTMLタグと句点を利用して文のリストを得る．
+%       HTMLタグとしては，例えばbr, pなどの改行，段落を表すタグを文区切り
+%       と認識する．preタグは，その中のテキストをフォーマットしないことを
+%       示すものなので，その中にある改行は文区切りと認識する．残りの部分
+%       は句点で分割する．
+
+% \item 日本語文の抽出
+%
+%       日本語ページと判定されていても，文ごとに見ると英語の場合もあるの
+%       で，日本語文のみを抽出する必要がある．ひらがな，カタカナ，漢字の
+%       いずれかが60\%以上含まれる文のみを抽出する．
+%
+%       得られた文集合には，ミラーサイトなどから同じ文が抽出されている場
+%       合もあるので，重複している文を除く．
+%\end{enumerate}
+
+%\subsection{既存の言語処理ツールの解析結果の埋め込み}
+
+%\begin{figure*}[t]
+%\begin{center}
+%\includegraphics[width=\textwidth,clip]{sf_sample.eps}
+%\caption{標準フォーマット化されたウェブ文書の例(KNPの解析結果埋め込%み済み)}
+%\label{interface}
+%\end{center}
+%\end{figure*}
+
+
+
+\subsection{ウェブ標準フォーマットデータの構築}
+\label{construction_of_wsf_data}
+
+\ref{pageset}章で得られた日本語ウェブページ★億件をウェブ標準フォーマットに変換した．
+★変換に用いた計算機環境は，Intel CPU Xeon 3.0GHz×4，メモリ 4GBのスペッ
+クを持つ計算機★台であり，GXP2\cite{gxp2}を用いて並列に変換処理を行っ
+た．
+%
+今回我々が用いたウェブ標準フォーマット変換ツールは以下のアドレスよりダウンロード可能である．
+\begin{flushleft}
+http://nlp.kuee.kyoto-u.ac.jp/~{}skeiji/html2sf.tgz
+\end{flushleft}
+%
+
+\noindent
+上記の環境，ツールを用いた結果，日本語ウェブページ1億件のウェブ標準フォー
+マット化に約★週間かかった．
+%
+表~\ref{disk_size}に標準フォーマット化されたデータおよび，対応するウェ
+ブページのファイルサイズを示す．
+
+\begin{table}[t]
+\begin{center}
+\caption{★オリジナルのウェブページと標準フォーマットデータのファイルサイズ~(約1億ページ，gzip圧縮時)}
+\label{disk_size}
+\small
+\begin{tabular}{l|r}
+\hline
+ファイルの種別&サイズ [TB]\\\hline
+オリジナルのウェブページ(utf8変換前)&0.6\\
+標準フォーマット変換済データ&3.1\\\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+
+ウェブ標準フォーマット化されたデータは，TSUBAKI API（付録を参照）を利用するこ
+とで誰でも容易に取得することが可能である．また，科研情報爆発支援班に
+て整備がすすめられているInTrigger環境のユーザーであれば，これらのデータ
+はInTrigger(chiba)上にコピー済みであるため，APIを用いなくても直接利用す
+ることが可能である．
+
+%% ウェブ標準フォーマットへの変換手順を，先述のクロールされた2億ページに対
+%% して適用し，日本語ウェブページの抽出及び，抽出されたページの標準フォーマ
+%% ット化(KNPの解析結果付き)を行った．

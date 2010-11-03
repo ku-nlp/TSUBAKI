@@ -1,0 +1,233 @@
+\section{検索}
+
+\subsection{検索の流れ}
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=0.6\columnwidth,clip,angle=-90]{figs/flow.eps}
+\begin{minipage}{\columnwidth}
+\footnotesize
+\begin{enumerate}
+\setlength{\itemsep}{-2pt}
+\item 負荷分散サーバーにクエリ$Q$が与えられる
+\item もっとも負荷の低いマスターサーバーにクエリ$Q$が送信される
+\item クエリ$Q$を解析し，検索条件$C$，単語インデックス$Q_{\mathit{word}}$，係り受けインデックス$Q_{\mathit{dpnd}}$を抽出する
+\item $C$, $Q_{\mathit{word}}$, $Q_{\mathit{dpnd}}$を27台の検索サーバーに送信する
+\item 各検索サーバーで$C$, $Q_{\mathit{word}}$, $Q_{\mathit{dpnd}}$に適合する文書を検索し，クエリとの適合度を表すスコアを計算する
+\item 検索により得られたスコア付き文書の集合をマスターサーバーへ返信する
+\item 各検索サーバーからの返信された検索結果をマージし，スコアに従いソートする
+\item 上位{\it M}件について，タイトル，URLなどをデータベースより獲得し，またファイルサーバーから標準フォーマットを読み込み，スニペッツを生成する
+\item 検索結果をユーザへ提示する
+\end{enumerate}
+\end{minipage}
+\caption{検索の流れ（同義表現を考慮した場合は，検索サーバーの台数が43になる）}
+\label{search_flow}
+\end{center}
+\end{figure}
+
+図~\ref{search_flow}に検索の流れを示す．
+%
+TSUBAKIは大きく，負荷分散サーバー（1台），マスターサーバー（4台），ファ
+イルサーバー(1台)，検索サーバー(43台)から構成されており，検索サーバーの
+台数は同義表現を考慮した検索を行うかどうかにより異なる．具体的には，同義
+表現を考慮しない通常検索の場合27台，同義表現を考慮した検索の場合43台であ
+る．
+
+TSUBAKIでは1億ページを検索対象としているが，インデックスは100万ページ単
+位で管理されており，各インデックスデータは27台（同義表現の場合は43台）の
+検索サーバーに割り振られる．従って，各検索サーバーでは高々400万ページ分
+のインデックス（同義表現の場合は300万ページ分）から，検索クエリに適合す
+るページを検索することになる．
+
+\subsection{クエリ処理}
+
+\subsubsection{タームの抽出}}
+
+入力されたクエリに対して言語解析を行い，その結果から検索に利用するターム
+を抽出する．言語解析としては，形態素・構文解析，同義語・句のアライメント
+処理，固有表現認識を行う．解析後，単語，同義語・句，係り受け関係をターム
+として抽出する．
+
+
+\subsubsection{タームの重要度判定}
+
+検索クエリに対する言語解析結果およびウェブ16億文を利用して求めた共起情報
+を利用して，クエリから抽出されたタームの重要度を決定する．
+%
+TSUBAKIでは，語句の重要度として以下の3段階を設け，検索での利
+用方法を区別する．
+
+\begin{description}
+ \setlength{\itemsep}{-2pt}
+ \item [必須:] 文書に含まれていなくてならない．さらに，必須の全表現が$W$
+	     語以内という近接条件を課すことも考えられる
+ \item [任意:] 文書に含まれていた方が良い
+ \item [不要:] 文書に含まれていても，いなくてもどちらでも良い
+\end{description}
+
+\noindent
+前節で述べたように，クエリ中の単語，同義語・句，係り受け関係がタームとし
+て抽出されるが，各タームの重要度は，基本的には{\bf 単語，同義語・句は必
+須}，{\bf 係り受けは任意}として扱われる．
+%
+しかしながら，固有名詞（または「情報科学」のようなつながりの強い複合名詞）
+内の係り受け関係や，「シェイクスピアの書いた本」における「書く」のような
+冗長的な動詞などが存在するため，言語解析結果および共起頻度を利用して重要
+度を変更する．重要度の変更処理については付録を参照されたい．
+
+検索では不要表現は一切利用せず，文書の収集に必須表現のみを，文書のスコア
+リングに必須表現，任意表現を利用する．
+
+
+\subsubsection{検索制約}
+
+TSUBAKIでは，入力として与えられた複数個の検索キーワード間に，AND/ORの論
+理条件を適用して検索することが可能であるが（一般に言われているAND検索・OR
+検索に相当する），検索条件に加え，検索キーワードごとに{\bf 制約}を指定することも可
+能である．制約は，検索キーワードの末尾に「\~{}制約を表す文字列」を
+指定して表現する．表\ref{const}にTSUBAKIで指定
+可能な検索キーワード制約を示す．
+
+\begin{table}[t]
+\footnotesize
+\caption{TSUBAKIで指定可能な検索キーワード制約}
+\label{const}
+\begin{tabular}{l|l|p{0.5\columnwidth}|l}
+\hline
+制約名&タグ名&説明&例\\ \hline
+AND制約&\~{}AND& 検索キーワード中の単語（自立語）が全て含まれていなければならない&京都大学\~{}AND\\ \hline
+OR制約&\~{}OR& 検索キーワード中のいずれかの単語（自立語）が含まれている&京都大学\~{}OR\\ \hline
+フレーズ制約&タグなし．`\"'で囲む&既存の検索エンジンで使われているフレーズ検索に相当する& "京都大学"\\ \hline
+係り受け制約&\~{}FD& 検索キーワード中の係り受け関係が全て含まれていなくてはならない& 京都大学\~{}FD\\ \hline
+近接制約（文）&\~{}$N$S& 検索キーワード中の単語（自立語）が，キーワード中の出現順で，$N$文以内に現れている& 京都大学\~{}5S\\ \hline
+近接制約（単語）&\~{}$N$W& 検索キーワード中の単語（自立語）が，キーワード中の出現順で，$N$語以内に現れている&京都大学\~{}20W\\ \hline
+\end{tabular}
+\end{table}
+
+制約が指定された検索キーワードを組み合わせて検索することも可能である．
+例えば，「"市バス"　京都大学へのアクセス~20W」とすることで，「市バス」
+というフレーズを含み，かつ，「京都」，「大学」，「アクセス」が20単語以
+内現れている文書を検索することが可能である．
+
+
+\subsubsection{検索式の表現}
+
+
+
+\subsection{文書のスコアリング}
+
+\subsubsection{単語・係り受けを使ったスコアリング}
+
+TSUBAKIでは，ユーザより与えられた検索条件および検索クエリに従って，条件
+に一致する文書を検索する．そして，検索して得られた文書群に対して，検索ク
+エリとの適合度を表すスコアを計算する．検索クエリ$Q$（子どもの体力低下）
+から抽出される単語インデックスを$Q_{\mathit{word}}$（子供，体力，低下），
+係り受けインデックス$Q_{\mathit{dpnd}}$（子供→体力，体力→低下）とした
+時，検索クエリ$Q$に対する文書$D$のスコア$\mathit{score}_{\mathit{rel}}(Q, 
+D)$を以下の式により計算する．
+
+$$
+\mathit{score}_{\mathit{rel}}(Q, d) = \mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, d) + \mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)
+$$
+
+\noindent
+ここで，$\mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, d)$は$Q$の単語インデックスより計算され
+るスコア，$\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)$は$Q$の係り受けインデックスより計
+算されるスコアをそれぞれ意味する．
+%
+
+TSUBAKIでは，$\mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, D)$および
+$\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, D)$に対して重み付けを行
+っていない．しかし，係り受け関係の出現頻度は，単語に比べ相対的に低い
+ため，単語に比べより高いスコアを文書に対して与える．
+これにより，係り受け関係を特別に重要視しなくとも，検索クエリに含まれる係
+り受け関係と同じ係り受け関係を持つ文書程高いスコアを得られるようになって
+いる．
+
+
+$\mathit{rel}_{\mathit{word}}(Q_{\mathit{word}}, d)$はOKAPI BM25\cite{okapi_bm25}を基にした以下の式によ
+り求められる．
+
+
+\[
+\begin{array}{l}
+\displaystyle
+\mathit{score}_{\mathit{rel}}(Q, D) = \sum_{q \in Q} w_q \times \mathit{BM25}(q, D)\\
+\displaystyle
+\mathit{BM25}(q, D) = w \times \frac{(k_1 + 1)\mathit{F_{\mathit{Dq}}}}{K + \mathit{F_{\mathit{Dq}}}} \times \frac{(k_3 + 1)\mathit{F_{\mathit{Qq}}}}{k_3 + \mathit{F_{\mathit{Qq}}}}\\
+\displaystyle
+w = \log \frac{N - DF_q + 0.5}{DF_q + 0.5}, K = k_1((1 - b) + b \frac{l_D}{l_{\mathit{ave}}})\\
+\end{array}
+\]
+
+\noindent
+ここで，$\mathit{F_{\mathit{Dq}}}$は表現$q$の文書$D$中での出現頻度，$\mathit{F_{\mathit{Qq}}}$ は
+$q$の検索クエリ中での出現頻度，$N$は検索対象としている全文書数(TSUBAKIで
+は$1.0 \times 10^{8}$)，$DF_q$は$q$を含む文書数，$l$は文書$d$の文書長
+(TSUBAKIでは文書中の単語数)，$l_{\mathit{ave}}$は平均文書長を表す．ま
+た，$k_1$,$k_3$,$b$は$\mathit{BM25}$のパラメータであり，TSUBAKIでは，
+$k_1 = 2$, $k_3 = 0$, $b = 0.75$を用いている．
+
+一方，$\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d)$は以下の式により求められる．
+
+$$
+\mathit{rel}_{\mathit{dpnd}}(Q_{\mathit{dpnd}}, d) = \sum_{q \in Q_{\mathit{dpnd}}} f(q,d)
+$$
+$$
+\displaystyle
+f(q,d) = \left\{ 
+\begin{array}{ll}
+\displaystyle
+\frac{3 \times \mathit{fq}}{K + \mathit{fq}} \times \log \frac{N - n + 0.5}{n + 0.5} & q がdに含まれている場合\\ \\
+\displaystyle
+\frac{3 \times w(q)}{K + \mathit{fq}} \times \log \frac{N - n + 0.5}{n + 0.5}& otherwise\\
+\end{array} \right.
+$$
+
+\noindent
+ここで$w(q)$は
+
+$$
+w(q) = \left\{ 
+\begin{array}{ll}
+\displaystyle
+\frac{D - \mathrm{min\_dist}(l(q), r(q))}{D} & \mathrm{min\_dist}(l(q), r(q)) < D\\ \\
+\displaystyle
+0 & \mathit{otherwise}\\
+\end{array} \right.
+$$
+
+\noindent
+で表される関数である．$\mathrm{min\_dist}(A, B)$は単語A，B間の最小距離を求める関
+数であり，$w(q)$では，係り受けインデックス$q$の係り元($l(q)$)と係り先($r(q)$)に
+対応する単語間の最小距離を求める際に用いている．
+%
+★これは，たとえ係り受け関係が文書中に含まれていなくても，係り受け関係を構
+成する単語同士が近くに出現していれば，それは検索クエリと関連する文書であ
+ろうという直感に基づいている．
+$D$としては，30を用いている．
+
+%TSUBAKIでは，係り先と係り元の距離$D(=30)$としている．
+
+\subsubsection{★同義表現・係り受けを使ったスコアリング}
+
+
+
+% 全検索サーバーから文書IDとスコアの組が返信されると，CGIサーバーではそれ
+% らをマージし，スコアに従って降順にソートする(ステップ5)．そして，スコア
+% の上位$M$件についてスニペッツを生成し，文書のタイトル，文書へのリンクと
+% 共に検索結果として表示する(ステップ6)．TSUBAKIでは，$M=50$としている．
+
+%により計算する．そして検索の結果得れる文書IDとその文書のスコアをCGIサーバへ返信する．このとき，係り受けインデックスはANDやORの条件とならない．{\bf 係り受けインデックスはあくまでも，文書のスコアを計算するときのみ利用される}．
+
+%つまり，上式は検索クエリ中に同じインデックスが含まれないことを仮定した式となっている．
+
+%\mathit{OKAPI}_{\mathit{BM25}(e)} = \sum_{T \in Q} \frac{(k_1 + 1)\mathit{tf}}{K + \mathit{tf}} \times \frac{(k_3 + 1)\mathit{qtf}}{k_3 + \mathit{qtf}} \times \log \frac{N - n + 0.5}{n + 0.5}
+
+%- AND, OR 検索\\
+%- OKAPIスコア\\
+
+\subsection{検索速度}
+
+TSUBAKIを使って実際に検索した場合の所要時間を表\ref{time}に示す．
+\footnote{今回速度測定に用いたクエリは，以下のNクエリである．}
