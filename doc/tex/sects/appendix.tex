@@ -2,44 +2,44 @@
 
 \section{TSUBAKI API}
 
-–{ß‚Å‚ÍTSUBAKI‚ªŒöŠJ‚µ‚Ä‚¢‚éAPI‚É‚Â‚¢‚Äq‚×‚éD
+ËÜÀá¤Ç¤ÏTSUBAKI¤¬¸ø³«¤·¤Æ¤¤¤ëAPI¤Ë¤Ä¤¤¤Æ½Ò¤Ù¤ë¡¥
 
-\subsection{ŒŸõŒ‹‰Ê‚Ìæ“¾•û–@}
+\subsection{¸¡º÷·ë²Ì¤Î¼èÆÀÊıË¡}
 
-TSUBAKI‚Å‚ÍREST\cite{rest}Œ`®‚ÅC‚»‚ÌAPI‚ğŒöŠJ‚µ‚Ä‚¢‚éDAPI‚ÉƒAƒNƒZƒX‚·‚é‚½‚ß‚ÌƒŠƒNƒGƒXƒgURL‚ÍˆÈ‰º‚Ì‚Æ‚¨‚è‚Å‚ ‚éD
+TSUBAKI¤Ç¤ÏREST\cite{rest}·Á¼°¤Ç¡¤¤½¤ÎAPI¤ò¸ø³«¤·¤Æ¤¤¤ë¡¥API¤Ë¥¢¥¯¥»¥¹¤¹¤ë¤¿¤á¤Î¥ê¥¯¥¨¥¹¥ÈURL¤Ï°Ê²¼¤Î¤È¤ª¤ê¤Ç¤¢¤ë¡¥
 
 \begin{flushleft}
 http://tsubaki.ixnlp.nii.ac.jp/api.cgi
 \end{flushleft}
 
 \noindent
-‚±‚ÌURL‚ÌŒã‚ë‚ÉC•\\ref{api_param}‚É‹“‚°‚½ƒŠƒNƒGƒXƒgƒpƒ‰ƒ[ƒ^‚ğ•t‰Á‚µCHTTP‚É‚Ä–â‚¢‡‚í‚¹‚é‚±‚Æ‚ÅŒŸõŒ‹‰Ê‚ª“¾‚ç‚ê‚éD
-ˆÈ‰º‚ÉƒŠƒNƒGƒXƒgURL‚Ì—á‚ğ¦‚·D
+¤³¤ÎURL¤Î¸å¤í¤Ë¡¤É½\ref{api_param}¤Ëµó¤²¤¿¥ê¥¯¥¨¥¹¥È¥Ñ¥é¥á¡¼¥¿¤òÉÕ²Ã¤·¡¤HTTP¤Ë¤ÆÌä¤¤¹ç¤ï¤»¤ë¤³¤È¤Ç¸¡º÷·ë²Ì¤¬ÆÀ¤é¤ì¤ë¡¥
+°Ê²¼¤Ë¥ê¥¯¥¨¥¹¥ÈURL¤ÎÎã¤ò¼¨¤¹¡¥
 
 
 \begin{table}[t]
 \footnotesize
 \begin{center}
-\caption{TSUBAKI API‚Å—˜—p‰Â”\‚ÈƒŠƒNƒGƒXƒgƒpƒ‰ƒ[ƒ^ˆê——}
+\caption{TSUBAKI API¤ÇÍøÍÑ²ÄÇ½¤Ê¥ê¥¯¥¨¥¹¥È¥Ñ¥é¥á¡¼¥¿°ìÍ÷}
 \label{api_param}
 \begin{tabular}{r|c|p{0.7\columnwidth}}
 \hline
-ƒpƒ‰ƒ[ƒ^&’l&à–¾ \\ \hline
-query &string &ŒŸõƒNƒGƒŠ(utf8)‚ğURLƒGƒ“ƒR[ƒh‚µ‚½•¶š—ñDŒŸõŒ‹‰Ê‚ğ“¾‚éê‡‚Í•K{D\\ \hline
-start &integer &æ“¾‚µ‚½‚¢ŒŸõŒ‹‰Ê‚Ìæ“ªˆÊ’uD\\ \hline
-results &integer &æ“¾‚µ‚½‚¢ŒŸõŒ‹‰Ê‚Ì”DƒfƒtƒHƒ‹ƒg‚Í10D\\ \hline
-logical\_operator &AND\/OR &ŒŸõ‚Ì˜_—ğŒDƒfƒtƒHƒ‹ƒg‚ÍANDD\\ \hline
-only\_hitcount &0/1 &ƒqƒbƒgŒ”‚¾‚¯‚ğ“¾‚½‚¢ê‡‚Í1CŒŸõŒ‹‰Ê‚ğ“¾‚½‚¢ê‡‚Í0DƒfƒtƒHƒ‹ƒg‚Í0D\\ \hline
-force\_dpnd &0/1 &ƒNƒGƒŠ’†‚ÌŒW‚èó‚¯ŠÖŒW‚ğ‘S‚ÄŠÜ‚Ş•¶‘‚ğ“¾‚½‚¢ê‡‚Í1C‚»‚¤‚Å‚È‚¢ê‡‚Í0DƒfƒtƒHƒ‹ƒg‚Í0D\\ \hline
-snippets &0/1 &ƒXƒjƒyƒbƒc‚ª•K—v‚Èê‡‚Í1CƒXƒjƒyƒbƒc‚ª•s—v‚Èê‡‚Í0DƒfƒtƒHƒ‹ƒg‚Í0D\\ \hline
-near &integer &ƒNƒGƒŠ’†‚Ì’PŒê‚Æ’PŒê‚ª n ŒêˆÈ“à‚ÉoŒ»‚·‚é‚Æ‚¢‚¤ğŒ‚Ì‚à‚ÆŒŸõ‚ğÀs‚·‚é(‹ßÚŒŸõ)DƒNƒGƒŠ’†‚Ì’PŒê‚ÌoŒ»‡˜‚Íl—¶‚³‚ê‚éD\\ \hline
-id &string &ŒÂ•Ê‚Ì•¶‘‚ğæ“¾‚·‚éÛ‚Ì•¶‘IDDƒIƒŠƒWƒiƒ‹‚ÌƒEƒFƒu•¶‘C‚Ü‚½‚Í•W€ƒtƒH[ƒ}ƒbƒgŒ`®‚Ì•¶‘‚ğ“¾‚éÛ‚Í•K{D\\ \hline
-format &html\/xml &ƒIƒŠƒWƒiƒ‹‚ÌƒEƒFƒu•¶‘C‚Ü‚½‚Í•W€ƒtƒH[ƒ}ƒbƒgŒ`®‚ÌƒEƒFƒu•¶‘‚Ì‚Ç‚¿‚ç‚ğæ“¾‚·‚é‚©‚ğw’èDid‚ğw’è‚µ‚½Û‚Í•K{D\\ \hline
+¥Ñ¥é¥á¡¼¥¿&ÃÍ&ÀâÌÀ \\ \hline
+query &string &¸¡º÷¥¯¥¨¥ê(utf8)¤òURL¥¨¥ó¥³¡¼¥É¤·¤¿Ê¸»úÎó¡¥¸¡º÷·ë²Ì¤òÆÀ¤ë¾ì¹ç¤ÏÉ¬¿Ü¡¥\\ \hline
+start &integer &¼èÆÀ¤·¤¿¤¤¸¡º÷·ë²Ì¤ÎÀèÆ¬°ÌÃÖ¡¥\\ \hline
+results &integer &¼èÆÀ¤·¤¿¤¤¸¡º÷·ë²Ì¤Î¿ô¡¥¥Ç¥Õ¥©¥ë¥È¤Ï10¡¥\\ \hline
+logical\_operator &AND\/OR &¸¡º÷»ş¤ÎÏÀÍı¾ò·ï¡¥¥Ç¥Õ¥©¥ë¥È¤ÏAND¡¥\\ \hline
+only\_hitcount &0/1 &¥Ò¥Ã¥È·ï¿ô¤À¤±¤òÆÀ¤¿¤¤¾ì¹ç¤Ï1¡¤¸¡º÷·ë²Ì¤òÆÀ¤¿¤¤¾ì¹ç¤Ï0¡¥¥Ç¥Õ¥©¥ë¥È¤Ï0¡¥\\ \hline
+force\_dpnd &0/1 &¥¯¥¨¥êÃæ¤Î·¸¤ê¼õ¤±´Ø·¸¤òÁ´¤Æ´Ş¤àÊ¸½ñ¤òÆÀ¤¿¤¤¾ì¹ç¤Ï1¡¤¤½¤¦¤Ç¤Ê¤¤¾ì¹ç¤Ï0¡¥¥Ç¥Õ¥©¥ë¥È¤Ï0¡¥\\ \hline
+snippets &0/1 &¥¹¥Ë¥Ú¥Ã¥Ä¤¬É¬Í×¤Ê¾ì¹ç¤Ï1¡¤¥¹¥Ë¥Ú¥Ã¥Ä¤¬ÉÔÍ×¤Ê¾ì¹ç¤Ï0¡¥¥Ç¥Õ¥©¥ë¥È¤Ï0¡¥\\ \hline
+near &integer &¥¯¥¨¥êÃæ¤ÎÃ±¸ì¤ÈÃ±¸ì¤¬ n ¸ì°ÊÆâ¤Ë½Ğ¸½¤¹¤ë¤È¤¤¤¦¾ò·ï¤Î¤â¤È¸¡º÷¤ò¼Â¹Ô¤¹¤ë(¶áÀÜ¸¡º÷)¡¥¥¯¥¨¥êÃæ¤ÎÃ±¸ì¤Î½Ğ¸½½ç½ø¤Ï¹ÍÎ¸¤µ¤ì¤ë¡¥\\ \hline
+id &string &¸ÄÊÌ¤ÎÊ¸½ñ¤ò¼èÆÀ¤¹¤ëºİ¤ÎÊ¸½ñID¡¥¥ª¥ê¥¸¥Ê¥ë¤Î¥¦¥§¥ÖÊ¸½ñ¡¤¤Ş¤¿¤ÏÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È·Á¼°¤ÎÊ¸½ñ¤òÆÀ¤ëºİ¤ÏÉ¬¿Ü¡¥\\ \hline
+format &html\/xml &¥ª¥ê¥¸¥Ê¥ë¤Î¥¦¥§¥ÖÊ¸½ñ¡¤¤Ş¤¿¤ÏÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È·Á¼°¤Î¥¦¥§¥ÖÊ¸½ñ¤Î¤É¤Á¤é¤ò¼èÆÀ¤¹¤ë¤«¤ò»ØÄê¡¥id¤ò»ØÄê¤·¤¿ºİ¤ÏÉ¬¿Ü¡¥\\ \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-\paragraph{—á1: u‹“s‚ÌŠÏŒõ–¼Šv‚É‚Â‚¢‚ÄŒŸõ‚µ‚½Œ‹‰Ê‚ÌãˆÊ20Œ‚ğæ“¾‚µ‚½‚¢ê‡}
+\paragraph{Îã1: ¡ÖµşÅÔ¤Î´Ñ¸÷Ì¾½ê¡×¤Ë¤Ä¤¤¤Æ¸¡º÷¤·¤¿·ë²Ì¤Î¾å°Ì20·ï¤ò¼èÆÀ¤·¤¿¤¤¾ì¹ç}
 
 \begin{flushleft}
 http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=\%E4\%BA\%AC\%E9\%83\%BD\%E3\%81\%AE\%E8\%A6\\
@@ -47,18 +47,18 @@ http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=\%E4\%BA\%AC\%E9\%83\%BD\%E3\%81\%A
 \end{flushleft}
 
 \noindent
-‚±‚±‚ÅC
+¤³¤³¤Ç¡¤
 
 \begin{description}
-\item {query:} ƒL[ƒ[ƒh‚ğURLƒGƒ“ƒR[ƒfƒBƒ“ƒO‚µ‚½•¶š—ñ(‚±‚Ì—á‚Ìê‡‚Íu‹“s‚ÌŠÏŒõ–¼Šv)
-\item {start:} ŒŸõŒ‹‰Ê‚Ìæ“¾‚ğŠJn‚µ‚½‚¢ŒŸõŒ‹‰Ê’†‚Å‚Ì‡ˆÊ(ƒIƒtƒZƒbƒg)
-\item {results:} ŒŸõŒ‹‰Ê‚ğæ“¾‚µ‚½‚¢start‚©‚ç‚Ì•¶‘”
+\item {query:} ¥­¡¼¥ï¡¼¥É¤òURL¥¨¥ó¥³¡¼¥Ç¥£¥ó¥°¤·¤¿Ê¸»úÎó(¤³¤ÎÎã¤Î¾ì¹ç¤Ï¡ÖµşÅÔ¤Î´Ñ¸÷Ì¾½ê¡×)
+\item {start:} ¸¡º÷·ë²Ì¤Î¼èÆÀ¤ò³«»Ï¤·¤¿¤¤¸¡º÷·ë²ÌÃæ¤Ç¤Î½ç°Ì(¥ª¥Õ¥»¥Ã¥È)
+\item {results:} ¸¡º÷·ë²Ì¤ò¼èÆÀ¤·¤¿¤¤start¤«¤é¤ÎÊ¸½ñ¿ô
 \end{description}
 
 \noindent
-‚ğˆÓ–¡‚·‚éD
+¤ò°ÕÌ£¤¹¤ë¡¥
 
-\paragraph{—á2:u‹“s‚ÌŠÏŒõ–¼Šv‚ÌƒqƒbƒgŒ”‚¾‚¯‚ğ’m‚è‚½‚¢ê‡}
+\paragraph{Îã2:¡ÖµşÅÔ¤Î´Ñ¸÷Ì¾½ê¡×¤Î¥Ò¥Ã¥È·ï¿ô¤À¤±¤òÃÎ¤ê¤¿¤¤¾ì¹ç}
 
 \begin{flushleft}
 http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=\%E4\%BA\%AC\%E9\%83\%BD\%E3\%81\%AE\%E8\%A6\%B3\\
@@ -66,12 +66,12 @@ http://tsubaki.ixnlp.nii.ac.jp/api.cgi?query=\%E4\%BA\%AC\%E9\%83\%BD\%E3\%81\%A
 \end{flushleft}
 
 \noindent
-‚±‚ÌCƒqƒbƒgŒ”‚¾‚¯‚ªplain/textŒ`®‚Å•Ô‚³‚ê‚éD 
+¤³¤Î»ş¡¤¥Ò¥Ã¥È·ï¿ô¤À¤±¤¬plain/text·Á¼°¤ÇÊÖ¤µ¤ì¤ë¡¥ 
 \\
 
-}\ref{sample_code}‚É—á1‚Ìê‡‚É‚Â‚¢‚ÄCperl‚ğg‚Á‚ÄTSUBAKI API‚ÉƒAƒNƒZ
-ƒX‚·‚é‚½‚ß‚ÌƒTƒ“ƒvƒ‹ƒR[ƒh‚ğ¦‚·DÀÛ‚É‚±‚ÌƒR[ƒh‚ğÀs‚·‚é‚ÆŒŸõŒ‹‰Ê‚ª
-XMLŒ`®‚Åo—Í‚³‚ê‚éi}\ref{api_result}QÆjD•\\ref{result_tagset}‚ÉŒŸõŒ‹‰Ê‚Åg‚í‚ê‚Ä‚¢‚éƒ^ƒO‚¨‚æ‚Ñ‘®«‚ğ¦‚·D
+¿Ş\ref{sample_code}¤ËÎã1¤Î¾ì¹ç¤Ë¤Ä¤¤¤Æ¡¤perl¤ò»È¤Ã¤ÆTSUBAKI API¤Ë¥¢¥¯¥»
+¥¹¤¹¤ë¤¿¤á¤Î¥µ¥ó¥×¥ë¥³¡¼¥É¤ò¼¨¤¹¡¥¼Âºİ¤Ë¤³¤Î¥³¡¼¥É¤ò¼Â¹Ô¤¹¤ë¤È¸¡º÷·ë²Ì¤¬
+XML·Á¼°¤Ç½ĞÎÏ¤µ¤ì¤ë¡Ê¿Ş\ref{api_result}»²¾È¡Ë¡¥É½\ref{result_tagset}¤Ë¸¡º÷·ë²Ì¤Ç»È¤ï¤ì¤Æ¤¤¤ë¥¿¥°¤ª¤è¤ÓÂ°À­¤ò¼¨¤¹¡¥
 
 
 \begin{figure}[t]
@@ -88,14 +88,14 @@ use URI::Escape;
 use Encode;
 use utf8;
 
-my $query = encode('utf8', '‹“s‚ÌŠÏŒõ–¼Š'); # ŒŸõ‚µ‚½‚¢ƒL[ƒ[ƒh (utf8)
-my $uri_escaped_query = uri_escape($query); # ŒŸõƒL[ƒ[ƒh‚ğURLƒGƒ“ƒR[ƒfƒBƒ“ƒO‚·‚é
+my $query = encode('utf8', 'µşÅÔ¤Î´Ñ¸÷Ì¾½ê'); # ¸¡º÷¤·¤¿¤¤¥­¡¼¥ï¡¼¥É (utf8)
+my $uri_escaped_query = uri_escape($query); # ¸¡º÷¥­¡¼¥ï¡¼¥É¤òURL¥¨¥ó¥³¡¼¥Ç¥£¥ó¥°¤¹¤ë
 my $base_url = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi';
 my $results = 20;
 my $start = 1;
 my $req_url = "$base_url?query=$uri_escaped_query&start=$start&results=$results&snippets=1";
 
-# TSUBAKI API‚ÌŒ‹‰Ê‚ğæ“¾
+# TSUBAKI API¤Î·ë²Ì¤ò¼èÆÀ
 my $response = get($req_url);
 print $response;
 
@@ -104,7 +104,7 @@ print $response;
 \\ \hline
 \end{tabular}
 \end{center}
-\caption{API‚ÉƒAƒNƒZƒX‚·‚é‚½‚ß‚ÌƒTƒ“ƒvƒ‹ƒR[ƒh}
+\caption{API¤Ë¥¢¥¯¥»¥¹¤¹¤ë¤¿¤á¤Î¥µ¥ó¥×¥ë¥³¡¼¥É}
 \label{sample_code}
 \end{figure}
 
@@ -117,59 +117,59 @@ print $response;
 \begin{minipage}{\columnwidth}
 \begin{verbatim}
 
-<ResultSet time="2007-02-21 13:43:58" query="‹“s‚ÌŠÏŒõ–¼Š" totalResultsAvailable="19586"
+<ResultSet time="2007-02-21 13:43:58" query="µşÅÔ¤Î´Ñ¸÷Ì¾½ê" totalResultsAvailable="19586"
  totalResultsReturned="10" firstResultPosition="0" logicalOperator="AND" dpnd="1" filterSimpages="0">
-@<Result Id="24411919" Score="68.67424">
-@@<Title>ŠÖ¼’Tõ</Title>
-@@<Url>http://www.kansaitansaku.com/</Url>
-@@<Snippet>
-@@@‚±‚Ìƒz[ƒ€ƒy[ƒW‚ÍC‹“s‚ğ’†S‚Æ‚µ‚½ŠÏŒõ–¼Š‚É‚¨‚Æ‚¸‚êC‚»‚ÌŠ´‘z‚ğq‚×‚Ä‚¢‚­ƒz[ƒ€ƒy[ƒW‚Å‚·D‚±
-‚Ìƒz[ƒ€ƒy[ƒW‚ÍC‹“s‚ğ’†S‚Æ‚µ‚½ŠÏŒõ–¼Š‚É‚¨‚Æ‚¸‚êC‚»‚ÌŠ´‘z‚ğq‚×‚Ä‚¢‚­ƒz[ƒ€ƒy[ƒW‚Å‚·D‹“sCŠÏŒõ
-–¼ŠC›‰@CŠÖ¼’Tõ ...
-@@</Snippet>
-@@<Cache>
-@@@<Url>
-@@@@http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/24/h2441/24411919.html&KEYS=%B5%FE%
+¡¡<Result Id="24411919" Score="68.67424">
+¡¡¡¡<Title>´ØÀ¾Ãµº÷</Title>
+¡¡¡¡<Url>http://www.kansaitansaku.com/</Url>
+¡¡¡¡<Snippet>
+¡¡¡¡¡¡¤³¤Î¥Û¡¼¥à¥Ú¡¼¥¸¤Ï¡¤µşÅÔ¤òÃæ¿´¤È¤·¤¿´Ñ¸÷Ì¾½ê¤Ë¤ª¤È¤º¤ì¡¤¤½¤Î´¶ÁÛ¤ò½Ò¤Ù¤Æ¤¤¤¯¥Û¡¼¥à¥Ú¡¼¥¸¤Ç¤¹¡¥¤³
+¤Î¥Û¡¼¥à¥Ú¡¼¥¸¤Ï¡¤µşÅÔ¤òÃæ¿´¤È¤·¤¿´Ñ¸÷Ì¾½ê¤Ë¤ª¤È¤º¤ì¡¤¤½¤Î´¶ÁÛ¤ò½Ò¤Ù¤Æ¤¤¤¯¥Û¡¼¥à¥Ú¡¼¥¸¤Ç¤¹¡¥µşÅÔ¡¤´Ñ¸÷
+Ì¾½ê¡¤»û±¡¡¤´ØÀ¾Ãµº÷ ...
+¡¡¡¡</Snippet>
+¡¡¡¡<Cache>
+¡¡¡¡¡¡<Url>
+¡¡¡¡¡¡¡¡http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/24/h2441/24411919.html&KEYS=%B5%FE%
 C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA
-@@@</Url>
-@@@<Size>619</Size>
-@@</Cache>
-@</Result>
-@<Result Id="06832429" Score="64.16455">
-@@<Title>‹“sŠÏŒõƒ^ƒNƒV[@‹“s‚Ì–¼‰€‚P</Title>
-@@<Url>http://kyoto-kankou.com/page02.htm</Url>
-@@<Snippet>
-@@@‹“s—·s‚Íƒ^ƒNƒV[—˜—p‚ª‚¨Š©‚ßCŠÏŒõƒ^ƒNƒV[‚Åg—tŠÏŒõCŠÏŒõƒ^ƒNƒV[‹“s–¼ŠC‹“s‚ÌŒŠêƒR[ƒX‹
-“sŠÏŒõƒ^ƒNƒV[Cƒ^ƒNƒV[ŠÏŒõC‹“sCg—tC‹“sŠÏŒõC—·sCî•ñC÷C’ë‰€CĞ›CŠÏŒõˆÄ“àm‹“s’ë‰€ƒR[
-ƒXnm‹“s‚Ìg—tnm‹“s‚Ì–¼Š“®‰ænm‹“s‚ÌŒŠênmhƒvƒ‰ƒUnmƒXƒ^ƒbƒtnm—¿‹à•\nm‚¨\‚µ‚İnŠ—v
-ŠÔ–ñ‚TŠÔ”‚ ‚é‹“sŠÏŒõ–¼Š‚Ì’†‚Å‚àCÅ‚à‹Gß‚É‚æ‚Á‚ÄŒiŠÏ‚É•Ï‰»‚Ì—L‚éî–L‚©‚ÈêŠ‚Å‚·DŠ—vŠÔ–ñ ...
-@@</Snippet>
-@@<Cache>
-@@@<Url>
-@@@@http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/06/h0683/06832429.html&KEYS=%B5%FE%
+¡¡¡¡¡¡</Url>
+¡¡¡¡¡¡<Size>619</Size>
+¡¡¡¡</Cache>
+¡¡</Result>
+¡¡<Result Id="06832429" Score="64.16455">
+¡¡¡¡<Title>µşÅÔ´Ñ¸÷¥¿¥¯¥·¡¼¡¡µşÅÔ¤ÎÌ¾±à£±</Title>
+¡¡¡¡<Url>http://kyoto-kankou.com/page02.htm</Url>
+¡¡¡¡<Snippet>
+¡¡¡¡¡¡µşÅÔÎ¹¹Ô¤Ï¥¿¥¯¥·¡¼ÍøÍÑ¤¬¤ª´«¤á¡¤´Ñ¸÷¥¿¥¯¥·¡¼¤Ç¹ÈÍÕ´Ñ¸÷¡¤´Ñ¸÷¥¿¥¯¥·¡¼µşÅÔÌ¾½ê¡¤µşÅÔ¤Î·ê¾ì¥³¡¼¥¹µş
+ÅÔ´Ñ¸÷¥¿¥¯¥·¡¼¡¤¥¿¥¯¥·¡¼´Ñ¸÷¡¤µşÅÔ¡¤¹ÈÍÕ¡¤µşÅÔ´Ñ¸÷¡¤Î¹¹Ô¡¤¾ğÊó¡¤ºù¡¤Äí±à¡¤¼Ò»û¡¤´Ñ¸÷°ÆÆâ¡ÎµşÅÔÄí±à¥³¡¼
+¥¹¡Ï¡ÎµşÅÔ¤Î¹ÈÍÕ¡Ï¡ÎµşÅÔ¤ÎÌ¾½êÆ°²è¡Ï¡ÎµşÅÔ¤Î·ê¾ì¡Ï¡Î½É¥×¥é¥¶¡Ï¡Î¥¹¥¿¥Ã¥Õ¡Ï¡ÎÎÁ¶âÉ½¡Ï¡Î¤ª¿½¤·¹ş¤ß¡Ï½êÍ×
+»ş´ÖÌó£µ»ş´Ö¿ô¤¢¤ëµşÅÔ´Ñ¸÷Ì¾½ê¤ÎÃæ¤Ç¤â¡¤ºÇ¤âµ¨Àá¤Ë¤è¤Ã¤Æ·Ê´Ñ¤ËÊÑ²½¤ÎÍ­¤ë¾ğ½ïË­¤«¤Ê¾ì½ê¤Ç¤¹¡¥½êÍ×»ş´ÖÌó ...
+¡¡¡¡</Snippet>
+¡¡¡¡<Cache>
+¡¡¡¡¡¡<Url>
+¡¡¡¡¡¡¡¡http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/06/h0683/06832429.html&KEYS=%B5%FE%
 C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA
-@@@</Url>
-@@@<Size>2152</Size>
-@@</Cache>
-@</Result>
+¡¡¡¡¡¡</Url>
+¡¡¡¡¡¡<Size>2152</Size>
+¡¡¡¡</Cache>
+¡¡</Result>
 
-...’†—ª...
+...ÃæÎ¬...
 
-@<Result Id="26054757" Score="60.45654">
-@@<Title>‚j‚™‚‚”‚@‚r‚ˆ‚‰‚‚‚‚•‚F‹“s‚ÌŠÏŒõ–¼Š‚Ö‚Ìƒ^ƒNƒV[‰^’À</Title>
-@@<Url>http://www.kyoto-np.co.jp/kp/koto/taxi/unchin.html</Url>
-@@<Snippet>
-@@@‚j‚™‚‚”‚‚r‚ˆ‚‰‚‚‚‚•‚‹“s‚ÌŠÏŒõ–¼Š‚Ö‚Ìƒ^ƒNƒV[‰^’À‚j‚™‚‚”‚‚r‚ˆ‚‰‚‚‚‚•‚‹“s‚ÌŠÏŒõ–¼Š‚Ö‚Ì
-ƒ^ƒNƒV[‰^’À‹“s‚ÌŠÏŒõ–¼Š‚Ö‚Ìƒ^ƒNƒV[‰^’Ày‚i‚q‹“s‰w‚©‚ç‚ÌŠTZzTŠ§‹“s
-@@</Snippet>
-@@<Cache>
-@@@<Url>
-@@@@http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/26/h2605/26054757.html&KEYS=%B5%FE%
+¡¡<Result Id="26054757" Score="60.45654">
+¡¡¡¡<Title>£Ë£ù£ï£ô£ï¡¡£Ó£è£é£î£â£õ£î¡§µşÅÔ¤Î´Ñ¸÷Ì¾½ê¤Ø¤Î¥¿¥¯¥·¡¼±¿ÄÂ</Title>
+¡¡¡¡<Url>http://www.kyoto-np.co.jp/kp/koto/taxi/unchin.html</Url>
+¡¡¡¡<Snippet>
+¡¡¡¡¡¡£Ë£ù£ï£ô£ï£Ó£è£é£î£â£õ£îµşÅÔ¤Î´Ñ¸÷Ì¾½ê¤Ø¤Î¥¿¥¯¥·¡¼±¿ÄÂ£Ë£ù£ï£ô£ï£Ó£è£é£î£â£õ£îµşÅÔ¤Î´Ñ¸÷Ì¾½ê¤Ø¤Î
+¥¿¥¯¥·¡¼±¿ÄÂµşÅÔ¤Î´Ñ¸÷Ì¾½ê¤Ø¤Î¥¿¥¯¥·¡¼±¿ÄÂ¡Ú£Ê£ÒµşÅÔ±Ø¤«¤é¤Î³µ»»¡Û½µ´©µşÅÔ
+¡¡¡¡</Snippet>
+¡¡¡¡<Cache>
+¡¡¡¡¡¡<Url>
+¡¡¡¡¡¡¡¡http://tsubaki.ixnlp.nii.ac.jp/index.cgi?URL= INDEX_NTCIR2/26/h2605/26054757.html&KEYS=%B5%FE%
 C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA
-@@@</Url>
-@@@<Size>1209</Size>
-@@</Cache>
-@</Result>
+¡¡¡¡¡¡</Url>
+¡¡¡¡¡¡<Size>1209</Size>
+¡¡¡¡</Cache>
+¡¡</Result>
 </ResultSet>
 
 \end{verbatim}
@@ -177,37 +177,37 @@ C5%D4%A4%CE%B4%D1%B8%F7%CC%BE%BD%EA
 \\ \hline
 \end{tabular}
 \end{center}
-\caption{API‚æ‚è“¾‚ç‚ê‚éŒŸõŒ‹‰Ê}
+\caption{API¤è¤êÆÀ¤é¤ì¤ë¸¡º÷·ë²Ì}
 \label{api_result}
 \end{figure}
 
 \begin{table}[t]
 \footnotesize
-\caption{ŒŸõŒ‹‰Ê‚ÉŠÜ‚Ü‚ê‚éƒ^ƒO‚¨‚æ‚Ñ‘®«}
+\caption{¸¡º÷·ë²Ì¤Ë´Ş¤Ş¤ì¤ë¥¿¥°¤ª¤è¤ÓÂ°À­}
 \label{result_tagset}
 \begin{center}
 \begin{tabular}{r|p{0.8\columnwidth}}
 \hline
-ƒtƒB[ƒ‹ƒh&à–¾ \\ \hline
+¥Õ¥£¡¼¥ë¥É&ÀâÌÀ \\ \hline
 ResultSet &
 \begin{minipage}{\columnwidth}
-‚±‚Ìƒ^ƒO‚ÅˆÍ‚Ü‚ê‚½•”•ª‚ªŒŸõŒ‹‰Ê‚ğ•\‚µ‚Ä‚¨‚èCŸ‚Ì‘®«‚ğ‚ÂD
+¤³¤Î¥¿¥°¤Ç°Ï¤Ş¤ì¤¿ÉôÊ¬¤¬¸¡º÷·ë²Ì¤òÉ½¤·¤Æ¤ª¤ê¡¤¼¡¤ÎÂ°À­¤ò»ı¤Ä¡¥
 \begin{description}
-\item {time:} ŒŸõ‚ğÀs‚µ‚½“ú
-\item {query:} ŒŸõƒL[ƒ[ƒh
-\item {totalResultsAvailable:} ŒŸõƒL[ƒ[ƒh‚ğŠÜ‚Ş•¶‘”
-\item {totalResultsReturned:} •Ô‚³‚ê‚½•¶‘”
-\item {firstResultPosition:} ŒŸõ‚Éw’è‚µ‚½C•¶‘‚ğæ“¾‚·‚éÛ‚ÌŠJn‡ˆÊ(ƒIƒtƒZƒbƒg)
-\item {logicalOperator:} ŒŸõ‚Ì˜_—ğŒ
-\item {dpnd:} ŒŸõ‚ªŒW‚èó‚¯‚ğl—¶‚µ‚Äs‚í‚ê‚½‚©‚Ç‚¤‚©
+\item {time:} ¸¡º÷¤ò¼Â¹Ô¤·¤¿Æü»ş
+\item {query:} ¸¡º÷¥­¡¼¥ï¡¼¥É
+\item {totalResultsAvailable:} ¸¡º÷¥­¡¼¥ï¡¼¥É¤ò´Ş¤àÊ¸½ñ¿ô
+\item {totalResultsReturned:} ÊÖ¤µ¤ì¤¿Ê¸½ñ¿ô
+\item {firstResultPosition:} ¸¡º÷»ş¤Ë»ØÄê¤·¤¿¡¤Ê¸½ñ¤ò¼èÆÀ¤¹¤ëºİ¤Î³«»Ï½ç°Ì(¥ª¥Õ¥»¥Ã¥È)
+\item {logicalOperator:} ¸¡º÷»ş¤ÎÏÀÍı¾ò·ï
+\item {dpnd:} ¸¡º÷¤¬·¸¤ê¼õ¤±¤ò¹ÍÎ¸¤·¤Æ¹Ô¤ï¤ì¤¿¤«¤É¤¦¤«
 \begin{description}
-\item {0:} ŒW‚èó‚¯‚ğl—¶‚¹‚¸‚ÉŒŸõ‚ğÀs
-\item {1:} ŒW‚èó‚¯‚ğl—¶‚µ‚ÄŒŸõ‚ğÀs
+\item {0:} ·¸¤ê¼õ¤±¤ò¹ÍÎ¸¤»¤º¤Ë¸¡º÷¤ò¼Â¹Ô
+\item {1:} ·¸¤ê¼õ¤±¤ò¹ÍÎ¸¤·¤Æ¸¡º÷¤ò¼Â¹Ô
 \end{description}
-\item {filterSimpages:} —Ş—ƒy[ƒWƒtƒBƒ‹ƒ^‚ª“K—p‚³‚ê‚Ä‚¢‚é‚©‚Ç‚¤‚©
+\item {filterSimpages:} Îà»÷¥Ú¡¼¥¸¥Õ¥£¥ë¥¿¤¬Å¬ÍÑ¤µ¤ì¤Æ¤¤¤ë¤«¤É¤¦¤«
 \begin {description}
-\item {0:} —Ş—ƒy[ƒWƒtƒBƒ‹ƒ^‚ª“K—p‚³‚ê‚Ä‚¢‚È‚¢
-\item {1:} —Ş—ƒy[ƒWƒtƒBƒ‹ƒ^‚ª“K—p‚³‚ê‚Ä‚¢‚é
+\item {0:} Îà»÷¥Ú¡¼¥¸¥Õ¥£¥ë¥¿¤¬Å¬ÍÑ¤µ¤ì¤Æ¤¤¤Ê¤¤
+\item {1:} Îà»÷¥Ú¡¼¥¸¥Õ¥£¥ë¥¿¤¬Å¬ÍÑ¤µ¤ì¤Æ¤¤¤ë
 \end{description}
 \end{description}
 \end{minipage}
@@ -215,46 +215,46 @@ ResultSet &
 
 Result &
 \begin{minipage}{\columnwidth}
-‚±‚Ìƒ^ƒO‚ÅˆÍ‚Ü‚ê‚½•”•ª‚ªŒŸõ‚µ‚Ä“¾‚ç‚ê‚½‚P•¶‘‚Ìî•ñ‚ÅCŸ‚Ì‘®«‚ğ‚ÂD
+¤³¤Î¥¿¥°¤Ç°Ï¤Ş¤ì¤¿ÉôÊ¬¤¬¸¡º÷¤·¤ÆÆÀ¤é¤ì¤¿£±Ê¸½ñ¤Î¾ğÊó¤Ç¡¤¼¡¤ÎÂ°À­¤ò»ı¤Ä¡¥
 \begin{description}
-\item{ID:} •¶‘‚ÌID
-\item{Score:} •¶‘‚ÌƒXƒRƒA
+\item{ID:} Ê¸½ñ¤ÎID
+\item{Score:} Ê¸½ñ¤Î¥¹¥³¥¢
 \end{description}
-•¶‘ID‚ÍCƒLƒƒƒbƒVƒ…‚³‚ê‚½ƒEƒFƒuƒy[ƒW‚¨‚æ‚Ñ•W€ƒtƒH[ƒ}ƒbƒg•ÏŠ·Ï‚İƒf[ƒ^‚ğæ“¾‚·‚éÛ‚É•K—v‚É‚È‚éD
+Ê¸½ñID¤Ï¡¤¥­¥ã¥Ã¥·¥å¤µ¤ì¤¿¥¦¥§¥Ö¥Ú¡¼¥¸¤ª¤è¤ÓÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥ÈÊÑ´¹ºÑ¤ß¥Ç¡¼¥¿¤ò¼èÆÀ¤¹¤ëºİ¤ËÉ¬Í×¤Ë¤Ê¤ë¡¥
 \end{minipage}
 \\ \hline
 
 \\ \hline
-Title &ƒy[ƒW‚Ìƒ^ƒCƒgƒ‹\\ \hline
-Url &ƒy[ƒW‚ÌURL\\ \hline
-Snippet &ƒy[ƒW‚ÉŠÜ‚Ü‚ê‚éŒŸõƒNƒGƒŠ‚ÆŠÖ˜A‚·‚éd—v•¶\\ \hline
-Cache &ƒLƒƒƒbƒVƒ…‚³‚ê‚½ƒEƒFƒuƒy[ƒW‚ÉŠÖ‚·‚éî•ñ\\ \hline
-Url &ƒLƒƒƒbƒVƒ…‚³‚ê‚½ƒEƒFƒuƒy[ƒW‚ÌURL\\ \hline
-Size &ƒLƒƒƒbƒVƒ…‚³‚ê‚½ƒEƒFƒuƒy[ƒW‚Ìgzipˆ³k‚Ìƒtƒ@ƒCƒ‹ƒTƒCƒY\\ \hline
+Title &¥Ú¡¼¥¸¤Î¥¿¥¤¥È¥ë\\ \hline
+Url &¥Ú¡¼¥¸¤ÎURL\\ \hline
+Snippet &¥Ú¡¼¥¸¤Ë´Ş¤Ş¤ì¤ë¸¡º÷¥¯¥¨¥ê¤È´ØÏ¢¤¹¤ë½ÅÍ×Ê¸\\ \hline
+Cache &¥­¥ã¥Ã¥·¥å¤µ¤ì¤¿¥¦¥§¥Ö¥Ú¡¼¥¸¤Ë´Ø¤¹¤ë¾ğÊó\\ \hline
+Url &¥­¥ã¥Ã¥·¥å¤µ¤ì¤¿¥¦¥§¥Ö¥Ú¡¼¥¸¤ÎURL\\ \hline
+Size &¥­¥ã¥Ã¥·¥å¤µ¤ì¤¿¥¦¥§¥Ö¥Ú¡¼¥¸¤Îgzip°µ½Ì»ş¤Î¥Õ¥¡¥¤¥ë¥µ¥¤¥º\\ \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-\subsection{ƒLƒƒƒbƒVƒ…‚³‚ê‚½ƒEƒFƒuƒy[ƒW‚¨‚æ‚Ñ•W€ƒtƒH[ƒ}ƒbƒg•ÏŠ·Ï‚İƒf[ƒ^‚Ìæ“¾•û–@}
+\subsection{¥­¥ã¥Ã¥·¥å¤µ¤ì¤¿¥¦¥§¥Ö¥Ú¡¼¥¸¤ª¤è¤ÓÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥ÈÊÑ´¹ºÑ¤ß¥Ç¡¼¥¿¤Î¼èÆÀÊıË¡}
 
-ƒLƒƒƒbƒVƒ…‚³‚ê‚Ä‚¢‚éƒEƒFƒuƒy[ƒW‚¨‚æ‚ÑC‚»‚Ì•¶‘‚ğ•W€ƒtƒH[ƒ}ƒbƒg‚É•ÏŠ·
-‚µ‚½ƒf[ƒ^‚É‚Â‚¢‚Ä‚àˆÈ‰º‚ÌƒAƒhƒŒƒX‚ÉƒAƒNƒZƒX‚·‚é‚±‚Æ‚Åæ“¾‚Å‚«‚éD
+¥­¥ã¥Ã¥·¥å¤µ¤ì¤Æ¤¤¤ë¥¦¥§¥Ö¥Ú¡¼¥¸¤ª¤è¤Ó¡¤¤½¤ÎÊ¸½ñ¤òÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤ËÊÑ´¹
+¤·¤¿¥Ç¡¼¥¿¤Ë¤Ä¤¤¤Æ¤â°Ê²¼¤Î¥¢¥É¥ì¥¹¤Ë¥¢¥¯¥»¥¹¤¹¤ë¤³¤È¤Ç¼èÆÀ¤Ç¤­¤ë¡¥
 
 \begin{flushleft}
 http://tsubaki.ixnlp.nii.ac.jp/api.cgi
 \end{flushleft}
 
 \noindent
-‚±‚ÌƒAƒhƒŒƒX‚Éformat‚¨‚æ‚ÑidƒIƒvƒVƒ‡ƒ“‚ğ•t—^‚µ‚ÄCAPI‚ÉƒAƒNƒZƒX‚·‚éD—á
-‚¦‚ÎC•¶‘ID ‚ª07423972”Ô‚Ì•¶‘‚É‚Â‚¢‚ÄCƒLƒƒƒbƒVƒ…‚³‚ê‚½ƒEƒFƒuƒy[ƒW‚ğ
-æ“¾‚µ‚½‚¢ê‡‚ÍCˆÈ‰º‚ÌURL‚ğ¶¬‚µCHTTP‚É‚ÄƒAƒNƒZƒX‚·‚éD
+¤³¤Î¥¢¥É¥ì¥¹¤Ëformat¤ª¤è¤Óid¥ª¥×¥·¥ç¥ó¤òÉÕÍ¿¤·¤Æ¡¤API¤Ë¥¢¥¯¥»¥¹¤¹¤ë¡¥Îã
+¤¨¤Ğ¡¤Ê¸½ñID ¤¬07423972ÈÖ¤ÎÊ¸½ñ¤Ë¤Ä¤¤¤Æ¡¤¥­¥ã¥Ã¥·¥å¤µ¤ì¤¿¥¦¥§¥Ö¥Ú¡¼¥¸¤ò
+¼èÆÀ¤·¤¿¤¤¾ì¹ç¤Ï¡¤°Ê²¼¤ÎURL¤òÀ¸À®¤·¡¤HTTP¤Ë¤Æ¥¢¥¯¥»¥¹¤¹¤ë¡¥
 
 \begin{flushleft}
 http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=html\&id=074239724
 \end{flushleft}
 
-“¯—l‚ÉC•W€ƒtƒH[ƒ}ƒbƒg•ÏŠ·Ï‚İƒf[ƒ^‚ª—~‚µ‚¢ê‡‚ÍCformat‚Ì’l‚ğxml‚É
-•ÏX‚·‚é‚±‚Æ‚Åæ“¾‰Â”\‚Å‚ ‚éD
+Æ±ÍÍ¤Ë¡¤É¸½à¥Õ¥©¡¼¥Ş¥Ã¥ÈÊÑ´¹ºÑ¤ß¥Ç¡¼¥¿¤¬Íß¤·¤¤¾ì¹ç¤Ï¡¤format¤ÎÃÍ¤òxml¤Ë
+ÊÑ¹¹¤¹¤ë¤³¤È¤Ç¼èÆÀ²ÄÇ½¤Ç¤¢¤ë¡¥
 
 \begin{flushleft}
 http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=xml\&id=074239724
@@ -262,66 +262,66 @@ http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=xml\&id=074239724
 
 
 
-\section{”z•zƒc[ƒ‹‚Ìg‚¢•ûš}
+\section{ÇÛÉÛ¥Ä¡¼¥ë¤Î»È¤¤Êı¡ú}
 
-\subsection{ƒEƒFƒuƒy[ƒW‚©‚ç•W€ƒtƒH[ƒ}ƒbƒg‚Ö‚Ì•ÏŠ·}
+\subsection{¥¦¥§¥Ö¥Ú¡¼¥¸¤«¤éÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤Ø¤ÎÊÑ´¹}
 
-\paragraph{ƒNƒ[ƒ‰‚Ìo—Í‚©‚ç‚ÌƒEƒFƒuƒy[ƒW‚ÌØ‚èo‚µ}
+\paragraph{¥¯¥í¡¼¥é¤Î½ĞÎÏ¤«¤é¤Î¥¦¥§¥Ö¥Ú¡¼¥¸¤ÎÀÚ¤ê½Ğ¤·}
 
-\paragraph{ƒEƒFƒuƒy[ƒW‚ğ•W€ƒtƒH[ƒ}ƒbƒg‚É•ÏŠ·‚·‚é}
-
-\begin{itemize}
-\item WWW2sf‚ğcvs co‚·‚é
-\item tool/scripts/make-standard-format.sh‚Ìworkspace, toolpath•Ï”‚Ì’l‚ğ•ÏX
-\item tool/scripts/make-standard-format.sh‚ğÀs
-
-\item sh tool/scripts/make-standard-format.sh 10000ƒy[ƒW‚²‚Æ‚É‚Ü‚Æ‚ß‚ç‚ê‚½HTMLƒfƒBƒŒƒNƒgƒŠ‚Ö‚Ìâ‘ÎƒpƒX
-\end{itemize}
-
-\paragraph{•¶‘ID‚Ì•”²‚¯‚ª‚Å‚«‚é‚Ì‚Å‚Â‚ß‚é}
+\paragraph{¥¦¥§¥Ö¥Ú¡¼¥¸¤òÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤ËÊÑ´¹¤¹¤ë}
 
 \begin{itemize}
+\item WWW2sf¤òcvs co¤¹¤ë
+\item tool/scripts/make-standard-format.sh¤Îworkspace, toolpathÊÑ¿ô¤ÎÃÍ¤òÊÑ¹¹
+\item tool/scripts/make-standard-format.sh¤ò¼Â¹Ô
 
-\item tool/scripts/rename-did.sh‚ğg‚Á‚Ä‚Â‚ß‚é
-\item tool/scripts/rename-did.sh‚Ìdistdir, workdir‚Ì’l‚ğ•ÏŠ·
-\item tool/scripts/rename-did.sh‚ğÀs
+\item sh tool/scripts/make-standard-format.sh 10000¥Ú¡¼¥¸¤´¤È¤Ë¤Ş¤È¤á¤é¤ì¤¿HTML¥Ç¥£¥ì¥¯¥È¥ê¤Ø¤ÎÀäÂĞ¥Ñ¥¹
+\end{itemize}
 
-\item sh tool/scripts/rename-did.sh •¶‘IDŠJnƒIƒtƒZƒbƒg •W€ƒtƒH[ƒ}ƒbƒg‚ª”[‚ß‚ç‚ê‚½ƒfƒBƒŒƒNƒgƒŠi•¡”‚ÌƒfƒBƒŒƒNƒgƒŠ‚ğw’è‰Âj
+\paragraph{Ê¸½ñID¤Î»õÈ´¤±¤¬¤Ç¤­¤ë¤Î¤Ç¤Ä¤á¤ë}
 
-\item ’[”‚Í‚Ç‚±‚©ˆê‰ÓŠ‚ÉW‚ß‚ÄÄ“x•¶‘ID‚ğU‚è‚È‚¨‚·
+\begin{itemize}
+
+\item tool/scripts/rename-did.sh¤ò»È¤Ã¤Æ¤Ä¤á¤ë
+\item tool/scripts/rename-did.sh¤Îdistdir, workdir¤ÎÃÍ¤òÊÑ´¹
+\item tool/scripts/rename-did.sh¤ò¼Â¹Ô
+
+\item sh tool/scripts/rename-did.sh Ê¸½ñID³«»Ï¥ª¥Õ¥»¥Ã¥È É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤¬Ç¼¤á¤é¤ì¤¿¥Ç¥£¥ì¥¯¥È¥ê¡ÊÊ£¿ô¤Î¥Ç¥£¥ì¥¯¥È¥ê¤ò»ØÄê²Ä¡Ë
+
+\item Ã¼¿ô¤Ï¤É¤³¤«°ì²Õ½ê¤Ë½¸¤á¤ÆºÆÅÙÊ¸½ñID¤ò¿¶¤ê¤Ê¤ª¤¹
 
 \end{itemize}
 
-\paragraph{10,000ƒtƒ@ƒCƒ‹‚ª”[‚ß‚ç‚ê‚Ä‚¢‚é‚±‚Æ‚ğŠm”F‚µ‚Ätar czf‚·‚é}
+\paragraph{10,000¥Õ¥¡¥¤¥ë¤¬Ç¼¤á¤é¤ì¤Æ¤¤¤ë¤³¤È¤ò³ÎÇ§¤·¤Ætar czf¤¹¤ë}
 
 
 
-\subsection{ƒCƒ“ƒfƒbƒNƒX‚Ìì¬•û–@}
+\subsection{¥¤¥ó¥Ç¥Ã¥¯¥¹¤ÎºîÀ®ÊıË¡}
 
-%\subsubsection{ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚Ìì¬è‡}
+%\subsubsection{¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿¤ÎºîÀ®¼ê½ç}
 %
 %\begin{enumerate}
 %
-%\item SearchEngine‚ğcvs co‚·‚é
+%\item SearchEngine¤òcvs co¤¹¤ë
 %
-%\item •W€ƒtƒH[ƒ}ƒbƒg‚©‚çƒCƒ“ƒfƒbƒNƒX‚ğ’Šo (a, b)
+%\item É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤«¤é¥¤¥ó¥Ç¥Ã¥¯¥¹¤òÃê½Ğ (a, b)
 %
-%\item ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ÌƒŠƒXƒg‚ğì¬‚·‚é
+%\item ¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿¤Î¥ê¥¹¥È¤òºîÀ®¤¹¤ë
 %
-%\item ƒCƒ“ƒfƒbƒNƒX‚ğ100–œƒy[ƒW–ˆ‚Éƒ}[ƒW‚·‚é (c)
+%\item ¥¤¥ó¥Ç¥Ã¥¯¥¹¤ò100Ëü¥Ú¡¼¥¸Ëè¤Ë¥Ş¡¼¥¸¤¹¤ë (c)
 %
-%\item ƒCƒ“ƒfƒbƒNƒX‚ğƒoƒCƒiƒŠ‰»‚µAŠeíƒf[ƒ^ƒx[ƒX‚ğ\’z‚·‚é (d)
+%\item ¥¤¥ó¥Ç¥Ã¥¯¥¹¤ò¥Ğ¥¤¥Ê¥ê²½¤·¡¢³Æ¼ï¥Ç¡¼¥¿¥Ù¡¼¥¹¤ò¹½ÃÛ¤¹¤ë (d)
 %
-%\item •¶‘•p“xƒf[ƒ^ƒx[ƒX‚ğÄ\’z‚·‚é
+%\item Ê¸½ñÉÑÅÙ¥Ç¡¼¥¿¥Ù¡¼¥¹¤òºÆ¹½ÃÛ¤¹¤ë
 %\end{enumerate}
 
-\paragraph{SearchEngine‚ğcvs co‚·‚é}
+\paragraph{SearchEngine¤òcvs co¤¹¤ë}
 
 \begin{itemize}
 \item login
 \begin{itemize}
 \item cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs login
-\item ƒpƒXƒ[ƒhFkuro-language
+\item ¥Ñ¥¹¥ï¡¼¥É¡§kuro-language
 \end{itemize}
 \item check out
 \begin{itemize}
@@ -329,19 +329,19 @@ http://tsubaki.ixnlp.nii.ac.jp/api.cgi?format=xml\&id=074239724
 \end{itemize}
 \end{itemize}
 
-\paragraph{•W€ƒtƒH[ƒ}ƒbƒg‚©‚çƒCƒ“ƒfƒbƒNƒX‚ğ’Šoi•À—ñÀs‰Âj}
+\paragraph{É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤«¤é¥¤¥ó¥Ç¥Ã¥¯¥¹¤òÃê½Ğ¡ÊÊÂÎó¼Â¹Ô²Ä¡Ë}
 
-scripts/make-index.sh‚ğ—˜—p‚·‚é.
-6A7s–Ú‚Ì•Ï”‚Ì’l‚ğ•ÏX‚·‚é.
+scripts/make-index.sh¤òÍøÍÑ¤¹¤ë.
+6¡¢7¹ÔÌÜ¤ÎÊÑ¿ô¤ÎÃÍ¤òÊÑ¹¹¤¹¤ë.
 
 \begin{center}
 \begin{minipage}{\columnwidth}
 \begin{verbatim}
      1  #!/bin/sh
      2  
-     3  # 1–œƒy[ƒW–ˆ‚Étgz‚³‚ê‚½•W€ƒtƒH[ƒ}ƒbƒg‚Ì‰ò‚©‚çƒCƒ“ƒfƒbƒNƒX‚ğ’Šo‚·‚éƒXƒNƒŠƒvƒg
+     3  # 1Ëü¥Ú¡¼¥¸Ëè¤Ëtgz¤µ¤ì¤¿É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤Î²ô¤«¤é¥¤¥ó¥Ç¥Ã¥¯¥¹¤òÃê½Ğ¤¹¤ë¥¹¥¯¥ê¥×¥È
      4  
-     5  # šˆÈ‰º‚Ì’l‚ğ•ÏX‚·‚é‚±‚Æ
+     5  # ¡ú°Ê²¼¤ÎÃÍ¤òÊÑ¹¹¤¹¤ë¤³¤È
      6  workspace=/tmp/mk_tsubaki_idx
      7  scriptdir=$HOME/cvs/SearchEngine/scripts
      8  
@@ -349,47 +349,47 @@ scripts/make-index.sh‚ğ—˜—p‚·‚é.
 \end{minipage}
 \end{center}
 
-Às—áFsh scripts/make-index.sh anywhere/x00000.tgz\\
-x00000.tgz c •W€ƒtƒH[ƒ}ƒbƒg‚ğtgz‚µ‚½ƒtƒ@ƒCƒ‹i•W€ƒtƒH[ƒ}ƒbƒg‚Ígzip‚Åˆ³k‚µ‚Ä‚ ‚é‚±‚Æj
+¼Â¹ÔÎã¡§sh scripts/make-index.sh anywhere/x00000.tgz\\
+x00000.tgz ¡Ä É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤òtgz¤·¤¿¥Õ¥¡¥¤¥ë¡ÊÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤Ïgzip¤Ç°µ½Ì¤·¤Æ¤¢¤ë¤³¤È¡Ë
 
 
-\paragraph{ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ÌƒŠƒXƒg‚ğ‚Â‚­‚é}
+\paragraph{¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿¤Î¥ê¥¹¥È¤ò¤Ä¤¯¤ë}
 
-ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ÌƒŠƒXƒgi‚Ç‚Ìƒ}ƒVƒ“‚ÌA‚Ç‚±‚É‚ ‚é‚©j‚ğì¬‚·‚é((gxp) + findƒRƒ}ƒ“ƒh)
+¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿¤Î¥ê¥¹¥È¡Ê¤É¤Î¥Ş¥·¥ó¤Î¡¢¤É¤³¤Ë¤¢¤ë¤«¡Ë¤òºîÀ®¤¹¤ë((gxp) + find¥³¥Ş¥ó¥É)
 
 
 \begin{center}
 \begin{minipage}{\columnwidth}
 \begin{verbatim}
-@% cat index.list
-@iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00835.idx.gz
-@iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00864.idx.gz
-@iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i01699.idx.gz
-@iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i02202.idx.gz
-@iccc015.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00164.idx.gz
-@iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03050.idx.gz
-@iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03634.idx.gz
-@iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03689.idx.gz
-@iccc040.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00108.idx.gz
-@iccc015.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00283.idx.gz
-@EEE
+¡¡% cat index.list
+¡¡iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00835.idx.gz
+¡¡iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00864.idx.gz
+¡¡iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i01699.idx.gz
+¡¡iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i02202.idx.gz
+¡¡iccc015.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00164.idx.gz
+¡¡iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03050.idx.gz
+¡¡iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03634.idx.gz
+¡¡iccc011.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i03689.idx.gz
+¡¡iccc040.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00108.idx.gz
+¡¡iccc015.crawl.kclab.jgn2.jp:/data/home/skeiji/mk_idx_syn_071229/i00283.idx.gz
+¡¡¡¦¡¦¡¦
 \end{verbatim}
 \end{minipage}
 \end{center}
 
-\paragraph{ƒCƒ“ƒfƒbƒNƒX‚ğƒ}[ƒW‚·‚é(•À—ñÀs‰Â)}
+\paragraph{¥¤¥ó¥Ç¥Ã¥¯¥¹¤ò¥Ş¡¼¥¸¤¹¤ë(ÊÂÎó¼Â¹Ô²Ä)}
 
-scripts/merge-index.sh‚ğ—˜—p‚·‚é.
-6A7s–Ú‚Ì•Ï”‚Ì’l‚ğ•ÏX‚·‚é.
+scripts/merge-index.sh¤òÍøÍÑ¤¹¤ë.
+6¡¢7¹ÔÌÜ¤ÎÊÑ¿ô¤ÎÃÍ¤òÊÑ¹¹¤¹¤ë.
 
 \begin{center}
 \begin{minipage}{\columnwidth}
 \begin{verbatim}
      1  #!/bin/sh
      2  
-     3  # 1–œŒ‚²‚Æ‚ÌƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ğ100–œŒ’PˆÊ‚Éƒ}[ƒW‚·‚éƒXƒNƒŠƒvƒg
+     3  # 1Ëü·ï¤´¤È¤Î¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿¤ò100Ëü·ïÃ±°Ì¤Ë¥Ş¡¼¥¸¤¹¤ë¥¹¥¯¥ê¥×¥È
      4  
-     5  # šˆÈ‰º‚Ì’l‚ğ•ÏX‚·‚é‚±‚Æ
+     5  # ¡ú°Ê²¼¤ÎÃÍ¤òÊÑ¹¹¤¹¤ë¤³¤È
      6  workspace=/tmp/mg_tsubaki_idx
      7  scriptdir=$HOME/cvs/SearchEngine/scripts
      8 
@@ -398,22 +398,22 @@ scripts/merge-index.sh‚ğ—˜—p‚·‚é.
 \end{center}
 
 \noindent
-Às—áFsh scripts/merge-index.sh 000 anywhere/index.list\\
-index.list c ‚³‚Á‚«ì‚Á‚½ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ÌƒŠƒXƒg
+¼Â¹ÔÎã¡§sh scripts/merge-index.sh 000 anywhere/index.list\\
+index.list ¡Ä ¤µ¤Ã¤­ºî¤Ã¤¿¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿¤Î¥ê¥¹¥È
 
-\paragraph{ƒCƒ“ƒfƒbƒNƒX‚ğƒoƒCƒiƒŠ‰»‚µAƒf[ƒ^ƒx[ƒX‚ğ\’z‚·‚é@(•À—ñÀs‰Â)}
+\paragraph{¥¤¥ó¥Ç¥Ã¥¯¥¹¤ò¥Ğ¥¤¥Ê¥ê²½¤·¡¢¥Ç¡¼¥¿¥Ù¡¼¥¹¤ò¹½ÃÛ¤¹¤ë¡¡(ÊÂÎó¼Â¹Ô²Ä)}
 
-scripts/binarize-index.sh‚ğ—˜—p‚·‚é
-6A7s–Ú‚Ì•Ï”‚Ì’l‚ğ•ÏX‚·‚é
+scripts/binarize-index.sh¤òÍøÍÑ¤¹¤ë
+6¡¢7¹ÔÌÜ¤ÎÊÑ¿ô¤ÎÃÍ¤òÊÑ¹¹¤¹¤ë
 
 \begin{center}
 \begin{minipage}{\columnwidth}
 \begin{verbatim}
      1  #!/bin/sh
      2  
-     3  # ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ğƒoƒCƒiƒŠ‰»‚µAŠeíƒf[ƒ^ƒx[ƒX‚ğì¬‚·‚éƒXƒNƒŠƒvƒg
+     3  # ¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿¤ò¥Ğ¥¤¥Ê¥ê²½¤·¡¢³Æ¼ï¥Ç¡¼¥¿¥Ù¡¼¥¹¤òºîÀ®¤¹¤ë¥¹¥¯¥ê¥×¥È
      4  
-     5  # šˆÈ‰º‚Ì•Ï”‚Ì’l‚ğ•Ï‚¦‚é‚±‚Æ
+     5  # ¡ú°Ê²¼¤ÎÊÑ¿ô¤ÎÃÍ¤òÊÑ¤¨¤ë¤³¤È
      6  workspace=/tmp/bin_tsubaki
      7  scriptdir=$HOME/cvs/SearchEngine/scripts
      8 
@@ -422,87 +422,87 @@ scripts/binarize-index.sh‚ğ—˜—p‚·‚é
 \end{center}
 
 \noindent
-Às—áFsh scripts/binarize-index.sh anywhere/000.idx.gz\\
-000.idx.gz c 100•¶‘•ª‚ªƒ}[ƒW‚³‚ê‚½ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^
+¼Â¹ÔÎã¡§sh scripts/binarize-index.sh anywhere/000.idx.gz\\
+000.idx.gz ¡Ä 100Ê¸½ñÊ¬¤¬¥Ş¡¼¥¸¤µ¤ì¤¿¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿
 
-\paragraph{ì¬‚³‚ê‚éƒf[ƒ^}
+\paragraph{ºîÀ®¤µ¤ì¤ë¥Ç¡¼¥¿}
 
 \begin{description}
-\item {ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^:} idx000.word.dat, idx000.dpnd.dat
-\item {ƒIƒtƒZƒbƒgDB:} offset000.word.cdb,offset000.dpnd.cdb,  offset000.word.cdb.1 c
-\item {•¶‘’·DB:} 000.doc\_length.bin
-\item {ƒ^ƒCƒgƒ‹DB:} 000.title.cdb
+\item {¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿:} idx000.word.dat, idx000.dpnd.dat
+\item {¥ª¥Õ¥»¥Ã¥ÈDB:} offset000.word.cdb,offset000.dpnd.cdb,  offset000.word.cdb.1 ¡Ä
+\item {Ê¸½ñÄ¹DB:} 000.doc\_length.bin
+\item {¥¿¥¤¥È¥ëDB:} 000.title.cdb
 \item {URLDB:} 000.url.cdb
 \end{description}
 
-\paragraph{URLAƒ^ƒCƒgƒ‹ƒf[ƒ^ƒx[ƒX‚Ì\’z}
+\paragraph{URL¡¢¥¿¥¤¥È¥ë¥Ç¡¼¥¿¥Ù¡¼¥¹¤Î¹½ÃÛ}
 
-WWW2sf“à‚Ìtool/scripts/extract-url-title.perl ‚ğ—˜—p.\\
+WWW2sfÆâ¤Îtool/scripts/extract-url-title.perl ¤òÍøÍÑ.\\
 make\_cdb.perl.\\
-–¢®—.\\
+Ì¤À°Íı.\\
 
 
-\paragraph{•¶‘•p“xƒf[ƒ^ƒx[ƒX‚ÌÄ\’z}
+\paragraph{Ê¸½ñÉÑÅÙ¥Ç¡¼¥¿¥Ù¡¼¥¹¤ÎºÆ¹½ÃÛ}
 
-•¶‘•p“xƒf[ƒ^ƒx[ƒX‚ÌÄ\’z‚ª•K—v.\\
-–¢®—.\\
+Ê¸½ñÉÑÅÙ¥Ç¡¼¥¿¥Ù¡¼¥¹¤ÎºÆ¹½ÃÛ¤¬É¬Í×.\\
+Ì¤À°Íı.\\
 
-\paragraph{ƒCƒ“ƒfƒbƒNƒX‚Ì’Ç‰Á}
+\paragraph{¥¤¥ó¥Ç¥Ã¥¯¥¹¤ÎÄÉ²Ã}
 
-•¶‘DBAƒ^ƒCƒgƒ‹DB‚ğˆÈ‰º‚ÌêŠ‚É’u‚­
+Ê¸½ñDB¡¢¥¿¥¤¥È¥ëDB¤ò°Ê²¼¤Î¾ì½ê¤ËÃÖ¤¯
 
 \begin{itemize}
 \item iccc001:/data/home/skeiji/dbs/titledb
 \item iccc001:/data/home/skeiji/dbs/urldb
 \end{itemize}
 
-ŒŸõƒT[ƒo[‚Ì“K“–‚ÈêŠ‚ÉˆÈ‰º‚Ìƒtƒ@ƒCƒ‹‚ğ’u‚­
+¸¡º÷¥µ¡¼¥Ğ¡¼¤ÎÅ¬Åö¤Ê¾ì½ê¤Ë°Ê²¼¤Î¥Õ¥¡¥¤¥ë¤òÃÖ¤¯
 \begin{itemize}
-\item {•¶‘’·DB:} ZZZ.doc\_length.bin,
-\item {ƒ^ƒCƒgƒ‹DB:} ZZZ.title.cdb,
+\item {Ê¸½ñÄ¹DB:} ZZZ.doc\_length.bin,
+\item {¥¿¥¤¥È¥ëDB:} ZZZ.title.cdb,
 \item {URLDB:} ZZZ.url.cdb,
-\item {ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^:} idxZZZ.word.dat, idxZZZ.dpnd.dat
-\item {ƒIƒtƒZƒbƒgDB:} offsetZZZ.word.cdb, offsetZZZ.dpnd.cdb,  offsetZZZ.word.cdb.1 c
+\item {¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿:} idxZZZ.word.dat, idxZZZ.dpnd.dat
+\item {¥ª¥Õ¥»¥Ã¥ÈDB:} offsetZZZ.word.cdb, offsetZZZ.dpnd.cdb,  offsetZZZ.word.cdb.1 ¡Ä
 \end{itemize}
 
-İ’èƒtƒ@ƒCƒ‹‚ğ‘‚«Š·‚¦‚éD
+ÀßÄê¥Õ¥¡¥¤¥ë¤ò½ñ¤­´¹¤¨¤ë¡¥
 
-\paragraph{İ’èƒtƒ@ƒCƒ‹}
+\paragraph{ÀßÄê¥Õ¥¡¥¤¥ë}
 
 /share10/WISDOM/conf/TSUBAKI.conf\\
 
-%% ƒCƒ“ƒfƒbƒNƒX‚Ì’Ç‰ÁAŒŸõƒm[ƒh‚ÌŒÌá‚È‚Ç‚ª‚ ‚Á‚½ê‡‚ÍAã‹L‚Ìƒtƒ@ƒCƒ‹‚ğ
-%% •ÒW‚·‚ê‚ÎATSUBAKI‚Ì“®ì‚É”½‰f‚³‚ê‚éB
+%% ¥¤¥ó¥Ç¥Ã¥¯¥¹¤ÎÄÉ²Ã¡¢¸¡º÷¥Î¡¼¥É¤Î¸Î¾ã¤Ê¤É¤¬¤¢¤Ã¤¿¾ì¹ç¤Ï¡¢¾åµ­¤Î¥Õ¥¡¥¤¥ë¤ò
+%% ÊÔ½¸¤¹¤ì¤Ğ¡¢TSUBAKI¤ÎÆ°ºî¤ËÈ¿±Ç¤µ¤ì¤ë¡£
 
 %% \small
 %% \begin{verbatim}
 %% ##################################################
-%% # TSUBAKI‚ÌŠÂ‹«•Ï”(šutf8‚Å•Û‘¶‚·‚é‚±‚Æ)
+%% # TSUBAKI¤Î´Ä¶­ÊÑ¿ô(¡úutf8¤ÇÊİÂ¸¤¹¤ë¤³¤È)
 %% # $Id$
 %% #
 %% #
 %% #
-%% # å‚Èİ’è€–Ú
-%% # * Šî–{ƒc[ƒ‹‚ÌƒpƒX
-%% # * ƒLƒƒƒbƒVƒ…ƒy[ƒW^•W€ƒtƒH[ƒ}ƒbƒgŠÖŒW‚ÌƒpƒX
-%% # * ƒf[ƒ^ƒx[ƒX‚ÌƒpƒX
-%% # * ŒŸõƒT[ƒo[^ƒXƒjƒyƒbƒgƒT[ƒo[ŠÖŒWiƒzƒXƒg–¼Aƒ|[ƒg”Ô†“™j
-%% # * ‚»‚Ì‘¼‚Ìİ’è
+%% # ¼ç¤ÊÀßÄê¹àÌÜ
+%% # * ´ğËÜ¥Ä¡¼¥ë¤Î¥Ñ¥¹
+%% # * ¥­¥ã¥Ã¥·¥å¥Ú¡¼¥¸¡¿É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È´Ø·¸¤Î¥Ñ¥¹
+%% # * ¥Ç¡¼¥¿¥Ù¡¼¥¹¤Î¥Ñ¥¹
+%% # * ¸¡º÷¥µ¡¼¥Ğ¡¼¡¿¥¹¥Ë¥Ú¥Ã¥È¥µ¡¼¥Ğ¡¼´Ø·¸¡Ê¥Û¥¹¥ÈÌ¾¡¢¥İ¡¼¥ÈÈÖ¹æÅù¡Ë
+%% # * ¤½¤ÎÂ¾¤ÎÀßÄê
 %% #
 %% #
 %% #
-%% # ‘®
+%% # ½ñ¼°
 %% # * KEY\tVALUE
-%% # * KEY\tVALUE1,VALUE2,...i’l‚ª•¡”‚Ìj
-%% #   - ƒT[ƒo[ŠÖŒW‚Ìİ’è‚Í“Á•Ê‚È‘®‚È‚Ì‚ÅAŠe€–Ú‚ğQÆ‚Ì‚±‚Æ
-%% # * s“ª‚ª`#' ‚Ìs‚ÍƒRƒƒ“ƒg
+%% # * KEY\tVALUE1,VALUE2,...¡ÊÃÍ¤¬Ê£¿ô¤Î»ş¡Ë
+%% #   - ¥µ¡¼¥Ğ¡¼´Ø·¸¤ÎÀßÄê¤ÏÆÃÊÌ¤Ê½ñ¼°¤Ê¤Î¤Ç¡¢³Æ¹àÌÜ¤ò»²¾È¤Î¤³¤È
+%% # * ¹ÔÆ¬¤¬`#' ¤Î¹Ô¤Ï¥³¥á¥ó¥È
 %% #
 %% ##################################################
 
 
 
 %% ##################################################
-%% # Šî–{ƒc[ƒ‹‚Ìİ’èiš—v•ÏXj
+%% # ´ğËÜ¥Ä¡¼¥ë¤ÎÀßÄê¡Ê¡úÍ×ÊÑ¹¹¡Ë
 %% ##################################################
 %% TOOL_HOME	/home/skeiji/local/bin
 %% KNP_PATH	/home/skeiji/local/bin
@@ -515,10 +515,10 @@ make\_cdb.perl.\\
 
 
 %% ##################################################
-%% # ƒLƒƒƒbƒVƒ…ƒy[ƒW^•W€ƒtƒH[ƒ}ƒbƒgŠÖŒW‚Ìİ’è
+%% # ¥­¥ã¥Ã¥·¥å¥Ú¡¼¥¸¡¿É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È´Ø·¸¤ÎÀßÄê
 %% ##################################################
 
-%% # ƒLƒƒƒbƒVƒ…ƒy[ƒW/•W€ƒtƒH[ƒ}ƒbƒg‘S‘Ì‚ğ’u‚¢‚Ä‚ ‚éƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌƒpƒXiš—v•ÏXj
+%% # ¥­¥ã¥Ã¥·¥å¥Ú¡¼¥¸/É¸½à¥Õ¥©¡¼¥Ş¥Ã¥ÈÁ´ÂÎ¤òÃÖ¤¤¤Æ¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê¤Ø¤Î¥Ñ¥¹¡Ê¡úÍ×ÊÑ¹¹¡Ë
 %% HTML_FILE_PATH		/net2/nlpcf34/disk08/skeiji
 %% ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
 %% SYNGRAPH_SF_PATH	/net2/nlpcf34/disk09/skeiji/sfs_w_syn
@@ -528,14 +528,14 @@ make\_cdb.perl.\\
 
 
 %% ##################################################
-%% # ƒf[ƒ^ƒx[ƒXŠÖŒW‚Ìİ’è
+%% # ¥Ç¡¼¥¿¥Ù¡¼¥¹´Ø·¸¤ÎÀßÄê
 %% ##################################################
 
-%% # TITLEDB/URLDB‚ğ”[‚ß‚½ƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌƒpƒXiš—v•ÏXj
+%% # TITLEDB/URLDB¤òÇ¼¤á¤¿¥Ç¥£¥ì¥¯¥È¥ê¤Ø¤Î¥Ñ¥¹¡Ê¡úÍ×ÊÑ¹¹¡Ë
 %% TITLE_DB_PATH	/work/skeiji/titledb
 %% URL_DB_PATH	/work/skeiji/urldb
 
-%% # ’PŒêEŒW‚èó‚¯E“¯‹`•\Œ»E“¯‹`•\Œ»ŒW‚èó‚¯‚ÌDFDB‚ğ”[‚ß‚½ƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌƒpƒXiš—v•ÏXj
+%% # Ã±¸ì¡¦·¸¤ê¼õ¤±¡¦Æ±µÁÉ½¸½¡¦Æ±µÁÉ½¸½·¸¤ê¼õ¤±¤ÎDFDB¤òÇ¼¤á¤¿¥Ç¥£¥ì¥¯¥È¥ê¤Ø¤Î¥Ñ¥¹¡Ê¡úÍ×ÊÑ¹¹¡Ë
 %% ORDINARY_DFDB_PATH	/var/www/cgi-bin/dbs/dfdbs
 %% SYNGRAPH_DFDB_PATH	/data/dfdb_syngraph_8600
 
@@ -544,11 +544,11 @@ make\_cdb.perl.\\
 
 
 %% ##################################################
-%% # ŒŸõƒT[ƒo[/ƒXƒjƒyƒbƒgƒT[ƒo[ŠÖŒW‚Ìİ’è
+%% # ¸¡º÷¥µ¡¼¥Ğ¡¼/¥¹¥Ë¥Ú¥Ã¥È¥µ¡¼¥Ğ¡¼´Ø·¸¤ÎÀßÄê
 %% ##################################################
 
-%% # ŒŸõ—pƒT[ƒo[iš—v•ÏXj
-%% # SEARCH_SERVERS ƒzƒXƒg–¼ ƒ|[ƒg”Ô†1,...
+%% # ¸¡º÷ÍÑ¥µ¡¼¥Ğ¡¼¡Ê¡úÍ×ÊÑ¹¹¡Ë
+%% # SEARCH_SERVERS ¥Û¥¹¥ÈÌ¾ ¥İ¡¼¥ÈÈÖ¹æ1,...
 
 %% SEARCH_SERVERS	 nlpc06		22001,22002,22003,20006
 %% SEARCH_SERVERS	 nlpc07		22001,22002,22003,20006
@@ -556,8 +556,8 @@ make\_cdb.perl.\\
 %% SEARCH_SERVERS	 nlpc31		22001,22002,22003
 %% SEARCH_SERVERS	 nlpc32		22001,22002,22003
 
-%% # SYNGRAPHŒŸõ—pƒT[ƒo[iš—v•ÏXj
-%% # SEARCH_SERVERS_FOR_SYNGRAPH ƒzƒXƒg–¼ ƒ|[ƒg”Ô†1,...
+%% # SYNGRAPH¸¡º÷ÍÑ¥µ¡¼¥Ğ¡¼¡Ê¡úÍ×ÊÑ¹¹¡Ë
+%% # SEARCH_SERVERS_FOR_SYNGRAPH ¥Û¥¹¥ÈÌ¾ ¥İ¡¼¥ÈÈÖ¹æ1,...
 
 %% SEARCH_SERVERS_FOR_SYNGRAPH	nlpc06	50001,50002
 %% SEARCH_SERVERS_FOR_SYNGRAPH	nlpc07	50001,50002
@@ -565,8 +565,8 @@ make\_cdb.perl.\\
 %% SEARCH_SERVERS_FOR_SYNGRAPH	nlpc47	50001,50002
 %% SEARCH_SERVERS_FOR_SYNGRAPH	nlpc48	50001,50002
 
-%% # ƒXƒjƒyƒbƒgƒT[ƒo[‚Ìİ’èiš—v•ÏXj
-%% # STANDARD_FORMAT_LOCATION ƒzƒXƒg–¼ ƒ|[ƒg”Ô† ƒfƒBƒXƒN‚É‚¨‚¢‚Ä‚ ‚é•W€ƒtƒH[ƒ}ƒbƒg‚ÌID1,...
+%% # ¥¹¥Ë¥Ú¥Ã¥È¥µ¡¼¥Ğ¡¼¤ÎÀßÄê¡Ê¡úÍ×ÊÑ¹¹¡Ë
+%% # STANDARD_FORMAT_LOCATION ¥Û¥¹¥ÈÌ¾ ¥İ¡¼¥ÈÈÖ¹æ ¥Ç¥£¥¹¥¯¤Ë¤ª¤¤¤Æ¤¢¤ëÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤ÎID1,...
 
 %% STANDARD_FORMAT_LOCATION	nlpc33	35000	000,016,032,048,064,080,096
 %% STANDARD_FORMAT_LOCATION	nlpc34	35000	001,017,033,049,065,081,097
@@ -578,140 +578,140 @@ make\_cdb.perl.\\
 
 
 %% ##################################################
-%% # ‚»‚Ì‘¼‚Ìİ’è
+%% # ¤½¤ÎÂ¾¤ÎÀßÄê
 %% ##################################################
 
-%% # ‹­’²•\¦‚É—p‚¢‚éF
+%% # ¶¯Ä´É½¼¨¤ËÍÑ¤¤¤ë¿§
 %% HIGHLIGHT_COLOR		ffff66,a0ffff,99ff99,ff9999,ff66ff,880000,00aa00,886800,004699,990099;
 
-%% # ƒƒOƒtƒ@ƒCƒ‹iš—v•ÏXj
+%% # ¥í¥°¥Õ¥¡¥¤¥ë¡Ê¡úÍ×ÊÑ¹¹¡Ë
 %% LOG_FILE_PATH		/se_tmp/input.log
 
-%% # ƒ}ƒVƒ“‚ÌŒÌá“™‚ÅƒT[ƒrƒX‚ğ’â~‚·‚éê‡‚Í1
+%% # ¥Ş¥·¥ó¤Î¸Î¾ãÅù¤Ç¥µ¡¼¥Ó¥¹¤òÄä»ß¤¹¤ë¾ì¹ç¤Ï1
 %% SERVICE_STOP_FLAG	0
 
-%% # ŒŸõ‰æ–Ê‚É•\¦‚·‚éƒƒbƒZ[ƒW
+%% # ¸¡º÷²èÌÌ¤ËÉ½¼¨¤¹¤ë¥á¥Ã¥»¡¼¥¸
 %% MESSAGE	0
 
-%% # ƒXƒjƒyƒbƒg‚Ì’·‚³iƒfƒtƒHƒ‹ƒg‚Í100’PŒêj
+%% # ¥¹¥Ë¥Ú¥Ã¥È¤ÎÄ¹¤µ¡Ê¥Ç¥Õ¥©¥ë¥È¤Ï100Ã±¸ì¡Ë
 %% MAX_NUM_OF_WORDS_IN_SNIPPET	100
 
-%% # ƒ^ƒCƒgƒ‹‚Ì’·‚³iƒfƒtƒHƒ‹ƒg‚Í60ƒoƒCƒgj
+%% # ¥¿¥¤¥È¥ë¤ÎÄ¹¤µ¡Ê¥Ç¥Õ¥©¥ë¥È¤Ï60¥Ğ¥¤¥È¡Ë
 %% MAX_LENGTH_OF_TITLE		60
 
-%% # ID‚©‚çƒLƒƒƒbƒVƒ…ƒy[ƒW‚Ö‚ÌƒpƒX‚ğ‹‚ß‚éÛ‚Ìƒeƒ“ƒvƒŒ[ƒgiš—v•ÏXj
+%% # ID¤«¤é¥­¥ã¥Ã¥·¥å¥Ú¡¼¥¸¤Ø¤Î¥Ñ¥¹¤òµá¤á¤ëºİ¤Î¥Æ¥ó¥×¥ì¡¼¥È¡Ê¡úÍ×ÊÑ¹¹¡Ë
 %% CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
 
-%% # ID‚©‚ç•W€ƒtƒH[ƒ}ƒbƒg‚Ö‚ÌƒpƒX‚ğ‹‚ß‚éÛ‚Ìƒeƒ“ƒvƒŒ[ƒgiš—v•ÏXj
+%% # ID¤«¤éÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤Ø¤Î¥Ñ¥¹¤òµá¤á¤ëºİ¤Î¥Æ¥ó¥×¥ì¡¼¥È¡Ê¡úÍ×ÊÑ¹¹¡Ë
 %% SF_PATH_TEMPLATE		/net2/nlpcf34/disk08/skeiji/x%03d/x%05d/%09d.xml.gz
 
-%% # index.cgi‚ÌƒAƒhƒŒƒXiš—v•ÏXj
+%% # index.cgi¤Î¥¢¥É¥ì¥¹¡Ê¡úÍ×ÊÑ¹¹¡Ë
 %% INDEX_CGI			http://tsubaki.ixnlp.nii.ac.jp/index.cgi
 
-%% # ƒLƒƒƒbƒVƒ…ƒy[ƒW‚Ö‚ÌƒŠƒ“ƒN‚ğ¶¬‚·‚éÛ‚É—p‚¢‚éƒeƒ“ƒvƒŒ[ƒg
+%% # ¥­¥ã¥Ã¥·¥å¥Ú¡¼¥¸¤Ø¤Î¥ê¥ó¥¯¤òÀ¸À®¤¹¤ëºİ¤ËÍÑ¤¤¤ë¥Æ¥ó¥×¥ì¡¼¥È
 %% CACHED_PAGE_ACCESS_TEMPLATE	cache=%09d
 %% \end{verbatim}
 %% \normalsize
 
-\subsection{TSUBAKI‚Ìİ’u•û–@}
+\subsection{TSUBAKI¤ÎÀßÃÖÊıË¡}
 
-ˆÈ‰º‚ÉTSUBAKI‚Ìİ’u•û–@‚ğ¦‚·B
+°Ê²¼¤ËTSUBAKI¤ÎÀßÃÖÊıË¡¤ò¼¨¤¹¡£
 
 \begin{enumerate}
 
-\item ƒvƒƒOƒ‰ƒ€‚ğcvs check out‚·‚éB
+\item ¥×¥í¥°¥é¥à¤òcvs check out¤¹¤ë¡£
 
 - cvs co SearchEngine
 
-\item scripts/Indexer.pm‚ğcgiˆÈ‰º‚ÉƒRƒs[iƒVƒ“ƒ{ƒŠƒbƒNƒŠƒ“ƒN‚à‰Âj
+\item scripts/Indexer.pm¤òcgi°Ê²¼¤Ë¥³¥Ô¡¼¡Ê¥·¥ó¥Ü¥ê¥Ã¥¯¥ê¥ó¥¯¤â²Ä¡Ë
 
-\item cgiƒtƒ@ƒCƒ‹AƒfƒBƒŒƒNƒgƒŠ‚Ìƒp[ƒ~ƒbƒVƒ‡ƒ“‚ğ755‚É•ÏX
+\item cgi¥Õ¥¡¥¤¥ë¡¢¥Ç¥£¥ì¥¯¥È¥ê¤Î¥Ñ¡¼¥ß¥Ã¥·¥ç¥ó¤ò755¤ËÊÑ¹¹
 
-\item ‚±‚±‚Åƒgƒbƒvƒy[ƒW‚ª•\¦‚³‚ê‚é‚©ƒ`ƒFƒbƒN
+\item ¤³¤³¤Ç¥È¥Ã¥×¥Ú¡¼¥¸¤¬É½¼¨¤µ¤ì¤ë¤«¥Á¥§¥Ã¥¯
 
-\item configure ‚Ìuš—v•ÏXv•”•ª‚ğŠÂ‹«‚É‡‚í‚¹‚ÄC³
+\item configure ¤Î¡Ö¡úÍ×ÊÑ¹¹¡×ÉôÊ¬¤ò´Ä¶­¤Ë¹ç¤ï¤»¤Æ½¤Àµ
 
-\item cgi/Configure.pm‚Ì17s–Ú‚Åw’è‚³‚ê‚Ä‚¢‚éİ’èƒtƒ@ƒCƒ‹‚ÌƒpƒX‚ğ•K—v‚Å‚ ‚ê‚Î•ÏX‚·‚éiƒfƒtƒHƒ‹ƒg‚Å‚Ícgi/configure‚ª“Ç‚İ‚Ü‚ê‚éj
+\item cgi/Configure.pm¤Î17¹ÔÌÜ¤Ç»ØÄê¤µ¤ì¤Æ¤¤¤ëÀßÄê¥Õ¥¡¥¤¥ë¤Î¥Ñ¥¹¤òÉ¬Í×¤Ç¤¢¤ì¤ĞÊÑ¹¹¤¹¤ë¡Ê¥Ç¥Õ¥©¥ë¥È¤Ç¤Ïcgi/configure¤¬ÆÉ¤ß¹ş¤Ş¤ì¤ë¡Ë
 
-\# ŠÂ‹«‚É‚æ‚Á‚ÄƒpƒX‚ğ•Ï‚¦‚é                                                                                     
+\# ´Ä¶­¤Ë¤è¤Ã¤Æ¥Ñ¥¹¤òÊÑ¤¨¤ë                                                                                     
 
 \texttt{my \$CONFIG\_FILE\_PATH = dirname(\$INC{'Configure.pm'}) . "/configure";}
 
-\item ŒŸõƒXƒŒ[ƒuƒT[ƒo[(tsubaki\_server.pl)‚ÌÀs
+\item ¸¡º÷¥¹¥ì¡¼¥Ö¥µ¡¼¥Ğ¡¼(tsubaki\_server.pl)¤Î¼Â¹Ô
 
 
 \begin{enumerate}
-\item ˆÈ‰º‚ÌƒRƒ}ƒ“ƒh‚É‚æ‚èƒvƒƒOƒ‰ƒ€‚Åg—p‚Å‚«‚éƒƒ‚ƒŠ‚ÌãŒÀ‚ğ‰ğœ‚·‚é
+\item °Ê²¼¤Î¥³¥Ş¥ó¥É¤Ë¤è¤ê¥×¥í¥°¥é¥à¤Ç»ÈÍÑ¤Ç¤­¤ë¥á¥â¥ê¤Î¾å¸Â¤ò²ò½ü¤¹¤ë
 
   ulimit -Ss unlimited 
 
-\item ˆÈ‰º‚ÌƒRƒ}ƒ“ƒh‚ÅƒT[ƒo[ƒvƒƒOƒ‰ƒ€‚ğ‹N“®‚·‚é
+\item °Ê²¼¤Î¥³¥Ş¥ó¥É¤Ç¥µ¡¼¥Ğ¡¼¥×¥í¥°¥é¥à¤òµ¯Æ°¤¹¤ë
 
-- perl -I ../cgi tsubaki\_server.pl -idxdir ƒCƒ“ƒfƒbƒNƒXƒf[ƒ^‚ª‚ ‚éƒfƒBƒŒƒNƒgƒŠ -dlengthdbdir •¶‘’·ƒf[ƒ^ƒx[ƒX‚ª‚ ‚éƒfƒBƒŒƒNƒgƒŠ -port ƒ|[ƒg”Ô†
+- perl -I ../cgi tsubaki\_server.pl -idxdir ¥¤¥ó¥Ç¥Ã¥¯¥¹¥Ç¡¼¥¿¤¬¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê -dlengthdbdir Ê¸½ñÄ¹¥Ç¡¼¥¿¥Ù¡¼¥¹¤¬¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê -port ¥İ¡¼¥ÈÈÖ¹æ
 
-- ˆê‘ä‚ÌŒvZ‹@‚Å•¡”ƒT[ƒo[‚ğ‹N“®‚·‚é‚Æ‚«‚ÍAƒ|[ƒg”Ô†‚ğ•ÏX‚·‚é‚±‚Æ
+- °ìÂæ¤Î·×»»µ¡¤ÇÊ£¿ô¥µ¡¼¥Ğ¡¼¤òµ¯Æ°¤¹¤ë¤È¤­¤Ï¡¢¥İ¡¼¥ÈÈÖ¹æ¤òÊÑ¹¹¤¹¤ë¤³¤È
 \end{enumerate}
 
-\item ƒXƒjƒyƒbƒg¶¬ƒT[ƒo[(snippet\_make\_server.pl)‚ÌÀs
+\item ¥¹¥Ë¥Ú¥Ã¥ÈÀ¸À®¥µ¡¼¥Ğ¡¼(snippet\_make\_server.pl)¤Î¼Â¹Ô
 
-- perl -I ../cgi snippet\_make\_server.pl -port ƒ|[ƒg”Ô†
+- perl -I ../cgi snippet\_make\_server.pl -port ¥İ¡¼¥ÈÈÖ¹æ
 
 \end{enumerate}
 
 
-ŒŸõƒXƒŒ[ƒuƒT[ƒo[AƒXƒjƒyƒbƒg¶¬ƒT[ƒo[‚Ì‹N“®‚É‚Ígxp‚ğ—˜—p‚·‚é‚Æ—eˆÕ‚É•¡”‘ä‚ÌŒvZ‹@‚ÅƒT[ƒo[ƒvƒƒOƒ‰ƒ€‚ğ‹N“®‚·‚é‚±‚Æ‚ª‰Â”\‚Å‚ ‚éB
+¸¡º÷¥¹¥ì¡¼¥Ö¥µ¡¼¥Ğ¡¼¡¢¥¹¥Ë¥Ú¥Ã¥ÈÀ¸À®¥µ¡¼¥Ğ¡¼¤Îµ¯Æ°¤Ë¤Ïgxp¤òÍøÍÑ¤¹¤ë¤ÈÍÆ°×¤ËÊ£¿ôÂæ¤Î·×»»µ¡¤Ç¥µ¡¼¥Ğ¡¼¥×¥í¥°¥é¥à¤òµ¯Æ°¤¹¤ë¤³¤È¤¬²ÄÇ½¤Ç¤¢¤ë¡£
 
 %% \begin{flushleft}
 %%    gxp\\
 %%    edges \texttt{->} iccc01[1,2,3,4,5,6,7,8,9]\\
 %%    edges \texttt{->} iccc02?\\
 %%    edges \texttt{->} iccc03[1,2,3,4,5,6]\\
-%%    explore  \# iccc011 - iccc036 ‚Ìƒm[ƒh‚ğŠl“¾
+%%    explore  \# iccc011 - iccc036 ¤Î¥Î¡¼¥É¤ò³ÍÆÀ
 %% \end{flushleft}
 
 
 %% \begin{itemize}
-%% \item Šî–{ƒc[ƒ‹‚Ìİ’èijuman,knp‚ÌƒpƒXAknprc‚ÌêŠj
-%% \item ƒLƒƒƒbƒVƒ…ƒy[ƒW/•W€ƒtƒH[ƒ}ƒbƒg‘S‘Ì‚ğ’u‚¢‚Ä‚ ‚éƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌƒpƒX
-%% \item TITLEDB/URLDB‚ğ”[‚ß‚½ƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌƒpƒX
-%% \item ’PŒêEŒW‚èó‚¯E“¯‹`•\Œ»E“¯‹`•\Œ»ŒW‚èó‚¯‚ÌDFDB‚ğ”[‚ß‚½ƒfƒBƒŒƒNƒgƒŠ‚Ö‚ÌƒpƒX
-%% \item ŒŸõ—pƒT[ƒo[‚ÌƒzƒXƒg–¼Aƒ|[ƒg”Ô†
-%% \item SYNGRAPHŒŸõ—pƒT[ƒo[‚ÌƒzƒXƒg–¼Aƒ|[ƒg”Ô†
-%% \item ƒXƒjƒyƒbƒgƒT[ƒo[‚ÌƒzƒXƒg–¼Aƒ|[ƒg”Ô†
-%% \item ƒƒOƒtƒ@ƒCƒ‹‚Ì’u‚«êŠ
-%% \item ID‚©‚çƒLƒƒƒbƒVƒ…ƒy[ƒW‚Ö‚ÌƒpƒX‚ğ‹‚ß‚éÛ‚Ìƒeƒ“ƒvƒŒ[ƒg
-%% \item ID‚©‚ç•W€ƒtƒH[ƒ}ƒbƒg‚Ö‚ÌƒpƒX‚ğ‹‚ß‚éÛ‚Ìƒeƒ“ƒvƒŒ[ƒg
-%% \item index.cgi‚ÌƒAƒhƒŒƒX
+%% \item ´ğËÜ¥Ä¡¼¥ë¤ÎÀßÄê¡Êjuman,knp¤Î¥Ñ¥¹¡¢knprc¤Î¾ì½ê¡Ë
+%% \item ¥­¥ã¥Ã¥·¥å¥Ú¡¼¥¸/É¸½à¥Õ¥©¡¼¥Ş¥Ã¥ÈÁ´ÂÎ¤òÃÖ¤¤¤Æ¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê¤Ø¤Î¥Ñ¥¹
+%% \item TITLEDB/URLDB¤òÇ¼¤á¤¿¥Ç¥£¥ì¥¯¥È¥ê¤Ø¤Î¥Ñ¥¹
+%% \item Ã±¸ì¡¦·¸¤ê¼õ¤±¡¦Æ±µÁÉ½¸½¡¦Æ±µÁÉ½¸½·¸¤ê¼õ¤±¤ÎDFDB¤òÇ¼¤á¤¿¥Ç¥£¥ì¥¯¥È¥ê¤Ø¤Î¥Ñ¥¹
+%% \item ¸¡º÷ÍÑ¥µ¡¼¥Ğ¡¼¤Î¥Û¥¹¥ÈÌ¾¡¢¥İ¡¼¥ÈÈÖ¹æ
+%% \item SYNGRAPH¸¡º÷ÍÑ¥µ¡¼¥Ğ¡¼¤Î¥Û¥¹¥ÈÌ¾¡¢¥İ¡¼¥ÈÈÖ¹æ
+%% \item ¥¹¥Ë¥Ú¥Ã¥È¥µ¡¼¥Ğ¡¼¤Î¥Û¥¹¥ÈÌ¾¡¢¥İ¡¼¥ÈÈÖ¹æ
+%% \item ¥í¥°¥Õ¥¡¥¤¥ë¤ÎÃÖ¤­¾ì½ê
+%% \item ID¤«¤é¥­¥ã¥Ã¥·¥å¥Ú¡¼¥¸¤Ø¤Î¥Ñ¥¹¤òµá¤á¤ëºİ¤Î¥Æ¥ó¥×¥ì¡¼¥È
+%% \item ID¤«¤éÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤Ø¤Î¥Ñ¥¹¤òµá¤á¤ëºİ¤Î¥Æ¥ó¥×¥ì¡¼¥È
+%% \item index.cgi¤Î¥¢¥É¥ì¥¹
 %% \end{itemize}
 
 
 
-\section{“®ìŠÂ‹«}
+\section{Æ°ºî´Ä¶­}
 
-TSUBAKI‚Í‘—§î•ñŠwŒ¤‹†Š ¼ç—t•ªŠÙ‚É‚Ä‰^—p‚³‚ê‚Ä‚¢‚éD•\\ref{spec_cpu}C
-\ref{spec_fs}‚ÉC¼ç—t•ªŠÙ‚ÌŒvZ‹@ŠÂ‹«‚ğ¦‚·D‚±‚±‚Å‚ÍC128‚ ‚éCPUƒRƒA
-‘S‚Ä‚ªŒŸõ—p‚É—p‚¢‚ç‚ê‚Ä‚¨‚èCˆê•”‚ÌCPUƒRƒA‚ÍƒCƒ“ƒfƒbƒNƒXì¬—p‚È‚Ç‚Ìˆ
-—‚É‚à•¹—p‚³‚ê‚éD
+TSUBAKI¤Ï¹ñÎ©¾ğÊó³Ø¸¦µæ½ê À¾ÀéÍÕÊ¬´Û¤Ë¤Æ±¿ÍÑ¤µ¤ì¤Æ¤¤¤ë¡¥É½\ref{spec_cpu}¡¤
+\ref{spec_fs}¤Ë¡¤À¾ÀéÍÕÊ¬´Û¤Î·×»»µ¡´Ä¶­¤ò¼¨¤¹¡¥¤³¤³¤Ç¤Ï¡¤128¤¢¤ëCPU¥³¥¢
+Á´¤Æ¤¬¸¡º÷ÍÑ¤ËÍÑ¤¤¤é¤ì¤Æ¤ª¤ê¡¤°ìÉô¤ÎCPU¥³¥¢¤Ï¥¤¥ó¥Ç¥Ã¥¯¥¹ºîÀ®ÍÑ¤Ê¤É¤Î½è
+Íı¤Ë¤âÊ»ÍÑ¤µ¤ì¤ë¡¥
 
-% ‚½‚¾‚µC‚±‚Ì—˜—p•û–@‚ÍŒŸõ‘ÎÛ‚Æ‚·‚é•¶‘”‚ÉˆË‘¶‚·‚é‚à
-% ‚Ì‚Å‚ ‚èCŒŸõ‘ÎÛ‚Æ‚È‚é•¶‘”‚ª‘‚¦‚ê‚ÎCPUƒRƒA‚Ìg—p•û–@‚à•Ï‚í‚Á‚Ä‚­‚éD
+% ¤¿¤À¤·¡¤¤³¤ÎÍøÍÑÊıË¡¤Ï¸¡º÷ÂĞ¾İ¤È¤¹¤ëÊ¸½ñ¿ô¤Ë°ÍÂ¸¤¹¤ë¤â
+% ¤Î¤Ç¤¢¤ê¡¤¸¡º÷ÂĞ¾İ¤È¤Ê¤ëÊ¸½ñ¿ô¤¬Áı¤¨¤ì¤ĞCPU¥³¥¢¤Î»ÈÍÑÊıË¡¤âÊÑ¤ï¤Ã¤Æ¤¯¤ë¡¥
 
-% Œ»İ‚ÌŒŸõ‘ÎÛ‚Æ‚·‚é•¶‘”‚Í1‰­ƒy[ƒW‚Å‚ ‚é‚ªC¡Œã‚Í2‰­ƒy[ƒW‚É‘‚â‚·—\’è‚Å‚ ‚èC
-% ‚»‚¤‚È‚Á‚½Û‚ÍC128CPUƒRƒA‘S‚Ä‚ğŒŸõ—p“r‚ÉŠ„‚è“–‚ÄCƒCƒ“ƒfƒbƒNƒXì
-% ¬‚Í“¯‚¶‚­‰ÈŒ¤î•ñ”š”­‚É‚Ä‰^—p‚³‚ê‚Ä‚¢‚éInTriggerƒvƒ‰ƒbƒgƒz[ƒ€\footnote{http://i-explosion.ex.nii.ac.jp/i-explosion/html/S/A02-1/index.html}
-% ‚ÉˆÚs‚·‚é—\’è‚Å‚ ‚éD
+% ¸½ºß¤Î¸¡º÷ÂĞ¾İ¤È¤¹¤ëÊ¸½ñ¿ô¤Ï1²¯¥Ú¡¼¥¸¤Ç¤¢¤ë¤¬¡¤º£¸å¤Ï2²¯¥Ú¡¼¥¸¤ËÁı¤ä¤¹Í½Äê¤Ç¤¢¤ê¡¤
+% ¤½¤¦¤Ê¤Ã¤¿ºİ¤Ï¡¤128CPU¥³¥¢Á´¤Æ¤ò¸¡º÷ÍÑÅÓ¤Ë³ä¤êÅö¤Æ¡¤¥¤¥ó¥Ç¥Ã¥¯¥¹ºî
+% À®¤ÏÆ±¤¸¤¯²Ê¸¦¾ğÊóÇúÈ¯¤Ë¤Æ±¿ÍÑ¤µ¤ì¤Æ¤¤¤ëInTrigger¥×¥é¥Ã¥È¥Û¡¼¥à\footnote{http://i-explosion.ex.nii.ac.jp/i-explosion/html/S/A02-1/index.html}
+% ¤Ë°Ü¹Ô¤¹¤ëÍ½Äê¤Ç¤¢¤ë¡¥
 
 \begin{table*}[h]
 \footnotesize
 \begin{center}
-\caption{TSUBAKIŒnŒvZ‹@ŠÂ‹«(ŒvZƒT[ƒo[)}
+\caption{TSUBAKI·Ï·×»»µ¡´Ä¶­(·×»»¥µ¡¼¥Ğ¡¼)}
 \label{spec_cpu}
 \begin{tabular}{r|r|r|r}
 \hline
-&HPĞ»ƒuƒŒ[ƒhƒT[ƒo[ (32‘ä) & APPROĞ»ƒuƒŒ[ƒhƒT[ƒo[ (16‘ä)&‡Œv\\ \hline
-CPU& 64CPUƒRƒA(2CPUƒRƒA~32) & 64CPUƒRƒA(4CPUƒRƒA~16) & 128CPUƒRƒA\\
-ƒƒ‚ƒŠ&192GB(6GB~32)&192GB(12GB~16) & 384GB\\
-ƒ[ƒJƒ‹ƒfƒBƒXƒN& 19.2TB(0.6TB~32) & 16.0TB (1TB~16) & 35.2TB\\ \hline
+&HP¼ÒÀ½¥Ö¥ì¡¼¥É¥µ¡¼¥Ğ¡¼ (32Âæ) & APPRO¼ÒÀ½¥Ö¥ì¡¼¥É¥µ¡¼¥Ğ¡¼ (16Âæ)&¹ç·×\\ \hline
+CPU& 64CPU¥³¥¢(2CPU¥³¥¢¡ß32) & 64CPU¥³¥¢(4CPU¥³¥¢¡ß16) & 128CPU¥³¥¢\\
+¥á¥â¥ê&192GB(6GB¡ß32)&192GB(12GB¡ß16) & 384GB\\
+¥í¡¼¥«¥ë¥Ç¥£¥¹¥¯& 19.2TB(0.6TB¡ß32) & 16.0TB (1TB¡ß16) & 35.2TB\\ \hline
 \end{tabular}
 \end{center}
 \end{table*}
@@ -719,25 +719,25 @@ CPU& 64CPUƒRƒA(2CPUƒRƒA~32) & 64CPUƒRƒA(4CPUƒRƒA~16) & 128CPUƒRƒA\\
 \begin{table}[h]
 \footnotesize
 \begin{center}
-\caption{TSUBAKIŒnŒvZ‹@ŠÂ‹«(ƒtƒ@ƒCƒ‹ƒT[ƒo[)}
+\caption{TSUBAKI·Ï·×»»µ¡´Ä¶­(¥Õ¥¡¥¤¥ë¥µ¡¼¥Ğ¡¼)}
 \label{spec_fs}
 \begin{tabular}{r|r}
 \hline
-ƒzƒXƒg–¼ & —e—Ê \\ \hline
+¥Û¥¹¥ÈÌ¾ & ÍÆÎÌ \\ \hline
 nlpcf.ixnlp.nii.ac.jp & 2.0TB \\
 nlpcf2.ixnlp.nii.ac.jp & 10.5TB \\
 nlpcf3.ixnlp.nii.ac.jp & 53.4TB\\
 nlpcf4.ixnlp.nii.ac.jp & 53.4TB\\ \hline
-‡Œv & 119.3TB\\ \hline
+¹ç·× & 119.3TB\\ \hline
 \end{tabular}
 \end{center}
 \end{table}
 
-\section{InTrigger‚Å‚Ì•W€ƒtƒH[ƒ}ƒbƒgƒf[ƒ^‚Ì—˜—p•û–@}
+\section{InTrigger¤Ç¤ÎÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¥Ç¡¼¥¿¤ÎÍøÍÑÊıË¡}
 
-\ref{construction_of_wsf_data}ß‚Å\’z‚µ‚½ˆê‰­Œ‚ÌKNP‰ğÍŒ‹‰Ê•t‚«•W€ƒtƒH[ƒ}ƒbƒgƒf[ƒ^‚ÍCInTrigger 
-(chiba)ã‚Ìƒ}ƒVƒ“ichiba100 - chiba157j‚É•ªU‚µ‚Ä”z’u‚µ‚Ä‚ ‚éD
-•W€ƒtƒH[ƒ}ƒbƒgƒf[ƒ^‚ÍCŠeƒ}ƒVƒ“‚Ì\texttt{/data/local/tsubaki/sfs}ˆÈ‰º‚É‚ ‚éD
+\ref{construction_of_wsf_data}Àá¤Ç¹½ÃÛ¤·¤¿°ì²¯·ï¤ÎKNP²òÀÏ·ë²ÌÉÕ¤­É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¥Ç¡¼¥¿¤Ï¡¤InTrigger 
+(chiba)¾å¤Î¥Ş¥·¥ó¡Êchiba100 - chiba157¡Ë¤ËÊ¬»¶¤·¤ÆÇÛÃÖ¤·¤Æ¤¢¤ë¡¥
+É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¥Ç¡¼¥¿¤Ï¡¤³Æ¥Ş¥·¥ó¤Î\texttt{/data/local/tsubaki/sfs}°Ê²¼¤Ë¤¢¤ë¡¥
 
 \begin{flushleft}
 \begin{minipage}{0.8\columnwidth}
@@ -751,11 +751,11 @@ skeiji@chiba100:~$
 \end{flushleft}
 
 \noindent
-‚Ç‚Ìƒ}ƒVƒ“‚ÉA‚Ç‚ÌID‚Ì•W€ƒtƒH[ƒ}ƒbƒg‚ª”z’u‚³‚ê‚Ä‚¢‚é‚©‚ÍC•\‚ğQÆ‚³‚ê‚½‚¢D
+¤É¤Î¥Ş¥·¥ó¤Ë¡¢¤É¤ÎID¤ÎÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤¬ÇÛÃÖ¤µ¤ì¤Æ¤¤¤ë¤«¤Ï¡¤É½¤ò»²¾È¤µ¤ì¤¿¤¤¡¥
 %
-•W€ƒtƒH[ƒ}ƒbƒgƒf[ƒ^‚ğˆ—‚·‚éÛ‚ÍC\texttt{scp}‚È‚Ç‚ğ—p‚¢‚ÄƒRƒs[‚µ‚Ä‚©‚çˆ—‚µ‚Ä’¸‚«‚½‚¢D
+É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¥Ç¡¼¥¿¤ò½èÍı¤¹¤ëºİ¤Ï¡¤\texttt{scp}¤Ê¤É¤òÍÑ¤¤¤Æ¥³¥Ô¡¼¤·¤Æ¤«¤é½èÍı¤·¤ÆÄº¤­¤¿¤¤¡¥
 
-%% ŠeƒfƒBƒŒƒNƒgƒŠ“à‚É‚Í100ŒÂ‚Ì\texttt{tgz}ƒtƒ@ƒCƒ‹‚ª’u‚©‚ê‚Ä‚¢‚éD
+%% ³Æ¥Ç¥£¥ì¥¯¥È¥êÆâ¤Ë¤Ï100¸Ä¤Î\texttt{tgz}¥Õ¥¡¥¤¥ë¤¬ÃÖ¤«¤ì¤Æ¤¤¤ë¡¥
 
 %% \begin{flushleft}
 %% \begin{minipage}{0.8\columnwidth}
@@ -766,7 +766,7 @@ skeiji@chiba100:~$
 %% x00000.tar.gz  x00017.tar.gz  x00034.tar.gz  x00051.tar.gz  x00068.tar.gz  x00085.tar.gz
 %% x00001.tar.gz  x00018.tar.gz  x00035.tar.gz  x00052.tar.gz  x00069.tar.gz  x00086.tar.gz
 %% x00002.tar.gz  x00019.tar.gz  x00036.tar.gz  x00053.tar.gz  x00070.tar.gz  x00087.tar.gz
-%% ... ’†—ª ...
+%% ... ÃæÎ¬ ...
 %% x00014.tar.gz  x00031.tar.gz  x00048.tar.gz  x00065.tar.gz  x00082.tar.gz  x00099.tar.gz
 %% x00015.tar.gz  x00032.tar.gz  x00049.tar.gz  x00066.tar.gz  x00083.tar.gz
 %% x00016.tar.gz  x00033.tar.gz  x00050.tar.gz  x00067.tar.gz  x00084.tar.gz
@@ -776,7 +776,7 @@ skeiji@chiba100:~$
 %% \end{flushleft}
 
 %% \noindent
-%% Še\texttt{tgz}ƒtƒ@ƒCƒ‹‚ÍC10,000ŒÂ‚Ì•W€ƒtƒH[ƒ}ƒbƒgƒf[ƒ^‚ğˆ³k‚µ‚½‚à‚Ì‚É‚È‚Á‚Ä‚¢‚éD
+%% ³Æ\texttt{tgz}¥Õ¥¡¥¤¥ë¤Ï¡¤10,000¸Ä¤ÎÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¥Ç¡¼¥¿¤ò°µ½Ì¤·¤¿¤â¤Î¤Ë¤Ê¤Ã¤Æ¤¤¤ë¡¥
 
 %% \begin{flushleft}
 %% \begin{minipage}{0.8\columnwidth}
@@ -787,7 +787,7 @@ skeiji@chiba100:~$
 %% skeiji@chiba100:~$ ls x00000
 %% 000000000.xml.gz  000002000.xml.gz  000004000.xml.gz  000006000.xml.gz  000008000.xml.gz
 %% 000000001.xml.gz  000002001.xml.gz  000004001.xml.gz  000006001.xml.gz  000008001.xml.gz
-%% ... ’†—ª ...
+%% ... ÃæÎ¬ ...
 %% 000001999.xml.gz  000003999.xml.gz  000005999.xml.gz  000007999.xml.gz  000009999.xml.gz
 %% 000001998.xml.gz  000003998.xml.gz  000005998.xml.gz  000007998.xml.gz  000009998.xml.gz
 %% skeiji@chiba100:~$ 
@@ -795,85 +795,85 @@ skeiji@chiba100:~$
 %% \end{minipage}
 %% \end{flushleft}
 
-%% ƒVƒ“ƒOƒ‹ƒvƒƒZƒX‚É‚Ä•W€ƒtƒH[ƒ}ƒbƒgƒf[ƒ^‚ğˆ—‚·‚éÛ‚ÍCƒtƒ@ƒCƒ‹ƒT[ƒo
-%% [ã‚Ìƒtƒ@ƒCƒ‹‚ğ’¼Úˆ—‚µ‚Ä‚à–â‘è‚Í‚È‚¢D‚µ‚©‚µ‚È‚ª‚çC•¡”‘ä‚Ìƒ}ƒVƒ“‚ğ
-%% g‚Á‚Äƒtƒ@ƒCƒ‹ƒT[ƒo[ã‚Ìƒf[ƒ^‚ğ•À—ñˆ—‚µ‚æ‚¤‚Æ‚·‚éê‡‚ÍCƒtƒ@ƒCƒ‹ƒT
-%% [ƒo[‚É‘Î‚µ‚Ä‚•‰‰×‚ª‚©‚©‚é‚½‚ß–â‘è‚Æ‚È‚éD
+%% ¥·¥ó¥°¥ë¥×¥í¥»¥¹¤Ë¤ÆÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¥Ç¡¼¥¿¤ò½èÍı¤¹¤ëºİ¤Ï¡¤¥Õ¥¡¥¤¥ë¥µ¡¼¥Ğ
+%% ¡¼¾å¤Î¥Õ¥¡¥¤¥ë¤òÄ¾ÀÜ½èÍı¤·¤Æ¤âÌäÂê¤Ï¤Ê¤¤¡¥¤·¤«¤·¤Ê¤¬¤é¡¤Ê£¿ôÂæ¤Î¥Ş¥·¥ó¤ò
+%% »È¤Ã¤Æ¥Õ¥¡¥¤¥ë¥µ¡¼¥Ğ¡¼¾å¤Î¥Ç¡¼¥¿¤òÊÂÎó½èÍı¤·¤è¤¦¤È¤¹¤ë¾ì¹ç¤Ï¡¤¥Õ¥¡¥¤¥ë¥µ
+%% ¡¼¥Ğ¡¼¤ËÂĞ¤·¤Æ¹âÉé²Ù¤¬¤«¤«¤ë¤¿¤áÌäÂê¤È¤Ê¤ë¡¥
 %% %
-%% ‚»‚±‚ÅC•¡”‘ä‚ÌƒNƒ‰ƒXƒ^‚ğg‚Á‚Ä•À—ñˆ—‚ğs‚¦‚é‚æ‚¤‚ÉC•W€ƒtƒH[ƒ}ƒbƒgƒf
-%% [ƒ^‚Í\texttt{chiba[100-158]}‚Ü‚Å‚ÌŠeƒ[ƒJƒ‹ƒfƒBƒXƒNã‚É•ªU‚µ‚ÄƒRƒs[
-%% ‚³‚ê‚Ä‚¢‚éD‹ï‘Ì“I‚É‚ÍCŠeƒ}ƒVƒ“‚Ì\texttt{/data/local/skeiji/sfs}ˆÈ‰º‚É3C
-%% 4ŒÂ‚¸‚Â\texttt{tgz}ƒtƒ@ƒCƒ‹‚ª’u‚©‚ê‚Ä‚¢‚éD
+%% ¤½¤³¤Ç¡¤Ê£¿ôÂæ¤Î¥¯¥é¥¹¥¿¤ò»È¤Ã¤ÆÊÂÎó½èÍı¤ò¹Ô¤¨¤ë¤è¤¦¤Ë¡¤É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¥Ç
+%% ¡¼¥¿¤Ï\texttt{chiba[100-158]}¤Ş¤Ç¤Î³Æ¥í¡¼¥«¥ë¥Ç¥£¥¹¥¯¾å¤ËÊ¬»¶¤·¤Æ¥³¥Ô¡¼
+%% ¤µ¤ì¤Æ¤¤¤ë¡¥¶ñÂÎÅª¤Ë¤Ï¡¤³Æ¥Ş¥·¥ó¤Î\texttt{/data/local/skeiji/sfs}°Ê²¼¤Ë3¡¤
+%% 4¸Ä¤º¤Ä\texttt{tgz}¥Õ¥¡¥¤¥ë¤¬ÃÖ¤«¤ì¤Æ¤¤¤ë¡¥
 %% %
-%% •W€ƒtƒH[ƒ}ƒbƒgƒf[ƒ^‚ğ•À—ñˆ—‚·‚éÛ‚ÍCƒtƒ@ƒCƒ‹ƒT[ƒo[‚Ö‚•‰‰×‚ğ—^‚¦
-%% ‚È‚¢‚æ‚¤‚É‚·‚é‚½‚ß‚ÉC\texttt{chiba[100-158]}‚Ìƒ[ƒJƒ‹ƒfƒBƒXƒNã‚É•ªU
-%% ‚³‚ê‚½ƒtƒ@ƒCƒ‹‚ğC\texttt{scp}‚È‚Ç‚ğ—p‚¢‚ÄƒRƒs[‚µ‚Ä‚©‚çˆ—‚µ‚Ä’¸‚«‚½‚¢D
+%% É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¥Ç¡¼¥¿¤òÊÂÎó½èÍı¤¹¤ëºİ¤Ï¡¤¥Õ¥¡¥¤¥ë¥µ¡¼¥Ğ¡¼¤Ø¹âÉé²Ù¤òÍ¿¤¨
+%% ¤Ê¤¤¤è¤¦¤Ë¤¹¤ë¤¿¤á¤Ë¡¤\texttt{chiba[100-158]}¤Î¥í¡¼¥«¥ë¥Ç¥£¥¹¥¯¾å¤ËÊ¬»¶
+%% ¤µ¤ì¤¿¥Õ¥¡¥¤¥ë¤ò¡¤\texttt{scp}¤Ê¤É¤òÍÑ¤¤¤Æ¥³¥Ô¡¼¤·¤Æ¤«¤é½èÍı¤·¤ÆÄº¤­¤¿¤¤¡¥
 
-\section{ƒVƒXƒeƒ€\¬š}
+\section{¥·¥¹¥Æ¥à¹½À®¡ú}
 
-%% š‚Ç‚¤‚¢‚Á‚½ƒf[ƒ^‚ªƒ[ƒJƒ‹ƒfƒBƒXƒN‚Ì‚Ç‚±‚É‚Ç‚Ì‚­‚ç‚¢‚ ‚é‚©pdfƒtƒ@ƒCƒ‹‚É’Ç‹L‚·‚é
-%% šURL‚ÆID‚Ì‘Î‰‚ª‚Ç‚¤‚¢‚Á‚½ƒvƒƒOƒ‰ƒ€‚Å‚Ç‚Ì‚æ‚¤‚ÉŠÇ—‚³‚ê‚Ä‚¢‚é‚©ƒhƒLƒ…ƒƒ“ƒg‚ğ‘‚­
+%% ¡ú¤É¤¦¤¤¤Ã¤¿¥Ç¡¼¥¿¤¬¥í¡¼¥«¥ë¥Ç¥£¥¹¥¯¤Î¤É¤³¤Ë¤É¤Î¤¯¤é¤¤¤¢¤ë¤«pdf¥Õ¥¡¥¤¥ë¤ËÄÉµ­¤¹¤ë
+%% ¡úURL¤ÈID¤ÎÂĞ±ş¤¬¤É¤¦¤¤¤Ã¤¿¥×¥í¥°¥é¥à¤Ç¤É¤Î¤è¤¦¤Ë´ÉÍı¤µ¤ì¤Æ¤¤¤ë¤«¥É¥­¥å¥á¥ó¥È¤ò½ñ¤¯
 
-\section{ƒEƒFƒuƒy[ƒW‚Ì\‘¢‰ğÍ} 
+\section{¥¦¥§¥Ö¥Ú¡¼¥¸¤Î¹½Â¤²òÀÏ} 
 
-–{Í‚Å‚ÍA—á‚¦‚Î”­MÒ‚ªoŒ»‚µ‚â‚·‚¢ƒwƒbƒ_Aƒtƒbƒ^—ÌˆæAoŒ»‚µ‚É‚­‚¢ƒŠƒ“
-ƒN—Ìˆæ‚â–{•¶—Ìˆæ‚È‚Ç‚ğŒŸo‚·‚é‚½‚ß‚ÉWebƒy[ƒW‚Ì\‘¢‰ğÍ‚ğs‚¤B\‘¢‰ğÍ‚Ì
-è‡‚ÍADOM–Ø‚âƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌˆÊ’uî•ñAŒJ‚è•Ô‚µ\‘¢‚È‚Ç‚ğ—˜—p‚µ‚Ä‚Ü‚¸
-Webƒy[ƒW‚ğ—Ìˆæ‚É•ªŠ„‚µAŸ‚ÉŠe—Ìˆæ‚Ì—Ìˆæ–¼‚ğ”»’è‚·‚éB
+ËÜ¾Ï¤Ç¤Ï¡¢Îã¤¨¤ĞÈ¯¿®¼Ô¤¬½Ğ¸½¤·¤ä¤¹¤¤¥Ø¥Ã¥À¡¢¥Õ¥Ã¥¿ÎÎ°è¡¢½Ğ¸½¤·¤Ë¤¯¤¤¥ê¥ó
+¥¯ÎÎ°è¤äËÜÊ¸ÎÎ°è¤Ê¤É¤ò¸¡½Ğ¤¹¤ë¤¿¤á¤ËWeb¥Ú¡¼¥¸¤Î¹½Â¤²òÀÏ¤ò¹Ô¤¦¡£¹½Â¤²òÀÏ¤Î
+¼ê½ç¤Ï¡¢DOMÌÚ¤ä¥ì¥ó¥À¥ê¥ó¥°»ş¤Î°ÌÃÖ¾ğÊó¡¢·«¤êÊÖ¤·¹½Â¤¤Ê¤É¤òÍøÍÑ¤·¤Æ¤Ş¤º
+Web¥Ú¡¼¥¸¤òÎÎ°è¤ËÊ¬³ä¤·¡¢¼¡¤Ë³ÆÎÎ°è¤ÎÎÎ°èÌ¾¤òÈ½Äê¤¹¤ë¡£
 
-\subsection{”»’è‚·‚é—Ìˆæ‚Ìí—Ş}
+\subsection{È½Äê¤¹¤ëÎÎ°è¤Î¼ïÎà}
 
-”»’è‚·‚é—Ìˆæ‚Í‘å‚«‚­•ª‚¯‚ÄŠî–{ƒuƒƒbƒN7í—Ş‚ÆƒTƒuƒuƒƒbƒN2í—Ş‚ÌŒv9í—Ş‚ğ
-l‚¦‚½BŠeƒuƒƒbƒN–¼‚Æ‚»‚Ì–ğŠ„‚ğˆÈ‰º‚É¦‚·B
+È½Äê¤¹¤ëÎÎ°è¤ÏÂç¤­¤¯Ê¬¤±¤Æ´ğËÜ¥Ö¥í¥Ã¥¯7¼ïÎà¤È¥µ¥Ö¥Ö¥í¥Ã¥¯2¼ïÎà¤Î·×9¼ïÎà¤ò
+¹Í¤¨¤¿¡£³Æ¥Ö¥í¥Ã¥¯Ì¾¤È¤½¤ÎÌò³ä¤ò°Ê²¼¤Ë¼¨¤¹¡£
 
 \begin{itemize}
- \item Šî–{ƒuƒƒbƒN
+ \item ´ğËÜ¥Ö¥í¥Ã¥¯
 
        \vspace{0.5zw}
        
        \begin{small}
 	\hspace{-1.5zw}\begin{tabular}{ll}
-	 \bf footer & ƒy[ƒW‰º•”‚ÉˆÊ’u‚·‚écopyright‚âƒƒjƒ…[“™‚ğ‚Ü‚Æ‚ß‚½—Ìˆæ \\
-	 \bf header & ƒy[ƒWã•”‚ÉˆÊ’u‚·‚éƒy[ƒWƒ^ƒCƒgƒ‹‚âƒƒjƒ…[“™‚ğ‚Ü‚Æ‚ß‚½—Ì
-	     ˆæ \\
-	 \bf link & ŠÖ˜AƒŠƒ“ƒN“™AƒŠƒ“ƒN‚ğ‚Ü‚Æ‚ß‚Ä‹Lq‚µ‚Ä‚ ‚é—Ìˆæ\\
-	 \bf image & ‰æ‘œ—Ìˆæ \\
-	 \bf maintext & ƒy[ƒW‚Ìå—vƒRƒ“ƒeƒ“ƒc‚Æ‚È‚é—Ìˆæ \\
-	 \bf form & ŒŸõEƒRƒƒ“ƒg‘—MƒtƒH[ƒ€‚È‚Ç\\
-	 \bf unknown & ƒy[ƒW’†‚Ì¬Œ©o‚µ“™ \\
+	 \bf footer & ¥Ú¡¼¥¸²¼Éô¤Ë°ÌÃÖ¤¹¤ëcopyright¤ä¥á¥Ë¥å¡¼Åù¤ò¤Ş¤È¤á¤¿ÎÎ°è \\
+	 \bf header & ¥Ú¡¼¥¸¾åÉô¤Ë°ÌÃÖ¤¹¤ë¥Ú¡¼¥¸¥¿¥¤¥È¥ë¤ä¥á¥Ë¥å¡¼Åù¤ò¤Ş¤È¤á¤¿ÎÎ
+	     °è \\
+	 \bf link & ´ØÏ¢¥ê¥ó¥¯Åù¡¢¥ê¥ó¥¯¤ò¤Ş¤È¤á¤Æµ­½Ò¤·¤Æ¤¢¤ëÎÎ°è\\
+	 \bf image & ²èÁüÎÎ°è \\
+	 \bf maintext & ¥Ú¡¼¥¸¤Î¼çÍ×¥³¥ó¥Æ¥ó¥Ä¤È¤Ê¤ëÎÎ°è \\
+	 \bf form & ¸¡º÷¡¦¥³¥á¥ó¥ÈÁ÷¿®¥Õ¥©¡¼¥à¤Ê¤É\\
+	 \bf unknown & ¥Ú¡¼¥¸Ãæ¤Î¾®¸«½Ğ¤·Åù \\
 		     \end{tabular}
        \end{small}
 
        \vspace{0.5zw}
 
- \item ƒTƒuƒuƒƒbƒN
+ \item ¥µ¥Ö¥Ö¥í¥Ã¥¯
 
        \vspace{0.5zw}
 
        \begin{small}
 	\hspace{-1.5zw}\begin{tabular}{ll}
-	 \bf profile & ƒy[ƒWŠÇ—Ò‚Ì–¼‘O‚â¶”NŒ“ú“™AƒvƒƒtƒB[ƒ‹‚ª‹Lq‚³‚ê‚Ä
-		   ‚¢‚é—Ìˆæ \\
-	 \bf address & “d˜b”Ô†‚âZŠ“™‚Ì˜A—æ‚ª‚Ü‚Æ‚ß‚ç‚ê‚Ä‚¢‚é—Ìˆæ
+	 \bf profile & ¥Ú¡¼¥¸´ÉÍı¼Ô¤ÎÌ¾Á°¤äÀ¸Ç¯·îÆüÅù¡¢¥×¥í¥Õ¥£¡¼¥ë¤¬µ­½Ò¤µ¤ì¤Æ
+		   ¤¤¤ëÎÎ°è \\
+	 \bf address & ÅÅÏÃÈÖ¹æ¤ä½»½êÅù¤ÎÏ¢ÍíÀè¤¬¤Ş¤È¤á¤é¤ì¤Æ¤¤¤ëÎÎ°è
 		     \end{tabular}
        \end{small}
        \vspace{0.5zw}
 \end{itemize}
 
-unknown‚ÍŠî–{ƒuƒƒbƒN‚Ìfooter, header, link, image, maintext, form‚Ì‚¢‚¸
-‚ê‚É‚àŠY“–‚µ‚È‚¢ƒuƒƒbƒN‚É•t—^‚·‚éBŠî–{ƒuƒƒbƒN‚Í“ü‚êq\‘¢‚ğ‹–‚³‚¸AƒT
-ƒuƒuƒƒbƒN‚Í•K‚¸Šî–{ƒuƒƒbƒN‚Ìmaintext‚Ü‚½‚Ífooter—Ìˆæ‚ÉŠÜ‚Ü‚ê‚éB‚±‚Ì‚æ
-‚¤‚È•ª—Ş‚ğs‚¤‚Ì‚ÍŠî–{ƒuƒƒbƒN‚ªƒŒƒCƒAƒEƒg‚ğ•\‚·‚æ‚¤‚È—Ìˆæ‚Å‚ ‚é‚Ì‚É‘Î‚µ
-‚ÄAƒTƒuƒuƒƒbƒN‚ÍŠî–{ƒuƒƒbƒN’†‚Ì•¶‚Ì«¿‚ğ•\‚·‚½‚ß‚Å‚ ‚éB
+unknown¤Ï´ğËÜ¥Ö¥í¥Ã¥¯¤Îfooter, header, link, image, maintext, form¤Î¤¤¤º
+¤ì¤Ë¤â³ºÅö¤·¤Ê¤¤¥Ö¥í¥Ã¥¯¤ËÉÕÍ¿¤¹¤ë¡£´ğËÜ¥Ö¥í¥Ã¥¯¤ÏÆş¤ì»Ò¹½Â¤¤òµö¤µ¤º¡¢¥µ
+¥Ö¥Ö¥í¥Ã¥¯¤ÏÉ¬¤º´ğËÜ¥Ö¥í¥Ã¥¯¤Îmaintext¤Ş¤¿¤ÏfooterÎÎ°è¤Ë´Ş¤Ş¤ì¤ë¡£¤³¤Î¤è
+¤¦¤ÊÊ¬Îà¤ò¹Ô¤¦¤Î¤Ï´ğËÜ¥Ö¥í¥Ã¥¯¤¬¥ì¥¤¥¢¥¦¥È¤òÉ½¤¹¤è¤¦¤ÊÎÎ°è¤Ç¤¢¤ë¤Î¤ËÂĞ¤·
+¤Æ¡¢¥µ¥Ö¥Ö¥í¥Ã¥¯¤Ï´ğËÜ¥Ö¥í¥Ã¥¯Ãæ¤ÎÊ¸¤ÎÀ­¼Á¤òÉ½¤¹¤¿¤á¤Ç¤¢¤ë¡£
 
-—á‚¦‚ÎA}\ref{RIETI-Pension-034}‚Ìƒy[ƒW‚ğ\‘¢‰ğÍ‚·‚é‚Æ}
-\ref{pre_detect_block_sample}‚Ì‚æ‚¤‚Éheader, form, link, unknown,
-maintext‚È‚Ç‚Ì—Ìˆæ‚É•ªŠ„‚³‚ê‚éB
+Îã¤¨¤Ğ¡¢¿Ş\ref{RIETI-Pension-034}¤Î¥Ú¡¼¥¸¤ò¹½Â¤²òÀÏ¤¹¤ë¤È¿Ş
+\ref{pre_detect_block_sample}¤Î¤è¤¦¤Ëheader, form, link, unknown,
+maintext¤Ê¤É¤ÎÎÎ°è¤ËÊ¬³ä¤µ¤ì¤ë¡£
 
 \begin{figure}[!t]
  \begin{center}
   \includegraphics[width=0.6\textwidth]{figs/detect-block-sample3.eps}
-  \caption{\‘¢‰ğÍ‚ğs‚Á‚½ƒy[ƒW‚Ì—á}
+  \caption{¹½Â¤²òÀÏ¤ò¹Ô¤Ã¤¿¥Ú¡¼¥¸¤ÎÎã}
   \label{pre_detect_block_sample}
  \end{center}
 \end{figure}
@@ -884,50 +884,50 @@ maintext‚È‚Ç‚Ì—Ìˆæ‚É•ªŠ„‚³‚ê‚éB
    \begin{minipage}[b]{0.33\textwidth}
     \begin{center}
      \includegraphics[width=\textwidth]{figs/3colmun.eps}
-     (a)~ƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌˆÊ’u
+     (a)~¥ì¥ó¥À¥ê¥ó¥°»ş¤Î°ÌÃÖ
     \end{center}
    \end{minipage}
    \begin{minipage}[b]{0.33\textwidth}
     \begin{center}
      \includegraphics[width=0.8\textwidth]{figs/3column_dom.eps}\\
-     (b)~HTML‚Ìƒ\[ƒX
+     (b)~HTML¤Î¥½¡¼¥¹
     \end{center}
    \end{minipage}
   \end{tabular}
-  \caption{3ƒJƒ‰ƒ€‚©‚ç‚È‚éƒy[ƒW}
+  \caption{3¥«¥é¥à¤«¤é¤Ê¤ë¥Ú¡¼¥¸}
   \label{3column}
  \end{center}
 \end{figure}
 
 
-\subsection{ƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌˆÊ’uî•ñ‚Ìæ“¾‚ÆHTML‚ÌDOM–Ø‚Ö‚Ì•ÏŠ·}
+\subsection{¥ì¥ó¥À¥ê¥ó¥°»ş¤Î°ÌÃÖ¾ğÊó¤Î¼èÆÀ¤ÈHTML¤ÎDOMÌÚ¤Ø¤ÎÊÑ´¹}
 \label{set_pos_info}
 
-HTML‚Ìƒ\[ƒX‚©‚ç“¾‚ç‚ê‚éˆÊ’u‚ÆƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌˆÊ’u‚Í•K‚¸‚µ‚àˆê’v‚µ‚È‚¢B
-—á‚¦‚ÎA’˜ìŒ •\¦•”•ª‚Íƒy[ƒW‚Ì‰º•”‚É‚ ‚é‚±‚Æ‚ª‚Ù‚Æ‚ñ‚Ç‚Å‚ ‚é‚ªAHTML‚Ì
-ƒ\[ƒX‚Ì––”ö‚Ì•û‚É‹Lq‚³‚ê‚Ä‚¢‚é‚Æ‚ÍŒÀ‚ç‚È‚¢B}\ref{3column}‚É—á‚ğ¦‚·B
-‚±‚Ìƒy[ƒW‚Í}\ref{3column}(a)‚Ì‚æ‚¤‚É3ƒJƒ‰ƒ€‚©‚ç‚È‚éƒy[ƒW‚Å‚ ‚èA’†‰›ƒJ
-ƒ‰ƒ€‚ÌÅ‰º•”‚É’˜ìŒ •\¦‚ª‹Lq‚³‚ê‚Ä‚¢‚éBHTML‚Ìƒ\[ƒX(}
-\ref{3column}(b))‚ğŒ©‚é‚ÆA‚±‚Ì•”•ª‚Í’†‰›ƒJƒ‰ƒ€‚É‘Î‰‚·‚é•”•ª‚Íƒ\[ƒX‚Ì’†
-‰›•t‹ß‚É‹Lq‚³‚ê‚Ä‚¨‚èAƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌˆÊ’u‚ª•ª‚©‚ç‚È‚¢‚Æ‚±‚Ì•”•ª‚ğƒtƒbƒ^
-—Ìˆæ‚Æ”F¯‚·‚é‚±‚Æ‚Í“ï‚µ‚¢B‚µ‚½‚ª‚Á‚Ä‚Ü‚¸A“ü—Í‚Æ‚È‚éHTML‚ğƒŒƒ“ƒ_ƒŠƒ“ƒO
-‚µ‚½Û‚Ì{\bf ˆÊ’uî•ñ}‚ğæ“¾‚·‚éB
+HTML¤Î¥½¡¼¥¹¤«¤éÆÀ¤é¤ì¤ë°ÌÃÖ¤È¥ì¥ó¥À¥ê¥ó¥°»ş¤Î°ÌÃÖ¤ÏÉ¬¤º¤·¤â°ìÃ×¤·¤Ê¤¤¡£
+Îã¤¨¤Ğ¡¢Ãøºî¸¢É½¼¨ÉôÊ¬¤Ï¥Ú¡¼¥¸¤Î²¼Éô¤Ë¤¢¤ë¤³¤È¤¬¤Û¤È¤ó¤É¤Ç¤¢¤ë¤¬¡¢HTML¤Î
+¥½¡¼¥¹¤ÎËöÈø¤ÎÊı¤Ëµ­½Ò¤µ¤ì¤Æ¤¤¤ë¤È¤Ï¸Â¤é¤Ê¤¤¡£¿Ş\ref{3column}¤ËÎã¤ò¼¨¤¹¡£
+¤³¤Î¥Ú¡¼¥¸¤Ï¿Ş\ref{3column}(a)¤Î¤è¤¦¤Ë3¥«¥é¥à¤«¤é¤Ê¤ë¥Ú¡¼¥¸¤Ç¤¢¤ê¡¢Ãæ±û¥«
+¥é¥à¤ÎºÇ²¼Éô¤ËÃøºî¸¢É½¼¨¤¬µ­½Ò¤µ¤ì¤Æ¤¤¤ë¡£HTML¤Î¥½¡¼¥¹(¿Ş
+\ref{3column}(b))¤ò¸«¤ë¤È¡¢¤³¤ÎÉôÊ¬¤ÏÃæ±û¥«¥é¥à¤ËÂĞ±ş¤¹¤ëÉôÊ¬¤Ï¥½¡¼¥¹¤ÎÃæ
+±ûÉÕ¶á¤Ëµ­½Ò¤µ¤ì¤Æ¤ª¤ê¡¢¥ì¥ó¥À¥ê¥ó¥°¤Î°ÌÃÖ¤¬Ê¬¤«¤é¤Ê¤¤¤È¤³¤ÎÉôÊ¬¤ò¥Õ¥Ã¥¿
+ÎÎ°è¤ÈÇ§¼±¤¹¤ë¤³¤È¤ÏÆñ¤·¤¤¡£¤·¤¿¤¬¤Ã¤Æ¤Ş¤º¡¢ÆşÎÏ¤È¤Ê¤ëHTML¤ò¥ì¥ó¥À¥ê¥ó¥°
+¤·¤¿ºİ¤Î{\bf °ÌÃÖ¾ğÊó}¤ò¼èÆÀ¤¹¤ë¡£
 
-ˆÊ’uî•ñ‚Ì•t—^‚É‚Í
-wkhtmltopdf\footnote{http://code.google.com/p/wkhtmltopdf/}‚Æ‚¢‚¤ƒc[ƒ‹‚ğ
-‰ü—Ç‚µ‚½‚à‚Ì‚ğ—p‚¢‚½Bwkhtmltopdf‚ÍƒŒƒ“ƒ_ƒŠƒ“ƒOƒGƒ“ƒWƒ“‚Å‚ ‚éwebkit‚ğ—˜—p
-‚µ‚Ähtml‚ğpdf‚É•ÏŠ·‚·‚éƒc[ƒ‹‚Å‚ ‚éB‚±‚Ìƒc[ƒ‹‚ğ‰ü—Ç‚µA“ü—Í‚Ìhtmlƒtƒ@ƒC
-ƒ‹‚ÌŠeƒ^ƒO‚É‘Î‚µ‚ÄˆÈ‰º‚Ì4‚Â‚ÌˆÊ’uî•ñ‚ğæ“¾‚·‚éB
+°ÌÃÖ¾ğÊó¤ÎÉÕÍ¿¤Ë¤Ï
+wkhtmltopdf\footnote{http://code.google.com/p/wkhtmltopdf/}¤È¤¤¤¦¥Ä¡¼¥ë¤ò
+²şÎÉ¤·¤¿¤â¤Î¤òÍÑ¤¤¤¿¡£wkhtmltopdf¤Ï¥ì¥ó¥À¥ê¥ó¥°¥¨¥ó¥¸¥ó¤Ç¤¢¤ëwebkit¤òÍøÍÑ
+¤·¤Æhtml¤òpdf¤ËÊÑ´¹¤¹¤ë¥Ä¡¼¥ë¤Ç¤¢¤ë¡£¤³¤Î¥Ä¡¼¥ë¤ò²şÎÉ¤·¡¢ÆşÎÏ¤Îhtml¥Õ¥¡¥¤
+¥ë¤Î³Æ¥¿¥°¤ËÂĞ¤·¤Æ°Ê²¼¤Î4¤Ä¤Î°ÌÃÖ¾ğÊó¤ò¼èÆÀ¤¹¤ë¡£
 
 \begin{enumerate}
  \renewcommand{\labelenumi}{(\arabic{enumi})}
- \item ƒy[ƒWã’[‚©‚ç—Ìˆæã’[‚Ü‚Å‚Ì‹——£ \label{mytop}
+ \item ¥Ú¡¼¥¸¾åÃ¼¤«¤éÎÎ°è¾åÃ¼¤Ş¤Ç¤Îµ÷Î¥ \label{mytop}
 	
- \item ƒy[ƒW¶’[‚©‚ç—Ìˆæ¶’[‚Ü‚Å‚Ì‹——£
+ \item ¥Ú¡¼¥¸º¸Ã¼¤«¤éÎÎ°èº¸Ã¼¤Ş¤Ç¤Îµ÷Î¥
 
- \item —Ìˆæ‚Ì•
+ \item ÎÎ°è¤ÎÉı
 
- \item —Ìˆæ‚Ì‚‚³ \label{myheight}
+ \item ÎÎ°è¤Î¹â¤µ \label{myheight}
 \end{enumerate}
 
 \begin{figure}[!t]
@@ -935,81 +935,81 @@ wkhtmltopdf\footnote{http://code.google.com/p/wkhtmltopdf/}‚Æ‚¢‚¤ƒc[ƒ‹‚ğ
  \begin{center}
   \includegraphics[width=0.9\textwidth]{figs/Kousei-Torihiki-Iinkai.eps}
  \end{center}
- \caption{ˆÊ’uî•ñ‚ÆŒJ‚è•Ô‚µ\‘¢‚ğ•t—^‚·‚éƒy[ƒW‚Ì—á} \label{detect_iteration}
+ \caption{°ÌÃÖ¾ğÊó¤È·«¤êÊÖ¤·¹½Â¤¤òÉÕÍ¿¤¹¤ë¥Ú¡¼¥¸¤ÎÎã} \label{detect_iteration}
 \end{figure}
 
-‚±‚±‚Å‚Ì—Ìˆæ‚Æ‚ÍAˆÊ’uî•ñ‚ğ•t—^‚·‚éƒ^ƒO‚ªƒŒƒ“ƒ_ƒŠƒ“ƒO‚É•`‚­—Ìˆæ‚ğw‚·B
-}\ref{detect_iteration}‚É•t—^‚·‚éˆÊ’uî•ñ‚Ì—á‚Æ‚»‚Ì’l‚ğ¦‚·B}’†‚Ì(1)`
-(4)‚ª‚»‚ê‚¼‚êã‹L‚Ì(\ref{mytop})`(\ref{myheight})‚É‘Î‰‚·‚éB
+¤³¤³¤Ç¤ÎÎÎ°è¤È¤Ï¡¢°ÌÃÖ¾ğÊó¤òÉÕÍ¿¤¹¤ë¥¿¥°¤¬¥ì¥ó¥À¥ê¥ó¥°»ş¤ËÉÁ¤¯ÎÎ°è¤ò»Ø¤¹¡£
+¿Ş\ref{detect_iteration}¤ËÉÕÍ¿¤¹¤ë°ÌÃÖ¾ğÊó¤ÎÎã¤È¤½¤ÎÃÍ¤ò¼¨¤¹¡£¿ŞÃæ¤Î(1)¡Á
+(4)¤¬¤½¤ì¤¾¤ì¾åµ­¤Î(\ref{mytop})¡Á(\ref{myheight})¤ËÂĞ±ş¤¹¤ë¡£
 
-‚±‚Ì‚æ‚¤‚ÉˆÊ’uî•ñ‚ğ•t—^‚µ‚½HTMLƒtƒ@ƒCƒ‹‚ğperlƒ‚ƒWƒ…[ƒ‹‚Ì
-HTML::\\TreeBuilder‚ğ—p‚¢‚ÄDOM(Document Object Model)–Ø‚É•ÏŠ·‚·‚éBˆÈ~‚Å‚Í
-‚±‚ÌDOM–Ø‚É‘Î‚µ‚Ä‘€ì‚ğs‚¤B
+¤³¤Î¤è¤¦¤Ë°ÌÃÖ¾ğÊó¤òÉÕÍ¿¤·¤¿HTML¥Õ¥¡¥¤¥ë¤òperl¥â¥¸¥å¡¼¥ë¤Î
+HTML::\\TreeBuilder¤òÍÑ¤¤¤ÆDOM(Document Object Model)ÌÚ¤ËÊÑ´¹¤¹¤ë¡£°Ê¹ß¤Ç¤Ï
+¤³¤ÎDOMÌÚ¤ËÂĞ¤·¤ÆÁàºî¤ò¹Ô¤¦¡£
 
 
-\subsection{ŒJ‚è•Ô‚µ\‘¢‚ÌŒŸo} \label{add_iteration}
+\subsection{·«¤êÊÖ¤·¹½Â¤¤Î¸¡½Ğ} \label{add_iteration}
 
-Ÿ‚ÉAdiv‚âtableAul‚È‚Ç‚Ìƒy[ƒW“à‚ÌŠeHTMLƒ^ƒO‚É‚Â‚¢‚ÄA{\bf ŒJ‚è•Ô‚µ\
-‘¢}‚ğŒŸo‚·‚éB‚±‚ÌŒJ‚è•Ô‚µ\‘¢‚Í—Ìˆæ”»’è‚ÌÛ‚É ``ƒŠƒ“ƒN—Ìˆæ‚Íaƒ^ƒO‚ğŠÜ‚Ş
-ŒJ‚è•Ô‚µ\‘¢‚ğ‚à‚Â''‚Æ‚¢‚Á‚½”»’èğŒ‚Æ‚µ‚Ä—˜—p‚µ‚½‚èAŠeƒƒ^ƒf[ƒ^’Šo‚Ì
-Û‚É``ŒJ‚è•Ô‚µ\‘¢‚Ìæ“ª‹y‚Ñ––”öˆÈŠO‚Ì•¶š—ñ‚ÍŒó•â‚Æ‚µ‚Ä’Šo‚µ‚È‚¢''‚Æ‚¢‚Á
-‚½§ŒÀ‚É—˜—p‚·‚é‚È‚ÇAˆÈ~‚Ìˆ—‚É‚¨‚¢‚Äd—v‚Èè‚ª‚©‚è‚Æ‚È‚éBŒJ‚è•Ô‚µ\
-‘¢”»’è‚ÌÛ‚Í‘Oß‚Ì}\ref{detect_iteration}‚É‚¨‚¯‚é\textit{$<$li$>$}‚Æ
-\textit{$<$a$>$}‚Ì‚æ‚¤‚È•¡”‚Ìƒ^ƒOA2ˆÈã‚Ì[‚³‚ğ‚Â‚æ‚¤‚ÈŒJ‚è•Ô‚µ‚àŒŸo‚µ
-‚Ä‚¢‚éB
+¼¡¤Ë¡¢div¤ätable¡¢ul¤Ê¤É¤Î¥Ú¡¼¥¸Æâ¤Î³ÆHTML¥¿¥°¤Ë¤Ä¤¤¤Æ¡¢{\bf ·«¤êÊÖ¤·¹½
+Â¤}¤ò¸¡½Ğ¤¹¤ë¡£¤³¤Î·«¤êÊÖ¤·¹½Â¤¤ÏÎÎ°èÈ½Äê¤Îºİ¤Ë ``¥ê¥ó¥¯ÎÎ°è¤Ïa¥¿¥°¤ò´Ş¤à
+·«¤êÊÖ¤·¹½Â¤¤ò¤â¤Ä''¤È¤¤¤Ã¤¿È½Äê¾ò·ï¤È¤·¤ÆÍøÍÑ¤·¤¿¤ê¡¢³Æ¥á¥¿¥Ç¡¼¥¿Ãê½Ğ¤Î
+ºİ¤Ë``·«¤êÊÖ¤·¹½Â¤¤ÎÀèÆ¬µÚ¤ÓËöÈø°Ê³°¤ÎÊ¸»úÎó¤Ï¸õÊä¤È¤·¤ÆÃê½Ğ¤·¤Ê¤¤''¤È¤¤¤Ã
+¤¿À©¸Â¤ËÍøÍÑ¤¹¤ë¤Ê¤É¡¢°Ê¹ß¤Î½èÍı¤Ë¤ª¤¤¤Æ½ÅÍ×¤Ê¼ê¤¬¤«¤ê¤È¤Ê¤ë¡£·«¤êÊÖ¤·¹½
+Â¤È½Äê¤Îºİ¤ÏÁ°Àá¤Î¿Ş\ref{detect_iteration}¤Ë¤ª¤±¤ë\textit{$<$li$>$}¤È
+\textit{$<$a$>$}¤Î¤è¤¦¤ÊÊ£¿ô¤Î¥¿¥°¡¢2°Ê¾å¤Î¿¼¤µ¤ò»ı¤Ä¤è¤¦¤Ê·«¤êÊÖ¤·¤â¸¡½Ğ¤·
+¤Æ¤¤¤ë¡£
 
-}\ref{detect_iteration}‚Ì—á‚Å‚Í\textit{$<$li$><$a$><$li$><$a$>$}‚ÌŒJ‚è•Ô‚µ‚ª2‰ñ
-‘¶İ‚·‚é‚Æ‚àl‚¦‚ç‚ê‚é‚ªA‚±‚Ì‚æ‚¤‚ÈŒJ‚è•Ô‚µ‚Íl—¶‚¹‚¸A‚à‚Á‚Æ‚à×‚©‚¢ŒJ
-‚è•Ô‚µ‚Å‚ ‚é5‰ñ‚Ì\textit{$<$li$><$a$>$}‚Ì‚İ‚ğ”F¯‚·‚éB
+¿Ş\ref{detect_iteration}¤ÎÎã¤Ç¤Ï\textit{$<$li$><$a$><$li$><$a$>$}¤Î·«¤êÊÖ¤·¤¬2²ó
+Â¸ºß¤¹¤ë¤È¤â¹Í¤¨¤é¤ì¤ë¤¬¡¢¤³¤Î¤è¤¦¤Ê·«¤êÊÖ¤·¤Ï¹ÍÎ¸¤»¤º¡¢¤â¤Ã¤È¤âºÙ¤«¤¤·«
+¤êÊÖ¤·¤Ç¤¢¤ë5²ó¤Î\textit{$<$li$><$a$>$}¤Î¤ß¤òÇ§¼±¤¹¤ë¡£
 
-Šeƒ^ƒO‚É‘Î‚µ‚Ä•t—^‚·‚éî•ñ‚ğ•\\ref{info_for_tag_about_iteration}‚É¦‚·B
-•\’†‚Ì``‘ÎÛƒm[ƒh''‚Æ‚Í}\ref{detect_iteration}‚Ìliƒ^ƒO‚âaƒ^ƒO‚Ì‚æ‚¤‚ÉŒJ
-‚è•Ô‚µ\‘¢‚ğ\¬‚·‚éƒm[ƒhA``eƒm[ƒh''‚Æ‚Íulƒ^ƒO‚Ì‚æ‚¤‚É‘ÎÛƒm[ƒh‚Ìe
-‚Æ‚È‚éƒm[ƒh‚Ì‚±‚Æ‚Å‚ ‚éB•\\ref{info_for_tag_about_iteration}‚É¦‚·‚æ‚¤
-‚É‘ÎÛƒm[ƒh‚É‚Í``\_li\_+\_a\_-\%4/5''‚Ì‚æ‚¤‚ÈŒ`®‚Å•t—^‚·‚éB``~\%~''‚æ
-‚è‘O‚ÉŠÖ‚µ‚Ä``\_li\_''A``\_a\_''‚ÍŒJ‚è•Ô‚µ\‘¢‚ğ\¬‚·‚éƒ^ƒO‚ğ•\‚·B‚Ü‚½
-``+''‚ÍA’¼‘O‚Ìƒ^ƒO‚É‘Î‚µ‚Ä’¼Œã‚Ìƒ^ƒO‚Ì[‚³‚ª1’iŠK[‚­‚È‚é‚±‚Æ‚ğ•\‚µA
-``~-~''‚Í1’iŠKó‚­‚È‚é‚±‚Æ‚ğ•\‚·B‚Ü‚½``~\%~''‚æ‚èŒã‚ë‚Ì”’l‚Í
+³Æ¥¿¥°¤ËÂĞ¤·¤ÆÉÕÍ¿¤¹¤ë¾ğÊó¤òÉ½\ref{info_for_tag_about_iteration}¤Ë¼¨¤¹¡£
+É½Ãæ¤Î``ÂĞ¾İ¥Î¡¼¥É''¤È¤Ï¿Ş\ref{detect_iteration}¤Îli¥¿¥°¤äa¥¿¥°¤Î¤è¤¦¤Ë·«
+¤êÊÖ¤·¹½Â¤¤ò¹½À®¤¹¤ë¥Î¡¼¥É¡¢``¿Æ¥Î¡¼¥É''¤È¤Ïul¥¿¥°¤Î¤è¤¦¤ËÂĞ¾İ¥Î¡¼¥É¤Î¿Æ
+¤È¤Ê¤ë¥Î¡¼¥É¤Î¤³¤È¤Ç¤¢¤ë¡£É½\ref{info_for_tag_about_iteration}¤Ë¼¨¤¹¤è¤¦
+¤ËÂĞ¾İ¥Î¡¼¥É¤Ë¤Ï``\_li\_+\_a\_-\%4/5''¤Î¤è¤¦¤Ê·Á¼°¤ÇÉÕÍ¿¤¹¤ë¡£``~\%~''¤è
+¤êÁ°¤Ë´Ø¤·¤Æ``\_li\_''¡¢``\_a\_''¤Ï·«¤êÊÖ¤·¹½Â¤¤ò¹½À®¤¹¤ë¥¿¥°¤òÉ½¤¹¡£¤Ş¤¿
+``+''¤Ï¡¢Ä¾Á°¤Î¥¿¥°¤ËÂĞ¤·¤ÆÄ¾¸å¤Î¥¿¥°¤Î¿¼¤µ¤¬1ÃÊ³¬¿¼¤¯¤Ê¤ë¤³¤È¤òÉ½¤·¡¢
+``~-~''¤Ï1ÃÊ³¬Àõ¤¯¤Ê¤ë¤³¤È¤òÉ½¤¹¡£¤Ş¤¿``~\%~''¤è¤ê¸å¤í¤Î¿ôÃÍ¤Ï
 \begin{eqnarray}
- \mbox{ŒJ‚è•Ô‚µ”Ô†~/~ŒJ‚è•Ô‚µ—v‘f‚Ì‘”} \nonumber
+ \mbox{·«¤êÊÖ¤·ÈÖ¹æ~/~·«¤êÊÖ¤·Í×ÁÇ¤ÎÁí¿ô} \nonumber
 \end{eqnarray}
-‚ğ•\‚·BŒJ‚è•Ô‚µ”Ô†‚Íæ“ª—v‘f‚ğ0‚Æ‚µ‚Ä‚»‚êˆÈ~‚ğ‡‚É1A2$\ldots$‚Æ‚·‚éB
-1‚Â‚Ìƒ^ƒO‚É‘Î‚µ‚Ä‚»‚Ìƒ^ƒO‚ğŠÜ‚ŞŒJ‚è•Ô‚µ\‘¢‚ª•¡”‘¶İ‚·‚éê‡‚ÍA‚»‚ê‚ç‚ğ
-``~:~''‚Å‚Â‚È‚°‚½‚à‚Ì•t—^‚·‚éB
+¤òÉ½¤¹¡£·«¤êÊÖ¤·ÈÖ¹æ¤ÏÀèÆ¬Í×ÁÇ¤ò0¤È¤·¤Æ¤½¤ì°Ê¹ß¤ò½ç¤Ë1¡¢2$\ldots$¤È¤¹¤ë¡£
+1¤Ä¤Î¥¿¥°¤ËÂĞ¤·¤Æ¤½¤Î¥¿¥°¤ò´Ş¤à·«¤êÊÖ¤·¹½Â¤¤¬Ê£¿ôÂ¸ºß¤¹¤ë¾ì¹ç¤Ï¡¢¤½¤ì¤é¤ò
+``~:~''¤Ç¤Ä¤Ê¤²¤¿¤â¤ÎÉÕÍ¿¤¹¤ë¡£
 
-‚Ü‚½eƒm[ƒh‚É‚Í‘ÎÛƒm[ƒh‚Ì``~\%~''‚æ‚è‘O‚ğ•t—^‚·‚éBeƒm[ƒh‚É‘ÎÛƒm[
-ƒh‚ÉŠÖ‚·‚éî•ñ‚ª•¡”•t—^‚³‚ê‚éê‡‚àA‚»‚ê‚ç‚ğ``~:~''‚Å‚Â‚È‚°‚½‚à‚Ì•t—^‚·
-‚éB
+¤Ş¤¿¿Æ¥Î¡¼¥É¤Ë¤ÏÂĞ¾İ¥Î¡¼¥É¤Î``~\%~''¤è¤êÁ°¤òÉÕÍ¿¤¹¤ë¡£¿Æ¥Î¡¼¥É¤ËÂĞ¾İ¥Î¡¼
+¥É¤Ë´Ø¤¹¤ë¾ğÊó¤¬Ê£¿ôÉÕÍ¿¤µ¤ì¤ë¾ì¹ç¤â¡¢¤½¤ì¤é¤ò``~:~''¤Ç¤Ä¤Ê¤²¤¿¤â¤ÎÉÕÍ¿¤¹
+¤ë¡£
 
 \begin{table}[t]
- \small \caption{\small{Šeƒ^ƒO‚É•t—^‚·‚éŒJ‚è•Ô‚µ\‘¢}}
+ \small \caption{\small{³Æ¥¿¥°¤ËÉÕÍ¿¤¹¤ë·«¤êÊÖ¤·¹½Â¤}}
  \label{info_for_tag_about_iteration}
  \begin{center}
   \begin{tabular}{lll} \hline
-   & •t—^‚·‚éî•ñ & ƒtƒH[ƒ}ƒbƒg \\ \hline
-   ‘ÎÛƒm[ƒh(ƒm[ƒh(b)) & ©•ª‚ğŠÜ‚ŞŒJ‚è•Ô‚µ\‘¢ &  \_li\_+\_a\_-\%4/5 \\
-   & ŒJ‚è•Ô‚µ\‘¢‚Ì”Ô† &  \\ \hline
-   eƒm[ƒh(ƒm[ƒh(a)) & ©•ªˆÈ‰º‚ÌŒJ‚è•Ô‚µ\‘¢ & \_li\_+\_a\_- \\ \hline
+   & ÉÕÍ¿¤¹¤ë¾ğÊó & ¥Õ¥©¡¼¥Ş¥Ã¥È \\ \hline
+   ÂĞ¾İ¥Î¡¼¥É(¥Î¡¼¥É(b)) & ¼«Ê¬¤ò´Ş¤à·«¤êÊÖ¤·¹½Â¤ &  \_li\_+\_a\_-\%4/5 \\
+   & ·«¤êÊÖ¤·¹½Â¤¤ÎÈÖ¹æ &  \\ \hline
+   ¿Æ¥Î¡¼¥É(¥Î¡¼¥É(a)) & ¼«Ê¬°Ê²¼¤Î·«¤êÊÖ¤·¹½Â¤ & \_li\_+\_a\_- \\ \hline
   \end{tabular}
  \end{center}
 \end{table}
 
 % \begin{table}[t]
-%  \small \caption{\small{Šeƒ^ƒO‚É•t—^‚·‚éŒJ‚è•Ô‚µ\‘¢}}
+%  \small \caption{\small{³Æ¥¿¥°¤ËÉÕÍ¿¤¹¤ë·«¤êÊÖ¤·¹½Â¤}}
 %  \label{info_for_tag_about_iteration}
 %  \begin{center}
 %   \begin{tabular}{l|ll} \hline
-%    ‘ÎÛƒm[ƒh & •t—^‚·‚éî•ñ & ©•ª‚ğŠÜ‚ŞŒJ‚è•Ô‚µ\‘¢ \\
-%    & & ŒJ‚è•Ô‚µ\‘¢‚Ì”Ô† \\ \cline{2-3}
-%    & }\ref{detect_iteration}‚Ì(b)‚É‘Î‚µ‚Ä•t—^‚·‚éî•ñ & \_li\_+\_a\_-\%4/5 \\ \hline
-%    eƒm[ƒh & •t—^‚·‚éî•ñ & ©•ªˆÈ‰º‚ÌŒJ‚è•Ô‚µ\‘¢ \\ \cline{2-3}
-%    & }\ref{detect_iteration}‚Ì(a)‚É‘Î‚µ‚Ä•t—^‚·‚éî•ñ & \_li\_+\_a\_- \\ \hline
+%    ÂĞ¾İ¥Î¡¼¥É & ÉÕÍ¿¤¹¤ë¾ğÊó & ¼«Ê¬¤ò´Ş¤à·«¤êÊÖ¤·¹½Â¤ \\
+%    & & ·«¤êÊÖ¤·¹½Â¤¤ÎÈÖ¹æ \\ \cline{2-3}
+%    & ¿Ş\ref{detect_iteration}¤Î(b)¤ËÂĞ¤·¤ÆÉÕÍ¿¤¹¤ë¾ğÊó & \_li\_+\_a\_-\%4/5 \\ \hline
+%    ¿Æ¥Î¡¼¥É & ÉÕÍ¿¤¹¤ë¾ğÊó & ¼«Ê¬°Ê²¼¤Î·«¤êÊÖ¤·¹½Â¤ \\ \cline{2-3}
+%    & ¿Ş\ref{detect_iteration}¤Î(a)¤ËÂĞ¤·¤ÆÉÕÍ¿¤¹¤ë¾ğÊó & \_li\_+\_a\_- \\ \hline
 %   \end{tabular}
 %  \end{center}
 % \end{table}
 
 
- \subsection{—Ìˆæ•ªŠ„} \label{block_division}
+ \subsection{ÎÎ°èÊ¬³ä} \label{block_division}
 
  \begin{figure}[!t]
   \begin{center}
@@ -1017,18 +1017,18 @@ HTML::\\TreeBuilder‚ğ—p‚¢‚ÄDOM(Document Object Model)–Ø‚É•ÏŠ·‚·‚éBˆÈ~‚Å‚Í
     \begin{minipage}[b]{0.33\textwidth}
      \begin{center}
       \includegraphics[width=\textwidth]{figs/block_division_matome.eps}
-      \footnotesize{(a)ƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌˆÊ’u}
+      \footnotesize{(a)¥ì¥ó¥À¥ê¥ó¥°»ş¤Î°ÌÃÖ}
      \end{center}
     \end{minipage}
     \begin{minipage}[b]{0.66\textwidth}
      \begin{center}   
       \includegraphics[width=\textwidth]{figs/block_division_matome_dom.eps}
-      \footnotesize{(b)DOM–Ø}
+      \footnotesize{(b)DOMÌÚ}
      \end{center}
     \end{minipage}
    \end{tabular}
   \end{center}
-  \caption{—Ìˆæ•ªŠ„‚Ì—á}
+  \caption{ÎÎ°èÊ¬³ä¤ÎÎã}
   \label{block_division_matome}
 
   % \begin{center}
@@ -1036,7 +1036,7 @@ HTML::\\TreeBuilder‚ğ—p‚¢‚ÄDOM(Document Object Model)–Ø‚É•ÏŠ·‚·‚éBˆÈ~‚Å‚Í
   %   \begin{minipage}[b]{0.33\textwidth}
   %    \begin{center}
   %     \includegraphics[width=\textwidth]{block_division_2.eps}
-  %     \footnotesize{(a)ƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌˆÊ’u}
+  %     \footnotesize{(a)¥ì¥ó¥À¥ê¥ó¥°»ş¤Î°ÌÃÖ}
   %    \end{center}
   %   \end{minipage}
   %   \begin{minipage}[b]{0.66\textwidth}
@@ -1047,70 +1047,70 @@ HTML::\\TreeBuilder‚ğ—p‚¢‚ÄDOM(Document Object Model)–Ø‚É•ÏŠ·‚·‚éBˆÈ~‚Å‚Í
   %   \end{minipage}
   %  \end{tabular}
   % \end{center}
-  % \caption{—Ìˆæ•ªŠ„‚Ì—á([‚³2)}
+  % \caption{ÎÎ°èÊ¬³ä¤ÎÎã(¿¼¤µ2)}
   % \label{block_division_2}
  \end{figure}
 
 
- % Ÿ‚ÉWebƒy[ƒW‚ğˆÓ–¡‚Ì‚ ‚é’PˆÊ‚É•ªŠ„‚·‚éBDOM tree‚ğbodyƒ^ƒO‚©‚çƒgƒbƒvƒ_
- % ƒEƒ“‚ÉŒ©‚ÄA©•ªˆÈ‰º‚ÌƒeƒLƒXƒg—Ê‚ªƒy[ƒW‘S‘Ì‚Ìè‡’lˆÈ‰º‚É‚È‚éƒ^ƒO‚ğŒ©‚Â‚¯A
- % ‚»‚±‚Å•ªŠ„‚·‚é(ˆÈ~A‚±‚Ì50\%‚ğØ‚éƒ^ƒO‚ğƒ‹[ƒg‚Æ‚·‚é•”•ª–Ø‚ğƒuƒƒbƒN‚Æ
- % ŒÄ‚Ô)Bè‡’l‚Íƒy[ƒW‘S‘Ì‚Ì•¶š”‚ª6000•¶š–¢–‚Ìƒy[ƒW‚Å‚Íƒy[ƒW‘S‘Ì‚Ì•¶
- % š”‚Ì50\%A6000•¶šˆÈã‚Ìƒy[ƒW‚Å‚Í3000•¶š‚Æ‚µ‚½B•¶š”‚Íimgƒ^ƒO‚Ì‘ã
- % ‘ÖƒeƒLƒXƒg(alt‘®«‚Ì’l)‚àŠÜ‚ß‚ÄŒv”‚·‚éB
+ % ¼¡¤ËWeb¥Ú¡¼¥¸¤ò°ÕÌ£¤Î¤¢¤ëÃ±°Ì¤ËÊ¬³ä¤¹¤ë¡£DOM tree¤òbody¥¿¥°¤«¤é¥È¥Ã¥×¥À
+ % ¥¦¥ó¤Ë¸«¤Æ¡¢¼«Ê¬°Ê²¼¤Î¥Æ¥­¥¹¥ÈÎÌ¤¬¥Ú¡¼¥¸Á´ÂÎ¤ÎïçÃÍ°Ê²¼¤Ë¤Ê¤ë¥¿¥°¤ò¸«¤Ä¤±¡¢
+ % ¤½¤³¤ÇÊ¬³ä¤¹¤ë(°Ê¹ß¡¢¤³¤Î50\%¤òÀÚ¤ë¥¿¥°¤ò¥ë¡¼¥È¤È¤¹¤ëÉôÊ¬ÌÚ¤ò¥Ö¥í¥Ã¥¯¤È
+ % ¸Æ¤Ö)¡£ïçÃÍ¤Ï¥Ú¡¼¥¸Á´ÂÎ¤ÎÊ¸»ú¿ô¤¬6000Ê¸»úÌ¤Ëş¤Î¥Ú¡¼¥¸¤Ç¤Ï¥Ú¡¼¥¸Á´ÂÎ¤ÎÊ¸
+ % »ú¿ô¤Î50\%¡¢6000Ê¸»ú°Ê¾å¤Î¥Ú¡¼¥¸¤Ç¤Ï3000Ê¸»ú¤È¤·¤¿¡£Ê¸»ú¿ô¤Ïimg¥¿¥°¤ÎÂå
+ % ÂØ¥Æ¥­¥¹¥È(altÂ°À­¤ÎÃÍ)¤â´Ş¤á¤Æ·×¿ô¤¹¤ë¡£
 
- Ÿ‚ÉWebƒy[ƒW‚ğˆÓ–¡‚Ì‚ ‚éƒuƒƒbƒN‚É•ªŠ„‚·‚éBDOM–Ø‚ğbodyƒ^ƒO‚©‚ç‡‚É‰ºˆÊ
- ƒm[ƒh‚ÉŒü‚©‚Á‚Ä‚½‚Ç‚è‚È‚ª‚çA©•ªˆÈ‰º‚ÌƒeƒLƒXƒg—Ê‚ªƒy[ƒW‘S‘Ì‚Ìè‡’lˆÈ‰º
- ‚É‚È‚éƒ^ƒO‚ğŒ©‚Â‚¯A‚»‚±‚Å•ªŠ„‚·‚é(ˆÈ~A‚±‚ÌƒeƒLƒXƒg—Ê‚ªè‡’lˆÈ‰º‚Æ‚È‚é
- ƒ^ƒO‚ğƒ‹[ƒg‚Æ‚·‚é•”•ª–Ø‚ğ{\bf ƒuƒƒbƒN}‚ÆŒÄ‚Ô)Bè‡’l‚Íƒy[ƒW‘S‘Ì‚Ì•¶š
- ”‚ª6000•¶š–¢–‚Ìƒy[ƒW‚Å‚Íƒy[ƒW‘S‘Ì‚Ì•¶š”‚Ì50\%A6000•¶šˆÈã‚Ìƒy[
- ƒW‚Å‚Í3000•¶š‚Æ‚µ‚½B•¶š”‚Íimgƒ^ƒO‚Ì‘ã‘ÖƒeƒLƒXƒg(alt‘®«‚Ì’l)‚àŠÜ‚ß‚Ä
- Œv”‚·‚éB}\ref{block_division_matome}‚ÉHTML‚ğƒŒƒ“ƒ_ƒŠƒ“ƒO‚µ‚½‚Æ‚«‚ÌˆÊ
- ’u(a)‚Æ‚»‚ÌDOM–Ø(b)‚Ì—á‚ğ¦‚·B}\ref{block_division_matome}(a)’†‚Ì”’l
- (\%)‚Íƒy[ƒW‘S‘Ì‚Ì•¶š”‚É‘Î‚·‚éŠeƒuƒƒbƒN‚Ì•¶š”‚ÌŠ„‡‚ğ•\‚·B}
- \ref{block_division_matome}‚Ìƒy[ƒW‚ÌƒeƒLƒXƒg—Ê‚ª6000•¶š–¢–‚Å‚ ‚é‚Æ‚·
- ‚éB—Ìˆæ•ªŠ„‚ğs‚¤Û‚É‚Í‚Ü‚¸A[‚³1‚Ìƒm[ƒhˆÈ‰º‚ÌƒeƒLƒXƒg—Ê‚ğƒ`ƒFƒbƒN‚·
- ‚é(ƒuƒƒbƒNAABAC)BƒuƒƒbƒNAAB‚ÍƒeƒLƒXƒg—Ê‚ªè‡’lˆÈ‰º(ƒy[ƒW‘S‘Ì‚Ì•¶š
- ”‚É‘Î‚µ‚Ä‹¤‚É20\%)‚Å‚ ‚é‚½‚ßA‚±‚êˆÈã•ªŠ„‚µ‚È‚¢B‚µ‚©‚µAƒuƒƒbƒNC‚Ìƒe
- ƒLƒXƒg—Ê‚Íƒy[ƒW‘S‘Ì‚Ì60\%‚Å‚ ‚é‚½‚ßA‚³‚ç‚É‰ºˆÊ‚Ìƒm[ƒh‚É‘Î‚µ‚ÄƒeƒLƒXƒg
- —Ê‚Ìƒ`ƒFƒbƒN‚ğs‚¤(ƒuƒƒbƒNC-1AC-2)B‚±‚êˆÈã•ªŠ„‚·‚é‚×‚«ƒuƒƒbƒN‚ª‘¶İ
- ‚µ‚È‚­‚È‚Á‚½“_‚Å•ªŠ„ˆ—‚ğI—¹‚·‚éB‚±‚Ì—á‚Å‚ÍAABAC-1AC-2‚Ì4‚Â‚Ìƒu
- ƒƒbƒN‚É•ªŠ„‚³‚ê‚éB
+ ¼¡¤ËWeb¥Ú¡¼¥¸¤ò°ÕÌ£¤Î¤¢¤ë¥Ö¥í¥Ã¥¯¤ËÊ¬³ä¤¹¤ë¡£DOMÌÚ¤òbody¥¿¥°¤«¤é½ç¤Ë²¼°Ì
+ ¥Î¡¼¥É¤Ë¸ş¤«¤Ã¤Æ¤¿¤É¤ê¤Ê¤¬¤é¡¢¼«Ê¬°Ê²¼¤Î¥Æ¥­¥¹¥ÈÎÌ¤¬¥Ú¡¼¥¸Á´ÂÎ¤ÎïçÃÍ°Ê²¼
+ ¤Ë¤Ê¤ë¥¿¥°¤ò¸«¤Ä¤±¡¢¤½¤³¤ÇÊ¬³ä¤¹¤ë(°Ê¹ß¡¢¤³¤Î¥Æ¥­¥¹¥ÈÎÌ¤¬ïçÃÍ°Ê²¼¤È¤Ê¤ë
+ ¥¿¥°¤ò¥ë¡¼¥È¤È¤¹¤ëÉôÊ¬ÌÚ¤ò{\bf ¥Ö¥í¥Ã¥¯}¤È¸Æ¤Ö)¡£ïçÃÍ¤Ï¥Ú¡¼¥¸Á´ÂÎ¤ÎÊ¸»ú
+ ¿ô¤¬6000Ê¸»úÌ¤Ëş¤Î¥Ú¡¼¥¸¤Ç¤Ï¥Ú¡¼¥¸Á´ÂÎ¤ÎÊ¸»ú¿ô¤Î50\%¡¢6000Ê¸»ú°Ê¾å¤Î¥Ú¡¼
+ ¥¸¤Ç¤Ï3000Ê¸»ú¤È¤·¤¿¡£Ê¸»ú¿ô¤Ïimg¥¿¥°¤ÎÂåÂØ¥Æ¥­¥¹¥È(altÂ°À­¤ÎÃÍ)¤â´Ş¤á¤Æ
+ ·×¿ô¤¹¤ë¡£¿Ş\ref{block_division_matome}¤ËHTML¤ò¥ì¥ó¥À¥ê¥ó¥°¤·¤¿¤È¤­¤Î°Ì
+ ÃÖ(a)¤È¤½¤ÎDOMÌÚ(b)¤ÎÎã¤ò¼¨¤¹¡£¿Ş\ref{block_division_matome}(a)Ãæ¤Î¿ôÃÍ
+ (\%)¤Ï¥Ú¡¼¥¸Á´ÂÎ¤ÎÊ¸»ú¿ô¤ËÂĞ¤¹¤ë³Æ¥Ö¥í¥Ã¥¯¤ÎÊ¸»ú¿ô¤Î³ä¹ç¤òÉ½¤¹¡£¿Ş
+ \ref{block_division_matome}¤Î¥Ú¡¼¥¸¤Î¥Æ¥­¥¹¥ÈÎÌ¤¬6000Ê¸»úÌ¤Ëş¤Ç¤¢¤ë¤È¤¹
+ ¤ë¡£ÎÎ°èÊ¬³ä¤ò¹Ô¤¦ºİ¤Ë¤Ï¤Ş¤º¡¢¿¼¤µ1¤Î¥Î¡¼¥É°Ê²¼¤Î¥Æ¥­¥¹¥ÈÎÌ¤ò¥Á¥§¥Ã¥¯¤¹
+ ¤ë(¥Ö¥í¥Ã¥¯A¡¢B¡¢C)¡£¥Ö¥í¥Ã¥¯A¡¢B¤Ï¥Æ¥­¥¹¥ÈÎÌ¤¬ïçÃÍ°Ê²¼(¥Ú¡¼¥¸Á´ÂÎ¤ÎÊ¸»ú
+ ¿ô¤ËÂĞ¤·¤Æ¶¦¤Ë20\%)¤Ç¤¢¤ë¤¿¤á¡¢¤³¤ì°Ê¾åÊ¬³ä¤·¤Ê¤¤¡£¤·¤«¤·¡¢¥Ö¥í¥Ã¥¯C¤Î¥Æ
+ ¥­¥¹¥ÈÎÌ¤Ï¥Ú¡¼¥¸Á´ÂÎ¤Î60\%¤Ç¤¢¤ë¤¿¤á¡¢¤µ¤é¤Ë²¼°Ì¤Î¥Î¡¼¥É¤ËÂĞ¤·¤Æ¥Æ¥­¥¹¥È
+ ÎÌ¤Î¥Á¥§¥Ã¥¯¤ò¹Ô¤¦(¥Ö¥í¥Ã¥¯C-1¡¢C-2)¡£¤³¤ì°Ê¾åÊ¬³ä¤¹¤ë¤Ù¤­¥Ö¥í¥Ã¥¯¤¬Â¸ºß
+ ¤·¤Ê¤¯¤Ê¤Ã¤¿»şÅÀ¤ÇÊ¬³ä½èÍı¤ò½ªÎ»¤¹¤ë¡£¤³¤ÎÎã¤Ç¤ÏA¡¢B¡¢C-1¡¢C-2¤Î4¤Ä¤Î¥Ö
+ ¥í¥Ã¥¯¤ËÊ¬³ä¤µ¤ì¤ë¡£
 
- ‚½‚¾‚µA—áŠO‚Æ‚µ‚ÄˆÈ‰º‚Ì‚æ‚¤‚ÉƒuƒƒbƒN‚ğ”»’è‚·‚éè‡’l‚ÉŠÖŒW‚È‚­‚³‚ç‚É•ªŠ„
- ‚µ‚½‚èA‚±‚êˆÈã•ªŠ„‚µ‚È‚¢‚Æ‚¢‚Á‚½ğŒ‚ğİ‚¯‚éB
+ ¤¿¤À¤·¡¢Îã³°¤È¤·¤Æ°Ê²¼¤Î¤è¤¦¤Ë¥Ö¥í¥Ã¥¯¤òÈ½Äê¤¹¤ëïçÃÍ¤Ë´Ø·¸¤Ê¤¯¤µ¤é¤ËÊ¬³ä
+ ¤·¤¿¤ê¡¢¤³¤ì°Ê¾åÊ¬³ä¤·¤Ê¤¤¤È¤¤¤Ã¤¿¾ò·ï¤òÀß¤±¤ë¡£
 
 
- \paragraph{‚³‚ç‚É•ªŠ„‚·‚éğŒ}
+ \paragraph{¤µ¤é¤ËÊ¬³ä¤¹¤ë¾ò·ï}
 
  \begin{itemize}
-  \item ƒuƒƒbƒNˆÈ‰º‚Éaddressƒ^ƒO‚ğŠÜ‚Şê‡
+  \item ¥Ö¥í¥Ã¥¯°Ê²¼¤Ëaddress¥¿¥°¤ò´Ş¤à¾ì¹ç
 
-	addressƒ^ƒO‚Í‚»‚Ì•¶‘‚ÉŠÖ‚·‚é˜A—æE–â‚¢‡‚í‚¹æ‚È‚Ç‚ğ‹Lq‚·‚éÛ
-	‚É—p‚¢‚ç‚ê‚éBaddressƒ^ƒO‚Í’˜ìŒ •\¦‚È‚Ç‚Æ‚Æ‚à‚Éƒy[ƒW‚Ìƒtƒbƒ^•”
-	•ª‚É‹Lq‚³‚ê‚é‚±‚Æ‚ª‘½‚¢B‚±‚Ìaddressƒ^ƒO‚ğŠÜ‚Ş•”•ª‚ªaƒ^ƒO‚ğŠÜ‚Ş
-	ŒJ‚è•Ô‚µ\‘¢‚ğ‚à‚Â•”•ª‚Æ‚Æ‚à‚É1‚Â‚ÌƒuƒƒbƒN‚Æ‚È‚é‚ÆA
-	\ref{blockname_judgement}ß‚ÅŒãq‚Ì—Ìˆæ”»’è‚ÌÛ‚ÉƒŠƒ“ƒN—Ìˆæ‚ÆŒë”»
-	’è‚³‚ê‚Ä‚µ‚Ü‚¤‹°‚ê‚ª‚ ‚é‚½‚ßAaddressƒ^ƒO‚ğŠÜ‚ŞƒuƒƒbƒN‚Í‚³‚ç‚É•ª
-	Š„‚·‚éB
+	address¥¿¥°¤Ï¤½¤ÎÊ¸½ñ¤Ë´Ø¤¹¤ëÏ¢ÍíÀè¡¦Ìä¤¤¹ç¤ï¤»Àè¤Ê¤É¤òµ­½Ò¤¹¤ëºİ
+	¤ËÍÑ¤¤¤é¤ì¤ë¡£address¥¿¥°¤ÏÃøºî¸¢É½¼¨¤Ê¤É¤È¤È¤â¤Ë¥Ú¡¼¥¸¤Î¥Õ¥Ã¥¿Éô
+	Ê¬¤Ëµ­½Ò¤µ¤ì¤ë¤³¤È¤¬Â¿¤¤¡£¤³¤Îaddress¥¿¥°¤ò´Ş¤àÉôÊ¬¤¬a¥¿¥°¤ò´Ş¤à
+	·«¤êÊÖ¤·¹½Â¤¤ò¤â¤ÄÉôÊ¬¤È¤È¤â¤Ë1¤Ä¤Î¥Ö¥í¥Ã¥¯¤È¤Ê¤ë¤È¡¢
+	\ref{blockname_judgement}Àá¤Ç¸å½Ò¤ÎÎÎ°èÈ½Äê¤Îºİ¤Ë¥ê¥ó¥¯ÎÎ°è¤È¸íÈ½
+	Äê¤µ¤ì¤Æ¤·¤Ş¤¦¶²¤ì¤¬¤¢¤ë¤¿¤á¡¢address¥¿¥°¤ò´Ş¤à¥Ö¥í¥Ã¥¯¤Ï¤µ¤é¤ËÊ¬
+	³ä¤¹¤ë¡£
  
-  \item ƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌƒuƒƒbƒN‚ÌŒ`‚ªLšŒ^‚ğ‚µ‚Ä‚¢‚éê‡
+  \item ¥ì¥ó¥À¥ê¥ó¥°»ş¤Î¥Ö¥í¥Ã¥¯¤Î·Á¤¬L»ú·¿¤ò¤·¤Æ¤¤¤ë¾ì¹ç
 
-	}\ref{Ldivision}‚ÉƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌƒuƒƒbƒN‚ªLšŒ^‚ğ‚µ‚Ä‚¢‚é—á‚ğ
-	¦‚·B}\ref{Ldivision}(b)‚Ì``contents1''‚ğŠÜ‚Ştdƒ^ƒO‚Ì‚æ‚¤‚É
-	urowspan=``2''v‚Æ‹Lq‚·‚é‚±‚Æ‚Å}\ref{Ldivision}(a)‚Ì‚æ‚¤‚ÉƒZƒ‹
-	‚ğ…•½•ûŒü‚ÉŒ‹‡‚·‚é‚±‚Æ‚ª‚Å‚«‚éBLšŒ^‚Ì—Ìˆæ‚Í•K‚¸‚µ‚àˆê‚Â‚Ì—Ìˆæ
-	“à—e‚ğ•\‚·‚Æ‚ÍŒÀ‚ç‚È‚¢B—á‚¦‚ÎƒuƒƒbƒNã•”‚ÉˆÊ’u‚·‚é•”•ª‚Íƒwƒbƒ_
-	—Ìˆæ‚Ì“Á’¥A¶•”‚ÉˆÊ’u‚·‚é•”•ª‚ÍƒŠƒ“ƒN—Ìˆæ‚Ì“Á’¥‚È‚Ç‚Æ‚¢‚Á‚½‹ï‡
-	‚Å‚ ‚éB‚»‚±‚ÅA‚±‚Ì‚æ‚¤‚ÈLšŒ^‚ğ‚µ‚½—Ìˆæ‚Í‚³‚ç‚É•ªŠ„‚·‚éB}
-	\ref{Ldivision}‚Ì—á‚Å‚Í—¼}‚Ì“_ü•”•ª‚Å•ªŠ„‚·‚éB‚»‚ÌÛA
-	\ref{set_pos_info}ß‚Å•t—^‚µ‚½ˆÊ’uî•ñ‚ğ—p‚¢‚éBcontents1‚Æ
-	contents2‚ğŠÜ‚Ştrƒ^ƒO‚É‚Írowspan‚ğl—¶‚µ‚È‚¢ˆÊ’uî•ñ‚ª•t—^‚³‚ê‚é
-	(130px)‚ªA‚»‚Ìq—v‘f‚Å‚ ‚étdƒ^ƒO‚É‚Í‚»‚ê‚¼‚êcontents1A2‚É‘Î‰‚µ
-	‚½ˆÊ’uî•ñ‚ª•t—^‚³‚ê‚é(‚»‚ê‚¼‚ê800pxA130px)B‚µ‚½‚ª‚Á‚Ä}
-	\ref{Ldivision}(b)‚Ì‚æ‚¤‚Étr—v‘f‚Ì‚‚³‚æ‚è‚àq—v‘f‚Å‚ ‚étd—v‘f‚Ì
-	•û‚ª‚‚³‚ª‘å‚«‚­‚È‚éB‚±‚Ì‚æ‚¤‚Éq—v‘f‚Ì‚‚³(‚Ü‚½‚Í•)‚ªe—v‘f‚æ
-	‚è‚à‘å‚«‚­‚È‚éê‡‚É•ªŠ„‚·‚éB
+	¿Ş\ref{Ldivision}¤Ë¥ì¥ó¥À¥ê¥ó¥°»ş¤Î¥Ö¥í¥Ã¥¯¤¬L»ú·¿¤ò¤·¤Æ¤¤¤ëÎã¤ò
+	¼¨¤¹¡£¿Ş\ref{Ldivision}(b)¤Î``contents1''¤ò´Ş¤àtd¥¿¥°¤Î¤è¤¦¤Ë
+	¡Örowspan=``2''¡×¤Èµ­½Ò¤¹¤ë¤³¤È¤Ç¿Ş\ref{Ldivision}(a)¤Î¤è¤¦¤Ë¥»¥ë
+	¤ò¿åÊ¿Êı¸ş¤Ë·ë¹ç¤¹¤ë¤³¤È¤¬¤Ç¤­¤ë¡£L»ú·¿¤ÎÎÎ°è¤ÏÉ¬¤º¤·¤â°ì¤Ä¤ÎÎÎ°è
+	ÆâÍÆ¤òÉ½¤¹¤È¤Ï¸Â¤é¤Ê¤¤¡£Îã¤¨¤Ğ¥Ö¥í¥Ã¥¯¾åÉô¤Ë°ÌÃÖ¤¹¤ëÉôÊ¬¤Ï¥Ø¥Ã¥À
+	ÎÎ°è¤ÎÆÃÄ§¡¢º¸Éô¤Ë°ÌÃÖ¤¹¤ëÉôÊ¬¤Ï¥ê¥ó¥¯ÎÎ°è¤ÎÆÃÄ§¤Ê¤É¤È¤¤¤Ã¤¿¶ñ¹ç
+	¤Ç¤¢¤ë¡£¤½¤³¤Ç¡¢¤³¤Î¤è¤¦¤ÊL»ú·¿¤ò¤·¤¿ÎÎ°è¤Ï¤µ¤é¤ËÊ¬³ä¤¹¤ë¡£¿Ş
+	\ref{Ldivision}¤ÎÎã¤Ç¤ÏÎ¾¿Ş¤ÎÅÀÀşÉôÊ¬¤ÇÊ¬³ä¤¹¤ë¡£¤½¤Îºİ¡¢
+	\ref{set_pos_info}Àá¤ÇÉÕÍ¿¤·¤¿°ÌÃÖ¾ğÊó¤òÍÑ¤¤¤ë¡£contents1¤È
+	contents2¤ò´Ş¤àtr¥¿¥°¤Ë¤Ïrowspan¤ò¹ÍÎ¸¤·¤Ê¤¤°ÌÃÖ¾ğÊó¤¬ÉÕÍ¿¤µ¤ì¤ë
+	(130px)¤¬¡¢¤½¤Î»ÒÍ×ÁÇ¤Ç¤¢¤ëtd¥¿¥°¤Ë¤Ï¤½¤ì¤¾¤ìcontents1¡¢2¤ËÂĞ±ş¤·
+	¤¿°ÌÃÖ¾ğÊó¤¬ÉÕÍ¿¤µ¤ì¤ë(¤½¤ì¤¾¤ì800px¡¢130px)¡£¤·¤¿¤¬¤Ã¤Æ¿Ş
+	\ref{Ldivision}(b)¤Î¤è¤¦¤ËtrÍ×ÁÇ¤Î¹â¤µ¤è¤ê¤â»ÒÍ×ÁÇ¤Ç¤¢¤ëtdÍ×ÁÇ¤Î
+	Êı¤¬¹â¤µ¤¬Âç¤­¤¯¤Ê¤ë¡£¤³¤Î¤è¤¦¤Ë»ÒÍ×ÁÇ¤Î¹â¤µ(¤Ş¤¿¤ÏÉı)¤¬¿ÆÍ×ÁÇ¤è
+	¤ê¤âÂç¤­¤¯¤Ê¤ë¾ì¹ç¤ËÊ¬³ä¤¹¤ë¡£
 
 	\begin{figure}[!t]
 	 \begin{center}
@@ -1118,34 +1118,34 @@ HTML::\\TreeBuilder‚ğ—p‚¢‚ÄDOM(Document Object Model)–Ø‚É•ÏŠ·‚·‚éBˆÈ~‚Å‚Í
 	   \begin{minipage}[b]{0.55\textwidth}
 	    \begin{center}
 	     \includegraphics[width=\textwidth]{figs/Ldivision.eps}
-	     (a)ƒŒƒ“ƒ_ƒŠƒ“ƒO‚ÌˆÊ’u
+	     (a)¥ì¥ó¥À¥ê¥ó¥°»ş¤Î°ÌÃÖ
 	    \end{center}
 	   \end{minipage}
 	   \begin{minipage}[b]{0.45\textwidth}
 	    \begin{center}   
 	     \includegraphics[width=\textwidth]{figs/Ldivision_html.eps}
-	     (b)HTML‚Ìƒ\[ƒX
+	     (b)HTML¤Î¥½¡¼¥¹
 	    \end{center}
 	   \end{minipage}
 	  \end{tabular}
-	  \caption{—Ìˆæ‚ªLšŒ^‚ğ‚µ‚Ä‚¢‚éƒy[ƒW‚Ì—á} \label{Ldivision}
+	  \caption{ÎÎ°è¤¬L»ú·¿¤ò¤·¤Æ¤¤¤ë¥Ú¡¼¥¸¤ÎÎã} \label{Ldivision}
 	 \end{center}
 	\end{figure}
 	
  \end{itemize}
 
- \paragraph{‚±‚êˆÈã•ªŠ„‚µ‚È‚¢ğŒ}
+ \paragraph{¤³¤ì°Ê¾åÊ¬³ä¤·¤Ê¤¤¾ò·ï}
 
  \begin{itemize}
-  \item ƒuƒƒbƒN‚Ìq—v‘f‚ª‘S‚ÄƒCƒ“ƒ‰ƒCƒ“—v‘f‚Å‚ ‚éê‡
+  \item ¥Ö¥í¥Ã¥¯¤Î»ÒÍ×ÁÇ¤¬Á´¤Æ¥¤¥ó¥é¥¤¥óÍ×ÁÇ¤Ç¤¢¤ë¾ì¹ç
 
-	HTMLƒ^ƒO‚Í‘å‚«‚­``ƒuƒƒbƒN—v‘f''‚Æ``ƒCƒ“ƒ‰ƒCƒ“—v‘f''‚Ì2‚Â‚É•ª—Ş‚·
-	‚é‚±‚Æ‚ª‚Å‚«‚éBƒuƒƒbƒN—v‘f‚ÍŒ©o‚µA’i—‚È‚Ç•¶‘‚ğ\¬‚·‚éŠî–{
-	—v‘f‚Æ‚È‚é‚à‚Ì‚Å‚ ‚èAƒCƒ“ƒ‰ƒCƒ“—v‘f‚ÍƒuƒƒbƒN—v‘f‚É‘Î‚µ‚Ä•¶’†‚Ì
-	ˆê•”‚É‚Ì‚İˆÓ–¡‚Ã‚¯‚â‘®İ’è‚ğs‚¤‚à‚Ì‚Å‚ ‚éBƒuƒƒbƒN—v‘f‚Ì’†‚É
-	ƒuƒƒbƒN—v‘f‚âƒCƒ“ƒ‰ƒCƒ“—v‘f‚ğ’u‚­‚±‚Æ‚Í‚Å‚«‚é‚ªAƒCƒ“ƒ‰ƒCƒ“—v‘f
-	‚Ì’†‚ÉƒuƒƒbƒN—v‘f‚ğ’u‚­‚±‚Æ‚Í‚Å‚«‚È‚¢BƒuƒƒbƒN—v‘f‚ÉˆÈ‰º‚Ì42ŒÂ
-	‚Ì‚à‚Ì‚ğw’è‚µA‚±‚êˆÈŠO‚Ì‚à‚Ì‚ğ‚·‚×‚ÄƒCƒ“ƒ‰ƒCƒ“—v‘f‚Æ‚·‚éB
+	HTML¥¿¥°¤ÏÂç¤­¤¯``¥Ö¥í¥Ã¥¯Í×ÁÇ''¤È``¥¤¥ó¥é¥¤¥óÍ×ÁÇ''¤Î2¤Ä¤ËÊ¬Îà¤¹
+	¤ë¤³¤È¤¬¤Ç¤­¤ë¡£¥Ö¥í¥Ã¥¯Í×ÁÇ¤Ï¸«½Ğ¤·¡¢ÃÊÍî¤Ê¤ÉÊ¸½ñ¤ò¹½À®¤¹¤ë´ğËÜ
+	Í×ÁÇ¤È¤Ê¤ë¤â¤Î¤Ç¤¢¤ê¡¢¥¤¥ó¥é¥¤¥óÍ×ÁÇ¤Ï¥Ö¥í¥Ã¥¯Í×ÁÇ¤ËÂĞ¤·¤ÆÊ¸Ãæ¤Î
+	°ìÉô¤Ë¤Î¤ß°ÕÌ£¤Å¤±¤ä½ñ¼°ÀßÄê¤ò¹Ô¤¦¤â¤Î¤Ç¤¢¤ë¡£¥Ö¥í¥Ã¥¯Í×ÁÇ¤ÎÃæ¤Ë
+	¥Ö¥í¥Ã¥¯Í×ÁÇ¤ä¥¤¥ó¥é¥¤¥óÍ×ÁÇ¤òÃÖ¤¯¤³¤È¤Ï¤Ç¤­¤ë¤¬¡¢¥¤¥ó¥é¥¤¥óÍ×ÁÇ
+	¤ÎÃæ¤Ë¥Ö¥í¥Ã¥¯Í×ÁÇ¤òÃÖ¤¯¤³¤È¤Ï¤Ç¤­¤Ê¤¤¡£¥Ö¥í¥Ã¥¯Í×ÁÇ¤Ë°Ê²¼¤Î42¸Ä
+	¤Î¤â¤Î¤ò»ØÄê¤·¡¢¤³¤ì°Ê³°¤Î¤â¤Î¤ò¤¹¤Ù¤Æ¥¤¥ó¥é¥¤¥óÍ×ÁÇ¤È¤¹¤ë¡£
 	
 	\begin{table}[!h]
 	 \begin{center}
@@ -1161,86 +1161,86 @@ HTML::\\TreeBuilder‚ğ—p‚¢‚ÄDOM(Document Object Model)–Ø‚É•ÏŠ·‚·‚éBˆÈ~‚Å‚Í
 	 \end{center}
 	\end{table}
 
-	‚ ‚éƒm[ƒh‚Ìqƒm[ƒh‚ª‘S‚ÄƒCƒ“ƒ‰ƒCƒ“—v‘f‚Ìê‡‚Í‚»‚êˆÈã•ªŠ„ˆ—
-	‚ğs‚í‚È‚¢B
+	¤¢¤ë¥Î¡¼¥É¤Î»Ò¥Î¡¼¥É¤¬Á´¤Æ¥¤¥ó¥é¥¤¥óÍ×ÁÇ¤Î¾ì¹ç¤Ï¤½¤ì°Ê¾åÊ¬³ä½èÍı
+	¤ò¹Ô¤ï¤Ê¤¤¡£
 
-	% ‚ ‚éƒm[ƒh‚É‚Â‚¢‚Ä‚³‚ç‚É•ªŠ„‚ğs‚¤‚±‚Æ‚Å‘S‚ÄƒCƒ“ƒ‰ƒCƒ“—v‘f‚Ì‚İ‚Ì
-	% ƒuƒƒbƒN‚Æ‚È‚éê‡‚ÍA‚»‚êˆÈã•ªŠ„ˆ—‚ğs‚í‚È‚¢B
+	% ¤¢¤ë¥Î¡¼¥É¤Ë¤Ä¤¤¤Æ¤µ¤é¤ËÊ¬³ä¤ò¹Ô¤¦¤³¤È¤ÇÁ´¤Æ¥¤¥ó¥é¥¤¥óÍ×ÁÇ¤Î¤ß¤Î
+	% ¥Ö¥í¥Ã¥¯¤È¤Ê¤ë¾ì¹ç¤Ï¡¢¤½¤ì°Ê¾åÊ¬³ä½èÍı¤ò¹Ô¤ï¤Ê¤¤¡£
 
  \end{itemize}
 
 
 
-\subsection{—Ìˆæ”»’è} \label{blockname_judgement}
+\subsection{ÎÎ°èÈ½Äê} \label{blockname_judgement}
  
 \begin{table}[t]
   \small
- \caption{Še—Ìˆæ‚Ì”»’èƒAƒ‹ƒSƒŠƒYƒ€}
+ \caption{³ÆÎÎ°è¤ÎÈ½Äê¥¢¥ë¥´¥ê¥º¥à}
  \label{role_and_algorithm_blockA}
  \begin{center}
   \begin{tabular}{ll} \hline
    &  \vspace{-1.4zw} \\
-   \multicolumn{2}{l}{\bf \fbox{Šî–{ƒuƒƒbƒN}} \\
-   footer & block“à‚É``copyright''A ``HOME''“™“Á’è‚Ì•¶š—ñ‚ğŠÜ‚Ş\\
-   & blockI—¹‚ªƒy[ƒW––”ö‚©‚ç100•¶šˆÈ“à\\
-   & blockŠJn‚ªƒy[ƒW––”ö‚©‚ç300•¶šˆÈ“à \\
-   & (ƒy[ƒWæ“ª‚©‚çblockã’[‚Ü‚Å‚Ì‹——£)~/~(bodyƒ^ƒO‚Ì‚‚³)~$\ge$~0.6 \\
-   & \multicolumn{1}{r}{(ˆÈã‘S‚Ä‚ğ–‚½‚·)} \vspace{0.5zw} \\ 
-   header & index.*‚Ö‚Ì“à•”ƒŠƒ“ƒN‚ğ‚à‚Â \\
-   & blockŠJn‚ªƒy[ƒWæ“ª‚©‚ç100•¶šˆÈ“à \\
-   & blockI—¹‚ªƒy[ƒWæ“ª‚©‚ç300•¶šˆÈ“à \\
-   & (ƒy[ƒWæ“ª‚©‚çblock‰º’[‚Ü‚Å‚Ì‹——£)~/~(bodyƒ^ƒO‚Ì‚‚³)~$\le$0.4 \\
-   & \multicolumn{1}{r}{(ˆÈã‘S‚Ä‚ğ–‚½‚·)} \vspace{0.5zw} \\ 
+   \multicolumn{2}{l}{\bf \fbox{´ğËÜ¥Ö¥í¥Ã¥¯}} \\
+   footer & blockÆâ¤Ë``copyright''¡¢ ``HOME''ÅùÆÃÄê¤ÎÊ¸»úÎó¤ò´Ş¤à\\
+   & block½ªÎ»¤¬¥Ú¡¼¥¸ËöÈø¤«¤é100Ê¸»ú°ÊÆâ\\
+   & block³«»Ï¤¬¥Ú¡¼¥¸ËöÈø¤«¤é300Ê¸»ú°ÊÆâ \\
+   & (¥Ú¡¼¥¸ÀèÆ¬¤«¤éblock¾åÃ¼¤Ş¤Ç¤Îµ÷Î¥)~/~(body¥¿¥°¤Î¹â¤µ)~$\ge$~0.6 \\
+   & \multicolumn{1}{r}{(°Ê¾åÁ´¤Æ¤òËş¤¿¤¹)} \vspace{0.5zw} \\ 
+   header & index.*¤Ø¤ÎÆâÉô¥ê¥ó¥¯¤ò¤â¤Ä \\
+   & block³«»Ï¤¬¥Ú¡¼¥¸ÀèÆ¬¤«¤é100Ê¸»ú°ÊÆâ \\
+   & block½ªÎ»¤¬¥Ú¡¼¥¸ÀèÆ¬¤«¤é300Ê¸»ú°ÊÆâ \\
+   & (¥Ú¡¼¥¸ÀèÆ¬¤«¤éblock²¼Ã¼¤Ş¤Ç¤Îµ÷Î¥)~/~(body¥¿¥°¤Î¹â¤µ)~$\le$0.4 \\
+   & \multicolumn{1}{r}{(°Ê¾åÁ´¤Æ¤òËş¤¿¤¹)} \vspace{0.5zw} \\ 
 
-   link & ©•ªˆÈ‰º‚Ì66\%ˆÈã‚Ìblock‚Éaƒ^ƒO‚ğŠÜ‚ŞŒJ‚è•Ô‚µ\‘¢‚ğ‚à‚Â \vspace{0.5zw} \\
+   link & ¼«Ê¬°Ê²¼¤Î66\%°Ê¾å¤Îblock¤Ëa¥¿¥°¤ò´Ş¤à·«¤êÊÖ¤·¹½Â¤¤ò¤â¤Ä \vspace{0.5zw} \\
 
-   image & ©•ªˆÈ‰º‚Ì80\%ˆÈã‚Ìblock‚Ì—tƒm[ƒh‚ªimgƒ^ƒO \vspace{0.5zw} \\ 
+   image & ¼«Ê¬°Ê²¼¤Î80\%°Ê¾å¤Îblock¤ÎÍÕ¥Î¡¼¥É¤¬img¥¿¥° \vspace{0.5zw} \\ 
 
-   maintext & ƒeƒLƒXƒg‚Ì’·‚³‚ª200•¶šˆÈã \\
-   & ‹å“Ç“_‚Ü‚½‚Í``‚Ì''ˆÈŠO‚Ì•Œ‚Ì‘SŒ`‘Ô‘f‚Éè‚ß‚éŠ„‡‚ª5\%ˆÈã \\
-   & \multicolumn{1}{r}{(ˆÈã‚¢‚¸‚ê‚©–‚½‚·)} \\ 
+   maintext & ¥Æ¥­¥¹¥È¤ÎÄ¹¤µ¤¬200Ê¸»ú°Ê¾å \\
+   & ¶çÆÉÅÀ¤Ş¤¿¤Ï``¤Î''°Ê³°¤Î½õ»ì¤ÎÁ´·ÁÂÖÁÇ¤ËÀê¤á¤ë³ä¹ç¤¬5\%°Ê¾å \\
+   & \multicolumn{1}{r}{(°Ê¾å¤¤¤º¤ì¤«Ëş¤¿¤¹)} \\ 
 
-   form & blockˆÈ‰º‚Éformƒ^ƒO‚ğŠÜ‚Ş \vspace{0.5zw} \\ 
+   form & block°Ê²¼¤Ëform¥¿¥°¤ò´Ş¤à \vspace{0.5zw} \\ 
 
-   unknown & ã‹LˆÈŠO‚Ì—Ìˆæ \\  \hline
+   unknown & ¾åµ­°Ê³°¤ÎÎÎ°è \\  \hline
 
    &  \vspace{-1.4zw} \\
-   \multicolumn{2}{l}{\bf \fbox{ƒTƒuƒuƒƒbƒN}} \\
-   profile & ``ƒvƒƒtƒB[ƒ‹''A ``ƒ†[ƒU–¼''A ``–¼‘O''‚È‚Ç“Á’è‚Ì•¶š—ñ‚ğ \\
-   & ©•ªˆÈ‰º‚Ìblock‚É2ŒÂˆÈãŠÜ‚Ş \vspace{0.5zw} \\
+   \multicolumn{2}{l}{\bf \fbox{¥µ¥Ö¥Ö¥í¥Ã¥¯}} \\
+   profile & ``¥×¥í¥Õ¥£¡¼¥ë''¡¢ ``¥æ¡¼¥¶Ì¾''¡¢ ``Ì¾Á°''¤Ê¤ÉÆÃÄê¤ÎÊ¸»úÎó¤ò \\
+   & ¼«Ê¬°Ê²¼¤Îblock¤Ë2¸Ä°Ê¾å´Ş¤à \vspace{0.5zw} \\
 
-   address & ``ZŠ''A ``˜A—æ''A ``TEL''‚È‚Ç“Á’è‚Ì•¶š—ñ‚ğ©•ªˆÈ‰º‚Ì  \\
-   & block‚É2ŒÂˆÈãŠÜ‚Ş \\ \hline
+   address & ``½»½ê''¡¢ ``Ï¢ÍíÀè''¡¢ ``TEL''¤Ê¤ÉÆÃÄê¤ÎÊ¸»úÎó¤ò¼«Ê¬°Ê²¼¤Î  \\
+   & block¤Ë2¸Ä°Ê¾å´Ş¤à \\ \hline
   \end{tabular}
  \end{center}
  \end{table}
 
-ÅŒã‚É\ref{block_division}ß‚Å•ªŠ„‚µ‚½ŠeƒuƒƒbƒN‚É‘Î‚µ‚Ä‚»‚Ì—Ìˆæ–¼‚ğ”»’è
-‚·‚éB
+ºÇ¸å¤Ë\ref{block_division}Àá¤ÇÊ¬³ä¤·¤¿³Æ¥Ö¥í¥Ã¥¯¤ËÂĞ¤·¤Æ¤½¤ÎÎÎ°èÌ¾¤òÈ½Äê
+¤¹¤ë¡£
 
-Še—Ìˆæ‚Ì”»’èƒAƒ‹ƒSƒŠƒYƒ€‚ğ•\\ref{role_and_algorithm_blockA}‚É¦‚·BŠî–{
-ƒuƒƒbƒN‚É‘®‚·‚é—Ìˆæ‚Í•\\ref{role_and_algorithm_blockA}‚Ìã‚©‚ç‡‚ÉğŒ‚É
-“K‡‚·‚é‚©‚µ‚È‚¢‚©‚ğ”»’è‚·‚éB‚·‚×‚Ä‚ÌƒuƒƒbƒN‚ÉŠî–{ƒuƒƒbƒN‚Ì—Ìˆæ–¼‚ªŠ„
-‚è“–‚Ä‚ç‚ê‚½‚Ì‚¿AƒTƒuƒuƒƒbƒN‚É‘®‚·‚é—Ìˆæ‚Ì”»’f‚ğs‚¤B‚½‚¾‚µA}
-\ref{inline_line}‚Ì‚æ‚¤‚ÉƒCƒ“ƒ‰ƒCƒ“—v‘f‚ª˜A‘±‚·‚éê‡‚Í‚»‚ê‚ğˆê‚Â‚Ì—Ìˆæ‚É
-‚Ü‚Æ‚ß‚éB‚±‚Ì—á‚Ìê‡‚Í\ref{block_division}ß‚ÌƒAƒ‹ƒSƒŠƒYƒ€‚Å•ªŠ„‚³‚ê‚½
+³ÆÎÎ°è¤ÎÈ½Äê¥¢¥ë¥´¥ê¥º¥à¤òÉ½\ref{role_and_algorithm_blockA}¤Ë¼¨¤¹¡£´ğËÜ
+¥Ö¥í¥Ã¥¯¤ËÂ°¤¹¤ëÎÎ°è¤ÏÉ½\ref{role_and_algorithm_blockA}¤Î¾å¤«¤é½ç¤Ë¾ò·ï¤Ë
+Å¬¹ç¤¹¤ë¤«¤·¤Ê¤¤¤«¤òÈ½Äê¤¹¤ë¡£¤¹¤Ù¤Æ¤Î¥Ö¥í¥Ã¥¯¤Ë´ğËÜ¥Ö¥í¥Ã¥¯¤ÎÎÎ°èÌ¾¤¬³ä
+¤êÅö¤Æ¤é¤ì¤¿¤Î¤Á¡¢¥µ¥Ö¥Ö¥í¥Ã¥¯¤ËÂ°¤¹¤ëÎÎ°è¤ÎÈ½ÃÇ¤ò¹Ô¤¦¡£¤¿¤À¤·¡¢¿Ş
+\ref{inline_line}¤Î¤è¤¦¤Ë¥¤¥ó¥é¥¤¥óÍ×ÁÇ¤¬Ï¢Â³¤¹¤ë¾ì¹ç¤Ï¤½¤ì¤ò°ì¤Ä¤ÎÎÎ°è¤Ë
+¤Ş¤È¤á¤ë¡£¤³¤ÎÎã¤Î¾ì¹ç¤Ï\ref{block_division}Àá¤Î¥¢¥ë¥´¥ê¥º¥à¤ÇÊ¬³ä¤µ¤ì¤¿
 \begin{quote}
 $\ldots$-a-br-br-br-br-b-$\ldots$
 \end{quote}
-‚Ì•”•ª‚ğmaintext—Ìˆæ‚Æ‚µ‚Ä‚Ü‚Æ‚ß‚éB
+¤ÎÉôÊ¬¤òmaintextÎÎ°è¤È¤·¤Æ¤Ş¤È¤á¤ë¡£
 
   \begin{figure}[t]
    \small
    \begin{center}
     \includegraphics[width=0.8\textwidth]{figs/inline_line.eps}
    \end{center}
-   \caption{ƒCƒ“ƒ‰ƒCƒ“—v‘f‚ğ1‚Â‚Ì—Ìˆæ‚Æ‚µ‚Ä‚Ü‚Æ‚ß‚é—á}
+   \caption{¥¤¥ó¥é¥¤¥óÍ×ÁÇ¤ò1¤Ä¤ÎÎÎ°è¤È¤·¤Æ¤Ş¤È¤á¤ëÎã}
    \label{inline_line}
   \end{figure}
 
-  }\ref{olympus-orig}A\ref{Unyu-Anzen-Iinkai-orig}‚Ìwebƒy[ƒW‚É‘Î‚µ‚Ä—Ì
-  ˆæ”»’è‚ğs‚Á‚½Œ‹‰Ê‚ğ}\ref{detect_block_sample1}A
-  \ref{detect_block_sample2}‚É¦‚·B
+  ¿Ş\ref{olympus-orig}¡¢\ref{Unyu-Anzen-Iinkai-orig}¤Îweb¥Ú¡¼¥¸¤ËÂĞ¤·¤ÆÎÎ
+  °èÈ½Äê¤ò¹Ô¤Ã¤¿·ë²Ì¤ò¿Ş\ref{detect_block_sample1}¡¢
+  \ref{detect_block_sample2}¤Ë¼¨¤¹¡£
 
 \begin{figure}[!t]
  \begin{center}
@@ -1248,14 +1248,14 @@ $\ldots$-a-br-br-br-br-b-$\ldots$
    \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
      \includegraphics[width=0.95\textwidth]{figs/detect-block-sample1.eps}
-    \caption{\‘¢‰ğÍ‚ğs‚Á‚½ƒy[ƒW‚Ì—á(1)}
+    \caption{¹½Â¤²òÀÏ¤ò¹Ô¤Ã¤¿¥Ú¡¼¥¸¤ÎÎã(1)}
     \label{detect_block_sample1}
     \end{center}
    \end{minipage}
    \begin{minipage}[b]{0.5\textwidth}
     \begin{center}
      \includegraphics[width=0.95\textwidth]{figs/detect-block-sample2.eps}
-    \caption{\‘¢‰ğÍ‚ğs‚Á‚½ƒy[ƒW‚Ì—á(2)}
+    \caption{¹½Â¤²òÀÏ¤ò¹Ô¤Ã¤¿¥Ú¡¼¥¸¤ÎÎã(2)}
     \label{detect_block_sample2}
     \end{center}
    \end{minipage}
