@@ -66,7 +66,7 @@ sub extractTerms {
     $sid = &remove_yomi($sid);
 
     # <上位語>を利用するかどうか
-    $features =~ s/<上位語>//g if ($features =~ /<上位語>/ && $opt->{use_of_hypernym});
+    next if ($features =~ /<上位語>/ && !$opt->{use_of_hypernym});
 
     # <反義語><否定>を利用するかどうか
     next if ($features =~ /<反義語>/ && $features =~ /<否定>/ && !$opt->{use_of_negation_and_antonym});
