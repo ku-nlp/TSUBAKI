@@ -47,12 +47,12 @@ sub xml2term {
 		my (@words);
 		for my $phrase_child_node ($result_child_node->getChildNodes) {
 		    next unless $phrase_child_node->nodeName eq 'word';
-		    my $term = $phrase_child_node->string_value;
+		    my $term = $phrase_child_node->getAttribute('midasi');
 		    # word terms
 		    $terms{$term}{freq}++;
 		    $terms{$term}{sentence_ids}{$sentence_id}++;
 		    $terms{$term}{pos}{$word_count} = 1; # value = score
-		    push(@words, {str => $phrase_child_node->string_value, 
+		    push(@words, {str => $term,
 				  feature => $phrase_child_node->getAttribute('feature'), 
 				  pos => $word_count});
 		    $word_count++;
