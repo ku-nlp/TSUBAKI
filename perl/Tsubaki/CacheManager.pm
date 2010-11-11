@@ -17,14 +17,16 @@ sub new {
     my ($class) = @_;
 
     my %buf;
-    my $cachelog = "$CONFIG->{CACHE_DIR}/log";
-    open(READER, '<:utf8', $cachelog) or die;
-    while (<READER>) {
-	chop;
-	my ($time, $key, $fp) = split("\t", $_);
-	$buf{$key} = $fp;
+    unless ($CONFIG->{DISABLE_CACHE}) {
+	my $cachelog = "$CONFIG->{CACHE_DIR}/log";
+	open(READER, '<:utf8', $cachelog) or die;
+	while (<READER>) {
+	    chop;
+	    my ($time, $key, $fp) = split("\t", $_);
+	    $buf{$key} = $fp;
+	}
+	close(READER);
     }
-    close(READER);
 
     my $this = {cachedData => \%buf};
 
