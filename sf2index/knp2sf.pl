@@ -3,7 +3,7 @@
 # $Id$
 
 # usage: echo '温泉旅館に一番近い駅' | juman | knp -tab | perl knp2sf.pl
-# usage: echo '温泉旅館に一番近い駅' | juman | knp -tab | perl -I/somewhere/SynGraph/perl /somewhere/SynGraph/scripts/knp_syn.pl -dbdir /somewhere/SynGraph/syndb/x86_64 perl knp2sf.pl
+# usage: echo '温泉旅館に一番近い駅' | juman | knp -tab | perl -I/somewhere/SynGraph/perl /somewhere/SynGraph/scripts/knp_syn.pl -dbdir /somewhere/SynGraph/syndb/x86_64 | perl knp2sf.pl
 
 use strict;
 use utf8;
@@ -16,9 +16,9 @@ use Getopt::Long;
 my (%opt); GetOptions(\%opt, 'filter_fstring');
 
 my %pf_order = (id => 0, dpnd => 1, cat => 2, f => 3); # print order of phrase attributes
-my %wf_order = (id => 0, lem => 1, read => 2, pos => 3, repname => 4, conj => 5, f => 99); # print order of word attributes
+my %wf_order = (id => 0, midasi => 1, lem => 2, read => 3, pos => 4, repname => 5, conj => 6, f => 99); # print order of word attributes
 my %synnodesf_order = (dpnd => 0, phraseid => 1);
-my %synnodef_order = (synid => 0, score => 1);
+my %synnodef_order = (wordid => 0, synid => 1, score => 2);
 
 my $knp = new KNP::File(file => $ARGV[0], encoding => 'euc-jp');
 my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
@@ -91,22 +91,17 @@ while (my $result = $knp->each()) {
 
 	    $writer->startTag('phrase', map({$_ => $pf{$_}} sort {$pf_order{$a} <=> $pf_order{$b}} keys %pf));
 
-	    # synnodes
-	    for my $synnodes ($tag->synnodes) {
-		my %synnodes_f;
-		$synnodes_f{dpnd} = $synnodes->parent;
-		$synnodes_f{phraseid} = $synnodes->tagid;
-
-		$writer->startTag('synnodes', map({$_ => $synnodes_f{$_}} sort {$synnodesf_order{$a} <=> $synnodesf_order{$b}} keys %synnodes_f));
-
- 		for my $synnode ($synnodes->synnode) {
-		    my %synnode_f;
-		    $synnode_f{synid} = $synnode->synid;
-		    $synnode_f{score} = $synnode->score;
-
-		    $writer->emptyTag('synnode', map({$_ => $synnode_f{$_}} sort {$synnodef_order{$a} <=> $synnodef_order{$b}} keys %synnode_f));
- 		}
-		$writer->endTag();
+ 	    # synnode
+	    my %synnode;
+ 	    for my $synnode ($tag->synnode) {
+		my %synnode_f;
+		my $word_id = $synnode->tagid; # 要修正
+		my $last_word_id = (split(',', $word_id))[-1]; # 最後の単語idにsynnodeを付与する
+		$synnode_f{synid} = $synnode->synid;
+		$synnode_f{score} = $synnode->score;
+		$synnode_f{wordid} = $word_id;
+		
+		push @{$synnode{$last_word_id}}, { word_id => $word_id, f => \%synnode_f };
 	    }
 
 	    # word
@@ -136,7 +131,8 @@ while (my $result = $knp->each()) {
 		    $conj = '';
 		}
 
-		my %wf = (lem => $mrph->genkei,
+		my %wf = (midasi => $mrph->midasi,
+			  lem => $mrph->genkei,
 			  read => $mrph->yomi,
 			  repname => $rep, 
 			  pos => $mrph->hinsi,
@@ -148,7 +144,10 @@ while (my $result = $knp->each()) {
 		$wf{f} = $opt{filter_fstring} ? &filter_fstring($fstring) . '...' : $fstring;
 
 		$writer->startTag('word', map({$_ => $wf{$_}} sort {$wf_order{$a} <=> $wf_order{$b}} keys %wf));
-		$writer->characters($mrph->midasi);
+		for my $synnode (@{$synnode{$abs_wnum}}) {
+		    $writer->emptyTag('synnode', map({$_ => $synnode->{f}{$_}} sort {$synnodef_order{$a} <=> $synnodef_order{$b}} keys %{$synnode->{f}}));
+		}
+
 		$writer->endTag();
 		$abs_wnum++;
 	    }
