@@ -16,20 +16,18 @@ our $SF_EXT = 'xml';
 our $IDX_EXT = $opt{suffix} ? $opt{suffix} : 'idx';
 our $parser = new XML::LibXML;
 
-for my $file (@ARGV) {
-    my ($prefix, $doc_id) = ($file =~ /^(.*)(\d+)\.$SF_EXT$/);
-    die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT\n" unless defined($doc_id);
-    my $output_file = $prefix . $doc_id . '.' . $IDX_EXT;
+my $file = $ARGV[0];
+my ($prefix, $doc_id) = ($file =~ /^(.*)(\d+)\.$SF_EXT$/);
+die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT\n" unless defined($doc_id);
+my $output_file = $prefix . $doc_id . '.' . $IDX_EXT;
 
-    my $xmldat;
-    open(XML, '< :utf8', $file) or die;
-    while (<XML>) {
-	$xmldat .= $_;
-    }
-    close(XML);
-    &xml2term($parser, $doc_id, $xmldat, $output_file);
+my $xmldat;
+open(XML, '< :utf8', $file) or die;
+while (<XML>) {
+    $xmldat .= $_;
 }
-
+close(XML);
+&xml2term($parser, $doc_id, $xmldat, $output_file);
 
 sub xml2term {
     my ($parser, $doc_id, $xmldat, $output_file) = @_;
