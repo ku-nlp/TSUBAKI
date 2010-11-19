@@ -179,20 +179,25 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
 	tid2sid.insert(std::pair<int, string>(_tid, sid));
 
 	// cdb -> map
-	string url = sid2url_cdb->get(sid);
-	string title = sid2title_cdb->get(sid);
+	if (sid2url_cdb->is_open()) {
+	    string url = sid2url_cdb->get(sid);
 
-	if (url.find("%") != string::npos) {
-	    string::size_type pos;
-	    string find_str = "%";
-	    string rep_str = "@";
-	    for(pos = url.find(find_str); pos != string::npos; pos = url.find(find_str, rep_str.length() + pos)) {
-		url.replace(pos, find_str.length(), rep_str);
+	    if (url.find("%") != string::npos) {
+		string::size_type pos;
+		string find_str = "%";
+		string rep_str = "@";
+		for(pos = url.find(find_str); pos != string::npos; pos = url.find(find_str, rep_str.length() + pos)) {
+		    url.replace(pos, find_str.length(), rep_str);
+		}
 	    }
+
+	    tid2url.insert(std::pair<int, string>(_tid, url));
 	}
 
-	tid2url.insert(std::pair<int, string>(_tid, url));
-	tid2title.insert(std::pair<int, string>(_tid, title));
+	if (sid2title_cdb->is_open()) {
+	    string title = sid2title_cdb->get(sid);
+	    tid2title.insert(std::pair<int, string>(_tid, title));
+	}
     }
     fin.close();
 
@@ -382,11 +387,28 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 
 	    int count = 0;
 	    for (std::vector<Document *>::iterator it = docs.begin(); it != docs.end(); it++) {
-
-		std::string sid = (*(MAP_IMPL<int, string>::iterator)tid2sid.find((*it)->get_id())).second;
-		std::string title = (*(MAP_IMPL<int, string>::iterator)tid2title.find((*it)->get_id())).second;
-		std::string url = (*(MAP_IMPL<int, string>::iterator)tid2url.find((*it)->get_id())).second;
-
+		std::string sid, title, url;
+		MAP_IMPL<int, string>::iterator sid_it = tid2sid.find((*it)->get_id());
+		if (sid_it != tid2sid.end()) {
+		    sid = (*sid_it).second;
+		}
+		else {
+		    sid = "0";
+		}
+		MAP_IMPL<int, string>::iterator title_it = tid2title.find((*it)->get_id());
+		if (title_it != tid2title.end()) {
+		    title = (*title_it).second;
+		}
+		else {
+		    title = "none";
+		}
+		MAP_IMPL<int, string>::iterator url_it = tid2url.find((*it)->get_id());
+		if (url_it != tid2url.end()) {
+		    url = (*url_it).second;
+		}
+		else {
+		    url = "none";
+		}
 		sbuf << sid << " " << title << " " << url << " " << ((*it)->to_string()) << endl;
 
 		if (++count > NUM_OF_RETURN_DOCUMENTS)
