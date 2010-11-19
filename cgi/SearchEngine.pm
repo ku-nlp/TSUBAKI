@@ -14,6 +14,7 @@ use State;
 use Logger;
 use Tsubaki::CacheManager;
 use Error qw(:try);
+use Time::HiRes;
 
 my $CONFIG = Configure::get_instance();
 
@@ -119,18 +120,22 @@ sub send_query_to_slave_servers {
 
 # 検索結果の受信
 sub recieve_result_from_slave_servers {
-    my($this, $selecter, $query, $logger, $num_of_sockets, $opt) = @_;
+    my($this, $selecter, $query, $logger, $num_of_sockets, $opt, $start) = @_;
 
     my @results = ();
     my $total_hitcount = 0;
     my %logbuf = ();
     my %host2log = ();
 
+    my $count = 0;
     while ($num_of_sockets > 0) {
+	$count++;
 	my ($readable_sockets) = IO::Select->select($selecter, undef, undef, undef);
 
+	my $_count = 0;
 	foreach my $socket (@{$readable_sockets}) {
-	    my ($hitcount, $result_docs) = $this->parse_recieved_data($socket, $query, \%host2log, \%logbuf, $opt);
+	    my ($hitcount, $result_docs, $time) = $this->parse_recieved_data($socket, $query, \%host2log, \%logbuf, $opt);
+#	    print "count: " . ($count) . " " . ($_count++) . " $time " . (Time::HiRes::time - $start) . "<BR>\n";
 
 	    $total_hitcount += $hitcount;
 	    push (@results, @$result_docs);
@@ -218,9 +223,8 @@ sub parse_recieved_data_for_cpp {
 
 	    # Set log data
 	    my $gid = 0;
-	    my $_logdata = join (" ", @logdata);
-	    $_logdata =~ s/^\[//;
-	    $_logdata =~ s/,\]$//;
+	    my $dumy = join (" ", @logdata);
+	    my ($_logdata, $_position) = ($dumy =~ /^\[(.+?),\] \[(.+?)\]$/);
 	    foreach my $__data (split (",", $_logdata)) {
 		my ($term, $score, $freq, $gdf) = split (' ', $__data);
 		$doc->{terminfo}{terms}{$gid}{str} = decode ('utf8', $term);
@@ -233,6 +237,11 @@ sub parse_recieved_data_for_cpp {
 	    $doc->{terminfo}{pagerank} = $pagerank;
 	    $doc->{terminfo}{flagOfStrictTerm} = $flagOfStrictTerm;
 	    $doc->{terminfo}{flagOfProxConst} = $flagOfProxConst;
+	    foreach my $term2posStr (split (/\#/, $_position)) {
+		my @term2pos = split (/,/, $term2posStr);
+		my $term = shift @term2pos;
+		$doc->{terminfo}{term2pos}{decode('utf8', $term)} = \@term2pos;
+	    }
 	    push (@results, $doc);
 	}
     }
@@ -249,7 +258,7 @@ sub parse_recieved_data_for_cpp {
     # ホストごとのログを保存
     push (@{$host2log->{$hostname}}, $slave_logger);
 
-    return ($hitcount, [\@results]);
+    return ($hitcount, [\@results], $slave_server_side_total);
 }
 
 
@@ -342,6 +351,7 @@ sub parse_recieved_data_for_perl {
 sub broadcastSearch {
     my($this, $query, $logger, $opt) = @_;
 
+    my $_start = Time::HiRes::time;
     $query->{sort_by_year} = $opt->{sort_by_year};
 
     ##################
@@ -368,12 +378,11 @@ sub broadcastSearch {
 
     my $num_of_sockets = $this->send_query_to_slave_servers($selecter, $query_dat, $logger, $opt);
 
-
     ##################
     # 検索クエリの受信
     ##################
-    my ($total_hitcount, $_results, $host2log, $logbuf) = $this->recieve_result_from_slave_servers($selecter, $query, $logger, $num_of_sockets, $opt);
-
+    my ($total_hitcount, $_results, $host2log, $logbuf) = $this->recieve_result_from_slave_servers($selecter, $query, $logger, $num_of_sockets, $opt, $_start);
+#   print "time: " . (Time::HiRes::time - $_start) . "<BR>\n";
 
     ##########
     # ロギング
