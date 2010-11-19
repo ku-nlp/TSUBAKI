@@ -345,6 +345,7 @@ class Documents {
     bool walk_and(Document *doc_ptr);
     bool check_phrase (Document *doc_ptr);
     bool walk_and_or(Document *doc_ptr);
+    bool collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, std::vector<int> *> *term2pos);
 };
 
 class sort_by_term_pos {
