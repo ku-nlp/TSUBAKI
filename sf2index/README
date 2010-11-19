@@ -9,7 +9,8 @@
 2. make
 
 
-検索例
-------
+検索のテスト
+------------
 
-./search.sh 旅館
+1. ../searchの下でmake
+2 ./search.sh query.sample.sexp
