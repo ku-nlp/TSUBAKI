@@ -31,6 +31,7 @@ class Dbm {
   public:
     Dbm() {
 	defined_keymap = false;
+	available = false;
 
 #ifdef _32BIT_CPU_MODE_FLAG
 	IS_32BIT_CPU_MODE = true;
@@ -49,6 +50,7 @@ class Dbm {
 
     bool init(string &in_dbname, string _hostname) {
 	hostname = _hostname;
+	available = true;
 	if (in_dbname.find("keymap") != string::npos) {
 	    defined_keymap = true;
 
@@ -79,6 +81,9 @@ class Dbm {
 
 		if (!IS_32BIT_CPU_MODE) {
 		    struct cdb *_db = tieCDB(dirname + "/" + filename);
+		    if (_db == NULL) {
+			available = false;
+		    }
 		    k2db.push_back(std::pair<string, cdb*>(key, _db));
 		} else {
 		    k2dbfile.push_back(std::pair<string, string>(key, dirname + "/" + filename));
@@ -91,8 +96,11 @@ class Dbm {
 	    defined_keymap = false;
 	    dbname = in_dbname;
 	    _cdb = tieCDB(dbname);
+	    if (_cdb == NULL) {
+		available = false;
+	    }
 	}
-	return true;
+	return available;
     }
 
     cdb* tieCDB (string dbfile) {
@@ -106,6 +114,7 @@ class Dbm {
 	int _fd;
 	if ((_fd = open(dbfile.c_str(), O_RDONLY)) < 0) {
 	    cerr << "Can't open file: " << dbfile << endl;
+	    return NULL;
 	}
 	int ret = cdb_init(db, _fd);
 
