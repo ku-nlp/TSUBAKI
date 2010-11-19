@@ -49,7 +49,6 @@ std::vector<double> *search (std::string *query,
     // scoring
     for (std::vector<Document *>::iterator it = result_docs->get_s_documents()->begin(); it != result_docs->get_s_documents()->end(); it++) {
 	Document *doc = result_docs->get_doc((*it)->get_id());
-
 	// 文書長の取得
 	int length = 10000;
 	MAP_IMPL<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
@@ -59,6 +58,9 @@ std::vector<double> *search (std::string *query,
 		length = (*_length).second;
 	}
 	doc->set_length(length);
+
+	// termの出現位置を取得
+	result_docs->collectTermPosition(doc, doc->getTermPosition());
 
 	// rmfilesにあればスキップ
 	if (rmsids.find((*_sid).second) != rmsids.end())
@@ -96,6 +98,9 @@ std::vector<double> *search (std::string *query,
 		length = (*_length).second;
 	}
 	doc->set_length(length);
+
+	// termの出現位置を取得
+	result_docs->collectTermPosition(doc, &term2pos);
 
 	// rmfilesにあればスキップ
 	if (rmsids.find((*_sid).second) != rmsids.end())
@@ -322,6 +327,7 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
     sin.sin_port = htons(TSUBAKI_SLAVE_PORT);
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
+
   
     /* bind */  
     if (bind(sfd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
@@ -330,12 +336,14 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 	return false;
     }
 
+
     /* listen */  
     if (listen(sfd, SOMAXCONN) < 0) {
 	cerr << ";; listen error" << endl;
 	close(sfd);
 	return false;
     }
+
 
     /* accept loop */
     while (1) {

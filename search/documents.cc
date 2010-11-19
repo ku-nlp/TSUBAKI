@@ -1328,3 +1328,27 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 
     return true;
 }
+
+bool Documents::collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, std::vector<int> *> *term2pos) {
+
+    if (get_type() == DOCUMENTS_TERM_STRICT   ||
+	get_type() == DOCUMENTS_TERM_LENIENT  ||
+	get_type() == DOCUMENTS_TERM_OPTIONAL ||
+	get_type() == DOCUMENTS_OR_OPTIONAL) {
+	Document *document = get_doc(doc_ptr->get_id());
+	if (document != NULL) {
+	    std::vector<int> *poslist = new std::vector<int>;
+	    std::vector<int> *org = document->get_pos();
+	    // コピーしないと消える
+	    for (std::vector<int>::iterator it = org->begin(); it != org->end(); it++) {
+		poslist->push_back((*it));
+	    }
+	    term2pos->insert(std::pair<const char*, std::vector<int> *>(get_label().c_str(), poslist));
+	}
+    }
+
+    for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it)
+	(*it)->collectTermPosition(doc_ptr, term2pos);
+
+    return true;
+}
