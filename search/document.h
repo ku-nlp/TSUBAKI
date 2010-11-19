@@ -17,6 +17,7 @@ class Document {
     double score;
     double pagerank;
     unsigned char *pos_buf;
+    MAP_IMPL<const char *, std::vector<int> *> term2pos;
 
     std::vector<int> *pos_list;
 //  std::vector<std::string *> terms;
@@ -167,6 +168,10 @@ class Document {
     bool pushbackTerm (Term *term) {
 	terms.push_back(term);
 	return true;
+    }
+
+    MAP_IMPL<const char*, std::vector<int> *> *getTermPosition () {
+	return &term2pos;
     }
 
     std::vector<Term *>* getTerms () {
