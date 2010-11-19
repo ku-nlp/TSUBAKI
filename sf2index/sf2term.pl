@@ -2,7 +2,7 @@
 
 # a script to convert standard format to term file
 
-#$Id$
+# $Id$
 
 use strict;
 use utf8;
@@ -36,21 +36,23 @@ sub xml2term {
 
     my (%terms, %dpnd_terms);
     my $word_count = 0;
-    for my $sentence_node ($doc->getElementsByTagName('S')) {
+    for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
 	my $sentence_id = $sentence_node->getAttribute('id');
 	my (%phrases);
-	for my $result_node ($doc->getElementsByTagName('result')) {
+	for my $result_node ($doc->getElementsByTagName('result')) { # parse
 	    for my $result_child_node ($result_node->getChildNodes) {
 		next unless $result_child_node->nodeName eq 'phrase';
 		my (@words);
 		for my $phrase_child_node ($result_child_node->getChildNodes) {
 		    next unless $phrase_child_node->nodeName eq 'word';
-		    my $term = $phrase_child_node->getAttribute('midasi');
-		    # word terms
-		    $terms{$term}{freq}++;
-		    $terms{$term}{sentence_ids}{$sentence_id}++;
-		    $terms{$term}{pos}{$word_count} = 1; # value = score
-		    push(@words, {str => $term,
+		    my $str = $phrase_child_node->getAttribute('midasi') . '*'; # word terms (string that appeared)
+		    my $lem = $phrase_child_node->getAttribute('lem'); # word terms (lem)
+		    for my $term ($str, $lem) {
+			$terms{$term}{freq}++;
+			$terms{$term}{sentence_ids}{$sentence_id}++;
+			$terms{$term}{pos}{$word_count} = 1; # value = score
+		    }
+		    push(@words, {str => $str, lem => $lem, 
 				  feature => $phrase_child_node->getAttribute('feature'), 
 				  pos => $word_count});
 		    $word_count++;
@@ -61,6 +63,7 @@ sub xml2term {
 				 words => \@words, 
 				 word_head_num => $word_head_num, # head word in this phrase
 				 str => $words[$word_head_num]{str}, 
+				 lem => $words[$word_head_num]{lem}, 
 				 pos => $words[$word_head_num]{pos}, 
 				};
 	    }
@@ -71,10 +74,13 @@ sub xml2term {
 	    next if !$phrases{$id}{head_ids}; # skip roots of English (undef)
 	    for my $head_id (@{$phrases{$id}{head_ids}}) {
 		next if $head_id == -1; # skip roots of Japanese (-1)
-		my $dpnd_term = sprintf('%s->%s', $phrases{$id}{str}, $phrases{$head_id}{str});
-		$dpnd_terms{$dpnd_term}{freq}++;
-		$dpnd_terms{$dpnd_term}{sentence_ids}{$sentence_id}++;
-		$dpnd_terms{$dpnd_term}{pos}{$phrases{$id}{pos}} = 1; # value = score
+		my $dpnd_str = sprintf('%s->%s', $phrases{$id}{str}, $phrases{$head_id}{str}); # string that appeared
+		my $dpnd_lem = sprintf('%s->%s', $phrases{$id}{lem}, $phrases{$head_id}{lem}); # lem
+		for my $dpnd_term ($dpnd_str, $dpnd_lem) {
+		    $dpnd_terms{$dpnd_term}{freq}++;
+		    $dpnd_terms{$dpnd_term}{sentence_ids}{$sentence_id}++;
+		    $dpnd_terms{$dpnd_term}{pos}{$phrases{$id}{pos}} = 1; # value = score
+		}
 	    }
 	}
     }
@@ -103,7 +109,7 @@ sub get_phrase_head_num {
     my ($words_ar) = @_;
 
     for my $i (0 .. $#{$words_ar}) {
-	if ($words_ar->[$i]{feature} =~ /<自立>/) {
+	if ($words_ar->[$i]{feature} =~ /<(?:準)?内容語>/) {
 	    return $i;
 	}
     }
