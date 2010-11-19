@@ -100,7 +100,7 @@ std::vector<double> *search (std::string *query,
 	doc->set_length(length);
 
 	// termの出現位置を取得
-	result_docs->collectTermPosition(doc, &term2pos);
+	result_docs->collectTermPosition(doc, doc->getTermPosition());
 
 	// rmfilesにあればスキップ
 	if (rmsids.find((*_sid).second) != rmsids.end())
