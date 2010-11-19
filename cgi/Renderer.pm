@@ -383,10 +383,10 @@ sub print_body {
     $this->print_canvas();
 
     print qq(<DIV style="font-size:11pt; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
-    if ($status eq 'search' || $status eq 'cache') {
+#    if ($status eq 'search' || $status eq 'cache') {
 	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">2007年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
 	print qq(&nbsp;|&nbsp;);
-    }
+#    }
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">使い方</A><BR>\n);
 
     # 混雑具合を表示
@@ -1675,9 +1675,10 @@ sub getSearchResultForAPICall {
 	    $writer->endTag('Url');
 	}
 
-	if ($params->{termInfo} > 0) {
+	if ($params->{TermPosition} > 0) {
 	    $writer->startTag('Terms');
 	    foreach my $midasi (sort {$a cmp $b} keys %{$page->{terminfo}{term2pos}}) {
+		next if ($midasi eq 'none' || $midasi =~ /AC_LK/);
 		my $pos = $page->{terminfo}{term2pos}{$midasi};
 		$writer->startTag('Term',
 				  midasi   => $midasi,
