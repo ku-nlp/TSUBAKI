@@ -1340,8 +1340,11 @@ bool Documents::collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, st
 	    std::vector<int> *poslist = new std::vector<int>;
 	    std::vector<int> *org = document->get_pos();
 	    // コピーしないと消える
+	    int prev = -1;
 	    for (std::vector<int>::iterator it = org->begin(); it != org->end(); it++) {
-		poslist->push_back((*it));
+		if (prev - (*it) != 0)
+		    poslist->push_back((*it));
+		prev = (*it);
 	    }
 	    term2pos->insert(std::pair<const char*, std::vector<int> *>(get_label().c_str(), poslist));
 	}
