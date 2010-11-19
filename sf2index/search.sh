@@ -1,7 +1,7 @@
 #!/bin/sh
 
 usage() {
-    echo "$0 [-e] query_string"
+    echo "$0 [-e] query_sexp_file"
     echo "\t-e: english mode"
     exit 1
 }
@@ -21,8 +21,8 @@ shift `expr $OPTIND - 1`
 query=$1
 UtilsDir=../../Utils
 
-if [ -z "$query" ]; then
+if [ -z "$query" -o ! -f "$query" ]; then
     usage
 fi
 
-perl -I $UtilsDir/perl -I ../scripts -I ../cgi -I ../perl ../scripts/tsubaki_test.pl -idxdir . -dlengthdbdir . -disable_query_processing $OtherOptions -query $query
+../search/slave_server . . 39999 `hostname` -standalone < $query
