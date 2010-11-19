@@ -384,7 +384,7 @@ sub print_body {
 
     print qq(<DIV style="font-size:11pt; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
     if ($status eq 'search' || $status eq 'cache') {
-	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/cgi-bin/2010/index.cgi">2010年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
+	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">2007年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
 	print qq(&nbsp;|&nbsp;);
     }
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">使い方</A><BR>\n);
@@ -1179,7 +1179,12 @@ sub printOrdinarySearchResult {
 		    }
 		}
 
-		my $line = sprintf "<TR><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%s</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='left' style='padding-left:1em;'>%s</TD></TR>\n", $okp, $frq, $tff, $gdf, $idf, (join (" ", @_buf));
+		my %term2pos;
+		while (my ($term, $pos) = each %{$results->[$rank]{terminfo}{term2pos}}) {
+		    $term2pos{$term} = join (",", @$pos) if (defined $pos);
+		}
+
+		my $line = sprintf "<TR><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%s</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='left' style='padding-left:1em;'>%s</TD><TD align='left' style='padding-left:1em;'>%s</TD></TR>\n", $okp, $frq, $tff, $gdf, $idf, (join (" ", @_buf)), $term2pos{$terms->{$gid}{str}};
 		if ($gid =~ /\//) {
 		    push (@{$buff{dpnds}}, $line);
 		} else {
@@ -1188,7 +1193,7 @@ sub printOrdinarySearchResult {
 	    }
 	    $output .= sprintf "length=%.2f, pageRank=%s, strictTerm=%s, proxConst=%s<BR>\n", $dleng, $pgrnk, $flagOfStrictTerm, $flagOfProxConst;
 	    $output .= "<TABLE>\n";
-	    $output .= "<TR><TH>okp</TH><TH>frq</TH><TH>tff</TH><TH>gdf</TH><TH>idf</TH><TH>terms</TH></TR>\n";
+	    $output .= "<TR><TH>okp</TH><TH>frq</TH><TH>tff</TH><TH>gdf</TH><TH>idf</TH><TH>terms</TH><TH>position</TH></TR>\n";
 	    foreach my $type (('words', 'dpnds')) {
 		foreach my $line (@{$buff{$type}}) {
 		    $output .= $line;
@@ -1212,7 +1217,7 @@ sub printOrdinarySearchResult {
 	    my $pageurl = "http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/skeiji/ntcir/ntcir-api.cgi?action=show_page\@id=$did\@format=html";
 	    my $block_type_detect_url = sprintf ("%sDetectBlocks_ROOT=%%2Fhome%%2Ffunayama%%2FDetectBlocks&DetectSender_ROOT=%%2Fhome%%2Ffunayama%%2FDetectSender&inputurl=%s&DetectSender_flag=&rel2abs=&input_type=url", $basecgi, $pageurl);
 
-	    $output .= qq(&nbsp;<A class="cache" href="$block_type_detect_url" target="_blank"><SMALL>構造解析結果</SMALL></A>\n);
+#	    $output .= qq(&nbsp;<A class="cache" href="$block_type_detect_url" target="_blank"><SMALL>構造解析結果</SMALL></A>\n);
 	}
 	$output .= "</DIV>";
 
@@ -1638,7 +1643,7 @@ sub getSearchResultForAPICall {
 	my $score = $page->{score_total};
 	my $title = $page->{title};
 	my $crawled_date = $page->{crawled_date};
-	my $cache_location = $page->{cache_location};
+	my $cache_location = sprintf ("%s?cache=%s", $CONFIG->{INDEX_CGI}, $did);
 	my $cache_size = $page->{cache_size};
 
 	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, Score => 3, DetailScore => 4);
@@ -1668,6 +1673,19 @@ sub getSearchResultForAPICall {
 	    $writer->startTag('Url');
 	    $writer->characters($url);
 	    $writer->endTag('Url');
+	}
+
+	if ($params->{termInfo} > 0) {
+	    $writer->startTag('Terms');
+	    foreach my $midasi (sort {$a cmp $b} keys %{$page->{terminfo}{term2pos}}) {
+		my $pos = $page->{terminfo}{term2pos}{$midasi};
+		$writer->startTag('Term',
+				  midasi   => $midasi,
+				  position => join (",", @$pos)
+		    );
+		$writer->endTag('Term');
+	    }
+	    $writer->endTag('Terms');
 	}
 
 	if ($params->{Positions} > 0) {
