@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/usr/bin/env perl
 
 # $Id$
 
