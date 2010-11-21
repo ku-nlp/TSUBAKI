@@ -285,7 +285,7 @@ DISABLE_ANCHOR_INDEX	0
 # 1 の場合、LOADBALANCER_NAME, APACHE_ACCESS_LOG, DATA_DIR 設定すること
 #######################################################################
 
-DISPLAY_CONGESTION	     1
+DISPLAY_CONGESTION	     0
 
 # apache のロードバランサーが起動しているサーバー
 LOADBALANCER_NAME	nlpc01.ixnlp.nii.ac.jp
@@ -374,4 +374,4 @@ USE_OF_HASH_FOR_SID_LOOKUP	0
 DISABLE_ANAPHORA_RESOLUTION_DISPLAY	1
 
 # C++版かどうか
-IS_CPP_MODE		0
+IS_CPP_MODE		1
