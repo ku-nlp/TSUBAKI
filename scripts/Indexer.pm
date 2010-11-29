@@ -193,20 +193,20 @@ sub makeIndexfromSynGraph {
 	} else {
 	    $knpbuf .= ($line . "\n");
 	    $position = $word_num if (index ($line, '<内容語>') > -1);
-	    $word_num++ if ($line !~ /^\+/ && $line !~ /^\@/);
-
-	    if ($line =~ m!情報:(.+?)/主辞:(.+?):!) {
-		my ($info, $head, $pos, $log) = ($1, $2, $position + $this->{absolute_pos}, $&);
+	    if ($line =~ m!情報:(.+?)/主辞:(.+?):(\d+)\-(\d+)!) {
+		my ($info, $head, $pos, $length, $log) = ($1, $2, $word_num + $this->{absolute_pos}, 1 + $4 - $3, $&);
 		$pos2info->{$pos}{midasi} = $head;
-		$pos2info->{$pos}{log} = $log;
+		$pos2info->{$pos}{length} = $length;
+		$pos2info->{$pos}{log}    = $log;
 		foreach my $_info (split (/@/, $info)) {
 		    if ($_info =~ /id=(\d+),off=(\d+),len=(\d+)/) {
 			$pos2info->{$pos}{tid} = $1;
 			push (@{$pos2info->{$pos}{offset}}, $2);
-			push (@{$pos2info->{$pos}{length}}, $3);
+			push (@{$pos2info->{$pos}{byteLength}}, $3);
 		    }
 		}
 	    }
+	    $word_num++ if ($line !~ /^\+/ && $line !~ /^\@/);
 	}
     }
     $this->{absolute_pos} += $word_num;
@@ -276,6 +276,8 @@ sub _makeTerms {
 		    $terms[-1]->{freq} = $s;
 		    $terms[-1]->{score} = $s;
 		    $terms[-1]->{pos} = $pos;
+		    $terms[-1]->{moto_pos} = $pos;
+		    $terms[-1]->{saki_pos} = $kakariSakiNode->{pos};
 		    $terms[-1]->{_pos} = $_pos;
 		    $terms[-1]->{group_id} = "$groupId\/$kakariSakiNode->{grpId}";
 		    $terms[-1]->{midasi} = "$synNode->{midasi}->$kakariSakiNode->{midasi}";
@@ -840,6 +842,15 @@ sub extractSynNodeTerms {
 
 sub makeIndexFromKNPResultObject {
     my ($this, $result, $option) = @_;
+
+
+    # 出現位置を付与
+    my $__pos = $this->{absolute_pos};
+    foreach my $m ($result->mrph()) {
+	$m->push_feature(sprintf("POSITION:%d", $__pos++));
+    }
+
+
     my $pos = $this->{absolute_pos};
     my $_pos = 0;
     my $gid = 0;
@@ -1061,6 +1072,8 @@ sub get_dpnd_index {
 	    $idx[-1]->{score} = 1;# / ($num_of_reps1 * $num_of_reps2);
 	    $idx[-1]->{isContentWord} = 1;
 	    $idx[-1]->{fstring} = $kihonku1->fstring;
+	    ($idx[-1]->{moto_pos}) = (($kihonku1->mrph)[0]->fstring =~ /POSITION:(\d+)/);
+	    ($idx[-1]->{saki_pos}) = (($kihonku2->mrph)[0]->fstring =~ /POSITION:(\d+)/);
 	}
     }
 

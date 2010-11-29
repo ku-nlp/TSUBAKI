@@ -71,12 +71,9 @@ my $ECTS;
 if ($opt{coordinate}) {
     require ECTS;
     my %opt;
-   $opt{bin_file}           = '../data/ecs.db';
-   $opt{triedb}             = '../data/offset.db';
-   $opt{term2id}            = '../data/term2id';
-#    $opt{bin_file}           = '/home/skeiji/coord.dat';
-#    $opt{triedb}             = '/home/skeiji/hypernym.head.x86.db';
-#    $opt{term2id}            = '/home/skeiji/term2id';
+    $opt{bin_file}           = '../data/ecs.db';
+    $opt{triedb}             = '../data/offset.db';
+    $opt{term2id}            = '../data/term2id';
     $opt{size_of_on_memory}  = 1000000000;
     $ECTS = new ECTS(\%opt);
 }
@@ -514,7 +511,7 @@ sub extractIndices {
 	    }
 	}
 
-#	$annotation = &annotateCoordinateInfo ($annotation) if ($opt{coordinate});
+	# 同位語の情報を付与
 	$annotation = $ECTS->annotateDBInfo($annotation, {knp_result => 1}) if ($opt{coordinate});
 
 	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation,
@@ -657,6 +654,7 @@ sub extract_indice_from_single_file {
 	}
     } catch Error with {
 	my $err = shift;
+	print STDERR "Exception ocurred in $file\n";
 	print STDERR "Exception at line ", $err->{-line} ," in ", $err->{-file}, " (", $err->{-text}, ")\n";
 	syswrite LOG, "timeout\n" if ($opt{logfile});
     };
@@ -745,9 +743,8 @@ sub merge_indices {
 		# 同位語から係り受けを作る
 		if ($opt{coordinate}) {
 		    if ($index->{midasi} =~ /^(.+?)\->(.+?)$/) {
-			my ($moto, $saki) = ($1, $2);
-			my $_dpnd1 = &makeDpndTermFromCoordinate ($moto, $saki, $index->{pos}, $poslist, $pos2info, 1, $file);
-			my $_dpnd2 = &makeDpndTermFromCoordinate ($moto, $saki, $index->{pos}, $poslist, $pos2info, 0, $file);
+			my $_dpnd1 = &makePenaltyTerms ($index, $poslist, $pos2info, 1, $file);
+			my $_dpnd2 = &makePenaltyTerms ($index, $poslist, $pos2info, 0, $file);
 
 			foreach my $_dpnd (($_dpnd1, $_dpnd2)) {
 			    next unless (defined $_dpnd);
@@ -786,11 +783,13 @@ sub merge_indices {
     return \%ret;
 }
 
-# 同位語をもとに係り受けタームを作成する
-sub makeDpndTermFromCoordinate {
-    my ($moto, $saki, $pos, $poslist, $pos2info, $forMoto, $file) = @_;
+# 同位語をもとにペナルティタームを作成する
+sub makePenaltyTerms {
+    my ($term, $poslist, $pos2info, $forMoto, $file) = @_;
 
     my $_term = undef;
+    my $pos = $term->{pos};
+    my ($moto, $saki) = ($term->{midasi} =~ /^(.+?)\->(.+?)$/);
     my $_moto = $moto;
     my $_saki = $saki;
 
@@ -799,21 +798,32 @@ sub makeDpndTermFromCoordinate {
     $_saki =~ s/\*$//;
     my $isGenkei = ($moto =~ /\*$/ || $saki =~ /\*$/) ? 1 : 0;
 
-    my $tid = ($forMoto) ? $ECTS->term2id($_moto) : $ECTS->term2id($_saki);
+    my $tid;
+    if ($forMoto) {
+	# 係り元が属す表現のIDを獲得（機->計算機）
+	$tid = $pos2info->{$term->{moto_pos}}->{tid} if (exists $pos2info->{$term->{moto_pos}});
+	# pos2infoから同位語の情報が得られない場合は、係り先の語に関して同位語DBを引く
+	$tid = $ECTS->term2id($_moto) unless (defined $tid);
+    } else {
+	# 係り先が属す表現のIDを獲得（機->計算機）
+	$tid = $pos2info->{$term->{saki_pos}}->{tid} if (exists $pos2info->{$term->{saki_pos}});
+	# 係り先が属す表現の一部に係り元がなっていないかチェック（計算が計算->機の一部でないかどうか）
+	$tid = undef if (exists $pos2info->{$term->{saki_pos}} && $term->{saki_pos} - $term->{moto_pos} < $pos2info->{$term->{saki_pos}}->{length});
+	# pos2infoから同位語の情報が得られない場合は、係り先の語に関して同位語DBを引く
+	$tid = $ECTS->term2id($_saki) unless (defined $tid);
+    }
+
     if (defined $tid) {
 	my $bgn = $pos - $DIST_FOR_MAKING_COORD_DPND; $bgn = 0 if ($bgn < 0);
 	my $end = $pos + $DIST_FOR_MAKING_COORD_DPND;
 	foreach my $_pos ($bgn..$end) {
 	    next unless (exists $pos2info->{$_pos});
 	    my $info = $pos2info->{$_pos};
-	    unless (defined $info->{offset}) {
-		foreach my $k (keys %$info) {
-		    print $k . " " . $info->{$k} . "\n";
-		}
-		next;
-	    }
+	    next if ($info->{tid} == $tid);
 
+	    # 同位語を獲得
 	    my $near_coords = &get_near_coords($tid, $info);
+	    # 同位語からペナルティタームを生成
 	    foreach my $coord (@$near_coords) {
 		next unless ($_moto ne $coord && $_saki ne $coord);
 
@@ -826,12 +836,13 @@ sub makeDpndTermFromCoordinate {
     return $_term;
 }
 
+# 同位語を獲得
 sub get_near_coords {
     my ($tid, $info) = @_;
 
     my @coords = ();
     foreach my $i (0..(scalar(@{$info->{offset}}) - 1)) {
-	my $tids = $ECTS->read($info->{offset}[$i], $info->{length}[$i]);
+	my $tids = $ECTS->read($info->{offset}[$i], $info->{byteLength}[$i]);
 	push (@coords, $info->{midasi}) if (exists $tids->{$tid});
     }
 
