@@ -134,8 +134,8 @@ sub retrieve {
 
     my @terms;
     my @mrphs = $this->{juman}->analysis($query)->mrph();
-    $this->{trie}->DetectString(\@mrphs, undef, { output_juman => 1 });
-    my ($infos, $head) = ($mrphs[0]->imis() =~ m!情報:(.+?)/主辞:([^:]+)!);
+    $this->{trie}->DetectString(\@mrphs, undef, { output_juman => 1, add_end_pos => 1 });
+    my ($infos, $head) = ($mrphs[-1]->imis() =~ m!情報:(.+?)/主辞:([^:]+)!);
 
     foreach my $info (split (/@/, $infos)) {
 	my ($id, $offset, $length) = ($info =~ /id=(\d+),off=(\d+),len=(\d+)/);
@@ -157,19 +157,28 @@ sub term2id {
     return $this->{term2id}{$term};
 }
 
+# $tid の midasi を返す
+sub id2term {
+    my ($this, $tid) = @_;
+
+    return $this->{id2term}{$tid};
+}
+
 # 言語解析結果に対してオフセット情報を付与する
 sub annotateDBInfo {
     my ($this, $annotation, $opt) = @_;
 
     my $resultObj;
-    if ($opt->{juman_result}) {
+    if ((ref $annotation) eq 'KNP::Result') {
+	$resultObj = $annotation;
+    } elsif ($opt->{juman_result}) {
 	$resultObj = new Juman::Result ($annotation);
     }
     elsif ($opt->{knp_result}) {
 	$resultObj = new KNP::Result ($annotation);
     }
     my @mrphs = $resultObj->mrph;
-    $this->{trie}->DetectString(\@mrphs, undef, { output_juman => 1 });
+    $this->{trie}->DetectString(\@mrphs, undef, { output_juman => 1, add_end_pos => 1 });
 
     return $resultObj->all_dynamic;
 }
