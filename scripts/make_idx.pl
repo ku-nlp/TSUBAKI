@@ -828,7 +828,7 @@ sub makePenaltyTerms {
 		next unless ($_moto ne $coord && $_saki ne $coord);
 
 		my $_coord = ($isGenkei) ? sprintf ("%s*", $coord) : $coord;
-		$_term = ($forMoto) ? sprintf ("%s->%s\$", $coord, $saki) : sprintf ("%s->%s\$", $moto, $coord);
+		$_term = ($forMoto) ? sprintf ("%s->%s\$", $_coord, $saki) : sprintf ("%s->%s\$", $moto, $_coord);
 	    }
 	}
     }
