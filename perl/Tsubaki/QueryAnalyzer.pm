@@ -389,7 +389,7 @@ sub annotateNEmodifierFeature {
     foreach my $kihonku (reverse $knpresult->tag) {
 	next unless ($kihonku->fstring() =~ /(<NE.+?>)/);
 	my $NEtag = $1;
-	next if ($NEtag =~ /PERCENT|TIME|DATE|MONEY/);
+	next if ($NEtag =~ /PERCENT|TIME|DATE|MONEY|ARTIFACT/);
 
 	$this->setNEmodifier($kihonku);
     }
