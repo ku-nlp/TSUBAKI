@@ -74,14 +74,17 @@ sub _getRep2Style {
 sub _getSynNode2Midasi {
     my ($kihonkus, $opt) = @_;
 
+    my @midasi = ();
     my %synnode2midasi = ();
-    foreach my $k (@$kihonkus) {
+    foreach my $i (0 .. scalar(@$kihonkus) - 1) {
 	my $surf;
-	foreach my $m ($k->mrph) {
+	foreach my $m ($kihonkus->[$i]->mrph) {
 	    next if ($m->fstring !~ /<内容語>/);
 	    $surf .= $m->midasi;
 	}
-	foreach my $synnodes ($k->synnodes()) {
+	$midasi[$i] = $surf;
+
+	foreach my $synnodes ($kihonkus->[$i]->synnodes()) {
 	    foreach my $synnode ($synnodes->synnode()) {
 		# 読みの削除
 		my $_midasi = sprintf ("%s%s", &remove_yomi($synnode->synid), $synnode->feature);
@@ -93,7 +96,9 @@ sub _getSynNode2Midasi {
 
 		# 文法素性の削除
 		$_midasi = &removeSyntacticFeatures($_midasi);
-		$synnode2midasi{$_midasi} = $surf;
+		foreach my $tid (split (/,/, $synnode->tagid)) {
+		    $synnode2midasi{$_midasi} .= $midasi[$tid];
+		}
 	    }
 	}
     }
