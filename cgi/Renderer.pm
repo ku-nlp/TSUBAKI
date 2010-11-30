@@ -1686,9 +1686,10 @@ sub getSearchResultForAPICall {
 				      position => join (",", @$pos)
 			);
 		} else {
+		    my ($_midasi) = (($midasi =~ /:[A-Z][A-Z]$/) ? ($midasi =~ /^(.+):..$/) : $midasi);
 		    $writer->startTag('Term',
 				      midasi   => $midasi,
-				      orig     => $query->{synnode2midasi}{$midasi},
+				      orig     => $query->{synnode2midasi}{$_midasi},
 				      position => join (",", @$pos)
 			);
 		}
