@@ -86,6 +86,9 @@ sub _getSynNode2Midasi {
 
 	foreach my $synnodes ($kihonkus->[$i]->synnodes()) {
 	    foreach my $synnode ($synnodes->synnode()) {
+		# synnode 以外は扱わない
+		next unless ($synnode->synid =~ /s\d+/);
+
 		# 読みの削除
 		my $_midasi = sprintf ("%s%s", &remove_yomi($synnode->synid), $synnode->feature);
 
