@@ -73,6 +73,7 @@ sub new {
 	$this->{isRoot} = $opt->{isRoot};
 	$this->{condition} = $opt->{condition};
 	$this->{rep2style} = $opt->{rep2style};
+	$this->{synnode2midasi} = $opt->{synnode2midasi};
     } else {
 	$this->{gdf} = $gdf;
 	&pushbackTerms ($this, $basic_node, $synnodes, $gid, $pos, $opt);
@@ -215,7 +216,7 @@ sub _to_S_exp_for_ROOT {
 
     foreach my $child (@_children) {
 	$_S_exp .= $child->to_S_exp($indent, $this->{condition});
-	$_S_exp_for_anchor .= $child->to_S_exp_for_anchor($indent);
+#	$_S_exp_for_anchor .= $child->to_S_exp_for_anchor($indent);
 	$num_of_children++;
     }
 

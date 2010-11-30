@@ -22,6 +22,7 @@ sub create {
     my @ids = ();
     my @kihonkus = $result->tag;
     my $rep2style = &_getRep2Style (\@kihonkus, \@ids, $option);
+    my $synnode2midasi = &_getSynNode2Midasi (\@kihonkus, $option);
     my ($terms, $optionals) =
 	(($condition->{is_phrasal_search} > 0) ?
 	 &_create4phrase (\@kihonkus, \@ids, "", $option) :
@@ -37,11 +38,12 @@ sub create {
 	undef,
 	$terms,
 	{
-	    isRoot => 1,
-	    optionals => $optionals,
-	    result => $result,
-	    condition => $condition,
-	    rep2style => $rep2style
+	    isRoot         => 1,
+	    optionals      => $optionals,
+	    result         => $result,
+	    condition      => $condition,
+	    rep2style      => $rep2style,
+	    synnode2midasi => $synnode2midasi
 	});
 
     return $root;
@@ -66,6 +68,37 @@ sub _getRep2Style {
     }
 
     return \%rep2style;
+}
+
+# synnodeからクエリ中に出現した見出しへのマップを作成
+sub _getSynNode2Midasi {
+    my ($kihonkus, $opt) = @_;
+
+    my %synnode2midasi = ();
+    foreach my $k (@$kihonkus) {
+	my $surf;
+	foreach my $m ($k->mrph) {
+	    next if ($m->fstring !~ /<内容語>/);
+	    $surf .= $m->midasi;
+	}
+	foreach my $synnodes ($k->synnodes()) {
+	    foreach my $synnode ($synnodes->synnode()) {
+		# 読みの削除
+		my $_midasi = sprintf ("%s%s", &remove_yomi($synnode->synid), $synnode->feature);
+
+		# <反義語><否定>を利用するかどうか
+		if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
+		    next unless ($opt->{option}{use_of_negation_and_antonym});
+		}
+
+		# 文法素性の削除
+		$_midasi = &removeSyntacticFeatures($_midasi);
+		$synnode2midasi{$_midasi} = $surf;
+	    }
+	}
+    }
+
+    return \%synnode2midasi;
 }
 
 sub _create4phrase {
