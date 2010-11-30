@@ -561,7 +561,7 @@ sub setProperties {
 		    }
 
 		    # 基本ノードであれば文書頻度を保存する(SYNノードの文書頻度は基本ノードの文書頻度とするため)
-		    $properties->{gid2df}{$rep->{gid}} = $rep->{df} if ($rep->{isBasicNode});
+		    $properties->{gid2df}{$rep->{gid}} = $rep->{df} if ($rep->{isBasicNode} && $rep->{string} !~ /<[^>]+>/);
 		    $qid++;
 
 		    # スニペットでハイライト表示する際のスタイルを設定
@@ -627,6 +627,7 @@ sub parse {
     my $delim = ($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+";
     my $rawstring;
     my $rep2style;
+    my $synnode2midasi;
     my $result;
     # $delimで区切る
     foreach my $search_expression (split(/$delim/, $qks_str)) {
@@ -657,6 +658,10 @@ sub parse {
 	    $result = $qk->{result};
 	    while (my ($k, $v) = each %{$qk->{rep2style}}) {
 		$rep2style->{$k} = $v;
+	    }
+
+	    while (my ($k, $v) = each %{$qk->{synnode2midasi}}) {
+		$synnode2midasi->{$k} = $v;
 	    }
 	}
 	elsif ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
@@ -691,6 +696,7 @@ sub parse {
 	rawstring => $rawstring,
 	result    => $result,
 	rep2style => $rep2style,
+	synnode2midasi => $synnode2midasi,
 	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0]))
 			});
 
@@ -787,6 +793,8 @@ sub get_DF {
     unless ($this->{OPTIONS}{use_of_block_types}) {
 	my $DFDBs = (index($term_w_blocktag, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
 
+#	$term_w_blocktag =~ s/\$$//;
+#	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag, {exhaustive => 1}) : 0;
 	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag) : 0;
     }
     # ブロックタイプを考慮している場合

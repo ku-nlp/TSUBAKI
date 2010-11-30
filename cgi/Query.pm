@@ -28,7 +28,8 @@ sub new {
 	result => $params->{result},
 	s_exp => $params->{s_exp},
 	rawstring => $params->{rawstring},
-	rep2style => $params->{rep2style}
+	rep2style => $params->{rep2style},
+	synnode2midasi => $params->{synnode2midasi}
     };
 
     bless $this;
