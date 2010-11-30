@@ -1680,16 +1680,16 @@ sub getSearchResultForAPICall {
 	    foreach my $midasi (sort {$a cmp $b} keys %{$page->{terminfo}{term2pos}}) {
 		next if ($midasi eq 'none' || $midasi =~ /AC_LK/);
 		my $pos = $page->{terminfo}{term2pos}{$midasi};
-		if ($midasi =~ /\->/) {
-		    $writer->startTag('Term',
-				      midasi   => $midasi,
-				      position => join (",", @$pos)
-			);
-		} else {
+		if ($midasi =~ /^s\d+/) {
 		    my ($_midasi) = (($midasi =~ /:[A-Z][A-Z]$/) ? ($midasi =~ /^(.+):..$/) : $midasi);
 		    $writer->startTag('Term',
 				      midasi   => $midasi,
 				      orig     => $query->{synnode2midasi}{$_midasi},
+				      position => join (",", @$pos)
+			);
+		} else {
+		    $writer->startTag('Term',
+				      midasi   => $midasi,
 				      position => join (",", @$pos)
 			);
 		}
