@@ -61,17 +61,20 @@ if ($opt{dir} && !$opt{idxfiles}) {
 # .idxファイルのリストが与えられた場合
 elsif ($opt{idxfiles}) {
 
-    # .idx ファイルに id を振る
-    my %sid2tid = ();
-    open (FILE, $opt{idx2did}) or die "$!";
-    while (<FILE>) {
-	chop;
-	my ($sid, $tid) = split (/ /, $_);
+    my $sid2tid = undef;
+    if ($opt{idx2did}) {
+	# .idx ファイルに id を振る
+	$sid2tid = ();
+	open (FILE, $opt{idx2did}) or die "$!";
+	while (<FILE>) {
+	    chop;
+	    my ($sid, $tid) = split (/ /, $_);
 
-	$sid =~ s/\-\d+$// if ($opt{ignore_version});
-	$sid2tid{$sid} = $tid;
+	    $sid =~ s/\-\d+$// if ($opt{ignore_version});
+	    $sid2tid->{$sid} = $tid;
+	}
+	close (FILE);
     }
-    close (FILE);
 
     open (FILE, $opt{idxfiles}) or die "$!";
     while (<FILE>) {
@@ -88,7 +91,7 @@ elsif ($opt{idxfiles}) {
 	$fcnt++;
 
 	while (<IDX_FILE>) {
-	    &ReadData($_, \%sid2tid);
+	    &ReadData($_, $sid2tid);
 	}
 	close IDX_FILE;
 
