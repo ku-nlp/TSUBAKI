@@ -10,173 +10,46 @@ use utf8;
 binmode(STDIN, ':encoding(euc-jp)');
 binmode(STDOUT, ':encoding(utf8)');
 use KNP::File;
-use XML::Writer;
+use XML::LibXML;
+use Encode;
+use AddKNPResult;
 use Getopt::Long;
 
 my (%opt); GetOptions(\%opt, 'filter_fstring');
 
-my %pf_order = (id => 0, head => 1, cat => 2, f => 3); # print order of phrase attributes
-my %wf_order = (id => 0, str => 1, lem => 2, read => 3, pos => 4, repname => 5, conj => 6, f => 99); # print order of word attributes
-my %synnodesf_order = (head => 0, phraseid => 1);
-my %synnodef_order = (wordid => 0, synid => 1, score => 2);
-
+my $addknpresult = new AddKNPResult(\%opt);
 my $knp = new KNP::File(file => $ARGV[0], encoding => 'euc-jp');
-my $writer = new XML::Writer(OUTPUT => *STDOUT, DATA_MODE => 'true', DATA_INDENT => 2);
+my $writer = new XML::LibXML::Document->new('1.0', 'utf-8');
 
-$writer->xmlDecl('utf-8');
-$writer->startTag('StandardFormat');
-$writer->startTag('Text');
+my $sf_node = $writer->createElement('StandardFormat');
+my $text_node = $writer->createElement('Text');
 
-my $old_id = '';
 my $sentence_count = 0;
-
 while (my $result = $knp->each()) {
-    my ($prob) = ($result->comment =~ /SCORE:([\-\d\.]+)/);
+    my $sentence_node = $writer->createElement('S');
 
     $sentence_count++;
-    $writer->startTag('S', id => $result->id ? $result->id : $sentence_count);
+    $sentence_node->setAttribute('id', $result->id ? $result->id : $sentence_count);
 
     my $rawstring = &get_rawstring($result);
-    $writer->startTag('Rawstring');
-    $writer->characters($rawstring);
-    $writer->endTag();
+    my $rawstring_node = $writer->createElement('RawString');
+    $rawstring_node->appendText($rawstring);
+    $sentence_node->appendChild($rawstring_node);
 
-    my $version = $result->version;
-    $writer->startTag('AnnotationTool', tool => "KNP:$version");
-    $writer->startTag('result', score => $prob);
-    
-    my $abs_wnum = 0;
-    my $pnum = 0;
+    # メイン
+    my $annotation_node = $writer->createElement('Annotation');
+    $addknpresult->Annotation2XML($writer, $result, $annotation_node);
 
-    for my $bnst ($result->bnst) {
-	my @tags = $bnst->tag_list;
-	my $bnst_end_pnum = $pnum + @tags - 1;
-	for my $tag_num (0 .. @tags - 1) {
-	    my $bnst_start_flag = 1 if $tag_num == 0;
-	    my $tag = $tags[$tag_num];
-	    my (%pf);
-
-	    $pf{id} = $pnum;
-
-	    # 係り先
-	    if ($tag->parent) {
-		$pf{head} = $tag->parent->id;
-	    }
-	    else {
-		$pf{head} = -1;
-	    }
-
-	    # feature processing
-	    my $fstring = $tag->fstring;
-
-	    # phrase category
-	    # 判定詞は 用言:判
-	    if ($fstring =~ s/<(用言[^>]*)>//) {
-		$pf{cat} = $1;
-	    }
-	    elsif ($fstring =~ s/<(体言[^>]*)>//) {
-		$pf{cat} = $1;
-	    }
-	    else {
-		$pf{cat} = 'NONE';
-	    }
-
-	    # feature残り
-	    $pf{f} = $opt{filter_fstring} ? &filter_fstring($fstring) : $fstring;
-
-	    # 文節
-	    $pf{f} .= sprintf("<文節:%d-%d>", $pnum, $bnst_end_pnum) if $bnst_start_flag;
-
-	    $pf{f} .= '...';
-
-	    $writer->startTag('phrase', map({$_ => $pf{$_}} sort {$pf_order{$a} <=> $pf_order{$b}} keys %pf));
-
- 	    # synnode
-	    my %synnode;
- 	    for my $synnode ($tag->synnode) {
-		my %synnode_f;
-		my $word_id = $synnode->tagid; # 要修正
-		my $last_word_id = (split(',', $word_id))[-1]; # 最後の単語idにsynnodeを付与する
-		$synnode_f{synid} = $synnode->synid;
-		$synnode_f{score} = $synnode->score;
-		$synnode_f{wordid} = $word_id;
-		
-		push @{$synnode{$last_word_id}}, { word_id => $word_id, f => \%synnode_f };
-	    }
-
-	    # word
-	    for my $mrph ($tag->mrph) {
-
-		$fstring = $mrph->fstring;
-
-		# 代表表記
-		my $rep;
-		if ($fstring =~ /<代表表記:([^\s\"\>]+)/) {
-		    $rep = $1;
-		}
-		elsif ($fstring =~ /<疑似代表表記:([^\s\"\>]+)/) {
-		    $rep = $1;
-		}
-		else {
-		    # $lem = $mrph->genkei . '/' . $mrph->yomi;
-		    $rep = $mrph->genkei . '/' . $mrph->genkei;
-		}
-
-		# 活用
-		my $conj;
-		if ($mrph->katuyou1 ne '*') {
-		    $conj = $mrph->katuyou1 . ':' . $mrph->katuyou2;
-		}
-		else {
-		    $conj = '';
-		}
-
-		my %wf = (str => $mrph->midasi,
-			  lem => $mrph->genkei,
-			  read => $mrph->yomi,
-			  repname => $rep, 
-			  pos => $mrph->hinsi,
-			  conj => $conj,
-			  id => $abs_wnum,
-			 );
-		$wf{pos} .= ':' . $mrph->bunrui if ($mrph->bunrui ne '*');
-
-		$wf{f} = $opt{filter_fstring} ? &filter_fstring($fstring) . '...' : $fstring;
-
-		$writer->startTag('word', map({$_ => $wf{$_}} sort {$wf_order{$a} <=> $wf_order{$b}} keys %wf));
-		for my $synnode (@{$synnode{$abs_wnum}}) {
-		    $writer->emptyTag('synnode', map({$_ => $synnode->{f}{$_}} sort {$synnodef_order{$a} <=> $synnodef_order{$b}} keys %{$synnode->{f}}));
-		}
-
-		$writer->endTag();
-		$abs_wnum++;
-	    }
-	    $writer->endTag();		# phrase
-	    $pnum++;
-	}
-    }
-    $writer->endTag(); # result
-    $writer->endTag(); # AnnotationTool
-    $writer->endTag(); # S
+    $sentence_node->appendChild($annotation_node);
+    $text_node->appendChild($sentence_node);
 }
 
-$writer->endTag(); # Text
-$writer->endTag(); # StandardFormat
-$writer->end();
+$sf_node->appendChild($text_node);
+$writer->setDocumentElement($sf_node);
 
-sub filter_fstring {
-    my ($str) = @_;
+my $string = $writer->toString(1); # 1 means indenting
+print utf8::is_utf8($string) ? $string : decode('utf-8', $string);
 
-    my (@f);
-    if ($str =~ /(<係:[^>]+>)/) {
-	push(@f, $1);
-    }
-    elsif ($str =~ /(<(?:自立|接頭|付属|内容語|準内容語)>)/) {
-	push(@f, $1);
-    }
-
-    return join('', @f);
-}
 
 # rawstringを得る
 sub get_rawstring {
