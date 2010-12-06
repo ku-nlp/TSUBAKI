@@ -39,11 +39,11 @@ sub xml2term {
     for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
 	my $sentence_id = $sentence_node->getAttribute('id');
 	my (%phrases);
-	for my $result_node ($doc->getElementsByTagName('result')) { # parse
-	    for my $result_child_node ($result_node->getChildNodes) {
-		next unless $result_child_node->nodeName eq 'phrase';
+	for my $annotation_node ($doc->getElementsByTagName('Annotation')) { # parse
+	    for my $annotation_child_node ($annotation_node->getChildNodes) {
+		next unless $annotation_child_node->nodeName eq 'phrase';
 		my (@words);
-		for my $phrase_child_node ($result_child_node->getChildNodes) {
+		for my $phrase_child_node ($annotation_child_node->getChildNodes) {
 		    next unless $phrase_child_node->nodeName eq 'word';
 		    my $str = $phrase_child_node->getAttribute('str') . '*'; # word terms (string that appeared)
 		    my $lem = $phrase_child_node->getAttribute('lem'); # word terms (lem)
@@ -57,9 +57,9 @@ sub xml2term {
 				  pos => $word_count});
 		    $word_count++;
 		}
-		my $id = $result_child_node->getAttribute('id');
+		my $id = $annotation_child_node->getAttribute('id');
 		my $word_head_num = &get_phrase_head_num(\@words);
-		$phrases{$id} = {head_ids => [split('/', $result_child_node->getAttribute('head'))], 
+		$phrases{$id} = {head_ids => [split('/', $annotation_child_node->getAttribute('head'))], 
 				 words => \@words, 
 				 word_head_num => $word_head_num, # head word in this phrase
 				 str => $words[$word_head_num]{str}, 
