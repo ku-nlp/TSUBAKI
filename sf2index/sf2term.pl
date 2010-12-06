@@ -45,7 +45,7 @@ sub xml2term {
 		my (@words);
 		for my $phrase_child_node ($result_child_node->getChildNodes) {
 		    next unless $phrase_child_node->nodeName eq 'word';
-		    my $str = $phrase_child_node->getAttribute('midasi') . '*'; # word terms (string that appeared)
+		    my $str = $phrase_child_node->getAttribute('str') . '*'; # word terms (string that appeared)
 		    my $lem = $phrase_child_node->getAttribute('lem'); # word terms (lem)
 		    for my $term ($str, $lem) {
 			$terms{$term}{freq}++;

@@ -16,7 +16,7 @@ use Getopt::Long;
 my (%opt); GetOptions(\%opt, 'filter_fstring');
 
 my %pf_order = (id => 0, head => 1, cat => 2, f => 3); # print order of phrase attributes
-my %wf_order = (id => 0, midasi => 1, lem => 2, read => 3, pos => 4, repname => 5, conj => 6, f => 99); # print order of word attributes
+my %wf_order = (id => 0, str => 1, lem => 2, read => 3, pos => 4, repname => 5, conj => 6, f => 99); # print order of word attributes
 my %synnodesf_order = (head => 0, phraseid => 1);
 my %synnodef_order = (wordid => 0, synid => 1, score => 2);
 
@@ -131,7 +131,7 @@ while (my $result = $knp->each()) {
 		    $conj = '';
 		}
 
-		my %wf = (midasi => $mrph->midasi,
+		my %wf = (str => $mrph->midasi,
 			  lem => $mrph->genkei,
 			  read => $mrph->yomi,
 			  repname => $rep, 
