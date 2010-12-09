@@ -2,6 +2,8 @@ ID = 000
 IDX0_SUFFIX = idx0
 IDX1_SUFFIX = idx1
 BASEDIR = $(shell pwd)
+HTMLS = $(wildcard $(BASEDIR)/*.html)
+HTML2XMLS = $(patsubst %.html,%.xml,$(HTMLS))
 XMLS = $(wildcard $(BASEDIR)/*.xml)
 IDXS = $(patsubst %.xml,%.$(IDX0_SUFFIX),$(XMLS))
 MERGED_IDX = $(BASEDIR)/$(ID).$(IDX1_SUFFIX)
@@ -14,8 +16,14 @@ URLDB = $(BASEDIR)/$(ID).url.cdb
 TITLEDB = $(BASEDIR)/$(ID).title.cdb
 
 UtilsDir = ../../Utils
+WWW2sfDir = ../../WWW2sf
 
 all: idx_bin idx_length dfdb
+
+html2xml: $(HTML2XMLS)
+
+$(HTML2XMLS): $(BASEDIR)/%.xml : $(BASEDIR)/%.html
+	$(WWW2sfDir)/tool/html2sf.sh -x -s $< > $@
 
 $(IDXS): $(BASEDIR)/%.$(IDX0_SUFFIX) : $(BASEDIR)/%.xml
 	perl $(BASEDIR)/sf2term.pl -suffix $(IDX0_SUFFIX) $< > $@
@@ -48,4 +56,4 @@ $(URL_TITLE_TXT): $(XMLFILES)
 	perl $(BASEDIR)/../scripts/extract-url-title.perl -files $(XMLFILES) > $(URL_TITLE_TXT)
 
 clean:
-	rm -f $(IDXS) $(MERGED_IDX) $(MERGED_IDX_FINAL) $(MAPFILE) idx*.word.dat* idx*.dpnd.dat* offset*.word*.cdb* offset*.dpnd*.cdb* *.doc_length.* df.word.* df.dpnd.*
+	rm -f $(IDXS) *.$(IDX0_SUFFIX) $(MERGED_IDX) $(MERGED_IDX_FINAL) $(MAPFILE) idx*.word.dat* idx*.dpnd.dat* offset*.word*.cdb* offset*.dpnd*.cdb* *.doc_length.* df.word.* df.dpnd.*
