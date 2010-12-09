@@ -1,4 +1,4 @@
-ID = 000000
+ID = 000
 IDX0_SUFFIX = idx0
 IDX1_SUFFIX = idx1
 BASEDIR = $(shell pwd)
