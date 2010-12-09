@@ -17,7 +17,7 @@ our $IDX_EXT = $opt{suffix} ? $opt{suffix} : 'idx';
 our $parser = new XML::LibXML;
 
 my $file = $ARGV[0];
-my ($prefix, $doc_id) = ($file =~ /^(.*)(\d+)\.$SF_EXT$/);
+my ($prefix, $doc_id) = ($file =~ /^(.*?)([-\d]+)\.$SF_EXT$/);
 die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT\n" unless defined($doc_id);
 my $output_file = $prefix . $doc_id . '.' . $IDX_EXT;
 
