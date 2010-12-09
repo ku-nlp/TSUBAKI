@@ -19,7 +19,6 @@ done
 shift `expr $OPTIND - 1`
 
 query=$1
-UtilsDir=../../Utils
 
 if [ -z "$query" -o ! -f "$query" ]; then
     usage
