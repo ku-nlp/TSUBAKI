@@ -6,9 +6,14 @@ use strict;
 use utf8;
 use CDB_File;
 use CDB_Writer;
+use Getopt::Long;
 
-my $word_cdb = new CDB_Writer("df.word.cdb", "df.word.cdb.keymap", 2.5 * 1024 * 1024 * 1024, 1000000);
-my $dpnd_cdb = new CDB_Writer("df.dpnd.cdb", "df.dpnd.cdb.keymap", 2.5 * 1024 * 1024 * 1024, 1000000);
+our (%opt);
+&GetOptions(\%opt, 'dir=s');
+$opt{dir} = '.' unless $opt{dir};
+
+my $word_cdb = new CDB_Writer("$opt{dir}/df.word.cdb", "df.word.cdb.keymap", 2.5 * 1024 * 1024 * 1024, 1000000);
+my $dpnd_cdb = new CDB_Writer("$opt{dir}/df.dpnd.cdb", "df.dpnd.cdb.keymap", 2.5 * 1024 * 1024 * 1024, 1000000);
 
 while (<STDIN>) {
     chop($_);
