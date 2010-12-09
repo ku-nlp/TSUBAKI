@@ -19,9 +19,10 @@ done
 shift `expr $OPTIND - 1`
 
 query=$1
+datadir=sample_data
 
 if [ -z "$query" -o ! -f "$query" ]; then
     usage
 fi
 
-../search/slave_server . . 39999 `hostname` -standalone < $query
+../search/slave_server $datadir $datadir 39999 `hostname` -standalone < $query

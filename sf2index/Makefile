@@ -2,18 +2,19 @@ ID = 000
 IDX0_SUFFIX = idx0
 IDX1_SUFFIX = idx1
 BASEDIR = $(shell pwd)
-HTMLS = $(wildcard $(BASEDIR)/*.html)
+DATADIR = sample_data
+HTMLS = $(wildcard $(DATADIR)/*.html)
 HTML2XMLS = $(patsubst %.html,%.xml,$(HTMLS))
-XMLS = $(wildcard $(BASEDIR)/*.xml)
+XMLS = $(wildcard $(DATADIR)/*.xml)
 IDXS = $(patsubst %.xml,%.$(IDX0_SUFFIX),$(XMLS))
-MERGED_IDX = $(BASEDIR)/$(ID).$(IDX1_SUFFIX)
-MERGED_IDX_FINAL = $(BASEDIR)/$(ID).idx
-MERGED_IDX_DF = $(BASEDIR)/$(ID).idx.df
-MAPFILE = $(BASEDIR)/sid2tid
+MERGED_IDX = $(DATADIR)/$(ID).$(IDX1_SUFFIX)
+MERGED_IDX_FINAL = $(DATADIR)/$(ID).idx
+MERGED_IDX_DF = $(DATADIR)/$(ID).idx.df
+MAPFILE = $(DATADIR)/sid2tid
 XMLFILES = $(ID).xmls
 URL_TITLE_TXT = $(ID).url_title
-URLDB = $(BASEDIR)/$(ID).url.cdb
-TITLEDB = $(BASEDIR)/$(ID).title.cdb
+URLDB = $(DATADIR)/$(ID).url.cdb
+TITLEDB = $(DATADIR)/$(ID).title.cdb
 
 UtilsDir = ../../Utils
 WWW2sfDir = ../../WWW2sf
@@ -22,17 +23,17 @@ all: idx_bin idx_length dfdb
 
 html2xml: $(HTML2XMLS)
 
-$(HTML2XMLS): $(BASEDIR)/%.xml : $(BASEDIR)/%.html
+$(HTML2XMLS): $(DATADIR)/%.xml : $(DATADIR)/%.html
 	$(WWW2sfDir)/tool/html2sf.sh -x -s $< > $@
 
-$(IDXS): $(BASEDIR)/%.$(IDX0_SUFFIX) : $(BASEDIR)/%.xml
+$(IDXS): $(DATADIR)/%.$(IDX0_SUFFIX) : $(DATADIR)/%.xml
 	perl $(BASEDIR)/sf2term.pl -suffix $(IDX0_SUFFIX) $< > $@
 
 $(MERGED_IDX): $(IDXS)
-	perl $(BASEDIR)/../scripts/merge_idx.pl -dir $(BASEDIR) -suffix $(IDX0_SUFFIX) > $@
+	perl $(BASEDIR)/../scripts/merge_idx.pl -dir $(DATADIR) -suffix $(IDX0_SUFFIX) > $@
 
 $(MERGED_IDX_FINAL): $(MERGED_IDX) $(MAPFILE)
-	perl $(BASEDIR)/../scripts/merge_sorted_idx.pl -dir $(BASEDIR) -suffix $(IDX1_SUFFIX) -mapfile $(MAPFILE) > $@
+	perl $(BASEDIR)/../scripts/merge_sorted_idx.pl -dir $(DATADIR) -suffix $(IDX1_SUFFIX) -mapfile $(MAPFILE) > $@
 
 idx_bin: $(MERGED_IDX_FINAL)
 	perl -I $(UtilsDir)/perl -I $(BASEDIR)/../scripts $(BASEDIR)/../scripts/binarize_idx.pl -syn $<
@@ -44,7 +45,7 @@ $(MERGED_IDX_DF): $(MERGED_IDX)
 	perl $(BASEDIR)/../scripts/idx2df.pl $<
 
 dfdb: $(MERGED_IDX_FINAL)
-	perl -I $(UtilsDir)/perl $(BASEDIR)/../scripts/make-df-db.perl < $<
+	perl -I $(UtilsDir)/perl $(BASEDIR)/../scripts/make-df-db.perl --dir $(DATADIR) < $<
 
 $(MAPFILE): $(MERGED_IDX)
 	perl $(BASEDIR)/../scripts/make-mapfile.perl $(MERGED_IDX) > $@
@@ -56,4 +57,4 @@ $(URL_TITLE_TXT): $(XMLFILES)
 	perl $(BASEDIR)/../scripts/extract-url-title.perl -files $(XMLFILES) > $(URL_TITLE_TXT)
 
 clean:
-	rm -f $(IDXS) *.$(IDX0_SUFFIX) $(MERGED_IDX) $(MERGED_IDX_FINAL) $(MAPFILE) idx*.word.dat* idx*.dpnd.dat* offset*.word*.cdb* offset*.dpnd*.cdb* *.doc_length.* df.word.* df.dpnd.*
+	rm -f $(IDXS) $(DATADIR)/*.$(IDX0_SUFFIX) $(MERGED_IDX) $(MERGED_IDX_FINAL) $(MAPFILE) $(DATADIR)/idx*.word.dat* $(DATADIR)/idx*.dpnd.dat* $(DATADIR)/offset*.word*.cdb* $(DATADIR)/offset*.dpnd*.cdb* $(DATADIR)/*.doc_length.* $(DATADIR)/df.word.* $(DATADIR)/df.dpnd.*
