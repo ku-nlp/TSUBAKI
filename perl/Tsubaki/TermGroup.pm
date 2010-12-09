@@ -216,7 +216,7 @@ sub _to_S_exp_for_ROOT {
 
     foreach my $child (@_children) {
 	$_S_exp .= $child->to_S_exp($indent, $this->{condition});
-#	$_S_exp_for_anchor .= $child->to_S_exp_for_anchor($indent);
+	$_S_exp_for_anchor .= $child->to_S_exp_for_anchor($indent);
 	$num_of_children++;
     }
 
