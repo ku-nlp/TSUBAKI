@@ -364,8 +364,8 @@ sub _runSynGraph {
 
     # SynGraphのオプションを設定
     # Wikipedia のエントリになっている表現に対しては同義語展開を行わない
-    $opt->{syngraph_option}{no_attach_synnode_in_wikipedia_entry} = 1;
-    $opt->{syngraph_option}{attach_wikipedia_info} = 1;
+    $opt->{syngraph_option}{no_attach_synnode_in_wikipedia_entry} = $CONFIG->{NO_ATTACH_SYNNODE_IN_WIKIPEDIA_ENTRY};
+    $opt->{syngraph_option}{attach_wikipedia_info} = $CONFIG->{NO_ATTACH_SYNNODE_IN_WIKIPEDIA_ENTRY}; # 同義語展開を行わないために、Wikipediaエントリの情報を付与するかどうか (すなわち、NO_ATTACH_...と同じ値にする)
     $opt->{syngraph_option}{wikipedia_entry_db} = $CONFIG->{WIKIPEDIA_ENTRY_DB};
     $opt->{syngraph_option}{regist_exclude_semi_contentword} = 1;
     $opt->{syngraph_option}{relation} = 0;
