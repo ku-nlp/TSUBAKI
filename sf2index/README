@@ -5,7 +5,7 @@
 インデクシング
 --------------
 
-1. このディレクトリに標準フォーマット(*.xml)を置く
+1. sample_dataディレクトリに標準フォーマット(数字10桁.xml)を置く
 2. make
 
 
@@ -13,4 +13,4 @@
 ------------
 
 1. ../searchの下でmake
-2 ./search.sh query.sample.sexp
+2 ./search.sh -f query.sample.ja.sexp (またはquery.sample.en.sexp)
