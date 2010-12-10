@@ -8,8 +8,8 @@ usage() {
     exit 1
 }
 
-searchengine_dir=$HOME/share/tool/SearchEngine
-utils_dir=$HOME/share/tool/Utils
+searchengine_dir=../
+utils_dir=../../Utils
 
 file_mode=0
 query_options=
