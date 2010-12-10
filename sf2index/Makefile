@@ -4,7 +4,6 @@ IDX1_SUFFIX = idx1
 BASEDIR = $(shell pwd)
 DATADIR = sample_data
 HTMLS = $(wildcard $(DATADIR)/*.html)
-HTML2XMLS = $(patsubst %.html,%.xml,$(HTMLS))
 XMLS = $(wildcard $(DATADIR)/*.xml)
 IDXS = $(patsubst %.xml,%.$(IDX0_SUFFIX),$(XMLS))
 MERGED_IDX = $(DATADIR)/$(ID).$(IDX1_SUFFIX)
@@ -21,10 +20,8 @@ WWW2sfDir = ../../WWW2sf
 
 all: idx_bin idx_length dfdb
 
-html2xml: $(HTML2XMLS)
-
-$(HTML2XMLS): $(DATADIR)/%.xml : $(DATADIR)/%.html
-	$(WWW2sfDir)/tool/html2sf.sh -x -s $< > $@
+html2xml:
+	$(WWW2sfDir)/tool/www2sf.sh -x -s $(DATADIR) $(DATADIR)
 
 $(IDXS): $(DATADIR)/%.$(IDX0_SUFFIX) : $(DATADIR)/%.xml
 	perl $(BASEDIR)/sf2term.pl -suffix $(IDX0_SUFFIX) $< > $@
