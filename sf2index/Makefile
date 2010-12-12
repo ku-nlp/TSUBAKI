@@ -10,7 +10,7 @@ MERGED_IDX = $(DATADIR)/$(ID).$(IDX1_SUFFIX)
 MERGED_IDX_FINAL = $(DATADIR)/$(ID).idx
 MERGED_IDX_DF = $(DATADIR)/$(ID).idx.df
 MAPFILE = $(DATADIR)/sid2tid
-XMLFILES = $(DATADIR)/$(ID).xmls
+XMLLIST = $(DATADIR)/$(ID).xmls
 URL_TITLE_TXT = $(DATADIR)/$(ID).url_title
 URLDB = $(DATADIR)/did2url.cdb
 TITLEDB = $(DATADIR)/did2title.cdb
@@ -47,14 +47,17 @@ dfdb: $(MERGED_IDX_FINAL)
 $(MAPFILE): $(MERGED_IDX)
 	perl $(BASEDIR)/../scripts/make-mapfile.perl $(MERGED_IDX) > $@
 
-$(XMLFILES): $(XMLS)
+$(XMLLIST): $(XMLS)
 	ls $(XMLS) > $@
 
-$(URL_TITLE_TXT): $(XMLFILES)
-	perl $(BASEDIR)/../scripts/extract-url-title.perl -files $(XMLFILES) > $(URL_TITLE_TXT)
+$(URL_TITLE_TXT): $(XMLLIST)
+	perl $(BASEDIR)/../scripts/extract-url-title.perl -files $(XMLLIST) > $(URL_TITLE_TXT)
 
 url_title_db : $(URL_TITLE_TXT)
 	perl $(BASEDIR)/../scripts/make-url-title-cdbs.perl --titledb $(TITLEDB) --urldb $(URLDB) $<
 
 clean:
-	rm -f $(IDXS) $(DATADIR)/*.$(IDX0_SUFFIX) $(MERGED_IDX) $(MERGED_IDX_FINAL) $(MAPFILE) $(DATADIR)/idx*.word.dat* $(DATADIR)/idx*.dpnd.dat* $(DATADIR)/offset*.word*.cdb* $(DATADIR)/offset*.dpnd*.cdb* $(DATADIR)/*.doc_length.* $(DATADIR)/df.word.* $(DATADIR)/df.dpnd.*
+	rm -f $(IDXS) $(DATADIR)/*.$(IDX0_SUFFIX) $(MERGED_IDX) $(MERGED_IDX_FINAL) $(MAPFILE) $(XMLLIST) $(URL_TITLE_TXT) $(URLDB) $(TITLEDB) $(DATADIR)/idx*.word.dat* $(DATADIR)/idx*.dpnd.dat* $(DATADIR)/offset*.word*.cdb* $(DATADIR)/offset*.dpnd*.cdb* $(DATADIR)/*.doc_length.* $(DATADIR)/df.word.* $(DATADIR)/df.dpnd.*
+
+clean_xml:
+	rm -f $(XMLS)
