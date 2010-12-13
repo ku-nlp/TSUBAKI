@@ -143,19 +143,38 @@ sub _new {
 	print "* create knp object...";
     }
 
-    unless ($this->{IS_ENGLISH_VERSION}) { # 英語モード以外ではKNPオブジェクトを作る
-	try {
+    try {
+	# 英語モード以外ではMALT PARSERオブジェクトを作る
+	if ($this->{IS_ENGLISH_VERSION}) {
+	    require TsuruokaTagger;
+	    $this->{TSURUOKA_TAGGER} = new TsuruokaTagger(
+		{
+		    lemmatize  => 1,
+		    tagger_dir => $this->{TSURUOKA_TAGGER_DIR},
+		    format     => 'conll'
+		});
+
+	    require MaltParser;
+	    $this->{MALT_PARSER} = new MaltParser(
+		{
+		    lemmatize    => 1,
+		    parser_dir   => $this->{MALT_PARSER_DIR},
+		    java_command => $this->{JAVA_COMMAND}
+		});
+	}
+	# 英語モード以外ではKNPオブジェクトを作る
+	else {
 	    $this->{KNP} = new KNP(
-				   -Command => $this->{KNP_COMMAND},
-				   -Option => join(' ', @{$this->{KNP_OPTIONS}}),
-				   -Rcfile => $this->{KNP_RCFILE},
-				   -JumanRcfile => $this->{JUMAN_RCFILE},
-				   -JumanCommand => $this->{JUMAN_COMMAND});
-	} catch Error with {
-	    printf STDERR (qq([ERROR] Can\'t create a KNP object!\n));
-	    exit;
-	};
-    }
+		-Command      => $this->{KNP_COMMAND},
+		-Option       => join(' ', @{$this->{KNP_OPTIONS}}),
+		-Rcfile       => $this->{KNP_RCFILE},
+		-JumanRcfile  => $this->{JUMAN_RCFILE},
+		-JumanCommand => $this->{JUMAN_COMMAND});
+	}
+    } catch Error with {
+	printf STDERR (qq([ERROR] Can\'t create a parser object!\n));
+	exit;
+    };
 
     print " done.\n" if ($opts->{debug});
 
