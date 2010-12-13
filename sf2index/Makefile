@@ -38,10 +38,10 @@ idx_bin: $(MERGED_IDX_FINAL)
 idx_length: $(MERGED_IDX_FINAL)
 	perl $(BASEDIR)/../scripts/make-dlength-db.perl -txt $<
 
-$(MERGED_IDX_DF): $(MERGED_IDX)
+$(MERGED_IDX_DF): $(MERGED_IDX_FINAL)
 	perl $(BASEDIR)/../scripts/idx2df.pl $<
 
-dfdb: $(MERGED_IDX_FINAL)
+dfdb: $(MERGED_IDX_DF)
 	perl -I $(UtilsDir)/perl $(BASEDIR)/../scripts/make-df-db.perl --dir $(DATADIR) < $<
 
 $(MAPFILE): $(MERGED_IDX)
