@@ -19,14 +19,35 @@ my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYN
 sub create {
     my ($result, $condition, $option) = @_;
 
-    my @ids = ();
-    my @kihonkus = $result->tag;
-    my $rep2style = &_getRep2Style (\@kihonkus, \@ids, $option);
-    my $synnode2midasi = &_getSynNode2Midasi (\@kihonkus, $option);
-    my ($terms, $optionals) =
-	(($condition->{is_phrasal_search} > 0) ?
-	 &_create4phrase (\@kihonkus, \@ids, "", $option) :
-	 &_create (0, \@kihonkus, \@ids, undef, "", $option));
+    my ($terms, $optionals, $rep2style, $synnode2midasi);
+    if ($option->{english}) {
+	my $gid = 0;
+	foreach my $line (split (/\n/, $result)) {
+	    last if ($line =~ /EOS/);
+
+	    my $count = 0;
+	    my @data = split(/\t/, $line);
+	    my $term = new Tsubaki::Term ({
+		tid => sprintf ("%s-%s", $gid, $count++),
+		text => $data[1],
+		term_type => 'word',
+		gdf => $DFDBS_WORD->get($data[1]),
+#		blockType => (($tag eq '') ? undef : $tag),
+		node_type => 'basic' });
+	    push (@$terms, $term);
+	    $gid++;
+	}
+    }
+    else {
+	my @ids = ();
+	my @kihonkus = $result->tag;
+	$rep2style = &_getRep2Style (\@kihonkus, \@ids, $option);
+	$synnode2midasi = &_getSynNode2Midasi (\@kihonkus, $option);
+	($terms, $optionals) =
+	    (($condition->{is_phrasal_search} > 0) ?
+	     &_create4phrase (\@kihonkus, \@ids, "", $option) :
+	     &_create (0, \@kihonkus, \@ids, undef, "", $option));
+    }
 
     my $root = new Tsubaki::TermGroup (
 	-1,
