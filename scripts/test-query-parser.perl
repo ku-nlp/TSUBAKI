@@ -22,7 +22,7 @@ my (%opt);
 GetOptions(\%opt, 'syngraph', 'english');
 
 
-my $queryParser = new QueryParser();
+my $queryParser = new QueryParser({IS_ENGLISH_VERSION => $opt{english}});
 while (<STDIN>) {
     chop;
 
