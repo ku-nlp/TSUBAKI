@@ -10,9 +10,10 @@ usage() {
 
 searchengine_dir=../
 utils_dir=../../Utils
+www2sf_dir=../../WWW2sf
 
 file_mode=0
-query_options=
+query_options=-syngraph
 data_dir=sample_data
 while getopts d:efh OPT
 do
@@ -36,11 +37,12 @@ if [ $file_mode -eq 0 ]; then
     fi
 
     query_file=tmp_query_sexp_$$
-    perl -I $utils_dir/perl -I $searchengine_dir/cgi -I $searchengine_dir/perl -I $searchengine_dir/scripts $searchengine_dir/scripts/query-sexp-generate.perl --syngraph --query $query $query_options > $query_file
+    echo $query | perl -I$www2sf_dir/tool/perl -I$utils_dir/perl -I$searchengine_dir/cgi -I$searchengine_dir/perl -I$searchengine_dir/scripts $searchengine_dir/scripts/test-query-parser.perl $query_options > $query_file
 else
     query_file=$1
 fi
 
+cat $query_file
 ../search/slave_server $data_dir $data_dir 39999 `hostname` -standalone < $query_file
 
 if [ $file_mode -eq 0 ]; then
