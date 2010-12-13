@@ -299,61 +299,76 @@ sub _normalizeSearchExpression {
 sub _linguisticAnalysis {
     my ($this, $search_expression, $opt) = @_;
 
-    unless ($search_expression) {
-	print "Empty query !<BR>\n";
-	exit(1);
-    }
+    try {
+	throw Error::Simple("Empty query!") unless ($search_expression);
 
-    if ($opt->{english}) {
-    } else {
-	# 検索表現を構文解析する
-	my $knpresult = $this->_runKNP($search_expression, $opt);
-
-	# disable_query_processing が指定されていたらフラグをオフにする
-	if ($opt->{disable_query_processing}) {
-	    $opt->{telic_process} = 0;
-	    $opt->{CN_process} = 0;
-	    $opt->{NE_process} = 0;
-	    $opt->{modifier_of_NE_process} = 0;
-	}
-
-	# クエリ処理を適用する
-	$this->_runQueryProcessing($knpresult, $opt) if ($opt->{telic_process} || $opt->{CN_process} || $opt->{NE_process} || $opt->{modifier_of_NE_process});
-	$this->{knp_result} = $knpresult;
-
-
-	if ($opt->{syngraph}) {
-	    $this->_setSynGraphObj();
-	    # SynGraphで解析する
-	    return $this->_runSynGraph($knpresult, $opt);
+	my $result;
+	if ($opt->{english}) {
+	    # 検索表現を構文解析する（英語）
+	    $result = $this->_runEnglishParser($search_expression, $opt);
 	} else {
-	    return $knpresult;
+	    # 検索表現を構文解析する（日本語）
+	    $result = $this->_runJapaneseParser($search_expression, $opt);
 	}
-    }
+	throw Error::Simple("Can't parse the query[$search_expression]") unless (defined $result);
+	    
+	if ($opt->{english}) {
+	    return $result;
+	} else {
+	    # disable_query_processing が指定されていたらフラグをオフにする
+	    if ($opt->{disable_query_processing}) {
+		$opt->{telic_process} = 0;
+		$opt->{CN_process} = 0;
+		$opt->{NE_process} = 0;
+		$opt->{modifier_of_NE_process} = 0;
+	    }
+
+	    # クエリ処理を適用する
+	    $this->_runQueryProcessing($result, $opt) if ($opt->{telic_process} || $opt->{CN_process} || $opt->{NE_process} || $opt->{modifier_of_NE_process});
+	    $this->{knp_result} = $result;
+
+
+	    if ($opt->{syngraph}) {
+		$this->_setSynGraphObj();
+		# SynGraphで解析する
+		return $this->_runSynGraph($result, $opt);
+	    } else {
+		return $result;
+	    }
+	}
+    } catch Error with {
+  	my $err = shift;
+  	print "Bad query: $search_expression<BR>\n";
+  	print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
+  	print "Dumpping messages of the parser object is following.<BR>\n";
+	if ($opt->{english}) {
+	    print Dumper::dump_as_HTML($CONFIG->{TSURUOKA_TAGGER}) . "<BR>\n";
+	    print "<HR>\n";
+	    print Dumper::dump_as_HTML($CONFIG->{MALT_PARSER}) . "<BR>\n";
+	} else {
+	    print Dumper::dump_as_HTML($CONFIG->{KNP}) . "<BR>\n";
+	}
+ 	exit(1);
+    };
 }
 
-# 構文解析
-sub _runKNP {
+# 構文解析（英語）
+sub _runEnglishParser {
     my ($this, $search_expression, $opt) = @_;
 
-    my $knpresult;
-#    try {
-	$knpresult = $CONFIG->{KNP}->parse($search_expression);
-#    }
-#    catch Error with {
-# 	my $err = shift;
-# 	print "Bad query: $search_expression<BR>\n";
-# 	print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
-# 	print "Dumpping messages of KNP object is following.<BR>\n";
-# 	print Dumper::dump_as_HTML($CONFIG->{KNP}) . "<BR>\n";
-#	exit(1);
-#    };
-    $this->{logger}->setTimeAs('KNP', '%.3f') if (defined $this->{logger});
+    my $result_string = $CONFIG->{TSURUOKA_TAGGER}->analyze($search_expression);
+    $result_string = $CONFIG->{MALT_PARSER}->analyze_from_conll($result_string);
+    $result_string =~ s/\n\n$/\nEOS\n/;
 
-    unless (defined $knpresult) {
-	print "Can't parse the query: $search_expression<BR>\n";
-	exit(1);
-    }
+    return $result_string;
+}
+
+# 構文解析（日本語）
+sub _runJapaneseParser {
+    my ($this, $search_expression, $opt) = @_;
+
+    my $knpresult = $CONFIG->{KNP}->parse($search_expression);
+    $this->{logger}->setTimeAs('KNP', '%.3f') if (defined $this->{logger});
 
     return $knpresult;
 }
@@ -416,7 +431,7 @@ sub createQueryKeywordObj {
 	$used_indexer) = $this->_analyzeSearchCondition($_search_expression, $opt);
 
     # 検索表現の正規化
-    $search_expression = $this->_normalizeSearchExpression($search_expression);
+    $search_expression = $this->_normalizeSearchExpression($search_expression) unless ($opt->{english});
 
     # フレーズ検索の場合はSynGraphを適用しない
     $opt->{syngraph} = 1 if ($is_phrasal_search > 0);
@@ -624,7 +639,8 @@ sub parse {
 
     my @qks = ();
     my @sexps = ();
-    my $delim = ($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+";
+    # 英語モードの場合は半角空白をデリミタと見なさない
+    my $delim = ($opt->{english} ? "(?:　)" : (($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+"));
     my $rawstring;
     my $rep2style;
     my $synnode2midasi;
