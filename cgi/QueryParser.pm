@@ -47,6 +47,7 @@ sub new {
 	    trimming => $opts->{QUERY_TRIMMING},
 	    use_of_block_types => defined($opts->{USE_OF_BLOCK_TYPES}) ? $opts->{USE_OF_BLOCK_TYPES} : $CONFIG->{USE_OF_BLOCK_TYPES}, # newに指定された設定は、CONFIGよりも優先
 	    is_cpp_mode => defined($opts->{IS_CPP_MODE}) ? $opts->{IS_CPP_MODE} : $CONFIG->{IS_CPP_MODE}, # newに指定された設定は、CONFIGよりも優先
+	    is_english_version => defined($opts->{IS_ENGLISH_VERSION}) ? $opts->{IS_ENGLISH_VERSION} : $CONFIG->{IS_ENGLISH_VERSION}, # newに指定された設定は、CONFIGよりも優先
 	    syngraph => undef,
 	    call_from_api => $opts->{option}{call_from_api}
 	}
@@ -303,7 +304,7 @@ sub _linguisticAnalysis {
 	throw Error::Simple("Empty query!") unless ($search_expression);
 
 	my $result;
-	if ($opt->{english}) {
+	if ($this->{OPTIONS}{is_english_version}) {
 	    # 検索表現を構文解析する（英語）
 	    $result = $this->_runEnglishParser($search_expression, $opt);
 	} else {
@@ -312,7 +313,7 @@ sub _linguisticAnalysis {
 	}
 	throw Error::Simple("Can't parse the query[$search_expression]") unless (defined $result);
 	    
-	if ($opt->{english}) {
+	if ($this->{OPTIONS}{is_english_version}) {
 	    return $result;
 	} else {
 	    # disable_query_processing が指定されていたらフラグをオフにする
@@ -341,7 +342,7 @@ sub _linguisticAnalysis {
   	print "Bad query: $search_expression<BR>\n";
   	print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
   	print "Dumpping messages of the parser object is following.<BR>\n";
-	if ($opt->{english}) {
+	if ($this->{OPTIONS}{is_english_version}) {
 	    print Dumper::dump_as_HTML($CONFIG->{TSURUOKA_TAGGER}) . "<BR>\n";
 	    print "<HR>\n";
 	    print Dumper::dump_as_HTML($CONFIG->{MALT_PARSER}) . "<BR>\n";
@@ -355,6 +356,10 @@ sub _linguisticAnalysis {
 # 構文解析（英語）
 sub _runEnglishParser {
     my ($this, $search_expression, $opt) = @_;
+
+    # tagger, parser の object を獲得
+    $CONFIG->getTsuruokaTaggerObj();
+    $CONFIG->getMaltParserObj();
 
     my $result_string = $CONFIG->{TSURUOKA_TAGGER}->analyze($search_expression);
     $result_string = $CONFIG->{MALT_PARSER}->analyze_from_conll($result_string);
@@ -431,15 +436,16 @@ sub createQueryKeywordObj {
 	$used_indexer) = $this->_analyzeSearchCondition($_search_expression, $opt);
 
     # 検索表現の正規化
-    $search_expression = $this->_normalizeSearchExpression($search_expression) unless ($opt->{english});
+    $search_expression = $this->_normalizeSearchExpression($search_expression) unless ($this->{OPTIONS}{is_english_version});
 
     # フレーズ検索の場合はSynGraphを適用しない
     $opt->{syngraph} = 1 if ($is_phrasal_search > 0);
 
-
     # 言語解析
     my $result = $this->_linguisticAnalysis($search_expression, $opt);
 
+    # english モードフラグのコピー
+    $opt->{english} = $this->{OPTIONS}{is_english_version};
 
     if ($this->{OPTIONS}{is_cpp_mode}) {
 	my %condition = ();
@@ -457,7 +463,7 @@ sub createQueryKeywordObj {
     }
     else {
 	$opt->{indexer} = $used_indexer;
-	if ($CONFIG->{IS_ENGLISH_VERSION}) {
+	if ($this->{OPTIONS}{is_english_version}) {
 	    return $this->parse_for_english($search_expression, $opt);
 	} else {
 	    my $qk = new QueryKeyword(
@@ -640,7 +646,7 @@ sub parse {
     my @qks = ();
     my @sexps = ();
     # 英語モードの場合は半角空白をデリミタと見なさない
-    my $delim = ($opt->{english} ? "(?:　)" : (($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+"));
+    my $delim = ($this->{OPTIONS}{is_english_version} ? "(?:　)" : (($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+"));
     my $rawstring;
     my $rep2style;
     my $synnode2midasi;
@@ -716,7 +722,7 @@ sub parse {
 	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0]))
 			});
 
-    print "<!-- " . $ret->{s_exp} . " -->\n" if ($this->{OPTIONS}{is_cpp_mode} && !$this->{OPTIONS}{call_from_api});
+#   print "<!-- " . $ret->{s_exp} . " -->\n" if ($this->{OPTIONS}{is_cpp_mode} && !$this->{OPTIONS}{call_from_api});
 
     ############
     # ログの取得
@@ -809,6 +815,8 @@ sub get_DF {
     unless ($this->{OPTIONS}{use_of_block_types}) {
 	my $DFDBs = (index($term_w_blocktag, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
 
+#	$term_w_blocktag =~ s/\$$//;
+#	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag, {exhaustive => 1}) : 0;
 #	$term_w_blocktag =~ s/\$$//;
 #	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag, {exhaustive => 1}) : 0;
 	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag) : 0;
