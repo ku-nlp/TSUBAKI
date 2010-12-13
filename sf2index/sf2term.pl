@@ -40,14 +40,15 @@ sub xml2term {
 	my $sentence_id = $sentence_node->getAttribute('id');
 	my (%phrases);
 	for my $annotation_node ($doc->getElementsByTagName('Annotation')) { # parse
-	    for my $annotation_child_node ($annotation_node->getChildNodes) {
-		next unless $annotation_child_node->nodeName eq 'phrase';
+	    for my $annotation_child_node ($annotation_node->getElementsByTagName('phrase')) {
 		my (@words);
 		for my $phrase_child_node ($annotation_child_node->getChildNodes) {
 		    next unless $phrase_child_node->nodeName eq 'word';
-		    my $str = $phrase_child_node->getAttribute('str') . '*'; # word terms (string that appeared)
+		    my $str = $phrase_child_node->getAttribute('str'); # word terms (string that appeared)
+		    $str .= '*' if $str;
 		    my $lem = $phrase_child_node->getAttribute('lem'); # word terms (lem)
 		    for my $term ($str, $lem) {
+			next unless $term;
 			$terms{$term}{freq}++;
 			$terms{$term}{sentence_ids}{$sentence_id}++;
 			$terms{$term}{pos}{$word_count} = 1; # value = score
@@ -77,6 +78,7 @@ sub xml2term {
 		my $dpnd_str = sprintf('%s->%s', $phrases{$id}{str}, $phrases{$head_id}{str}); # string that appeared
 		my $dpnd_lem = sprintf('%s->%s', $phrases{$id}{lem}, $phrases{$head_id}{lem}); # lem
 		for my $dpnd_term ($dpnd_str, $dpnd_lem) {
+		    next if $dpnd_term eq '->';
 		    $dpnd_terms{$dpnd_term}{freq}++;
 		    $dpnd_terms{$dpnd_term}{sentence_ids}{$sentence_id}++;
 		    $dpnd_terms{$dpnd_term}{pos}{$phrases{$id}{pos}} = 1; # value = score
