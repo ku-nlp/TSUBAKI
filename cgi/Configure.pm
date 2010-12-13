@@ -144,26 +144,8 @@ sub _new {
     }
 
     try {
-	# 英語モード以外ではMALT PARSERオブジェクトを作る
-	if ($this->{IS_ENGLISH_VERSION}) {
-	    require TsuruokaTagger;
-	    $this->{TSURUOKA_TAGGER} = new TsuruokaTagger(
-		{
-		    lemmatize  => 1,
-		    tagger_dir => $this->{TSURUOKA_TAGGER_DIR},
-		    format     => 'conll'
-		});
-
-	    require MaltParser;
-	    $this->{MALT_PARSER} = new MaltParser(
-		{
-		    lemmatize    => 1,
-		    parser_dir   => $this->{MALT_PARSER_DIR},
-		    java_command => $this->{JAVA_COMMAND}
-		});
-	}
 	# 英語モード以外ではKNPオブジェクトを作る
-	else {
+	unless ($this->{IS_ENGLISH_VERSION}) {
 	    $this->{KNP} = new KNP(
 		-Command      => $this->{KNP_COMMAND},
 		-Option       => join(' ', @{$this->{KNP_OPTIONS}}),
@@ -178,7 +160,39 @@ sub _new {
 
     print " done.\n" if ($opts->{debug});
 
-    bless $this, $clazz;
+    bless $this;
+}
+
+sub getTsuruokaTaggerObj {
+    my ($this) = @_;
+
+    unless (defined $instance->{TSURUOKA_TAGGER}) {
+	require TsuruokaTagger;
+	$instance->{TSURUOKA_TAGGER} = new TsuruokaTagger(
+	    {
+		lemmatize  => 1,
+		tagger_dir => $this->{TSURUOKA_TAGGER_DIR},
+		format     => 'conll'
+	    });
+    }
+
+    return $instance->{TSURUOKA_TAGGER}
+}
+
+sub getMaltParserObj {
+    my ($this) = @_;
+
+    unless (defined $instance->{MALT_PARSER}) {
+	require MaltParser;
+	$instance->{MALT_PARSER} = new MaltParser(
+	    {
+		lemmatize    => 1,
+		parser_dir   => $this->{MALT_PARSER_DIR},
+		java_command => $this->{JAVA_COMMAND}
+	    });
+    }
+
+    return $instance->{MALT_PARSER};
 }
 
 sub getSynGraphObj {
