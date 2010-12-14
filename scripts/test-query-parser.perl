@@ -9,6 +9,7 @@ use utf8;
 use Configure;
 use QueryParser;
 use Getopt::Long;
+use Logger;
 
 binmode (STDIN,  ':utf8');
 binmode (STDOUT, ':utf8');
@@ -19,13 +20,14 @@ push (@INC, $CONFIG->{UTILS_PATH});
 
 
 my (%opt);
-GetOptions(\%opt, 'syngraph', 'english');
+GetOptions(\%opt, 'syngraph', 'english', 'verbose');
 
 
 my $queryParser = new QueryParser({IS_ENGLISH_VERSION => $opt{english}});
 while (<STDIN>) {
     chop;
 
+    $opt{logger} = new Logger();
     my $queryObj = $queryParser->parse($_, \%opt);
 
     my $s_exp = $queryObj->{s_exp};
@@ -33,4 +35,13 @@ while (<STDIN>) {
     $s_exp =~ s/\s+/ /g;
 
     print $s_exp . "\n";
+
+    if ($opt{verbose} && defined $opt{logger}->getParameter('ERROR_MSGS')) {
+	# エラーを出力
+	my $eid = 1;
+	foreach my $errObj (@{$opt{logger}->getParameter('ERROR_MSGS')}) {
+	    print "ERROR$eid: $errObj->{msg} @ $errObj->{owner}\n";
+	    $eid++;
+	}
+    }
 }
