@@ -645,6 +645,7 @@ sub parse {
 
     my @qks = ();
     my @sexps = ();
+    my @errMsgs = ();
     # 英語モードの場合は半角空白をデリミタと見なさない
     my $delim = ($this->{OPTIONS}{is_english_version} ? "(?:　)" : (($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+"));
     my $rawstring;
@@ -671,32 +672,40 @@ sub parse {
 	    next;
 	}
 
-	# QueryKeywordオブジェクトの構築
-	my $qk = $this->createQueryKeywordObj($search_expression, $opt);
+	try {
+	    # QueryKeywordオブジェクトの構築
+	    my $qk = $this->createQueryKeywordObj($search_expression, $opt);
 
-	if ($this->{OPTIONS}{is_cpp_mode}) {
-	    push (@sexps, $qk->to_S_exp());
-	    $rawstring = $qks_str;
-	    $result = $qk->{result};
-	    while (my ($k, $v) = each %{$qk->{rep2style}}) {
-		$rep2style->{$k} = $v;
-	    }
+	    if ($this->{OPTIONS}{is_cpp_mode}) {
+		push (@sexps, $qk->to_S_exp());
+		$rawstring = $qks_str;
+		$result = $qk->{result};
+		while (my ($k, $v) = each %{$qk->{rep2style}}) {
+		    $rep2style->{$k} = $v;
+		}
 
-	    while (my ($k, $v) = each %{$qk->{synnode2midasi}}) {
-		$synnode2midasi->{$k} = $v;
+		while (my ($k, $v) = each %{$qk->{synnode2midasi}}) {
+		    $synnode2midasi->{$k} = $v;
+		}
 	    }
-	}
-	elsif ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
-  	    push (@{$qks[0]->{words}}, @{$qk->{words}}) if (scalar(@{$qk->{words}}) > 0);
-  	    push (@{$qks[0]->{dpnds}}, @{$qk->{dpnds}}) if (scalar(@{$qk->{dpnds}}) > 0);
-  	    $qks[0]->{rawstring} .= (" " . $qk->{rawstring});
-  	} else {
-	    push(@qks, $qk);
-  	    $rawstring .= (" " . $qk->{rawstring});
-  	}
+	    elsif ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
+		push (@{$qks[0]->{words}}, @{$qk->{words}}) if (scalar(@{$qk->{words}}) > 0);
+		push (@{$qks[0]->{dpnds}}, @{$qk->{dpnds}}) if (scalar(@{$qk->{dpnds}}) > 0);
+		$qks[0]->{rawstring} .= (" " . $qk->{rawstring});
+	    } else {
+		push(@qks, $qk);
+		$rawstring .= (" " . $qk->{rawstring});
+	    }
+	} catch Error with {
+	    my $err = shift;
+	    push (@errMsgs, {owner => 'QueryParser.pm', msg => $err->{-text}});
+	};
     }
-    # QueryKeyword作成にかかる時間を測定
-    $opt->{logger}->setTimeAs('make_qks', '%.3f') if ($opt->{logger});
+    if ($opt->{logger}) {
+	$opt->{logger}->setTimeAs('make_qks', '%.3f');           # QueryKeyword作成にかかる時間を測定
+	$opt->{logger}->setParameterAs('ERROR_MSGS', \@errMsgs); # Error log を保存
+    }
+
 
     # プロパティ値のセット
     my $properties = $this->setProperties(\@qks, $opt);
