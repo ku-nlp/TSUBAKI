@@ -16,7 +16,7 @@ use CDB_File;
 use Query;
 use Dumper;
 use CDB_Reader;
-
+use Error qw(:try);
 
 my $CONFIG = Configure::get_instance();
 
@@ -230,7 +230,7 @@ sub _analyzeSearchCondition {
     my $used_indexer = $this->{INDEXER};
 
     # フレーズ検索かどうかの判定
-    if ($search_expression =~ /^"(.+)?"$/) {
+    if ($search_expression =~ /^["“”](.+)?["“”]$/) {
 	$is_phrasal_search = 1;
 	$approximate_order = 1;
 	$search_expression = $1;
