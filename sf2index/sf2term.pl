@@ -39,28 +39,33 @@ sub xml2term {
     for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
 	my $sentence_id = $sentence_node->getAttribute('id');
 	my (%phrases);
-	for my $annotation_node ($doc->getElementsByTagName('Annotation')) { # parse
-	    for my $annotation_child_node ($annotation_node->getElementsByTagName('phrase')) {
+	for my $annotation_node ($sentence_node->getElementsByTagName('Annotation')) { # parse
+	    for my $phrase_node ($annotation_node->getElementsByTagName('phrase')) {
 		my (@words);
-		for my $phrase_child_node ($annotation_child_node->getChildNodes) {
-		    next unless $phrase_child_node->nodeName eq 'word';
-		    my $str = $phrase_child_node->getAttribute('str'); # word terms (string that appeared)
+		for my $word_node ($phrase_node->getElementsByTagName('word')) {
+		    my $str = $word_node->getAttribute('str'); # word terms (string that appeared)
 		    $str .= '*' if $str;
-		    my $lem = $phrase_child_node->getAttribute('lem'); # word terms (lem)
+		    my $lem = $word_node->getAttribute('lem'); # word terms (lem)
 		    for my $term ($str, $lem) {
 			next unless $term;
-			$terms{$term}{freq}++;
-			$terms{$term}{sentence_ids}{$sentence_id}++;
-			$terms{$term}{pos}{$word_count} = 1; # value = score
+			&hash_term(\%terms, $term, $sentence_id, $word_count, 1); # score=1
 		    }
 		    push(@words, {str => $str, lem => $lem, 
-				  feature => $phrase_child_node->getAttribute('feature'), 
+				  feature => $word_node->getAttribute('feature'), 
 				  pos => $word_count});
 		    $word_count++;
+
+		    for my $synnode ($word_node->getElementsByTagName('synnode')) { # synonym node
+			my $synid = $synnode->getAttribute('synid');
+			my $score = $synnode->getAttribute('score');
+			next unless $score < 1; # except the identical expression with the word
+			my $wordid = (split(',', $synnode->getAttribute('wordid')))[0]; # the first wordid
+			&hash_term(\%terms, $synid, $sentence_id, $wordid, $score);
+		    }
 		}
-		my $id = $annotation_child_node->getAttribute('id');
+		my $id = $phrase_node->getAttribute('id');
 		my $word_head_num = &get_phrase_head_num(\@words);
-		$phrases{$id} = {head_ids => [split('/', $annotation_child_node->getAttribute('head'))], 
+		$phrases{$id} = {head_ids => [split('/', $phrase_node->getAttribute('head'))], 
 				 words => \@words, 
 				 word_head_num => $word_head_num, # head word in this phrase
 				 str => $words[$word_head_num]{str}, 
@@ -79,9 +84,7 @@ sub xml2term {
 		my $dpnd_lem = sprintf('%s->%s', $phrases{$id}{lem}, $phrases{$head_id}{lem}); # lem
 		for my $dpnd_term ($dpnd_str, $dpnd_lem) {
 		    next if $dpnd_term eq '->';
-		    $dpnd_terms{$dpnd_term}{freq}++;
-		    $dpnd_terms{$dpnd_term}{sentence_ids}{$sentence_id}++;
-		    $dpnd_terms{$dpnd_term}{pos}{$phrases{$id}{pos}} = 1; # value = score
+		    &hash_term(\%dpnd_terms, $dpnd_term, $sentence_id, $phrases{$id}{pos}, 1); # score=1
 		}
 	    }
 	}
@@ -94,6 +97,14 @@ sub xml2term {
     close(OUT);
 }
 
+sub hash_term {
+    my ($terms_hr, $term, $sentence_id, $word_count, $score) = @_;
+
+    $terms_hr->{$term}{score} += $score;
+    $terms_hr->{$term}{sentence_ids}{$sentence_id}++;
+    $terms_hr->{$term}{pos}{$word_count} = $score;
+}
+
 sub register_terms {
     my ($doc_id, $terms_hr, $OUTPUT) = @_;
 
@@ -103,7 +114,7 @@ sub register_terms {
 	    push @buf, sprintf "%s&%s", $pos, $terms_hr->{$term}{pos}{$pos};
 	}
 
-	printf $OUTPUT "%s %s:%.2f@%s#%s\n", $term, $doc_id, $terms_hr->{$term}{freq}, join (',', sort {$a <=> $b} keys %{$terms_hr->{$term}{sentence_ids}}), join ',', @buf;
+	printf $OUTPUT "%s %s:%.2f@%s#%s\n", $term, $doc_id, $terms_hr->{$term}{score}, join (',', sort {$a <=> $b} keys %{$terms_hr->{$term}{sentence_ids}}), join ',', @buf;
     }
 }
 
