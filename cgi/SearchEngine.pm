@@ -67,7 +67,6 @@ sub search {
 	    $status = 'busy';
 	}
     }
-
     return ($result->{hitcount}, $result->{hitpages}, $status);
 }
 
@@ -135,7 +134,6 @@ sub recieve_result_from_slave_servers {
 	my $_count = 0;
 	foreach my $socket (@{$readable_sockets}) {
 	    my ($hitcount, $result_docs, $time) = $this->parse_recieved_data($socket, $query, \%host2log, \%logbuf, $opt);
-#	    print "count: " . ($count) . " " . ($_count++) . " $time " . (Time::HiRes::time - $start) . "<BR>\n";
 
 	    $total_hitcount += $hitcount;
 	    push (@results, @$result_docs);
@@ -209,40 +207,43 @@ sub parse_recieved_data_for_cpp {
 	    push (@t_buf, sprintf ("slave_server_side_total=%.5f", $slave_server_side_total));
 	    last;
 	} else {
-	    $recieved_data .= $_;
-	    my ($sid, $title, $url, $tid, $score, $length, $pagerank, $flagOfStrictTerm, $flagOfProxConst, $start, $end, @logdata) = split (/ /, $_);
-	    $url =~ s/@/%/g;
+ 	    $recieved_data .= $_;
+ 	    my ($sid, $title, $url, $tid, $score, $length, $pagerank, $flagOfStrictTerm, $flagOfProxConst, $start, $end, @logdata) = split (/ /, $_);
+  	    $url =~ s/@/%/g;
 
-	    my $doc;
-	    $doc->{did} = $sid;
-	    $doc->{start} = $start;
-	    $doc->{end} = $end;
-	    $doc->{title} = $title;
-	    $doc->{url} = $url;
-	    $doc->{score_total} = $score;
+ 	    my $doc;
+ 	    $doc->{did} = $sid;
+ 	    $doc->{start} = $start;
+ 	    $doc->{end} = $end;
+ 	    $doc->{title} = $title;
+ 	    $doc->{url} = $url;
+ 	    $doc->{score_total} = $score;
 
-	    # Set log data
-	    my $gid = 0;
-	    my $dumy = join (" ", @logdata);
-	    my ($_logdata, $_position) = ($dumy =~ /^\[(.+?),\] \[(.+?)\]$/);
-	    foreach my $__data (split (",", $_logdata)) {
-		my ($term, $score, $freq, $gdf) = split (' ', $__data);
-		$doc->{terminfo}{terms}{$gid}{str} = decode ('utf8', $term);
-		$doc->{terminfo}{terms}{$gid}{okp} = $score;
-		$doc->{terminfo}{terms}{$gid}{frq} = $freq;
-		$doc->{terminfo}{terms}{$gid}{gdf} = $gdf;
-		$gid++;
+ 	    # Set log data
+ 	    my $gid = 0;
+ 	    my $dumy = join (" ", @logdata);
+ 	    my ($_logdata, $_position) = ($dumy =~ /^\[(.+?),\] \[(.+?)\]$/);
+	    if ($opt->{debug}) {
+		foreach my $__data (split (",", $_logdata)) {
+		    my ($term, $score, $freq, $gdf) = split (' ', $__data);
+		    $doc->{terminfo}{terms}{$gid}{str} = decode ('utf8', $term);
+		    $doc->{terminfo}{terms}{$gid}{okp} = $score;
+		    $doc->{terminfo}{terms}{$gid}{frq} = $freq;
+		    $doc->{terminfo}{terms}{$gid}{gdf} = $gdf;
+		    $gid++;
+		}
+		$doc->{terminfo}{length} = $length;
+		$doc->{terminfo}{pagerank} = $pagerank;
+		$doc->{terminfo}{flagOfStrictTerm} = $flagOfStrictTerm;
+		$doc->{terminfo}{flagOfProxConst} = $flagOfProxConst;
 	    }
-	    $doc->{terminfo}{length} = $length;
-	    $doc->{terminfo}{pagerank} = $pagerank;
-	    $doc->{terminfo}{flagOfStrictTerm} = $flagOfStrictTerm;
-	    $doc->{terminfo}{flagOfProxConst} = $flagOfProxConst;
+
 	    foreach my $term2posStr (split (/\#/, $_position)) {
 		my @term2pos = split (/,/, $term2posStr);
 		my $term = shift @term2pos;
 		$doc->{terminfo}{term2pos}{decode('utf8', $term)} = \@term2pos;
 	    }
-	    push (@results, $doc);
+ 	    push (@results, $doc);
 	}
     }
 
@@ -382,7 +383,6 @@ sub broadcastSearch {
     # 検索クエリの受信
     ##################
     my ($total_hitcount, $_results, $host2log, $logbuf) = $this->recieve_result_from_slave_servers($selecter, $query, $logger, $num_of_sockets, $opt, $_start);
-#   print "time: " . (Time::HiRes::time - $_start) . "<BR>\n";
 
     ##########
     # ロギング
