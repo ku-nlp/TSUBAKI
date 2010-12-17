@@ -59,9 +59,6 @@ std::vector<double> *search (std::string *query,
 	}
 	doc->set_length(length);
 
-	// termの出現位置を取得
-	result_docs->collectTermPosition(doc, doc->getTermPosition());
-
 	// rmfilesにあればスキップ
 	if (rmsids.find((*_sid).second) != rmsids.end())
 	    continue;
@@ -99,9 +96,6 @@ std::vector<double> *search (std::string *query,
 	}
 	doc->set_length(length);
 
-	// termの出現位置を取得
-	result_docs->collectTermPosition(doc, doc->getTermPosition());
-
 	// rmfilesにあればスキップ
 	if (rmsids.find((*_sid).second) != rmsids.end())
 	    continue;
@@ -123,6 +117,16 @@ std::vector<double> *search (std::string *query,
 
     sort (docs->begin(), docs->end(), sort_by_final_score);
     double sort_end = (double) gettimeofday_sec();
+
+    // embed pos info.
+    int _count = 1;
+    for (std::vector<Document *>::iterator it = docs->begin(); it != docs->end(); it++) {
+	// termの出現位置を取得
+	result_docs->collectTermPosition((*it), (*it)->getTermPosition());
+	if (++_count > NUM_OF_RETURN_DOCUMENTS)
+	    break;
+    }
+
 
     std::vector<double> *logdata = new std::vector<double>;
     logdata->push_back (1000 * (search_end - search_bgn));
