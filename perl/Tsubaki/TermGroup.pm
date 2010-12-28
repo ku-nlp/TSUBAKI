@@ -11,6 +11,8 @@ use Tsubaki::Term;
 use Data::Dumper;
 use Configure;
 use CDB_Reader;
+use URI::Escape;
+
 
 my $CONFIG = Configure::get_instance();
 
@@ -191,6 +193,31 @@ sub to_string {
 	$child->to_string($space . "\t");
     }
     print "\n";
+}
+
+sub to_uri_escaped_string {
+    my ($this) = @_;
+
+    if ($this->{isRoot}) {
+	my @buf;
+	foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
+	    push (@buf, $child->to_uri_escaped_string());
+	}
+	return &uri_escape(encode('utf8', join (",", @buf)));
+    } else {
+	my %buf = ();
+	foreach my $term (@{$this->{terms}}) {
+	    $buf{$term->to_uri_escaped_string()} = 1;
+	}
+
+	if ($this->{hasChild}) {    
+	    foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
+		$buf{$child->to_uri_escaped_string()} = 1;
+	    }
+	}
+
+	return join (";", keys %buf);
+    }
 }
 
 sub get_term_type {

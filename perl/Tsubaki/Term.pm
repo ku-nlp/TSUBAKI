@@ -106,6 +106,17 @@ sub get_term_type {
     return $TYPE2INT{$this->{term_type}};
 }
 
+sub to_uri_escaped_string {
+    my ($this) = @_;
+
+    if ($this->{term_type} eq 'word') {
+	unless ($this->{text} =~ /<^>]+?>/) {
+	    return $this->{text};
+	}
+    }
+    return '';
+}
+
 sub to_S_exp {
     my ($this, $space) = @_;
 
