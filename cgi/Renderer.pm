@@ -1074,7 +1074,7 @@ sub printOrdinarySearchResult {
     ################
     # 検索結果を表示
     ################
-    my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
+    my $uri_escaped_search_keys = ($CONFIG->{IS_CPP_MODE}) ? $query->{escaped_query} : $this->get_uri_escaped_query($query);
     for (my $rank = $start; $rank < $end; $rank++) {
 #	my $did = sprintf("%09d", $results->[$rank]{did});
 	my $did = $results->[$rank]{did};
