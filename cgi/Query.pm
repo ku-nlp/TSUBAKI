@@ -29,7 +29,8 @@ sub new {
 	s_exp => $params->{s_exp},
 	rawstring => $params->{rawstring},
 	rep2style => $params->{rep2style},
-	synnode2midasi => $params->{synnode2midasi}
+	synnode2midasi => $params->{synnode2midasi},
+	escaped_query => $params->{escaped_query}
     };
 
     bless $this;

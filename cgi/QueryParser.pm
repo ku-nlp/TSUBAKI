@@ -645,6 +645,7 @@ sub parse {
 
     my @qks = ();
     my @sexps = ();
+    my @escapedStrings = ();
     my @errMsgs = ();
     # 英語モードの場合は半角空白をデリミタと見なさない
     my $delim = ($this->{OPTIONS}{is_english_version} ? "(?:　)" : (($opt->{no_use_of_Zwhitespace_as_delimiter}) ? "(?: )" : "(?: |　)+"));
@@ -678,6 +679,7 @@ sub parse {
 
 	    if ($this->{OPTIONS}{is_cpp_mode}) {
 		push (@sexps, $qk->to_S_exp());
+		push (@escapedStrings, $qk->to_uri_escaped_string());
 		$rawstring = $qks_str;
 		$result = $qk->{result};
 		while (my ($k, $v) = each %{$qk->{rep2style}}) {
@@ -728,10 +730,11 @@ sub parse {
 	result    => $result,
 	rep2style => $rep2style,
 	synnode2midasi => $synnode2midasi,
-	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0]))
+	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0])),
+	escaped_query => join (",", @escapedStrings)
 			});
 
-#   print "<!-- " . $ret->{s_exp} . " -->\n" if ($this->{OPTIONS}{is_cpp_mode} && !$this->{OPTIONS}{call_from_api});
+#    print "<!-- " . $ret->{s_exp} . " -->\n" if ($this->{OPTIONS}{is_cpp_mode} && !$this->{OPTIONS}{call_from_api});
 
     ############
     # ログの取得
