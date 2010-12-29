@@ -152,7 +152,7 @@ sub processCoordinateStructure {
 }
 
 sub makeIndexfromSynGraph {
-    my($this, $syngraph, $kihonkus, $poslist, $pos2info, $opt) = @_;
+    my($this, $syngraph, $kihonkus, $pos2synnode, $pos2info, $opt) = @_;
 
     if ($opt->{string_mode}) {
 	return $this->makeIndexfromSynGraph4Indexing($syngraph, $opt);
@@ -183,6 +183,13 @@ sub makeIndexfromSynGraph {
 	} elsif ($line =~ /^! /) {
 	    # term（単語）の抽出
 	    $this->extractTerms ($kihonkus, $surf, $position, $line, \%synNodes, \%lastBnstIds, $opt);
+	    # synnodeの保持
+	    if ($line =~ /<SYNID:(.+?)>/) {
+		my $synnode = $1;
+		if ($synnode =~ /s\d+/) {
+		    push (@{$pos2synnode->{$position + $this->{absolute_pos}}}, $synnode);
+		}
+	    }
 	} elsif ($line =~ /^\* /) {
 	    %lastBnstIds = ();
 	    $knpbuf .= ($line . "\n");
@@ -192,6 +199,7 @@ sub makeIndexfromSynGraph {
 	    $knpbuf .= ($line . "\n");
 	} else {
 	    $knpbuf .= ($line . "\n");
+	    # 直近の内容語の出現位置
 	    $position = $word_num if (index ($line, '<内容語>') > -1);
 	    if ($line =~ m!情報:(.+?)/主辞:(.+?):(\d+)\-(\d+)!) {
 		my ($info, $head, $pos, $length, $log) = ($1, $2, $word_num + $this->{absolute_pos}, 1 + $4 - $3, $&);
