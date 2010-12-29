@@ -63,19 +63,27 @@ GetOptions(\%opt,
 	   'use_block_type',
 	   'ipsj',
 	   'hypernym_and_head_db=s',
+	   'syndb=s',
 	   'coordinate',
 	   'verbose',
 	   'help');
 
 my $ECTS;
+my %SYNDB;
 if ($opt{coordinate}) {
     require ECTS;
-    my %opt;
-    $opt{bin_file}           = '../data/ecs.db';
-    $opt{triedb}             = '../data/offset.db';
-    $opt{term2id}            = '../data/term2id';
-    $opt{size_of_on_memory}  = 1000000000;
-    $ECTS = new ECTS(\%opt);
+    my %_opt;
+    $_opt{bin_file}           = '../data/ecs.db';
+    $_opt{triedb}             = '../data/offset.db';
+    $_opt{term2id}            = '../data/term2id';
+    $_opt{size_of_on_memory}  = 1000000000;
+    $ECTS = new ECTS(\%_opt);
+
+    require CDB_File;
+    tie my %_SYNDB, 'CDB_File', $opt{syndb} or die $!;
+    while (my ($k, $v) = each %_SYNDB) {
+	$SYNDB{decode('utf8', $k)} = decode('utf8', $v);
+    }
 }
 
 # デフォルト値の設定
@@ -273,7 +281,7 @@ sub main {
 	    $opt{out} = sprintf (qq(%s/i%04d/i%07d), $opt{outdir_prefix}, $fid / 1000000, $fid / 1000);
 	    `mkdir -p $opt{out}` unless (-e $opt{out});
 	    &extract_indice_from_single_file($file, $fname);
-	    $ECTS->clear();
+	    $ECTS->clear() if ($opt{coordinate});
 	}
 	close (FILE);
     }
@@ -290,7 +298,7 @@ sub main {
 		next unless ($file =~ /([^\/]+?)(\.link)?\.xml/);
 		&extract_indice_from_single_file("$opt{in}/$file", $1);
 	    }
-	    $ECTS->clear();
+	    $ECTS->clear() if ($opt{coordinate});
 	}
 	closedir(DIR);
     }
@@ -345,7 +353,7 @@ sub extract_indices_wo_pm {
     my %sid2blockType = ();
     my %results_of_istvan = ();
     my $blockType;
-    my @poslist = ();
+    my %pos2synnode = ();
     my %pos2info = ();
     LOOP:
     while (<READER>) {
@@ -428,7 +436,7 @@ sub extract_indices_wo_pm {
 	elsif ($_ =~ $pattern_end) {
 	    $content .= $1;
 
-	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei, \@poslist, \%pos2info);
+	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei, \%pos2synnode, \%pos2info);
 
 	    # インリンクの場合は披リンク数分を考慮する
 	    if ($tagName eq 'InLink') {
@@ -462,13 +470,13 @@ sub extract_indices_wo_pm {
     close(READER);
 
     # 索引のマージ
-    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan, \@poslist, \%pos2info, $file);
+    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $file);
 }
 
 
 
 sub extractIndices {
-    my ($content, $indexer, $file, $indexer_genkei, $poslist, $pos2info) = @_;
+    my ($content, $indexer, $file, $indexer_genkei, $pos2synnode, $pos2info) = @_;
 
     my ($annotation) = ($content =~ /<Annotation[^>]+?>\<\!\[CDATA\[((.|\n)+)\]\]\><\/Annotation>/);
 
@@ -516,7 +524,7 @@ sub extractIndices {
 
 	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation,
 							\@contentWordFeatures,
-							$poslist,
+							$pos2synnode,
 							$pos2info,
 							{ use_of_syngraph_dependency => !$opt{ignore_syn_dpnd},
 							  use_of_hypernym => !$opt{ignore_hypernym},
@@ -707,7 +715,17 @@ sub extract_indices {
 }
 
 sub merge_indices {
-    my ($indices, $sid2blockType, $results_of_istvan, $poslist, $pos2info, $file) = @_;
+    my ($indices, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info, $file) = @_;
+
+    # 係り受けタームだけ抜き出す
+    my %midasiOfDpndancyTerm = ();
+    if ($opt{coordinate}) {
+	foreach my $sid (sort {$a <=> $b} keys %$indices) {
+	    foreach my $term (@{$indices->{$sid}}) {
+		$midasiOfDpndancyTerm{$term->{midasi}} = 1 if ($term->{midasi} =~ /\->/);
+	    }
+	}
+    }
 
     # 索引のマージ
     my %ret;
@@ -715,6 +733,10 @@ sub merge_indices {
     foreach my $sid (sort {$a <=> $b} keys %$indices) {
 	my $blockType = $prefixOfBlockType{$sid2blockType->{$sid}};
 	foreach my $index (@{$indices->{$sid}}) {
+
+	    ##########################
+	    # ブロックタイプタグを取得
+	    ##########################
 
 	    # 領域判定結果に対応したタグ
 	    my @tags = ();
@@ -736,28 +758,33 @@ sub merge_indices {
 	    }
 
 
+	    ##########################
+	    # タームの集約
+	    ##########################
+
 	    foreach my $tag (@tags) {
 		my $midasi = sprintf ("%s%s", $tag, $index->{midasi});
 		next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
 
-		# 同位語から係り受けを作る
 		if ($opt{coordinate}) {
-		    if ($index->{midasi} =~ /^(.+?)\->(.+?)$/) {
-			my $_dpnd1 = &makePenaltyTerms ($index, $poslist, $pos2info, 1, $file);
-			my $_dpnd2 = &makePenaltyTerms ($index, $poslist, $pos2info, 0, $file);
+		    # ペナルティタームの生成
+		    if (exists $midasiOfDpndancyTerm{$index->{midasi}}) {
+			my $_dpnd1 = &makePenaltyTerms ($index, $pos2synnode, $pos2info, 1, $file, \%midasiOfDpndancyTerm);
+			my $_dpnd2 = &makePenaltyTerms ($index, $pos2synnode, $pos2info, 0, $file, \%midasiOfDpndancyTerm);
 
 			foreach my $_dpnd (($_dpnd1, $_dpnd2)) {
 			    next unless (defined $_dpnd);
 
-			    my $__dpnd = sprintf ("%s%s", $tag, $_dpnd);
-			    push (@{$coords{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}});
-			    $coords{$__dpnd}->{score} -= $index->{score};
-			    $coords{$__dpnd}->{sids}{$sid} = 1;
+			    my $__dpnd = sprintf ("%s%s\$", $tag, $_dpnd);
+			    push (@{$ret{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}});
+			    $ret{$__dpnd}->{score} -= $index->{score};
+			    $ret{$__dpnd}->{sids}{$sid} = 1;
 			}
 		    }
 		}
 
-		print $midasi . "\n" if ($opt{verbose});
+
+
 		$ret{$midasi}->{sids}{$sid} = 1;
 		if ($opt{knp} || $opt{syn} || $opt{english}) {
 		    push(@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
@@ -770,40 +797,47 @@ sub merge_indices {
 	}
     }
 
+    return \%ret;
+}
 
-    # 同位語から作成した係り受けを追加
-    foreach my $term (keys %coords) {
-	my $_term = $term;
-	$_term =~ s/.$//;
-	unless (exists $ret{$_term}) {
-	    $ret{$term} = $coords{$term};
+sub getSynonyms {
+    my ($synids) = @_;
+
+    my @synonyms = ();
+    foreach my $synnode (@$synids) {
+	next unless (defined $synnode);
+	foreach my $string (split(/\|/, $SYNDB{$synnode})) {
+	    $string =~ s!\[.+\]$!!;
+	    $string =~ s!^(.+?)/.+$!\1!;
+	    push (@synonyms, $string);
 	}
     }
-
-    return \%ret;
+    return \@synonyms;
 }
 
 # 同位語をもとにペナルティタームを作成する
 sub makePenaltyTerms {
-    my ($term, $poslist, $pos2info, $forMoto, $file) = @_;
+    my ($term, $pos2synnode, $pos2info, $forMoto, $file, $midasiOfDpndancyTerm) = @_;
 
     my $_term = undef;
     my $pos = $term->{pos};
     my ($moto, $saki) = ($term->{midasi} =~ /^(.+?)\->(.+?)$/);
-    my $_moto = $moto;
-    my $_saki = $saki;
+    my $_moto = $moto; $_moto =~ s/\*$//;
+    my $_saki = $saki; $_saki =~ s/\*$//;
 
     # 原形かどうかのチェック
-    $_moto =~ s/\*$//;
-    $_saki =~ s/\*$//;
     my $isGenkei = ($moto =~ /\*$/ || $saki =~ /\*$/) ? 1 : 0;
 
     my $tid;
+    my $synonyms;
     if ($forMoto) {
 	# 係り元が属す表現のIDを獲得（機->計算機）
 	$tid = $pos2info->{$term->{moto_pos}}->{tid} if (exists $pos2info->{$term->{moto_pos}});
 	# pos2infoから同位語の情報が得られない場合は、係り先の語に関して同位語DBを引く
 	$tid = $ECTS->term2id($_moto) unless (defined $tid);
+
+	# 係り先の語の同義語を取得
+	$synonyms = &getSynonyms($pos2synnode->{$term->{saki_pos}});
     } else {
 	# 係り先が属す表現のIDを獲得（機->計算機）
 	$tid = $pos2info->{$term->{saki_pos}}->{tid} if (exists $pos2info->{$term->{saki_pos}});
@@ -811,6 +845,9 @@ sub makePenaltyTerms {
 	$tid = undef if (exists $pos2info->{$term->{saki_pos}} && $term->{saki_pos} - $term->{moto_pos} < $pos2info->{$term->{saki_pos}}->{length});
 	# pos2infoから同位語の情報が得られない場合は、係り先の語に関して同位語DBを引く
 	$tid = $ECTS->term2id($_saki) unless (defined $tid);
+
+	# 係り元の語の同義語を取得
+	$synonyms = &getSynonyms($pos2synnode->{$term->{moto_pos}});
     }
 
     if (defined $tid) {
@@ -828,7 +865,23 @@ sub makePenaltyTerms {
 		next unless ($_moto ne $coord && $_saki ne $coord);
 
 		my $_coord = ($isGenkei) ? sprintf ("%s*", $coord) : $coord;
-		$_term = ($forMoto) ? sprintf ("%s->%s\$", $_coord, $saki) : sprintf ("%s->%s\$", $moto, $_coord);
+
+		# ペナルティタームの生成
+		$_term = ($forMoto) ? sprintf ("%s->%s", $_coord, $saki) : sprintf ("%s->%s", $moto, $_coord);
+
+		# ペナルティタームと同じ係り受けタームが文書中に存在するかどうかチェック
+		if (exists $midasiOfDpndancyTerm->{$_term}) {
+		    $_term = undef;
+		} else {
+		    # 同義語を考慮
+		    foreach my $synonym (@$synonyms) {
+			$synonym .= '*' if ($isGenkei);
+			my $__term = ($forMoto) ? sprintf ("%s->%s", $_coord, $synonym) : sprintf ("%s->%s", $synonym, $_coord);
+			if (exists $midasiOfDpndancyTerm->{$__term}) {
+			    $_term = undef; last;
+			}
+		    }
+		}
 	    }
 	}
     }
