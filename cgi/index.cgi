@@ -10,6 +10,7 @@ BEGIN {
     $CONFIG = Configure::get_instance();
     push(@INC, $CONFIG->{TSUBAKI_SCRIPT_PATH});
     push(@INC, $CONFIG->{TSUBAKI_MODULE_PATH});
+    push(@INC, $CONFIG->{WWW2SF_PATH});
     push(@INC, $CONFIG->{UTILS_PATH});
 }
 
