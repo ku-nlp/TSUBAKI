@@ -367,9 +367,11 @@ sub print_header {
 END_OF_HTML
 
 
-# クエリ解析結果を描画するjavascriptコードの出力
-    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
-    &printJavascriptCode('canvas', $query, $opt) if ($query->{rawstring});
+    # クエリ解析結果を描画するjavascriptコードの出力
+    unless ($CONFIG->{IS_ENGLISH_VERSION}) {
+	my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
+	&printJavascriptCode('canvas', $query, $opt) if ($query->{rawstring});
+    }
     print "</HEAD>\n";
 }
 
