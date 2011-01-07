@@ -196,7 +196,7 @@ NUMBER_OF_DOCUMENTS	94002227
 AVERAGE_DOCUMENT_LENGTH	524.4507
 
 # 強調表示に用いる色
-HIGHLIGHT_COLOR		ffffaa,ddffff,ddffdd,ffdddd,ffddff,dd0000,00dd00,dddd00,00dddd,dd00dd
+HIGHLIGHT_COLOR		ffffaa,ddffff,ffddff,ffbbbb,ddffdd,dd0000,00dd00,dddd00,00dddd,dd00dd
 
 # 作業領域
 WORKSPACE	/tmp/tsubaki

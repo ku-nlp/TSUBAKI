@@ -425,8 +425,6 @@ sub _pushbackDependencyTerms {
 sub getPaintingJavaScriptCode {
     my ($result, $colorOffset, $opt) = @_;
 
-    ###### 変数の初期化 #####
-
     my $REQUISITE = '<クエリ必須語>';
     my $OPTIONAL  = '<クエリ不要語>';
     my $IGNORE    = '<クエリ削除語>';
@@ -441,9 +439,9 @@ sub getPaintingJavaScriptCode {
     my @color = ();
     push(@color, '#ffa500;');
     push(@color, '#000080;');
-    push(@color, '#779977;');
-    push(@color, '#800000;');
     push(@color, '#997799;');
+    push(@color, '#800000;');
+    push(@color, '#779977;');
     push(@color, '#770000;');
     push(@color, '#007700;');
     push(@color, '#777700;');
@@ -453,9 +451,9 @@ sub getPaintingJavaScriptCode {
     my @bgcolor = ();
     push(@bgcolor, '#ffff99;');
     push(@bgcolor, '#bbffff;');
-    push(@bgcolor, '#bbffbb;');
-    push(@bgcolor, '#ffbbbb;');
     push(@bgcolor, '#ffbbff;');
+    push(@bgcolor, '#ffbbbb;');
+    push(@bgcolor, '#bbffbb;');
     push(@bgcolor, '#bb0000;');
     push(@bgcolor, '#00bb00;');
     push(@bgcolor, '#bbbb00;');
@@ -465,9 +463,9 @@ sub getPaintingJavaScriptCode {
     my @stylecolor = ();
     push(@stylecolor, 'border: 2px solid #ffa500; background-color: #ffff99;');
     push(@stylecolor, 'border: 2px solid #000080; background-color: #bbffff;');
-    push(@stylecolor, 'border: 2px solid #779977; background-color: #bbffbb;');
-    push(@stylecolor, 'border: 2px solid #800000; background-color: #ffbbbb;');
     push(@stylecolor, 'border: 2px solid #997799; background-color: #ffbbff;');
+    push(@stylecolor, 'border: 2px solid #800000; background-color: #ffbbbb;');
+    push(@stylecolor, 'border: 2px solid #779977; background-color: #bbffbb;');
     push(@stylecolor, 'border: 2px solid #770000; background-color: #bb0000; color: white;');
     push(@stylecolor, 'border: 2px solid #007700; background-color: #00bb00; color: white;');
     push(@stylecolor, 'border: 2px solid #777700; background-color: #bbbb00; color: white;');
