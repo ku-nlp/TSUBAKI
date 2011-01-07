@@ -132,7 +132,7 @@ sub print_copyright {
     TSUBAKI利用時の良かった点、問題点などご意見を頂けると幸いです。<br>
     ご意見は tsubaki-feedback あっと nlp.kuee.kyoto-u.ac.jp までお願い致します。
     <P>
-    <DIV><B>&copy;2006 - 2010 黒橋研究室</B></DIV> 
+    <DIV><B>&copy;2006 - 2011 黒橋研究室</B></DIV> 
 </DIV>
 </BODY>
 </HTML>
@@ -591,8 +591,6 @@ sub printBlockTypeCheckbox {
     my ($this, $params) = @_;
 
     if ($CONFIG->{USE_OF_BLOCK_TYPES} && !$CONFIG->{DISABLE_BLOCK_TYPE_DISPLAY}) {
-	print qq(<TR>\n);
-	printf qq(<TD colspan="2" align="%s">\n), (($params->{query}) ? 'left' : 'center');
 	print qq(<DIV style="padding-top:1em; border: 0px solid green;">\n);
 	foreach my $key (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
 	    my $tag = $CONFIG->{BLOCK_TYPE_DATA}{$key}{tag};
