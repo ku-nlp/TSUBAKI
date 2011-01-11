@@ -75,6 +75,7 @@ sub new {
 	$this->{isRoot} = $opt->{isRoot};
 	$this->{condition} = $opt->{condition};
 	$this->{rep2style} = $opt->{rep2style};
+	$this->{rep2rep_w_yomi} = $opt->{rep2rep_w_yomi};
 	$this->{synnode2midasi} = $opt->{synnode2midasi};
     } else {
 	$this->{gdf} = $gdf;
@@ -196,23 +197,22 @@ sub to_string {
 }
 
 sub to_uri_escaped_string {
-    my ($this) = @_;
+    my ($this, $rep2rep_w_yomi) = @_;
 
     if ($this->{isRoot}) {
 	my @buf;
 	foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
-	    push (@buf, $child->to_uri_escaped_string());
+	    push (@buf, $child->to_uri_escaped_string($this->{rep2rep_w_yomi}));
 	}
 	return &uri_escape(encode('utf8', join (",", @buf)));
     } else {
 	my %buf = ();
 	foreach my $term (@{$this->{terms}}) {
-	    $buf{$term->to_uri_escaped_string()} = 1;
+	    $buf{$term->to_uri_escaped_string($rep2rep_w_yomi)} = 1;
 	}
-
 	if ($this->{hasChild}) {    
 	    foreach my $child (sort {$a->{gdf} <=> $b->{gdf}} @{$this->{children}}) {
-		$buf{$child->to_uri_escaped_string()} = 1;
+		$buf{$child->to_uri_escaped_string($rep2rep_w_yomi)} = 1;
 	    }
 	}
 

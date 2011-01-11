@@ -107,11 +107,11 @@ sub get_term_type {
 }
 
 sub to_uri_escaped_string {
-    my ($this) = @_;
+    my ($this, $rep2rep_w_yomi) = @_;
 
     if ($this->{term_type} eq 'word') {
 	unless ($this->{text} =~ /<^>]+?>/) {
-	    return $this->{text};
+	    return $rep2rep_w_yomi->{$this->{text}};
 	}
     }
     return '';

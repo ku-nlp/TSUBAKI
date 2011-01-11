@@ -19,7 +19,7 @@ my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYN
 sub create {
     my ($result, $condition, $option) = @_;
 
-    my ($terms, $optionals, $rep2style, $synnode2midasi);
+    my ($terms, $optionals, $rep2style, $rep2rep_w_yomi, $synnode2midasi);
     if ($option->{english}) {
 	my $gid = 0;
 	foreach my $line (split (/\n/, $result)) {
@@ -42,6 +42,7 @@ sub create {
 	my @ids = ();
 	my @kihonkus = $result->tag;
 	$rep2style = &_getRep2Style (\@kihonkus, \@ids, $option);
+	$rep2rep_w_yomi = &_getRep2RepWithYomi (\@kihonkus, \@ids, $option);
 	$synnode2midasi = &_getSynNode2Midasi (\@kihonkus, $option);
 	($terms, $optionals) =
 	    (($condition->{is_phrasal_search} > 0) ?
@@ -64,11 +65,29 @@ sub create {
 	    result         => $result,
 	    condition      => $condition,
 	    rep2style      => $rep2style,
+	    rep2rep_w_yomi => $rep2rep_w_yomi,
 	    synnode2midasi => $synnode2midasi
 	});
 
     return $root;
 }
+
+# キャッシュページハイライト用に、タームからターム（読み付き）へのマップを作成
+sub _getRep2RepWithYomi {
+    my ($kihonkus, $ids, $option) = @_;
+
+    my %rep2rep_w_yomi = ();
+    foreach my $i (0 .. scalar (@$kihonkus) - 1) {
+	foreach my $synnodes ($kihonkus->[$i]->synnodes) {
+	    foreach my $synnode ($synnodes->synnode) {
+		$rep2rep_w_yomi{&remove_yomi(lc($synnode->synid))} = $synnode->synid;
+	    }
+	}
+    }
+
+    return \%rep2rep_w_yomi;
+}
+
 
 # スニペット表示の際に利用するタームのスタイルシートを生成
 sub _getRep2Style {
