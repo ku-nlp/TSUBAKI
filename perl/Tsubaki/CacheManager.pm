@@ -8,7 +8,7 @@ use strict;
 use utf8;
 use POSIX qw(strftime);
 use Configure;
-use Storable;
+use Storable qw(nstore retrieve);
 
 my $CONFIG = Configure::get_instance();
 
@@ -16,64 +16,93 @@ my $CONFIG = Configure::get_instance();
 sub new {
     my ($class) = @_;
 
-    my %buf;
+    my %data;
+    my %mode;
     unless ($CONFIG->{DISABLE_CACHE}) {
 	my $cachelog = "$CONFIG->{CACHE_DIR}/log";
+	# log ファイルがなければ作成する
+	unless (-f $cachelog) {
+	    open (W, "> $cachelog") or die $!; close (W) or die $!;
+	    chmod(0777, $cachelog) or die $!;
+	}
+
 	open(READER, '<:utf8', $cachelog) or die;
 	while (<READER>) {
 	    chop;
-	    my ($time, $key, $fp) = split("\t", $_);
-	    $buf{$key} = $fp;
+	    my ($time, $mode, $key, $file) = split("\t", $_);
+	    $data{$key} = $file;
+	    $mode{$key} = $mode;
+
 	}
 	close(READER);
     }
 
-    my $this = {cachedData => \%buf};
+    my $this;
+    $this->{data} = \%data;
+    $this->{mode} = \%mode;
 
     bless $this;
 }
 
 sub save {
-    my ($this, $query, $result) = @_;
+    my ($this, $key, $result, $mode) = @_;
 
-    # 英語のときはキャッシュしない
-    if (!$CONFIG->{IS_ENGLISH_VERSION} && $result->{hitcount} > 0) {
-	my $timestamp = strftime("%Y-%m-%d-%T", localtime(time));
-	my $fname = $timestamp;
-	my $filepath = sprintf("%s/%s", $CONFIG->{CACHE_DIR}, $fname);
-	store($result, $filepath) or die;
+    my $timestamp = strftime("%Y-%m-%d-%T", localtime(time));
+    my $fname = $timestamp;
+    my $filepath = sprintf("%s/%s", $CONFIG->{CACHE_DIR}, $fname);
 
-	my $normalizedQuery = $query->normalize();
-	my $cachelog = "$CONFIG->{CACHE_DIR}/log";
-	open(WRITER, '>>:utf8', $cachelog) or die;
-	print WRITER "$timestamp\t$normalizedQuery\t$filepath\n";
-	close(WRITER);
+    if ($mode eq 'OBJ') {
+	nstore ($result, $filepath) or die $!;
     }
+    elsif ($mode eq 'TXT') {
+	open (F, "> $filepath") or die $!;
+	print F $result;
+	close (F);
+    }
+    else {
+	nstore ($result, $filepath) or die $!;
+	$mode = 'OBJ';
+    }
+
+
+    my $cachelog = "$CONFIG->{CACHE_DIR}/log";
+    open(WRITER, '>>:utf8', $cachelog) or die;
+    print WRITER "$timestamp\t$mode\t$key\t$filepath\n";
+    close(WRITER);
 }
 
 sub exists {
-    my ($this, $query) = @_;
+    my ($this, $key) = @_;
 
     # 英語のときはキャッシュを使わない
     return 0 if $CONFIG->{IS_ENGLISH_VERSION};
 
-    my $normalizedQuery = $query->normalize();
-
-    return exists $this->{cachedData}{$normalizedQuery};
+    return exists $this->{cachedData}{$key};
 }
 
 sub load {
-    my ($this, $query) = @_;
+    my ($this, $key) = @_;
 
     # 英語のときはキャッシュを使わない
     return undef if $CONFIG->{IS_ENGLISH_VERSION};
 
-    my $normalizedQuery = $query->normalize();
-    my $filepath = $this->{cachedData}{$normalizedQuery};
+    my $filepath = $this->{data}{$key};
 
     my $result;
     if ($filepath) {
-	$result = retrieve($filepath) or die;
+	if ($this->{mode}{$key} eq 'OBJ') {
+	    $result = retrieve($filepath) or die $!;
+	}
+	elsif ($this->{mode}{$key} eq 'TXT') {
+	    open (F, $filepath) or die $!;
+	    while (<F>) {
+		$result .= $_;
+	    }		
+	    close (F);
+	}
+	else {
+	    $result = retrieve($filepath) or die $!;
+	}
     }
 
     return $result;
