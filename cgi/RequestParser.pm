@@ -16,6 +16,7 @@ use IO::Socket;
 use IO::Select;
 use MIME::Base64;
 use Storable;
+use URI::Escape;
 
 
 my $CONFIG = Configure::get_instance();
@@ -90,6 +91,13 @@ sub getDefaultValues {
     $params{field} = "";
     $params{id} = -1;
     $params{Sids} = "";
+
+
+    # クラスタリング結果用設定
+    $params{cluster_id} = undef;
+    $params{cluster_label} = undef;
+    $params{org_referer} = sprintf ("%s", $ENV{REQUEST_URI});
+    $params{escaped_org_referer} = uri_escape($params{org_referer});
 
 
     # その他
@@ -304,6 +312,7 @@ sub parseCGIRequest {
     my ($cgi) = @_;
 
     my $THIS_IS_API_CALL = 0;
+
     my $params = &getDefaultValues($THIS_IS_API_CALL);
 
     if ($cgi->param('cache')) {
