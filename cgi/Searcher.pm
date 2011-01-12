@@ -53,7 +53,6 @@ sub search {
     ####################################
 
     # 時間の測定開始
-
     $logger->setTimeAs('create_se_obj', '%.3f');
 
     my ($hitcount, $results, $status);
@@ -71,6 +70,10 @@ sub search {
 	my $se_obj = new SearchEngine($opt->{syngraph});
 	($hitcount, $results, $status) = $se_obj->search($query, $logger, $opt);
     }
+
+    # 検索結果をフィルタリング
+    $results = $this->filterSearchResult($results, $opt) if (defined $opt->{cluster_id});
+
     # 検索に要した時間をロギング
     $logger->setTimeAs('search', '%.3f');
 
@@ -79,7 +82,6 @@ sub search {
 
     # 検索時のステータスをロギング
     $logger->setParameterAs('status', $status);
-
 
     return ([], 0, $status) if ($hitcount < 1);
 
@@ -106,6 +108,46 @@ sub search {
 
 
     return ($mg_result, $size, $status);
+}
+
+# 検索結果を絞りこむ
+sub filterSearchResult {
+    my ($this, $_results, $opt) = @_;
+
+    # クラスタリング結果のロード
+    require Tsubaki::CacheManager;
+    my $cache = new Tsubaki::CacheManager();
+    my $key = sprintf ("clustering{query=%s,num=%s}", uri_escape(encode('utf8', $opt->{query})), 100);
+    my $xmldat = $cache->load($key);
+
+    require XML::LibXML;
+    my $parser = new XML::LibXML;
+
+    my $result = $parser->parse_string($xmldat);
+    my %dids = ();
+    foreach my $cluster ($result->getElementsByTagName('Cluster')) {
+	my $id = $cluster->getAttribute('Id');
+	if ($id == $opt->{cluster_id}) {
+	    foreach my $doc ($cluster->getElementsByTagName('Doc')) {
+		$dids{$doc->getAttribute('Id')} = 1;
+	    }
+	}
+    }
+
+
+
+    my $i = 0;
+    my @results;
+    foreach my $_result (@$_results) {
+	push (@{$results[$i]}, ());
+	foreach my $doc (@$_result) {
+	    if ($dids{$doc->{did}}) {
+		push (@{$results[-1]}, $doc);
+	    }
+	}
+	$i++ if (scalar(@{$results[-1]}) > 0);
+    }
+    return \@results;
 }
 
 # 検索サーバから得られた検索結果のマージ
