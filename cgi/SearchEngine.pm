@@ -45,9 +45,9 @@ sub search {
     my ($this, $query, $logger, $opt) = @_;
 
     my $cache = new Tsubaki::CacheManager();
-    my $result = $cache->load($query);
-    my $status;
+    my $result = $cache->load($query->normalize());
 
+    my $status;
     if ($result && !$opt->{disable_cache}) {
 	$logger->setTimeAs('search', '%.3f');
 	$logger->setParameterAs('IS_CACHE', 1);
@@ -58,7 +58,11 @@ sub search {
 	if ($CONFIG->{DISABLE_REQUEST_SCHEDULING} || $state->checkIn()) {
 	    $result = $this->broadcastSearch($query, $logger, $opt);
 
-	    $cache->save($query, $result) unless ($opt->{disable_cache});
+	    # キャッシュを利用しない、英語モード、ヒット件数が0件のときはキャッシュしない
+	    unless ($opt->{disable_cache} || !$CONFIG->{IS_ENGLISH_VERSION} || $result->{hitcount} < 1) {
+		$cache->save($query->normalize(), $result);
+	    }
+
 	    $logger->setParameterAs('IS_CACHE', 0);
 	    $state->checkOut();
 	    $status = 'search';
