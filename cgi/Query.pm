@@ -51,6 +51,11 @@ sub normalize {
 	next if ($memberName eq 'start');
 	next if ($memberName eq 'score_verbose');
 	next if ($memberName eq 'logger');
+	next if ($memberName eq 'synnode2midasi');
+	next if ($memberName eq 'rep2style');
+	next if ($memberName eq 'result');
+	next if ($memberName eq 's_exp');
+	next if ($memberName eq 'sort_by_year');
 
 	if ($memberName eq 'option') {
 	    foreach my $k (sort keys %{$this->{option}}) {
@@ -60,12 +65,22 @@ sub normalize {
 		next if ($k eq 'indexer');
 		next if ($k eq 'debug');
 		next if ($k eq 'logger');
+		next if ($k eq 'URI');
+		next if ($k eq 'start');
 
 		my $v = (defined $this->{option}{$k}) ? $this->{option}{$k} : 0;
 
-		next if ((ref $v) =~ /(HASH|ARRAY)/);
-
-		push(@buf, $k . '=' . $v);
+		if ((ref $v) =~ /(HASH|ARRAY)/) {
+		    my @blockT = ();
+		    if ($k eq 'blockTypes') {
+			while (my ($kk, $vv) = each %$v) {
+			    push (@blockT, sprintf ("%s=%s", $kk, $vv));
+			}
+		    }
+		    push(@buf, sprintf ("%s={%s}", $k, join(",", @blockT)));
+		} else {
+		    push(@buf, $k . '=' . $v);
+		}
 	    }
 	} else {
 	    my $v = (defined $this->{$memberName}) ? $this->{$memberName} : 0;
@@ -79,7 +94,12 @@ sub normalize {
 	$i++;
     }
 
-    return join(',', @buf);
+    my $normalizedQueryString = join(',', @buf);
+    if (utf8::is_utf8($normalizedQueryString)) {
+	return $normalizedQueryString;
+    } else {
+	return decode('utf8', $normalizedQueryString);
+    }
 }
 
 1;
