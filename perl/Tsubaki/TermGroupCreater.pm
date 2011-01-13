@@ -50,6 +50,28 @@ sub create {
 	     &_create (0, \@kihonkus, \@ids, undef, "", $option));
     }
 
+    if ($option->{conjunctive_particle}) {
+	my $termG = new Tsubaki::TermGroup();
+	foreach my $midasi (@{$option->{conjunctive_particle}}) {
+	    my ($cnt, $gid) = (10000, 0);
+	    my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
+	    foreach my $tag (keys %$blockTypes) {
+		next unless ($tag eq ':MT');
+		my $term = new Tsubaki::Term ({
+		    tid => sprintf ("%s-%s", $gid, $cnt++),
+		    pos => 0,
+		    text => sprintf ("%s*", $midasi),
+		    term_type => 'word',
+		    node_type => 'basic',
+		    gdf => 10000000,
+		    blockType => (($tag eq 'UNDEF') ? undef : $tag)
+					      });
+		push (@{$termG->{terms}}, $term);
+	    }
+	}
+	unshift (@$terms, $termG);
+    }
+
     my $root = new Tsubaki::TermGroup (
 	-1,
 	-1,
