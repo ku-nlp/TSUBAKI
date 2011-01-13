@@ -123,6 +123,15 @@ sub getDefaultValues {
 
 
     #######################################################
+    # 情報爆発デモ用
+    #######################################################
+
+    # 根拠サーチ用パラメータ
+    $params{conjunctive_particle} = undef;    
+
+
+
+    #######################################################
     # 論文検索用
     #######################################################
 
@@ -213,6 +222,13 @@ sub setParametersOfGetRequest {
 			$types{$tag . ":"} = 1;
 		    }
 		    $CONFIG->{BLOCK_TYPE_DATA}{$tag}{isChecked} = 1;
+		}
+	    }
+	    # 情報爆発用デモ
+	    # 根拠サーチ用パラメータの取得
+	    elsif ($name eq 'conjunctive_particle') {
+		foreach my $conj (split (/,/, decode('utf8', $cgi->param($name)))) {
+		    push (@{$params->{$name}}, $conj);
 		}
 	    } else {
 		if (scalar (@values) > 1) {
