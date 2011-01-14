@@ -54,7 +54,13 @@ sub printQuery {
 	if ($size > $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'}) {
 	    my $end = $params->{'start'} + $CONFIG->{'NUM_OF_RESULTS_PER_PAGE'};
 	    $end = $size if ($end > $size);
-	    printf("のうち %d - %d 件目\n", $params->{'start'} + 1, $end);
+	    printf("のうち");
+	    printf(" <B>%s</B> を含む文書", decode('utf8', $params->{cluster_label})) if (defined $params->{cluster_label});
+	    printf(" %d - %d 件目\n", $params->{'start'} + 1, $end);
+	} else {
+	    if (defined $params->{cluster_label}) {
+		printf("のうち <B>%s</B> を含む文書", decode('utf8', $params->{cluster_label}));
+	    }
 	}
 	print "</TD>\n";
     }
@@ -108,6 +114,13 @@ sub printFooter {
 				push (@buf, sprintf ("blockTypes=%s", $tag));
 			    }
 			}
+			if (defined $params->{cluster_id}) {
+			    push (@buf, sprintf ("cluster_id=%d", $params->{cluster_id}));
+			}
+			if (defined $params->{cluster_id}) {
+			    push (@buf, sprintf ("cluster_label=%s", &uri_escape($params->{cluster_label})));
+			}
+
 			printf qq(<a href="index.cgi?start=%d&query=%s&%s">%d</a>&nbsp;), $offset, $params->{query}, join ("&", @buf), $i + 1;
  		    } else {
 			printf qq(<a href="index.cgi?start=%d&query=%s">%d</a>&nbsp;), $offset, $params->{query}, $i + 1;
@@ -270,11 +283,14 @@ END_OF_HTML
 
     <script language="JavaScript" type="text/javascript">
 END_OF_HTML
+unless ($query->{rawstring}) {
+    print "</script>\n";
+    return;
+}
 
     print "var jg;\n";
     print "function init () {\n";
     printf "jg = new jsGraphics('%s');\n", $canvasName;
-
 
     if ($CONFIG->{IS_CPP_MODE}) {
 	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", 0;
@@ -367,11 +383,9 @@ sub print_header {
 END_OF_HTML
 
 
-    # クエリ解析結果を描画するjavascriptコードの出力
-    unless ($CONFIG->{IS_ENGLISH_VERSION}) {
-	my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
-	&printJavascriptCode('canvas', $query, $opt) if ($query->{rawstring});
-    }
+# クエリ解析結果を描画するjavascriptコードの出力
+    my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
+    &printJavascriptCode('canvas', $query, $opt);
     print "</HEAD>\n";
 }
 
@@ -466,7 +480,7 @@ sub print_form {
 
     printf qq(<TD width="*" align="%s" valign="middle" style="border: 0px solid red; padding-top: 1em;">\n), (($params->{query}) ? 'left' : 'center');
 
-    print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data">\n);
+    print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data" onSubmit="submitQuery();">\n);
     print qq(<INPUT type="hidden" name="start" value="1">\n);
     print qq(<INPUT type="text" id="qbox" name="query" value="$params->{'query'}" size="112">\n);
 
@@ -915,6 +929,32 @@ sub printSlaveServerLogs {
     print "</DIV>\n";
 }
 
+sub printAjax {
+    my ($this, $params) = @_;
+
+    print << "END_OF_HTML";
+<SCRIPT>
+new Ajax.Request(
+    "call-webclustering.cgi",
+    {
+         onSuccess  : processResponse,
+         onFailure  : notifyFailure,
+         parameters : "query=$params->{query}&num=100&org_referer=$params->{escaped_org_referer}"
+    }
+);
+
+function processResponse(xhrObject)
+    {
+	Element.update('msg', xhrObject.responseText);
+    }
+
+function notifyFailure()
+    {
+        alert("An error occurred!");
+    }
+</SCRIPT>
+END_OF_HTML
+}
 
 sub printSearchResultForBrowserAccess {
     my ($this, $params, $results, $query, $logger, $status) = @_;
@@ -941,6 +981,8 @@ sub printSearchResultForBrowserAccess {
     ##################
     $this->printQuery($logger, $params, $size, $query, $status);
 
+    # for ajax
+    $this->printAjax($params);
 
     ############################
     # 必要ならばスニペットを生成
@@ -1074,10 +1116,11 @@ sub printOrdinarySearchResult {
     ################
     # 検索結果を表示
     ################
+    print "<TABLE border='0'><TR><TD valign='top'>";
     my $uri_escaped_search_keys = ($CONFIG->{IS_CPP_MODE}) ? $query->{escaped_query} : $this->get_uri_escaped_query($query);
     for (my $rank = $start; $rank < $end; $rank++) {
-#	my $did = sprintf("%09d", $results->[$rank]{did});
 	my $did = $results->[$rank]{did};
+
 	my $score = sprintf("score = %.4f", $results->[$rank]{score_total});
 	my $snippet = $did2snippets->{$did};
 	my $title = $results->[$rank]{title};
@@ -1264,6 +1307,32 @@ sub printOrdinarySearchResult {
 	# 1 ページ分の結果を表示
 	print $output;
     }
+    print << "END_OF_HTML";
+</TD>
+<TD valign='top' width='300'>
+
+<TABLE width="100%" cellpadding="0" cellspacing="0">
+<TR>
+<TD width="7"><IMG src="image/top-left.PNG"></TD>
+<TD width="*" style='border-top:1px solid silver;'><IMG src="image/bottom-left.PNG" width=1></TD>
+<TD width="7"><IMG src="image/top-right.PNG"></TD></TR>
+
+<TR>
+<TD style='border-left:1px solid silver;'><IMG src="image/bottom-left.PNG" width=1></TD>
+<TD><DIV id='msg'><CENTER><IMG width='1em' src='image/loading.gif' border='0'>&nbsp;関連語蒸留中...</CENTER></DIV></TD>
+<TD style='border-right:1px solid silver;'><IMG src="image/bottom-left.PNG" width=1></TD>
+</TR>
+
+<TR>
+<TD><IMG src="image/bottom-left.PNG"></TD>
+<TD style='border-bottom:1px solid silver;'><IMG src="image/bottom-left.PNG" width=1></TD>
+<TD><IMG src="image/bottom-right.PNG"></TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>;
+END_OF_HTML
 }
 
 sub printIPSJSearchResult {
