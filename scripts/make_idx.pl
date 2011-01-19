@@ -798,16 +798,18 @@ sub merge_indices {
 		if ($opt{penalty}) {
 		    # ペナルティタームの生成
 		    if (exists $midasiOfDpndancyTerm{$index->{midasi}}) {
-			my $_dpnd1 = &makePenaltyTerms ($index, $pos2synnode, $pos2info, 1, $file, \%midasiOfDpndancyTerm);
-			my $_dpnd2 = &makePenaltyTerms ($index, $pos2synnode, $pos2info, 0, $file, \%midasiOfDpndancyTerm);
+			my $_dpnds1 = &makePenaltyTerms ($index, $pos2synnode, $pos2info, 1, $file, \%midasiOfDpndancyTerm);
+			my $_dpnds2 = &makePenaltyTerms ($index, $pos2synnode, $pos2info, 0, $file, \%midasiOfDpndancyTerm);
 
-			foreach my $_dpnd (($_dpnd1, $_dpnd2)) {
-			    next unless (defined $_dpnd);
+			foreach my $_dpnds (($_dpnds1, $_dpnds2)) {
+			    foreach my $_dpnd (@$_dpnds) {
+				next unless (defined $_dpnd);
 
-			    my $__dpnd = sprintf ("%s%s\$", $tag, $_dpnd);
-			    push (@{$ret{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}});
-			    $ret{$__dpnd}->{score} -= $index->{score};
-			    $ret{$__dpnd}->{sids}{$sid} = 1;
+				my $__dpnd = sprintf ("%s%s\$", $tag, $_dpnd);
+				push (@{$ret{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}});
+				$ret{$__dpnd}->{score} -= $index->{score};
+				$ret{$__dpnd}->{sids}{$sid} = 1;
+			    }
 			}
 		    }
 		}
@@ -847,7 +849,6 @@ sub getSynonyms {
 sub makePenaltyTerms {
     my ($term, $pos2synnode, $pos2info, $forMoto, $file, $midasiOfDpndancyTerm) = @_;
 
-    my $_term = undef;
     my $pos = $term->{pos};
     my ($moto, $saki) = ($term->{midasi} =~ /^(.+?)\->(.+?)$/);
     my $_moto = $moto; $_moto =~ s/\*$//;
@@ -878,6 +879,7 @@ sub makePenaltyTerms {
 	$synonyms = &getSynonyms($pos2synnode->{$term->{moto_pos}});
     }
 
+    my @penaltyTerms = ();
     if (defined $tid) {
 	my $bgn = $pos - $DIST_FOR_MAKING_COORD_DPND; $bgn = 0 if ($bgn < 0);
 	my $end = $pos + $DIST_FOR_MAKING_COORD_DPND;
@@ -895,7 +897,7 @@ sub makePenaltyTerms {
 		my $_coord = ($isGenkei) ? sprintf ("%s*", $coord) : $coord;
 
 		# ペナルティタームの生成
-		$_term = ($forMoto) ? sprintf ("%s->%s", $_coord, $saki) : sprintf ("%s->%s", $moto, $_coord);
+		my $_term = ($forMoto) ? sprintf ("%s->%s", $_coord, $saki) : sprintf ("%s->%s", $moto, $_coord);
 
 		# ペナルティタームと同じ係り受けタームが文書中に存在するかどうかチェック
 		if (exists $midasiOfDpndancyTerm->{$_term}) {
@@ -921,11 +923,12 @@ sub makePenaltyTerms {
 			}
 		    }
 		}
+		push (@penaltyTerms, $_term) if ($_term);
 	    }
 	}
     }
 
-    return $_term;
+    return \@penaltyTerms;
 }
 
 # 同位語を獲得
