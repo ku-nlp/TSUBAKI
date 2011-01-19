@@ -1,4 +1,501 @@
+2011-01-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl: bug fixed.
+
+	* scripts/make_idx.pl:
+	¥Ú¥Ê¥ë¥Æ¥£¥¿¡¼¥à¤òÀ¸À®¤¹¤ëºİ¡¢²¼°Ì¸ì¤ò¥Á¥§¥Ã¥¯¤¹¤ë¤è¤¦¤Ë.
+
+2011-01-17  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	Changed not to generate java scripts of query analysis for English mode.
+
+2011-01-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: ´ØÏ¢¸ì¤òÉ½¼¨¤¹¤ë¤è¤¦¤Ë.
+
+2011-01-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/TermGroupCreater.pm:
+	ÀÜÂ³½õ»ì¤¬»ØÄê¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¡¢S¼°¤ËÄÉ²Ã¤¹¤ë¤è¤¦¤Ë.
+
+	* cgi/RequestParser.pm: ÀÜÂ³½õ»ì¤ò»ØÄê¤¹¤ë¥Ñ¥é¥á¡¼¥¿¤ÎÄÉ²Ã.
+
+2011-01-12  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm: CacheManager¤ÎÊÑ¹¹¤ËÂĞ±ş.
+
+	* cgi/Searcher.pm:
+	¥¯¥é¥¹¥¿¥ê¥ó¥°·ë²Ì¤òÍøÍÑ¤·¤Æ¸¡º÷·ë²Ì¤ò¹Ê¤ê¤³¤á¤ë¤è¤¦¤Ë.
+
+	* cgi/RequestParser.pm: ¥¯¥é¥¹¥¿¥ê¥ó¥°ÍÑ¥Ñ¥é¥á¡¼¥¿¤ÎÄÉ²Ã.
+
+	* cgi/Query.pm: ¥¯¥¨¥ê¤ÎÀµµ¬²½½èÍı¤òÊÑ¹¹.
+
+	* perl/Tsubaki/CacheManager.pm:
+	Ç¤°Õ¤ÎÊ¸»úÎó¤ò¥­¡¼¤Ë¤Ç¤­¤ë¤è¤¦¤Ë, ÊİÂ¸¤¹¤ë¥â¡¼¥É¤òÄÉ²Ã.
+
+	* cgi/call-stmap.cgi, cgi/call-webclustering.cgi: added.
+
+2011-01-11  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/Term.pm, perl/Tsubaki/TermGroup.pm, perl/Tsubaki/TermGroupCreater.pm:
+	SYN¥Î¡¼¥ÉÆâ¤Î¸ì¤ò¥Ï¥¤¥é¥¤¥È¤¹¤ë¤è¤¦¤Ë.
+
+2011-01-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: ¼ÁÌä¥Ü¥Ã¥¯¥¹¤ò¾å¤Ë.
+
+	* cgi/configure.2010, cgi/configure.nict, perl/Tsubaki/TermGroupCreater.pm, cgi/configure:
+	¶¯Ä´¿§¤ÎÊÑ¹¹.
+
+2011-01-04  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm:
+	Changed not to generate java scripts of query analysis for English mode.
+
+	* cgi/api.cgi, cgi/index.cgi: Added WWW2SF_PATH to @INC.
+
+2010-12-29  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	¥Ú¥Ê¥ë¥Æ¥£¥¿¡¼¥à¤òÀ¸À®¤¹¤ëºİ¤ËÆ±µÁ¸ì¤ò¹ÍÎ¸¤¹¤ë¤è¤¦¤Ë.
+
+	* scripts/Indexer.pm: synid¤Î½Ğ¸½°ÌÃÖ¤òÊİ»ı¤¹¤ë¤è¤¦¤Ë.
+
+2010-12-28  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/Renderer.pm: small change.
+
+	* cgi/Query.pm, cgi/QueryParser.pm:
+	URI¥¨¥¹¥±¡¼¥×¤µ¤ì¤¿Ê¸»úÎó¤òÊİ»ı¤¹¤ë¤è¤¦¤Ë.
+
+	* perl/Tsubaki/Term.pm, perl/Tsubaki/TermGroup.pm:
+	URI¥¨¥ó¥³¡¼¥ÉÍÑ¤Î¥á¥½¥Ã¥É¤òÄÉ²Ã.
+
+2010-12-22  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm: Modified to highlight terms on NICT mode.
+
+2010-12-17  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm: term¤Î¾ğÊó¤òÊİ»ı¤¹¤ë¤Î¤Ï debug ¥â¡¼¥É»ş¤Î¤ß¤Ë.
+
+	* search/slave_server.cc: term ¤Î position ¤ò¼èÆÀ¤¹¤ëÊ¸½ñ¿ô¤òÀ©¸Â.
+
+2010-12-16  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/sf2term.pl: Output synnodes to term.
+
+2010-12-14  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/configure.nict:
+	Changed NO_ATTACH_SYNNODE_IN_WIKIPEDIA_ENTRY to 1.
+
+2010-12-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/test-query-parser.perl: ¥¨¥é¡¼¤ò½ĞÎÏ¤¹¤ë¤è¤¦¤Ë.
+
+	* cgi/QueryParser.pm:
+	¥¯¥¨¥ê²òÀÏ»ş¤Ë¥¨¥é¡¼¤¬½Ğ¤Æ¤â½èÍı¤¬½ªÎ»¤·¤Ê¤¤¤è¤¦¤Ë.
+
+	* cgi/QueryParser.pm:
+	Á´³Ñ¥¯¥ª¡¼¥È¤Ç°Ï¤Ş¤ì¤¿¾ì¹ç, ¥Õ¥ì¡¼¥º¸¡º÷¤È¤·¤ÆÇ§¼±¤¹¤ë¤è¤¦¤Ë.
+
+2010-12-13  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/sf2term.pl: Robustly recognize phrase nodes.
+
+	* sf2index/search.sh: Modified to use test-query-parser.perl.
+
+2010-12-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/test-query-parser.perl: QueryParser¤ÎÊÑ¹¹¤ËÂĞ±ş.
+
+	* cgi/QueryParser.pm: is_english_version ÊÑ¿ô¤ÎÄÉ²Ã.
+
+	* cgi/Configure.pm:
+	±Ñ¸ì¥¯¥¨¥ê¤Î²òÀÏ¤ËÍøÍÑ¤¹¤ë¥Ä¡¼¥ë¤Î¥ª¥Ö¥¸¥§¥¯¥È¤ò¡¢Configure ¤Î¥³¥ó¥¹¥È¥é¥¯¥¿À¸À®»ş¤Ë new ¤·¤Ê¤¤¤è¤¦¤Ë.
+
+2010-12-13  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile: Modified to generate correct dfdb.
+
+2010-12-13  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/test-query-parser.perl: ¥³¡¼¥ÉÀ°Íı.
+
+	* cgi/configure, cgi/configure.2010, cgi/configure.nict:
+	±Ñ¸ì¥â¡¼¥É¤Ç»²¾È¤¹¤ëÊÑ¿ô¤òÄÉ²Ã.
+
+	* cgi/Configure.pm:
+	±Ñ¸ì¥â¡¼¥É¤Îºİ¡¢TsuruokaTagger, MaltParser ¥ª¥Ö¥¸¥§¥¯¥È¤òÀ¸À®¤¹¤ë¤è¤¦¤Ë.
+
+	* cgi/QueryParser.pm:
+	TsuruokaTagger, MaltParser ¤ò»È¤Ã¤Æ¥¯¥¨¥ê¤ò²òÀÏ¤¹¤ë¤è¤¦¤Ë¡Ê±Ñ¸ì¥â¡¼¥É¡Ë
+
+	* perl/Tsubaki/TermGroupCreater.pm: ±Ñ¸ìÈÇ¤ÎS¼°¤ò½ĞÎÏ¤¹¤ë¤è¤¦¤Ë.
+
+2010-12-12  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile: Modified the clean target to clean completely.
+
+	* sf2index/sample_wikipedia/0105962505-2.html, sf2index/sample_wikipedia/0105963102-2.html, sf2index/sample_wikipedia/0105963106-2.html, sf2index/sample_wikipedia/0105963150-2.html, sf2index/sample_wikipedia/0105964025-2.html:
+	added.
+
+2010-12-11  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile: Added a target of creating DBs of url and title.
+
+	* scripts/make-url-title-cdbs.perl:
+	Modified to be able to speficy the names of cdbs.
+
+2010-12-10  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/README: updated.
+
+	* sf2index/Makefile: Changed to use www2sf.sh.
+
+	* sf2index/search.sh: Modified paths.
+
+	* cgi/QueryParser.pm:
+	Modified to use the value of NO_ATTACH_SYNNODE_IN_WIKIPEDIA_ENTRY in configure.
+
+	* cgi/configure, cgi/configure.2010, cgi/configure.nict:
+	Added a selection of NO_ATTACH_SYNNODE_IN_WIKIPEDIA_ENTRY.
+
+	* sf2index/search.sh: Modified to search by a given query.
+
+2010-12-09  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/query-sexp-generate.perl: added.
+
+	* perl/Tsubaki/TermGroup.pm: Fixed to use anchor.
+
+	* sf2index/sf2term.pl: Modified doc_id extraction.
+
+	* scripts/make-df-db.perl:
+	Modified to be able to specify output directory.
+
+	* sf2index/Makefile, sf2index/search.sh: Modified to use directory.
+
+2010-12-09  Tomohide Shibata  <shibata@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile: Added a target "html2xml".
+
+2010-12-09  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile: Reverted for search.
+
+	* sf2index/search.sh: Deleted a useless variable.
+
+	* sf2index/Makefile: Modified ID for standard SID spec.
+
+2010-12-06  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/sf2term.pl: Modifiation for updated format.
+
+	* sf2index/sample_data/0000000000.xml, sf2index/sample_data/0000000001.xml:
+	Updated sample xmls.
+
+	* sf2index/knp2sf.pl: Exported to AddKNPResult.pm.
+
+	* sf2index/sf2term.pl, sf2index/sample_data/0000000000.xml, sf2index/sample_data/0000000001.xml, sf2index/knp2sf.pl:
+	Changed "midasi" to "str."
+
+2010-12-01  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/merge_idx.pl:
+	idx2did¤¬»ØÄê¤µ¤ì¤Æ¤¤¤Ê¤¤¾ì¹ç¤Ç¤âÆ°ºî¤¹¤ë¤è¤¦¤Ë.
+
+2010-11-30  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/QueryAnalyzer.pm:
+	ARTIFACT¤Î½¤¾ş¶ç¤ò¥ª¥×¥·¥ç¥Ê¥ë¤È¤·¤Ê¤¤¤è¤¦¤Ë.
+
+	* cgi/Renderer.pm: orig¤ÎÉ½¼¨¤òSYN¥Î¡¼¥É¤Î¤ß¤Ë.
+
+	* perl/Tsubaki/TermGroupCreater.pm: small changes.
+
+	* cgi/Renderer.pm: ¥Ö¥í¥Ã¥¯¥¿¥¤¥×¤ËÂĞ±ş.
+
+	* perl/Tsubaki/TermGroupCreater.pm:
+	Ê£¿ô·ÁÂÖÁÇ¤«¤éÀ¸À®¤µ¤ì¤¿SYN¥Î¡¼¥É¤ËÂĞ±ş.
+
+	* cgi/Query.pm, cgi/QueryParser.pm:
+	SYN¥Î¡¼¥É¤«¤é¥¯¥¨¥êÃæ¤Î¸ì¤Ø¤Î¥Ş¥Ã¥×¤òÊİ»ı¤¹¤ë¤è¤¦¤Ë.
+
+	* cgi/Renderer.pm: SYN¥Î¡¼¥É¤òÀ¸À®¤·¤¿Ã±¸ì¤Î¾ğÊó¤ò½ĞÎÏ¤¹¤ë¤è¤¦¤Ë.
+
+	* perl/Tsubaki/TermGroupCreater.pm, perl/Tsubaki/TermGroup.pm:
+	SYN¥Î¡¼¥É¤òÀ¸À®¤·¤¿¥¯¥¨¥êÃæ¤ÎÃ±¸ì¤Î¾ğÊó¤ò»ı¤Ä¤è¤¦¤Ë.
+
+2010-11-29  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl: small changes.
+
+	* scripts/ECTS.pm: Æ±°Ì¸ì¾ğÊó¤òËöÈø¤Î·ÁÂÖÁÇ¤ËÉÕÍ¿¤¹¤ë¤è¤¦¤Ë.
+
+	* scripts/Indexer.pm, scripts/make_idx.pl:
+	Æ±°Ì¸ì¤ò¼èÆÀ¤¹¤ëºİ¡¢Ê£¹çÌ¾»ì¤ò¹ÍÎ¸¤¹¤ë¤è¤¦¤Ë.
+
+2010-11-22  Tomohide Shibata  <shibata@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/tsubaki-server-manager.sh: small change.
+
+2010-11-21  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* search/Makefile: Modified to be adapted to standard environment.
+
+	* scripts/tsubaki-server-manager.sh:
+	Changed the default command to slave_server.
+
+	* README: Added a required perl module.
+
+	* cgi/api.cgi, cgi/index.cgi: Changed shebang to /usr/bin/env perl.
+
+	* cgi/configure, cgi/configure.nict:
+	Changed default values of DISPLAY_CONGESTION and IS_CPP_MODE.
+
+2010-11-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* doc/tex/sects/appendix.tex, doc/tex/sects/blocktype.tex, doc/tex/sects/indexing.tex:
+	updated.
+
+2010-11-19  Tomohide Shibata  <shibata@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile: small change.
+
+2010-11-19  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/documents.cc: Æ±¤¸½Ğ¸½°ÌÃÖ¤¬Ï¢Â³¤·¤Ê¤¤¤è¤¦¤Ë.
+
+	* cgi/Renderer.pm, search/slave_server.cc: small changes.
+
+	* search/documents.h: ¥á¥½¥Ã¥É¤ÎÀë¸À¤òÄÉ²Ã.
+
+	* search/document.h: ¥á¥ó¥ĞÊÑ¿ô¤ÎÄÉ²Ã.
+
+	* search/document.cc: to_string()¤Çterm¤Î½Ğ¸½°ÌÃÖ¤òÊÖ¤¹¤è¤¦¤Ë.
+
+	* search/documents.cc, search/slave_server.cc:
+	term¤Î½Ğ¸½°ÌÃÖ¤òÊÖ¤¹¤è¤¦¤Ë.
+
+	* cgi/SearchEngine.pm: term¤Î¾ì½ê¾ğÊó¤ò¼õ¤±ÉÕ¤±¤ë¤è¤¦¤Ë.
+
+	* cgi/Renderer.pm:
+	term¤Î½Ğ¸½°ÌÃÖ¤ò½ĞÎÏ¤¹¤ë¤è¤¦¤Ë(debug»ş,¥ª¥×¥·¥ç¥ó»ØÄê»ş)
+
+2010-11-19  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/query.sample.en.sexp: added.
+
+	* sf2index/README: updated.
+
+	* sf2index/search.sh: Modified to use slave_server -standalone.
+
+	* sf2index/Makefile: Updated.
+
+	* sf2index/query.sample.ja.sexp: added.
+
+	* search/slave_server.cc: Modified to work without url/title DBs.
+
+	* search/hash.h: Modified to keep availability of DB.
+
+	* sf2index/sf2term.pl: Modified to generate terms of midasi and lem.
+
+2010-11-18  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/sample_data/0000000000.xml, sf2index/sample_data/0000000001.xml, sf2index/knp2sf.pl:
+	Changed the tag name: dpnd -> head.
+
+2010-11-17  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/make-mapfile.perl: Modified to accept non-gzipped files.
+
+2010-11-12  Tomohide Shibata  <shibata@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile: Modification for gxp make.
+
+	* sf2index/sf2term.pl: Changed an input to one xml file.
+
+2010-11-11  Tomohide Shibata  <shibata@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/sf2term.pl: small change.
+
+	* sf2index/knp2sf.pl, sf2index/sample_data/0000000000.xml, sf2index/sample_data/0000000001.xml:
+	Modified to add synonyms to word(s).
+
+2010-11-11  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* perl/Tsubaki/CacheManager.pm: Check DISABLE_CACHE flag.
+
+2010-11-09  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm:
+	use_of_hypernym ¤¬»ØÄê¤µ¤ì¤¿ºİ¤Ï, <¾å°Ì¸ì>¤ò»Ä¤¹¤è¤¦¤Ë.
+
+2010-11-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/Indexer.pm, scripts/make_idx.pl:
+	ECTS.pmã‚’åˆ©ç”¨ã—ã¦ãƒšãƒŠãƒ«ãƒ†ã‚£ã‚¿ãƒ¼ãƒ ã‚’ç”Ÿæˆã™ã‚‹ã‚ˆã†ã«.
+
+2010-11-03  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* doc/tex/sects/intro.tex~: deleted.
+
+2010-11-03  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* doc/tex/sects/analysis.tex, doc/tex/sects/appendix.tex, doc/tex/sects/blocktype.tex, doc/tex/sects/documents.tex, doc/tex/sects/indexing.tex, doc/tex/sects/outro.tex, doc/tex/sects/overview.tex, doc/tex/sects/search.tex:
+	Change encoding.
+
+	* doc/tex/manual.tex: Divide manual.tex according to sections.
+
+	* doc/tex/sects/analysis.tex, doc/tex/sects/appendix.tex, doc/tex/sects/blocktype.tex, doc/tex/sects/documents.tex, doc/tex/sects/indexing.tex, doc/tex/sects/intro.tex, doc/tex/sects/intro.tex~, doc/tex/sects/outro.tex, doc/tex/sects/overview.tex, doc/tex/sects/search.tex, doc/tex/sects/wsf.tex:
+	added.
+
+2010-11-02  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/ECTS.pm, scripts/make-ects-db.perl: added.
+
+2010-10-26  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/search.sh: Added english mode.
+
+	* cgi/Configure.pm: Modification for english mode.
+
+2010-10-26  Tomohide Shibata  <shibata@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: small change.
+
+2010-10-26  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/Configure.pm: Default is "configure."
+
+2010-10-26  Tomohide Shibata  <shibata@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/sample_data/0000000001.xml: added.
+
+	* sf2index/sample_data/0000000000.xml: updated.
+
+	* sf2index/knp2sf.pl: added.
+
+2010-10-26  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile: Modified the directory of sf2term.pl.
+
+2010-10-26  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* doc/tex/manual.tex: Change encoding. (sjis -> euc)
+
+	* doc/tex/figs/3colmun.eps, doc/tex/figs/3column_dom.eps, doc/tex/figs/Kousei-Torihiki-Iinkai.eps, doc/tex/figs/Ldivision.eps, doc/tex/figs/Ldivision_html.eps, doc/tex/figs/block_division_1.eps, doc/tex/figs/block_division_1_dom.eps, doc/tex/figs/block_division_2.eps, doc/tex/figs/block_division_2_dom.eps, doc/tex/figs/block_division_matome.eps, doc/tex/figs/block_division_matome_dom.eps, doc/tex/figs/detect-block-sample1.eps, doc/tex/figs/detect-block-sample2.eps, doc/tex/figs/detect-block-sample3.eps, doc/tex/figs/inline_line.eps, doc/tex/figs/overview.eps:
+	added.
+
+	* doc/tex/manual.tex: updated.
+
+2010-10-25  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SearchEngine.pm:
+	slave_server¤ÎÊÖ¤¹¥Ç¡¼¥¿¥Õ¥©¡¼¥Ş¥Ã¥È¤ÎÊÑ¹¹¤ËÂĞ±ş.
+
+	* search/document.cc: to_string¥á¥½¥Ã¥É¤ÎÊÑ¹¹.
+
+	* search/document.h: ¥á¥ó¥ĞÊÑ¿ô¤Ø¤Îget¥á¥½¥Ã¥É¤ÎÄÉ²Ã.
+
+	* cgi/Renderer.pm: debug»ş¤ËpagerankÅù¤Î¾ğÊó¤òÉ½¼¨¤¹¤ë¤è¤¦¤Ë.
+
+	* cgi/Renderer.pm: small changes.
+
+	* cgi/configure.2010: added.
+
+	* cgi/SnippetMakerAgent.pm: NICT2NII¤òÆÉ¤ß¹ş¤à¤è¤¦¤Ë.
+
+	* scripts/SidRange.pm: nict2nii¥ª¥×¥·¥ç¥ó¤ÎÄÉ²Ã.
+
+	* data/nict2nii: added.
+
+2010-10-25  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/sf2term.pl, sf2index/Makefile:
+	Modified to index multiple xmls.
+
+	* sf2index/sample_data/0000000000.xml: added.
+
+	* sf2index/standard_format_knp.xml: deleted.
+
+2010-10-22  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/Makefile, sf2index/README, sf2index/search.sh, sf2index/standard_format_knp.xml:
+	Added sf2index.
+
+	* cgi/QueryParser.pm: Changed use to require of TermGroupCreater.
+
+	* scripts/tsubaki_test.pl: Changed encoding to utf8.
+
+2010-10-18  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* sf2index/sf2term.pl:
+	Modified to adapt multiple heads and roots of English.
+
+	* sf2index/sf2term.pl: Added the registration of dpnd terms.
+
+2010-10-07  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* data/qs-fml-ntcir34: added.
+
+2010-09-30  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl:
+	Modified the method of counting inlinks (thanks to Yoshikiyo Kato <ykato@nict.go.jp>).
+
+2010-09-23  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/binarize_idx.pl: small changes.
+
+2010-09-22  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/SynGraphBinarizer.pm, scripts/binarize_idx.pl:
+	32¥Ó¥Ã¥È´Ä¶­ÍÑ¥ª¥×¥·¥ç¥ó¤ÎÄÉ²Ã.
+
+	* scripts/make_idx.pl: ¥Ú¥Ê¥ë¥Æ¥£¥¿¡¼¥à¤ÎËöÈø¤Ë¡ğ¤òÉÕ¤±¤ë¤è¤¦¤Ë.
+
+2010-09-21  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/CachedHTMLDocument.pm:
+	Modified not to display descriptions for NICT mode.
+
+2010-09-20  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* cgi/SnippetMakerAgent.pm:
+	¥¹¥Ë¥Ú¥Ã¥È¥µ¡¼¥Ğ¡¼¤¬¥À¥¦¥ó¤·¤Æ¤¤¤ëºİ¡¢Îã³°¤ò½ĞÎÏ¤¹¤ë¤è¤¦¤Ë.
+
+2010-09-16  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* search/documents.cc: Fix for empty sexp.
+
+2010-09-15  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* cgi/QueryParser.pm: Fixed normalization problems.
+
 2010-09-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* scripts/make_idx.pl: small changes.
+
+2010-09-14  Daisuke Kawahara  <kawahara@sakura.lang-private.kuee.kyoto-u.ac.jp>
+
+	* ChangeLog: updated.
+
+	* cgi/QueryParser.pm: Bug fix of normalization.
+
+2010-09-14  Keiji Shinzato  <shinzato@nlp.kuee.kyoto-u.ac.jp>
+
+	* search/documents.cc:
+	walk_and_or ¤Ë¤ª¤¤¤Æ¡¢¶áÀÜ¾ò·ï¤òËş¤¿¤µ¤Ê¤¤¾ì¹ç¤Ï remove_doc ¤ò¸Æ¤Ö¤è¤¦¤Ë.
+
+	* perl/Tsubaki/TermGroupCreater.pm:
+	¥¯¥¨¥êºï½ü¸ì¤ËÂĞ¤·¤ÆCSS¤ò¼èÆÀ¤·¤Ê¤¤¤è¤¦¤Ë.
+
+	* ChangeLog: updated.
 
 	* perl/Tsubaki/TermGroupCreater.pm: bug fixed(<¥¯¥¨¥êºï½ü·¸¤ê¼õ¤±>¤ò¥¹¥³¥¢¥ê¥ó¥°¤ÇÍøÍÑ¤·¤Ê¤¤¤è¤¦¤Ë).
 
