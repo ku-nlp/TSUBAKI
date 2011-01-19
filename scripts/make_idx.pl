@@ -2,11 +2,11 @@
 
 # $Id$
 
-#########################################################################################
-# JUMAN.KNP/SynGraphの解析結果を読み込み、ドキュメントごとに単語頻度を計数するプログラム
-#########################################################################################
+################################################
+# 標準フォーマットから term を抽出するプログラム
+################################################
 
-# perl -I $HOME/cvs/Utils/perl make_idx.pl -in s -out i -syn -z -ignore_syn_dpnd -position -coordinate -hypernym_and_head_db hypernym.repname.head.db
+# perl -I $HOME/cvs/Utils/perl make_idx.pl -in s -out i -syn -z -ignore_syn_dpnd -position -penalty -syngraph_dir SYNGRAPH_DIR
 
 use strict;
 use utf8;
@@ -62,31 +62,60 @@ GetOptions(\%opt,
 	   'use_pm',
 	   'use_block_type',
 	   'ipsj',
-	   'hypernym_and_head_db=s',
-	   'syndb=s',
-	   'coordinate',
+	   'syngraph_dir=s',
+	   'penalty',
 	   'verbose',
 	   'help');
 
+##############################################
+# ペナルティターム作成に利用するデータをロード
+##############################################
+
 my $ECTS;
 my %SYNDB;
-if ($opt{coordinate}) {
+my %HYPODB;
+if ($opt{penalty}) {
     require ECTS;
     my %_opt;
-    $_opt{bin_file}           = '../data/ecs.db';
-    $_opt{triedb}             = '../data/offset.db';
-    $_opt{term2id}            = '../data/term2id';
-    $_opt{size_of_on_memory}  = 1000000000;
+    $_opt{bin_file}          = '../data/ecs.db';
+    $_opt{triedb}            = '../data/offset.db';
+    $_opt{term2id}           = '../data/term2id';
+    $_opt{size_of_on_memory} = 1000000000;
     $ECTS = new ECTS(\%_opt);
 
+    # load syndb
+    my $syndb = sprintf ("%s/syndb/%s/syndb.cdb", $opt{syngraph_dir}, (POSIX::uname())[4]);
     require CDB_File;
-    tie my %_SYNDB, 'CDB_File', $opt{syndb} or die $!;
-    while (my ($k, $v) = each %_SYNDB) {
-	$SYNDB{decode('utf8', $k)} = decode('utf8', $v);
+    tie my %_SYNDB, 'CDB_File', $syndb or die $!;
+    while (my ($synid, $members) = each %_SYNDB) {
+	my $_synid = decode('utf8', $synid);
+	foreach my $string (split(/\|/, decode('utf8', $members))) {
+	    # リソース情報を削除
+	    $string =~ s!\[.+\]$!!;
+	    # 読みを削除
+	    $string =~ s!^(.+?)/.+$!\1!;
+
+	    push (@{$SYNDB{$_synid}}, $string);
+	}
+    }
+
+    # load hyponymy relation
+    foreach my $isa_file ((sprintf ("%s/dic/rsk_iwanami/isa.txt.filtered.manual", $opt{syngraph_dir}),
+			   sprintf ("%s/dic/wikipedia/isa.txt", $opt{syngraph_dir}))) {
+	open (F, '<:encoding(euc-jp)', $isa_file) or die $!;
+	while (<F>) {
+	    my ($hyponym, $hypernym, $num) = split (/ /, $_);
+	    $hyponym  =~ s!/.+$!!;
+	    $hypernym =~ s!/.+$!!;
+	    push (@{$HYPODB{$hypernym}}, $hyponym);
+	}
+	close (F);
     }
 }
 
+####################
 # デフォルト値の設定
+####################
 
 # 同位語をもとに係り受けタームを作成する際の閾値
 my $DIST_FOR_MAKING_COORD_DPND = 100;
@@ -281,7 +310,7 @@ sub main {
 	    $opt{out} = sprintf (qq(%s/i%04d/i%07d), $opt{outdir_prefix}, $fid / 1000000, $fid / 1000);
 	    `mkdir -p $opt{out}` unless (-e $opt{out});
 	    &extract_indice_from_single_file($file, $fname);
-	    $ECTS->clear() if ($opt{coordinate});
+	    $ECTS->clear() if ($opt{penalty});
 	}
 	close (FILE);
     }
@@ -298,7 +327,7 @@ sub main {
 		next unless ($file =~ /([^\/]+?)(\.link)?\.xml/);
 		&extract_indice_from_single_file("$opt{in}/$file", $1);
 	    }
-	    $ECTS->clear() if ($opt{coordinate});
+	    $ECTS->clear() if ($opt{penalty});
 	}
 	closedir(DIR);
     }
@@ -520,7 +549,7 @@ sub extractIndices {
 	}
 
 	# 同位語の情報を付与
-	$annotation = $ECTS->annotateDBInfo($annotation, {knp_result => 1}) if ($opt{coordinate});
+	$annotation = $ECTS->annotateDBInfo($annotation, {knp_result => 1}) if ($opt{penalty});
 
 	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation,
 							\@contentWordFeatures,
@@ -719,7 +748,7 @@ sub merge_indices {
 
     # 係り受けタームだけ抜き出す
     my %midasiOfDpndancyTerm = ();
-    if ($opt{coordinate}) {
+    if ($opt{penalty}) {
 	foreach my $sid (sort {$a <=> $b} keys %$indices) {
 	    foreach my $term (@{$indices->{$sid}}) {
 		$midasiOfDpndancyTerm{$term->{midasi}} = 1 if ($term->{midasi} =~ /\->/);
@@ -766,7 +795,7 @@ sub merge_indices {
 		my $midasi = sprintf ("%s%s", $tag, $index->{midasi});
 		next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
 
-		if ($opt{coordinate}) {
+		if ($opt{penalty}) {
 		    # ペナルティタームの生成
 		    if (exists $midasiOfDpndancyTerm{$index->{midasi}}) {
 			my $_dpnd1 = &makePenaltyTerms ($index, $pos2synnode, $pos2info, 1, $file, \%midasiOfDpndancyTerm);
@@ -800,15 +829,14 @@ sub merge_indices {
     return \%ret;
 }
 
+# 同義語の獲得
 sub getSynonyms {
     my ($synids) = @_;
 
     my @synonyms = ();
-    foreach my $synnode (@$synids) {
-	next unless (defined $synnode);
-	foreach my $string (split(/\|/, $SYNDB{$synnode})) {
-	    $string =~ s!\[.+\]$!!;
-	    $string =~ s!^(.+?)/.+$!\1!;
+    foreach my $synid (@$synids) {
+	next unless (defined $synid);
+	foreach my $string (@{$SYNDB{$synid}}) {
 	    push (@synonyms, $string);
 	}
     }
@@ -873,10 +901,21 @@ sub makePenaltyTerms {
 		if (exists $midasiOfDpndancyTerm->{$_term}) {
 		    $_term = undef;
 		} else {
-		    # 同義語を考慮
+		    # 同義語をチェック
+		    # オーロラ->発生 が既にある場合は オーロラ->生じる は除く
 		    foreach my $synonym (@$synonyms) {
-			$synonym .= '*' if ($isGenkei);
-			my $__term = ($forMoto) ? sprintf ("%s->%s", $_coord, $synonym) : sprintf ("%s->%s", $synonym, $_coord);
+			my $_synonym = ($isGenkei) ? sprintf ("%s*", $synonym) : $synonym;
+			my $__term = ($forMoto) ? sprintf ("%s->%s", $_coord, $_synonym) : sprintf ("%s->%s", $_synonym, $_coord);
+			if (exists $midasiOfDpndancyTerm->{$__term}) {
+			    $_term = undef; last;
+			}
+		    }
+
+		    # 下位語をチェック
+		    # 酵母->カレー/パン から 酵母->パン が作られている場合は除く
+		    foreach my $hyponym (@{$HYPODB{$_coord}}) {
+			my $_hyponym = ($isGenkei) ? sprintf ("%s*", $hyponym) : $hyponym;
+			my $__term = ($forMoto) ? sprintf ("%s->%s", $_hyponym, $saki) : sprintf ("%s->%s", $moto, $_hyponym);
 			if (exists $midasiOfDpndancyTerm->{$__term}) {
 			    $_term = undef; last;
 			}
