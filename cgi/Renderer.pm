@@ -1714,7 +1714,8 @@ sub getSearchResultForAPICall {
 	my $score = $page->{score_total};
 	my $title = $page->{title};
 	my $crawled_date = $page->{crawled_date};
-	my $cache_location = sprintf ("%s?cache=%s", $CONFIG->{INDEX_CGI}, $did);
+	my $uri_escaped_search_keys = ($CONFIG->{IS_CPP_MODE}) ? $query->{escaped_query} : $this->get_uri_escaped_query($query);
+	my $cache_location = sprintf ("%s?cache=%s&KEYS=%s", $CONFIG->{INDEX_CGI}, $did, $uri_escaped_search_keys);
 	my $cache_size = $page->{cache_size};
 
 	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, Score => 3, DetailScore => 4);
