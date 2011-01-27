@@ -3,7 +3,7 @@
 # $Id$
 
 # usage: echo '温泉旅館に一番近い駅' | juman | knp -tab | perl knp2sf.pl
-# usage: echo '温泉旅館に一番近い駅' | juman | knp -tab | perl -I/somewhere/SynGraph/perl /somewhere/SynGraph/scripts/knp_syn.pl -dbdir /somewhere/SynGraph/syndb/x86_64 | perl knp2sf.pl
+# usage: echo '温泉旅館に一番近い駅' | juman | knp -tab | perl -I/somewhere/SynGraph/perl /somewhere/SynGraph/scripts/knp_syn.pl -dbdir /somewhere/SynGraph/syndb/x86_64 -word_basic_unit | perl knp2sf.pl
 
 use strict;
 use utf8;
