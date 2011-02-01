@@ -12,6 +12,8 @@ use CDB_Writer;
 use Encode;
 use FileHandle;
 
+our $FREQ_BIT_SIZE = 10;
+
 sub new {
     my($class, $th, $datfp, $cdbfp, $position, $is_legacy_mode, $verbose, $is_32_bit_mode) = @_;
     my $dat = new FileHandle;
@@ -189,29 +191,25 @@ sub _add {
 }
 
 # merge_sorted_idx.pl の出力ファイルをバイナリ化
-# 京都 002795673:1@1#0&1 007988825:2@1,2#5&1,10&1
 sub text2binary {
     my ($this, $term, $num_of_docs, $docs) = @_;
-    
-    my ($bindat_dids, $bindat_offs, $bindat_frqs, $bindat_poss);
+
+    my ($bindat_dids, $bindat_features, $bindat_offs, $bindat_pos_freq_feature);
     for (my $i = 0; $i < $num_of_docs; $i++) {
 
 	########################################################
 	# テキストデータをデリミタを手掛かりに各データに分解する
 	########################################################
 
- 	my ($did, $totalfreq_sid_pos_freq) = split (/:/, $docs->[$i]);
-	my ($totalfreq, $sid_pos_freq, @sids, @pos_frqs, $sids_size, $poss_size, $frqs_size);
-	if ($totalfreq_sid_pos_freq =~ /@/) {
-	    ($totalfreq, $sid_pos_freq) = split (/@/, $totalfreq_sid_pos_freq);
-	    my ($sids_str, $pos_freq_str) = split(/\#/, $sid_pos_freq);
+	# フォーマット
+	# s1029:値段 0181111770:0.99@109#1446&0.99&16 0181111823-1:1.98@164,176#1748&0.99&16,1868&0.99&16
 
-	    @sids = split (/,/, $sids_str);
-	    @pos_frqs = split (/,/, $pos_freq_str);
-
-	    $sids_size = scalar(@sids);
-	    $poss_size = scalar(@pos_frqs);
-	    $frqs_size = $poss_size;
+ 	my ($did, $totalfreq_sid_pos_freq_feature) = split (/:/, $docs->[$i]);
+	my ($sid_pos_freq, @sids, @pos_frq_features);
+	if ($totalfreq_sid_pos_freq_feature =~ /@/) {
+	    my ($totalfreq, $sid_pos_freq_feature) = split (/@/, $totalfreq_sid_pos_freq_feature);
+	    my ($sentenceID_str, $pos_freq_feature_str) = split(/\#/, $sid_pos_freq_feature);
+	    @pos_frq_features = split (/,/, $pos_freq_feature_str);
 	} else {
 	    # position が指定されているのにインデックスの位置情報がない場合
 	    print STDERR "\nOption error!\n";
@@ -226,21 +224,22 @@ sub text2binary {
 	######################
 
 	$bindat_dids .= pack('L', $did);
-	$bindat_frqs .= pack('L', int(1000 * $totalfreq));
-	if ($this->{position}) {
-	    my ($cnt, $buf) = (0, '');
-	    foreach my $pos_frq (@pos_frqs) {
-		my ($pos, $freq) = split(/\&/, $pos_frq);
-		$buf .= pack('L', $pos);
-		$cnt++;
-	    }
-	    $bindat_offs .= pack('L', length($bindat_poss));
-	    $bindat_poss .= pack('L', $cnt);
-	    $bindat_poss .= $buf;
+	my ($cnt, $feature, $buf) = (0, 0, '');
+	foreach my $pos_frq_feature (@pos_frq_features) {
+	    my ($_pos, $_freq, $_feature) = split(/\&/, $pos_frq_feature);
+	    my $pos_frq =($_pos << $FREQ_BIT_SIZE) + int(1000 * $_freq);
+	    $feature |= $_feature;
+	    $buf .= pack('L', $_feature);
+	    $buf .= pack('L', $pos_frq);
+	    $cnt++;
 	}
+	$bindat_features .= pack('L', $feature);
+	$bindat_offs .= pack('L', length($bindat_pos_freq_feature));
+	$bindat_pos_freq_feature .= pack('L', $cnt);
+	$bindat_pos_freq_feature .= $buf;
     }
 
-    my $bindat = ((pack('L', $num_of_docs)) . $bindat_dids . $bindat_frqs . $bindat_offs . $bindat_poss);
+    my $bindat = ((pack('L', $num_of_docs)) . $bindat_dids . $bindat_features . $bindat_offs . $bindat_pos_freq_feature);
     return (pack('L', length($bindat)) . $bindat);
 }
 
