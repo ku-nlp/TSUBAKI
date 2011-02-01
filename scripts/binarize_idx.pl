@@ -6,15 +6,40 @@
 # idxファイルをバイナリ化するプログラム(オフセット値も同時に保存)
 #################################################################
 
+# -----
+# USAGE
+# -----
+#
+# For create:
+# For create:
+# perl -I somewhere/Utils/perl binarize_idx.pl -z -syn -quiet somewhere/000.idx.gz
+#
+# For test:
+# perl -I somewhere/Utils/perl binarize_idx.pl -test -term s605:教師 -keymapfile somewhere/offset000.word.conv.cdb.keymap -idxfile somewhere/idx000.word.dat.conv
+
 use strict;
-use Binarizer;
-use SynGraphBinarizer;
 use utf8;
 use Getopt::Long;
 use Encode;
 
 my (%opt);
-GetOptions(\%opt, 'wordth=i', 'dpndth=i', 'wordpos', 'dpndpos', 'legacy_mode', 'verbose', 'cdbdir=s', 'z', 'syn', '32bit', 'quiet');
+GetOptions(\%opt,
+	   'wordth=i',
+	   'dpndth=i',
+	   'wordpos',
+	   'dpndpos',
+	   'legacy_mode',
+	   'cdbdir=s',
+	   'z',
+	   'syn',
+	   '32bit',
+	   'test',
+	   'keymapfile=s',
+	   'idxfile=s',
+	   'term=s',
+	   'quiet',
+	   'verbose'
+	   );
 
 # 足切りの閾値
 my $wordth = $opt{wordth} ? $opt{wordth} : 0;
@@ -55,9 +80,57 @@ if ($opt{cdbdir}) {
     closedir(DIR);
 }
 
-&main();
+if ($opt{test}) {
+    &main4test();
+} else {
+    &main4create();
+}
 
-sub main {
+sub main4test {
+    require CDB_Reader;
+
+
+    my $FREQ_BIT_SIZE = 10;
+    my $FREQ_MASK     = (2 ** $FREQ_BIT_SIZE) - 1;
+
+    my $db = new CDB_Reader($opt{keymapfile});
+    my $offset = $db->get($opt{term});
+    open (F, $opt{idxfile}) or die $!;
+
+    # バイナリデータの読み込み
+    my $buf;
+    seek (F, $offset, 0);
+    read (F, $buf, 4);
+    my $datalen = unpack ("L", $buf);
+    my $bindata;
+    read (F, $bindata, $datalen);
+    close (F);
+
+    my $ldf = unpack ("L", substr($bindata, 0, 4));
+    foreach my $i (0 .. $ldf - 1) {
+	my $did    = unpack ("L", substr($bindata, 4 + $i * 4, 4));
+	my $fbits  = unpack ("L", substr($bindata, 4 + $i * 4  +  4 * $ldf, 4));
+	my $offset = unpack ("L", substr($bindata, 4 + $i * 4  +  8 * $ldf, 4));
+	my $posnum = unpack ("L", substr($bindata, 4 + $offset + 12 * $ldf, 4));
+	print "$did FEATURE=$fbits\t#POS=$posnum\t";
+	my @buf;
+	foreach my $j (0 .. $posnum - 1) {
+	    my $feature = unpack ("L", substr($bindata, 12 * $ldf + 4 + $offset + 4 + $j * 8,     4));
+	    my $posfreq = unpack ("L", substr($bindata, 12 * $ldf + 4 + $offset + 4 + $j * 8 + 4, 4));
+	    my $freq = ($posfreq & $FREQ_MASK) / 1000;
+	    my $pos = $posfreq >> $FREQ_BIT_SIZE;
+	    push (@buf, sprintf ("f=%s,p=%s,s=%s", $feature, $pos, $freq));
+	}
+	print join (" ", @buf) . "\n";
+    }
+    print "LDF=$ldf\n";
+}
+
+
+sub main4create {
+    require Binarizer;
+    require SynGraphBinarizer;
+
     my $fp = $ARGV[0];
     unless ($fp =~ /(.*?)([^\/]+)\.(idx.*)$/) {
 	die "file name is not *.idx ($fp)\n"
@@ -123,7 +196,7 @@ sub main {
 		    else {
 			$bin = $bins->{dpnd};
 		    }
-		} else {		    
+		} else {
 		    $bin = $bins->{dpnd};
 		}
 	    }
