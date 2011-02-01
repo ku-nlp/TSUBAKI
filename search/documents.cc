@@ -155,31 +155,31 @@ bool Documents::merge_and(Documents *parent, CELL *cell, DocumentBuffer *_alread
 
 	// s and l
 	l_documents.clear();
-	and_operation(backup_documents.get_s_documents(), 
-		      next_documents->get_l_documents(), 
+	and_operation(backup_documents.get_s_documents(),
+		      next_documents->get_l_documents(),
 		      &l_documents);
 
 	// l and s
 	std::vector<Document *> temp_documents;
-	and_operation(backup_documents.get_l_documents(), 
-		      next_documents->get_s_documents(), 
+	and_operation(backup_documents.get_l_documents(),
+		      next_documents->get_s_documents(),
 		      &temp_documents);
 
 	std::vector<Document *> backup_l_documents = l_documents;
 	l_documents.clear(); // *** FIX ME: clear the contents ***
-	or_operation(&backup_l_documents, 
-		     &temp_documents, 
+	or_operation(&backup_l_documents,
+		     &temp_documents,
 		     &l_documents);
 
 	// l and l
 	temp_documents.clear();
-	and_operation(backup_documents.get_l_documents(), 
-		      next_documents->get_l_documents(), 
+	and_operation(backup_documents.get_l_documents(),
+		      next_documents->get_l_documents(),
 		      &temp_documents);
 	backup_l_documents = l_documents; // *** FIX ME: clear the contents ***
 	l_documents.clear(); // *** FIX ME: clear the contents ***
-	or_operation(&backup_l_documents, 
-		     &temp_documents, 
+	or_operation(&backup_l_documents,
+		     &temp_documents,
 		     &l_documents);
 	cell = cdr(cell);
     }
@@ -314,7 +314,6 @@ bool Documents::merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_al
 	    }
 	}
 
-    
 	bool phrasal_flag = false;
 	while (1) {
 	    int cur_pos = pos_list_list[sorted_int[0]]->front();
@@ -440,13 +439,13 @@ bool Documents::merge_or(Documents *parent, CELL *cell, DocumentBuffer *_already
 	}
 
 	s_documents.clear(); // *** FIX ME: clear the contents ***
-	or_operation(backup_documents.get_s_documents(), 
-		     next_documents->get_s_documents(), 
+	or_operation(backup_documents.get_s_documents(),
+		     next_documents->get_s_documents(),
 		     &s_documents);
 
 	// l_documents.clear(); // *** FIX ME: clear the contents ***
-	or_operation(backup_documents.get_l_documents(), 
-		     next_documents->get_l_documents(), 
+	or_operation(backup_documents.get_l_documents(),
+		     next_documents->get_l_documents(),
 		     &l_documents);
 	cell = cdr(cell);
     }
@@ -661,7 +660,6 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 	    int pos_num = intchar2int(buffer + ldf * 3 * SIZEOFINT + pos_offset);
 	    doc->set_freq(score);
 	    doc->set_gdf(term_df);
-	    
 //	    cerr << "score = "<< score << " pos_off = " << pos_offset << " pos_num = " << pos_num << endl;
 	    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
 	    memcpy (__buf, (buffer + ldf * 12 + pos_offset), SIZEOFINT * (pos_num + 1));
@@ -692,9 +690,9 @@ bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_s
 #ifdef DEBUG
 	cerr << "KEY: " << term_string << ", ADDRESS: " << address << " (" << address_str << ")" << endl;
 #endif
-	double start = (double) gettimeofday_sec();	
+	double start = (double) gettimeofday_sec();
 	index_stream->seekg((std::ios::off_type)address, std::ios::beg);
-	double end = (double) gettimeofday_sec();	
+	double end = (double) gettimeofday_sec();
 
 	if (VERBOSE)
 	    cout << "      seek index = " << 1000 * (end - start) << " [ms]" <<  " " << address << " [byte]" << endl;
@@ -723,7 +721,7 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
     int index_size = 0, offset = 0;
     unsigned char *buffer, *_buf;
 
-    double _start = (double) gettimeofday_sec();	
+    double _start = (double) gettimeofday_sec();
     _buf = new unsigned char[SIZEOFINT];
     index_stream->read((char *) _buf, SIZEOFINT);
 
@@ -734,7 +732,7 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
 
     buffer = new unsigned char[index_size];
     index_stream->read((char *)buffer, index_size);
-    double _end = (double) gettimeofday_sec();	
+    double _end = (double) gettimeofday_sec();
 
     int ldf;
     ldf = intchar2int(buffer + offset);
