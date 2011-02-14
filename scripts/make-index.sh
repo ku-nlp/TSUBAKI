@@ -60,9 +60,9 @@ echo tar xzf $xdir.tgz
 tar xzf $xdir.tgz
 rm -f $xdir.tgz
 
-# スワップしないように仕様するメモリサイズを制限する(max 2GB)
-ulimit -m 2097152
-ulimit -v 2097152
+# スワップしないように仕様するメモリサイズを制限する(max 4GB)
+ulimit -m 4097152
+ulimit -v 4097152
 
 
 LOGFILE=$workspace/$xdir.log
