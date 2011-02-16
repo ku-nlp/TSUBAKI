@@ -22,6 +22,9 @@ foreach my $file (@ARGV) {
 	my ($midashi, @docs) = split(/\s+/, $_);
 	foreach my $doc (@docs) {
 	    my ($sid, $etc) = split(':', $doc);
+
+	    next unless ($sid =~ /^[\d|\-]+$/);
+
 	    unless (exists $sid2tid{$sid}) {
 		$sid2tid{$sid} = $tid++;
 	    }
