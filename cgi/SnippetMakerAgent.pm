@@ -262,7 +262,7 @@ sub get_snippets_for_each_did {
 		foreach my $rep (@$reps) {
 		    foreach my $string (split (/\+/, $rep->{string})) {
 			# 論文検索モードであれば、領域タグを削除する
-			$string =~ s/^[A-Z][A-Z]:// if ($CONFIG->{USE_OF_BLOCK_TYPES});
+#			$string =~ s/^[A-Z][A-Z]:// if ($CONFIG->{USE_OF_BLOCK_TYPES});
 			$rep2style->{$string} = $rep->{stylesheet};
 		    }
 		}
@@ -280,6 +280,7 @@ sub get_snippets_for_each_did {
 	my %sbuf = ();
 
 	my $flag_of_drawline = 0;
+	next unless (defined $sentences);
 	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score} || $a->{sid} <=> $b->{sid}} @{$sentences}) {
 	    next if (exists($sbuf{$sentence->{rawstring}}));
 	    $sbuf{$sentence->{rawstring}} = 1;
@@ -295,7 +296,7 @@ sub get_snippets_for_each_did {
 	    # 単語の位置
 	    my $start_pos = $sentence->{start_pos} + 1;
 	    my $end_pos = $sentence->{end_pos};
-	    my $flag_of_underline = ($this->{did2region}{$did}{start} > 50 && $this->{did2region}{$did}{end} - $this->{did2region}{$did}{start} < 50) ? 1 : 0;
+	    my $flag_of_underline = 0; # ($this->{did2region}{$did}{start} > 50 && $this->{did2region}{$did}{end} - $this->{did2region}{$did}{start} < 50) ? 1 : 0;
 
 	    my $pos = $start_pos;
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
