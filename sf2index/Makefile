@@ -24,7 +24,7 @@ html2xml:
 	$(WWW2sfDir)/tool/www2sf.sh -x -s $(DATADIR) $(DATADIR)
 
 $(IDXS): $(DATADIR)/%.$(IDX0_SUFFIX) : $(DATADIR)/%.xml
-	perl $(BASEDIR)/sf2term.pl -suffix $(IDX0_SUFFIX) $< > $@
+	perl -I ../cgi $(BASEDIR)/sf2term.pl -suffix $(IDX0_SUFFIX) $< > $@
 
 $(MERGED_IDX): $(IDXS)
 	perl $(BASEDIR)/../scripts/merge_idx.pl -dir $(DATADIR) -suffix $(IDX0_SUFFIX) > $@
