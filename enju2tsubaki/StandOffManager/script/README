@@ -1,0 +1,51 @@
+﻿このディレクトリには、辻井研究室で開発された自然言語処理ツールの入出力を、
+StandOffManagerで操作するためのラッパープログラムがあります。
+
+１．各プログラムの使い方
+# NEtagger2standOff.rb: NEtaggerの出力をstand-off形式に変換する。// You don't need to use with the new NEtagger.
+newEnju2standOff.rb: Enjuの出力をstand-off形式に変換する。
+enju2standOff.rb: 古いversionのEnjuの出力をstand-off形式に変換する。
+sentence2standOff.rb: 文区切り前のデータと文区切り後のデータから、sentenceタグの位置を解析し、stand-off形式で出力する。
+geniatagger2standOff.rb: GENIAtaggerの出力をstand-off形式に変換する。
+
+
+
+
+２．MEDIE用データ作成のための一連の操作
+This section is obsolete. See cvs/medline2medie/NEWork.sh and other files in
+the directory.
+
+例）Medline06n0001.xmlに対して処理を行うとする場合
+
+tagsToClip.tagに、切り分ける対象のタグ名（Title AbstractText）を記述し、
+tagOrder.tagに、タグの順序関係を記述しておき、
+
+#　xmlからstand-offと生テキストへ変換
+som import Medline06n0001.xml med06n0001_full.so med06n0001_full.txt
+#　titleとabstractを抽出
+som clip med06n0001_full.so med06n0001_full.txt tagToClip.tag med06n0001_abst.so med06n0001_abst.txt
+#　abstractを一文一行の形式へ
+geniass med06n0001_abst.txt med06n0001_abst_split.txt
+#　一文相当区間をstand-off形式の表現に直す
+ruby sentence2standOff.rb med06n0001_abst.txt med06n0001_abst_split.txt med06n0001_abst_sentence.so
+#　PoSタガーをかけ、stand-offへ変換
+(*)geniatagger < med06n0001_abst_split.txt > geniatagger_06n0001.dat
+ruby geniatagger2standOff.rb med06n0001_abst.txt geniatagger_06n0001.dat med06n0001_abst_pos.so
+#　enjuをかけ、stand-offへ変換
+(*)enju -so -t geniatagger <  med06n0001_abst_split.txt > enju_06n0001.so
+ruby newEnju2standOff.rb med06n0001_abst.txt med06n0001_abst_split.txt enju_06n0001.so med06n0001_abst_enju.so
+#　文情報とPoS情報をマージ、ソート
+som merge med06n0001_abst_sentence.so med06n0001_abst_sent_pos.so
+som sort -t tagOrder.tag med06n0001_abst_sent_pos.so med06n0001_abst_sent_pos.so
+#　マージしたものを使って、Named Entity Taggerをかける
+(*)ne_tagger med06n0001_abst.txt med06n0001_abst_sent_pos.so med06n0001_abst_ne.so
+#　さらにそれぞれの結果をマージ、ソート
+som merge med06n0001_abst_ne.so med06n0001_abst_sent_pos.so med06n0001_abst_sent_pos_ne.so
+som merge med06n0001_abst_enju.so med06n0001_abst_sent_pos_ne.so med06n0001_abst_sent_pos_ne_enju.so
+som sort -t tagOrder.tag med06n0001_abst_sent_pos_ne_enju.so med06n0001_abst_sent_pos_ne_enju.so
+#　抽出前のファイルに接合
+som unite med06n0001_full.so med06n0001_abst_sent_pos_ne_enju.so med06n0001_unite.so
+#　semi-xmlスタイルに変換
+som export med06n0001_unite.so med06n0001_unite.semixml
+
+と、してください。*印のプログラムの使い方は、それぞれの解説を参照して下さい。

@@ -1,0 +1,9 @@
+1. Build
+	$ make all
+
+2. Usage
+	$ som command [options] arg1 ...
+
+	available commands: import, export, merge, sort, clip, unite
+
+	see StandOffManager.html for details
