@@ -493,14 +493,12 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 
     if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "ROOT")) {
 	documents->set_type(DOCUMENTS_ROOT);
-	if (!Lisp_Null(cdr(cell))) { // requires term
-	    double start = (double) gettimeofday_sec();
-	    documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
-	    double end = (double) gettimeofday_sec();
-	    if (VERBOSE) {
-		cout << "root = " << 1000 * (end - start) << " [ms]" << endl;
-		cout << "-----" << (char *)_Atom(car(cell)) << "-----" << endl;
-	    }
+	double start = (double) gettimeofday_sec();
+	documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
+	double end = (double) gettimeofday_sec();
+	if (VERBOSE) {
+	    cout << "root = " << 1000 * (end - start) << " [ms]" << endl;
+	    cout << "-----" << (char *)_Atom(car(cell)) << "-----" << endl;
 	}
     }
     else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "PHRASE")) {
@@ -886,8 +884,9 @@ bool Documents::walk_or(Document *doc_ptr) {
 
 
     int target_num = pos_list_list.size();
-    int sorted_int[target_num];
+    int sorted_int[target_num], tid2idx[target_num];
     for (int i = 0, size = pos_list_list.size(); i < size; ++i) {
+	tid2idx[i] = 0;
 	sorted_int[i] = i;
     }
 
@@ -907,12 +906,14 @@ bool Documents::walk_or(Document *doc_ptr) {
     int prev_pos = -1;
     std::vector<int> pos_list;
     while (1) {
-	int cur_pos = pos_list_list[sorted_int[0]]->front();
-	pos_list_list[sorted_int[0]]->erase(pos_list_list[sorted_int[0]]->begin());
+	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
+//	int cur_pos = pos_list_list[sorted_int[0]]->front();
+//	pos_list_list[sorted_int[0]]->erase(pos_list_list[sorted_int[0]]->begin());
 	if (cur_pos == -1) {
 	    break;
 	}
 	best_pos = cur_pos;
+	tid2idx[sorted_int[0]]++;
 
 	// remove duplicate position
 	if (cur_pos > prev_pos)
@@ -1047,7 +1048,17 @@ bool Documents::walk_and(Document *doc_ptr) {
 	tid2idx[i] = 0;
     }
 
-    update_sorted_int(sorted_int, tid2idx, &pos_list_list, target_num, false);
+    for (int i = 0; i < target_num - 1; i++) {
+	for (int j = 0; j < target_num - i - 1; j++) {
+	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
+		pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()) {
+		int temp = sorted_int[i];
+		sorted_int[i] = sorted_int[i + 1];
+		sorted_int[i + 1] = temp;
+	    }
+	}
+    }
+//    update_sorted_int(sorted_int, tid2idx, &pos_list_list, target_num, false);
 
     int best_pos = -1;
     int best_begin = -1;
@@ -1328,12 +1339,12 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 }
 
 bool Documents::collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, std::vector<int> *> *term2pos) {
-
     if (get_type() == DOCUMENTS_TERM_STRICT   ||
-	get_type() == DOCUMENTS_TERM_LENIENT  ||
-	get_type() == DOCUMENTS_TERM_OPTIONAL ||
-	get_type() == DOCUMENTS_OR_OPTIONAL) {
+ 	get_type() == DOCUMENTS_TERM_LENIENT  ||
+ 	get_type() == DOCUMENTS_TERM_OPTIONAL ||
+ 	get_type() == DOCUMENTS_OR_OPTIONAL) {
 	Document *document = get_doc(doc_ptr->get_id());
+/*
 	if (document != NULL) {
 	    std::vector<int> *poslist = new std::vector<int>;
 	    std::vector<int> *org = document->get_pos();
@@ -1343,6 +1354,23 @@ bool Documents::collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, st
 		if (prev - (*it) != 0)
 		    poslist->push_back((*it));
 		prev = (*it);
+	    }
+	    term2pos->insert(std::pair<const char*, std::vector<int> *>(get_label().c_str(), poslist));
+	}
+*/
+
+	if (document != NULL) {
+	    int prev = -2;
+	    std::vector<int> *poslist = new std::vector<int>;
+	    std::vector<int> *org = document->get_pos();
+	    // コピーしないと消える
+	    int* _poslist = document->get_poslist();
+	    int pos_num = document->get_pos_num();
+	    for (int i = 0; i < pos_num; i++) {
+		if (prev - _poslist[i] != 0)
+		    poslist->push_back(_poslist[i]);
+
+		prev = _poslist[i];
 	    }
 	    term2pos->insert(std::pair<const char*, std::vector<int> *>(get_label().c_str(), poslist));
 	}
