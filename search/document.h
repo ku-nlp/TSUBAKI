@@ -6,6 +6,7 @@
 class Document {
     int id;
     int length;
+    int pos_num;
     int strict_term_feature;
     int proximate_feature;
     int phrase_feature;
@@ -20,6 +21,7 @@ class Document {
     MAP_IMPL<const char *, std::vector<int> *> term2pos;
 
     std::vector<int> *pos_list;
+    int *poslist;
 //  std::vector<std::string *> terms;
     std::vector<Term *> terms;
   public:
@@ -36,6 +38,7 @@ class Document {
 	proximate_feature = 0;
 	strict_term_feature = 0;
 	phrase_feature = 0;
+//	pos_list = new std::vector<int>;
 	pos_list = NULL;
 	pos_buf = NULL;
     }
@@ -48,6 +51,10 @@ class Document {
 
     int get_id() {
 	return id;
+    }
+
+    int get_pos_num() {
+	return pos_num;
     }
 
     bool set_best_pos (int pos) {
@@ -71,6 +78,8 @@ class Document {
     }
 
     std::string to_string ();
+
+    int* get_poslist ();
 
     bool set_length(int in_length) {
       length = in_length;
