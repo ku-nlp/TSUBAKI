@@ -1,6 +1,6 @@
 #!/bin/sh
 
-dir=$HOME/share/tool/enju2tsubaki
+dir=$HOME/share/tool/SearchEngine/enju2tsubaki
 input=$1
 
 usage() {
