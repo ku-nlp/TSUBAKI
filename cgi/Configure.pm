@@ -163,36 +163,18 @@ sub _new {
     bless $this;
 }
 
-sub getTsuruokaTaggerObj {
+sub getEnglishParserObj {
     my ($this) = @_;
 
-    unless (defined $instance->{TSURUOKA_TAGGER}) {
-	require TsuruokaTagger;
-	$instance->{TSURUOKA_TAGGER} = new TsuruokaTagger(
+    unless (defined $instance->{ENGLISH_PARSER}) {
+	require EnjuWrapper; # currently use enju directly
+	$instance->{ENGLISH_PARSER} = new EnjuWrapper(
 	    {
-		lemmatize  => 1,
-		tagger_dir => $this->{TSURUOKA_TAGGER_DIR},
-		format     => 'conll'
+		parser_dir   => $this->{ENGLISH_PARSER_DIR},
 	    });
     }
 
-    return $instance->{TSURUOKA_TAGGER}
-}
-
-sub getMaltParserObj {
-    my ($this) = @_;
-
-    unless (defined $instance->{MALT_PARSER}) {
-	require MaltParser;
-	$instance->{MALT_PARSER} = new MaltParser(
-	    {
-		lemmatize    => 1,
-		parser_dir   => $this->{MALT_PARSER_DIR},
-		java_command => $this->{JAVA_COMMAND}
-	    });
-    }
-
-    return $instance->{MALT_PARSER};
+    return $instance->{ENGLISH_PARSER};
 }
 
 sub getSynGraphObj {

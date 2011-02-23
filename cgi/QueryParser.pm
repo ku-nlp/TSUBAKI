@@ -357,15 +357,10 @@ sub _linguisticAnalysis {
 sub _runEnglishParser {
     my ($this, $search_expression, $opt) = @_;
 
-    # tagger, parser の object を獲得
-    $CONFIG->getTsuruokaTaggerObj();
-    $CONFIG->getMaltParserObj();
+    # parser の object を獲得
+    $CONFIG->getEnglishParserObj();
 
-    my $result_string = $CONFIG->{TSURUOKA_TAGGER}->analyze($search_expression);
-    $result_string = $CONFIG->{MALT_PARSER}->analyze_from_conll($result_string);
-    $result_string =~ s/\n\n$/\nEOS\n/;
-
-    return $result_string;
+    return $CONFIG->{ENGLISH_PARSER}->analyze($search_expression);
 }
 
 # 構文解析（日本語）
