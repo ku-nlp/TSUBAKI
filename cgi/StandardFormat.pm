@@ -22,7 +22,7 @@ sub read_first_annotation {
 
     $this->{doc} = $this->{parser}->parse_string($xmldat);
 
-    for my $annotation_node ($this->{doc}->getElementsByTagName('Annotation')) { # parse
+    for my $annotation_node ($this->{doc}->getElementsByTagName('S')) { # parse
 	$this->read_annotation_from_node($annotation_node);
 	return;
     }
