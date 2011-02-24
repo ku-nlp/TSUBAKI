@@ -90,7 +90,7 @@ sub register_terms {
 
     for my $term (keys %{$terms_hr}) {
 	my @buf;
-	for my $pos (sort keys %{$terms_hr->{$term}{pos}}) {
+	for my $pos (sort {$a <=> $b} keys %{$terms_hr->{$term}{pos}}) {
 	    push @buf, sprintf "%s&%s", $pos, $terms_hr->{$term}{pos}{$pos};
 	}
 
