@@ -20,18 +20,18 @@ sub create {
     my ($result, $condition, $option) = @_;
 
     my ($terms, $optionals, $rep2style, $rep2rep_w_yomi, $synnode2midasi);
-    if ($option->{english}) {
+    if ($option->{english}) { # read from standard format
+	require StandardFormat;
+	my $sf = new StandardFormat();
+	$sf->read_first_annotation($result);
 	my $gid = 0;
-	foreach my $line (split (/\n/, $result)) {
-	    last if ($line =~ /EOS/);
-
+	foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) {
 	    my $count = 0;
-	    my @data = split(/\t/, $line);
 	    my $term = new Tsubaki::Term ({
 		tid => sprintf ("%s-%s", $gid, $count++),
-		text => $data[1],
+		text => $sf->{words}{$id}{lem},
 		term_type => 'word',
-		gdf => $DFDBS_WORD->get($data[1]),
+		gdf => $DFDBS_WORD->get($sf->{words}{$id}{lem}),
 #		blockType => (($tag eq '') ? undef : $tag),
 		node_type => 'basic' });
 	    push (@$terms, $term);
