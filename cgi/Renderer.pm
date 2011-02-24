@@ -932,7 +932,7 @@ sub printSlaveServerLogs {
 }
 
 sub printAjax {
-    my ($this, $params) = @_;
+    my ($this, $params, $dids) = @_;
 
     print << "END_OF_HTML";
 <SCRIPT>
@@ -941,7 +941,7 @@ new Ajax.Request(
     {
          onSuccess  : processResponse,
          onFailure  : notifyFailure,
-         parameters : "query=$params->{query}&num=100&org_referer=$params->{escaped_org_referer}"
+         parameters : "query=$params->{query}&dids=$dids&org_referer=$params->{escaped_org_referer}"
     }
 );
 
@@ -984,7 +984,14 @@ sub printSearchResultForBrowserAccess {
     $this->printQuery($logger, $params, $size, $query, $status);
 
     # for ajax
-    $this->printAjax($params);
+    my @__buf;
+    my $rank = 1;
+    foreach my $doc (@$results) {
+	push (@__buf, $doc->{did});
+	$rank++;
+	last if ($rank > 100);
+    }
+    $this->printAjax($params, join (",", @__buf)) if ($status ne "busy");
 
     ############################
     # 必要ならばスニペットを生成
@@ -1309,6 +1316,7 @@ sub printOrdinarySearchResult {
 	# 1 ページ分の結果を表示
 	print $output;
     }
+    if ($logger->getParameter('hitcount') > 0) {
     print << "END_OF_HTML";
 </TD>
 <TD valign='top' width='300'>
@@ -1335,6 +1343,7 @@ sub printOrdinarySearchResult {
 </TR>
 </TABLE>;
 END_OF_HTML
+    }
 }
 
 sub printIPSJSearchResult {
@@ -1750,10 +1759,11 @@ sub getSearchResultForAPICall {
 	if ($params->{TermPosition} > 0) {
 	    $writer->startTag('Terms');
 	    foreach my $midasi (sort {$a cmp $b} keys %{$page->{terminfo}{term2pos}}) {
-		next if ($midasi eq 'none' || $midasi =~ /AC_LK/);
+		next if ($midasi eq 'none' || $midasi =~ /_LK/);
 		my $pos = $page->{terminfo}{term2pos}{$midasi};
 		if ($midasi =~ /^s\d+/) {
-		    my ($_midasi) = (($midasi =~ /:[A-Z][A-Z]$/) ? ($midasi =~ /^(.+):..$/) : $midasi);
+#		    my ($_midasi) = (($midasi =~ /:[A-Z][A-Z]$/) ? ($midasi =~ /^(.+):..$/) : $midasi);
+		    my $_midasi = $midasi;
 		    $writer->startTag('Term',
 				      midasi   => $midasi,
 				      orig     => $query->{synnode2midasi}{$_midasi},
