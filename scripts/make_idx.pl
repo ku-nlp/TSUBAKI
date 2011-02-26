@@ -64,6 +64,8 @@ GetOptions(\%opt,
 	   'ipsj',
 	   'syngraph_dir=s',
 	   'penalty',
+	   'data_dir=s',
+	   'feature=s',
 	   'verbose',
 	   'help');
 
@@ -77,16 +79,17 @@ my %HYPODB;
 if ($opt{penalty}) {
     require ECTS;
     my %_opt;
-    $_opt{bin_file}          = '../data/ecs.db';
-    $_opt{triedb}            = '../data/offset.db';
-    $_opt{term2id}           = '../data/term2id';
+    my $_DATA_DIR            = (($opt{data_dir}) ? $opt{data_dir} : '../data');
+    $_opt{bin_file}          = "$_DATA_DIR/ecs.db";
+    $_opt{triedb}            = "$_DATA_DIR/offset.db";
+    $_opt{term2id}           = "$_DATA_DIR/term2id";
     $_opt{size_of_on_memory} = 1000000000;
     $ECTS = new ECTS(\%_opt);
 
     # load syndb
     my $syndb = sprintf ("%s/syndb/%s/syndb.cdb", $opt{syngraph_dir}, (POSIX::uname())[4]);
     require CDB_File;
-    tie my %_SYNDB, 'CDB_File', $syndb or die $!;
+    tie my %_SYNDB, 'CDB_File', $syndb or die "$!($syndb)";
     while (my ($synid, $members) = each %_SYNDB) {
 	my $_synid = decode('utf8', $synid);
 	foreach my $string (split(/\|/, decode('utf8', $members))) {
@@ -176,7 +179,6 @@ $prefixOfStringType{RELBASE}        = 'RB';
 $prefixOfStringType{RESULT}         = 'RT';
 
 
-
 my @ISTVAN_TAGS = (
 		   'AIM',
 		   'BASE',
@@ -206,8 +208,6 @@ if ($opt{ipsj}) {
     $opt{abstract} = 1;
 }
 
-
-
 if (!$opt{title} && !$opt{keywords} && !$opt{description} && $opt{inlinks} && !$opt{sentences}) {
     $opt{only_inlinks} = 1;
 }
@@ -224,7 +224,19 @@ $opt{ignore_genkei} = 0 unless ($opt{ignore_genkei});
 $opt{max_length_of_rawstring} = 5000 unless ($opt{max_length_of_rawstring});
 
 
-
+# ブロックタイプの素性ビットを読み込む
+my %BLOCK_TYPE2FEATURE = ();
+if ($opt{feature}) {
+    open (F, '<:utf8', $opt{feature}) or die $!;
+    while (<F>) {
+	next if ($_ =~ /^\#/);
+	chop;
+	my @data = split (/ /, $_);
+	$BLOCK_TYPE2FEATURE{$data[2]} = $data[5];
+    }
+    $BLOCK_TYPE2FEATURE{""} = 0;
+    close (F);
+}
 
 my %alreadyAnalyzedFiles = ();
 if (-f $opt{logfile}) {
@@ -792,8 +804,9 @@ sub merge_indices {
 	    ##########################
 
 	    foreach my $tag (@tags) {
-		my $midasi = sprintf ("%s%s", $tag, $index->{midasi});
+		my $midasi = ($opt{feature}) ? $index->{midasi} : sprintf ("%s%s", $tag, $index->{midasi});
 		next if ($midasi =~ /\->/ && $midasi =~ /s\d+/ && $opt{ignore_syn_dpnd});
+		chop $tag if ($opt{feature});
 
 		if ($opt{penalty}) {
 		    # ペナルティタームの生成
@@ -805,8 +818,13 @@ sub merge_indices {
 			    foreach my $_dpnd (@$_dpnds) {
 				next unless (defined $_dpnd);
 
-				my $__dpnd = sprintf ("%s%s\$", $tag, $_dpnd);
-				push (@{$ret{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}});
+				my $__dpnd = $_dpnd;
+				if ($opt{feature}) {
+				    push (@{$ret{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}, feature => $BLOCK_TYPE2FEATURE{$tag} });
+				} else {
+				    $__dpnd = sprintf ("%s%s\$", $tag, $_dpnd);
+				    push (@{$ret{$__dpnd}->{pos_score}}, {pos => $index->{pos}, score => -1 * $index->{score}});
+				}
 				$ret{$__dpnd}->{score} -= $index->{score};
 				$ret{$__dpnd}->{sids}{$sid} = 1;
 			    }
@@ -818,7 +836,11 @@ sub merge_indices {
 
 		$ret{$midasi}->{sids}{$sid} = 1;
 		if ($opt{knp} || $opt{syn} || $opt{english}) {
-		    push(@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}});
+		    if ($opt{feature}) {
+			push (@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}, feature => $BLOCK_TYPE2FEATURE{$tag} });
+		    } else {
+			push (@{$ret{$midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score} });
+		    }
 		    $ret{$midasi}->{score} += $index->{score};
 		} else {
 		    push(@{$ret{$midasi}->{poss}}, @{$index->{absolute_pos}});
@@ -1008,15 +1030,20 @@ sub output_syngraph_indice_with_position {
 
 	my $score = &round($indice->{$midasi}{score});
 	my $sids_str = join(',', sort {$a <=> $b} keys %{$indice->{$midasi}{sids}});
-	my $pos_scr_str;
+	my $pos_scr_msk_str;
 	foreach my $pos_score (sort {$a->{pos} <=> $b->{pos}} @{$indice->{$midasi}{pos_score}}) {
 	    my $pos = $pos_score->{pos};
+	    my $msk = $pos_score->{feature} + 0;
 	    my $scr = &round($pos_score->{score});
-	    $pos_scr_str .= $pos . "&" . $scr . ",";
+	    if ($opt{feature}) {
+		$pos_scr_msk_str .= $pos . "&" . $scr . "&" . $msk . ",";
+	    } else {
+		$pos_scr_msk_str .= $pos . "&" . $scr . ",";
+	    }
 	}
-	chop($pos_scr_str);
+	chop($pos_scr_msk_str);
 
-	printf $fh ("%s %s:%s@%s#%s\n", $midasi, $did, $score, $sids_str, $pos_scr_str);
+	printf $fh ("%s %s:%s@%s#%s\n", $midasi, $did, $score, $sids_str, $pos_scr_msk_str);
     }
 }
 
