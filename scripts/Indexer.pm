@@ -167,6 +167,7 @@ sub makeIndexfromSynGraph {
     my $surf;
     my %lastBnstIds = ();
     my $NE_flag = undef;
+    my $kihonkuFeature = '';
     foreach my $line (split(/\n/, $syngraph)) {
 	if ($line =~ /^\# /) {
 	    next;
@@ -174,11 +175,13 @@ sub makeIndexfromSynGraph {
 	    my ($dumy, $id, $kakari, $midasi) = split(/ /, $line);
 	    if ($kakari =~ /^(.+)(A|I|D|P)$/) {
 		$dpndInfo{$id}->{kakariType} = $2;
+		$dpndInfo{$id}->{kihonkuFeature} = $kihonkuFeature;
 		$dpndInfo{$id}->{pos} = $position + $this->{absolute_pos};
 		foreach my $kakariSakiID (split(/\//, $1)) {
 		    push(@{$dpndInfo{$id}->{kakariSaki}}, $kakariSakiID);
 		}
 	    }
+	    $kihonkuFeature = '';
 	    ($surf) = ($midasi =~ /<見出し:([^>]+)>/);
 	} elsif ($line =~ /^! /) {
 	    # term（単語）の抽出
@@ -190,6 +193,8 @@ sub makeIndexfromSynGraph {
 		    push (@{$pos2synnode->{$position + $this->{absolute_pos}}}, $synnode);
 		}
 	    }
+	} elsif ($line =~ /^\+ /) {
+	    $kihonkuFeature = $line;
 	} elsif ($line =~ /^\* /) {
 	    %lastBnstIds = ();
 	    $knpbuf .= ($line . "\n");
@@ -292,7 +297,8 @@ sub _makeTerms {
 		    $terms[-1]->{isContentWord} = 1;
 		    $terms[-1]->{kakarimoto_fstring} = $synNode->{fstring};
 		    $terms[-1]->{kakarisaki_fstring} = $kakariSakiNode->{fstring};
-
+		    $terms[-1]->{kakarimoto_kihonku_fstring} = $dpndInfo->{$id}{kihonkuFeature};
+		    $terms[-1]->{kakarisaki_kihonku_fstring} = $dpndInfo->{$kakariSakiID}{kihonkuFeature};
 		    if ($terms[-1]->{midasi} !~ /s\d+/) {
 			$terms[-1]->{isBasicNode} = 1
 		    }
@@ -1080,6 +1086,8 @@ sub get_dpnd_index {
 	    $idx[-1]->{score} = 1;# / ($num_of_reps1 * $num_of_reps2);
 	    $idx[-1]->{isContentWord} = 1;
 	    $idx[-1]->{fstring} = $kihonku1->fstring;
+	    $idx[-1]->{kakarimoto_kihonku_fstring} = $kihonku1->fstring;
+	    $idx[-1]->{kakarisaki_kihonku_fstring} = $kihonku2->fstring;
 	    ($idx[-1]->{moto_pos}) = (($kihonku1->mrph)[0]->fstring =~ /POSITION:(\d+)/);
 	    ($idx[-1]->{saki_pos}) = (($kihonku2->mrph)[0]->fstring =~ /POSITION:(\d+)/);
 	}
