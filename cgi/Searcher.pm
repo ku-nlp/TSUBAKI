@@ -117,7 +117,7 @@ sub filterSearchResult {
     # クラスタリング結果のロード
     require Tsubaki::CacheManager;
     my $cache = new Tsubaki::CacheManager();
-    my $key = sprintf ("clustering{query=%s,num=%s}", uri_escape(encode('utf8', $opt->{query})), 100);
+    my $key = sprintf ("clustering{query=%s,num=}", uri_escape(encode('utf8', $opt->{query})));
     my $xmldat = $cache->load($key);
 
     require XML::LibXML;
