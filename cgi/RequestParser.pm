@@ -67,6 +67,9 @@ sub getDefaultValues {
     $params{modifier_of_NE_process} = 1;
     $params{site} = undef;
     $params{blockTypes} = undef;
+    $params{remove_synids} = undef;
+    $params{term_states} = undef;
+    $params{dpnd_states} = undef;
     $params{disable_Zwhitespace_delimiter} = 0;
     $params{call_from_api} = $call_from_API;
 
@@ -230,7 +233,25 @@ sub setParametersOfGetRequest {
 		foreach my $conj (split (/,/, decode('utf8', $cgi->param($name)))) {
 		    push (@{$params->{$name}}, $conj);
 		}
-	    } else {
+	    }
+	    elsif ($name eq 'remove_synids') {
+		foreach my $synids (split (/,/, decode('utf8', $cgi->param($name)))) {
+		    $params->{$name}{$synids} = 1;
+		}
+	    }
+	    elsif ($name eq 'term_states') {
+		foreach my $state (split (/,/, decode('utf8', $cgi->param($name)))) {
+		    my ($k, $v) = split ("=", $state);
+		    $params->{$name}{$k} = $v;
+		}
+	    }
+	    elsif ($name eq 'dpnd_states') {
+		foreach my $state (split (/,/, decode('utf8', $cgi->param($name)))) {
+		    my ($k, $v) = split ("=", $state);
+		    $params->{$name}{$k} = $v;
+		}
+	    }
+	    else {
 		if (scalar (@values) > 1) {
 		    $params->{$name} = \@values;
 		} else {
@@ -474,6 +495,9 @@ sub parseQuery {
 	    $selecter->remove($socket);
 	    $socket->close();
 	}
+	my $qkstring = $query->{s_exp};
+#	$qkstring =~ s/\n/ /g;
+#	print $qkstring . "\n";
     } else {
 	my $q_parser = new QueryParser({
 	    DFDB_DIR => ($params->{DFDB_DIR}) ? $params->{DFDB_DIR} : $CONFIG->{SYNGRAPH_DFDB_PATH},
