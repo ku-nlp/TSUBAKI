@@ -41,3 +41,7 @@ DIV.bottom_message{
 	text-align: center;
 	color: red;
 }
+
+a:visited{
+	color: blue;
+}
