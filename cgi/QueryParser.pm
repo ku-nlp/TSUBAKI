@@ -368,6 +368,7 @@ sub _runJapaneseParser {
     my ($this, $search_expression, $opt) = @_;
 
     my $knpresult = $CONFIG->{KNP}->parse($search_expression);
+
     $this->{logger}->setTimeAs('KNP', '%.3f') if (defined $this->{logger});
 
     return $knpresult;
@@ -439,9 +440,13 @@ sub createQueryKeywordObj {
     # 言語解析
     my $result = $this->_linguisticAnalysis($search_expression, $opt);
 
+
+    # クエリ解析修正結果を反映する
+    $this->reflectQueryModificationFeedback($result, $opt);
+
+
     # english モードフラグのコピー
     $opt->{english} = $this->{OPTIONS}{is_english_version};
-
     if ($this->{OPTIONS}{is_cpp_mode}) {
 	my %condition = ();
 	$condition{force_dpnd}        = $force_dpnd;
@@ -473,6 +478,38 @@ sub createQueryKeywordObj {
 	    
 	    return $qk;
 	}
+    }
+}
+
+# クエリ解析修正結果を反映する
+sub reflectQueryModificationFeedback {
+    my ($this, $result, $opt) = @_;
+
+    my @kihonkus = $result->tag;
+    while (my ($i, $dpndState) = each %{$opt->{dpnd_states}}) {
+	my $fstring = $kihonkus[$i]->fstring();
+	$fstring =~ s/<クエリ必須係り受け>//g;
+	$fstring =~ s/<クエリ削除係り受け>//g;
+	if ($dpndState == 0) {
+	    $fstring .= '<クエリ必須係り受け>';
+	}
+	elsif ($dpndState == 2) {
+	    $fstring .= '<クエリ削除係り受け>';
+	}
+	$kihonkus[$i]->{fstring} = $fstring;
+    }
+
+    while (my ($i, $termState) = each %{$opt->{term_states}}) {
+	my $fstring = $kihonkus[$i]->fstring();
+	$fstring =~ s/<クエリ削除語>//g;
+	$fstring =~ s/<クエリ不要語>//g;
+	if ($termState == 1) {
+	    $fstring .= '<クエリ不要語>';
+	}
+	elsif ($termState == 2) {
+	    $fstring .= '<クエリ削除語>';
+	}
+	$kihonkus[$i]->{fstring} = $fstring;
     }
 }
 
@@ -673,7 +710,7 @@ sub parse {
 	    my $qk = $this->createQueryKeywordObj($search_expression, $opt);
 
 	    if ($this->{OPTIONS}{is_cpp_mode}) {
-		push (@sexps, $qk->to_S_exp());
+		push (@sexps, $qk->to_S_exp("", undef, $opt));
 		push (@escapedStrings, $qk->to_uri_escaped_string());
 		$rawstring = $qks_str;
 		$result = $qk->{result};
@@ -682,7 +719,7 @@ sub parse {
 		}
 
 		while (my ($k, $v) = each %{$qk->{synnode2midasi}}) {
-		    $synnode2midasi->{$k} = $v;
+		    $synnode2midasi->{lc($k)} = $v;
 		}
 	    }
 	    elsif ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
@@ -728,8 +765,6 @@ sub parse {
 	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0])),
 	escaped_query => join (",", @escapedStrings)
 			});
-
-#    print "<!-- " . $ret->{s_exp} . " -->\n" if ($this->{OPTIONS}{is_cpp_mode} && !$this->{OPTIONS}{call_from_api});
 
     ############
     # ログの取得
