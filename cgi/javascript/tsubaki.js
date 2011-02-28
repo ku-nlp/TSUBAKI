@@ -32,6 +32,10 @@ function toggle_simpage_view (id, obj, open_label, close_label) {
     }
 }
 
+function open_query_edit_window () {
+    window.open();    
+}
+
 function hide_query_result () {
     var baroon = document.getElementById("baroon");
     baroon.style.display = "none";
@@ -57,4 +61,35 @@ function toggle_ipsj_verbose_view (id1, id2, id3, id4, obj, open_label, close_la
         document.getElementById(id2).style.display = "block";
         document.getElementById(id4).style.display = "block";
     }
+}
+
+function submitQuery () {
+    document.search.submit();
+    parent.stmap.location = "http://www.cl.ecei.tohoku.ac.jp/stmap/api/evidence_search.cgi?q=" + encodeURI(document.all.query.value);
+}
+
+function submitQuery2 () {
+    var removeSynids = new Array();
+    var dpndStates = new Array();
+    var termStates = new Array();
+    for (var i = 0; i < termGroups.length; i++) {
+        var states = termGroups[i].getState().split(",");
+	var dpnds  = termGroups[i].getDependancy();
+
+        termStates.push(termGroups[i].getID() + "=" + termGroups[i].getImportance());
+
+	for (var j = 0; j < dpnds.length; j++) {
+            dpndStates.push(dpnds[j].child.getID() + "=" + dpnds[j].getImportance());
+        }
+        for (var j = 0; j < states.length; j++) {
+            var kv = states[j].split("=");
+            if (kv[1] == 0) {
+                removeSynids.push(kv[0]);
+            }
+        }
+    }
+    document.getElementById("rm_synids").value  = removeSynids.join(",");
+    document.getElementById("trm_states").value = termStates.join(",");
+    document.getElementById("dep_states").value = dpndStates.join(",");
+    document.search.submit();
 }
