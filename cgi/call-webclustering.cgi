@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/home/skeiji/local/bin/perl
 
 # $Id$
 
@@ -28,7 +28,7 @@ binmode (STDOUT, 'utf8');
 print header(-charset => 'utf-8');
 
 my $CGI = new CGI();
-my $BASE_URL = 'http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/shibata/WebClustering/api.cgi';
+my $BASE_URL = 'http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/shibata/WebClusteringDemo/api.cgi';
 my $ORG_REFERER = $CGI->param('org_referer');
 my $selected_cluster_id = -1 ; $selected_cluster_id = $1 if ($ORG_REFERER =~ /&cluster_id=(\d+)/);
 $ORG_REFERER =~ s/&cluster_id=\d+//;
@@ -37,6 +37,7 @@ $ORG_REFERER =~ s/start=\d+/start=1/;
 
 my $QUERY = uri_escape($CGI->param('query'));
 my $NUM_OF_PAGE = $CGI->param('num');
+my $DOC_DATA = $CGI->param('dids');
 my $REQUEST_URI = sprintf ("%s?query=%s&api=1&num=%d&organized_method=grouping", $BASE_URL, $QUERY, $NUM_OF_PAGE);
 
 &main();
@@ -61,13 +62,27 @@ sub main {
     &printClusteringResult($result);
 }
 
+sub makeClusteringDocinfo {
+    my $docinfo = sprintf (qq(<ClusteringDocinfo query="%s" organized_method="grouping">\n), $QUERY);
+    my $rank = 1;
+    foreach my $did (split (",", $DOC_DATA)) {
+	$docinfo .= sprintf (qq(\t<Doc Id="%s" Rank="%d"/>\n), $did, $rank++);
+    }
+    $docinfo .= "</ClusteringDocinfo>\n";
+
+    return $docinfo;
+}
+
 sub getClusteringResult {
+    # POST data 
+    my $DOCINFO = &makeClusteringDocinfo();
+
     # UserAgent の作成
     my $ua = new LWP::UserAgent();
 
     # リクエストの送信
-    my $req = HTTP::Request->new(GET => $REQUEST_URI);
-    $req->header('Accept' => 'text/xml');
+    my $req = HTTP::Request->new(POST => $REQUEST_URI);
+    $req->content(encode('utf8', $DOCINFO));
     my $response = $ua->request($req);
 
     # APIの結果を取得
