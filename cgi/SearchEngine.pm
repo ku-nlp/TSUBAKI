@@ -59,17 +59,17 @@ sub search {
 	    $result = $this->broadcastSearch($query, $logger, $opt);
 
 	    # キャッシュを利用しない、英語モード、ヒット件数が0件のときはキャッシュしない
-	    unless ($opt->{disable_cache} || !$CONFIG->{IS_ENGLISH_VERSION} || $result->{hitcount} < 1) {
+	    unless ($opt->{disable_cache} || $CONFIG->{IS_ENGLISH_VERSION} || $result->{hitcount} < 1) {
 		$cache->save($query->normalize(), $result);
 	    }
 
 	    $logger->setParameterAs('IS_CACHE', 0);
-	    $state->checkOut();
 	    $status = 'search';
 	} else {
 	    # 混雑していて検索できなかった
 	    $status = 'busy';
 	}
+	$state->checkOut();
     }
     return ($result->{hitcount}, $result->{hitpages}, $status);
 }
