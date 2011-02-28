@@ -62,6 +62,8 @@ sub printQuery {
 		printf("のうち <B>%s</B> を含む文書", decode('utf8', $params->{cluster_label}));
 	    }
 	}
+
+	print qq(<INPUT type="button" value="クエリ解析結果の確認・修正" onclick="javascript:showQueryEditWindow();">);
 	print "</TD>\n";
     }
 }
@@ -280,6 +282,31 @@ END_OF_HTML
     <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
     <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
     <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
+    <style type="text/css">
+	DIV.term {
+	  text-align: center;
+	  margin: 0.1em;
+    }
+
+    DIV.termBasic {
+	text-align: center;
+        margin: 0.1em;
+    }
+
+    DIV.termGroup {
+      text-align: center;
+      padding: 0em 0.1em;
+      margin: 0.5em;
+      border: 1px solid blue;
+      float: left;
+      font-size: 10pt;
+    }
+
+    DIV.imp {
+	text-align: center;
+      cursor: pointer;
+    }
+</style>
 
     <script language="JavaScript" type="text/javascript">
 END_OF_HTML
@@ -291,10 +318,10 @@ unless ($query->{rawstring}) {
     print "var jg;\n";
     print "function init () {\n";
     printf "jg = new jsGraphics('%s');\n", $canvasName;
-
     if ($CONFIG->{IS_CPP_MODE}) {
-	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", 0;
-	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", 0, 0;
+	printf "Event.observe('query%d', 'click',  showQueryEditWindow);\n", 0;
+#	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", 0;
+#	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", 0, 0;
 	print "}\n";
 
 	my ($width, $height, $coffset, $jscode) = &Tsubaki::TermGroupCreater::getPaintingJavaScriptCode($query->{result}, 0, $opt);
@@ -315,8 +342,9 @@ unless ($query->{rawstring}) {
 	print "}\n";
     } else {
 	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
-	    printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", $i;
-	    printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", $i, $i;
+	    printf "Event.observe('query%d', 'click',  showQueryEditWindow);\n", 0;
+#	    printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", $i;
+#	    printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", $i, $i;
 	}
 	print "}\n";
 
@@ -395,15 +423,41 @@ END_OF_HTML
 sub print_body {
     my ($this, $params, $query, $status) = @_;
 
-    print qq(<BODY style="padding: 0.2em 0.6em; margin:0em; z-index:1;" onload="javascript:init();">\n);
+    print qq(<BODY style="padding: 0.2em 0.6em; margin:0em; z-index:1;" onload="javascript:init();javascript:init2('query_edit_canvas'); javascript:createTerms();">\n);
+    print << "END_OF_HTML";
+
+<TABLE cellpadding="0" cellspacing="0" border="0" id="query_edit_window" style="z-index: 10; display:none; position: absolute; top: 20%; align: center; left: 20%; display: none; z-index: 10;">
+    <TR>
+	<TD><IMG width="24" height="42" src="image/curve-top-left.png"></TD>
+<TD style="background-color:#ffffcc;">
+<CENTER style="padding-top: 1em;">
+   <INPUT type="button" value="修正結果で検索する" onclick="javascript:submitQuery2();">
+   <INPUT type="button" value="閉じる" onclick="javascript:hideQueryEditWindow();">
+</CENTER>
+</TD>
+	<TD><IMG width="24" height="42" src="image/curve-top-right.png"></TD>
+    </TR>
+    <TR>
+	<TD style="background-color:#ffffcc;"></TD>
+	<TD style="background-color:#ffffcc;"><CENTER><DIV id="query_edit_canvas" style="position: relative; padding-top:7em;"></CENTER></DIV></TD>
+	<TD style="background-color:#ffffcc;"></TD>
+    </TR>
+    <TR>
+	<TD><IMG width="24" height="24" src="image/curve-bottom-left.png"></TD>
+	<TD style="background-color:#ffffcc;"></TD>
+	<TD><IMG width="24" height="24" src="image/curve-bottom-right.png"></TD>
+    </TR>
+</TABLE>
+END_OF_HTML
+
 
     # クエリ解析結果表示用の領域を確保
     $this->print_canvas();
 
     print qq(<DIV style="font-size:11pt; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
 #    if ($status eq 'search' || $status eq 'cache') {
-	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">2007年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
-	print qq(&nbsp;|&nbsp;);
+#	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">2007年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
+#	print qq(&nbsp;|&nbsp;);
 #    }
     print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">使い方</A><BR>\n);
 
@@ -483,10 +537,13 @@ sub print_form {
     printf qq(<TD width="*" align="%s" valign="middle" style="border: 0px solid red; padding-top: 1em;">\n), (($params->{query}) ? 'left' : 'center');
 
     print qq(<FORM name="search" method="GET" action="" enctype="multipart/form-data" onSubmit="submitQuery();">\n);
-    print qq(<INPUT type="hidden" name="start" value="1">\n);
+    print qq(<INPUT type="hidden" id="num_of_start_page" name="start" value="1">\n);
+    print qq(<INPUT type="hidden" id="rm_synids" name="remove_synids" value="">\n);
+    print qq(<INPUT type="hidden" id="trm_states" name="term_states" value="">\n);
+    print qq(<INPUT type="hidden" id="dep_states" name="dpnd_states" value="">\n);
     print qq(<INPUT type="text" id="qbox" name="query" value="$params->{'query'}" size="112">\n);
 
-    print qq(<INPUT type="submit" value="検索する"/>\n);
+    print qq(<INPUT type="button" value="検索する" onclick="submitQuery();"/>\n);
     print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/><BR>\n);
 
     # NTCIRモードの場合はクエリを表示
@@ -982,6 +1039,8 @@ sub printSearchResultForBrowserAccess {
     # 検索クエリの表示
     ##################
     $this->printQuery($logger, $params, $size, $query, $status);
+
+    $this->printQueryEditPain($params, $query);
 
     # for ajax
     my @__buf;
@@ -1968,6 +2027,349 @@ sub printErrorMessage {
 
     print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
     print $msg . "\n";
+}
+
+
+
+sub printQueryEditPain {
+    my ($this, $params, $query) = @_;
+
+    my $jscode = $this->getPaintingJavaScriptCode($query->{result}, $params);
+
+    print $jscode . "\n";
+}
+
+
+sub getPaintingJavaScriptCode {
+    my ($this, $result, $opt) = @_;
+
+    my $jscode;
+    $jscode .= qq(<script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/drawResult.js"></script>\n);
+    $jscode .= qq(<script language="JavaScript">\n);
+
+    # 単語・同義表現グループを描画する
+    my @kihonkus = $result->tag;
+    my $syngraph = Configure::getSynGraphObj();
+    
+    my %tid2syns = ();
+    my @surfs = ();
+    my %synos = ();
+    my %tag2i = ();
+    for (my $i = 0; $i < scalar(@kihonkus); $i++) {
+	my $tag = $kihonkus[$i];
+	$tag2i{$tag} = $i;
+	my ($synbuf, $max_num_of_words) = &_getExpressions($i, $tag, \%tid2syns, $syngraph, $opt);
+
+	my ($white_space_flag, $_surf) = (1, '');
+	foreach my $m ($tag->mrph) {
+	    if ($white_space_flag && $m->fstring !~ /内容語/) {
+		$_surf .= ' ';
+		$white_space_flag = 0;
+	    }
+	    $_surf .= $m->midasi;
+	}
+	push (@surfs, $_surf);
+	$synos{$surfs[-1]}->{importance} = ($tag->fstring() =~ /クエリ削除語/) ? "UNNECCESARY" : (($tag->fstring() =~ /クエリ不要語/) ?  "OPTIONAL" : "NECCESARY");
+	$synos{$surfs[-1]}->{synonyms} = $synbuf;
+    }
+
+    $jscode .= qq(function createTerms () {\n);
+    $jscode .= qq(var termGroups = new Array\(\);\n);
+    $jscode .= qq(var basicWords = new Array\() . join (",", map {sprintf "\"%s\"", $_} @surfs) . qq(\);\n);
+    $jscode .= qq(var importance = new Array\() . join (",", map {sprintf "%s", $synos{$_}->{importance}} @surfs) . qq(\);\n);
+    $jscode .= qq(for (var i = 0; i < basicWords.length; i++) {\n);
+    $jscode .= qq(\ttermGroups[i] = new TermGroup(i, basicWords[i], importance[i]);\n);
+    $jscode .= qq(}\n\n);
+
+    foreach my $i (0..scalar(@surfs) - 1) {
+	my $surf = $surfs[$i];
+	while (my ($synid, $synonyms) = each %{$synos{$surf}->{synonyms}}) {
+	    my $strs = qq(new Array\() . join (",", map {sprintf "\"%s\"", $_} @$synonyms) . qq(\));
+	    my $initState = (exists $opt->{remove_synids}{$synid}) ? 0 : 1;
+	    $jscode .= qq(termGroups[$i].push($initState, "$synid", $strs);\n);
+	}
+    }
+
+
+    my %dpnds = ();
+    foreach my $kihonku (@kihonkus) {
+	my $kakarimoto = $kihonku;
+	my $kakarisaki = $kihonku->parent;
+	# 係り先がない場合は next
+	next unless (defined $kakarisaki);
+
+	# 並列句の処理１
+	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 日本->政治, 日本->経済 の部分
+	my $buf = $kakarisaki;
+	&generateDependencyTermsForParaType1(\%dpnds, $kakarimoto, $kakarisaki, \%tag2i);
+
+
+	# 並列句の処理2
+	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 政治->正す, 経済->正す の部分
+	my $buf = $kakarimoto;
+	while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
+	    $buf = $kakarisaki;
+	    $kakarisaki = $kakarisaki->parent;
+	}
+	# 係り受けオブジェクトの生成
+	push (@{$dpnds{$tag2i{$kakarisaki}}}, &generateJavascriptCode4Dpnd($kakarimoto, $kakarisaki, \%tag2i));
+
+
+	# クエリ解析により追加された係り受けオブジェクトの生成
+	if ($kakarimoto->fstring() !~ /<クエリ削除係り受け>/ &&
+	    $kakarisaki->fstring() =~ /<クエリ不要語>/ &&
+	    $kakarisaki->fstring() !~ /<クエリ削除語>/ &&
+	    $kakarisaki->fstring() !~ /<固有表現を修飾>/) {
+	    my $_kakarisaki = $kakarisaki->parent();
+
+	    # 係り先の係り先への係り受けを描画
+	    if (defined $_kakarisaki) {
+		push (@{$dpnds{$tag2i{$_kakarisaki}}}, &generateJavascriptCode4Dpnd($kakarimoto, $_kakarisaki, \%tag2i));
+	    }
+	}
+    }
+
+    # termGroup に係り受け関係を追加
+    while (my ($i, $_dpnds) = each %dpnds) {
+	$jscode .= qq(var dpnds$i = new Array \() . join (", ", @$_dpnds) . ");\n";
+	$jscode .= qq(termGroups[$i].setDependancy(dpnds$i);\n);
+    }
+
+    # 表示する
+    $jscode .= "setTermGroups(termGroups);\n";
+    $jscode .= "paint(termGroups);\n";
+    $jscode .= "}\n";
+    $jscode .= "</script>\n";
+    return $jscode;
+}
+
+
+sub getDrawingDependencyCodeForParaType1 {
+    my ($kakarimoto, $kakarisaki, $i, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos) = @_;
+
+    my $jscode;
+    if (defined $kakarisaki && defined $kakarisaki->child) {
+	foreach my $child ($kakarisaki->child) {
+	    # 係り受け関係を追加する際、係り元のノード以前は無視する
+	    # ex) 緑茶やピロリ菌
+	    if ($child->dpndtype eq 'P' && $child->id > $kakarimoto->id) {
+		my $mark = ($child->fstring() =~ /クエリ削除語/) ?  'Ｘ' : '△';
+		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $child, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos);
+
+		# 子の子についても処理する
+		$jscode .= &getDrawingDependencyCodeForParaType1($kakarimoto, $child, $i, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos);
+	    }
+	}
+    }
+    return $jscode;
+}
+
+
+sub getDrawingDependencyCode {
+    my ($i, $kakarimoto, $kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos) = @_;
+
+    my $jscode = '';
+
+    my $kakarimoto_gid = ($kakarimoto->synnodes)[0]->tagid;
+    my $kakarisaki_gid = ($kakarisaki->synnodes)[0]->tagid;
+
+    my $dist = abs($i - $gid2num->{$kakarisaki_gid});
+
+    my $x1 = $gid2pos->{$kakarimoto_gid}->{pos} + (3 * $gid2pos->{$kakarimoto_gid}->{num_parent} * $arrow_size);
+    my $x2 = $gid2pos->{$kakarisaki_gid}->{pos} - (3 * $gid2pos->{$kakarisaki_gid}->{num_child} * $arrow_size);
+    $gid2pos->{$kakarimoto_gid}->{num_parent}++;
+    $gid2pos->{$kakarisaki_gid}->{num_child}++;
+
+    my $y = $offsetY - $font_size - (1.5 * $dist * $font_size);
+
+
+    # 係り受けの線をひく
+
+    if ($mark eq 'Ｘ') {
+	$jscode .= qq(jg.setStroke(Stroke.DOTTED);\n);
+    } else {
+	$jscode .= qq(jg.setStroke(1);\n);
+    }
+
+    $jscode .= qq(jg.drawLine($x1, $offsetY, $x1, $y);\n);
+    $jscode .= qq(jg.drawLine($x1 - 1, $offsetY, $x1 - 1, $y);\n);
+
+    $jscode .= qq(jg.drawLine($x1, $y, $x2, $y);\n);
+    $jscode .= qq(jg.drawLine($x1, $y - 1, $x2, $y - 1);\n);
+
+    $jscode .= qq(jg.drawLine($x2, $y, $x2, $offsetY);\n);
+    $jscode .= qq(jg.drawLine($x2 + 1, $y, $x2 + 1, $offsetY);\n);
+
+    # 矢印
+    $jscode .= qq(jg.fillPolygon(new Array($x2, $x2 + $arrow_size, $x2 - $arrow_size), new Array($offsetY, $offsetY - $arrow_size, $offsetY - $arrow_size));\n);
+
+
+    # 線の上に必須・オプショナルのフラグを描画する
+    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1, $y - 1.05 * $font_size, $font_size, 'left');\n);
+
+    return $jscode;
+}
+
+
+sub _getNormalizedString {
+    my ($str) = @_;
+
+    my ($yomi) = ($str =~ m!/(.+?)(?:v|a)?$!);
+    $str =~ s/\[.+?\]//g;
+    $str =~ s/(\/|:).+//;
+    $str = lc($str);
+    $str =~ s/人」/人/;
+
+    return ($str, $yomi);
+}
+
+sub _pushbackBuf {
+    my ($i, $tid2syns, $string, $yomi, $functional_word) = @_;
+
+    foreach my $e (($string, $yomi)) {
+	next unless ($e);
+
+	$tid2syns->{$i}{$e} = 1;
+	$tid2syns->{$i}{sprintf ("%s%s", $e, $functional_word)} = 1;
+    }
+}
+
+sub _getPackedExpressions {
+    my ($i, $synbuf, $tid2syns, $tids, $str, $functional_word, $syngraph) = @_;
+
+    my %buf = ();
+    my @synonymous_exps = split(/\|+/, decode('utf8', $syngraph->{syndb}{$str}));
+    my $max_num_of_words = 0;
+    if (scalar(@synonymous_exps) > 1) {
+	foreach my $_string (@synonymous_exps) {
+	    my ($string, $yomi) = &_getNormalizedString($_string);
+	    &_pushbackBuf($i, $tid2syns, $string, undef, $functional_word);
+	    $buf{$string} = 1;
+	}
+
+	foreach my $string (keys %buf) {
+	    my $matched_exp = undef;
+	    if (scalar(@$tids) > 1) {
+		my $_string = $string;
+		foreach my $tid (@$tids) {
+		    my $isMatched = 0;
+		    foreach my $_prev (sort {length($b) <=> length($a)} keys %{$tid2syns->{$tid}}) {
+			if ($_string =~ /^$_prev/) {
+			    $matched_exp .= $_prev;
+			    $_string = "$'";
+			    $isMatched = 1;
+			    last;
+			}
+		    }
+
+		    # 先行する語とマッチしなければ終了
+		    last unless ($isMatched);
+		}
+	    }
+
+	    unless ($matched_exp) {
+		$synbuf->{$string} = 1;
+	    } else {
+		if ($string ne $matched_exp) {
+		    $string =~ s/$matched_exp/（$matched_exp）/;
+		    $synbuf->{$string} = 1;
+		}
+	    }
+	    $max_num_of_words = length($string) if ($max_num_of_words < length($string));
+	}
+    }
+
+    return $max_num_of_words;
+}
+
+
+# 同義グループに属す表現の取得と幅（文字数）の取得
+sub _getExpressions {
+    my ($termGroupID, $tag, $tid2syns, $syngraph, $opt) = @_;
+
+
+    my $surf = ($tag->synnodes)[0]->midasi;
+    my $surf_contentW = ($tag->mrph)[0]->midasi;
+    my @repnames_contentW = ($tag->mrph)[0]->repnames;
+    my $max_num_of_words = length($surf);
+    my $functional_word = (($tag->mrph)[-1]->fstring !~ /<内容語>/) ? ($tag->mrph)[-1]->midasi : '';
+    $functional_word =~ s!/.*$!!;
+
+    my @basicNodes = ();
+    my %synonyms = ();
+    unless ($tag->fstring() =~ /<クエリ削除語>/) {
+	foreach my $synnodes ($tag->synnodes) {
+	    foreach my $node ($synnodes->synnode) {
+		next if ($node->feature =~ /<上位語>/ || $node->feature =~ /<反義語>/ || $node->feature =~ /<否定>/);
+		my %buf;
+
+		# 基本ノードの獲得
+		my $synid = $node->synid;
+		if ($synid !~ /s\d+/) {
+		    my ($_str, $_yomi) = &_getNormalizedString($synid);
+		    push (@basicNodes, $_str);
+		    push (@basicNodes, $_yomi) if ($_yomi);
+		    &_pushbackBuf($termGroupID, $tid2syns, $_str, $_yomi, $functional_word);
+		    next;
+		}
+
+
+		# 同義グループに属す表現の取得
+		unless ($opt->{disable_synnode}) {
+		    my @tids = $synnodes->tagids;
+		    my $max_num_of_w = &_getPackedExpressions($termGroupID, \%buf, $tid2syns, \@tids, $synid, $functional_word, $syngraph);
+		    $max_num_of_words = $max_num_of_w if ($max_num_of_words < $max_num_of_w);
+		}
+
+
+		# 出現形、基本ノードと同じ表現は削除する
+		delete ($buf{$surf});
+		delete ($buf{$surf_contentW});
+		foreach my $basicNode (@basicNodes) {
+		    delete ($buf{$basicNode});
+		}
+		foreach my $rep (@repnames_contentW) {
+		    foreach my $word_w_yomi (split (/\?/, $rep)) {
+			my ($hyouki, $yomi) = split (/\//, $word_w_yomi);
+			delete ($buf{$hyouki});
+		    }
+		}
+
+		foreach my $string (sort {$a cmp $b} keys %buf) {
+		    push (@{$synonyms{$synid}}, $string);
+		}
+	    }
+	}
+    }
+
+    return (\%synonyms, $max_num_of_words);
+}
+
+sub generateDependencyTermsForParaType1 {
+    my ($dpnds, $kakarimoto, $kakarisaki, $tag2i) = @_;
+
+    if (defined $kakarisaki->child) {
+	foreach my $child ($kakarisaki->child) {
+
+	    # 係り受け関係を追加する際、係り元のノード以前は無視する
+	    # ex) 緑茶やピロリ菌
+	    if ($child->dpndtype eq 'P' && $child->id > $kakarimoto->id) {
+		push (@{$dpnds->{$tag2i->{$kakarisaki}}}, &generateJavascriptCode4Dpnd($kakarimoto, $child, $tag2i));
+
+		# 子の子についても処理する
+		&generateDependencyTermsForParaType1($dpnds, $kakarimoto, $child, $tag2i);
+	    }
+	}
+    }
+}
+
+sub generateJavascriptCode4Dpnd {
+    my ($kakarimoto, $kakarisaki, $tag2i) = @_;
+
+    my $importance = 'OPTIONAL';
+    $importance = 'NECCESARY'   if ($kakarimoto->fstring() =~ /クエリ必須係り受け/);
+    $importance = 'UNNECCESARY' if ($kakarimoto->fstring() =~ /クエリ削除係り受け/ || $kakarisaki->fstring() =~ /クエリ削除語/);
+    return sprintf ("new Dependancy(termGroups[%d], termGroups[%d], $importance)", $tag2i->{$kakarisaki}, $tag2i->{$kakarimoto});
 }
 
 1;
