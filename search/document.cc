@@ -50,22 +50,32 @@ bool Document::set_term_pos(std::string term, std::vector<int> *in_pos_list) {
     }
 }
 
-std::vector<int> *Document::get_pos() {
+std::vector<int> *Document::get_pos(int featureBit) {
     if (pos_list == NULL) {
+	pos_list = new std::vector<int>;
 	if (pos_buf) {
+	    score = 0;
 	    pos_list = new std::vector<int>;
 	    pos_num = intchar2int(pos_buf);
 	    poslist = new int[pos_num];
 	    pos_buf += sizeof (int);
 
+	    freq = 0;
 	    for (int i = 0; i < pos_num; i++) {
-		int p = intchar2int(pos_buf);
-//		std::cerr << "pos=" << p << std::endl;
-		poslist[i] = p;
-		pos_list->push_back(p);
+		int feature = intchar2int(pos_buf);
+		pos_buf += sizeof (int);
+		if (feature & featureBit) {
+		    int posfreq = intchar2int(pos_buf);
+		    double frq = 0.001 * (posfreq & 1023);
+		    int pos = posfreq >> 10;
+		    pos_list->push_back(pos);
+		    poslist[i] = pos;
+		    freq += frq;
+		}
 		pos_buf += sizeof (int);
 	    }
 	    pos_list->push_back(-1);
+	    score = calc_okapi(freq, gdf);
 	}
     }
 
@@ -73,5 +83,12 @@ std::vector<int> *Document::get_pos() {
 }
 
 int* Document::get_poslist (){
+    int i = 0;
+    for (std::vector<int>::iterator it = pos_list->begin(); it != pos_list->end(); it++) {
+	std::cerr << (*it) << std::endl;
+	poslist[i] = (*it);
+	i++;
+    }
+    std::cerr << "-----" << std::endl;
     return poslist;
 }

@@ -99,6 +99,7 @@ class DocumentBuffer {
 };
 
 class Documents {
+    int featureBits;
     documents_type type;
     std::string term;
     double term_df;
@@ -231,6 +232,8 @@ class Documents {
 	return type = in_type;
     }
 
+    bool appendDocument (int i, int did, int load_dids, unsigned char *offdat, unsigned char *posdat);
+
     bool update_sorted_int (int *sorted_int, int *tid2idx, std::vector<std::vector<int> *> *pos_list_list, int target_num, bool skip_first);
 
     documents_type get_type() {
@@ -318,8 +321,9 @@ class Documents {
     }
 
     bool read_dids(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs);
-    bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs);
-    bool read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs);
+    bool read_dids_with_feature(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBit);
+    bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs, int featureBit);
+    bool read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBit);
 
     void _push_back_documents_index(int did, int value) {
 	__documents_index->add(did, value);

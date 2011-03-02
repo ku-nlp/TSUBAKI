@@ -289,7 +289,7 @@ bool Documents::merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_al
 		notFound = true;
 		break;
 	    }
-	    pos_list_list.push_back(_doc->get_pos());
+	    pos_list_list.push_back(_doc->get_pos(featureBits));
 	}
 	if (notFound)
 	    continue;
@@ -557,6 +557,9 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 
 	int file = atoi((char *)_Atom(car(cdr(cdr(cdr(cdr(car(cell))))))));
 
+	// Feature bits
+	featureBits = atoi((char *)_Atom(car(cdr(cdr(cdr(cdr(cdr(car(cell)))))))));
+
 	term = current_term;
 	// cerr << term << endl;
 	documents->set_label(term, file);
@@ -576,7 +579,8 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 	if (VERBOSE)
 	    cout << "    before lookup = " << 1000 * (_start - start) << " [ms] file = " << file << endl;
 
-	documents->lookup_index(current_term, term_type, index_streams->at(file), offset_dbs->at(file), _already_retrieved_docs);
+	documents->lookup_index(current_term, term_type, index_streams->at(file), offset_dbs->at(file), _already_retrieved_docs, featureBits);
+
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "    lookup = " << 1000 * (end - _start) << " [ms] file = " << file << endl;
@@ -590,7 +594,6 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
     bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
     s_documents.reserve(ldf);
     buffer += offset;
-    unsigned char *head_of_scrdat = buffer + ldf * SIZEOFINT * 1;
     unsigned char *head_of_offdat = buffer + ldf * SIZEOFINT * 2;
     unsigned char *head_of_posdat = buffer + ldf * SIZEOFINT * 3;
     if (already_retrieved_docs_exists) {
@@ -679,7 +682,81 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
     return true;
 }
 
-bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs) {
+
+bool Documents::appendDocument (int i, int did, int load_dids, unsigned char *offdat, unsigned char *posdat) {
+    Document *doc = new Document(did);
+    int pos_offset = intchar2int(offdat + i * SIZEOFINT);
+    int num_of_pos = intchar2int(posdat + pos_offset);
+
+    doc->set_gdf(term_df);
+    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (2 * num_of_pos + 1));
+    memcpy (__buf, (posdat + pos_offset), SIZEOFINT * (2 * num_of_pos + 1));
+    doc->set_pos_char(__buf);
+
+    s_documents.push_back(doc);
+
+    // map index
+    __documents_index->add(did, load_dids);
+    s_documents_index->add(did, load_dids);
+
+    return true;
+}
+
+
+bool Documents::read_dids_with_feature (unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBits) {
+    int load_dids = 0;
+    s_documents.reserve(ldf);
+    bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
+
+    buffer += offset;
+    unsigned char *head_of_feature = buffer + ldf * SIZEOFINT * 1;
+    unsigned char *head_of_offdat  = buffer + ldf * SIZEOFINT * 2;
+    unsigned char *head_of_posdat  = buffer + ldf * SIZEOFINT * 3;
+    if (already_retrieved_docs_exists) {
+	// load dids with conversion
+	int *docids = new int[ldf];
+	for (int i = 0; i < ldf; i++)
+	    *(docids + i) = intchar2int(buffer + i * SIZEOFINT);
+
+	// binary search
+	int head = 0;
+	std::vector<int> *did_list = _already_retrieved_docs->get_list();
+	for (std::vector<int>::iterator it = did_list->begin(), end = did_list->end(); it != end; ++it) {
+	    int tail = ldf - 1;
+	    while (head <= tail) {
+		if (*(docids + ((head + tail) >> 1)) - (*it) > 0) {
+		    tail = ((head + tail) >> 1) - 1;
+		} else if (*(docids + ((head + tail) >> 1)) - (*it) < 0) {
+		    head = ((head + tail) >> 1) + 1;
+		} else {
+		    int i = (head + tail) >> 1;
+		    int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
+		    // 文書Dにおける term の feature bit とクエリで与えられた feature bit の論理積をとる
+		    if (fbits_in_d & featureBits) {
+			appendDocument (i, *it, load_dids, head_of_offdat, head_of_posdat);
+			load_dids++;
+		    }
+
+		    head = ((head + tail) >> 1) + 1;
+		    break;
+		}
+	    }
+	}
+    } else {
+	for (int i = 0; i < ldf; i++) {
+	    int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
+	    // 文書Dにおける term の feature bit とクエリで与えられた feature bit の論理積をとる
+	    if (fbits_in_d & featureBits) {
+		int did = intchar2int(buffer + i * SIZEOFINT);
+		appendDocument (i, did, load_dids, head_of_offdat, head_of_posdat);
+		load_dids++;
+	    }
+	}
+    }
+    return true;
+}
+
+bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs, int featureBits) {
     std::string term_string = in_term;
     std::string address_str = term_db->get(term_string);
 
@@ -695,7 +772,7 @@ bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_s
 	if (VERBOSE)
 	    cout << "      seek index = " << 1000 * (end - start) << " [ms]" <<  " " << address << " [byte]" << endl;
 
-	return read_index(index_stream, term_type, _already_retrieved_docs);
+	return read_index(index_stream, term_type, _already_retrieved_docs, featureBits);
     }
     else {
 #ifdef DEBUG
@@ -715,7 +792,7 @@ bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_s
     }
 }
 
-bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs) {
+bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBits) {
     int index_size = 0, offset = 0;
     unsigned char *buffer, *_buf;
 
@@ -753,7 +830,11 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
     if (VERBOSE)
 	cout << "      create index = " << 1000 * (end - start) << " [ms]" <<  " " << ldf << endl;
 
-    read_dids(buffer, offset, ldf, term_type, _already_retrieved_docs);
+    if (featureBits > 0) {
+	read_dids_with_feature(buffer, offset, ldf, term_type, _already_retrieved_docs, featureBits);
+    } else {
+	read_dids(buffer, offset, ldf, term_type, _already_retrieved_docs);
+    }
 
     double end1 = (double) gettimeofday_sec();
     if (VERBOSE)
@@ -792,7 +873,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    doc->set_length(doc_ptr->get_length());
 
 	    // load positions
-	    pos_list_list.push_back(doc->get_pos());
+	    pos_list_list.push_back(doc->get_pos(featureBits));
 
 
 	    string term = (*it)->get_label();
@@ -990,7 +1071,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 		(*it)->get_type() == DOCUMENTS_PHRASE ||
 		(*it)->get_type() == DOCUMENTS_PROX ||
 		(*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
-		pos_list_list.push_back(doc->get_pos());
+		pos_list_list.push_back(doc->get_pos(featureBits));
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
@@ -1207,7 +1288,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 	// for TERM_OPTIONAL documents
 	if (doc) {
 	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_OR_OPTIONAL || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
-		pos_list_list.push_back(doc->get_pos());
+		pos_list_list.push_back(doc->get_pos(featureBits));
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
@@ -1344,34 +1425,17 @@ bool Documents::collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, st
  	get_type() == DOCUMENTS_TERM_OPTIONAL ||
  	get_type() == DOCUMENTS_OR_OPTIONAL) {
 	Document *document = get_doc(doc_ptr->get_id());
-/*
+
 	if (document != NULL) {
 	    std::vector<int> *poslist = new std::vector<int>;
-	    std::vector<int> *org = document->get_pos();
+	    std::vector<int> *org = document->get_pos(featureBits);
 	    // コピーしないと消える
 	    int prev = -1;
-	    for (std::vector<int>::iterator it = org->begin(); it != org->end(); it++) {
-		if (prev - (*it) != 0)
-		    poslist->push_back((*it));
-		prev = (*it);
-	    }
-	    term2pos->insert(std::pair<const char*, std::vector<int> *>(get_label().c_str(), poslist));
-	}
-*/
-
-	if (document != NULL) {
-	    int prev = -2;
-	    std::vector<int> *poslist = new std::vector<int>;
-	    std::vector<int> *org = document->get_pos();
-	    // コピーしないと消える
-	    int* _poslist = document->get_poslist();
-	    int pos_num = document->get_pos_num();
-	    for (int i = 0; i < pos_num; i++) {
-		if (prev - _poslist[i] != 0)
-		    poslist->push_back(_poslist[i]);
-
-		prev = _poslist[i];
-	    }
+ 	    for (std::vector<int>::iterator it = org->begin(); it != org->end(); it++) {
+ 		if (prev - (*it) != 0)
+ 		    poslist->push_back((*it));
+ 		prev = (*it);
+ 	    }
 	    term2pos->insert(std::pair<const char*, std::vector<int> *>(get_label().c_str(), poslist));
 	}
     }
