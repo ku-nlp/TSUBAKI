@@ -34,20 +34,29 @@ my $selected_cluster_id = -1 ; $selected_cluster_id = $1 if ($ORG_REFERER =~ /&c
 $ORG_REFERER =~ s/&cluster_id=\d+//;
 $ORG_REFERER =~ s/&cluster_label=([^&]+)//;
 $ORG_REFERER =~ s/start=\d+/start=1/;
-
-my $QUERY = uri_escape($CGI->param('query'));
+my $QUERY = &uri_escape($CGI->param('query'));
+my $RAW_QUERY = $CGI->param('query'); $RAW_QUERY = decode ('utf8', $RAW_QUERY) unless (utf8::is_utf8($RAW_QUERY));
 my $NUM_OF_PAGE = $CGI->param('num');
+my $REMOVE_SYNIDS = $CGI->param('remove_synids');
+my $TERM_STATES = $CGI->param('term_states');
+my $DPND_STATES = $CGI->param('dpnd_states');
+
 my $DOC_DATA = $CGI->param('dids');
+# my $REQUEST_URI = sprintf ("%s?api=1&num=%d&organized_method=grouping", $BASE_URL, $NUM_OF_PAGE);
 my $REQUEST_URI = sprintf ("%s?query=%s&api=1&num=%d&organized_method=grouping", $BASE_URL, $QUERY, $NUM_OF_PAGE);
 
 &main();
 
 sub main {
 
-    my $key = sprintf ("clustering{query=%s,num=%s}", $QUERY, $NUM_OF_PAGE);
+    my $key = sprintf ("clustering{query=%s,remove_synids=%s,term_states=%s,dpnd_states=%s}",
+		       &uri_escape(encode('utf8', $QUERY)),
+		       $REMOVE_SYNIDS,
+		       $TERM_STATES,
+		       $DPND_STATES);
+    my $key = sprintf ("clustering{query=%s}", $QUERY);
     my $cache = new Tsubaki::CacheManager();
     my $xmldat = $cache->load($key);
-
     # cache のチェック
     unless ($xmldat) {
 	$xmldat = &getClusteringResult();
@@ -63,7 +72,7 @@ sub main {
 }
 
 sub makeClusteringDocinfo {
-    my $docinfo = sprintf (qq(<ClusteringDocinfo query="%s" organized_method="grouping">\n), $QUERY);
+    my $docinfo = sprintf (qq(<ClusteringDocinfo query="%s" organized_method="grouping">\n), $RAW_QUERY);
     my $rank = 1;
     foreach my $did (split (",", $DOC_DATA)) {
 	$docinfo .= sprintf (qq(\t<Doc Id="%s" Rank="%d"/>\n), $did, $rank++);
@@ -116,9 +125,9 @@ sub printClusteringResult {
 
     print qq(<DIV style="padding: 0em; border: 0px solid gray;">);
     if ($selected_cluster_id > -1) {
-	print qq(<DIV style="text-align:right; font-size:small;"><A href="$ORG_REFERER">絞り込みを解除</A></DIV>\n);
+	print qq(<DIV class='clustering_off'><A href="$ORG_REFERER">絞り込みを解除</A></DIV>\n);
     } else {
-	print qq(<DIV style="text-align:right; font-size:small; color: gray;">絞り込みを解除</DIV>\n);
+	print qq(<DIV  class='clustering_off' style="color: gray;">絞り込みを解除</DIV>\n);
     }
 
     foreach my $pid (sort {$a <=> $b} keys %parent2children) {
@@ -128,9 +137,9 @@ sub printClusteringResult {
 	    my $midasi = $id2midasi{$cid};
 	    my $url = sprintf ("%s&cluster_id=%s&cluster_label=%s", $ORG_REFERER, $cid, &uri_escape(encode('utf8', $midasi)));
 	    if ($cid == $selected_cluster_id) {
-		print "<SPAN style='padding: 0em 1em 0em 0em;'>" . $midasi . "</SPAN>\n";
+		print "<SPAN class='clustering_label'>" . $midasi . "</SPAN>\n";
 	    } else {
-		print "<A style='padding: 0em 1em 0em 0em;' href='$url'>" . $midasi . "</A>\n";
+		print "<A class='clustering_label' href='$url'>" . $midasi . "</A>\n";
 	    }
 	}
 	print qq(</DIV>);
