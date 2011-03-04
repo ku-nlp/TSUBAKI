@@ -299,7 +299,22 @@ if (-f $opt{logfile}) {
 open(LOG, ">> $opt{logfile}") or die "$!\n" if ($opt{logfile});
 open(SID2TID, ">> $opt{in}.sid2tid") or die "$!\n" if ($opt{offset});
 
+
+
+
+
+
+
+
+################################
+# メイン処理
+################################
+
 &main();
+
+################################
+# 後処理
+################################
 
 if ($opt{logfile}) {
     print LOG "finish.\n";
@@ -307,6 +322,11 @@ if ($opt{logfile}) {
 }
 
 close(SID2TID) if ($opt{offset});
+
+
+
+
+
 
 
 sub usage {
@@ -376,19 +396,82 @@ sub main {
     }
 }
 
+######################################
+# 標準フォーマットからタームを抽出する
+######################################
+
 sub extract_indices_wo_pm {
     my ($file, $fid, $my_opt) = @_;
 
-    my $indexer = new Indexer({
+    ##################
+    # インデクサの準備
+    ##################
+
+    # 代表表記、同義語・句
+    my $indexerRepname = new Indexer({
 	ignore_yomi => $opt{ignore_yomi},
 	MAX_NUM_OF_TERMS_FROM_SENTENCE => $opt{max_num_of_indices},
 	without_using_repname => $opt{genkei} });
 
-    my $indexer_genkei = new Indexer({
+    # 出現形のみ
+    my $indexerGenkei = new Indexer({
 	ignore_yomi => $opt{ignore_yomi},
 	MAX_NUM_OF_TERMS_FROM_SENTENCE => $opt{max_num_of_indices},
 	genkei => 1 });
 
+
+    ##################################
+    # インデックス対象とする領域を設定
+    ##################################
+
+    my @targetTags;
+    push(@targetTags, 'Title')       if ($opt{title});
+    push(@targetTags, 'Keywords')    if ($opt{keywords});
+    push(@targetTags, 'Description') if ($opt{description});
+    push(@targetTags, 'InLink')      if ($opt{inlinks});
+    push(@targetTags, 'S')           if ($opt{sentences});
+    push(@targetTags, 'Keywords')    if ($opt{keyword});
+    push(@targetTags, 'Keyword')     if ($opt{keyword});
+    push(@targetTags, 'Authors')     if ($opt{author});
+    push(@targetTags, 'Author')      if ($opt{author});
+    push(@targetTags, 'Abstract')    if ($opt{abstract});
+
+
+    # インデキシングに利用する変数
+    my (%terms, %sid2blockType, %results_of_istvan, %pos2synnode, %pos2info) = ((), (), (), (), ());
+
+    # 標準フォーマットからタームを抽出
+    &extractTermsFromStandardFormat($file, $fid, $indexerRepname, $indexerGenkei, \@targetTags, \%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $my_opt);
+
+    # 個々の文から抽出されたタームのマージ
+    return &merge_indices(\%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $file);
+}
+
+sub extractTermsTextFormat {
+    my ($file, $fid, $indexerRepname, $indexerGenkei, $targetTags, $TERMS, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info) = @_;
+}
+
+sub extractTermsFromStandardFormat {
+    my ($file, $fid, $indexerRepname, $indexerGenkei, $targetTags, $TERMS, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info, $my_opt) = @_;
+
+    my $sid;
+    # Title, Keywords, Description, Inlink には文IDがないため、-100000からカウントする
+    my $meta_sid = -100000;
+    my $isIndexingTarget = 0;
+    my $tagName;
+    my $blockType;
+    my $rawstring;
+    my $content;
+
+    # パターンを生成
+    my $pattern = join("|", @$targetTags);
+    my $pattern_start = qr/^\s*(<($pattern)(?: |\>).*\n)/o;
+    my $pattern_end   = qr/^(.*\<\/($pattern)\>)/o;
+
+
+    ########################
+    # ファイルハンドラを開く
+    ########################
     if ($my_opt->{gzipped}) {
 	open(READER, "zcat $file 2> /dev/null |");
     } else {
@@ -396,37 +479,6 @@ sub extract_indices_wo_pm {
     }
     binmode(READER, ':utf8');
 
-
-    my @buf;
-    push(@buf, 'Title') if ($opt{title});
-    push(@buf, 'Keywords') if ($opt{keywords});
-    push(@buf, 'Description') if ($opt{description});
-    push(@buf, 'InLink') if ($opt{inlinks});
-    push(@buf, 'S') if ($opt{sentences});
-    push(@buf, 'Keywords') if ($opt{keyword});
-    push(@buf, 'Keyword') if ($opt{keyword});
-    push(@buf, 'Authors') if ($opt{author});
-    push(@buf, 'Author') if ($opt{author});
-    push(@buf, 'Abstract') if ($opt{abstract});
-
-
-    my $pattern = join("|", @buf);
-    my $pattern_start = qr/^\s*(<($pattern)(?: |\>).*\n)/o;
-    my $pattern_end   = qr/^(.*\<\/($pattern)\>)/o;
-
-    # Title, Keywords, Description, Inlink には文IDがないため、-100000からカウントする
-    my $sid;
-    my $meta_sid = -100000;
-    my $isIndexingTarget = 0;
-    my $tagName;
-    my $content;
-    my %indices = ();
-    my $rawstring;
-    my %sid2blockType = ();
-    my %results_of_istvan = ();
-    my $blockType;
-    my %pos2synnode = ();
-    my %pos2info = ();
     LOOP:
     while (<READER>) {
 	last if ($_ =~ /<Text / && $opt{only_inlinks});
@@ -435,32 +487,34 @@ sub extract_indices_wo_pm {
 	    $rawstring = $1;
 	}
 
+	# インデキシング対象領域であればバッファに言語解析結果を保存
 	if ($_ !~ /^(?:\s|\])/) {
 	    if ($isIndexingTarget) {
 		$content .= $_;
 	    }
 	}
+	# 開始タグ
 	elsif ($_ =~ $pattern_start) {
-	    $isIndexingTarget = 1;
-	    $content = $1;
-	    $tagName = $2;
+	    ($isIndexingTarget, $content, $tagName) = (1, $1, $2);
 
+	    # 文字数が多い文はスキップ
 	    if ($_ =~ /Length=\"(\d+)\"/) {
 		my $length = $1;
 		# $opt{max_length_of_rawstring}バイトより大きい場合は読み込まない, 越える場合は文字化け、英数字の羅列の可能性
 		if ($length > $opt{max_length_of_rawstring}) {
-		    my $rawstring = <READER>;
+		    my $_rawstring = <READER>;
 		    while (<READER>) {
 			if (/(.*\<\/($pattern)\>)/o) {
-			    $isIndexingTarget = 0;
-			    $tagName = '';
-			    $content = '';
-
+			    ($isIndexingTarget, $content, $tagName) = (0, '', '');
 			    next LOOP;
 			}
 		    }
 		}
 	    }
+
+	    ############################
+	    # ブロックタイプと文IDの取得
+	    ############################
 
 	    # 領域判定結果の取得
 	    $blockType = 'unknown_block' unless ($opt{ipsj});
@@ -479,15 +533,13 @@ sub extract_indices_wo_pm {
 
 	    # 文IDの取得
 	    if (/\<S.*? Id="(\d+)"/ && $blockType ne 'abstract') {
-		print STDERR "\rdir=$opt{in},file=$fid (Id=$1)" if ($opt{verbose});
 		$sid = $1;
 	    }
 	    elsif (/\<(?:$pattern)/) {
 		$meta_sid += 2;
 		$sid = $meta_sid;
-		print STDERR "\rdir=$opt{in},file=$fid (Id=$sid)" if ($opt{verbose});
 	    }
-
+	    print STDERR "\rdir=$opt{in},file=$fid (Id=$sid)" if ($opt{verbose});
 
 	    # istvan's result を利用
 	    if ($opt{ipsj} && $opt{use_block_type}) {
@@ -496,19 +548,22 @@ sub extract_indices_wo_pm {
 			my $values = $1;
 			foreach my $value (split ("/", $values)) {
 			    my ($begin, $end) = ($value =~ /B:(\d+),E:(\d+)/);
-			    push (@{$results_of_istvan{$sid}{$tag}}, {begin => $begin, end => $end});
+			    push (@{$results_of_istvan->{$sid}{$tag}}, {begin => $begin, end => $end});
 			}
 		    }
 		}
 	    }
-
-
-	    $sid2blockType{$sid} = $blockType;
+	    $sid2blockType->{$sid} = $blockType;
  	}
+	# 終了タグ
 	elsif ($_ =~ $pattern_end) {
 	    $content .= $1;
 
-	    my $terms = &extractIndices($content, $indexer, $file, $indexer_genkei, \%pos2synnode, \%pos2info);
+	    # 言語解析部分の取得
+	    my ($linguisticAnalysisResult) = ($content =~ /<Annotation[^>]+?>\<\!\[CDATA\[((.|\n)+)\]\]\><\/Annotation>/);
+
+	    # タームの抽出
+	    my $terms = &extractIndices($linguisticAnalysisResult, $indexerRepname, $file, $indexerGenkei, $pos2synnode, $pos2info, $rawstring);
 
 	    # インリンクの場合は披リンク数分を考慮する
 	    if ($tagName eq 'InLink') {
@@ -525,13 +580,11 @@ sub extract_indices_wo_pm {
 		}
 
 		# inlinkから抽出した場合は領域タグACを追加
-		$sid2blockType{$sid} = $prefixOfBlockType{inlink};
+		$sid2blockType->{$sid} = $prefixOfBlockType{inlink};
 	    }
-	    $indices{$sid} = $terms if (defined $terms);
+	    $TERMS->{$sid} = $terms if (defined $terms);
 
-	    $isIndexingTarget = 0;
-	    $tagName = '';
-	    $content = '';
+	    ($isIndexingTarget, $content, $tagName) = (0, '', '');
 	}
 	else {
 	    if ($isIndexingTarget) {
@@ -540,49 +593,47 @@ sub extract_indices_wo_pm {
 	}
     }
     close(READER);
-
-    # 索引のマージ
-    return &merge_indices(\%indices, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $file);
 }
 
 
+##################
+# タームを抽出する
+##################
 
 sub extractIndices {
-    my ($content, $indexer, $file, $indexer_genkei, $pos2synnode, $pos2info) = @_;
+    my ($linguisticAnalysisResult, $indexer, $file, $indexer_genkei, $pos2synnode, $pos2info, $rawstring) = @_;
 
-    my ($annotation) = ($content =~ /<Annotation[^>]+?>\<\!\[CDATA\[((.|\n)+)\]\]\><\/Annotation>/);
-
-    return if ($annotation eq '');
+    return if ($linguisticAnalysisResult eq '');
 
     my $knp_result;
     if ($opt{scheme} eq 'SynGraph') {
 	# `空行 or !' or '#' ではじまる行はスキップ
-	$knp_result = join ("\n", grep { $_ ne '' && $_ !~ /^(?:!|\#)/ } split ("\n", $annotation));
+	$knp_result = join ("\n", grep { $_ ne '' && $_ !~ /^(?:!|\#)/ } split ("\n", $linguisticAnalysisResult));
     } else {
-	$knp_result = $annotation;
+	$knp_result = $linguisticAnalysisResult;
     }
 
     my $terms;
     if ($opt{syn}) {
-	my @contentWordFeatures = ();
-	my @buf;
+	# 基本句内の内容語の素性を取得
+	my (@buf, @contentWordFeatures) = ((), ());
 	foreach my $line (split (/\n/, $knp_result)) {
 	    next if ($line =~ /^\* /);
 
-	    if ($line =~ /^\+ /) {
+	    if ($line =~ /^[\+ |EOS]/) {
 		if (scalar(@buf)) {
-		    my $m = $buf[-1];
-		    foreach my $mline (@buf) {
-			if ($mline =~ /<内容語>/) {
-			    $m = $mline;
+		    my $contentWord = $buf[-1];
+		    foreach my $mrph (@buf) {
+			if ($mrph =~ /<内容語>/) {
+			    $contentWord = $mrph;
 			    last;
 			}
 		    }
 
-		    if ($m =~ /((?:<[^<]+>)+)$/) {
+		    if ($contentWord =~ /((?:<[^<]+>)+)$/) {
 			push (@contentWordFeatures, $1);
 		    } else {
-			print STDERR "\? $m\n";
+			print STDERR "\? $contentWord\n";
 		    }
 		    @buf = ();
 		}
@@ -591,10 +642,11 @@ sub extractIndices {
 	    }
 	}
 
-	# 同位語の情報を付与
-	$annotation = $ECTS->annotateDBInfo($annotation, {knp_result => 1}) if ($opt{penalty});
+	# 同位語の情報を付与(ペナルティターム生成時)
+	$linguisticAnalysisResult = $ECTS->annotateDBInfo($linguisticAnalysisResult, {knp_result => 1}) if ($opt{penalty});
 
-	my $terms_syn = $indexer->makeIndexfromSynGraph($annotation,
+	# ターム（代表表記，同義語・句，係り受け）
+	my $terms_syn = $indexer->makeIndexfromSynGraph($linguisticAnalysisResult,
 							\@contentWordFeatures,
 							$pos2synnode,
 							$pos2info,
@@ -602,8 +654,6 @@ sub extractIndices {
 							  use_of_hypernym => !$opt{ignore_hypernym},
 							  use_of_negation_and_antonym => 1,
 							  verbose => $opt{verbose}} );
-	my ($rawstring) = ($content =~ m!<RawString>(.+?)</RawString>!);
-
 	unless (defined $terms_syn) {
 	    print STDERR "[SKIP] A large number of indices are extracted from [$rawstring]: $file (limit=" . $opt{max_num_of_indices} . ")\n";
 	}
@@ -620,9 +670,9 @@ sub extractIndices {
     }
     elsif ($opt{english}) {
 	if ($opt{scheme} eq 'CoNLL') {
-	    $terms = $indexer->makeIndexFromCoNLLFormat($annotation, \%opt);
+	    $terms = $indexer->makeIndexFromCoNLLFormat($linguisticAnalysisResult, \%opt);
 	} else {
-	    $terms = $indexer->makeIndexFromEnglishData($annotation, \%opt);
+	    $terms = $indexer->makeIndexFromEnglishData($linguisticAnalysisResult, \%opt);
 	}
     }
     elsif ($opt{knp}) {
@@ -639,7 +689,7 @@ sub extractIndices {
 	}
     }
     else {
-	$terms = $indexer->makeIndexfromJumanResult($annotation);
+	$terms = $indexer->makeIndexfromJumanResult($linguisticAnalysisResult);
     }
 
     if ($opt{verbose}) {
@@ -1106,6 +1156,13 @@ sub extract_indices_from_annotation {
 
     return $indices;
 }
+
+
+
+
+########################################
+# 出力
+########################################
 
 sub output_syngraph_indice_wo_position {
     my ($fh, $did, $indice) = @_;
