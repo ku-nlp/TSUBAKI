@@ -24,6 +24,7 @@ use Data::Dumper;
 }
 $Data::Dumper::Useperl = 1;
 
+binmode(STDIN,  ":utf8");
 binmode(STDOUT, ":utf8");
 binmode(STDERR, ":utf8");
 
@@ -42,6 +43,7 @@ GetOptions(\%opt,
 	   'offset=s',
 	   'file=s',
 	   'infiles=s',
+	   'rawresult',
 	   'outdir_prefix=s',
 	   'ignore_yomi',
 	   'ignore_syn_dpnd',
@@ -337,11 +339,11 @@ sub usage {
 sub main {
     my $show_usage = 1;
 
-    $show_usage = 0 if (($opt{file} || $opt{in}) && $opt{out});
+    $show_usage = 0 if (($opt{file} || $opt{in} || $opt{rawresult}) && $opt{out});
     $show_usage = 0 if ($opt{infiles} && $opt{outdir_prefix});
     &usage() if ($show_usage);
 
-    die "Not found! $opt{in}\n" unless (-e $opt{in} || -e $opt{file} || -e $opt{infiles});
+    die "Not found! $opt{in}\n" unless (-e $opt{in} || -e $opt{file} || -e $opt{infiles} || $opt{rawresult});
 
     if (!$opt{jmn} && !$opt{knp} && !$opt{syn} && !$opt{english}) {
 	die "-jmn, -knp, -syn, -english のいずれかを指定して下さい.\n";
@@ -394,6 +396,31 @@ sub main {
 	}
 	closedir(DIR);
     }
+    elsif ($opt{rawresult}) {
+	my @data = ();
+	my $prevSID = undef;
+	my $numOfSent = 0;
+	while (<STDIN>) {
+	    if ($_ =~ /^\# S\-ID:w\d+\-(.+) BlockType/) {
+		my $SID_SentID = $1;
+		my @field = split ("-", $SID_SentID);
+		my $sentID = pop @field;
+		my $SID = join ("-", @field);
+
+		if (defined $prevSID && $SID eq $prevSID) {
+		    $numOfSent++;
+		} else {
+		    &extract_indice_from_single_file("stdin", $prevSID, \@data);
+		    @data = ();
+		    $numOfSent = 0;
+		    $ECTS->clear() if ($opt{penalty});
+		}
+		$prevSID = $SID;
+	    }
+	    push (@{$data[$numOfSent]}, $_);
+	}
+	&extract_indice_from_single_file("stdin", $prevSID, \@data);
+    }
 }
 
 ######################################
@@ -401,7 +428,7 @@ sub main {
 ######################################
 
 sub extract_indices_wo_pm {
-    my ($file, $fid, $my_opt) = @_;
+    my ($file, $fid, $data, $my_opt) = @_;
 
     ##################
     # インデクサの準備
@@ -440,15 +467,37 @@ sub extract_indices_wo_pm {
     # インデキシングに利用する変数
     my (%terms, %sid2blockType, %results_of_istvan, %pos2synnode, %pos2info) = ((), (), (), (), ());
 
-    # 標準フォーマットからタームを抽出
-    &extractTermsFromStandardFormat($file, $fid, $indexerRepname, $indexerGenkei, \@targetTags, \%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $my_opt);
+    if ($opt{rawresult}) {
+	# 生の解析結果からタームを抽出
+	&extractTermsFromRawResult($file, $data, $fid, $indexerRepname, $indexerGenkei, \@targetTags, \%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $my_opt);
+    } else {
+	# 標準フォーマットからタームを抽出
+	&extractTermsFromStandardFormat($file, $fid, $indexerRepname, $indexerGenkei, \@targetTags, \%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $my_opt);
+    }
 
     # 個々の文から抽出されたタームのマージ
     return &merge_indices(\%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $file);
 }
 
-sub extractTermsTextFormat {
-    my ($file, $fid, $indexerRepname, $indexerGenkei, $targetTags, $TERMS, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info) = @_;
+sub extractTermsFromRawResult {
+    my ($file, $data, $fid, $indexerRepname, $indexerGenkei, $targetTags, $TERMS, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info) = @_;
+
+    foreach my $linguisticAnalysisResult (@$data) {
+	my $comment = shift @$linguisticAnalysisResult;
+	if ($comment =~ /^\# S\-ID:w\d+\-(.+) BlockType:(.+?) JUMAN/) {
+	    my $SID_SentID = $1;
+	    my $blockType  = $2;
+	    my $lingResult = join ("", @$linguisticAnalysisResult);
+	    my @field = split ("-", $SID_SentID);
+	    my $sid = pop @field;
+	    my $fid = join ("-", @field);
+	    $sid2blockType->{$sid} = $blockType;
+
+	    # タームの抽出
+	    my $terms = &extractIndices($lingResult, $indexerRepname, $file, $indexerGenkei, $pos2synnode, $pos2info);
+	    $TERMS->{$sid} = $terms if (defined $terms);
+	}
+    }
 }
 
 sub extractTermsFromStandardFormat {
@@ -630,10 +679,11 @@ sub extractIndices {
 			}
 		    }
 
-		    if ($contentWord =~ /((?:<[^<]+>)+)$/) {
+		    if ($contentWord =~ /((?:<[^>]+>)+)$/) {
 			push (@contentWordFeatures, $1);
 		    } else {
-			print STDERR "\? $contentWord\n";
+			print "\? $contentWord\n";
+			exit;
 		    }
 		    @buf = ();
 		}
@@ -704,14 +754,14 @@ sub extractIndices {
 }
 
 sub extract_indice_from_single_file {
-    my ($file, $fid) = @_;
+    my ($file, $fid, $data) = @_;
 
     return if (exists $alreadyAnalyzedFiles{$file});
 
     syswrite LOG, "$file " if $opt{logfile};
 
-    # ファイルサイズのチェック
-    if ($opt{skip_large_file}) {
+    # ファイルサイズのチェック（rawresultの場合はチェックしない）
+    if ($opt{skip_large_file} && !$opt{rawresult}) {
 	my $st = stat($file);
 	unless ($st) {
 	    syswrite LOG, "error\n" if ($opt{logfile});
@@ -736,7 +786,7 @@ sub extract_indice_from_single_file {
 	    my $sfdat = new StandardFormatData($file, {gzipped => $opt{z}, is_old_version => 0});
 	    $indice = &extract_indices($sfdat, $fid);
 	} else {
-	    $indice = &extract_indices_wo_pm($file, $fid, {gzipped => $opt{z}});
+	    $indice = &extract_indices_wo_pm($file, $fid, $data, {gzipped => $opt{z}});
 	}
 	# 時間内に終了すればタイムアウトの設定を解除
 	alarm 0;
