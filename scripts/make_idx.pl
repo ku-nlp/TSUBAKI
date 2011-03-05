@@ -243,31 +243,31 @@ if ($opt{feature}) {
 # 格・係り受けタイプの素性ビット
 
 my %CASE_FEATURE_BIT = ();
-$CASE_FEATURE_BIT{ガ}     = (2 ** 10);
-$CASE_FEATURE_BIT{ヲ}     = (2 ** 11);
-$CASE_FEATURE_BIT{ニ}     = (2 ** 12);
-$CASE_FEATURE_BIT{ヘ}     = (2 ** 13);
-$CASE_FEATURE_BIT{ト}     = (2 ** 14);
-$CASE_FEATURE_BIT{デ}     = (2 ** 15);
-$CASE_FEATURE_BIT{カラ}   = (2 ** 16);
-$CASE_FEATURE_BIT{マデ}   = (2 ** 17);
-$CASE_FEATURE_BIT{ヨリ}   = (2 ** 18);
-$CASE_FEATURE_BIT{修飾}   = (2 ** 19);
-$CASE_FEATURE_BIT{時間}   = (2 ** 20);
-$CASE_FEATURE_BIT{ノ}     = (2 ** 21);
-$CASE_FEATURE_BIT{ニツク} = (2 ** 22);
-$CASE_FEATURE_BIT{トスル} = (2 ** 23);
-$CASE_FEATURE_BIT{その他} = (2 ** 24);
+$CASE_FEATURE_BIT{ガ}     = (2 ** 9);
+$CASE_FEATURE_BIT{ヲ}     = (2 ** 10);
+$CASE_FEATURE_BIT{ニ}     = (2 ** 11);
+$CASE_FEATURE_BIT{ヘ}     = (2 ** 12);
+$CASE_FEATURE_BIT{ト}     = (2 ** 13);
+$CASE_FEATURE_BIT{デ}     = (2 ** 14);
+$CASE_FEATURE_BIT{カラ}   = (2 ** 15);
+$CASE_FEATURE_BIT{マデ}   = (2 ** 16);
+$CASE_FEATURE_BIT{ヨリ}   = (2 ** 17);
+$CASE_FEATURE_BIT{修飾}   = (2 ** 18);
+$CASE_FEATURE_BIT{時間}   = (2 ** 19);
+$CASE_FEATURE_BIT{ノ}     = (2 ** 20);
+$CASE_FEATURE_BIT{ニツク} = (2 ** 21);
+$CASE_FEATURE_BIT{トスル} = (2 ** 22);
+$CASE_FEATURE_BIT{その他} = (2 ** 23);
 
 my %DPND_TYPE_FEATURE_BIT = ();
-$DPND_TYPE_FEATURE_BIT{未格}   = (2 ** 25);
-$DPND_TYPE_FEATURE_BIT{連体}   = (2 ** 26);
-$DPND_TYPE_FEATURE_BIT{省略}   = (2 ** 27);
-$DPND_TYPE_FEATURE_BIT{受動}   = (2 ** 28);
-$DPND_TYPE_FEATURE_BIT{使役}   = (2 ** 29);
-$DPND_TYPE_FEATURE_BIT{可能}   = (2 ** 30);
-$DPND_TYPE_FEATURE_BIT{他動}   = (2 ** 31);
-$DPND_TYPE_FEATURE_BIT{授動詞} = (2 ** 32);
+$DPND_TYPE_FEATURE_BIT{未格}   = (2 ** 24);
+$DPND_TYPE_FEATURE_BIT{連体}   = (2 ** 25);
+$DPND_TYPE_FEATURE_BIT{省略}   = (2 ** 26);
+$DPND_TYPE_FEATURE_BIT{受動}   = (2 ** 27);
+$DPND_TYPE_FEATURE_BIT{使役}   = (2 ** 28);
+$DPND_TYPE_FEATURE_BIT{可能}   = (2 ** 29);
+$DPND_TYPE_FEATURE_BIT{自動}   = (2 ** 30);
+$DPND_TYPE_FEATURE_BIT{授動詞} = (2 ** 31);
 # $DPND_TYPE_FEATURE_BIT{否定}   = (2 ** 32);
 
 
@@ -411,6 +411,7 @@ sub main {
 		    $numOfSent++;
 		} else {
 		    &extract_indice_from_single_file("stdin", $prevSID, \@data);
+
 		    @data = ();
 		    $numOfSent = 0;
 		    $ECTS->clear() if ($opt{penalty});
@@ -419,6 +420,7 @@ sub main {
 	    }
 	    push (@{$data[$numOfSent]}, $_);
 	}
+	$prevSID = 0 unless (defined $prevSID);
 	&extract_indice_from_single_file("stdin", $prevSID, \@data);
     }
 }
@@ -483,20 +485,21 @@ sub extractTermsFromRawResult {
     my ($file, $data, $fid, $indexerRepname, $indexerGenkei, $targetTags, $TERMS, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info) = @_;
 
     foreach my $linguisticAnalysisResult (@$data) {
+	my $sid;
 	my $comment = shift @$linguisticAnalysisResult;
+	my $lingResult = join ("", @$linguisticAnalysisResult);
 	if ($comment =~ /^\# S\-ID:w\d+\-(.+) BlockType:(.+?) JUMAN/) {
 	    my $SID_SentID = $1;
 	    my $blockType  = $2;
-	    my $lingResult = join ("", @$linguisticAnalysisResult);
 	    my @field = split ("-", $SID_SentID);
-	    my $sid = pop @field;
+	    $sid = pop @field;
 	    my $fid = join ("-", @field);
 	    $sid2blockType->{$sid} = $blockType;
-
-	    # タームの抽出
-	    my $terms = &extractIndices($lingResult, $indexerRepname, $file, $indexerGenkei, $pos2synnode, $pos2info);
-	    $TERMS->{$sid} = $terms if (defined $terms);
 	}
+
+	# タームの抽出
+	my $terms = &extractIndices($lingResult, $indexerRepname, $file, $indexerGenkei, $pos2synnode, $pos2info);
+	$TERMS->{$sid} = $terms if (defined $terms);
     }
 }
 
@@ -791,8 +794,6 @@ sub extract_indice_from_single_file {
 	# 時間内に終了すればタイムアウトの設定を解除
 	alarm 0;
 
-
-
 	# 出力
 	if ($opt{compress}) {
 	    if ($opt{only_inlinks}) {
@@ -967,11 +968,41 @@ sub merge_indices {
 		my $feature = $BLOCK_TYPE2FEATURE{$tag};
 
 		# 係り受け素性
-		if ($opt{feature} && $midasi =~ /^(.+)\->(.+)$/) {
-		    my ($_midasi, $_feature) = &appendDpndFeature($midasi, $1, $2, $index);
-		    $midasi = $_midasi;
-		    $feature += $_feature;
+		if ($opt{feature}) {
+		    if ($midasi =~ /^(.+)\->(.+)$/) {
+			my ($kakarimoto, $kakarisaki) = ($1, $2);
+
+			if ($index->{kakarimoto_fstring} =~ /<換言:(\+N[^>]+)>/) {
+			    foreach my $pattern (split (";", $1)) {
+				my ($case, $predicate) = ($pattern =~ /\+N:N(.)(.+)/);
+				$case =~ tr/あ-ん/ア-ン/;
+				my $_midasi = sprintf ("%s->%s", $kakarisaki, $predicate);
+				my $_feature = $feature;
+				$_feature += $CASE_FEATURE_BIT{$case};
+				$_feature += $DPND_TYPE_FEATURE_BIT{連体};
+				$ret{$_midasi}->{sids}{$sid} = 1;
+				push (@{$ret{$_midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}, feature => $_feature});
+			    }
+			}
+
+			if ($index->{kakarisaki_fstring} =~ /<換言:(N\+[^>]+)>/) {
+			    foreach my $pattern (split (";", $1)) {
+				my ($case, $predicate) = ($pattern =~ /N\+:N(.)(.+)/);
+				$case =~ tr/あ-ん/ア-ン/;
+				my $_midasi = sprintf ("%s->%s", $kakarimoto, $predicate);
+				my $_feature = $feature;
+				$_feature += $CASE_FEATURE_BIT{$case};
+				$ret{$_midasi}->{sids}{$sid} = 1;
+				push (@{$ret{$_midasi}->{pos_score}}, {pos => $index->{pos}, score => $index->{score}, feature => $_feature});
+			    }
+			}
+
+			my ($_midasi, $_feature) = &appendDpndFeature($midasi, $kakarimoto, $kakarisaki, $index);
+			$midasi = $_midasi;
+			$feature += $_feature;
+		    }
 		}
+
 
 		$ret{$midasi}->{sids}{$sid} = 1;
 		if ($opt{knp} || $opt{syn} || $opt{english}) {
@@ -1009,41 +1040,116 @@ sub appendDpndFeature {
     my $flag_saki = 1;
     my $featureBit = 0;
     my $case = 'その他';
-    my $dpndType = undef;
-    foreach my $kihonkuFeature ($index->{kakarisaki_kihonku_fstring}, $index->{kakarimoto_kihonku_fstring}) {
-	if ($kihonkuFeature =~ /<格構造:(.+?):([^>]+)>/) {
-	    my $CASE_F_ID = $1;
-	    my $CASE_ELMT = $2;
-	    foreach my $caseElement (split (";", $CASE_ELMT)) {
-		my ($_case, $type, $label, $eid) = split ("/", $caseElement);
-		if ($_case =~ /:/) {
-		    $_case = (split (":", $_case))[-1];
-		}
-		if ($flag_saki) {
-		    next unless ($label =~ /$kakarimoto$/);
-		} else {
-		    next unless ($label =~ /$kakarisaki$/);
-		}
+    my @dpndTypes = ();
 
-		$dpndType = '未格' if ($type eq 'N' && $kihonkuFeature !~ /<係:連格>/);
-		if ($kihonkuFeature =~ /<係:連格>/ && !$flag_saki) {
-		    $dpndType = '連体';
-		    # 連体修飾の場合は係り元と係り先を入れ替える
-		    if ($isSurfForm) {
-			$midasi = sprintf ("%s*->%s*", $kakarisaki, $kakarimoto);
-		    } else {
-			$midasi = sprintf ("%s->%s", $kakarisaki, $kakarimoto);
-		    }
-		}
-		$case = $_case;
-		$dpndType = '省略' if ($type eq 'O');
-	    }
+    my $isRentai = ($index->{kakarimoto_kihonku_fstring} =~ /<係:連格>/) ? 1: 0;
+    my $mrphF    = $index->{kakarisaki_fstring};
+
+    my $kihonkuF = $index->{kakarisaki_kihonku_fstring};
+    my $kakarimotoSurf = $index->{kakarimoto_surf};
+    my $suffix   = '';
+    if ($isRentai) {
+	$mrphF    = $index->{kakarimoto_fstring};
+	$kihonkuF = $index->{kakarimoto_kihonku_fstring};
+	$kakarimotoSurf = $index->{kakarisaki_surf};
+	push (@dpndTypes, '連体');
+	# 連体修飾の場合は係り元と係り先を入れ替える
+	my $_tmp = $kakarimoto;
+	$kakarimoto = $kakarisaki;
+	$kakarisaki = $_tmp;
+	if ($isSurfForm) {
+	    $midasi = sprintf ("%s*->%s*", $kakarimoto, $kakarisaki);
+	} else {
+	    $midasi = sprintf ("%s->%s", $kakarimoto, $kakarisaki);
 	}
-	$flag_saki = 0;
+    } else {
+#	$case = 'ノ' if ($index->{kakarimoto_kihonku_fstring} =~ /<係:(?:ノ格|文節内)>/);
+#	$case = 'ノ' if ($index->{kakarimoto_kihonku_fstring} =~ /<係:ノ格>/);
     }
 
+    my ($CASE_F_ID, $CASE_ELMT);
+    if ($kihonkuF =~ /<格構造:([^:]+:[^:]+(?::[PC]+)?\d+):([^>]+)>/) {
+	$CASE_F_ID = $1;
+	$CASE_ELMT = $2;
+    }
+    my ($N_CASE_F_ID, $N_CASE_ELMT);
+    if ($kihonkuF =~ /<正規化格解析結果-0:([^:]+:[^:]+(?::[PC]+)?\d+):([^>]+)>/) {
+	$N_CASE_F_ID = $1;
+	$N_CASE_ELMT = $2;
+    }
+
+    if ($CASE_F_ID =~ /CP/) {
+	push (@dpndTypes, '使役');
+	push (@dpndTypes, '受動');
+	$suffix = '<使役><受動>';
+    }
+    elsif ($CASE_F_ID =~ /C/) {
+	push (@dpndTypes, '使役');
+	$suffix = '<使役>';
+    }
+    elsif ($CASE_F_ID =~ /P/) {
+	push (@dpndTypes, '受動');
+	$suffix = '<受動>';
+    }
+
+    # 正規化格解析
+    foreach my $caseElement (split (";", $N_CASE_ELMT)) {
+	my ($_case, $type, $label, $eid) = split ("/", $caseElement);
+
+	# チェック
+	next unless ($label =~ /[$kakarimoto|$kakarimotoSurf]$/);
+
+	if ($N_CASE_F_ID =~ m!^([^/]+)!) {
+	    $kakarisaki = $1;
+	    if ($isSurfForm) {
+		$midasi = sprintf ("%s*->%s*", $kakarimoto, $kakarisaki);
+	    } else {
+		$midasi = sprintf ("%s->%s", $kakarimoto, $kakarisaki);
+	    }
+	}
+
+	if ($type eq 'N' && !$isRentai) {
+	    push (@dpndTypes, '未格');
+	}
+	elsif ($type eq 'O') {
+	    push (@dpndTypes, '省略');
+	}
+	$case = $_case;
+	last;
+    }
+
+    if ($case eq 'その他') {
+	# 格構造
+	foreach my $caseElement (split (";", $CASE_ELMT)) {
+	    my ($_case, $type, $label, $eid) = split ("/", $caseElement);
+
+	    # チェック
+	    next unless ($label =~ /[$kakarimoto|$kakarimotoSurf]$/);
+
+	    if (!$isRentai && $index->{kakarimoto_kihonku_fstring} =~ /<係:未格>/) {
+		push (@dpndTypes, '未格');
+	    }
+	    elsif ($type eq 'O') {
+		push (@dpndTypes, '省略');
+	    }
+
+	    # <使役><受動>をタームに付与
+	    $midasi .= $suffix;
+	    $case = $_case;
+	    last;
+	}
+    }
+
+    push (@dpndTypes, '自動')   if ($mrphF =~ /<自他動詞:他/);
+    push (@dpndTypes, '授動詞') if ($mrphF =~ /<授受動詞:受/);
+
     my $featureBit = $CASE_FEATURE_BIT{$case};
-    $featureBit += $DPND_TYPE_FEATURE_BIT{$dpndType} if ($dpndType);
+#   my @featureBuf = ($case);
+    foreach my $dpndType (@dpndTypes) {
+	$featureBit |= $DPND_TYPE_FEATURE_BIT{$dpndType};
+#	push (@featureBuf, $dpndType);
+    }
+#   print $midasi . " " . join (",", @featureBuf) . "\n";
 
     return ($midasi, $featureBit);
 }
@@ -1236,6 +1342,7 @@ sub output_syngraph_indice_with_position {
 	foreach my $pos_score (sort {$a->{pos} <=> $b->{pos}} @{$indice->{$midasi}{pos_score}}) {
 	    my $pos = $pos_score->{pos};
 	    my $msk = $pos_score->{feature} + 0;
+#	    my $msk = sprintf ("%032b", $pos_score->{feature} + 0);
 	    my $scr = &round($pos_score->{score});
 	    if ($opt{feature}) {
 		$pos_scr_msk_str .= $pos . "&" . $scr . "&" . $msk . ",";
