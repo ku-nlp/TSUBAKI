@@ -295,6 +295,8 @@ sub _makeTerms {
 		    $terms[-1]->{group_id} = "$groupId\/$kakariSakiNode->{grpId}";
 		    $terms[-1]->{midasi} = "$synNode->{midasi}->$kakariSakiNode->{midasi}";
 		    $terms[-1]->{isContentWord} = 1;
+		    $terms[-1]->{kakarisaki_surf} = $kakariSakiNode->{surf};
+		    $terms[-1]->{kakarimoto_surf} = $synNode->{surf};
 		    $terms[-1]->{kakarimoto_fstring} = $synNode->{fstring};
 		    $terms[-1]->{kakarisaki_fstring} = $kakariSakiNode->{fstring};
 		    $terms[-1]->{kakarimoto_kihonku_fstring} = $dpndInfo->{$id}{kihonkuFeature};
