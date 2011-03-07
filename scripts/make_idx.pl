@@ -467,22 +467,22 @@ sub extract_indices_wo_pm {
 
 
     # インデキシングに利用する変数
-    my (%terms, %sid2blockType, %results_of_istvan, %pos2synnode, %pos2info) = ((), (), (), (), ());
+    my (%terms, %sid2blockType, %results_of_istvan, %pos2synnode, %pos2info, %eid2string) = ((), (), (), (), (), ());
 
     if ($opt{rawresult}) {
 	# 生の解析結果からタームを抽出
-	&extractTermsFromRawResult($file, $data, $fid, $indexerRepname, $indexerGenkei, \@targetTags, \%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $my_opt);
+	&extractTermsFromRawResult($file, $data, $fid, $indexerRepname, $indexerGenkei, \@targetTags, \%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, \%eid2string, $my_opt);
     } else {
 	# 標準フォーマットからタームを抽出
 	&extractTermsFromStandardFormat($file, $fid, $indexerRepname, $indexerGenkei, \@targetTags, \%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $my_opt);
     }
 
     # 個々の文から抽出されたタームのマージ
-    return &merge_indices(\%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $file);
+    return &merge_indices(\%terms, \%sid2blockType, \%results_of_istvan, \%pos2synnode, \%pos2info, $file, \%eid2string);
 }
 
 sub extractTermsFromRawResult {
-    my ($file, $data, $fid, $indexerRepname, $indexerGenkei, $targetTags, $TERMS, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info) = @_;
+    my ($file, $data, $fid, $indexerRepname, $indexerGenkei, $targetTags, $TERMS, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info, $eid2string) = @_;
 
     foreach my $linguisticAnalysisResult (@$data) {
 	my $sid;
@@ -498,7 +498,7 @@ sub extractTermsFromRawResult {
 	}
 
 	# タームの抽出
-	my $terms = &extractIndices($lingResult, $indexerRepname, $file, $indexerGenkei, $pos2synnode, $pos2info);
+	my $terms = &extractIndices($lingResult, $indexerRepname, $file, $indexerGenkei, $pos2synnode, $pos2info, "", $eid2string);
 	$TERMS->{$sid} = $terms if (defined $terms);
     }
 }
@@ -653,7 +653,7 @@ sub extractTermsFromStandardFormat {
 ##################
 
 sub extractIndices {
-    my ($linguisticAnalysisResult, $indexer, $file, $indexer_genkei, $pos2synnode, $pos2info, $rawstring) = @_;
+    my ($linguisticAnalysisResult, $indexer, $file, $indexer_genkei, $pos2synnode, $pos2info, $rawstring, $eid2string) = @_;
 
     return if ($linguisticAnalysisResult eq '');
 
@@ -668,10 +668,9 @@ sub extractIndices {
     my $terms;
     if ($opt{syn}) {
 	# 基本句内の内容語の素性を取得
-	my (@buf, @contentWordFeatures) = ((), ());
+	my ($eid, @buf, @contentWordFeatures) = ((), (), ());
 	foreach my $line (split (/\n/, $knp_result)) {
 	    next if ($line =~ /^\* /);
-
 	    if ($line =~ /^[\+ |EOS]/) {
 		if (scalar(@buf)) {
 		    my $contentWord = $buf[-1];
@@ -682,6 +681,10 @@ sub extractIndices {
 			}
 		    }
 
+		    if ($contentWord =~ m!<代表表記:([^/]+)!) {
+			$eid2string->{$eid}{$1} = 1;
+		    }
+
 		    if ($contentWord =~ /((?:<[^>]+>)+)$/) {
 			push (@contentWordFeatures, $1);
 		    } else {
@@ -690,6 +693,7 @@ sub extractIndices {
 		    }
 		    @buf = ();
 		}
+		$eid = $1 if ($line =~ /<EID:(\d+)>/);
 	    } else {
 		push (@buf, $line);
 	    }
@@ -888,7 +892,7 @@ sub extract_indices {
 }
 
 sub merge_indices {
-    my ($indices, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info, $file) = @_;
+    my ($indices, $sid2blockType, $results_of_istvan, $pos2synnode, $pos2info, $file, $eid2string) = @_;
 
     # 係り受けタームだけ抜き出す
     my %midasiOfDpndancyTerm = ();
@@ -969,7 +973,28 @@ sub merge_indices {
 
 		# 係り受け素性
 		if ($opt{feature}) {
-		    if ($midasi =~ /^(.+)\->(.+)$/) {
+		    unless ($midasi =~ /^(.+)\->(.+)$/) {
+			unless ($index->{midasi} =~ /s\d+/) {
+			    my ($CASE_F_ID, $CASE_ELMT);
+			    if ($index->{kihonku_fstring} =~ /<格構造:([^:]+:[^:]+(?::[PC]+)?\d+):([^>]+)>/) {
+				$CASE_F_ID = $1;
+				$CASE_ELMT = $2;
+				foreach my $caseElement (split (";", $CASE_ELMT)) {
+				    my ($_case, $type, $label, $eid) = split ("/", $caseElement);
+				    if ($type eq 'O') {
+					foreach my $_label (keys %{$eid2string->{$eid}}) {
+					    my $_midasi = sprintf ("%s->%s", $_label, $index->{midasi});
+					    my $_feature = $feature;
+					    $_feature += $CASE_FEATURE_BIT{$_case};
+					    $_feature += $DPND_TYPE_FEATURE_BIT{省略};
+					    $ret{$_midasi}->{sids}{$sid} = 1;
+					    push (@{$ret{$_midasi}->{pos_score}}, {pos => $index->{pos}, score => 1, feature => $_feature});
+					}
+				    }
+				}
+			    }
+			}
+		    } else {
 			my ($kakarimoto, $kakarisaki) = ($1, $2);
 
 			if ($index->{kakarimoto_fstring} =~ /<換言:(\+N[^>]+)>/) {
@@ -1144,12 +1169,12 @@ sub appendDpndFeature {
     push (@dpndTypes, '授動詞') if ($mrphF =~ /<授受動詞:受/);
 
     my $featureBit = $CASE_FEATURE_BIT{$case};
-#   my @featureBuf = ($case);
+    my @featureBuf = ($case);
     foreach my $dpndType (@dpndTypes) {
 	$featureBit |= $DPND_TYPE_FEATURE_BIT{$dpndType};
-#	push (@featureBuf, $dpndType);
+	push (@featureBuf, $dpndType);
     }
-#   print $midasi . " " . join (",", @featureBuf) . "\n";
+#    print $midasi . " " . join (",", @featureBuf) . "\n";
 
     return ($midasi, $featureBit);
 }
