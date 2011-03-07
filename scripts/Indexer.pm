@@ -268,6 +268,7 @@ sub _makeTerms {
 	    $terms[-1]->{question_type} = $synNode->{question_type} if ($synNode->{question_type});
 	    $terms[-1]->{isBasicNode} = 1 if ($synNode->{midasi} !~ /s\d+/);
 	    $terms[-1]->{fstring} = $synNode->{fstring};
+	    $terms[-1]->{kihonku_fstring} = $dpndInfo->{$id}{kihonkuFeature};
 
 	    foreach my $kakariSakiID (@{$kakariSakis}){
 		my $kakariSakiNodes = $synNodes->{$kakariSakiID};
