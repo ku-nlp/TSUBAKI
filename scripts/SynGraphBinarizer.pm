@@ -62,7 +62,10 @@ sub add {
     if ($this->{is_legacy_mode}) {
 	$this->_add_for_legacy ($term, $docs);
     } else {
-	$this->_add ($term, $docs);
+	unless ($term =~ /^([A-Z][A-Z])?:/) {
+#	    print $term . "\n";
+	    $this->_add ($term, $docs);
+	}
     }
 }
 
@@ -215,7 +218,7 @@ sub text2binary {
 	    print STDERR "\nOption error!\n";
 	    print STDERR "Not found the locations of indexed terms.\n";
 	    print STDERR encode('euc-jp', "$term $docs->[$i]") . "\n";
-	    exit(1);
+	    next;
 	}
 
 
