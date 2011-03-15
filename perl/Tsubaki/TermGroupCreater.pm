@@ -392,9 +392,14 @@ sub _getBroadestSynNode {
 
 	# synnodeが交差する場合は、交差しなくなるまで子をだどる
 	# 例) 水の中に潜る -> s22145:水中, s10424:中に潜る
+
+	# 間に要素の入るsynnodeは無視
+	# 例) 「検索技術の情報工学者」の「技術」「者」から生成される「技術者」
 	my $node = ($synnodes->synnode)[0];
 	my $head = ($node->tagids)[0];
-	next if ($ids->[0] > $head);
+	my $tail = ($node->tagids)[-1];
+	my $size = scalar($node->tagids);
+	next if ($ids->[0] > $head || $tail - $head + 1 != $size);
 
 	$broadest_synnodes = $synnodes;
     }
