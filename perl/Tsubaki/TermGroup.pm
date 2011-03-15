@@ -16,47 +16,6 @@ use URI::Escape;
 
 my $CONFIG = Configure::get_instance();
 
-my $font_size = 12;
-my $arrow_size = 3;
-
-my @color = ();
-push(@color, '#ffa500;');
-push(@color, '#000080;');
-push(@color, '#779977;');
-push(@color, '#800000;');
-push(@color, '#997799;');
-push(@color, '#770000;');
-push(@color, '#007700;');
-push(@color, '#777700;');
-push(@color, '#007777;');
-push(@color, '#770077;');
-
-my @bgcolor = ();
-push(@bgcolor, '#ffff99;');
-push(@bgcolor, '#bbffff;');
-push(@bgcolor, '#bbffbb;');
-push(@bgcolor, '#ffbbbb;');
-push(@bgcolor, '#ffbbff;');
-push(@bgcolor, '#bb0000;');
-push(@bgcolor, '#00bb00;');
-push(@bgcolor, '#bbbb00;');
-push(@bgcolor, '#00bbbb;');
-push(@bgcolor, '#bb00bb;');
-
-my @stylecolor = ();
-push(@stylecolor, 'border: 2px solid #ffa500; background-color: #ffff99;');
-push(@stylecolor, 'border: 2px solid #000080; background-color: #bbffff;');
-push(@stylecolor, 'border: 2px solid #779977; background-color: #bbffbb;');
-push(@stylecolor, 'border: 2px solid #800000; background-color: #ffbbbb;');
-push(@stylecolor, 'border: 2px solid #997799; background-color: #ffbbff;');
-push(@stylecolor, 'border: 2px solid #770000; background-color: #bb0000; color: white;');
-push(@stylecolor, 'border: 2px solid #007700; background-color: #00bb00; color: white;');
-push(@stylecolor, 'border: 2px solid #777700; background-color: #bbbb00; color: white;');
-push(@stylecolor, 'border: 2px solid #007777; background-color: #00bbbb; color: white;');
-push(@stylecolor, 'border: 2px solid #770077; background-color: #bb00bb; color: white;');
-
-my $removedcolor = 'border: 2px solid #9f9f9f; background-color: #e0e0e0; color: black;';
-
 
 sub new {
     my ($class, $gid, $pos, $gdf, $parentGroup, $basic_node, $synnodes, $parent, $children, $opt) = @_;
@@ -112,6 +71,7 @@ sub pushbackTerms {
 		node_type => ($midasi eq $basic_node) ? 'basic' : 'syn',
 		gdf => $this->{gdf},
 		blockType => (($tag eq 'UNDEF') ? undef : $tag)
+#		blockType => $CONFIG->{BLOCK_TYPE_DATA}{$tag}{featureBit}
 					      });
 	    push (@{$this->{terms}}, $term);
 	}
@@ -322,84 +282,6 @@ sub to_S_exp {
     } else {
 	return $this->_to_S_exp ($indent, $condition);
     }
-}
-
-
-sub show_query_structure {
-    my ($this) = @_;
-
-
-
-    if ($this->{isRoot}) {
-	foreach my $child (@{$this->{children}}) {
-	    $child->show_query_structure();
-	}
-    } else {
-	foreach my $term (@{$this->{terms}}) {
-	    print $term->{text} . "<BR>\n";
-	}
-
-	if ($this->{hasChild}) {
-	    foreach my $child (@{$this->{children}}) {
-		$child->show_query_structure();
-	    }
-	}
-    }
-
-    return "";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    my $buf;
-    my $num = ($this->{hasChild}) ? scalar (@{$this->{children}}) : 0;
-
-    my $CONFIG = Configure::get_instance();
-    tie my %synonyms, 'CDB_File', "$CONFIG->{SYNDB_PATH}/syndb.cdb" or die $! . " $CONFIG->{SYNDB_PATH}/syndb.cdb\n";
-
-    foreach my $term (@{$this->{terms}}) {
-	my ($id) = ($term->{groupID} =~ /^\d+\-(\d+)/);
-	my $string = $term->show_query_structure();
-	if ($term->{node_type} eq 'syn') {
-	    my $_string = decode('utf8', $synonyms{$string});
-	    next if ($_string eq '');
-	    $string = $_string;
-	}
-	foreach my $_string (split (/\|/, $string)) {
-	    $_string =~ s/\[.+?\]//g;
-	    if ($num > 1) {
-		$buf .= ("<TR><TD colspan='$num' align=center style='vertical-align:top; padding:0.5em; border: 1px solid green;$stylecolor[$id];'>" . $_string . "</TD></TR>\n");
-	    } else {
-		$buf .= ("<TR><TD align=center style='vertical-align:top; padding:0.5em; border: 1px solid green;$stylecolor[$id];'>" . $_string . "</TD></TR>\n");
-	    }
-	}
-    }
-
-    if ($this->{hasChild}) {
-	my $_buf = "<TR>";
-	my $rate = 100 / $num;
-	foreach my $child (sort {$a->{tid} <=> $b->{tid}} @{$this->{children}}) {
-	    $_buf .= ("<TD valign='top' align='center' width='$rate\%'>" . $child->show_query_structure() . "</TD>");
-	}
-	$_buf .= "</TR>";
-	$buf = $_buf . $buf;
-    }
-
-
-    my ($id) = ($this->{groupID} =~ /^\d+\-(\d+)/);
-    return sprintf qq(<TABLE style="vertical-align:top; padding:0.5em; border: 1px solid red; %s">($id) $buf</TABLE>\n), $stylecolor[$id];
 }
 
 sub to_S_exp_for_anchor {
