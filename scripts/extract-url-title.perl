@@ -56,7 +56,7 @@ sub main {
 	    my $sf_tag = <READER>;
 	    my $url;
 	    if ($opt{url}) {
-		if ($sf_tag =~ /Url="([^"]+)"/) {
+		if ($sf_tag =~ /Url=\"([^\"]+)\"/) {
 		    $url = $1;
 		} else {
 		    print STDERR "$file URL parse error.\n";
@@ -69,7 +69,13 @@ sub main {
 		unless ($header_tag =~ /Header/) {
 		    print "$name $url null\n";
 		} else {
-		    my $title_tag = <READER>;
+		    if ($header_tag =~ m!Header/!) {
+			# <Header/>の場合
+			my $text_tag = <READER>;
+			my $s_tag = <READER>;
+		    } else {
+			my $title_tag = <READER>;
+		    }
 		    my $rawstring_tag = <READER>;
 		    $title = $1 if ($rawstring_tag =~ /<RawString>([^<]+)<\/RawString>/);
 		}
