@@ -383,8 +383,8 @@ DEFAULT_APPROXIMATE_DIST	100
 # スニペットの長さ（デフォルトは100単語）
 MAX_NUM_OF_WORDS_IN_SNIPPET	100
 
-# タイトルの長さ（デフォルトは15文字）
-MAX_LENGTH_OF_TITLE		15
+# タイトルの長さ（デフォルトは50文字）
+MAX_LENGTH_OF_TITLE		50
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
 CACHED_HTML_PATH_TEMPLATE	icccmm010:31056:%s
