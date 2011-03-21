@@ -3,7 +3,7 @@
 \subsection{概要}
 
 本節ではインデックスデータについて述べる．TSUBAKI では転置インデックス方
-式を採用している．転置インデックスを100文書単位で作成し，検索時にデータを
+式を採用している．転置インデックスを100万文書単位で作成し，検索時にデータを
 120並列に引くことで，1.2億ページを対象とした検索を実現している．
 
 インデックスに登録されるタームの種類及び登録されるデータを表\ref{size}に
@@ -24,7 +24,15 @@
 \begin{center}
 \includegraphics[height=\columnwidth,clip,angle=-90]{figs/index.eps}
 \end{center}
-\caption{★インデックスのフォーマット}
+\caption{インデックスデータのフォーマット}
+\label{sample_index}
+\end{figure}
+
+\begin{figure}[t]
+\begin{center}
+\includegraphics[height=\columnwidth,clip,angle=-90]{figs/indexing-step.eps}
+\end{center}
+\caption{インデックス作成の流れ}
 \label{sample_index}
 \end{figure}
 
@@ -53,9 +61,10 @@
 % 方は，自立語同士の係り受け関係に限定，さらに位置情報を保持していないためである．
 
 
-以下に，インデックス作成の手順を示す．配布ツールを用いた，より具体的な作
-成手順については，本マニュアル末尾の付録を参照されたい（★ステップを図示
-する）
+インデックス作成の概要を図\ref{indexing-steop}にします．
+作成の手順は以下の通りである．
+% 配布ツールを用いた，より具体的な作
+% 成手順については，本マニュアル末尾の付録を参照されたい．
 
 \begin{description}
 \item [Step 1:] ウェブ標準フォーマットデータからタームを抽出し，タームファ
