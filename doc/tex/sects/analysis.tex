@@ -114,6 +114,7 @@ KNP{\footnote{http://nlp.kuee.kyoto-u.ac.jp/nl-resource/knp.html}を例に
 \hline \\
 \begin{minipage}{\columnwidth}
 \begin{tabular}{p{0.8\columnwidth}}
+
 \texttt{\#} S-ID:1 KNP:3.0-20080214 DATE:2008/04/21 SCORE:10.00000 \\
 \texttt{*} 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:赤ちゃん/あかちゃん\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1069\texttt{>}\texttt{<}正規化代表表記:赤ちゃん/あかちゃん\texttt{>}\texttt{<}主辞代表表記:赤ちゃん/あかちゃん\texttt{>} \\
 + 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:赤ちゃん/あかちゃん\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1069\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>}\texttt{<}係チ:非用言格解析||用言\&\&文節内:Ｔ解析格-ヲ\texttt{>}\texttt{<}正規化代表表記:赤ちゃん/あかちゃん\texttt{>} \\
@@ -128,6 +129,7 @@ KNP{\footnote{http://nlp.kuee.kyoto-u.ac.jp/nl-resource/knp.html}を例に
 防ぐ ふせぐ 防ぐ 動詞 2 * 0 子音動詞ガ行 4 基本形 2 "代表表記:防ぐ/ふせぐ" \texttt{<}代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}正規化代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}表現文末\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}活用語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}内容語\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>} \\
 。 。 。 特殊 1 句点 1 * 0 * 0 NIL \texttt{<}文末\texttt{>}\texttt{<}英記号\texttt{>}\texttt{<}記号\texttt{>}\texttt{<}付属\texttt{>} \\
 EOS \\
+
 \end{tabular}
 \end{minipage}
 \\ \hline
@@ -152,7 +154,7 @@ EOS \\
 \subsection{同義語・句のアライメント}
 
 「赤ちゃん」と「赤子」，「一番近い」と「最寄り」のように同じ意味を表す表
-現は多々ある．これらの表現を関連付ける（アライメント）ことは，情報検索や
+現は多く存在する．これらの表現を関連付ける（アライメント）ことは，情報検索や
 機械翻訳などのアプリケーションを考えた場合重要である．同義語・句のアライ
 メントとは，入力文に対して，事前に辞書等から獲得した同義語・句を関連付け
 る処理を呼び，ここではSynGraph\cite{syngraph}を例に説明する\footnote{詳細については当該論文を参照されたい．}．
@@ -167,9 +169,10 @@ SynGraphとは，文と文の柔軟なマッチングを実現するために，入力文における語・
 を，図\ref{syn_result}にツールの実際の出力を示す．
 
 \begin{figure}[t]
-\begin{center}\includegraphics[height=0.3\columnwidth,clip,angle=-90]{figs/syn_dpnd.eps}
+\begin{center}\includegraphics[height=.5\columnwidth,clip,angle=-90]{figs/synnodes.eps}
 \end{center}
-\caption{「赤ちゃんの虫歯を防ぐ。」をSynGraph構造に変換した例（赤は基本ノードを，青はSynノードを意味する）★}
+\caption{「赤ちゃんの虫歯を防ぐ。」をSynGraph構造に変換した例（灰色は基
+ 本ノードを，白はSYNノードを意味する）}
 \label{syn_dpnd}
 \end{figure}
 
@@ -180,63 +183,41 @@ SynGraphとは，文と文の柔軟なマッチングを実現するために，入力文における語・
 \hline \\
 \begin{minipage}{\columnwidth}
 \begin{tabular}{p{0.8\columnwidth}}
-\texttt{\#} S-ID:1 KNP:3.0-20080214 DATE:2008/04/21 SCORE:-24.85197 SynGraph:1.1-20080406 \\
-* 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:赤ちゃん/あかちゃん\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1069\texttt{>}\texttt{<}正規化代表表記:赤ちゃん/あかちゃん\texttt{>}\texttt{<}主辞代表表記:赤ちゃん/あかちゃん\texttt{>} \\
-+ 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:赤ちゃん/あかちゃん\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1069\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>}\texttt{<}係チ:非用言格解析||用言\&\&文節内:Ｔ解析格-ヲ\texttt{>}\texttt{<}正規化代表表記:赤ちゃん/あかちゃん\texttt{>} \\
-赤ちゃん あかちゃん 赤ちゃん 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:人 ドメイン:家庭・暮らし 代表表記:赤ちゃん/あかちゃん" \texttt{<}カテゴリ:人\texttt{>}\texttt{<}ドメイン:家庭・暮らし\texttt{>}\texttt{<}代表表記:赤ちゃん/あかちゃん\texttt{>}\texttt{<}正規化代表表記:赤ちゃん/あかちゃん\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}内容語\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>} \\
-の の の 助詞 9 接続助詞 3 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>} \\
-!! 0 1D \texttt{<}見出し:赤ちゃんの\texttt{>} \\
-! 0 \texttt{<}SYNID:赤ちゃん/あかちゃん\texttt{>}\texttt{<}スコア:1\texttt{>} \\
-! 0 \texttt{<}SYNID:s120:乳飲み子/ちのみご\texttt{>}\texttt{<}スコア:0.99\texttt{>} \\
-* 2D \texttt{<}BGH:虫歯/むしば\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0-0\texttt{>}\texttt{<}RID:1118\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}正規化代表表記:虫歯/むしば\texttt{>}\texttt{<}主辞代表表記:虫歯/むしば\texttt{>} \\
-+ 2D \texttt{<}BGH:虫歯/むしば\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0-0\texttt{>}\texttt{<}RID:1118\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>}\texttt{<}正規化代表表記:虫歯/むしば\texttt{>}\texttt{<}解析格:ヲ\texttt{>} \\
-虫歯 むしば 虫歯 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:動物-部位 ドメイン:健康・医学 代表表記:虫歯/むしば" \texttt{<}カテゴリ:動物-部位\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:虫歯/むしば\texttt{>}\texttt{<}正規化代表表記:虫歯/むしば\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}内容語\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>} \\
-を を を 助詞 9 格助詞 1 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>} \\
-!! 1 2D \texttt{<}見出し:虫歯を\texttt{>}\texttt{<}格解析結果:ヲ格\texttt{>} \\
-! 1 \texttt{<}SYNID:虫歯/むしば\texttt{>}\texttt{<}スコア:1\texttt{>} \\
-! 1 \texttt{<}SYNID:s14638:虫歯/むしば\texttt{>}\texttt{<}スコア:0.99\texttt{>} \\
-! 1 \texttt{<}SYNID:s14632:歯/は\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:9\texttt{>} \\
-* -1D \texttt{<}BGH:防ぐ/ふせぐ\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}句点\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>}\texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:112\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<}正規化代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}主辞代表表記:防ぐ/ふせぐ\texttt{>} \\
-+ -1D \texttt{<}BGH:防ぐ/ふせぐ\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}句点\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>}\texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:112\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<}正規化代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}用言代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}格要素-ガ:＃一人称優位\texttt{>}\texttt{<}格要素-ヲ:虫歯\texttt{>}\texttt{<}格要素-ニ:NIL\texttt{>}\texttt{<}格要素-ト:NIL\texttt{>}\texttt{<}格要素-デ:NIL\texttt{>}\texttt{<}格要素-カラ:NIL\texttt{>}\texttt{<}格要素-ヨリ:NIL\texttt{>}\texttt{<}格要素-マデ:NIL\texttt{>}\texttt{<}格要素-ヘ:NIL\texttt{>}\texttt{<}格要素-時間:NIL\texttt{>}\texttt{<}格要素-外の関係:NIL\texttt{>}\texttt{<}格要素-ノ:NIL\texttt{>}\texttt{<}格要素-修飾:NIL\texttt{>}\texttt{<}格要素-ニヨル:NIL\texttt{>}\texttt{<}格要素-トスル:NIL\texttt{>}\texttt{<}格要素-ニツク:NIL\texttt{>}\texttt{<}格要素-ニタイスル:NIL\texttt{>}\texttt{<}格要素-ヲハジメル:NIL\texttt{>}\texttt{<}格要素-トイウ:NIL\texttt{>}\texttt{<}格要素-ニオク:NIL\texttt{>}\texttt{<}格フレーム-ガ-主体\texttt{>}\texttt{<}格フレーム-ヲ-主体\texttt{>}\texttt{<}格フレーム-デ-主体\texttt{>}\texttt{<}格フレーム-ノ-主体\texttt{>}\texttt{<}格フレーム-修飾-主体\texttt{>}\texttt{<}格フレーム-ニヨル-主体\texttt{>}\texttt{<}格フレーム-ガ-主体ｏｒ主体準\texttt{>}\texttt{<}格フレーム-ヲ-主体ｏｒ主体準\texttt{>}\texttt{<}主題格:一人称優位\texttt{>}\texttt{<}格関係1:ヲ:虫歯\texttt{>}\texttt{<}格解析結果:防ぐ/ふせぐ:動2:ガ/U/-/-/-/-;ヲ/C/虫歯/1/0/?;ニ/U/-/-/-/-;ト/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ/U/-/-/-/-;ヘ/U/-/-/-/-;時間/U/-/-/-/-;外の関係/U/-/-/-/-;ノ/U/-/-/-/-;修飾/U/-/-/-/-;ニヨル/U/-/-/-/-;トスル/U/-/-/-/-;ニツク/U/-/-/-/-;ニタイスル/U/-/-/-/-;ヲハジメル/U/-/-/-/-;トイウ/U/-/-/-/-;ニオク/U/-/-/-/-\texttt{>} \\
-防ぐ ふせぐ 防ぐ 動詞 2 * 0 子音動詞ガ行 4 基本形 2 "代表表記:防ぐ/ふせぐ" \texttt{<}代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}正規化代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}表現文末\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}活用語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}内容語\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>} \\
-。 。 。 特殊 1 句点 1 * 0 * 0 NIL \texttt{<}文末\texttt{>}\texttt{<}英記号\texttt{>}\texttt{<}記号\texttt{>}\texttt{<}付属\texttt{>} \\
-!! 2 -1D \texttt{<}見出し:防ぐ\texttt{>} \\
-! 2 \texttt{<}SYNID:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:1\texttt{>} \\
-! 2 \texttt{<}SYNID:s30151:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.99\texttt{>} \\
-! 2 \texttt{<}SYNID:s30152:風などをさえぎる\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:1\texttt{>} \\
-! 2 \texttt{<}SYNID:s3803:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.99\texttt{>} \\
-! 2 \texttt{<}SYNID:s2364:支える/ささえる\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:2\texttt{>} \\
-! 2 \texttt{<}SYNID:s32:回避/かいひ\texttt{>}\texttt{<}スコア:0.99\texttt{>} \\
-! 2 \texttt{<}SYNID:s13458:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.99\texttt{>} \\
-! 2 \texttt{<}SYNID:s978:攻める/せめる\texttt{>}\texttt{<}スコア:0.792\texttt{>}\texttt{<}反義語\texttt{>}\texttt{<}否定\texttt{>} \\
-EOS \\
 
-% \texttt{+} 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:乳児/にゅうじ\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾 \texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1069\texttt{>}\texttt{<}名詞項候補\texttt{>} \texttt{<}先行詞候補\texttt{>}\texttt{<}係チ:非用言格解析||用言\&\&文節内:Ｔ解析格-ヲ\texttt{>}\\
-% 乳児 にゅうじ 乳児 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:人 ドメイン:健康・医学:家庭・暮らし 代表表記:乳児/にゅうじ" \texttt{<}カテゴリ:人\texttt{>}\texttt{<}ドメイン:健康・医学:家庭・暮らし\texttt{>}\texttt{<}代表表記:乳児/にゅうじ\texttt{>}\texttt{<}文頭\texttt{>} \texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>} \texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
-% の の の 助詞 9 接続助詞 3 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
-% !! 0 1D \texttt{<}見出し:乳児の\texttt{>}\\
-%   ! 0 \texttt{<}SYNID:乳児/にゅうじ\texttt{>}\texttt{<}スコア:1\texttt{>}\\
-%   ! 0 \texttt{<}SYNID:s121:乳飲み子/ちのみご\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
-%   ! 0 \texttt{<}SYNID:s2894:児童/じどう\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
-%   ! 0 \texttt{<}SYNID:s14116:子\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:16\texttt{>}\\
-%   ! 0 \texttt{<}SYNID:s2669:子女/しじょ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
-%   ! 0 \texttt{<}SYNID:s2787:小児/しょうに\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
-% \texttt{+} 2D \texttt{<}BGH:虫歯/むしば\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0- 0\texttt{>}\texttt{<}RID:1118\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>} \texttt{<}解析格:ヲ\texttt{>}\\
-% 虫歯 むしば 虫歯 名詞 6 普通名詞 1 * 0 * 0 "カテゴリ:動物-部位 ドメイン:健康・医学代表表記:虫歯/むしば" \texttt{<}カテゴリ:動物-部位\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:虫歯/むしば\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞 \texttt{>}\\
-% を を を 助詞 9 格助詞 1 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
-% !! 1 2D \texttt{<}見出し:虫歯を\texttt{>}\texttt{<}格解析結果:ヲ格\texttt{>}\\
-%   ! 1 \texttt{<}SYNID:虫歯/むしば\texttt{>}\texttt{<}スコア:1\texttt{>}\\
-%   ! 1 \texttt{<}SYNID:s15141:虫歯/むしば\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
-%   ! 1 \texttt{<}SYNID:s15137:歯/は\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:9\texttt{>}\\
-% \texttt{+} -1D \texttt{<}BGH:予防/よぼう+する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}サ変スル\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>} \texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:112\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<} サ変\texttt{>}\texttt{<}格要素-ガ:＃一人称優位\texttt{>}\texttt{<}格要素-ヲ:虫歯\texttt{>}\texttt{<}格要素-ニ:NIL\texttt{>}\texttt{<}格要素-ト: NIL\texttt{>}\texttt{<}格要素-デ:NIL\texttt{>}\texttt{<}格要素-カラ:NIL\texttt{>}\texttt{<}格要素-ヨリ:NIL\texttt{>}\texttt{<}格要素-マデ: NIL\texttt{>}\texttt{<}格要素-時間:NIL\texttt{>}\texttt{<}格要素-外の関係:NIL\texttt{>}\texttt{<}格要素-ノ:NIL\texttt{>}\texttt{<}格要素-ニヨル:NIL\texttt{>}\texttt{<}格要素-ヲツウジル:NIL\texttt{>}\texttt{<}格要素-ニタイスル:NIL\texttt{>}\texttt{<}格要素-トスル:NIL\texttt{>} \texttt{<}格要素-ニカンスル:NIL\texttt{>}\texttt{<}格要素-ニクワエル:NIL\texttt{>}\texttt{<}格要素-ヲハジメル:NIL\texttt{>}\texttt{<}格要素-ニオク:NIL\texttt{>}\texttt{<}格要素-ヲノゾク:NIL\texttt{>}\texttt{<}格フレーム-ガ-主体準\texttt{>}\texttt{<}格フレーム-ガ-主体ｏｒ主体準\texttt{>} \texttt{<}主題格:一人称優位\texttt{>}\texttt{<}格関係1:ヲ:虫歯\texttt{>}\texttt{<}格解析結果:予防/よぼう:動1:ガ/U/-/-/-/-;ヲ/C/虫歯 /1/0/?;ニ/U/-/-/-/-;ト/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ /U/-/-/-/-;時間/U/-/-/-/-;外の関係/U/-/-/-/-;ノ/U/-/-/-/-;ニヨル/U/-/-/-/-;ヲツウジル /U/-/-/-/-;ニタイスル/U/-/-/-/-;トスル/U/-/-/-/-;ニカンスル/U/-/-/-/-;ニクワエル/U/-/-/-/ -;ヲハジメル/U/-/-/-/-;ニオク/U/-/-/-/-;ヲノゾク/U/-/-/-/-\texttt{>}\\
-% 予防 よぼう 予防 名詞 6 サ変名詞 2 * 0 * 0 "カテゴリ:抽象物 ドメイン:健康・医学 代表表記:予防/よぼう" \texttt{<}カテゴリ:抽象物\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}代表表記:予防/よぼう\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字 \texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}サ変\texttt{>}\texttt{<}サ変動詞\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}意味有\texttt{>}\texttt{<}タグ単位始 \texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
-% する する する 動詞 2 * 0 サ変動詞 16 基本形 2 "付属動詞候補（基本） 代表表記:する/する" \texttt{<}付属動詞候補（基本）\texttt{>}\texttt{<}代表表記:する/する\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}表現文末\texttt{>}\texttt{<}とタ系連用テ形複合辞 \texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}活用語\texttt{>}\texttt{<}付属\texttt{>}\\
-% !! 2 -1D \texttt{<}見出し:予防する\texttt{>}\\
-%   ! 2 \texttt{<}SYNID:予防/よぼう\texttt{>}\texttt{<}スコア:1\texttt{>}\\
-%   ! 2 \texttt{<}SYNID:s17557:予防/よぼう\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
-%   ! 2 \texttt{<}SYNID:s4234:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:3\texttt{>}\\
-%   ! 2 \texttt{<}SYNID:s35:回避/かいひ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:3\texttt{>}\\
-% EOS\\
+\texttt{\#} S-ID:1 KNP:3.1-20101125 DATE:2011/03/31 SCORE:-8.56032 SynGraph:1.19-20100726\\
+* 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:赤ちゃん/あかちゃん\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1072\texttt{>}\texttt{<}正規化代表表記:赤ちゃん/あかちゃん\texttt{>}\texttt{<}主辞代表表記:赤ちゃん/あかちゃん\texttt{>}\\
++ 1D \texttt{<}SM-主体\texttt{>}\texttt{<}SM-人\texttt{>}\texttt{<}BGH:赤ちゃん/あかちゃん\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}連体修飾\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ノ格\texttt{>}\texttt{<}区切:0-4\texttt{>}\texttt{<}RID:1072\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>}\texttt{<}係チ:非用言格解析||用言\&\&文節内:Ｔ解析格-ヲ\texttt{>}\texttt{<}正規化代表表記:赤ちゃん/あかちゃん\texttt{>}\\
+赤ちゃん あかちゃん 赤ちゃん 名詞 6 普通名詞 1 * 0 * 0 "代表表記:赤ちゃん/あかちゃん カテゴリ:人 ドメイン:家庭・暮らし" \texttt{<}代表表記:赤ちゃん/あかちゃん\texttt{>}\texttt{<}カテゴリ:人\texttt{>}\texttt{<}ドメイン:家庭・暮らし\texttt{>}\texttt{<}正規化代表表記:赤ちゃん /あかちゃん\texttt{>}\texttt{<}文頭\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}内容語\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
+の の の 助詞 9 接続助詞 3 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
+!! 0 1D \texttt{<}見出し:赤ちゃんの\texttt{>}\\
+  ! 0 \texttt{<}SYNID:赤ちゃん/あかちゃん\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s116:乳飲み子/ちのみご\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s2914:子女/しじょ\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s10762:子\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:17\texttt{>}\\
+  ! 0 \texttt{<}SYNID:s2995:小児/しょうに\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:21\texttt{>}\\
+* 2D \texttt{<}BGH:虫歯/むしば\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0-0\texttt{>}\texttt{<}RID:1121\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}正規化代表表記:虫歯/むしば\texttt{>}\texttt{<}主辞代表表記:虫歯/むしば\texttt{>}\\
++ 2D \texttt{<}BGH:虫歯/むしば\texttt{>}\texttt{<}ヲ\texttt{>}\texttt{<}助詞\texttt{>}\texttt{<}体言\texttt{>}\texttt{<}係:ヲ格\texttt{>}\texttt{<}区切:0-0\texttt{>}\texttt{<}RID:1121\texttt{>}\texttt{<}格要素\texttt{>}\texttt{<}連用要素\texttt{>}\texttt{<}名詞項候補\texttt{>}\texttt{<}先行詞候補\texttt{>}\texttt{<}正規化代表表記:虫歯/むしば\texttt{>}\texttt{<}解析格:ヲ\texttt{>}\\
+虫歯 むしば 虫歯 名詞 6 普通名詞 1 * 0 * 0 "代表表記:虫歯/むしば カテゴリ:動物-部位 ドメイン:健康・医学" \texttt{<}代表表記:虫歯/むしば\texttt{>}\texttt{<}カテゴリ:動物-部位\texttt{>}\texttt{<}ドメイン:健康・医学\texttt{>}\texttt{<}正規化代表表記:虫歯/むしば\texttt{>}\texttt{<}漢字\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}名詞相当語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}内容語\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
+を を を 助詞 9 格助詞 1 * 0 * 0 NIL \texttt{<}かな漢字\texttt{>}\texttt{<}ひらがな\texttt{>}\texttt{<}付属\texttt{>}\\
+!! 1 2D \texttt{<}見出し:虫歯を\texttt{>}\texttt{<}格解析結果:ヲ格\texttt{>}\\
+  ! 1 \texttt{<}SYNID:虫歯/むしば\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 1 \texttt{<}SYNID:歯/は\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:9\texttt{>}\\
+* -1D \texttt{<}BGH:防ぐ/ふせぐ\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>}\texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:708\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<}動態述語\texttt{>}\texttt{<}定義文主辞\texttt{>}\texttt{<}正規化代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}主辞代表表記:防ぐ/ふせぐ\texttt{>}\\
++ -1D \texttt{<}BGH:防ぐ/ふせぐ\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}用言:動\texttt{>}\texttt{<}レベル:C\texttt{>}\texttt{<}区切:5-5\texttt{>}\texttt{<}ID:（文末）\texttt{>}\texttt{<}RID:708\texttt{>}\texttt{<}提題受:30\texttt{>}\texttt{<}主節\texttt{>}\texttt{<}動態述語\texttt{>}\texttt{<}定義文主辞\texttt{>}\texttt{<}正規化代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}用言代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}格要素-ガ:＃一人称優位\texttt{>}\texttt{<}格要素-ヲ:虫歯\texttt{>}\texttt{<}格要素-ニ:NIL\texttt{>}\texttt{<}格要素-デ:NIL\texttt{>}\texttt{<}格要素-カラ:NIL\texttt{>}\texttt{<}格要素-時間:NIL\texttt{>}\texttt{<}格要素-ノ:NIL\texttt{>}\texttt{<}格要素-修飾:NIL\texttt{>}\texttt{<}格要素-外の関係:NIL\texttt{>}\texttt{<}格フレーム-ガ-主体\texttt{>}\texttt{<}格フレーム-デ-主体\texttt{>}\texttt{<}格フレーム-修飾-主体\texttt{>}\texttt{<}格フレーム-ガ-主体ｏｒ主体準\texttt{>}\texttt{<}時制-未来\texttt{>}\texttt{<}主題格:一人称優位\texttt{>}\texttt{<}格関係1:ヲ:虫歯\texttt{>}\texttt{<}格解析結果:防ぐ/ふせぐ:動3:ガ/U/-/-/-/-;ヲ/C/虫歯/1/0/1;ニ/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/- /-;時間/U/-/-/-/-;ノ/U/-/-/-/-;修飾/U/-/-/-/-;外の関係/U/-/-/-/-\texttt{>}\\
+防ぐ ふせぐ 防ぐ 動詞 2 * 0 子音動詞ガ行 4 基本形 2 "代表表記:防ぐ/ふせぐ 反義:動詞:攻める/せめる" \texttt{<}代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}反義:動詞:攻める/せめる\texttt{>}\texttt{<}正規化代表表記:防ぐ/ふせぐ\texttt{>}\texttt{<}文末\texttt{>}\texttt{<}表現文末\texttt{>}\texttt{<}かな漢字\texttt{>}\texttt{<}活用語\texttt{>}\texttt{<}自立\texttt{>}\texttt{<}内容語\texttt{>}\texttt{<}タグ単位始\texttt{>}\texttt{<}文節始\texttt{>}\texttt{<}文節主辞\texttt{>}\\
+!! 2 -1D \texttt{<}見出し:防ぐ\texttt{>}\\
+  ! 2 \texttt{<}SYNID:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:1\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s4815:防止/ぼうし\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s29241:風などをさえぎる\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:1\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s4814:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s807:支える/ささえる\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:2\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s34:回避/かいひ\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s29239:防ぐ/ふせぐ\texttt{>}\texttt{<}スコア:0.99\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s2344:保護/ほご\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:12\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s733:守備/しゅび\texttt{>}\texttt{<}スコア:0.693\texttt{>}\texttt{<}上位語\texttt{>}\texttt{<}下位語数:12\texttt{>}\\
+  ! 2 \texttt{<}SYNID:s1131:攻める/せめる\texttt{>}\texttt{<}スコア:0.792\texttt{>}\texttt{<}反義語\texttt{>}\texttt{<}否定\texttt{>}\\
+EOS\\
+
 \end{tabular}
 \end{minipage}
 \\ \hline
@@ -246,14 +227,13 @@ EOS \\
 \label{syn_result}
 \end{figure}
 
-SynGraphはKNPの基本句を単位としてアライメント処理を行う\footnote{2011年3
-月現在.}．入力文中の語・句
+SynGraphはKNPの基本句を単位としてアライメント処理を行う．入力文中の語・句
 が多義であった場合，複数の同義語・句（Synノード）が関連付けられる．また，
 複数の基本句に対して一つの同義語・句が付与される場合があり，例えば，「一
 番 近い」という2つの基本句に対して\verb|<|最寄り\verb|>|というSynノードが
 付与される．
 
-「!!」で始まる行はSynノード群に共通の素性を表わし，「!」で始まる行はSynノー
+「!!」で始まる行はSYNノード群に共通の素性を表わし，「!」で始まる行はSYNノー
 ドの情報を表す．それぞれ以下のようなフォーマットとなっている．
 
 \begin{quote}
@@ -267,7 +247,7 @@ SynGraphはKNPの基本句を単位としてアライメント処理を行う\footnote{2011年3
 
 また，各ノードは元の表現とどれくらい似ているかを反映したスコアを持つ．現
 在は，同義関係であれば0.99，上位関係であれば0.7としている．例えば，
-\verb|<|SYNID:s120:乳飲み子/ちのみご\verb|>|は「赤ちゃん」と同義関係にあ
-るのでスコア0.99を持ち，\verb|<|SYNID:s14632:歯/は\verb|>|は
+\verb|<|SYNID:s116:乳飲み子/ちのみご\verb|>|は「赤ちゃん」と同義関係にあ
+るのでスコア0.99を持ち，\verb|<|SYNID:s2914:子女/しじょ\verb|>|は
 \verb|<|SYNID:s14638:虫歯/むしば\verb|>|の上位関係にあるのでスコア
 0.693($=$ 0.99 $×$ 0.7)を持つ．
