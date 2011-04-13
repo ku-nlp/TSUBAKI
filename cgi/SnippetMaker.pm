@@ -21,6 +21,7 @@ $Data::Dumper::Useperl = 1;
 my $CONFIG = Configure::get_instance();
 my $NUM_OF_CHARS_IN_HEADER = 100;
 
+# SIDから文抽出
 sub extract_sentences_from_ID {
     my($query, $did_w_version, $opt) = @_;
 
@@ -48,6 +49,7 @@ sub extract_sentences_from_ID {
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
 }
 
+# 標準フォーマットのファイルから文抽出
 sub extract_sentences_from_standard_format {
     my($query, $xmlfile, $opt) = @_;
 
@@ -70,7 +72,7 @@ sub extract_sentences_from_standard_format {
 
 
     my $content;
-    if ($opt->{extract_from_abstract_only}) {
+    if ($opt->{extract_from_abstract_only}) { # 論文サーチ用
 	while (<READER>) {
 	    last  if ($_ =~ /<\/Header>/);
 	    $content .= $_;
@@ -90,8 +92,10 @@ sub extract_sentences_from_standard_format {
 	} else {
 	    # Title, Keywords, Description から重要文を抽出しない
 	    if ($opt->{start} > $NUM_OF_CHARS_IN_HEADER) {
+		# スレーブサーバが返すベストpositionを使う手法
 		return &extract_sentences_from_content_using_position($query, $content, $opt);
 	    } else {
+		# positionを使わない手法
 		return &extract_sentences_from_content($query, $content, $opt);
 	    }
 	}
@@ -140,7 +144,7 @@ sub extract_sentences_from_content_using_position {
 		} elsif ($ln =~ /^S\-ID:\d+$/) {
 		} else {
 		    $pos++;
-		    if (exists $opt->{pos2qid}{$pos}) {
+		    if (exists $opt->{pos2qid}{$pos}) { # 使っていない
 			$number_of_included_queries++;
 			$included_query_types{$opt->{pos2qid}{$pos}}++;
 		    }
@@ -475,6 +479,7 @@ sub uniqSentences {
     return \@sents;
 }
 
+# positionを使わない手法
 sub extract_sentences_from_content {
     my($query, $content, $opt) = @_;
 
@@ -562,6 +567,7 @@ sub extract_sentences_from_content {
 		    $indice = $indexer->makeIndexFromKNPResultObject($resultObj, $opt);
 		}
 
+		# 各文をスコアリング
 		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
 
 		my $sentence = {
