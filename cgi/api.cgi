@@ -604,11 +604,11 @@ sub provideSearchResult {
 	    }
 	    close (F);
 
-	    # tarファイルの転送
-	    print encode_base64($buf);
-
 	    # tarファイル、ディレクトリの削除
 	    `rm -rf $CONFIG->{WORKSPACE}/$dirname $CONFIG->{WORKSPACE}/$dirname.tgz`;
+
+	    # tarファイルの転送
+	    print encode_base64($buf);
 	}
     }
 
