@@ -32,6 +32,7 @@ function paint () {
 
     GRAPHICS = new jsGraphics(canvasName);
     GRAPHICS.setFont('ＭＳゴシック', "10pt", 0);
+    GRAPHICS.clear();
 
     for (var i = 0; i < termGroups.length; i++) {
 	termGroups[i].drawDependancy();
@@ -72,10 +73,20 @@ function Term (initState, id, synid, strings, type, color) {
 	if (type == "basic") {
 	    return ("<DIV class='termBasic' style='border-bottom: 1px solid " + DARK_COLOR[this.color] + ";'>" + this.strings + "</DIV>");
 	} else {
+            var _buf = new Array();
+            for (var i = 0; i < this.strings.length; i++) {
+                if (i < 5) {
+                    _buf.push(this.strings[i]);
+                } else {
+                    _buf.push("：");
+                    break;
+                }
+            }
+
             if (this.state % 2) {
-	        return ("<DIV id=" + this.id + " onclick='onclickPerformed(this.id)' class='term' style='cursor: pointer; color:" + this.fgcolor + "; background-color:" + this.bgcolor + "; border: 1px solid " + this.borderColor + ";'>" + this.strings.slice(0,5).join("<BR>") + "</DIV>");
+	        return ("<DIV id=" + this.id + " onclick='onclickPerformed(this.id)' class='term' style='cursor: pointer; color:" + this.fgcolor + "; background-color:" + this.bgcolor + "; border: 1px solid " + this.borderColor + ";'>" + _buf.join("<BR>") + "</DIV>");
             } else {
-	        return ("<DIV id=" + this.id + " onclick='onclickPerformed(this.id)' class='term' style='cursor: pointer; color: gray; background-color: lightGray; border: 1px solid " + this.borderColor + ";'>" + this.strings.slice(0,5).join("<BR>") + "</DIV>");
+	        return ("<DIV id=" + this.id + " onclick='onclickPerformed(this.id)' class='term' style='cursor: pointer; color: gray; background-color: lightGray; border: 1px solid " + this.borderColor + ";'>" + _buf.join("<BR>") + "</DIV>");
             }
 	}
     }
@@ -144,7 +155,7 @@ function TermGroup (id, basicWord, importance) {
 
     this.drawImportance = function () {
 	var string = "<DIV class='imp' id='" + this.id + "-imp' onclick='onclickPerformed(this.id)'>" + IMPORTANCE_CHARS[this.importance] + "</DIV>";
-	GRAPHICS.drawStringRect(string, this.getX(), this.getY() - (1.4 * FONT_SIZE), FONT_SIZE, 'right');
+	GRAPHICS.drawStringRect(string, this.getX(), this.getY() - (1.4 * FONT_SIZE), FONT_SIZE * 2, 'right');
 	for (var i = 0; i < this.dependancy.length; i++) {
 	    this.dependancy[i].drawImportance();
 	}
@@ -300,7 +311,7 @@ function Dependancy (parent, child, importance) {
 	var top  = document.getElementById(canvasName).style.top;
 	var _top = this.height - (1.4 * FONT_SIZE);
 	var string = "<DIV class='imp' id='" + this.id + "' onclick='onclickPerformed(this.id)'>" + IMPORTANCE_CHARS[this.importance] + "</DIV>";
-	GRAPHICS.drawStringRect(string, this.offsetX + child.getCX(), _top, FONT_SIZE, 'right');
+	GRAPHICS.drawStringRect(string, this.offsetX + child.getCX(), _top, FONT_SIZE * 2 + 5, 'right');
     }
 
     this.getHeight = function () {
@@ -316,10 +327,11 @@ function Dependancy (parent, child, importance) {
 	    GRAPHICS.setStroke(1);
 	}
 	this.height = this.parent.getY() - (this.dist) * FONT_SIZE;
+        var gap = 5;
 
 	this.drawVLine(this.parent.getCX() - offsetX, this.parent.getY(), this.parent.getCX() - offsetX, this.height);
-	this.drawHLine(this.parent.getCX() - offsetX, this.height, this.child.getCX() + offsetX, this.height);
-	this.drawVLine(this.child.getCX()  + offsetX, this.child.getY(), this.child.getCX() + offsetX, this.height);
+	this.drawHLine(this.parent.getCX() - offsetX, this.height, this.child.getCX() + offsetX + gap, this.height);
+	this.drawVLine(this.child.getCX()  + offsetX + gap, this.child.getY(), this.child.getCX() + offsetX + gap, this.height);
 	this.drawArrow(this.parent.getCX() - offsetX, this.parent.getY());
     }
 
