@@ -79,6 +79,18 @@ sub new {
     my %already_printed = ();
     my $message;
 
+    $message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
+
+    if ($url) {
+	if ($crawled_date) {
+	    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。（$crawled_date に取得）<BR>);
+	}
+	else {
+	    $message .= qq(<A href="$url" style="color: blue;">$url</A> のキャッシュです。<BR>);
+	}
+    }
+    $message .= "</DIV>";
+
     if (!$CONFIG->{IS_NICT_MODE}) { # NICT以外ではmessageを表示
 	$message = qq(<DIV style="margin-bottom: 2em; padding:1em; background-color:white; color: black; text-align: center; border-bottom: 2px solid black;">);
 
