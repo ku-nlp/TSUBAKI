@@ -149,6 +149,20 @@ sub recieve_result_from_slave_servers {
 	}
     }
 
+
+    ########################
+    # ★★★ 削除予定 ★★★
+    ########################
+
+    # if ($query->{rawstring} =~ /肩が重くならない姿勢/) {
+    # 	push (@{$results[-1]}, {
+    # 	    did => '0130158210-2',
+    # 	    title => 'パソコン作業 で 肩が凝らない 方法−副業キューピット の ...',
+    # 	    url => 'http://blog.manabiyahonpo.com/archives/category_cat_6/post_2841/',
+    # 	    score_total => 179.4400
+    # 	      });
+    # }
+
     return ($total_hitcount, \@results, \%host2log, \%logbuf);
 }
 
