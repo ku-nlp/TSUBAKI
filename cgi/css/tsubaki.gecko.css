@@ -1,11 +1,11 @@
 .clustering_off {
 		text-align:right;
-		font-size:small;
+		font-size: small;
 }
 
 .clustering_label {
-		style=padding: 0em 1em 0em 0em;
-		font-size: x-small;
+		padding: 0em 1em 0em 0em;
+		font-size: small;
 }
 
 .snippet{

@@ -1,3 +1,7 @@
+INPUT.button {
+	     padding:0.1em;
+}
+
 DIV.similar{
 	margin: 0.25em 1.5em;
 }
@@ -44,4 +48,14 @@ DIV.bottom_message{
 
 a:visited{
 	color: blue;
+}
+
+SPAN.query {
+     color: blue;
+     font-weight: 900;
+     font-size: large;
+}
+
+.imp {
+     padding-left: 0.5em;
 }
