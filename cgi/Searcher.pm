@@ -117,12 +117,18 @@ sub filterSearchResult {
     # クラスタリング結果のロード
     require Tsubaki::CacheManager;
     my $cache = new Tsubaki::CacheManager();
-    my $key = sprintf ("clustering{query=%s,num=}", uri_escape(encode('utf8', $opt->{query})));
+    my $key = sprintf ("clustering{query=%s,remove_synids=%s,term_states=%s,dpnd_states=%s}",
+		       &uri_escape(encode('utf8', $opt->{query})),
+		       $opt->{remove_synids},
+		       $opt->{term_states},
+		       $opt->{dpnd_states});
+
+    my $key = sprintf ("clustering{query=%s}", &uri_escape(encode('utf8', $opt->{query})));
+
     my $xmldat = $cache->load($key);
 
     require XML::LibXML;
     my $parser = new XML::LibXML;
-
     my $result = $parser->parse_string($xmldat);
     my %dids = ();
     foreach my $cluster ($result->getElementsByTagName('Cluster')) {
