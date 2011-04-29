@@ -337,8 +337,8 @@ sub getStandardFormdatDataFromSnippetServer {
 	    $num_of_sockets++;
 	} catch Error with {
 	    my $err = shift;
-	    printf ("Cannot connect to the server %s:%s.\n", $host, $port);
-	    printf ("Exception at line %s in %s\n", $err->{-line}, $err->{-file});
+#	    printf ("Cannot connect to the server %s:%s.\n", $host, $port);
+#	    printf ("Exception at line %s in %s\n", $err->{-line}, $err->{-file});
 	};
     }
 
@@ -522,7 +522,7 @@ sub provideSearchResult {
     if ($status eq 'busy') {
 	print $cgi->header(-type => 'text/plain', -charset => 'utf-8');
 	printf qq(ただいま検索サーバーが混雑しています。時間をおいてから再検索して下さい。\n);
-	exit;
+	exit 1;
     }
 
 
@@ -585,7 +585,6 @@ sub provideSearchResult {
 	    for (my $rank = $from; $rank < $end; $rank++) {
 		my $page = $result->[$rank];
 		my $did = sprintf("%s", $page->{did});
-		print STDERR $did . "\n";
 		my $content = &getStandardFormdatDataFromSnippetServer($did);
 		open (F, "> $workspace/$did.xml") or die $!;
 		print F $content;
@@ -598,14 +597,16 @@ sub provideSearchResult {
 
 	    # tarファイルの転送
 	    my $buf;
-	    open (F, "$CONFIG->{WORKSPACE}/$dirname.tgz") or die $!;
-	    while (<F>) {
-		$buf .= $_;
-	    }
+	    my $tgzf = "$CONFIG->{WORKSPACE}/$dirname.tgz";
+	    my $size = -s $tgzf;
+
+	    open (F, $tgzf) or die $!;
+	    read (F, $buf, $size);
 	    close (F);
 
 	    # tarファイル、ディレクトリの削除
-	    `rm -rf $CONFIG->{WORKSPACE}/$dirname $CONFIG->{WORKSPACE}/$dirname.tgz`;
+	    my $rmCommand = "rm -rf $CONFIG->{WORKSPACE}/$dirname $CONFIG->{WORKSPACE}/$dirname.tgz";
+	    `$rmCommand`;
 
 	    # tarファイルの転送
 	    print encode_base64($buf);
