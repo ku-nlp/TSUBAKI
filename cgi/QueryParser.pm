@@ -328,9 +328,7 @@ sub _linguisticAnalysis {
 	    $this->_runQueryProcessing($result, $opt) if ($opt->{telic_process} || $opt->{CN_process} || $opt->{NE_process} || $opt->{modifier_of_NE_process});
 	    $this->{knp_result} = $result;
 
-
 	    if ($opt->{syngraph}) {
-		$this->_setSynGraphObj();
 		# SynGraphで解析する
 		return $this->_runSynGraph($result, $opt);
 	    } else {
@@ -377,6 +375,9 @@ sub _runJapaneseParser {
 # SynGraphで解析
 sub _runSynGraph {
     my ($this, $knpresult, $opt) = @_;
+
+    # SynGraphをnew
+    $this->_setSynGraphObj() unless ($this->{SYNGRAPH});
 
     # SynGraphのオプションを設定
     # Wikipedia のエントリになっている表現に対しては同義語展開を行わない
@@ -439,7 +440,6 @@ sub createQueryKeywordObj {
 
     # 言語解析
     my $result = $this->_linguisticAnalysis($search_expression, $opt);
-
 
     # クエリ解析修正結果を反映する
     $this->reflectQueryModificationFeedback($result, $opt);
