@@ -2,40 +2,54 @@
 
 # $Id$
 
+# Usage:
+# perl -I /somewhere/Utils/perl -I /somewhere/SearchEngine/scripts -I /somewhere/SearchEngine/cgi Tsubaki/term-creater.perl -query STRING
+
 use strict;
 use utf8;
 use Encode;
-use Configure;
 use Data::Dumper;
+use Getopt::Long;
+
+use Configure;
+use QueryParser;
 use Tsubaki::TermGroup;
 use Tsubaki::QueryAnalyzer;
 use Tsubaki::TermGroupCreater;
-use Indexer;
 
+
+my (%opt);
+GetOptions(\%opt, 'query=s');
 
 my $CONFIG = Configure::get_instance();
-
 push(@INC, $CONFIG->{SYNGRAPH_PM_PATH});
 
-binmode (STDOUT, ':encoding(euc-jp)');
-binmode (STDERR, ':encoding(euc-jp)');
+my $encoding;
+if ($ENV{LANG} =~ /UTF8/) {
+    $encoding = 'utf8';
+}
+elsif ($ENV{LANG} =~ /euc/) {
+    $encoding = 'euc-jp';
+} else {
+    $encoding = 'shiftjis';
+}
+
+
+binmode (STDOUT, ":encoding($encoding)");
+binmode (STDERR, ":encoding($encoding)");
 
 &main();
 
 sub main {
-    require SynGraph;
 
-    my $SYNGRAPH = new SynGraph($CONFIG->{SYNDB_PATH});
-    # my $knpresult = $CONFIG->{KNP}->parse("水の中にもぐってするスポーツ");
-    # my $knpresult = $CONFIG->{KNP}->parse("水の中に長時間もぐってするスポーツ");
-    # my $knpresult = $CONFIG->{KNP}->parse("人工知能");
-    my $knpresult = $CONFIG->{KNP}->parse("京都大学への行き方");
-    # my $knpresult = $CONFIG->{KNP}->parse("京都大学");
-    $knpresult->set_id(0);
-    my $synresult = new KNP::Result($SYNGRAPH->OutputSynFormat($knpresult, $CONFIG->{SYNGRAPH_OPTION}, $CONFIG->{SYNGRAPH_OPTION}));
+    # クエリの言語解析
+    my $SYNGRAPH = $CONFIG->getSynGraphObj();
+    my $knpresult = $CONFIG->{KNP}->parse(decode($encoding, $opt{query}));
+    my $parser = new QueryParser();
+    my $synresult = $parser->_runSynGraph($knpresult, ());
 
-    # クエリ解析処理
 
+    # クエリ処理
     my $opt;
     $opt->{end_of_sentence_process} = 1;
     $opt->{telic_process} = 1;
@@ -54,6 +68,7 @@ sub main {
 		       });
 
 
+    # S式の生成
     my $root = &Tsubaki::TermGroupCreater::create($synresult);
     print $root->to_S_exp() . "\n";
 }
