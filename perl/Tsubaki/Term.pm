@@ -28,14 +28,162 @@ sub new {
     bless $this;
 }
 
-sub show_query_structure {
-    my ($this) = @_;
+# 否定、反義語で拡張する
+sub expandAntonymAndNegationTerm {
+    my ($this, $_buf) = @_;
+
+    # 反義情報の削除
+    my $midasi = lc($this->{text});
+    $midasi =~ s/<反義語>//;
+
+    my @features;
+    # <否定>の付け変え
+    if ($midasi =~ /<否定>/) {
+	$midasi =~ s/<否定>//;
+	push (@features, '');
+    } else {
+	push (@features, '<反義語><否定>');
+    }
+
+    foreach my $feature (@features) {
+	push (@$_buf, sprintf ("%s%s", $midasi, $feature));
+    }
+}
+
+# <上位語>を付けることで下位語を検索可能にする
+sub expandHypernymTerm {
+    my ($this, $_buf, $opt) = @_;
+
+    # 反義情報の削除
+    my $midasi = lc($this->{text});
+
+    # フレーズの場合は付けない
+    unless ($midasi =~ /\*$/) {
+	$midasi .= '<上位語>';
+	unless (exists $opt->{remove_synids}{$midasi}) {
+	    push (@$_buf, $midasi);
+	}
+    }
+}
+
+# S式を出力
+sub to_S_exp {
+    my ($this, $indent, $condition, $opt, $call_for_anchor) = @_;
+
+    # 係り受けタームの場合は<上位語>の付与、否定・反義語による拡張を行わない
+    if ($this->{term_type} =~ /dpnd/) {
+	my $midasi = lc($this->{text});
+	$this->{blockType} =~ s/://;
+	my $term_type = $TYPE2INT{$this->{term_type}};
+	my $index_type = (($this->{term_type} =~ /word/) ? 0 : 1);
+	my $featureBit = $this->{blockTypeFeature};
+
+	# アンカーインデックス用に変更
+	if ($call_for_anchor) {
+	    $term_type = 3;
+	    $index_type += 2;
+	    $featureBit = 1;
+	}
+
+	return sprintf("%s((%s %d %d %d %d %d))\n",
+		       (($this->{term_type} =~ /dpnd/) ? $indent : $indent . $Tsubaki::TermGroup::INDENT_CHAR),
+		       $midasi,
+		       $term_type,
+		       $this->{gdf},
+		       (($this->{node_type} eq 'basic')? 1 : 0),
+		       $index_type,
+		       $featureBit);
+    } else {
+	return $this->createORNode($indent, $opt, $call_for_anchor);
+    }
+}
+
+# 拡張されたタームをORでまとめたノードを作成
+sub createORNode {
+    my ($this, $indent, $opt, $call_for_anchor) = @_;
+
+    my @midasis = ();
+    push (@midasis, lc($this->{text}));
+
+    # タームを拡張する
+    push (@midasis, @{$this->termExpansion($opt)});
+
+    # <上位語>が付与されたターム、否定・反義語で拡張されたタームをORでまとめる
+    my $term_str;
+    foreach my $_midasi (@midasis) {
+	my $term_type = $TYPE2INT{$this->{term_type}};
+	my $index_type = (($this->{term_type} =~ /word/) ? 0 : 1);
+	my $featureBit = $this->{blockTypeFeature};
+	# アンカーインデックス用に変更
+	if ($call_for_anchor) {
+	    $term_type = 3;
+	    $index_type += 2;
+	    $featureBit = 1;
+	}
+
+	$term_str .= sprintf("%s((%s %d %d %d %d %d))\n",
+			     ($indent . $Tsubaki::TermGroup::INDENT_CHAR),
+			     $_midasi,
+			     $term_type,
+			     $this->{gdf},
+			     (($this->{node_type} eq 'basic')? 1 : 0),
+			     $index_type,
+			     $featureBit );
+    }
+    return sprintf ("%s(OR\n%s%s)\n",
+		    $indent,
+		    $term_str,
+		    $indent);
+}
+
+# termを拡張する
+sub termExpansion {
+    my ($this, $opt) = @_;
+
+    my @buf;
+    # <上位語>を付与して下位語を検索可能にする
+    $opt->{hypernym_expansion} = 1;
+    $this->expandHypernymTerm (\@buf, $opt) if ($opt->{hypernym_expansion});
+
+    # 否定・反義語でタームを拡張する
+    $opt->{antonym_and_negation_expansion} = 1;
+    # 拡張されるのは最後の基本句のみ
+    $this->expandAntonymAndNegationTerm (\@buf) if ($opt->{antonym_and_negation_expansion} && $this->{is_last_kihonku});
+
+    return \@buf;
+}
+
+sub to_uri_escaped_string {
+    my ($this, $rep2rep_w_yomi) = @_;
 
     if ($this->{term_type} eq 'word') {
-	return $this->{text};
-    } else {
-	return "";
+	unless ($this->{text} =~ /<^>]+?>/) {
+	    return $rep2rep_w_yomi->{$this->{text}};
+	}
     }
+    return '';
+}
+
+sub to_string {
+    my ($this, $indent) = @_;
+
+    foreach my $k (keys %$this) {
+	print $indent . "- " . $k . " = " . $this->{$k} . "\n";
+    }
+}
+
+
+
+
+
+###############################
+# プロパティ値のget/setメソッド
+###############################
+
+sub get_id {
+    my ($this) = @_;
+
+    return sprintf "%s%s", $this->{blockType}, $this->{text};
 }
 
 sub appendChild {
@@ -93,66 +241,9 @@ sub gdf {
     return $this->{gdf};
 }
 
-sub to_string {
-    my ($this, $space) = @_;
-
-    foreach my $k (keys %$this) {
-	print $space . "- " . $k . " = " . $this->{$k} . "\n";
-    }
-}
-
 sub get_term_type {
     my ($this) = @_;
     return $TYPE2INT{$this->{term_type}};
-}
-
-sub to_uri_escaped_string {
-    my ($this, $rep2rep_w_yomi) = @_;
-
-    if ($this->{term_type} eq 'word') {
-	unless ($this->{text} =~ /<^>]+?>/) {
-	    return $rep2rep_w_yomi->{$this->{text}};
-	}
-    }
-    return '';
-}
-
-sub to_S_exp {
-    my ($this, $space) = @_;
-
-    my ($midasi);
-    if ($CONFIG->{IS_NICT_MODE}) { # attach blocktype backward if NICT
-	$midasi = sprintf ("%s%s", lc($this->{text}), $this->{blockType});
-    }
-    else {
-	$midasi = sprintf ("%s%s", $this->{blockType}, lc($this->{text}));
-    }
-    return sprintf("%s((%s %d %d %d %d %d))\n", $space, $midasi, $TYPE2INT{$this->{term_type}}, $this->{gdf}, (($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 0 : 1), $this->{pos});
-}
-
-sub to_S_exp_for_anchor {
-    my ($this, $space) = @_;
-
-    my ($midasi);
-    if ($this->{blockType}) {
-	if ($CONFIG->{IS_NICT_MODE}) { # attach blocktype backward if NICT
-	    $midasi = sprintf ("%s:AC", lc($this->{text}));
-	}
-	else {
-	    $midasi = sprintf ("AC:%s", lc($this->{text}));
-	}
-    }
-    else {
-	$midasi = lc($this->{text});
-    }
-
-    return sprintf("%s((%s %d %d %d %d))\n", $space, $midasi, 3, $this->{gdf}, (($this->{node_type} eq 'basic')? 1 : 0), (($this->{term_type} =~ /word/) ? 2 : 3));
-}
-
-sub get_id {
-    my ($this) = @_;
-
-    return sprintf "%s%s", $this->{blockType}, $this->{text};
 }
 
 -1;

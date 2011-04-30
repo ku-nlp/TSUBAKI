@@ -20,56 +20,22 @@ sub create {
     my ($result, $condition, $option) = @_;
 
     my ($terms, $optionals, $rep2style, $rep2rep_w_yomi, $synnode2midasi);
-    if ($option->{english}) { # read from standard format
-	require StandardFormat;
-	my $sf = new StandardFormat();
-	$sf->read_first_annotation($result);
-	my $gid = 0;
-	foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) {
-	    my $count = 0;
-	    my $term = new Tsubaki::Term ({
-		tid => sprintf ("%s-%s", $gid, $count++),
-		text => $sf->{words}{$id}{lem},
-		term_type => 'word',
-		gdf => $DFDBS_WORD->get($sf->{words}{$id}{lem}),
-#		blockType => (($tag eq '') ? undef : $tag),
-		node_type => 'basic' });
-	    push (@$terms, $term);
-	    $gid++;
-	}
-    }
-    else {
+    if ($option->{english}) {
+	# 英語用
+	$terms = &createTermsFromEnglish($result);
+    } else {
+	# 日本語用
 	my @ids = ();
 	my @kihonkus = $result->tag;
+	# termからハイライト用スタイルへのマップ
 	$rep2style = &_getRep2Style (\@kihonkus, \@ids, $option);
+	# termから表記（読み付き）へのマップ（キャッシュページをハイライトする際に利用）
 	$rep2rep_w_yomi = &_getRep2RepWithYomi (\@kihonkus, \@ids, $option);
+	# term（synnode）から代表表記へのマップ（根拠検索で利用）
 	$synnode2midasi = &_getSynNode2Midasi (\@kihonkus, $option);
-	($terms, $optionals) =
-	    (($condition->{is_phrasal_search} > 0) ?
-	     &_create4phrase (\@kihonkus, \@ids, "", $option) :
-	     &_create (0, \@kihonkus, \@ids, undef, "", $option));
-    }
 
-    if ($option->{conjunctive_particle}) {
-	my $termG = new Tsubaki::TermGroup();
-	foreach my $midasi (@{$option->{conjunctive_particle}}) {
-	    my ($cnt, $gid) = (10000, 0);
-	    my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
-	    foreach my $tag (keys %$blockTypes) {
-		next unless ($tag eq ':MT');
-		my $term = new Tsubaki::Term ({
-		    tid => sprintf ("%s-%s", $gid, $cnt++),
-		    pos => 0,
-		    text => sprintf ("%s*", $midasi),
-		    term_type => 'word',
-		    node_type => 'basic',
-		    gdf => 10000000,
-		    blockType => (($tag eq 'UNDEF') ? undef : $tag)
-					      });
-		push (@{$termG->{terms}}, $term);
-	    }
-	}
-	unshift (@$terms, $termG);
+	# termのS式を生成
+	($terms, $optionals) = &createTermsFromJapanese($condition, \@kihonkus, \@ids, $option);
     }
 
     my $root = new Tsubaki::TermGroup (
@@ -91,7 +57,73 @@ sub create {
 	    synnode2midasi => $synnode2midasi
 	});
 
+#   print $root->to_S_exp() . "\n";
     return $root;
+}
+
+# termオブジェクトを生成（英語）
+sub createTermsFromEnglish {
+    my ($result) = @_;
+
+    my $terms;
+    # read from standard format
+    require StandardFormat;
+    my $sf = new StandardFormat();
+    $sf->read_first_annotation($result);
+    my $gid = 0;
+    foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) {
+	my $count = 0;
+	my $term = new Tsubaki::Term ({
+	    tid => sprintf ("%s-%s", $gid, $count++),
+	    text => $sf->{words}{$id}{lem},
+	    term_type => 'word',
+	    gdf => $DFDBS_WORD->get($sf->{words}{$id}{lem}),
+	    node_type => 'basic' });
+	push (@{$terms}, $term);
+	$gid++;
+    }
+
+    return $terms;
+}
+
+# termオブジェクトを生成（日本語）
+sub createTermsFromJapanese {
+    my ($condition, $kihonkus, $ids, $option) = @_;
+
+    my ($terms, $optionals) =
+	(($condition->{is_phrasal_search} > 0) ?
+	 &_create4phrase ($kihonkus, $ids, "", $option) :
+	 &_create (0, $kihonkus, $ids, undef, "", $option));
+
+    # 根拠検索用に「ため」や「ので」を含む文書を検索するようにする
+    if ($option->{conjunctive_particle}) {
+	# 指定された語に関するタームを生成
+	my $termG = new Tsubaki::TermGroup();
+	$termG->{gdf} = 100000000;
+	foreach my $midasi (@{$option->{conjunctive_particle}}) {
+	    my ($cnt, $gid) = (10000, 0);
+	    my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
+	    my $blockTypeFeature = 0;
+	    foreach my $tag (keys %{$blockTypes}) {
+		next unless ($tag =~ /MT/);
+		$tag =~ s/://;
+		$blockTypeFeature += $CONFIG->{BLOCK_TYPE_DATA}{$tag}{mask};
+	    }
+
+	    my $term = new Tsubaki::Term ({
+		tid => sprintf ("%s-%s", $gid, $cnt++),
+		pos => 0,
+		text => sprintf ("%s*", $midasi),
+		term_type => 'word',
+		node_type => 'basic',
+		gdf => 10000000,
+		blockTypeFeature => $blockTypeFeature });
+	    push (@{$termG->{terms}}, $term);
+	}
+	unshift (@$terms, $termG);
+    }
+
+    return ($terms, $optionals);
 }
 
 # キャッシュページハイライト用に、タームからターム（読み付き）へのマップを作成
@@ -124,7 +156,8 @@ sub _getRep2Style {
 	foreach my $synnodes ($kihonkus->[$i]->synnodes) {
 	    foreach my $synnode ($synnodes->synnode) {
 		next if ($synnode->synid =~ /s\d+/ && $option->{disable_synnode});
-		$rep2style{&remove_yomi(lc($synnode->synid))} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
+		my $key = sprintf ("%s%s", &remove_yomi(lc($synnode->synid)), $synnode->feature);
+		$rep2style{$key} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
 	    }
 	}
     }
@@ -156,7 +189,7 @@ sub _getSynNode2Midasi {
 
 		# <反義語><否定>を利用するかどうか
 		if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
-		    next unless ($opt->{option}{use_of_negation_and_antonym});
+		    next unless ($opt->{option}{antonym_and_negation_expansion});
 		}
 
 		# 文法素性の削除
@@ -171,6 +204,7 @@ sub _getSynNode2Midasi {
     return \%synnode2midasi;
 }
 
+# フレーズ検索用にtermオブジェクトを生成
 sub _create4phrase {
     my ($kihonkus, $tids, $space, $opt) = @_;
 
@@ -204,10 +238,11 @@ sub _create4phrase {
     return (\@terms, \%optionals);
 }
 
+# termオブジェクトを生成
 sub _create {
     my ($gid, $kihonkus, $tids, $parent, $space, $option) = @_;
 
-    my ($count, @terms, %optionals, %visitedKihonkus) = (0, (), (), ());
+    my ($isLastKihonku, $count, @terms, %optionals, %visitedKihonkus) = (1, 0, (), (), ());
     foreach my $tid (reverse @$tids) {
 	my $kihonku = $kihonkus->[$tid];
 
@@ -229,7 +264,8 @@ sub _create {
 	my $children = &_getChildNodes (\%optionals, $group_id, $kihonkus, \@tagids, $broadest_synnodes, $space, $option);
 
 	# タームグループの作成
-	my $termGroups = &_createTermGroup ($group_id, $tid, \@synnodes, $kihonku, $children, { optional_flag => $is_optional_node, option => $option });
+	my $termGroups = &_createTermGroup ($group_id, $tid, \@synnodes, $kihonku, $children, { optional_flag => $is_optional_node, is_last_kihonku => $isLastKihonku, option => $option });
+	$isLastKihonku = 0;
 
 	foreach my $termGroup (@$termGroups) {
 	    if ($is_optional_node) {
@@ -246,93 +282,7 @@ sub _create {
     return (\@terms, \%optionals);
 }
 
-sub reduceSynNode {
-    my ($basic_node, $synnodes, $opt) = @_;
-
-    next unless (defined $synnodes);
-
-    my $N = ($opt->{use_of_antonym_expansion}) ? int (0.5 * ($CONFIG->{MAX_NUMBER_OF_SYNNODES} + 1)) : $CONFIG->{MAX_NUMBER_OF_SYNNODES};
-
-    # 各ノードのgdfを得る
-    my $count = 0;
-    my @newNodes = ();
-
-    push (@newNodes, $basic_node) if (defined $basic_node);
-    foreach my $node (sort {$DFDBS_WORD->get(&remove_yomi($b->synid)) <=> $DFDBS_WORD->get(&remove_yomi($a->synid)) } @$synnodes) {
-	next if ($basic_node == $node);
-	push (@newNodes, $node) if (defined $node);
-	last if (++$count >= $N);
-    }
-
-    return \@newNodes;
-}
-
-sub _getDF {
-    my ($basicNd, $synNds) = @_;
-
-    if ($basicNd) {
-	return $DFDBS_WORD->get(&remove_yomi($basicNd->synid), {exhaustive => 1});
-    } else {
-	return $DFDBS_WORD->get(&remove_yomi($synNds->[0]->synid), {exhaustive => 1}) if (defined $synNds);
-    }
-}
-
-sub remove_yomi {
-    my ($text) = @_;
-
-    my @buf;
-    foreach my $word (split /\+/, $text) {
-	my ($hyouki, $yomi) = split (/\//, $word);
-	push (@buf, $hyouki);
-    }
-
-    return join ("+", @buf)
-}
-
-sub getBasicNode {
-    my ($synnodes) = @_;
-
-    foreach my $synnode (@$synnodes) {
-	if ($synnode->synid !~ /^s\d+/ && $synnode->feature eq '') {
-	    return $synnode;
-	}
-    }
-    return undef;
-}
-
-sub removeSyntacticFeatures {
-    my ($midasi) = @_;
-
-    $midasi =~ s/<可能>//;
-    $midasi =~ s/<尊敬>//;
-    $midasi =~ s/<受身>//;
-    $midasi =~ s/<使役>//;
-
-    return $midasi;
-}
-
-sub expandAntonymAndNegationTerms {
-    my ($midasi, $opt) = @_;
-
-    my @buf;
-    push (@buf, $midasi);
-    # 拡張するタームを最後のものに限定する必要あり
-    if ($opt->{option}{antonym_and_negation_expansion}) {
-	# 反義情報の削除
-	$midasi =~ s/<反義語>//;
-
-	# <否定>の付け変え
-	if ($midasi =~ /<否定>/) {
-	    $midasi =~ s/<否定>//;
-	} else {
-	    $midasi .= '<否定>';
-	}
-	push (@buf, $midasi);
-    }
-
-    return \@buf;
-}
-
+# termグループの作成
 sub _createTermGroup {
     my ($gid, $tid, $synNds, $parent, $children, $opt) = @_;
 
@@ -342,12 +292,9 @@ sub _createTermGroup {
 
     my @midasis = ();
     foreach my $synNd (@$synNds) {
-	my $_midasi = sprintf ("%s%s", &remove_yomi($synNd->synid), $synNd->feature);
+	next if (exists $opt->{option}{remove_synids}{$synNd->synid});
 
-	# <反義語><否定>を利用するかどうか
-	if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
-	    next unless ($opt->{option}{use_of_negation_and_antonym});
-	}
+	my $_midasi = sprintf ("%s%s", &remove_yomi($synNd->synid), $synNd->feature);
 
 	# SYNノードを利用しない場合
 	next if ($_midasi =~ /s\d+/ && $opt->{option}{disable_synnode});
@@ -355,10 +302,7 @@ sub _createTermGroup {
 	# 文法素性の削除
 	$_midasi = &removeSyntacticFeatures($_midasi);
 
-	# 反義語を使ってタームを拡張する
-	my $_midasis = &expandAntonymAndNegationTerms($_midasi, $opt);
-
-	push (@midasis, @$_midasis);
+	push (@midasis, $_midasi);
     }
 
     # タームグループの作成
@@ -382,7 +326,7 @@ sub _createTermGroup {
     }
 }
 
-# もっとも大きいsynnodeを獲得
+# もっとも大きい（語数の多い）synnodeを獲得
 sub _getBroadestSynNode {
     my ($parent, $kihonku, $ids) = @_;
 
@@ -422,6 +366,7 @@ sub _getChildNodes {
     return $children;
 }
 
+# 係り受けタームの追加
 sub _pushbackDependencyTerms {
     my ($terms, $optionals, $kihonku, $gid, $count, $option) = @_;
 
@@ -439,20 +384,24 @@ sub _pushbackDependencyTerms {
 		my $gdf = $DFDBS_DPND->get($midasi, {exhaustive => 1});
 		my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
 
+		my $blockTypeFeature = 0;
 		foreach my $tag (keys %{$blockTypes}) {
-		    my $term = new Tsubaki::Term ({
-			tid => sprintf ("%s-%s", $gid, $count++),
-			text => $midasi,
-			term_type => (($is_optional_node) ? 'dpnd' : 'force_dpnd'),
-			gdf => $gdf,
-			blockType => (($tag eq '') ? undef : $tag),
-			node_type => 'basic' });
+		    $tag =~ s/://;
+		    $blockTypeFeature += $CONFIG->{BLOCK_TYPE_DATA}{$tag}{mask};
+		}
 
-		    if ($is_optional_node) {
-			$optionals->{$term->get_id()} = $term unless (exists $optionals->{$term->get_id()});
-		    } else {
-			push (@_terms, $term);
-		    }
+		my $term = new Tsubaki::Term ({
+		    tid => sprintf ("%s-%s", $gid, $count++),
+		    text => $midasi,
+		    term_type => (($is_optional_node) ? 'dpnd' : 'force_dpnd'),
+		    gdf => $gdf,
+		    blockTypeFeature => $blockTypeFeature,
+		    node_type => 'basic' });
+
+		if ($is_optional_node) {
+		    $optionals->{$term->get_id()} = $term unless (exists $optionals->{$term->get_id()});
+		} else {
+		    push (@_terms, $term);
 		}
 	    }
 	}
@@ -467,364 +416,74 @@ sub _pushbackDependencyTerms {
     }
 }
 
+# メモリ使用量減らすためにsynnodeを削除する
+sub reduceSynNode {
+    my ($basic_node, $synnodes, $opt) = @_;
 
-sub getPaintingJavaScriptCode {
-    my ($result, $colorOffset, $opt) = @_;
+    next unless (defined $synnodes);
 
-    my $REQUISITE = '<クエリ必須語>';
-    my $OPTIONAL  = '<クエリ不要語>';
-    my $IGNORE    = '<クエリ削除語>';
-    my $REQUISITE_DPND = '<クエリ必須係り受け>';
+    my $N = ($opt->{use_of_antonym_expansion}) ? int (0.5 * ($CONFIG->{MAX_NUMBER_OF_SYNNODES} + 1)) : $CONFIG->{MAX_NUMBER_OF_SYNNODES};
 
-    my $font_size = 12;
-    my $offsetX = 10 + 24;
-    my $offsetY = $font_size * (scalar($result->tag) + 3);
-    my $arrow_size = 3;
-    my $synbox_margin = $font_size;
+    # 各ノードのgdfを得る
+    my $count = 0;
+    my @newNodes = ();
 
-    my @color = ();
-    push(@color, '#ffa500;');
-    push(@color, '#000080;');
-    push(@color, '#997799;');
-    push(@color, '#800000;');
-    push(@color, '#779977;');
-    push(@color, '#770000;');
-    push(@color, '#007700;');
-    push(@color, '#777700;');
-    push(@color, '#007777;');
-    push(@color, '#770077;');
-
-    my @bgcolor = ();
-    push(@bgcolor, '#ffff99;');
-    push(@bgcolor, '#bbffff;');
-    push(@bgcolor, '#ffbbff;');
-    push(@bgcolor, '#ffbbbb;');
-    push(@bgcolor, '#bbffbb;');
-    push(@bgcolor, '#bb0000;');
-    push(@bgcolor, '#00bb00;');
-    push(@bgcolor, '#bbbb00;');
-    push(@bgcolor, '#00bbbb;');
-    push(@bgcolor, '#bb00bb;');
-
-    my @stylecolor = ();
-    push(@stylecolor, 'border: 2px solid #ffa500; background-color: #ffff99;');
-    push(@stylecolor, 'border: 2px solid #000080; background-color: #bbffff;');
-    push(@stylecolor, 'border: 2px solid #997799; background-color: #ffbbff;');
-    push(@stylecolor, 'border: 2px solid #800000; background-color: #ffbbbb;');
-    push(@stylecolor, 'border: 2px solid #779977; background-color: #bbffbb;');
-    push(@stylecolor, 'border: 2px solid #770000; background-color: #bb0000; color: white;');
-    push(@stylecolor, 'border: 2px solid #007700; background-color: #00bb00; color: white;');
-    push(@stylecolor, 'border: 2px solid #777700; background-color: #bbbb00; color: white;');
-    push(@stylecolor, 'border: 2px solid #007777; background-color: #00bbbb; color: white;');
-    push(@stylecolor, 'border: 2px solid #770077; background-color: #bb00bb; color: white;');
-
-    my $removedcolor = 'border: 2px solid #9f9f9f; background-color: #e0e0e0; color: black;';
-
-    #########################
-
-
-    my $jscode .= qq(jg.clear();\n);
-
-    # 単語・同義表現グループを描画する
-    my $max_num_of_synonyms = 0;
-    my %gid2pos = ();
-    my %gid2num = ();
-    my @kihonkus = $result->tag;
-    my $syngraph = Configure::getSynGraphObj();
-    
-    my %tid2syns = ();
-    for (my $i = 0; $i < scalar(@kihonkus); $i++) {
-	my $tag = $kihonkus[$i];
-
-	my $gid = ($tag->synnodes)[0]->tagid;
-	$gid2num{$gid} = $i;
-
-	my ($synbuf, $max_num_of_words) = &_getExpressions($i, $tag, \%tid2syns, $syngraph, $opt);
-
-	my $width = $font_size * (1.5 + $max_num_of_words);
-	# 同義グループのX軸の中心座標を保持（係り受けの線を描画する際に利用する）
-	$gid2pos{$gid}->{pos} = $offsetX + int(0.5 * $width);
-	$gid2pos{$gid}->{num_child} = 0;
-	$gid2pos{$gid}->{num_parent} = 1;
-
-	# 下に必須・オプショナルのフラグを取得
-	my $mark = ($tag->fstring() =~ /クエリ削除語/) ? 'Ｘ' : (($tag->fstring() =~ /クエリ不要語/) ?  '△' : '〇');
-	my $colorIndex = ($i + $colorOffset) % scalar(@stylecolor);
-
-	my $synbox;
-	if ($tag->fstring() =~ /<クエリ削除語>/) {
-	    $synbox .= sprintf(qq(<TABLE style=\\'font-size: $font_size; margin: 0px;text-align: center; $removedcolor\\' width=%dpx>), $width);
-	} else {
-	    $synbox .= sprintf(qq(<TABLE style=\\'font-size: $font_size; margin: 0px;text-align: center; $stylecolor[$colorIndex]\\' width=%dpx>), $width);
-	}
-
-	my $surf = ($tag->synnodes)[0]->midasi;
-	if (scalar(keys %$synbuf) > 0) {
-	    my $rate = 36;
-	    my ($r, $g, $b) = ($bgcolor[$colorIndex] =~ /#(..)(..)(..);/);
-	    $r = (hex($r) + $rate > 255) ? 'ff' : sprintf ("%x", hex($r) + $rate);
-	    $g = (hex($g) + $rate > 255) ? 'ff' : sprintf ("%x", hex($g) + $rate);
-	    $b = (hex($b) + $rate > 255) ? 'ff' : sprintf ("%x", hex($b) + $rate);
-	    my $dilutedColor = sprintf("#%s%s%s", $r, $g, $b);
-
-	    $synbox .= sprintf(qq(<TR><TD style=\\'border-bottom: 1px solid %s;\\'>%s</TD></TR>), $color[$colorIndex], $surf);
-	    $synbox .= sprintf(qq(<TR><TD style=\\'background-color: %s;\\'>%s</TD></TR>), $dilutedColor, join("<BR>", sort keys %$synbuf));
-	} else {
-	    $synbox .= sprintf(qq(<TR><TD>%s</TD></TR>), $surf);
-	}
-	$synbox .= "</TABLE>";
-
-	$max_num_of_synonyms = scalar(keys %$synbuf) if ($max_num_of_synonyms < scalar(keys %$synbuf));
-
-	$jscode .= qq(jg.drawStringRect(\'$synbox\', $offsetX, $offsetY, $width, 'left');\n);
-	$jscode .= qq(jg.drawStringRect(\'$mark\', $offsetX, $offsetY - 1.05 * $font_size, $font_size, 'left');\n);
-	$offsetX += ($width + $synbox_margin);
-    }
-    $colorOffset += scalar(scalar($result->tag));
-
-    # 解析結果を表示するウィンドウの幅、高さを求める
-    my $width = $offsetX;
-    my $height = $offsetY + int(($max_num_of_synonyms + 1) * 1.1 * $font_size); # +1 は●▲の分, *1.1 は行間
-
-
-
-    for (my $i = 0; $i < scalar(@kihonkus); $i++) {
-	my $kakarimoto = $kihonkus[$i];
-	my $kakarisaki = $kakarimoto->parent;
-
-	# 並列句の処理１
-	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 日本->政治, 日本->経済 の部分
-	if ($kakarimoto->dpndtype ne 'P') {
-	    $jscode .= &getDrawingDependencyCodeForParaType1($kakarimoto, $kakarisaki, $i, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
-	}
-
-	# 並列句の処理２
-	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 政治->正す, 経済->正す の部分
-	my $buf = $kakarimoto;
-	while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
-	    $buf = $kakarisaki;
-	    $kakarisaki = $kakarisaki->parent;
-	}
-
- 	next unless (defined $kakarisaki);
-
-	# 追加された係り受けの描画
-	if ($kakarimoto->fstring() !~ /<クエリ削除係り受け>/ &&
-	    $kakarisaki->fstring() =~ /<クエリ不要語>/ &&
-	    $kakarisaki->fstring() !~ /<クエリ削除語>/ &&
-	    $kakarisaki->fstring() !~ /<固有表現を修飾>/) {
-	    my $_kakarisaki = $kakarisaki->parent();
-
-	    # 係り先の係り先への係り受けを描画
-	    if (defined $_kakarisaki) {
-		my $mark = ($_kakarisaki->fstring() =~ /クエリ削除語/) ?  'Ｘ' : '△';
-		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $_kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
-	    }
-	}
-
-	my $mark = ($kakarimoto->fstring() =~ /クエリ必須係り受け/) ?  '〇' : (($kakarimoto->fstring() =~ /クエリ削除係り受け/) ? 'Ｘ' : '△');
-	$mark = 'Ｘ' if (defined $kakarisaki && $kakarisaki->fstring() =~ /<クエリ削除語>/);
-	$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, \%gid2num, \%gid2pos);
+    push (@newNodes, $basic_node) if (defined $basic_node);
+    foreach my $node (sort {$DFDBS_WORD->get(&remove_yomi($b->synid)) <=> $DFDBS_WORD->get(&remove_yomi($a->synid)) } @$synnodes) {
+	next if ($basic_node == $node);
+	push (@newNodes, $node) if (defined $node);
+	last if (++$count >= $N);
     }
 
-
-    $jscode .= qq(jg.setFont(\'ＭＳゴシック\', \'$font_size\', 0);\n);
-    $jscode .= qq(jg.paint();\n);
-
-    return ($width, $height, $colorOffset, $jscode);
+    return \@newNodes;
 }
 
-sub getDrawingDependencyCodeForParaType1 {
-    my ($kakarimoto, $kakarisaki, $i, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos) = @_;
+# DFの取得
+sub _getDF {
+    my ($basicNd, $synNds) = @_;
 
-    my $jscode;
-    if (defined $kakarisaki && defined $kakarisaki->child) {
-	foreach my $child ($kakarisaki->child) {
-	    # 係り受け関係を追加する際、係り元のノード以前は無視する
-	    # ex) 緑茶やピロリ菌
-	    if ($child->dpndtype eq 'P' && $child->id > $kakarimoto->id) {
-		my $mark = ($child->fstring() =~ /クエリ削除語/) ?  'Ｘ' : '△';
-		$jscode .= &getDrawingDependencyCode($i, $kakarimoto, $child, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos);
-
-		# 子の子についても処理する
-		$jscode .= &getDrawingDependencyCodeForParaType1($kakarimoto, $child, $i, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos);
-	    }
-	}
-    }
-    return $jscode;
-}
-
-sub getDrawingDependencyCode {
-    my ($i, $kakarimoto, $kakarisaki, $mark, $offsetX, $offsetY, $arrow_size, $font_size, $gid2num, $gid2pos) = @_;
-
-    my $jscode = '';
-
-    my $kakarimoto_gid = ($kakarimoto->synnodes)[0]->tagid;
-    my $kakarisaki_gid = ($kakarisaki->synnodes)[0]->tagid;
-
-    my $dist = abs($i - $gid2num->{$kakarisaki_gid});
-
-    my $x1 = $gid2pos->{$kakarimoto_gid}->{pos} + (3 * $gid2pos->{$kakarimoto_gid}->{num_parent} * $arrow_size);
-    my $x2 = $gid2pos->{$kakarisaki_gid}->{pos} - (3 * $gid2pos->{$kakarisaki_gid}->{num_child} * $arrow_size);
-    $gid2pos->{$kakarimoto_gid}->{num_parent}++;
-    $gid2pos->{$kakarisaki_gid}->{num_child}++;
-
-    my $y = $offsetY - $font_size - (1.5 * $dist * $font_size);
-
-
-    # 係り受けの線をひく
-
-    if ($mark eq 'Ｘ') {
-	$jscode .= qq(jg.setStroke(Stroke.DOTTED);\n);
+    if ($basicNd) {
+	return $DFDBS_WORD->get(&remove_yomi($basicNd->synid), {exhaustive => 1});
     } else {
-	$jscode .= qq(jg.setStroke(1);\n);
-    }
-
-    $jscode .= qq(jg.drawLine($x1, $offsetY, $x1, $y);\n);
-    $jscode .= qq(jg.drawLine($x1 - 1, $offsetY, $x1 - 1, $y);\n);
-
-    $jscode .= qq(jg.drawLine($x1, $y, $x2, $y);\n);
-    $jscode .= qq(jg.drawLine($x1, $y - 1, $x2, $y - 1);\n);
-
-    $jscode .= qq(jg.drawLine($x2, $y, $x2, $offsetY);\n);
-    $jscode .= qq(jg.drawLine($x2 + 1, $y, $x2 + 1, $offsetY);\n);
-
-    # 矢印
-    $jscode .= qq(jg.fillPolygon(new Array($x2, $x2 + $arrow_size, $x2 - $arrow_size), new Array($offsetY, $offsetY - $arrow_size, $offsetY - $arrow_size));\n);
-
-
-    # 線の上に必須・オプショナルのフラグを描画する
-    $jscode .= qq(jg.drawStringRect(\'$mark\', $x1, $y - 1.05 * $font_size, $font_size, 'left');\n);
-
-    return $jscode;
-}
-
-
-sub _getNormalizedString {
-    my ($str) = @_;
-
-    my ($yomi) = ($str =~ m!/(.+?)(?:v|a)?$!);
-    $str =~ s/\[.+?\]//g;
-    $str =~ s/(\/|:).+//;
-    $str = lc($str);
-    $str =~ s/人」/人/;
-
-    return ($str, $yomi);
-}
-
-sub _pushbackBuf {
-    my ($i, $tid2syns, $string, $yomi, $functional_word) = @_;
-
-    foreach my $e (($string, $yomi)) {
-	next unless ($e);
-
-	$tid2syns->{$i}{$e} = 1;
-	$tid2syns->{$i}{sprintf ("%s%s", $e, $functional_word)} = 1;
+	return $DFDBS_WORD->get(&remove_yomi($synNds->[0]->synid), {exhaustive => 1}) if (defined $synNds);
     }
 }
 
-sub _getPackedExpressions {
-    my ($i, $synbuf, $tid2syns, $tids, $str, $functional_word, $syngraph) = @_;
+# 読みの削除
+sub remove_yomi {
+    my ($text) = @_;
 
-    my %buf = ();
-    my @synonymous_exps = split(/\|+/, decode('utf8', $syngraph->{syndb}{$str}));
-    my $max_num_of_words = 0;
-    if (scalar(@synonymous_exps) > 1) {
-	foreach my $_string (@synonymous_exps) {
-	    my ($string, $yomi) = &_getNormalizedString($_string);
-	    &_pushbackBuf($i, $tid2syns, $string, undef, $functional_word);
-	    $buf{$string} = 1;
-	}
-
-	foreach my $string (keys %buf) {
-	    my $matched_exp = undef;
-	    if (scalar(@$tids) > 1) {
-		my $_string = $string;
-		foreach my $tid (@$tids) {
-		    my $isMatched = 0;
-		    foreach my $_prev (sort {length($b) <=> length($a)} keys %{$tid2syns->{$tid}}) {
-			if ($_string =~ /^$_prev/) {
-			    $matched_exp .= $_prev;
-			    $_string = "$'";
-			    $isMatched = 1;
-			    last;
-			}
-		    }
-
-		    # 先行する語とマッチしなければ終了
-		    last unless ($isMatched);
-		}
-	    }
-
-	    unless ($matched_exp) {
-		$synbuf->{$string} = 1;
-	    } else {
-		if ($string ne $matched_exp) {
-		    $string =~ s/$matched_exp/（$matched_exp）/;
-		    $synbuf->{$string} = 1;
-		}
-	    }
-	    $max_num_of_words = length($string) if ($max_num_of_words < length($string));
-	}
+    my @buf;
+    foreach my $word (split /\+/, $text) {
+	my ($hyouki, $yomi) = split (/\//, $word);
+	push (@buf, $hyouki);
     }
 
-    return $max_num_of_words;
+    return join ("+", @buf)
 }
 
+# 基本ノードの取得
+sub getBasicNode {
+    my ($synnodes) = @_;
 
-# 同義グループに属す表現の取得と幅（文字数）の取得
-sub _getExpressions {
-    my ($i, $tag, $tid2syns, $syngraph, $opt) = @_;
-
-
-    my $surf = ($tag->synnodes)[0]->midasi;
-    my $surf_contentW = ($tag->mrph)[0]->midasi;
-    my @repnames_contentW = ($tag->mrph)[0]->repnames;
-    my $max_num_of_words = length($surf);
-    my $functional_word = (($tag->mrph)[-1]->fstring !~ /<内容語>/) ? ($tag->mrph)[-1]->midasi : '';
-    $functional_word =~ s!/.*$!!;
-
-    my @basicNodes = ();
-    my %synbuf;
-    unless ($tag->fstring() =~ /<クエリ削除語>/) {
-	foreach my $synnodes ($tag->synnodes) {
-	    foreach my $node ($synnodes->synnode) {
-		next if ($node->feature =~ /<上位語>/ || $node->feature =~ /<反義語>/ || $node->feature =~ /<否定>/);
-
-		# 基本ノードの獲得
-		my $str = $node->synid;
-		if ($str !~ /s\d+/) {
-		    my ($_str, $_yomi) = &_getNormalizedString($str);
-		    push (@basicNodes, $_str);
-		    push (@basicNodes, $_yomi) if ($_yomi);
-		    &_pushbackBuf($i, $tid2syns, $_str, $_yomi, $functional_word);
-		}
-
-
-		# 同義グループに属す表現の取得
-		unless ($opt->{disable_synnode}) {
-		    my @tids = $synnodes->tagids;
-		    my $max_num_of_w = &_getPackedExpressions($i, \%synbuf, $tid2syns, \@tids, $str, $functional_word, $syngraph);
-		    $max_num_of_words = $max_num_of_w if ($max_num_of_words < $max_num_of_w);
-		}
-	    }
-	}
-
-	# 出現形、基本ノードと同じ表現は削除する
-	delete ($synbuf{$surf});
-	delete ($synbuf{$surf_contentW});
-	foreach my $basicNode (@basicNodes) {
-	    delete ($synbuf{$basicNode});
-	}
-	foreach my $rep (@repnames_contentW) {
-	    foreach my $word_w_yomi (split (/\?/, $rep)) {
-		my ($hyouki, $yomi) = split (/\//, $word_w_yomi);
-		delete ($synbuf{$hyouki});
-	    }
+    foreach my $synnode (@$synnodes) {
+	if ($synnode->synid !~ /^s\d+/ && $synnode->feature eq '') {
+	    return $synnode;
 	}
     }
+    return undef;
+}
 
-    return (\%synbuf, $max_num_of_words);
+# 文法素性の削除
+sub removeSyntacticFeatures {
+    my ($midasi) = @_;
+
+    $midasi =~ s/<可能>//;
+    $midasi =~ s/<尊敬>//;
+    $midasi =~ s/<受身>//;
+    $midasi =~ s/<使役>//;
+
+    return $midasi;
 }
 
 1;
