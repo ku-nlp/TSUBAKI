@@ -95,13 +95,14 @@ sub _new {
 		$line =~ s/#.*$//;
 		next if ($line eq '');
 
-		my ($attribute, $label, $tag, $chk_flag, $weight) = split (/\s/, $_);
+		my ($attribute, $label, $tag, $chk_flag, $weight, $mask) = split (/\s/, $_);
 		$this->{BLOCK_TYPE_DATA}{$tag}{attribute} = $attribute;
 		$this->{BLOCK_TYPE_DATA}{$tag}{label} = $label;
 		$this->{BLOCK_TYPE_DATA}{$tag}{tag} = $tag;
 		$this->{BLOCK_TYPE_DATA}{$tag}{isChecked} = $chk_flag;
 		$this->{BLOCK_TYPE_DATA}{$tag}{isDefaultChecked} = $chk_flag;
 		$this->{BLOCK_TYPE_DATA}{$tag}{weight} = $weight;
+		$this->{BLOCK_TYPE_DATA}{$tag}{mask} = $mask;
 		push (@{$this->{BLOCK_TYPE_KEYS}}, $tag);
 	    }
 	    close (FILE);
@@ -184,12 +185,39 @@ sub getSynGraphObj {
 	push (@INC, $instance->{SYNGRAPH_PM_PATH});
 	require SynGraph;
 
-	my $option = ();
-	$option->{syndbcdb} = sprintf ("%s/../x86_64/syndb.cdb", $instance->{SYNDB_PATH});
+	my $regnode_option = ();
+
+	# Wikipediaの見出し語に対する設定
+	$regnode_option->{no_attach_synnode_in_wikipedia_entry} = 1;
+	$regnode_option->{attach_wikipedia_info} = 1;
+	$regnode_option->{wikipedia_entry_db} = $opt{wikipedia_entry_db} if ($opt{wikipedia_entry_db});
+
+	# 上位語付与の設定
+	$regnode_option->{relation} = ($opt{hyponymy}) ? 1 : 0;
+	$regnode_option->{relation_recursive} = ($opt{hyponymy}) ? 1 : 0;
+	$regnode_option->{hypocut_attachnode} = $opt{hypocut} if $opt{hypocut};
+
+	# 反義語付与の設定
+	$regnode_option->{antonym} = ($opt{antonymy}) ? 1 : 0;
+
+	# 準内容語を除いたものもノードに登録するオプション(ネットワーク化 -> ネットワーク, 深み -> 深い)
+	$syngraph_option = {
+	    regist_exclude_semi_contentword => 1,
+	    no_regist_adjective_stem => $opt{no_regist_adjective_stem},
+	    db_on_memory => $opt{syndb_on_memory}
+	};
+	my $syngraph_option = ();
+	$syngraph_option->{no_attach_synnode_in_wikipedia_entry} = 1;
+	$syngraph_option->{attach_wikipedia_info} = 1;
+	$syngraph_option->{wikipedia_entry_db} = $opt{wikipedia_entry_db} if ($opt{wikipedia_entry_db});
+
+
+
+	$regnode_option->{syndbcdb} = sprintf ("%s/syndb.cdb", $instance->{SYNDB_PATH});
 	$instance->{SYNGRAPH} = new SynGraph(
 	    $instance->{SYNDB_PATH},
-	    undef, # KNPのオプション
-	    $option
+	    undef,
+	    $regnode_option
 	    );
     }
 
