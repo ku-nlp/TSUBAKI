@@ -179,7 +179,7 @@ sub getEnglishParserObj {
 }
 
 sub getSynGraphObj {
-    my ($this) = @_;
+    my ($this, $opt) = @_;
 
     unless (defined $instance->{SYNGRAPH}) {
 	push (@INC, $instance->{SYNGRAPH_PM_PATH});
@@ -190,26 +190,25 @@ sub getSynGraphObj {
 	# Wikipediaの見出し語に対する設定
 	$regnode_option->{no_attach_synnode_in_wikipedia_entry} = 1;
 	$regnode_option->{attach_wikipedia_info} = 1;
-	$regnode_option->{wikipedia_entry_db} = $opt{wikipedia_entry_db} if ($opt{wikipedia_entry_db});
+	$regnode_option->{wikipedia_entry_db} = $opt->{wikipedia_entry_db} if ($opt->{wikipedia_entry_db});
 
 	# 上位語付与の設定
-	$regnode_option->{relation} = ($opt{hyponymy}) ? 1 : 0;
-	$regnode_option->{relation_recursive} = ($opt{hyponymy}) ? 1 : 0;
-	$regnode_option->{hypocut_attachnode} = $opt{hypocut} if $opt{hypocut};
+	$regnode_option->{relation} = ($opt->{hyponymy}) ? 1 : 0;
+	$regnode_option->{relation_recursive} = ($opt->{hyponymy}) ? 1 : 0;
+	$regnode_option->{hypocut_attachnode} = $opt->{hypocut} if $opt->{hypocut};
 
 	# 反義語付与の設定
-	$regnode_option->{antonym} = ($opt{antonymy}) ? 1 : 0;
+	$regnode_option->{antonym} = ($opt->{antonymy}) ? 1 : 0;
 
 	# 準内容語を除いたものもノードに登録するオプション(ネットワーク化 -> ネットワーク, 深み -> 深い)
-	$syngraph_option = {
+	my $syngraph_option = {
 	    regist_exclude_semi_contentword => 1,
-	    no_regist_adjective_stem => $opt{no_regist_adjective_stem},
-	    db_on_memory => $opt{syndb_on_memory}
+	    no_regist_adjective_stem => $opt->{no_regist_adjective_stem},
+	    db_on_memory => $opt->{syndb_on_memory}
 	};
-	my $syngraph_option = ();
 	$syngraph_option->{no_attach_synnode_in_wikipedia_entry} = 1;
 	$syngraph_option->{attach_wikipedia_info} = 1;
-	$syngraph_option->{wikipedia_entry_db} = $opt{wikipedia_entry_db} if ($opt{wikipedia_entry_db});
+	$syngraph_option->{wikipedia_entry_db} = $opt->{wikipedia_entry_db} if ($opt->{wikipedia_entry_db});
 
 
 
