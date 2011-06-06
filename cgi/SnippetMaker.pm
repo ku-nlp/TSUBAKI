@@ -91,12 +91,22 @@ sub extract_sentences_from_standard_format {
 	    return &extract_sentences_from_content_for_kwic($query, $content, $opt);
 	} else {
 	    # Title, Keywords, Description から重要文を抽出しない
-	    if ($opt->{start} > $NUM_OF_CHARS_IN_HEADER) {
+	    if (1 || $opt->{start} > $NUM_OF_CHARS_IN_HEADER) { # 常にこちらを利用
 		# スレーブサーバが返すベストpositionを使う手法
-		return &extract_sentences_from_content_using_position($query, $content, $opt);
+		if ($opt->{IS_ENGLISH_VERSION}) {
+		    return &extract_sentences_from_content_using_position_new_sf($query, $content, $opt);
+		}
+		else {
+		    return &extract_sentences_from_content_using_position($query, $content, $opt);
+		}
 	    } else {
 		# positionを使わない手法
-		return &extract_sentences_from_content($query, $content, $opt);
+		if ($opt->{IS_ENGLISH_VERSION}) {
+		    return &extract_sentences_from_content_new_sf($query, $content, $opt);
+		}
+		else {
+		    return &extract_sentences_from_content($query, $content, $opt);
+		}
 	    }
 	}
     }
@@ -161,45 +171,7 @@ sub extract_sentences_from_content_using_position {
 	    last if (!$showFlag && $pos > $end);
 
 	    if ($showFlag) {
-		my $sentence = {
-		    rawstring => '',
-		    score => 0,
-		    smoothed_score => 0,
-		    words => {},
-		    dpnds => {},
-		    surfs => [],
-		    start_pos => $start_pos,
-		    end_pos => $pos - 1,
-		    reps => [],
-		    sid => $sid,
-		    number_of_included_queries => $number_of_included_queries,
-		    number_of_included_query_types => scalar (keys %included_query_types),
-		    num_of_whitespaces => 0
-		};
-
- 		$sentence->{result} = $result if ($opt->{keep_result});
-
- 		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
-
- 		my $num_of_whitespace_cdot_comma = 0;
-		foreach my $w (@{$word_list}) {
-		    my $surf = $w->{surf};
-		    my $reps = $w->{reps};
-		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
-
-		    $sentence->{rawstring} .= $surf;
-		    push(@{$sentence->{surfs}}, $surf);
-		    push(@{$sentence->{reps}}, $w->{reps});
-		}
-
-		my $length = scalar(@{$sentence->{surfs}});
-		$length = 1 if ($length < 1);
-		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
-		$sentence->{score} = $score;
-		$sentence->{smoothed_score} = $score;
-		$sentence->{length} = $length;
-		$sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
-
+		my $sentence = &make_sentence($sid, 0, $number_of_included_queries, scalar (keys %included_query_types), undef, undef, $result, undef, undef, $opt, $start_pos, $pos - 1);
 		push(@sentences, $sentence);
 	    }
 	} else {
@@ -214,6 +186,54 @@ sub extract_sentences_from_content_using_position {
     }
 }
 
+sub extract_sentences_from_content_using_position_new_sf {
+    my ($query, $content, $opt) = @_;
+
+    # 前後width語を重要文の抽出範囲とする
+    my $width = ($CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET} - ($opt->{end} - $opt->{start})) / 2;
+    my $start = ($opt->{start} - $width < $NUM_OF_CHARS_IN_HEADER) ? $opt->{start} : $opt->{start} - $width;
+    my $end = ($opt->{start} - $width < $NUM_OF_CHARS_IN_HEADER) ? $opt->{end} + 2 * $width : $opt->{end} + $width;
+
+    my $pos = 0;
+    my @sentences = ();
+
+    require XML::LibXML;
+    require StandardFormat;
+    my $parser = new XML::LibXML;
+    my $doc = $parser->parse_string($content);
+    my $sf = new StandardFormat;
+
+    for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
+	my $sentence_id = $sentence_node->getAttribute('id');
+	for my $annotation_node ($sentence_node->getElementsByTagName('Annotation')) { # parse
+	    $sf->read_annotation_from_node($annotation_node);
+
+	    my $showFlag = 0;
+	    my $number_of_included_queries = 0;
+	    my %included_query_types = ();
+	    my $start_pos = $pos;
+
+	    foreach my $id (keys %{$sf->{words}}) {
+		$pos++;
+		$showFlag = 1 if ($start <= $pos && $pos <= $end && !$showFlag);
+	    }
+
+	    # クエリ中の語が出現する範囲を超えた
+	    last if (!$showFlag && $pos > $end);
+
+	    if ($showFlag) {
+		my $sentence = &make_sentence($sentence_id, 0, $number_of_included_queries, scalar (keys %included_query_types), undef, undef, undef, undef, $sf, $opt, $start_pos, $pos - 1);
+		push(@sentences, $sentence);
+	    }
+	}
+    }
+
+    if ($opt->{uniq}) {
+	return &uniqSentences(\@sentences);
+    } else {
+	return \@sentences;
+    }
+}
 
 sub isMatch {
     my ($listQ, $listS) = @_;
@@ -479,6 +499,57 @@ sub uniqSentences {
     return \@sents;
 }
 
+sub make_sentence {
+    my ($sid, $paraid, $num_of_queries, $num_of_types, $including_all_indices, $paragraph_first_sentence, $result, $resultObj, $sf, $opt, $start_pos, $end_pos) = @_;
+
+    my $sentence = {
+		    rawstring => undef,
+		    score => 0,
+		    smoothed_score => 0,
+		    words => {},
+		    dpnds => {},
+		    surfs => [],
+		    start_pos => $start_pos,
+		    end_pos => $end_pos,
+		    reps => [],
+		    sid => $sid,
+		    paraid => $paraid,
+		    number_of_included_queries => $num_of_queries,
+		    number_of_included_query_types => $num_of_types,
+		    including_all_indices => $including_all_indices,
+		    num_of_whitespaces => 0
+		   };
+
+    $sentence->{resultObj} = $resultObj if ($opt->{keepResultObj});
+    $sentence->{result} = $result if ($opt->{keep_result});
+    $sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence} || $opt->{get_paragraph_first_sentence_without_anntotation});
+
+    return $sentence if $opt->{extract_from_abstract_only} && $opt->{keyword_server_mode};
+
+    my $word_list = ($opt->{IS_ENGLISH_VERSION}) ? &make_word_list_new_sf($sf, $opt) : ($opt->{syngraph}) ? &make_word_list_syngraph($result) : &make_word_list($result, $opt);
+
+    my $num_of_whitespace_cdot_comma = 0;
+    foreach my $w (@{$word_list}) {
+	my $surf = $w->{surf};
+	my $reps = $w->{reps};
+	$num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
+
+	push(@{$sentence->{surfs}}, $surf);
+	push(@{$sentence->{reps}}, $w->{reps});
+    }
+    $sentence->{rawstring} = join($opt->{IS_ENGLISH_VERSION} ? ' ' : '', @{$sentence->{surfs}});
+
+    my $length = scalar(@{$sentence->{surfs}});
+    $length = 1 if ($length < 1);
+    my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
+    $sentence->{score} = $score;
+    $sentence->{smoothed_score} = $score;
+    $sentence->{length} = $length;
+    $sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
+
+    return $sentence;
+}
+
 # positionを使わない手法
 sub extract_sentences_from_content {
     my($query, $content, $opt) = @_;
@@ -570,48 +641,10 @@ sub extract_sentences_from_content {
 		# 各文をスコアリング
 		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
 
-		my $sentence = {
-		    rawstring => undef,
-		    score => 0,
-		    smoothed_score => 0,
-		    words => {},
-		    dpnds => {},
-		    surfs => [],
-		    reps => [],
-		    sid => $sid,
-		    paraid => $paraid,
-		    number_of_included_queries => $num_of_queries,
-		    number_of_included_query_types => $num_of_types,
-		    including_all_indices => $including_all_indices
-		};
-
-		$sentence->{resultObj} = $resultObj if ($opt->{keepResultObj});
-		$sentence->{result} = $result if ($opt->{keep_result});
-		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence} || $opt->{get_paragraph_first_sentence_without_anntotation});
-
-		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
-
-		my $num_of_whitespace_cdot_comma = 0;
-		foreach my $w (@{$word_list}) {
-		    my $surf = $w->{surf};
-		    my $reps = $w->{reps};
-		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
-
-		    $sentence->{rawstring} .= $surf;
-		    push(@{$sentence->{surfs}}, $surf);
-		    push(@{$sentence->{reps}}, $w->{reps});
-		}
-
-		my $length = scalar(@{$sentence->{surfs}});
-		$length = 1 if ($length < 1);
-		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
-		$th = $count + $opt->{window_size} if ($score > 0 && $th < 0);
-		$sentence->{score} = $score;
-		$sentence->{smoothed_score} = $score;
-		$sentence->{length} = $length;
-		$sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
+		my $sentence = &make_sentence($sid, $paraid, $num_of_queries, $num_of_types, $including_all_indices, $paragraph_first_sentence, $result, $resultObj, undef, $opt);
 		push(@sentences, $sentence);
 
+		$th = $count + $opt->{window_size} if ($sentence->{score} > 0 && $th < 0);
 		last if ($opt->{lightweight} && $count > $th && $th > 0);
 		$count++;
 #		print encode('euc-jp', $sentence->{rawstring}) . " (" . $num_of_whitespace_cdot_comma . ") is SKIPPED.\n";
@@ -619,6 +652,62 @@ sub extract_sentences_from_content {
 	    $annotation = '';
 	}
     }
+
+    my $window_size = $opt->{window_size};
+    my $size = scalar(@sentences);
+    for (my $i = 0; $i < scalar(@sentences); $i++) {
+	my $s = $sentences[$i];
+	for (my $j = 0; $j < $window_size; $j++) {
+	    my $k = $i - $j - 1;
+	    last if ($k < 0 || $s->{paraid} != $sentences[$k]->{paraid});
+	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
+	}
+
+	for (my $j = 0; $j < $window_size; $j++) {
+	    my $k = $i + $j + 1;
+	    last if ($k > $size - 1 || $s->{paraid} != $sentences[$k]->{paraid});
+	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
+	}
+    }
+
+    if ($opt->{uniq}) {
+	return &uniqSentences(\@sentences);
+    } else {
+	return \@sentences;
+    }
+}
+
+# positionを使わない手法 (新標準フォーマット)
+sub extract_sentences_from_content_new_sf {
+    my($query, $content, $opt) = @_;
+
+    my @sentences = ();
+    my $count = 0;
+    my $th = -1;
+
+    require XML::LibXML;
+    require StandardFormat;
+    my $parser = new XML::LibXML;
+    my $doc = $parser->parse_string($content);
+    my $sf = new StandardFormat;
+
+    for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
+	my $sentence_id = $sentence_node->getAttribute('id');
+	for my $annotation_node ($sentence_node->getElementsByTagName('Annotation')) { # parse
+	    $sf->read_annotation_from_node($annotation_node);
+
+	    # 各文をスコアリング
+	    my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score_with_sf($query, $sf, $opt);
+
+	    my $sentence = &make_sentence($sentence_id, 0, $num_of_queries, $num_of_types, $including_all_indices, 0, undef, undef, $sf, $opt);
+	    push(@sentences, $sentence);
+
+	    $th = $count + $opt->{window_size} if ($sentence->{score} > 0 && $th < 0);
+	    last if ($opt->{lightweight} && $count > $th && $th > 0);
+	    $count++;
+	}
+    }
+
 
     my $window_size = $opt->{window_size};
     my $size = scalar(@sentences);
@@ -703,50 +792,10 @@ sub extract_sentences_from_metadata {
 	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
 		my $result = $1;
 
-		my ($num_of_queries, $num_of_types, $including_all_indices);
-		my $sentence = {
-		    rawstring => $rawstring,
-		    score => 0,
-		    smoothed_score => 0,
-		    words => {},
-		    dpnds => {},
-		    surfs => [],
-		    reps => [],
-		    sid => $sid,
-		    paraid => $paraid,
-		    number_of_included_queries => $num_of_queries,
-		    number_of_included_query_types => $num_of_types,
-		    including_all_indices => $including_all_indices
-		};
-
-		$sentence->{resultObj} = new KNP::Result($result) if ($opt->{keepResultObj});
-		$sentence->{result} = $result if ($opt->{keep_result});
-		$sentence->{paragraph_first_sentence} = $paragraph_first_sentence if ($opt->{get_paragraph_first_sentence});
-
-		if (!$opt->{keyword_server_mode}) {
-		    my $word_list = ($opt->{syngraph}) ? &make_word_list_syngraph($result) : &make_word_list($result, $opt);
-
-		    my $num_of_whitespace_cdot_comma = 0;
-		    foreach my $w (@{$word_list}) {
-			my $surf = $w->{surf};
-			my $reps = $w->{reps};
-			$num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
-
-			push(@{$sentence->{surfs}}, $surf);
-			push(@{$sentence->{reps}}, $w->{reps});
-		    }
-
-		    my $length = scalar(@{$sentence->{surfs}});
-		    $length = 1 if ($length < 1);
-		    my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * (log($length) + 1);
-		    $th = $count + $opt->{window_size} if ($score > 0 && $th < 0);
-		    $sentence->{score} = $score;
-		    $sentence->{smoothed_score} = $score;
-		    $sentence->{length} = $length;
-		    $sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
-		}
-
+		my $sentence = &make_sentence($sid, $paraid, 0, 0, undef, $paragraph_first_sentence, $result, $opt->{keepResultObj} ? new KNP::Result($result) : undef, undef, $opt);
+		$sentence->{rawstring} = $rawstring;
 		push(@sentences, $sentence);
+		$th = $count + $opt->{window_size} if ($sentence->{score} > 0 && $th < 0);
 		last if ($opt->{lightweight} && $count > $th && $th > 0);
 		$count++;
 	    }
@@ -759,103 +808,6 @@ sub extract_sentences_from_metadata {
     } else {
 	return \@sentences;
     }
-}
-
-
-sub extract_sentences_from_content_old {
-    my($query, $content, $opt) = @_;
-
-    my $annotation;
-    my $indexer = new Indexer({ignore_yomi => $opt->{ignore_yomi}});
-    my @sentences = ();
-    my %sbuff = ();
-    my $sid = 0;
-    my $in_title = 0;
-    foreach my $line (split(/\n/, $content)) {
-	$line .= "\n";
-	if ($opt->{discard_title}) {
-	    # タイトルはスニッペッツの対象としない
-	    if ($line =~ /<Title [^>]+>/) {
-		$in_title = 1;
-	    } elsif ($line =~ /<\/Title>/ || $line =~ /<\/Header>/) {
-		$in_title = 0;
-	    }
-	}
-	next if ($in_title > 0);
-	next if ($line =~ /^!/ && !$opt->{syngraph});
-
-	$annotation .= $line;
-
-	$sid = $1 if ($line =~ m!<S .+ Id="(\d+)"!);
-	$sid = 0 if ($line =~ m!<Title !);
-
-	if ($line =~ m!</Annotation>!) {
-	    if ($annotation =~ m/<Annotation Scheme=\".+?\"><!\[CDATA\[((?:.|\n)+?)\]\]><\/Annotation>/) {
-		my $result = $1;
-		my $indice = ($opt->{syngraph}) ? $indexer->makeIndexfromSynGraph($result, undef, $opt) : $indexer->makeIndexFromKNPResult($result, $opt);
-		my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score($query, $indice, $opt);
-
-		my $sentence = {
-		    rawstring => undef,
-		    score => 0,
-		    smoothed_score => 0,
-		    words => {},
-		    dpnds => {},
-		    surfs => [],
-		    reps => [],
-		    sid => $sid,
-		    number_of_included_queries => $num_of_queries,
-		    number_of_included_query_types => $num_of_types,
-		    including_all_indices => $including_all_indices
-		};
-
-		$sentence->{result} = $result if ($opt->{keep_result});
-		my $word_list = ($opt->{syngraph}) ?  &make_word_list_syngraph($result) :  &make_word_list($result, $opt);
-
-		my $num_of_whitespace_cdot_comma = 0;
-		foreach my $w (@{$word_list}) {
-		    my $surf = $w->{surf};
-		    my $reps = $w->{reps};
-		    $num_of_whitespace_cdot_comma++ if ($surf =~ /　|・|，|、|＞|−|｜|／|◆|◇/);
-
-		    $sentence->{rawstring} .= $surf;
-		    push(@{$sentence->{surfs}}, $surf);
-		    push(@{$sentence->{reps}}, $w->{reps});
-		}
-
-		my $length = scalar(@{$sentence->{surfs}});
-		$length = 1 if ($length < 1);
-		my $score = $sentence->{number_of_included_query_types} * $sentence->{number_of_included_queries} * log($length);
-		$sentence->{score} = $score;
-		$sentence->{smoothed_score} = $score;
-		$sentence->{length} = $length;
-		$sentence->{num_of_whitespaces} = $num_of_whitespace_cdot_comma;
-
-		push(@sentences, $sentence);
-#		print encode('euc-jp', $sentence->{rawstring}) . " (" . $num_of_whitespace_cdot_comma . ") is SKIPPED.\n";
-	    }
-	    $annotation = '';
-	}
-    }
-
-    my $window_size = $opt->{window_size};
-    my $size = scalar(@sentences);
-    for (my $i = 0; $i < scalar(@sentences); $i++) {
-	my $s = $sentences[$i];
-	for (my $j = 0; $j < $window_size; $j++) {
-	    my $k = $i - $j - 1;
-	    last if ($k < 0);
-	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
-	}
-
-	for (my $j = 0; $j < $window_size; $j++) {
-	    my $k = $i + $j + 1;
-	    last if ($k > $size - 1);
-	    $sentences[$k]->{smoothed_score} += ($s->{score} / (2 ** ($j + 1)));
-	}
-    }
-
-    return \@sentences;
 }
 
 sub calculate_score {
@@ -917,6 +869,74 @@ sub calculate_score {
     }
     print "=====\n" if ($opt->{debug});
     return ($num_of_queries, scalar(keys %matched_queries), $including_all_indices);
+}
+
+sub calculate_score_with_sf {
+    my ($query, $sf, $opt) = @_;
+
+    my $num_of_queries = 0;
+    my %matched_queries = ();
+    my %buf;
+    foreach my $id (keys %{$sf->{words}}) {
+	my $word = $sf->{words}{$id};
+	$buf{$word->{lem}}++;
+    }
+    foreach my $id (keys %{$sf->{phrases}}) {
+	next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
+	for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
+	    next if $head_id == -1; # skip roots of Japanese (-1)
+	    my $dpnd_lem = sprintf('%s->%s', $sf->{phrases}{$id}{lem}, $sf->{phrases}{$head_id}{lem}); # lem
+	    $buf{$dpnd_lem}++;
+	}
+    }
+
+#     if ($opt->{debug}) {
+# 	print "index terms in a sentence\n";
+# 	print Dumper (\%buf) . "\n";
+# 	print "-----\n";
+#     }
+
+    my $including_all_indices = 1;
+    for (my $q = 0; $q < scalar(@{$query}); $q++) {
+	my $qk = $query->[$q];
+	foreach my $reps (@{$qk->{words}}, @{$qk->{dpnds}}) {
+	    my $flag = 0;
+	    foreach my $rep (@{$reps}) {
+		my $k = $rep->{string};
+		$k =~ s/(a|v)$// unless ($opt->{string_mode});
+		print $k . " is exists? -> " if ($opt->{debug});
+		if (exists($buf{$k})) {
+		    print "true.\n" if ($opt->{debug});
+		    $num_of_queries += $buf{$k};
+		    $matched_queries{$k}++;
+		    $flag = 1;
+		} else {
+		    print "false.\n" if ($opt->{debug});
+		}
+	    }
+
+	    $including_all_indices = 0 unless ($flag);
+	}
+    }
+    print "=====\n" if ($opt->{debug});
+    return ($num_of_queries, scalar(keys %matched_queries), $including_all_indices);
+}
+
+sub make_word_list_new_sf {
+    my ($sf, $opt) = @_;
+
+    my (@words);
+    foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) { # order: left-to-right
+	my $word = $sf->{words}{$id};
+	my $surf = $word->{str};
+	$surf =~ s/\*$//;
+	push(@words, {surf => $surf,
+		      reps => [$word->{lem}],
+		      isContentWord => 1
+		     });
+    }
+
+    return \@words;
 }
 
 sub make_word_list {
