@@ -22,7 +22,9 @@ sub main {
     open(READER, '<:utf8', $fp);
     while(<READER>){
 	chop($_);
-	my ($did, $url, $title) = split(' ', $_);
+	my ($did, $url, @title_elements) = split(' ', $_);
+	pop(@title_elements); # 最後のサイズを捨てる
+	my $title = join(' ', @title_elements);
 
 	$titlecdb->insert($did, $title);
 	$urlcdb->insert($did, $url);
