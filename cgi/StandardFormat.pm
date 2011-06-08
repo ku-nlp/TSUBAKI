@@ -32,6 +32,9 @@ sub read_first_annotation {
 sub read_annotation_from_node {
     my ($this, $annotation_node) = @_;
 
+    undef $this->{words};
+    undef $this->{phrases};
+
     for my $phrase_node ($annotation_node->getElementsByTagName('phrase')) {
 	my (@words);
 	for my $word_node ($phrase_node->getElementsByTagName('word')) {
