@@ -655,7 +655,7 @@ sub extract_sentences_from_content {
 
     my $window_size = $opt->{window_size};
     my $size = scalar(@sentences);
-    for (my $i = 0; $i < scalar(@sentences); $i++) {
+    for (my $i = 0; $i < $size; $i++) {
 	my $s = $sentences[$i];
 	for (my $j = 0; $j < $window_size; $j++) {
 	    my $k = $i - $j - 1;
@@ -711,7 +711,7 @@ sub extract_sentences_from_content_new_sf {
 
     my $window_size = $opt->{window_size};
     my $size = scalar(@sentences);
-    for (my $i = 0; $i < scalar(@sentences); $i++) {
+    for (my $i = 0; $i < $size; $i++) {
 	my $s = $sentences[$i];
 	for (my $j = 0; $j < $window_size; $j++) {
 	    my $k = $i - $j - 1;
