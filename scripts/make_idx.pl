@@ -103,6 +103,7 @@ if ($opt{penalty}) {
 	    push (@{$SYNDB{$_synid}}, $string);
 	}
     }
+    untie %_SYNDB;
 
     # load hyponymy relation
     foreach my $isa_file ((sprintf ("%s/dic/rsk_iwanami/isa.txt.filtered.manual", $opt{syngraph_dir}),
