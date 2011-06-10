@@ -22,7 +22,7 @@ sub create {
     my ($terms, $optionals, $rep2style, $rep2rep_w_yomi, $synnode2midasi);
     if ($option->{english}) {
 	# 英語用
-	$terms = &createTermsFromEnglish($result);
+	($terms, $optionals) = &createTermsFromEnglish($result, $option);
     } else {
 	# 日本語用
 	my @ids = ();
@@ -63,13 +63,24 @@ sub create {
 
 # termオブジェクトを生成（英語）
 sub createTermsFromEnglish {
-    my ($result) = @_;
+    my ($result, $option) = @_;
 
-    my $terms;
+    # make blocktype features
+    my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
+    my $blockTypeFeature = 0;
+    foreach my $tag (keys %{$blockTypes}) {
+	next unless ($tag =~ /MT/);
+	$tag =~ s/://;
+	$blockTypeFeature += $CONFIG->{BLOCK_TYPE_DATA}{$tag}{mask};
+    }
+
+    my ($terms, $optionals);
     # read from standard format
     require StandardFormat;
     my $sf = new StandardFormat();
     $sf->read_first_annotation($result);
+
+    # word terms
     my $gid = 0;
     foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) {
 	my $count = 0;
@@ -83,7 +94,27 @@ sub createTermsFromEnglish {
 	$gid++;
     }
 
-    return $terms;
+    # dpnd terms
+    foreach my $id (sort {$sf->{phrases}{$a} <=> $sf->{phrases}{$b}} keys %{$sf->{phrases}}) {
+	next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
+	next unless $sf->{phrases}{$id}{lem};
+	for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
+	    next if $head_id == -1;	# skip roots of Japanese (-1)
+	    next unless $sf->{phrases}{$head_id}{lem};
+	    my $count = 0;
+	    my $dpnd_lem = sprintf('%s->%s', $sf->{phrases}{$id}{lem}, $sf->{phrases}{$head_id}{lem});
+	    my $term = new Tsubaki::Term ({
+		tid => sprintf ("%s-%s", $gid, $count++),
+		text => $dpnd_lem,
+		term_type => 'dpnd',
+		gdf => $DFDBS_DPND->get($dpnd_lem, {exhaustive => 1}), 
+		blockTypeFeature => $blockTypeFeature,
+		node_type => 'basic' });
+	    $optionals->{$term->get_id()} = $term unless (exists $optionals->{$term->get_id()});
+	}
+    }
+
+    return ($terms, $optionals);
 }
 
 # termオブジェクトを生成（日本語）
