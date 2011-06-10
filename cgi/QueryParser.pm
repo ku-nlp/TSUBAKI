@@ -17,6 +17,7 @@ use Query;
 use Dumper;
 use CDB_Reader;
 use Error qw(:try);
+use Data::Dumper;
 
 my $CONFIG = Configure::get_instance();
 
@@ -53,8 +54,12 @@ sub new {
 	}
     };
 
-
-    print "QueryParser object construction is OK.\n\n" if ($opts->{debug});
+    if ($opts->{debug}) {
+	print "query:\n";
+	print Dumper ($this) . "\n";
+	print "-----\n";
+	print "QueryParser object construction is OK.\n\n";
+    }
     bless $this;
 }
 
@@ -442,7 +447,7 @@ sub createQueryKeywordObj {
     my $result = $this->_linguisticAnalysis($search_expression, $opt);
 
     # クエリ解析修正結果を反映する
-    $this->reflectQueryModificationFeedback($result, $opt);
+    $this->reflectQueryModificationFeedback($result, $opt) unless $this->{OPTIONS}{is_english_version};
 
 
     # english モードフラグのコピー
@@ -475,7 +480,6 @@ sub createQueryKeywordObj {
 		$force_dpnd,
 		$logical_cond_qkw,
 		$opt);
-	    
 	    return $qk;
 	}
     }
@@ -786,6 +790,12 @@ sub parse {
 	foreach my $key (keys %buf) {
 	    $opt->{logger}->setParameterAs($key, sprintf('%.3f', $buf{$key}));
 	}
+    }
+
+    if ($opt->{debug}) {
+	print "query:\n";
+	print Dumper ($ret) . "\n";
+	print "-----\n";
     }
 
     return $ret;
