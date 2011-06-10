@@ -106,7 +106,7 @@ sub createORNode {
     push (@midasis, lc($this->{text}));
 
     # タームを拡張する
-    push (@midasis, @{$this->termExpansion($opt)});
+    push (@midasis, @{$this->termExpansion($opt)}) unless $opt->{english}; # 上位語や否定による拡張 (日本語のみ)
 
     # <上位語>が付与されたターム、否定・反義語で拡張されたタームをORでまとめる
     my $term_str;
