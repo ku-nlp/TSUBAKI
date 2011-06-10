@@ -6,6 +6,7 @@ use strict;
 use QueryParser;
 use Getopt::Long;
 use Encode;
+use Data::Dumper;
 
 my $TOOL_HOME = "$ENV{HOME}/local/bin";
 my $KNP_PATH = $TOOL_HOME;
@@ -34,28 +35,27 @@ GetOptions(\%opt,
 	   'string_mode',
 	   'is_old_version',
 	   'uniq',
-	   'debug'
+	   'debug',
+	   'english',
+	   'new_sf'
     );
 
 $SYNDB_PATH = $opt{syndb} if ($opt{syndb});
 $opt{kwic_window_size} = 5 unless ($opt{kwic_window_size});
 
 require SynGraph if ($opt{syngraph});
-$opt{encoding} = 'euc-jp' unless ($opt{encoding});
+$opt{encoding} = 'utf8' unless ($opt{encoding});
 
-binmode(STDOUT, ':encoding(euc-jp)');
-binmode(STDERR, ':encoding(euc-jp)');
+$opt{IS_ENGLISH_VERSION} = $opt{english};
+$opt{USE_NEW_STANDARD_FORMAT} = $opt{IS_ENGLISH_VERSION} ? 1 : $opt{new_sf};
+
+$opt{verbose} = 1 if $opt{debug};
+
+binmode(STDOUT, ":encoding($opt{encoding})");
+binmode(STDERR, ":encoding($opt{encoding})");
 
 &main();
 
-sub init_query_parser {
-    my $q_parser = new QueryParser({
-	SYNDB_PATH => $SYNDB_PATH,
-	KNP_OPTIONS => ['-postprocess','-tab','-dpnd'] });
-    $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
-
-    return $q_parser;
-}
 
 sub main {
     # クエリの解析
@@ -64,10 +64,7 @@ sub main {
 
     if ($opt{debug}) {
 	print "*** QUERY ***\n";
-	foreach my $qk (@{$query->{keywords}}) {
-	    print $qk->to_string() . "\n";
-	    print "*************\n";
-	}
+	print Dumper($query);
     }
 
     my %pos2qid = ();
