@@ -38,14 +38,12 @@ sub create_snippets {
     # 文書IDを標準フォーマットを管理しているホストに割り振る
     my %host2dids = ();
     my $range = undef;
-    if ($CONFIG->{IS_KUHP_MODE}) {
-	# nothing to do;
-    }
-    elsif ($CONFIG->{IS_NICT_MODE}) {
+    if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NII_MODE}) {
  	require SidRange;
  	if ($CONFIG->{IS_NTCIR_MODE}) {
  	    $range = new SidRange({sids_for_ntcir => $CONFIG->{SIDS_FOR_NTCIR}});
- 	} else {
+ 	}
+	else {
  	    $range = new SidRange({nict2nii => $CONFIG->{NICT2NII}});
  	}
     }
@@ -55,14 +53,15 @@ sub create_snippets {
 	if ($CONFIG->{IS_KUHP_MODE}) {
 	    push(@{$host2dids{$CONFIG->{IPSJ_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{IPSJ_SNIPPET_SERVERS}})]}}, $doc);
 	}
- 	elsif ($CONFIG->{IS_NICT_MODE}) {
+ 	elsif ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NII_MODE}) {
  	    my $did = sprintf ("%09d", $doc->{did});
  	    my $host = $range->lookup($did);
  	    push(@{$host2dids{$host}}, $doc);
  	}
 	elsif ($CONFIG->{IS_IPSJ_MODE}) {
 	    push(@{$host2dids{$CONFIG->{IPSJ_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{IPSJ_SNIPPET_SERVERS}})]}}, $doc);
-	} else {
+	}
+	else {
 	    push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%03d", $doc->{did} / 1000000)}}}, $doc);
 	}
     }
@@ -275,6 +274,10 @@ sub get_snippets_for_each_did {
 	my $wordcnt = 0;
 	my %snippets = ();
 	my $sentences = $this->{did2snippets}{$did};
+	unless (defined($sentences)) {
+	    printf "this->{did2snippets}{%s} is not found!<br>\n", $did if $opt->{debug};
+	    next;
+	}
 
 	# スコアの高い順に処理（同点の場合は、sidの若い順）
 	my %sbuf = ();
@@ -302,6 +305,9 @@ sub get_snippets_for_each_did {
 	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
 		my $highlighted = -1;
 		my $surf = $sentence->{surfs}[$i];
+		if ($CONFIG->{IS_ENGLISH_VERSION}) { # add a white space for English
+		    $surf = ' ' . $surf if $surf !~ /^[.,:;]$/
+		}
 
 		if ($opt->{highlight}) {
 		    foreach my $rep (@{$sentence->{reps}[$i]}) {
