@@ -21,14 +21,14 @@ use Configure;
 
 my $CONFIG = Configure::get_instance();
 
-binmode(STDOUT, ":encoding(euc-jp)");
-binmode(STDERR, ":encoding(euc-jp)");
-
 my $MAX_NUM_OF_WORDS_IN_SNIPPET = 100;
 my $HOSTNAME = `hostname` ; chop($HOSTNAME);
 
 my (%opt);
-GetOptions(\%opt, 'help', 'port=s', 'z', 'string_mode', 'is_old_version', 'ignore_yomi', 'verbose');
+GetOptions(\%opt, 'help', 'port=s', 'z', 'string_mode', 'is_old_version', 'ignore_yomi', 'verbose', 'new_sf', 'encoding=s');
+$opt{encoding} = 'utf8' unless ($opt{encoding});
+binmode(STDOUT, ":encoding($opt{encoding})");
+binmode(STDERR, ":encoding($opt{encoding})");
 
 if (!$opt{port} || $opt{help}) {
     print "Usage\n";
@@ -161,6 +161,8 @@ sub main {
 	    $option->{is_old_version} = $opt{is_old_version};
 	    $option->{ignore_yomi} = $opt{ignore_yomi};
 	    $option->{z} = $opt{z};
+	    $option->{IS_ENGLISH_VERSION} = $CONFIG->{IS_ENGLISH_VERSION};
+	    $option->{USE_NEW_STANDARD_FORMAT} = $CONFIG->{IS_ENGLISH_VERSION} ? 1 : $opt{new_sf};
 
 	    if ($opt{verbose}) {
 		print "begin with snippet creation $client_hostname.\n";
@@ -175,11 +177,22 @@ sub main {
 	    my %result = ();
 	    foreach my $doc (@{$docs}) {
 		my $did = $doc->{did};
-		print STDERR $did . "\n" if ($opt{verbose});
+		printf STDERR "$did: start=%d end=%d\n", $doc->{start}, $doc->{end} if ($opt{verbose});
 		$option->{start} = $doc->{start};
 		$option->{end} = $doc->{end};
 		$option->{pos2qid} = $doc->{pos2qid};
 		$result{$did} = &SnippetMaker::extract_sentences_from_ID($query->{keywords}, $did, $option);
+		if ($opt{verbose}) {
+		    foreach my $s (@{$result{$did}}) {
+			print $s->{including_all_indices} . " ";
+			print "para " . $s->{paraid} . " ";
+			print "sid " . $s->{sid} . " ";
+			print "score " . sprintf ("%.3f", $s->{score}) . " ";
+			print "smoothed " . sprintf ("%.3f", $s->{smoothed_score}) . " ";
+			printf("whitespace %.2f ", $s->{num_of_whitespaces} / $s->{length});
+			print " $s->{rawstring}\n";
+		    }
+		}
 	    }
 	    print "finish of snippet creation for $client_hostname @ $HOSTNAME\n" if ($opt{verbose});
 
