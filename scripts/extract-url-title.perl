@@ -30,7 +30,7 @@ sub main {
 	chop;
 
 	my $file = $_;
-	my ($name) = ($file =~ /((\-|\d)+)\.xml/);
+	my ($name) = ($file =~ /([^\/]+)\.xml/);
 	try {
 	    if ($file =~ /\.gz$/) {
 		open(READER, '<:gzip', $file) or die "$!";
@@ -65,20 +65,19 @@ sub main {
 
 	    my $title = 'none';
 	    if ($opt{title}) {
-		my $header_tag = <READER>;
-		unless ($header_tag =~ /Header/) {
-		    print "$name $url null\n";
-		} else {
-		    if ($header_tag =~ m!Header/!) {
-			# <Header/>の場合
-			my $text_tag = <READER>;
-			my $s_tag = <READER>;
-		    } else {
-			my $title_tag = <READER>;
-		    }
-		    my $rawstring_tag = <READER>;
-		    $title = $1 if ($rawstring_tag =~ /<RawString>([^<]+)<\/RawString>/);
+		if ($sf_tag =~ /<RawString>([^<]+)<\/RawString>/) { # first RawString (in the line of sf_tag)
+		    $title = $1;
 		}
+		else {
+		    while (my $header_tag = <READER>) {
+			if ($header_tag =~ /<RawString>([^<]+)<\/RawString>/) { # first RawString (maybe in Header)
+			    $title = $1;
+			    last;
+			}
+		    }
+		}
+		# スペースを_に置換 for English
+		$title =~ s/ /_/g;
 	    }
 
 	    if ($opt{url} && $opt{title}) {
