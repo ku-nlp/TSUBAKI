@@ -26,24 +26,17 @@ sub extract_sentences_from_ID {
     my($query, $did_w_version, $opt) = @_;
 
     my $dir_prefix = $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH};
+    my ($did) = ($did_w_version =~ /(^\d+)/);
     my $xmlfile;
-    if ($CONFIG->{IS_KUHP_MODE}) {
-	$xmlfile = sprintf("%s/%s.xml.gz", $dir_prefix, $did_w_version);
-    } elsif ($CONFIG->{IS_NICT_MODE}) {
-	my ($did) = ($did_w_version =~ /(^\d+)/);
-	$xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version);
-    } if ($CONFIG->{IS_NTCIR_MODE}) {
-	my ($did) = ($did_w_version =~ /(^\d+)/);
-	$xmlfile = sprintf("%s/%09d.xml.gz", $dir_prefix, $did);
+    my $ext = $opt->{z} ? '.xml.gz' : '.xml';
+    if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NII_MODE}) {
+	$xmlfile = sprintf("%s/x%04d/x%07d/%s%s", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version, $ext);
+    } elsif ($CONFIG->{IS_NTCIR_MODE}) {
+	$xmlfile = sprintf("%s/%09d%s", $dir_prefix, $did, $ext);
+    } elsif ($CONFIG->{IS_SIMPLE_MODE}) {
+	$xmlfile = sprintf("%s/%s%s", $dir_prefix, $did_w_version, $ext);
     } else {
-	my $did = $did_w_version;
-	if ($CONFIG->{IS_IPSJ_MODE}) {
-	    $xmlfile = sprintf("%s/%s.xml.gz", $dir_prefix, $did);
-	} else {
-	    my ($did) = ($did_w_version =~ /(^\d+)/);
-	    $xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version);
-#	    $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $dir_prefix, $did / 1000000, $did / 10000, $did);
-	}
+	$xmlfile = sprintf("%s/%06d/%s%s", $dir_prefix, $did / 10000, $did_w_version, $ext);
     }
 
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
@@ -93,7 +86,7 @@ sub extract_sentences_from_standard_format {
 	    # Title, Keywords, Description から重要文を抽出しない
 	    if (1 || $opt->{start} > $NUM_OF_CHARS_IN_HEADER) { # 常にこちらを利用
 		# スレーブサーバが返すベストpositionを使う手法
-		if ($opt->{IS_ENGLISH_VERSION}) {
+		if ($opt->{IS_ENGLISH_VERSION} || $opt->{USE_NEW_STANDARD_FORMAT}) {
 		    return &extract_sentences_from_content_using_position_new_sf($query, $content, $opt);
 		}
 		else {
@@ -101,7 +94,7 @@ sub extract_sentences_from_standard_format {
 		}
 	    } else {
 		# positionを使わない手法
-		if ($opt->{IS_ENGLISH_VERSION}) {
+		if ($opt->{IS_ENGLISH_VERSION} || $opt->{USE_NEW_STANDARD_FORMAT}) {
 		    return &extract_sentences_from_content_new_sf($query, $content, $opt);
 		}
 		else {
@@ -526,7 +519,7 @@ sub make_sentence {
 
     return $sentence if $opt->{extract_from_abstract_only} && $opt->{keyword_server_mode};
 
-    my $word_list = ($opt->{IS_ENGLISH_VERSION}) ? &make_word_list_new_sf($sf, $opt) : ($opt->{syngraph}) ? &make_word_list_syngraph($result) : &make_word_list($result, $opt);
+    my $word_list = ($opt->{IS_ENGLISH_VERSION} || $opt->{USE_NEW_STANDARD_FORMAT}) ? &make_word_list_new_sf($sf, $opt) : ($opt->{syngraph}) ? &make_word_list_syngraph($result) : &make_word_list($result, $opt);
 
     my $num_of_whitespace_cdot_comma = 0;
     foreach my $w (@{$word_list}) {
@@ -537,7 +530,7 @@ sub make_sentence {
 	push(@{$sentence->{surfs}}, $surf);
 	push(@{$sentence->{reps}}, $w->{reps});
     }
-    $sentence->{rawstring} = join($opt->{IS_ENGLISH_VERSION} ? ' ' : '', @{$sentence->{surfs}});
+    $sentence->{rawstring} = join(($opt->{IS_ENGLISH_VERSION} || $opt->{USE_NEW_STANDARD_FORMAT}) ? ' ' : '', @{$sentence->{surfs}});
 
     my $length = scalar(@{$sentence->{surfs}});
     $length = 1 if ($length < 1);
