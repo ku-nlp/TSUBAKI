@@ -63,7 +63,7 @@ sub printQuery {
 	    }
 	}
 
-	print qq(<INPUT type="button" value="クエリ解析結果の確認・修正" onclick="javascript:showQueryEditWindow();">);
+	print qq(<INPUT type="button" class='button' value="クエリ解析結果の確認・修正" onclick="javascript:showQueryEditWindow();">);
 	print "</TD>\n";
     }
 }
@@ -182,11 +182,11 @@ sub print_query {
 	my @buf;
 	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
 	    my $kwd = $query->{keywords}[$i];
-	    push(@buf, sprintf (qq(<SPAN style="color: blue; font-weight: 900;" id="query%d">%s</SPAN>), $i, $kwd->{rawstring}));
+	    push(@buf, sprintf (qq(<SPAN class="query" id="query%d">%s</SPAN>), $i, $kwd->{rawstring}));
 	}
 	print join('&nbsp;', @buf);
     } elsif ($query->{s_exp}) {
-	printf qq(<SPAN style="color: blue; font-weight: 900;" id="query%d">%s</SPAN>), 0, $query->{rawstring};
+	printf qq(<SPAN class="query" id="query%d">%s</SPAN>), 0, $query->{rawstring};
     } else {
 	printf ("site:%s", $query->{option}{site});
     }
@@ -394,7 +394,7 @@ END_OF_HTML
 
     # クエリ解析結果を描画するjavascriptコードの出力
     unless ($CONFIG->{IS_ENGLISH_VERSION}) {
-	my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
+	# my ($width, $height, $jscode) = $query->{keywords}[0]->getPaintingJavaScriptCode() if (defined $query->{keywords}[0]);
 	&printJavascriptCode('canvas', $query, $opt);
     }
     print "</HEAD>\n";
@@ -407,20 +407,28 @@ sub print_body {
     print qq(<BODY style="padding: 0.2em 0.6em; margin:0em; z-index:1;" onload="javascript:init();javascript:init2('query_edit_canvas'); javascript:createTerms();">\n);
     print << "END_OF_HTML";
 
-<TABLE cellpadding="0" cellspacing="0" border="0" id="query_edit_window" style="z-index: 10; display:none; position: absolute; top: 20%; align: center; left: 20%; display: none; z-index: 10;">
+<TABLE cellpadding="0" cellspacing="0" border="0" id="query_edit_window" style="z-index: 2; display:none; position: absolute; top: 20%; align: center; left: 20%; display: none;">
     <TR>
 	<TD><IMG width="24" height="42" src="image/curve-top-left.png"></TD>
 <TD style="background-color:#ffffcc;">
 <CENTER style="padding-top: 1em;">
-   <INPUT type="button" value="修正結果で検索する" onclick="javascript:submitQuery2();">
-   <INPUT type="button" value="閉じる" onclick="javascript:hideQueryEditWindow();">
+   <INPUT type="button" class="button" value="修正結果で検索する" onclick="javascript:submitQuery2();">
+   <INPUT type="button" class="button" value="閉じる" onclick="javascript:hideQueryEditWindow();">
 </CENTER>
 </TD>
 	<TD><IMG width="24" height="42" src="image/curve-top-right.png"></TD>
     </TR>
     <TR>
 	<TD style="background-color:#ffffcc;"></TD>
-	<TD style="background-color:#ffffcc;"><CENTER><DIV id="query_edit_canvas" style="position: relative; padding-top:7em;"></CENTER></DIV></TD>
+	<script language="JavaScript">
+	    var regexp = new RegExp("Gecko");
+	if (navigator.userAgent.match(regexp)) {
+	    document.write('<TD style="background-color:#ffffcc;"><CENTER><DIV id="query_edit_canvas" style="position: relative; padding-top:7em;"></DIV></CENTER></TD>');
+	} else {
+	    document.write('<TD style="background-color:#ffffcc;" id="query_edit_canvas" style="position: relative; padding-top:7em;"><BR></TD>');
+	}
+	</script>
+
 	<TD style="background-color:#ffffcc;"></TD>
     </TR>
     <TR>
@@ -431,16 +439,16 @@ sub print_body {
 </TABLE>
 END_OF_HTML
 
-
     # クエリ解析結果表示用の領域を確保
     $this->print_canvas();
 
-    print qq(<DIV style="font-size:11pt; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
+#   print qq(<DIV style="font-size:11pt; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
+    print qq(<DIV style="font-size:11pt; width: 100%; border: 0px solid red; text-align: right; margin-top:5pt; marging-right: 5pt;">\n);
 #    if ($status eq 'search' || $status eq 'cache') {
 #	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">2007年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
 #	print qq(&nbsp;|&nbsp;);
 #    }
-    print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/tutorial.html">使い方</A><BR>\n);
+    print qq(<A href="tutorial.html">使い方</A><BR>\n);
 
     # 混雑具合を表示
     $this->print_congestion() if ($CONFIG->{DISPLAY_CONGESTION});
@@ -522,10 +530,10 @@ sub print_form {
     print qq(<INPUT type="hidden" id="rm_synids" name="remove_synids" value="">\n);
     print qq(<INPUT type="hidden" id="trm_states" name="term_states" value="">\n);
     print qq(<INPUT type="hidden" id="dep_states" name="dpnd_states" value="">\n);
-    print qq(<INPUT type="text" id="qbox" name="query" value="$params->{'query'}" size="112">\n);
+    print qq(<INPUT type="text" style="border: 1px solid black;padding:0.1em; width: 40em;" id="qbox" name="query" value="$params->{'query'}" size="112">\n);
 
-    print qq(<INPUT type="button" value="検索する" onclick="submitQuery();"/>\n);
-    print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/><BR>\n);
+    print qq(<INPUT type="button" class="button" value="検索" onclick="submitQuery();"/>\n);
+    # print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/><BR>\n);
 
     # NTCIRモードの場合はクエリを表示
     $this->print_ntcir_queries($params) if ($CONFIG->{IS_NTCIR_MODE});
@@ -836,8 +844,7 @@ sub get_snippets {
 	}
     } else {
 	# スニペッツを取得
-	my $did2snippets = $sni_obj->get_snippets_for_each_did($query, {highlight => $opt->{highlight}, debug => $opt->{debug}});
-	return $did2snippets;
+	return $sni_obj->get_snippets_for_each_did($query, {highlight => $opt->{highlight}, debug => $opt->{debug}});
     }
 }
 
@@ -972,6 +979,20 @@ sub printSlaveServerLogs {
 sub printAjax {
     my ($this, $params, $dids) = @_;
 
+    # クエリ修正結果を取得
+    my @removeSynids = ();
+    foreach my $k (sort keys %{$params->{remove_synids}}) {
+	push (@removeSynids, sprintf ("%s:%s", $k, $params->{remove_synids}{$k}));
+    }
+    my @termStates = ();
+    foreach my $k (sort keys %{$params->{term_states}}) {
+	push (@termStates, sprintf ("%s:%s", $k, $params->{term_states}{$k}));
+    }
+    my @dpndStates = ();
+    foreach my $k (sort keys %{$params->{dpnd_states}}) {
+	push (@dpndStates, sprintf ("%s:%s", $k, $params->{dpnd_states}{$k}));
+    }
+
     print << "END_OF_HTML";
 <SCRIPT>
 new Ajax.Request(
@@ -1029,7 +1050,7 @@ sub printSearchResultForBrowserAccess {
     foreach my $doc (@$results) {
 	push (@__buf, $doc->{did});
 	$rank++;
-	last if ($rank > 100);
+	# last if ($rank > 100);
     }
     $this->printAjax($params, join (",", @__buf)) if ($status ne "busy");
 
