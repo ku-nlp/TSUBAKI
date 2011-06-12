@@ -320,25 +320,6 @@ unless ($query->{rawstring}) {
     printf "jg = new jsGraphics('%s');\n", $canvasName;
     if ($CONFIG->{IS_CPP_MODE}) {
 	printf "Event.observe('query%d', 'click',  showQueryEditWindow);\n", 0;
-#	printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", 0;
-#	printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", 0, 0;
-	print "}\n";
-
-	my ($width, $height, $coffset, $jscode) = &Tsubaki::TermGroupCreater::getPaintingJavaScriptCode($query->{result}, 0, $opt);
-	printf "function show_query_result%d (e) {\n", 0;
-	print "var x = Event.pointerX(e);\n";
-	print "var y = Event.pointerY(e);\n";
-
-	print "var baroon = document.getElementById('baroon');\n";
-	print "baroon.style.display = 'block';\n";
-	print "baroon.style.left = (x + 'px');";
-	print "baroon.style.top = ((y + 20) + 'px');";
-
-	print "var canvas = document.getElementById('canvas');\n";
-	print "canvas.style.width = $width + 'px';\n";
-	print "canvas.style.height = $height + 'px';\n";
-
-	print $jscode;
 	print "}\n";
     } else {
 	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
