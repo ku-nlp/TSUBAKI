@@ -1363,20 +1363,20 @@ sub printOrdinarySearchResult {
 
 <TABLE width="100%" cellpadding="0" cellspacing="0">
 <TR>
-<TD width="7"><IMG src="image/top-left.PNG"></TD>
-<TD width="*" style='border-top:1px solid silver;'><IMG src="image/bottom-left.PNG" width=1></TD>
-<TD width="7"><IMG src="image/top-right.PNG"></TD></TR>
+<TD width="7"><IMG src="image/top-left.png"></TD>
+<TD width="*" style='border-top:1px solid silver;'><IMG src="image/bottom-left.png" width=1></TD>
+<TD width="7"><IMG src="image/top-right.png"></TD></TR>
 
 <TR>
-<TD style='border-left:1px solid silver;'><IMG src="image/bottom-left.PNG" width=1></TD>
+<TD style='border-left:1px solid silver;'><IMG src="image/bottom-left.png" width=1></TD>
 <TD><DIV id='msg'><CENTER><IMG width='1em' src='image/loading.gif' border='0'>&nbsp;関連語蒸留中...</CENTER></DIV></TD>
-<TD style='border-right:1px solid silver;'><IMG src="image/bottom-left.PNG" width=1></TD>
+<TD style='border-right:1px solid silver;'><IMG src="image/bottom-left.png" width=1></TD>
 </TR>
 
 <TR>
-<TD><IMG src="image/bottom-left.PNG"></TD>
-<TD style='border-bottom:1px solid silver;'><IMG src="image/bottom-left.PNG" width=1></TD>
-<TD><IMG src="image/bottom-right.PNG"></TD>
+<TD><IMG src="image/bottom-left.png"></TD>
+<TD style='border-bottom:1px solid silver;'><IMG src="image/bottom-left.png" width=1></TD>
+<TD><IMG src="image/bottom-right.png"></TD>
 </TR>
 </TABLE>
 </TD>
