@@ -63,7 +63,7 @@ sub printQuery {
 	    }
 	}
 
-	print qq(<INPUT type="button" class='button' value="クエリ解析結果の確認・修正" onclick="javascript:showQueryEditWindow();">);
+	print qq(<INPUT type="button" class='button' value="クエリ解析結果の確認・修正" onclick="javascript:showQueryEditWindow();">) unless $CONFIG->{IS_ENGLISH_VERSION};
 	print "</TD>\n";
     }
 }
@@ -1042,7 +1042,7 @@ sub printSearchResultForBrowserAccess {
     ##################
     $this->printQuery($logger, $params, $size, $query, $status);
 
-    $this->printQueryEditPain($params, $query);
+    $this->printQueryEditPain($params, $query) unless $CONFIG->{IS_ENGLISH_VERSION};
 
     # for ajax
     my @__buf;
@@ -1218,6 +1218,7 @@ sub printOrdinarySearchResult {
 	}
 	# 全角英数字を半角に
 	$title =~ tr/[Ａ-Ｚａ-ｚ０-９．／＠　]/[A-Za-z0-9.\/@ ]/;
+	$title =~ s/_/ / if $CONFIG->{IS_ENGLISH_VERSION}; # extract-url-title.perlでスペースを_に置換しているのを戻す
 	$output .= $title . "</a>";
 
 	if ($params->{from_portal}) {
@@ -1377,7 +1378,7 @@ sub printOrdinarySearchResult {
 	# 1 ページ分の結果を表示
 	print $output;
     }
-    if ($logger->getParameter('hitcount') > 0) {
+    if ($logger->getParameter('hitcount') > 0 && !$CONFIG->{IS_ENGLISH_VERSION}) {
     print << "END_OF_HTML";
 </TD>
 <TD valign='top' width='300'>
