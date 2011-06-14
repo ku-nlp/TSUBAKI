@@ -47,16 +47,11 @@ start() {
 		    idxdir=`echo $LINE | cut -f 1 -d ' '`
 		    anchor_idxdir=`echo $LINE | cut -f 2 -d ' '`
 		    dlengthdbdir=$idxdir
-		    if [ $anchor_idxdir = "none" ]; then
-			if [ $COMMAND = "slave_server" ]; then
-			    echo anchor_idxdir is not specified.
-			    exit
-			else
-			    OPTION="-idxdir $idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
-			fi
+		    if [ $COMMAND = "slave_server" ]; then
+			OPTION="$idxdir $anchor_idxdir $PORT `hostname`"
 		    else
-			if [ $COMMAND = "slave_server" ]; then
-			    OPTION="$idxdir $anchor_idxdir $PORT `hostname`"
+			if [ $anchor_idxdir = "none" ]; then
+			    OPTION="-idxdir $idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
 			else
 			    OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
 			fi
