@@ -17,7 +17,6 @@ use Query;
 use Dumper;
 use CDB_Reader;
 use Error qw(:try);
-use Data::Dumper;
 
 my $CONFIG = Configure::get_instance();
 
@@ -55,9 +54,6 @@ sub new {
     };
 
     if ($opts->{debug}) {
-	print "query:\n";
-	print Dumper ($this) . "\n";
-	print "-----\n";
 	print "QueryParser object construction is OK.\n\n";
     }
     bless $this;
@@ -790,12 +786,6 @@ sub parse {
 	foreach my $key (keys %buf) {
 	    $opt->{logger}->setParameterAs($key, sprintf('%.3f', $buf{$key}));
 	}
-    }
-
-    if ($opt->{debug}) {
-	print "query:\n";
-	print Dumper ($ret) . "\n";
-	print "-----\n";
     }
 
     return $ret;
