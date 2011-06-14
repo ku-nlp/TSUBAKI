@@ -51,17 +51,17 @@ std::vector<double> *search (std::string *query,
 	Document *doc = result_docs->get_doc((*it)->get_id());
 	// 文書長の取得
 	int length = 10000;
-	MAP_IMPL<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
-	if (_sid != tid2sid->end()) {
-	    MAP_IMPL<int, int>::iterator _length = tid2len->find((*it)->get_id());
-	    if (_length != tid2len->end())
-		length = (*_length).second;
-	}
+	MAP_IMPL<int, int>::iterator _length = tid2len->find((*it)->get_id());
+	if (_length != tid2len->end())
+	    length = (*_length).second;
 	doc->set_length(length);
 
 	// rmfilesにあればスキップ
-	if (rmsids.find((*_sid).second) != rmsids.end())
-	    continue;
+	MAP_IMPL<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
+	if (_sid != tid2sid->end()) {
+	    if (rmsids.find((*_sid).second) != rmsids.end())
+		continue;
+	}
 
 	bool flag = result_docs->walk_and_or(*it);
 	if (flag) {
@@ -88,17 +88,17 @@ std::vector<double> *search (std::string *query,
 
 	// 文書長の取得
 	int length = 10000;
-	MAP_IMPL<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
-	if (_sid != tid2sid->end()) {
-	    MAP_IMPL<int, int>::iterator _length = tid2len->find((*it)->get_id());
-	    if (_length != tid2len->end())
-		length = (*_length).second;
-	}
+	MAP_IMPL<int, int>::iterator _length = tid2len->find((*it)->get_id());
+	if (_length != tid2len->end())
+	    length = (*_length).second;
 	doc->set_length(length);
 
 	// rmfilesにあればスキップ
-	if (rmsids.find((*_sid).second) != rmsids.end())
-	    continue;
+	MAP_IMPL<int, string>::iterator _sid = tid2sid->find((*it)->get_id());
+	if (_sid != tid2sid->end()) {
+	    if (rmsids.find((*_sid).second) != rmsids.end())
+		continue;
+	}
 
 	bool flag = result_docs->walk_and_or(*it);
 	if (flag) {
@@ -123,8 +123,8 @@ std::vector<double> *search (std::string *query,
     for (std::vector<Document *>::iterator it = docs->begin(); it != docs->end(); it++) {
 	// termの出現位置を取得
 	result_docs->collectTermPosition((*it), (*it)->getTermPosition());
-	if (++_count > NUM_OF_RETURN_DOCUMENTS)
-	    break;
+        if (++_count > NUM_OF_RETURN_DOCUMENTS)
+            break;
     }
 
 
@@ -143,7 +143,7 @@ bool pushback_file_handle (string file) {
 	index_streams.push_back(fin);
     } else {
 	cerr << "Not found! (" << file << ")" << endl;
-	exit(1);
+	index_streams.push_back(NULL);
     }
     return true;
 }
@@ -286,7 +286,7 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 	    */
 
 	    if (++count > NUM_OF_RETURN_DOCUMENTS)
-		break;
+	    	break;
 	}
 	cerr << endl;
 
