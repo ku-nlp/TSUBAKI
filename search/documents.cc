@@ -589,6 +589,7 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
     return documents;
 }
 
+// obsolete read_dids function for old index (without features)
 bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs) {
     int load_dids = 0;
     bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
@@ -731,8 +732,9 @@ bool Documents::read_dids_with_feature (unsigned char *buffer, int &offset, int 
 		} else {
 		    int i = (head + tail) >> 1;
 		    int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
+                    // no features (in query) are given or
 		    // 文書Dにおける term の feature bit とクエリで与えられた feature bit と CONDITION_FEATURE_MASKの論理積をとる
-		    if (fbits_in_d & featureBits & CONDITION_FEATURE_MASK) {
+		    if (featureBits == 0 || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
 			appendDocument (i, *it, load_dids, head_of_offdat, head_of_posdat);
 			load_dids++;
 		    }
@@ -745,8 +747,9 @@ bool Documents::read_dids_with_feature (unsigned char *buffer, int &offset, int 
     } else {
 	for (int i = 0; i < ldf; i++) {
 	    int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
+            // no features (in query) are given or
 	    // 文書Dにおける term の feature bit とクエリで与えられた feature bit の論理積をとる
-	    if (fbits_in_d & featureBits & CONDITION_FEATURE_MASK) {
+	    if (featureBits == 0 || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
 		int did = intchar2int(buffer + i * SIZEOFINT);
 		appendDocument (i, did, load_dids, head_of_offdat, head_of_posdat);
 		load_dids++;
@@ -830,11 +833,7 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
     if (VERBOSE)
 	cout << "      create index = " << 1000 * (end - start) << " [ms]" <<  " " << ldf << endl;
 
-    if (featureBits > 0) {
-	read_dids_with_feature(buffer, offset, ldf, term_type, _already_retrieved_docs, featureBits);
-    } else {
-	read_dids(buffer, offset, ldf, term_type, _already_retrieved_docs);
-    }
+    read_dids_with_feature(buffer, offset, ldf, term_type, _already_retrieved_docs, featureBits);
 
     double end1 = (double) gettimeofday_sec();
     if (VERBOSE)

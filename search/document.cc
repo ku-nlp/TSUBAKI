@@ -64,20 +64,22 @@ std::vector<int> *Document::get_pos(int featureBit) {
 	    for (int i = 0; i < pos_num; i++) {
 		int feature = intchar2int(pos_buf);
 		pos_buf += sizeof (int);
-		if (feature & featureBit & CONDITION_FEATURE_MASK) {
+                // no features are given or feature matches featureBit
+		if (featureBit == 0 || (feature & featureBit & CONDITION_FEATURE_MASK)) {
 		    int posfreq = intchar2int(pos_buf);
-		    double frq = 0.001 * (posfreq & 1023);
-		    int pos = posfreq >> 10;
+		    double frq = 0.001 * (posfreq & FREQ_MASK);
+		    int pos = posfreq >> FREQ_BIT_SIZE;
 		    pos_list->push_back(pos);
 		    poslist[i] = pos;
 		    double weight = 1.0;
-		    if (!(featureBit & CASE_FEATURE_MASK))
-			weight *= WEIGHT_OF_CASE_FEATURE_MISMATCH;
+                    if (featureBit > 0) {
+                        if (!(featureBit & CASE_FEATURE_MASK))
+                            weight *= WEIGHT_OF_CASE_FEATURE_MISMATCH;
 
-		    if (!(featureBit & DPND_TYPE_FEATURE_MASK))
-			weight *= WEIGHT_OF_DPND_TYPE_FEATURE_MISMATCH;
+                        if (!(featureBit & DPND_TYPE_FEATURE_MASK))
+                            weight *= WEIGHT_OF_DPND_TYPE_FEATURE_MISMATCH;
+                    }
 
-		    std::cerr << "weight = " << weight << std::endl;
 		    freq += (weight * frq);
 		}
 		pos_buf += sizeof (int);
