@@ -367,7 +367,7 @@ sub get_snippets_for_each_did {
 		    $snippet .= " ... " unless ($snippet =~ /\.\.\.$/);
 		}
 	    }
-	    if ($snippet =~ /。$/) {
+	    if ($CONFIG->{IS_ENGLISH_VERSION} || $snippet =~ /。$/) { # 英語もしくは日本語で句点で終わっているなら、そのままcat
 		$snippet .= ($snippets{$sid});
 	    } else {
 		$snippet .= ("&nbsp;&nbsp;" . $snippets{$sid});
