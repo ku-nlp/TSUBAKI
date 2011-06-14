@@ -761,7 +761,10 @@ bool Documents::read_dids_with_feature (unsigned char *buffer, int &offset, int 
 
 bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs, int featureBits) {
     std::string term_string = in_term;
-    std::string address_str = term_db->get(term_string);
+    std::string address_str;
+    if (term_db->is_open()) {
+        address_str = term_db->get(term_string);
+    }
 
     if (address_str.size() != 0) {
 	long long address = atoll(address_str);
@@ -1062,6 +1065,9 @@ bool Documents::walk_and(Document *doc_ptr) {
 		term = "ORDERED_PROX"; break;
 	    }
 
+            // get pos and score for all types of documents (including DOCUMENTS_TERM_OPTIONAL)
+            std::vector<int> *pos_list = doc->get_pos(featureBits);
+
 	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT ||
 		(*it)->get_type() == DOCUMENTS_AND ||
 		(*it)->get_type() == DOCUMENTS_OR ||
@@ -1070,7 +1076,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 		(*it)->get_type() == DOCUMENTS_PHRASE ||
 		(*it)->get_type() == DOCUMENTS_PROX ||
 		(*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
-		pos_list_list.push_back(doc->get_pos(featureBits));
+		pos_list_list.push_back(pos_list);
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
