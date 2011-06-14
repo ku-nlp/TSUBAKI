@@ -64,6 +64,9 @@ class Dbm {
 	    string file0 = string(in_dbname, 0, loc - 6) + ".0";
 	    if (!IS_32BIT_CPU_MODE) {
 		struct cdb *_db = tieCDB(file0);
+                if (_db == NULL) {
+                    available = false;
+                }
 		k2db.push_back(std::pair<string, cdb*>("", _db));
 	    } else {
 		k2dbfile.push_back(std::pair<string, string>("", file0));
@@ -168,6 +171,7 @@ class Dbm {
 	    *(val + vlen) = '\0';
 	    // cout << key << " is found. val = " << val << endl;
 	    ret_value = val;
+	    free(val);
 	} else {
 	    // cout << key << " is not found." << endl;
 	}
