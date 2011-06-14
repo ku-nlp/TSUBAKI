@@ -265,19 +265,6 @@ sub print_query_verbose {
 sub printJavascriptCode {
     my ($canvasName, $query, $opt, $disable_css_loading_code) = @_;
 
-    unless ($disable_css_loading_code) {
-	print << "END_OF_HTML";
-	<script language="JavaScript">
-	    var regexp = new RegExp("Gecko");
-	if (navigator.userAgent.match(regexp)) {
-	    document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.gecko.css'>");
-	} else {
-	    document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
-	}
-	</script>
-END_OF_HTML
-    }
-
     print << "END_OF_HTML";
     <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
     <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
@@ -391,6 +378,16 @@ sub print_header {
     <LINK rel="Shortcut Icon" type="img/x-icon" href="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" />  
 END_OF_HTML
 
+    print << "END_OF_HTML";
+	<script language="JavaScript">
+	    var regexp = new RegExp("Gecko");
+	if (navigator.userAgent.match(regexp)) {
+	    document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.gecko.css'>");
+	} else {
+	    document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
+	}
+	</script>
+END_OF_HTML
 
     # クエリ解析結果を描画するjavascriptコードの出力
     unless ($CONFIG->{IS_ENGLISH_VERSION}) {
@@ -1237,7 +1234,7 @@ sub printOrdinarySearchResult {
 	$output .= qq(<DIV class="meta">\n);
 	# ポータルからのアクセスでなければ文書IDとスコアを表示する
 	if (!$params->{from_portal}) {
-	    $output .= sprintf qq(id=%s, score=%.3f), $did, $score;
+	    $output .= sprintf qq(id=%s, %s), $did, $score;
 	}
 
 	# score_verbose が指定去れている場合は内訳を表示する
