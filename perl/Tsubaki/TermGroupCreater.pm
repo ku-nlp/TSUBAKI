@@ -22,7 +22,8 @@ sub create {
     my ($terms, $optionals, $rep2style, $rep2rep_w_yomi, $synnode2midasi);
     if ($option->{english}) {
 	# 英語用
-	($terms, $optionals) = &createTermsFromEnglish($result, $option);
+	$rep2style = {};
+	($terms, $optionals) = &createTermsFromEnglish($result, $option, $rep2style);
     } else {
 	# 日本語用
 	my @ids = ();
@@ -63,7 +64,7 @@ sub create {
 
 # termオブジェクトを生成（英語）
 sub createTermsFromEnglish {
-    my ($result, $option) = @_;
+    my ($result, $option, $rep2style) = @_;
 
     # make blocktype features
     my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
@@ -84,6 +85,8 @@ sub createTermsFromEnglish {
     my $gid = 0;
     foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) {
 	my $count = 0;
+	my $color_num = $gid % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
+	$rep2style->{$sf->{words}{$id}{lem}} = sprintf("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$color_num], (($color_num > 4) ? 'white' : 'black'));
 	my $term = new Tsubaki::Term ({
 	    tid => sprintf ("%s-%s", $gid, $count++),
 	    text => $sf->{words}{$id}{lem},
