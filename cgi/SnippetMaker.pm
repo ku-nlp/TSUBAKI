@@ -146,12 +146,12 @@ sub extract_sentences_from_content_using_position {
 #		} elsif ($ln =~ /^EOS$/) {
 		} elsif ($ln =~ /^S\-ID:\d+$/) {
 		} else {
-		    $pos++;
 		    if (exists $opt->{pos2qid}{$pos}) { # 使っていない
 			$number_of_included_queries++;
 			$included_query_types{$opt->{pos2qid}{$pos}}++;
 		    }
 		    $showFlag = 1 if ($start <= $pos && $pos <= $end && !$showFlag);
+		    $pos++;
 		}
 	    }
 	    my $result = join ("\n", @linebuf);

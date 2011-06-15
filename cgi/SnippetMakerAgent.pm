@@ -297,7 +297,7 @@ sub get_snippets_for_each_did {
 	    next if ($sentence->{number_of_included_query_types} < 1 && $num_of_whitespaces / $length > 0.2);
 
 	    # 単語の位置
-	    my $start_pos = $sentence->{start_pos} + 1;
+	    my $start_pos = $sentence->{start_pos};
 	    my $end_pos = $sentence->{end_pos};
 	    my $flag_of_underline = 0; # ($this->{did2region}{$did}{start} > 50 && $this->{did2region}{$did}{end} - $this->{did2region}{$did}{start} < 50) ? 1 : 0;
 
