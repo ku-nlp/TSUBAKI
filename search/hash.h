@@ -203,11 +203,13 @@ class Dbm {
 	    }
 	    file = (*it).second;
 	}
+        string ret;
 	cdb *db = tieCDB(file);
-	string ret = get ((const char*)key.c_str(), db);
-	cdb_free(db);
-
-	return ret;
+        if (db != NULL) {
+            ret = get ((const char*)key.c_str(), db);
+            cdb_free(db);
+        }
+        return ret;
     }
 };
 
