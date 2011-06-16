@@ -12,6 +12,7 @@ if [ -z "$1" -o ! -f "$1" ]; then
 fi
 
 enju -A -so < $1 > $1.enju.so
-perl -I $dir $dir/enjuquery.pl $1.enju.so > $1.tsubaki1.so
+perl -I $dir $dir/add_lex_head.perl < $1.enju.so > $1.enju-lexhead.so
+perl -I $dir $dir/enjuquery.pl $1.enju-lexhead.so > $1.tsubaki1.so
 $dir/StandOffManager/som export $1.tsubaki1.so $1 $1.tsubaki1.xml
 perl $dir/addrawtext.pl $1.tsubaki1.xml
