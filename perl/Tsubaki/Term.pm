@@ -82,7 +82,7 @@ sub to_S_exp {
 	if ($call_for_anchor) {
 	    $term_type = 3;
 	    $index_type += 2;
-	    $featureBit = 1;
+	    $featureBit = 0;
 	}
 
 	return sprintf("%s((%s %d %d %d %d %d))\n",
@@ -118,7 +118,7 @@ sub createORNode {
 	if ($call_for_anchor) {
 	    $term_type = 3;
 	    $index_type += 2;
-	    $featureBit = 1;
+	    $featureBit = 0;
 	}
 
 	$term_str .= sprintf("%s((%s %d %d %d %d %d))\n",
