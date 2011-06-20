@@ -39,6 +39,10 @@ sub extract_sentences_from_ID {
 	$xmlfile = sprintf("%s/%06d/%s%s", $dir_prefix, $did / 10000, $did_w_version, $ext);
     }
 
+    if ($opt->{z} && ! -e $xmlfile) { # -z指定されているが、.xml.gzファイルが存在しない場合は、.xmlファイルとして探す
+	$xmlfile =~ s/\.gz//;
+    }
+
     return &extract_sentences_from_standard_format($query, $xmlfile, $opt);
 }
 
@@ -55,9 +59,8 @@ sub extract_sentences_from_standard_format {
     # XMLファイルがない場合
     return () unless (-e $xmlfile);
 
-    if ($opt->{z}) {
+    if ($xmlfile =~ /\.gz$/) {
 	open (READER, '<:gzip', $xmlfile) or die $!;
-	binmode (READER, ':utf8');
     } else {
 	open(READER, $xmlfile) or die "$!";
     }
