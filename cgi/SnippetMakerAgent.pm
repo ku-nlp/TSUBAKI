@@ -289,6 +289,7 @@ sub get_snippets_for_each_did {
 	    $sbuf{$sentence->{rawstring}} = 1;
 
 	    my $sid = $sentence->{sid};
+	    $sid =~ s/^\w+//; # 文ID先頭にアルファベット列があれば削除
 	    next if (defined $opt->{usedSIDs}{$did} && !exists $opt->{usedSIDs}{$did}{$sid});
 
 	    my $length = $sentence->{length};
