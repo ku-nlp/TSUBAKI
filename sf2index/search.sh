@@ -43,7 +43,7 @@ else
 fi
 
 cat $query_file
-../search/slave_server $data_dir $data_dir 39999 `hostname` -standalone < $query_file
+../search/slave_server $data_dir none 39999 `hostname` -standalone < $query_file
 
 if [ $file_mode -eq 0 ]; then
     rm -f $query_file
