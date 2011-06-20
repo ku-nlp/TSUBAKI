@@ -110,8 +110,8 @@ sub getDefaultValues {
     $params{query_verbose} = 0;
     $params{sort_by} = 'score';
     $params{sort_by_CR} = 0;
-    $params{from_portal} = 1;
-    $params{score_verbose} = 1;
+    $params{from_portal} = 0;
+    $params{score_verbose} = 0;
     $params{tarball} = 0;
     $params{get_jscode_for_parse_result} = 0;
     $params{use_of_anaphora_resolution} = 0;
