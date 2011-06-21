@@ -47,8 +47,8 @@ dfdb: $(MERGED_IDX_DF)
 $(MAPFILE): $(MERGED_IDX)
 	perl $(BASEDIR)/../scripts/make-mapfile.perl $(MERGED_IDX) > $@
 
-$(XMLLIST): $(XMLS)
-	ls $(XMLS) > $@
+$(XMLLIST):
+	for f in $(DATADIR)/*.xml; do echo $$f; done > $@
 
 $(URL_TITLE_TXT): $(XMLLIST)
 	perl $(BASEDIR)/../scripts/extract-url-title.perl -files $(XMLLIST) > $(URL_TITLE_TXT)
