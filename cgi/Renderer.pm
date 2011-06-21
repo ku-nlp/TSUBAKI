@@ -266,9 +266,6 @@ sub printJavascriptCode {
     my ($canvasName, $query, $opt, $disable_css_loading_code) = @_;
 
     print << "END_OF_HTML";
-    <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
-    <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
-    <script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
     <style type="text/css">
 	DIV.term {
 	  text-align: center;
@@ -387,6 +384,9 @@ END_OF_HTML
 	    document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
 	}
 	</script>
+	<script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
+	<script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
+	<script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
 END_OF_HTML
 
     # クエリ解析結果を描画するjavascriptコードの出力
@@ -1049,7 +1049,7 @@ sub printSearchResultForBrowserAccess {
 	$rank++;
 	# last if ($rank > 100);
     }
-    $this->printAjax($params, join (",", @__buf)) if ($status ne "busy");
+    $this->printAjax($params, join (",", @__buf)) if ($status ne "busy") && !$CONFIG->{IS_ENGLISH_VERSION};
 
     ############################
     # 必要ならばスニペットを生成
