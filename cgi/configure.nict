@@ -386,6 +386,9 @@ MAX_NUM_OF_WORDS_IN_SNIPPET	100
 # タイトルの長さ（デフォルトは50文字）
 MAX_LENGTH_OF_TITLE		50
 
+# タイトルからキャッシュページへのリンクをはるかどうか　はる(1)/はらない=元ページへのリンク(0)
+LINK_CACHED_HTML_FROM_TITLE	1
+
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
 CACHED_HTML_PATH_TEMPLATE	icccmm010:31056:%s
 

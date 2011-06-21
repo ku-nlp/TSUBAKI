@@ -218,6 +218,9 @@ MAX_NUM_OF_WORDS_IN_SNIPPET	200
 # タイトルの長さ（デフォルトは15文字）
 MAX_LENGTH_OF_TITLE		30
 
+# タイトルからキャッシュページへのリンクをはるかどうか　はる(1)/はらない=元ページへのリンク(0)
+LINK_CACHED_HTML_FROM_TITLE	1
+
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
 CACHED_HTML_PATH_TEMPLATE1	/net2/nlpcf34/disk10/skeiji/htmls/htmls1/h%04d/h%07d/%s.html.gz
 CACHED_HTML_PATH_TEMPLATE2	/net2/nlpcf34/disk10/skeiji/htmls/htmls2/h%04d/h%07d/%s.html.gz
