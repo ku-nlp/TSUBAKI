@@ -38,7 +38,7 @@ while (my $result = $knp->each()) {
 
     # メイン
     my $annotation_node = $writer->createElement('Annotation');
-    $addknpresult->Annotation2XML($writer, $result, $annotation_node);
+    $addknpresult->Annotation2XMLforKNP($writer, $result, $annotation_node);
 
     $sentence_node->appendChild($annotation_node);
     $text_node->appendChild($sentence_node);
