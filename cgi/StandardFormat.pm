@@ -44,6 +44,7 @@ sub read_annotation_from_node {
 	    my $id = $word_node->getAttribute('id');
 	    $this->{words}{$id} = {str => $str, lem => $lem, 
 				   feature => $word_node->getAttribute('feature'), 
+				   content_p => $word_node->getAttribute('content_p'), 
 				   pos => $this->{word_count}};
 	    push(@words, $this->{words}{$id});
 	    $this->{word_count}++;
@@ -68,15 +69,16 @@ sub read_annotation_from_node {
     }
 }
 
+# get the number of headword in the phrase
 sub get_phrase_head_num {
     my ($words_ar) = @_;
 
-    for my $i (0 .. $#{$words_ar}) {
-	if ($words_ar->[$i]{feature} =~ /<(?:準)?内容語>/) {
+    for my $i (reverse(0 .. $#{$words_ar})) {
+	if ($words_ar->[$i]{content_p}) {
 	    return $i;
 	}
     }
-    return -1;
+    return $#{$words_ar}; # default is the last one in the phrase
 }
 
 1;
