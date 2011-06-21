@@ -1211,7 +1211,12 @@ sub printOrdinarySearchResult {
 	    $judge = '？' unless ($judge);
 	    $title = sprintf ("%s: %s", $judge, $title);
 	} else {
-	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
+	    if ($CONFIG->{LINK_CACHED_HTML_FROM_TITLE}) { # タイトルからキャッシュへのリンクをはるとき
+		$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
+	    }
+	    else { # 元ページへのリンク
+		$output .= qq(<A class="title" href="$results->[$rank]{url}" target="_blank" class="ex">);
+	    }
 	}
 	# 全角英数字を半角に
 	$title =~ tr/[Ａ-Ｚａ-ｚ０-９．／＠　]/[A-Za-z0-9.\/@ ]/;
@@ -1318,8 +1323,12 @@ sub printOrdinarySearchResult {
 	###############################################################################
 
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
-	$output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
-#	$output .= qq(<SPAN class="cache">$results->[$rank]{url}</SPAN>\n);
+	if ($CONFIG->{LINK_CACHED_HTML_FROM_TITLE}) { # タイトルがキャッシュページのときは、こちらを元ページへのリンクにする
+	    $output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
+	}
+	else { # タイトルが元ページへのリンクのときは、こちらはリンクなし
+	    $output .= qq(<SPAN class="cache">$results->[$rank]{url}</SPAN>\n);
+	}
 #	$output .= qq(<A class="cache2" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank">キャッシュ</A>\n);
 
 	if ($CONFIG->{USE_OF_BLOCK_TYPES} && !$CONFIG->{IS_KUHP_MODE}) {
