@@ -57,7 +57,7 @@ url_title_db : $(URL_TITLE_TXT)
 	perl $(BASEDIR)/../scripts/make-url-title-cdbs.perl --titledb $(TITLEDB) --urldb $(URLDB) $<
 
 clean:
-	rm -f $(IDXS) $(DATADIR)/*.$(IDX0_SUFFIX) $(MERGED_IDX) $(MERGED_IDX_FINAL) $(MAPFILE) $(XMLLIST) $(URL_TITLE_TXT) $(URLDB) $(TITLEDB) $(DATADIR)/idx*.word.dat* $(DATADIR)/idx*.dpnd.dat* $(DATADIR)/offset*.word*.cdb* $(DATADIR)/offset*.dpnd*.cdb* $(DATADIR)/*.doc_length.* $(DATADIR)/df.word.* $(DATADIR)/df.dpnd.*
+	rm -f $(IDXS) $(DATADIR)/*.$(IDX0_SUFFIX) $(MERGED_IDX) $(MERGED_IDX_FINAL) $(MERGED_IDX_DF) $(MAPFILE) $(XMLLIST) $(URL_TITLE_TXT) $(URLDB) $(TITLEDB) $(DATADIR)/idx*.word.dat* $(DATADIR)/idx*.dpnd.dat* $(DATADIR)/offset*.word*.cdb* $(DATADIR)/offset*.dpnd*.cdb* $(DATADIR)/*.doc_length.* $(DATADIR)/df.word.* $(DATADIR)/df.dpnd.*
 
 clean_xml:
 	rm -f $(XMLS)
