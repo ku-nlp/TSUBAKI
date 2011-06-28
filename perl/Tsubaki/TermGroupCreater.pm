@@ -10,11 +10,40 @@ use CDB_File;
 use Encode;
 use Tsubaki::TermGroup;
 use KNP::Result;
+use Data::Dumper;
 
 my $CONFIG = Configure::get_instance();
 
 my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
+
+# 係り受け素性を追加
+my %CASE_FEATURE_BIT = ();
+$CASE_FEATURE_BIT{ガ}     = (2 ** 9);
+$CASE_FEATURE_BIT{ヲ}     = (2 ** 10);
+$CASE_FEATURE_BIT{ニ}     = (2 ** 11);
+$CASE_FEATURE_BIT{ヘ}     = (2 ** 12);
+$CASE_FEATURE_BIT{ト}     = (2 ** 13);
+$CASE_FEATURE_BIT{デ}     = (2 ** 14);
+$CASE_FEATURE_BIT{カラ}   = (2 ** 15);
+$CASE_FEATURE_BIT{マデ}   = (2 ** 16);
+$CASE_FEATURE_BIT{ヨリ}   = (2 ** 17);
+$CASE_FEATURE_BIT{修飾}   = (2 ** 18);
+$CASE_FEATURE_BIT{時間}   = (2 ** 19);
+$CASE_FEATURE_BIT{ノ}     = (2 ** 20);
+$CASE_FEATURE_BIT{ニツク} = (2 ** 21);
+$CASE_FEATURE_BIT{トスル} = (2 ** 22);
+$CASE_FEATURE_BIT{その他} = (2 ** 23);
+
+my %DPND_TYPE_FEATURE_BIT = ();
+$DPND_TYPE_FEATURE_BIT{未格}   = (2 ** 24);
+$DPND_TYPE_FEATURE_BIT{連体}   = (2 ** 25);
+$DPND_TYPE_FEATURE_BIT{省略}   = (2 ** 26);
+$DPND_TYPE_FEATURE_BIT{受動}   = (2 ** 27);
+$DPND_TYPE_FEATURE_BIT{使役}   = (2 ** 28);
+$DPND_TYPE_FEATURE_BIT{可能}   = (2 ** 29);
+$DPND_TYPE_FEATURE_BIT{自動}   = (2 ** 30);
+$DPND_TYPE_FEATURE_BIT{授動詞} = (2 ** 31);
 
 sub create {
     my ($result, $condition, $option) = @_;
@@ -223,6 +252,7 @@ sub _getSynNode2Midasi {
 
 		# <反義語><否定>を利用するかどうか
 		if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
+#		    next unless ($opt->{option}{use_of_negation_and_antonym});
 		    next unless ($opt->{option}{antonym_and_negation_expansion});
 		}
 
@@ -316,6 +346,94 @@ sub _create {
     return (\@terms, \%optionals);
 }
 
+sub reduceSynNode {
+    my ($basic_node, $synnodes, $opt) = @_;
+
+    next unless (defined $synnodes);
+
+    my $N = ($opt->{use_of_antonym_expansion}) ? int (0.5 * ($CONFIG->{MAX_NUMBER_OF_SYNNODES} + 1)) : $CONFIG->{MAX_NUMBER_OF_SYNNODES};
+
+    # 各ノードのgdfを得る
+    my $count = 0;
+    my @newNodes = ();
+
+    push (@newNodes, $basic_node) if (defined $basic_node);
+    foreach my $node (sort {$DFDBS_WORD->get(&remove_yomi($b->synid)) <=> $DFDBS_WORD->get(&remove_yomi($a->synid)) } @$synnodes) {
+	next if ($basic_node == $node);
+	push (@newNodes, $node) if (defined $node);
+	last if (++$count >= $N);
+    }
+
+    return \@newNodes;
+}
+
+sub _getDF {
+    my ($basicNd, $synNds) = @_;
+
+    if ($basicNd) {
+	return $DFDBS_WORD->get(&remove_yomi($basicNd->synid), {exhaustive => 1});
+    } else {
+	return $DFDBS_WORD->get(&remove_yomi($synNds->[0]->synid), {exhaustive => 1}) if (defined $synNds);
+    }
+}
+
+sub remove_yomi {
+    my ($text) = @_;
+
+    my @buf;
+    foreach my $word (split /\+/, $text) {
+	my ($hyouki, $yomi) = split (/\//, $word);
+	push (@buf, $hyouki);
+    }
+
+    return join ("+", @buf)
+}
+
+sub getBasicNode {
+    my ($synnodes) = @_;
+
+    foreach my $synnode (@$synnodes) {
+	if ($synnode->synid !~ /^s\d+/ && $synnode->feature eq '') {
+	    return $synnode;
+	}
+    }
+    return undef;
+}
+
+sub removeSyntacticFeatures {
+    my ($midasi) = @_;
+
+    $midasi =~ s/<可能>//;
+    $midasi =~ s/<尊敬>//;
+    $midasi =~ s/<受身>//;
+    $midasi =~ s/<使役>//;
+
+    return $midasi;
+}
+
+sub expandAntonymAndNegationTerms {
+    my ($midasi, $opt) = @_;
+
+    my @buf;
+    push (@buf, $midasi);
+    # 最後の基本句に含まれるタームのみ拡張する
+    if ($opt->{option}{antonym_and_negation_expansion} &&
+	$opt->{is_last_kihonku}) {
+	# 反義情報の削除
+	$midasi =~ s/<反義語>//;
+
+	# <否定>の付け変え
+	if ($midasi =~ /<否定>/) {
+	    $midasi =~ s/<否定>//;
+	} else {
+	    $midasi .= '<否定>';
+	}
+	push (@buf, $midasi);
+    }
+
+    return \@buf;
+}
+
 # termグループの作成
 sub _createTermGroup {
     my ($gid, $tid, $synNds, $parent, $children, $opt) = @_;
@@ -326,9 +444,14 @@ sub _createTermGroup {
 
     my @midasis = ();
     foreach my $synNd (@$synNds) {
+	# print $opt->{option}{remove_synids} ." " . $synNd->synid . "\n";
 	next if (exists $opt->{option}{remove_synids}{$synNd->synid});
 
 	my $_midasi = sprintf ("%s%s", &remove_yomi($synNd->synid), $synNd->feature);
+	# <反義語><否定>を利用するかどうか
+	if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
+	    # next unless ($opt->{option}{use_of_negation_and_antonym});
+	}
 
 	# SYNノードを利用しない場合
 	next if ($_midasi =~ /s\d+/ && $opt->{option}{disable_synnode});
@@ -338,6 +461,9 @@ sub _createTermGroup {
 
 	push (@midasis, $_midasi);
     }
+
+    # 反義語を使ってタームを拡張する
+    # my $_midasis = &expandAntonymAndNegationTerms($_midasi, $opt);
 
     # タームグループの作成
     if (scalar (@midasis) < 1) {
@@ -400,6 +526,133 @@ sub _getChildNodes {
     return $children;
 }
 
+sub appendDpndFeature {
+    my ($midasi, $kakarimoto, $kakarisaki, $index) = @_;
+
+    my $isSurfForm = 0;
+    if ($kakarimoto =~ /\*$/) {
+	chop $kakarimoto;
+	chop $kakarisaki;
+	$isSurfForm = 1;
+    }
+
+    my $flag_saki = 1;
+    my $featureBit = 0;
+    my $case = 'その他';
+    my @dpndTypes = ();
+
+    my $isRentai = ($index->{kakarimoto_kihonku_fstring} =~ /<係:連格>/) ? 1: 0;
+    my $mrphF    = $index->{kakarisaki_fstring};
+
+    my $kihonkuF = $index->{kakarisaki_kihonku_fstring};
+    my $kakarimotoSurf = $index->{kakarimoto_surf};
+    my $suffix   = '';
+    if ($isRentai) {
+	$mrphF    = $index->{kakarimoto_fstring};
+	$kihonkuF = $index->{kakarimoto_kihonku_fstring};
+	$kakarimotoSurf = $index->{kakarisaki_surf};
+	push (@dpndTypes, '連体');
+	# 連体修飾の場合は係り元と係り先を入れ替える
+	my $_tmp = $kakarimoto;
+	$kakarimoto = $kakarisaki;
+	$kakarisaki = $_tmp;
+	if ($isSurfForm) {
+	    $midasi = sprintf ("%s*->%s*", $kakarimoto, $kakarisaki);
+	} else {
+	    $midasi = sprintf ("%s->%s", $kakarimoto, $kakarisaki);
+	}
+    } else {
+#	$case = 'ノ' if ($index->{kakarimoto_kihonku_fstring} =~ /<係:(?:ノ格|文節内)>/);
+#	$case = 'ノ' if ($index->{kakarimoto_kihonku_fstring} =~ /<係:ノ格>/);
+    }
+
+    my ($CASE_F_ID, $CASE_ELMT);
+    if ($kihonkuF =~ /<格構造:([^:]+:[^:]+(?::[PC]+)?\d+):([^>]+)>/) {
+	$CASE_F_ID = $1;
+	$CASE_ELMT = $2;
+    }
+    my ($N_CASE_F_ID, $N_CASE_ELMT);
+    if ($kihonkuF =~ /<正規化格解析結果-0:([^:]+:[^:]+(?::[PC]+)?\d+):([^>]+)>/) {
+	$N_CASE_F_ID = $1;
+	$N_CASE_ELMT = $2;
+    }
+
+    if ($CASE_F_ID =~ /CP/) {
+	push (@dpndTypes, '使役');
+	push (@dpndTypes, '受動');
+	$suffix = '<使役><受動>';
+    }
+    elsif ($CASE_F_ID =~ /C/) {
+	push (@dpndTypes, '使役');
+	$suffix = '<使役>';
+    }
+    elsif ($CASE_F_ID =~ /P/) {
+	push (@dpndTypes, '受動');
+	$suffix = '<受動>';
+    }
+
+    # 正規化格解析
+    foreach my $caseElement (split (";", $N_CASE_ELMT)) {
+	my ($_case, $type, $label, $eid) = split ("/", $caseElement);
+
+	# チェック
+	next unless ($label =~ /[$kakarimoto|$kakarimotoSurf]$/);
+
+	if ($N_CASE_F_ID =~ m!^([^/]+)!) {
+	    $kakarisaki = $1;
+	    if ($isSurfForm) {
+		$midasi = sprintf ("%s*->%s*", $kakarimoto, $kakarisaki);
+	    } else {
+		$midasi = sprintf ("%s->%s", $kakarimoto, $kakarisaki);
+	    }
+	}
+
+	if ($type eq 'N' && !$isRentai) {
+	    push (@dpndTypes, '未格');
+	}
+	elsif ($type eq 'O') {
+	    push (@dpndTypes, '省略');
+	}
+	$case = $_case;
+	last;
+    }
+
+    if ($case eq 'その他') {
+	# 格構造
+	foreach my $caseElement (split (";", $CASE_ELMT)) {
+	    my ($_case, $type, $label, $eid) = split ("/", $caseElement);
+
+	    # チェック
+	    next unless ($label =~ /[$kakarimoto|$kakarimotoSurf]$/);
+
+	    if (!$isRentai && $index->{kakarimoto_kihonku_fstring} =~ /<係:未格>/) {
+		push (@dpndTypes, '未格');
+	    }
+	    elsif ($type eq 'O') {
+		push (@dpndTypes, '省略');
+	    }
+
+	    # <使役><受動>をタームに付与
+	    $midasi .= $suffix;
+	    $case = $_case;
+	    last;
+	}
+    }
+
+    push (@dpndTypes, '自動')   if ($mrphF =~ /<自他動詞:他/);
+    push (@dpndTypes, '授動詞') if ($mrphF =~ /<授受動詞:受/);
+
+    my $featureBit = $CASE_FEATURE_BIT{$case};
+    my @featureBuf = ($case);
+    foreach my $dpndType (@dpndTypes) {
+	$featureBit |= $DPND_TYPE_FEATURE_BIT{$dpndType};
+	push (@featureBuf, $dpndType);
+    }
+    # print "*** " . $midasi . " " . join (",", @featureBuf) . " $featureBit\n";
+
+    return ($midasi, $featureBit);
+}
+
 # 係り受けタームの追加
 sub _pushbackDependencyTerms {
     my ($terms, $optionals, $kihonku, $gid, $count, $option) = @_;
@@ -412,12 +665,23 @@ sub _pushbackDependencyTerms {
 	my $kakarisaki = $indexer->get_repnames2($kihonku->parent);
 	my $is_optional_node = ($kihonku->fstring =~ /<クエリ必須係り受け>/) ? 0 : (($option->{force_dpnd}) ? 0 : 1);
 	my @_terms;
+
+	
+	my $index;
+	$index->{kakarimoto_kihonku_fstring} = $kihonku->fstring;
+	$index->{kakarisaki_kihonku_fstring} = $kihonku->parent->fstring;
+	$index->{kakarisaki_fstring} = ($kihonku->parent->mrph)[0]->fstring;
+	$index->{kakarimoto_fstring} = ($kihonku->mrph)[0]->fstring;
+	$index->{kakarisaki_surf} = &remove_yomi(($kihonku->parent->mrph)[0]->midasi);
+	$index->{kakarimoto_surf} = &remove_yomi(($kihonku->mrph)[0]->midasi);
+
 	foreach my $moto (@$kakarimoto) {
 	    foreach my $saki (@$kakarisaki) {
-		my $midasi = sprintf ("%s->%s", $moto, $saki);
+		my $_midasi = sprintf ("%s->%s", $moto, $saki);
+		my ($midasi, $feature) = &appendDpndFeature($_midasi, $moto, $saki, $index);
+
 		my $gdf = $DFDBS_DPND->get($midasi, {exhaustive => 1});
 		my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
-
 		my $blockTypeFeature = 0;
 		foreach my $tag (keys %{$blockTypes}) {
 		    $tag =~ s/://;
@@ -429,7 +693,7 @@ sub _pushbackDependencyTerms {
 		    text => $midasi,
 		    term_type => (($is_optional_node) ? 'dpnd' : 'force_dpnd'),
 		    gdf => $gdf,
-		    blockTypeFeature => $blockTypeFeature,
+		    blockTypeFeature => ($blockTypeFeature + $feature),
 		    node_type => 'basic' });
 
 		if ($is_optional_node) {
