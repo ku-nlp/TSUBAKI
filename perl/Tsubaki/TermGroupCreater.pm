@@ -17,7 +17,9 @@ my $CONFIG = Configure::get_instance();
 my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 
+####################
 # 係り受け素性を追加
+####################
 my %CASE_FEATURE_BIT = ();
 $CASE_FEATURE_BIT{ガ}     = (2 ** 9);
 $CASE_FEATURE_BIT{ヲ}     = (2 ** 10);
