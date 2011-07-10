@@ -459,7 +459,7 @@ sub parseQuery {
 	    PeerPort => $CONFIG->{PORT_OF_QUERY_PARSE_SERVER},
 	    Proto    => 'tcp' );
 
-	$selecter->add($socket) or die "Cannot connect to the localhost:" . $CONFIG->{PORT_OF_QUERY_PARSE_SERVER} . ". $!\n";
+	$selecter->add($socket) or die "Cannot connect to the " . $CONFIG->{HOST_OF_QUERY_PARSE_SERVER} . " " . $CONFIG->{PORT_OF_QUERY_PARSE_SERVER} . ". $!\n";
 
  	# クエリ解析時のパラメータを送信
  	print $socket encode_base64(Storable::nfreeze($params), "") . "\n";
@@ -495,8 +495,9 @@ sub parseQuery {
 	    $selecter->remove($socket);
 	    $socket->close();
 	}
-	my $qkstring = $query->{s_exp};
-#	$qkstring =~ s/\n/ /g;
+#	my $qkstring = $query->{s_exp};
+#	$qkstring =~ s/\n/<BR>/g;
+#	$qkstring =~ s/ /&nbsp;/g;
 #	print $qkstring . "\n";
     } else {
 	my $q_parser = new QueryParser({
