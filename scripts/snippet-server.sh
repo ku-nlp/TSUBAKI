@@ -27,7 +27,7 @@ start() {
 
 	for port in `echo $ports | perl -pe 's/,/ /g'`
 	do
-	    command="ssh -f $host ulimit -Ss unlimited ; nice $NICE $PERL -I $CGI_DIR -I $SCRIPTS_DIR $SCRIPTS_DIR/$COMMAND -port $port $OPTS"
+	    command="ssh -f $host $PERL -I $CGI_DIR -I $SCRIPTS_DIR $SCRIPTS_DIR/$COMMAND -port $port $OPTS"
 	    echo $command
 	    $command
 	done
