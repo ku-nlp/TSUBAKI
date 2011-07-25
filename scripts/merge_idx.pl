@@ -10,14 +10,16 @@ use strict;
 use utf8;
 use Getopt::Long;
 use Encode;
+use File::Basename;
 
-my (%opt); GetOptions(\%opt, 'dir=s', 'idxfiles=s', 'suffix=s', 'n=s', 'z', 'compress', 'verbose', 'offset=s', 'idx2did=s', 'ignore_version');
+my (%opt); GetOptions(\%opt, 'dir=s', 'outdir=s', 'idxfiles=s', 'suffix=s', 'n=s', 'z', 'compress', 'verbose', 'offset=s', 'idx2did=s', 'ignore_version');
 
 # 単語IDの初期化
 my %freq;
 my $fcnt = 0;
 
 $opt{suffix} = 'idx' unless $opt{suffix};
+mkdir $opt{outdir} if $opt{outdir} && ! -d $opt{outdir};
 
 # ディレクトリが指定された場合
 if ($opt{dir} && !$opt{idxfiles}) {
@@ -51,6 +53,7 @@ if ($opt{dir} && !$opt{idxfiles}) {
 	if (defined($opt{n})) {
 	    if ($fcnt % $opt{n} == 0) {
 		my $fname = sprintf("$opt{dir}.%d.%d.%s", $fcnt/$opt{n}, $$, $opt{suffix});
+		$fname = $opt{outdir} . '/' . basename($fname) if ($opt{outdir});
 		&output_data($fname, \%freq);
 		%freq = ();
 	    }
@@ -106,7 +109,6 @@ elsif ($opt{idxfiles}) {
     close (FILE);
 
     $opt{dir} = $opt{idxfiles};
-
 }
 # ディレクトリの指定がない場合は標準入力から読む
 else {
@@ -121,6 +123,7 @@ if (defined($opt{n})) {
     my $size = scalar(keys %freq);
     if ($size > 0) {
 	my $fname = sprintf("$opt{dir}.%d.%d.%s", 1 + $fcnt/$opt{n}, $$, $opt{suffix});
+	$fname = $opt{outdir} . '/' . basename($fname) if ($opt{outdir});
 	&output_data($fname, \%freq);
     }
 }else{
