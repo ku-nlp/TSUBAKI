@@ -111,7 +111,7 @@ sub _add_for_legacy {
 		# position が指定されているのにインデックスの位置情報がない場合
 		print STDERR "\nOption error!\n";
 		print STDERR "Not found the locations of indexed terms.\n";
-		print STDERR encode('euc-jp', "$index $docs->[$i]") . "\n";
+		print STDERR encode('utf8', "$index $docs->[$i]") . "\n";
 #		exit(1);
 	    }
 	    $totalfreq = $totalfreq_sid_pos_freq;
@@ -217,7 +217,7 @@ sub text2binary {
 	    # position が指定されているのにインデックスの位置情報がない場合
 	    print STDERR "\nOption error!\n";
 	    print STDERR "Not found the locations of indexed terms.\n";
-	    print STDERR encode('euc-jp', "$term $docs->[$i]") . "\n";
+	    print STDERR encode('utf8', "$term $docs->[$i]") . "\n";
 	    next;
 	}
 
