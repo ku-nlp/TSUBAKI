@@ -94,7 +94,7 @@ sub main4test {
     my $FREQ_MASK     = (2 ** $FREQ_BIT_SIZE) - 1;
 
     my $db = new CDB_Reader($opt{keymapfile});
-    my $offset = $db->get($opt{term});
+    my $offset = $db->get(decode('utf8', $opt{term}));
     open (F, $opt{idxfile}) or die $!;
 
     # バイナリデータの読み込み
