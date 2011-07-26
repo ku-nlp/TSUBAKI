@@ -1655,7 +1655,7 @@ sub getSearchResultForAPICall {
     my ($this, $logger, $params, $result, $query, $hitcount) = @_;
 
     my $from = $params->{start};
-    my $end = (scalar(@$result) < $params->{start} + $params->{results}) ?  scalar (@$result) : $params->{results};
+    my $end = (scalar(@$result) < $params->{results}) ?  scalar (@$result) : $params->{results}; # paramsのresultsはstartを足したもの (RequestParser:setParametersOfGetRequest)
 
     my $did2snippets = {};
     if ($params->{no_snippets} < 1 || $params->{Snippet} > 0) {

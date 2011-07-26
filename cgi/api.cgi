@@ -581,7 +581,7 @@ sub provideSearchResult {
 
 	    # 検索して得られた文書の標準フォーマットをコピー
 	    my $from = $params->{start};
-	    my $end = (scalar(@$result) < $params->{start} + $params->{results}) ?  scalar (@$result) : $params->{results};
+	    my $end = (scalar(@$result) < $params->{results}) ?  scalar (@$result) : $params->{results}; # paramsのresultsはstartを足したもの (RequestParser:setParametersOfGetRequest)
 	    for (my $rank = $from; $rank < $end; $rank++) {
 		my $page = $result->[$rank];
 		my $did = sprintf("%s", $page->{did});
