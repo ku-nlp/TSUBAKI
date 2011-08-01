@@ -178,49 +178,59 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     sid2title_cdb  = new Dbm(sid2title_file, HOSTNAME);
 
     std::ifstream fin(tid2sid_file.c_str());
-    while (!fin.eof()) {
-	string sid;
-	string tid;
-	fin >> sid;
-	fin >> tid;
+    if (fin) {
+        while (!fin.eof()) {
+            string sid;
+            string tid;
+            fin >> sid;
+            fin >> tid;
 
-	int _tid = (int)atoi(tid);
-	tid2sid.insert(std::pair<int, string>(_tid, sid));
+            int _tid = (int)atoi(tid);
+            tid2sid.insert(std::pair<int, string>(_tid, sid));
 
-	// cdb -> map
-	if (sid2url_cdb->is_open()) {
-	    string url = sid2url_cdb->get(sid);
+            // cdb -> map
+            if (sid2url_cdb->is_open()) {
+                string url = sid2url_cdb->get(sid);
 
-	    if (url.find("%") != string::npos) {
-		string::size_type pos;
-		string find_str = "%";
-		string rep_str = "@";
-		for(pos = url.find(find_str); pos != string::npos; pos = url.find(find_str, rep_str.length() + pos)) {
-		    url.replace(pos, find_str.length(), rep_str);
-		}
-	    }
+                if (url.find("%") != string::npos) {
+                    string::size_type pos;
+                    string find_str = "%";
+                    string rep_str = "@";
+                    for(pos = url.find(find_str); pos != string::npos; pos = url.find(find_str, rep_str.length() + pos)) {
+                        url.replace(pos, find_str.length(), rep_str);
+                    }
+                }
 
-	    tid2url.insert(std::pair<int, string>(_tid, url));
-	}
+                tid2url.insert(std::pair<int, string>(_tid, url));
+            }
 
-	if (sid2title_cdb->is_open()) {
-	    string title = sid2title_cdb->get(sid);
-	    tid2title.insert(std::pair<int, string>(_tid, title));
-	}
+            if (sid2title_cdb->is_open()) {
+                string title = sid2title_cdb->get(sid);
+                tid2title.insert(std::pair<int, string>(_tid, title));
+            }
+        }
+        fin.close();
     }
-    fin.close();
+    else {
+        cerr << "Not found: " << tid2sid_file << endl;
+    }
 
     std::ifstream fin1(tid2length_file.c_str());
-    while (!fin1.eof()) {
-	string tid;
-	string length;
-	fin1 >> tid;
-	fin1 >> length;
-	int _tid = (int)atoi(tid);
-	int _length = (int)atoi(length);
-	tid2len.insert(std::pair<int, int>(_tid, _length));
+    if (fin1) {
+        while (!fin1.eof()) {
+            string tid;
+            string length;
+            fin1 >> tid;
+            fin1 >> length;
+            int _tid = (int)atoi(tid);
+            int _length = (int)atoi(length);
+            tid2len.insert(std::pair<int, int>(_tid, _length));
+        }
+        fin1.close();
     }
-    fin1.close();
+    else {
+        cerr << "Not found: " << tid2length_file << endl;
+    }
 
     std::ifstream fin2(rmfiles.c_str());
     if (fin2) {
