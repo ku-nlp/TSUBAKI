@@ -3,42 +3,40 @@
   <Text>
     <S id="1">
       <RawString>温泉旅館に一番近い駅</RawString>
-      <Annotation tool="KNP:3.1-20101102" score="-23.22077">
-        <phrase id="0" head="1" cat="体言" feature="&lt;SM-場所&gt;&lt;BGH:温泉/おんせん&gt;&lt;文節内&gt;&lt;係:文節内&gt;&lt;文頭&gt;&lt;名詞項候補&gt;&lt;先行詞候補&gt;&lt;正規化代表表記:温泉/おんせん&gt;&lt;文節:0-1&gt;">
-          <word id="0" str="温泉" lem="温泉" read="おんせん" pos="名詞:普通名詞" repname="温泉/おんせん" conj="" feature="&lt;代表表記:温泉/おんせん&gt;&lt;地名末尾&gt;&lt;カテゴリ:場所-自然&gt;&lt;ドメイン:レクリエーション&gt;&lt;正規化代表表記:温泉/おんせん&gt;&lt;文頭&gt;&lt;漢字&gt;&lt;かな漢字&gt;&lt;名詞相当語&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;">
+      <Annotation tool="KNP:3.1-20101105" score="-21.88354">
+        <phrase id="0" head="1" category="体言" feature="&lt;係:文節内&gt;&lt;文節:0-1&gt;..." dpndtype="D">
+          <word id="0" str="温泉" lem="温泉" read="おんせん" pos="名詞:普通名詞" repname="温泉/おんせん" conj="" content_p="1" feature="&lt;内容語&gt;...">
             <synnode wordid="0" synid="温泉/おんせん" score="1"/>
           </word>
         </phrase>
-        <phrase id="1" head="3" cat="体言" feature="&lt;SM-主体&gt;&lt;SM-場所&gt;&lt;SM-組織&gt;&lt;BGH:旅館/りょかん&gt;&lt;ニ&gt;&lt;助詞&gt;&lt;係:ニ格&gt;&lt;区切:0-0&gt;&lt;RID:1180&gt;&lt;格要素&gt;&lt;連用要素&gt;&lt;名詞項候補&gt;&lt;先行詞候補&gt;&lt;正規化代表表記:旅館/りょかん&gt;&lt;解析格:ニ&gt;">
-          <word id="1" str="旅館" lem="旅館" read="りょかん" pos="名詞:普通名詞" repname="旅館/りょかん" conj="" feature="&lt;代表表記:旅館/りょかん&gt;&lt;カテゴリ:場所-施設&gt;&lt;ドメイン:レクリエーション&gt;&lt;正規化代表表記:旅館/りょかん&gt;&lt;漢字&gt;&lt;かな漢字&gt;&lt;名詞相当語&gt;&lt;自立&gt;&lt;複合←&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節主辞&gt;">
+        <phrase id="1" head="3" category="体言" feature="&lt;係:ニ格&gt;..." dpndtype="D">
+          <word id="1" str="旅館" lem="旅館" read="りょかん" pos="名詞:普通名詞" repname="旅館/りょかん" conj="" content_p="1" feature="&lt;内容語&gt;...">
             <synnode wordid="1" synid="旅館/りょかん" score="1"/>
             <synnode wordid="1" synid="s259:宿/やど" score="0.99"/>
           </word>
-          <word id="2" str="に" lem="に" read="に" pos="助詞:格助詞" repname="に/に" conj="" feature="&lt;品曖&gt;&lt;ALT-に-に-に-9-3-0-0-NIL&gt;&lt;品曖-格助詞&gt;&lt;品曖-接続助詞&gt;&lt;かな漢字&gt;&lt;ひらがな&gt;&lt;付属&gt;"/>
+          <word id="2" str="に" lem="に" read="に" pos="助詞:格助詞" repname="に/に" conj="" content_p="0" feature="&lt;付属&gt;..."/>
         </phrase>
-        <phrase id="2" head="3" cat="用言弱修飾" feature="&lt;BGH:一番/いちばん&gt;&lt;相対名詞修飾&gt;&lt;副詞&gt;&lt;修飾&gt;&lt;係:連用&gt;&lt;区切:0-4&gt;&lt;RID:1398&gt;&lt;連用要素&gt;&lt;連用節&gt;&lt;正規化代表表記:一番/いちばん&gt;&lt;解析格:修飾&gt;&lt;文節:2-2&gt;">
-          <word id="3" str="一番" lem="一番" read="いちばん" pos="副詞" repname="一番/いちばん" conj="" feature="&lt;代表表記:一番/いちばん&gt;&lt;相対名詞修飾&gt;&lt;用言弱修飾&gt;&lt;正規化代表表記:一番/いちばん&gt;&lt;漢字&gt;&lt;かな漢字&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;&lt;文節主辞&gt;">
-            <synnode wordid="3" synid="一番/いちばん" score="1"/>
-            <synnode wordid="3" synid="s2308:何より/なにより" score="0.99"/>
-            <synnode wordid="3" synid="s585:トップ/とっぷ" score="0.99"/>
-            <synnode wordid="3" synid="s2099:一番/いちばん" score="0.99"/>
-            <synnode wordid="3" synid="s2098:一番/いちばん" score="0.99"/>
+        <phrase id="2" head="3" category="体言" feature="&lt;係:無格&gt;&lt;文節:2-2&gt;..." dpndtype="D">
+          <word id="3" str="一" lem="一" read="いち" pos="名詞:数詞" repname="一/いち" conj="" content_p="1" feature="&lt;内容語&gt;..."/>
+          <word id="4" str="番" lem="番" read="ばん" pos="接尾辞:名詞性名詞助数辞" repname="番/ばん" conj="" content_p="1" feature="&lt;準内容語&gt;...">
+            <synnode wordid="3,4" synid="一/いち+番/ばん" score="1"/>
+            <synnode wordid="3,4" synid="s1848:ナンバーワン/なんばーわん" score="0.99"/>
+            <synnode wordid="3,4" synid="s481:随一/ずいいち" score="0.99"/>
           </word>
         </phrase>
-        <phrase id="3" head="4" cat="用言:形" feature="&lt;BGH:近い/ちかい&gt;&lt;連体修飾&gt;&lt;係:連格&gt;&lt;レベル:B-&gt;&lt;区切:0-5&gt;&lt;ID:（形判連体）&gt;&lt;RID:765&gt;&lt;連体並列条件&gt;&lt;連体節&gt;&lt;状態述語&gt;&lt;正規化代表表記:近い/ちかい&gt;&lt;用言代表表記:近い/ちかい&gt;&lt;格要素-ガ:駅&gt;&lt;格要素-ニ:旅館&gt;&lt;格要素-ト:NIL&gt;&lt;格要素-デ:NIL&gt;&lt;格要素-カラ:NIL&gt;&lt;格要素-ヨリ:NIL&gt;&lt;格要素-マデ:NIL&gt;&lt;格要素-時間:NIL&gt;&lt;格要素-外の関係:NIL&gt;&lt;格要素-修飾:一番&gt;&lt;格要素-ノ:NIL&gt;&lt;格フレーム-ガ-主体&gt;&lt;格フレーム-ニ-主体&gt;&lt;格フレーム-デ-主体&gt;&lt;格フレーム-ヨリ-主体&gt;&lt;格フレーム-修飾-主体&gt;&lt;格フレーム-ガ-主体ｏｒ主体準&gt;&lt;格フレーム-ニ-主体ｏｒ主体準&gt;&lt;時制-現在&gt;&lt;時制-無時制&gt;&lt;格関係1:ニ:旅館&gt;&lt;格関係2:修飾:一番&gt;&lt;格関係4:ガ:駅&gt;&lt;格解析結果:近い/ちかい:形9:ガ/N/駅/4/0/1;ニ/C/旅館/1/0/1;ト/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ/U/-/-/-/-;時間/U/-/-/-/-;外の関係/U/-/-/-/-;修飾/C/一番/2/0/1;ノ/U/-/-/-/-&gt;&lt;文節:3-3&gt;">
-          <word id="4" str="近い" lem="近い" read="ちかい" pos="形容詞" repname="近い/ちかい" conj="イ形容詞アウオ段:基本形" feature="&lt;代表表記:近い/ちかい&gt;&lt;反義:形容詞:遠い/とおい&gt;&lt;正規化代表表記:近い/ちかい&gt;&lt;かな漢字&gt;&lt;活用語&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;&lt;文節主辞&gt;">
-            <synnode wordid="4" synid="近い/ちかい" score="1"/>
-            <synnode wordid="4" synid="s468:近い/ちかい" score="0.99"/>
-            <synnode wordid="4" synid="s13:付近/ふきん" score="0.99"/>
-            <synnode wordid="4" synid="s206:親しい/したしい" score="0.99"/>
-            <synnode wordid="4" synid="近く/ちかく" score="0.99"/>
-            <synnode wordid="3,4" synid="s13:付近/ふきん" score="0.99"/>
+        <phrase id="3" head="4" category="用言:形" feature="&lt;係:連格&gt;&lt;文節:3-3&gt;..." dpndtype="D">
+          <word id="5" str="近い" lem="近い" read="ちかい" pos="形容詞" repname="近い/ちかい" conj="イ形容詞アウオ段:基本形" content_p="1" feature="&lt;内容語&gt;...">
+            <synnode wordid="5" synid="近い/ちかい" score="1"/>
+            <synnode wordid="5" synid="s468:近い/ちかい" score="0.99"/>
+            <synnode wordid="5" synid="s13:付近/ふきん" score="0.99"/>
+            <synnode wordid="5" synid="s206:親しい/したしい" score="0.99"/>
+            <synnode wordid="5" synid="近く/ちかく" score="0.99"/>
           </word>
         </phrase>
-        <phrase id="4" head="-1" cat="用言:判" feature="&lt;SM-主体&gt;&lt;SM-場所&gt;&lt;SM-組織&gt;&lt;BGH:駅/えき&gt;&lt;文末&gt;&lt;体言&gt;&lt;体言止&gt;&lt;一文字漢字&gt;&lt;レベル:C&gt;&lt;区切:5-5&gt;&lt;ID:（文末）&gt;&lt;裸名詞&gt;&lt;RID:1470&gt;&lt;提題受:30&gt;&lt;主節&gt;&lt;状態述語&gt;&lt;判定詞&gt;&lt;名詞項候補&gt;&lt;先行詞候補&gt;&lt;正規化代表表記:駅/えき&gt;&lt;用言代表表記:駅/えき&gt;&lt;格要素-ガ:NIL&gt;&lt;格要素-ヲ:NIL&gt;&lt;格要素-ニ:NIL&gt;&lt;格要素-デ:NIL&gt;&lt;格要素-カラ:NIL&gt;&lt;格要素-ヨリ:NIL&gt;&lt;格要素-マデ:NIL&gt;&lt;格要素-ヘ:NIL&gt;&lt;格要素-時間:NIL&gt;&lt;格要素-ノ:NIL&gt;&lt;格要素-修飾:NIL&gt;&lt;格要素-ガ２:NIL&gt;&lt;格要素-外の関係:NIL&gt;&lt;格フレーム-ガ-主体&gt;&lt;格フレーム-デ-主体&gt;&lt;格フレーム-カラ-主体&gt;&lt;格フレーム-マデ-主体&gt;&lt;格フレーム-ヘ-主体&gt;&lt;格フレーム-修飾-主体&gt;&lt;格フレーム-ガ２-主体&gt;&lt;格フレーム-ガ-主体ｏｒ主体準&gt;&lt;格フレーム-ガ２-主体ｏｒ主体準&gt;&lt;時制-無時制&gt;&lt;解析連格:ガ&gt;&lt;格解析結果:駅/えき:判0:ガ/U/-/-/-/-;ヲ/U/-/-/-/-;ニ/U/-/-/-/-;デ/U/-/-/-/-;カラ/U/-/-/-/-;ヨリ/U/-/-/-/-;マデ/U/-/-/-/-;ヘ/U/-/-/-/-;時間/U/-/-/-/-;ノ/U/-/-/-/-;修飾/U/-/-/-/-;ガ２/U/-/-/-/-;外の関係/U/-/-/-/-&gt;&lt;文節:4-4&gt;">
-          <word id="5" str="駅" lem="駅" read="えき" pos="名詞:普通名詞" repname="駅/えき" conj="" feature="&lt;代表表記:駅/えき&gt;&lt;漢字読み:音&gt;&lt;地名末尾&gt;&lt;カテゴリ:場所-施設&gt;&lt;ドメイン:交通&gt;&lt;正規化代表表記:駅/えき&gt;&lt;文末&gt;&lt;表現文末&gt;&lt;漢字&gt;&lt;かな漢字&gt;&lt;名詞相当語&gt;&lt;自立&gt;&lt;内容語&gt;&lt;タグ単位始&gt;&lt;文節始&gt;&lt;文節主辞&gt;">
-            <synnode wordid="5" synid="駅/えき" score="1"/>
-            <synnode wordid="5" synid="s2358:停車場/ていしゃば" score="0.99"/>
+        <phrase id="4" head="-1" category="用言:判" feature="&lt;文節:4-4&gt;..." dpndtype="D">
+          <word id="6" str="駅" lem="駅" read="えき" pos="名詞:普通名詞" repname="駅/えき" conj="" content_p="1" feature="&lt;内容語&gt;...">
+            <synnode wordid="6" synid="駅/えき" score="1"/>
+            <synnode wordid="6" synid="s2358:停車場/ていしゃば" score="0.99"/>
           </word>
         </phrase>
       </Annotation>
