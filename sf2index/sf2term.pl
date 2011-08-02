@@ -10,8 +10,10 @@ use Getopt::Long;
 use XML::LibXML;
 use StandardFormat;
 
+binmode(STDOUT, ':utf8');
+
 our %opt;
-&GetOptions(\%opt, 'suffix=s');
+&GetOptions(\%opt, 'suffix=s', 'autoout');
 
 our $SF_EXT = 'xml';
 our $IDX_EXT = $opt{suffix} ? $opt{suffix} : 'idx';
@@ -71,10 +73,15 @@ sub xml2term {
     }
 
     # register word terms and dpnd terms
-    open(OUT, '>:utf8', $output_file) or die;
+    if ($opt{autoout}) {
+	open(OUT, '>:utf8', $output_file) or die;
+    }
+    else {
+	*OUT = *STDOUT;
+    }
     &register_terms($doc_id, \%terms, *OUT);
     &register_terms($doc_id, \%dpnd_terms, *OUT);
-    close(OUT);
+    close(OUT) if $opt{autoout};
 }
 
 sub hash_term {
