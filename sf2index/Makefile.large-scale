@@ -26,7 +26,7 @@ XML_DIRS := $(wildcard $(XML_BASE)??)
 IDX_BASE := 0000
 XML_DIR := $(XML_TOP_DIR)/000000
 XML_FILES = $(wildcard $(XML_DIR)/*.xml)
-IDX_FILES = $(patsubst $(XML_TOP_DIR)/%.xml,$(IDX_TOP_DIR)/%.idx,$(XML_FILES))
+IDX_FILES = $(patsubst $(XML_TOP_DIR)/%.xml,$(IDX_TOP_DIR)/%.$(IDX0_SUFFIX),$(XML_FILES))
 
 IDX_DIRS := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(XML_DIRS))
 IDXS := $(addsuffix .$(IDX1_SUFFIX), $(IDX_DIRS))
@@ -54,10 +54,10 @@ idxs: $(IDXS)
 
 url_titles: $(URL_TITLES)
 
-$(IDX_FILES): $(IDX_TOP_DIR)/%.idx: $(XML_TOP_DIR)/%.xml
+$(IDX_FILES): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.xml
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
 	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
-	perl -I ../cgi $(BASEDIR)/sf2term.pl -suffix $(IDX0_SUFFIX) $< > $(TMP_DIR)/$(notdir $@) && \
+	perl -I ../cgi $(BASEDIR)/sf2term.pl $< > $(TMP_DIR)/$(notdir $@) && \
 	mv $(TMP_DIR)/$(notdir $@) $@
 
 $(IDX_TOP_DIR)/%.idx0done:
@@ -66,8 +66,8 @@ $(IDX_TOP_DIR)/%.idx0done:
 
 $(IDXS): $(IDX_TOP_DIR)/%.$(IDX1_SUFFIX): $(IDX_TOP_DIR)/%.idx0done
 	mkdir -p $(basename $@).idx.tmp && \
-	perl $(BASEDIR)/../scripts/merge_idx.pl -dir $(basename $@) -outdir $(basename $@).idx.tmp -n 50 && \
-	perl $(BASEDIR)/../scripts/merge_sorted_idx.pl -dir $(basename $@).idx.tmp > $@ && \
+	perl $(BASEDIR)/../scripts/merge_idx.pl -dir $(basename $@) -suffix $(IDX0_SUFFIX) -outdir $(basename $@).idx.tmp -n 50 && \
+	perl $(BASEDIR)/../scripts/merge_sorted_idx.pl -dir $(basename $@).idx.tmp -suffix $(IDX0_SUFFIX) > $@ && \
 	rm -rf $(basename $@).idx.tmp
 
 $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX):
