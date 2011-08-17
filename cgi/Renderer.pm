@@ -990,7 +990,7 @@ sub printAjax {
 	push (@dpndStates, sprintf ("%s:%s", $k, $params->{dpnd_states}{$k}));
     }
 
-    print << "END_OF_HTML";
+    print << "END_OF_HTML" if !$CONFIG->{DISABLE_CALL_WEBCLUSTERING};
 <SCRIPT>
 new Ajax.Request(
     "call-webclustering.cgi",
@@ -1386,7 +1386,7 @@ sub printOrdinarySearchResult {
 	# 1 ページ分の結果を表示
 	print $output;
     }
-    if ($logger->getParameter('hitcount') > 0 && !$CONFIG->{IS_ENGLISH_VERSION}) {
+    if ($logger->getParameter('hitcount') > 0 && !$CONFIG->{IS_ENGLISH_VERSION} && !$CONFIG->{DISABLE_CALL_WEBCLUSTERING}) {
     print << "END_OF_HTML";
 </TD>
 <TD valign='top' width='300'>
@@ -1411,7 +1411,7 @@ sub printOrdinarySearchResult {
 </TABLE>
 </TD>
 </TR>
-</TABLE>;
+</TABLE>
 END_OF_HTML
     }
 }
