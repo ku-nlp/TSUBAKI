@@ -1323,11 +1323,13 @@ sub printOrdinarySearchResult {
 	###############################################################################
 
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
+	my $_url = $results->[$rank]{url};
+        $_url = substr($_url, 0, $CONFIG->{MAX_LENGTH_OF_URL}) . "..." if (length($_url) > $CONFIG->{MAX_LENGTH_OF_URL});
 	if ($CONFIG->{LINK_CACHED_HTML_FROM_TITLE}) { # タイトルがキャッシュページのときは、こちらを元ページへのリンクにする
-	    $output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$results->[$rank]{url}</A>\n);
+	    $output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$_url</A>\n);
 	}
 	else { # タイトルが元ページへのリンクのときは、こちらはリンクなし
-	    $output .= qq(<SPAN class="cache">$results->[$rank]{url}</SPAN>\n);
+	    $output .= qq(<SPAN class="cache">$_url</SPAN>\n);
 	}
 #	$output .= qq(<A class="cache2" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank">キャッシュ</A>\n);
 
