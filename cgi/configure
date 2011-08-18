@@ -162,6 +162,9 @@ STANDARD_FORMAT_LOCATION	nlpc32	61000,61001	025,051,077
 # その他の設定
 ##################################################
 
+# TSUBAKIの下に出すサブタイトル
+TSUBAKI_SUBTITLE	2010年度版
+
 # 総文書数
 NUMBER_OF_DOCUMENTS	100132750
 

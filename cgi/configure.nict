@@ -356,6 +356,9 @@ STANDARD_FORMAT_LOCATION	iccc130.crawl.kclab.jgn2.jp	32011
 # その他の設定
 ##################################################
 
+# TSUBAKIの下に出すサブタイトル
+TSUBAKI_SUBTITLE	2010年度版
+
 # 総文書数
 NUMBER_OF_DOCUMENTS	100132750
 

@@ -187,6 +187,9 @@ STANDARD_FORMAT_LOCATION        nlpc69	       45511,45512
 # その他の設定
 ##################################################
 
+# TSUBAKIの下に出すサブタイトル
+TSUBAKI_SUBTITLE	2010年度版
+
 # 総文書数
 NUMBER_OF_DOCUMENTS	94002227
 
