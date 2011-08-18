@@ -501,7 +501,7 @@ sub print_logo {
     if ($params->{query}) {
 	print qq(<TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
 	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
-	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- 2010年度版 -</SPAN></TD>\n);
+	printf qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- %s -</SPAN></TD>\n), $CONFIG->{TSUBAKI_SUBTITLE};
 	if ($CONFIG->{IS_IPSJ_MODE}) {
 	    print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
 	}
@@ -509,7 +509,7 @@ sub print_logo {
     else {
 	print qq(<TD align="center">);
 	printf ("<A href=%s><IMG border=0 src=image/logo.png></A>\n", $CONFIG->{INDEX_CGI});
-	print qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">2010年度版</SPAN>\n);
+	printf qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">%s</SPAN>\n), $CONFIG->{TSUBAKI_SUBTITLE};
 	print qq(<BR><SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
 	print "</TD></TR>\n";
 	print "<TR>";
