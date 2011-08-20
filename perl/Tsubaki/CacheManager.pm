@@ -66,7 +66,7 @@ sub save {
 
 
     my $cachelog = "$CONFIG->{CACHE_DIR}/log";
-    open(WRITER, '>>:utf8', $cachelog) or die;
+    open(WRITER, '>>:utf8', $cachelog) or die $!;
     print WRITER "$timestamp\t$mode\t$key\t$filepath\n";
     close(WRITER);
 }
