@@ -167,10 +167,10 @@ sub createTermsFromJapanese {
 	$termG->{gdf} = 100000000;
 	foreach my $midasi (@{$option->{conjunctive_particle}}) {
 	    my ($cnt, $gid) = (10000, 0);
-	    my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
+	    my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {};
 	    my $blockTypeFeature = 0;
 	    foreach my $tag (keys %{$blockTypes}) {
-		next unless ($tag =~ /MT/);
+		# next unless ($tag =~ /MT/);
 		$tag =~ s/://;
 		$blockTypeFeature += $CONFIG->{BLOCK_TYPE_DATA}{$tag}{mask};
 	    }
