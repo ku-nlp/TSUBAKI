@@ -20,8 +20,8 @@ use Data::Dumper;
 }
 $Data::Dumper::Useperl = 1;
 
-binmode(STDOUT, ':encoding(euc-jp)');
-binmode(STDERR, ':encoding(euc-jp)');
+binmode(STDOUT, ':encoding(utf8)');
+binmode(STDERR, ':encoding(utf8)');
 
 
 
