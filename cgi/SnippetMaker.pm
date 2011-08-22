@@ -161,7 +161,6 @@ sub extract_sentences_from_content_using_position {
 
 	    @linebuf = ();
 	    $annotationFlag = 0;
-	    $pos++;
 
 	    # クエリ中の語が出現する範囲を超えた
 	    last if (!$showFlag && $pos > $end);
