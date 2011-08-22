@@ -14,7 +14,8 @@ $Data::Dumper::Useperl = 1;
 use Getopt::Long;
 use Configure;
 
-binmode(STDOUT, ':encoding(euc-jp)');
+our $ENCODING = 'utf8';
+binmode(STDOUT, ":encoding($ENCODING)");
 
 my (%opt);
 GetOptions(\%opt, 'query=s', 'logical=s', 'syngraph');
@@ -33,6 +34,6 @@ my $q_parser = new QueryParser({
     SYNDB_PATH => $CONFIG->{SYNDB_PATH},
     KNP_OPTIONS => $CONFIG->{KNP_OPTIONS} });
 $q_parser->{SYNGRAPH_OPTION}->{hypocut_attachnode} = 1;
-my $query = $q_parser->parse(decode('euc-jp', $opt{query}), {logical_cond_qk => $opt{logical}, syngraph => $opt{syngraph}});
+my $query = $q_parser->parse(decode($ENCODING, $opt{query}), {logical_cond_qk => $opt{logical}, syngraph => $opt{syngraph}});
 
 print Dumper($query) . "\n";
