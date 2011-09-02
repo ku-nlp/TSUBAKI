@@ -239,7 +239,7 @@ sub _getSynNode2Midasi {
     foreach my $i (0 .. scalar(@$kihonkus) - 1) {
 	my $surf;
 	foreach my $m ($kihonkus->[$i]->mrph) {
-	    next if ($m->fstring !~ /<内容語>/);
+	    next if ($m->fstring !~ /<(?:準)?内容語>/);
 	    $surf .= $m->midasi;
 	}
 	$midasi[$i] = $surf;
