@@ -371,8 +371,8 @@ sub print_header {
     <TITLE>$title</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=utf-8">
     <LINK rel="stylesheet" type="text/css" href="css/tsubaki.common.css">
-    <LINK rel="icon" href="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" type="image/x-icon" />  
-    <LINK rel="Shortcut Icon" type="img/x-icon" href="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/favicon.ico" />  
+    <LINK rel="icon" href="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/favicon.ico" type="image/x-icon" />  
+    <LINK rel="Shortcut Icon" type="img/x-icon" href="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/favicon.ico" />  
 END_OF_HTML
 
     print << "END_OF_HTML";
@@ -384,9 +384,9 @@ END_OF_HTML
 	    document.write("<LINK rel='stylesheet' type='text/css' href='css/tsubaki.ie.css'>");
 	}
 	</script>
-	<script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/wz_jsgraphics.js"></script>
-	<script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/prototype.js"></script>
-	<script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/tsubaki.js"></script>
+	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/wz_jsgraphics.js"></script>
+	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/prototype.js"></script>
+	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/tsubaki.js"></script>
 END_OF_HTML
 
     # クエリ解析結果を描画するjavascriptコードの出力
@@ -2055,7 +2055,7 @@ sub getPaintingJavaScriptCode {
     my ($this, $result, $opt) = @_;
 
     my $jscode;
-    $jscode .= qq(<script type="text/javascript" src="http://nlp.kuee.kyoto-u.ac.jp/~skeiji/drawResult.js"></script>\n);
+    $jscode .= qq(<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/drawResult.js"></script>\n);
     $jscode .= qq(<script language="JavaScript">\n);
 
     # 単語・同義表現グループを描画する
