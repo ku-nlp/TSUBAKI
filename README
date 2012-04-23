@@ -51,6 +51,7 @@
   -- XML::LibXML
   -- CDB_File
   -- Error
+     Module::Metadata, version, Perl::OSType, Module::Buildも必要
 
 
 * 2. インデクシング
