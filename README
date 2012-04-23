@@ -1,179 +1,147 @@
-###################################
-# ¸¡º÷¥¨¥ó¥¸¥ó TSUBAKI ¥Ş¥Ë¥å¥¢¥ë #
-###################################
+###############################
+# æ¤œç´¢ã‚¨ãƒ³ã‚¸ãƒ³ TSUBAKI README #
+###############################
 
-====================
-É¬Í×¤ÊPerl¥â¥¸¥å¡¼¥ë
-====================
+============
+ãƒ‰ã‚­ãƒ¥ãƒ¡ãƒ³ãƒˆ
+============
 
-- Error
-- Unicode::Japanese
-- PerlIO::gzip
-
-====================================
-Ã±¸ì¡¦·¸¤ê¼õ¤±¥¤¥ó¥Ç¥Ã¥¯¥¹¤ÎºîÀ®ÊıË¡
-====================================
-
-----------------------------------------------------------------------
-1. É¸½à¥Õ¥©¡¼¥Ş¥Ã¥È²½¤µ¤ì¤¿Ê¸½ñ¤ÎKNPÉôÊ¬(<Annotation Sceme="Knp">
-... </Annotation>¤Ç°Ï¤Ş¤ì¤¿ÉôÊ¬)¤òÆÉ¤ß¹ş¤ß¡¢Ê¸½ñ¤´¤È¤ËÃ±¸ì¡¦·¸¤ê¼õ¤±¤Î
-ÉÑÅÙ¤ò·×¿ô¤¹¤ë
-----------------------------------------------------------------------
-
-Usage: perl make_idx.pl -in INPUT_DIR -out OUTPUT_DIR
-
-"-in" ¤Ç»ØÄê¤·¤¿¥Ç¥£¥ì¥¯¥È¥ê¤ò³«¤­¡¢¥Õ¥¡¥¤¥ëÌ¾¤¬"<¿ô»ú>.xml"¤Î¥Õ¥¡¥¤¥ë
- ¤òÆÉ¤ß¹ş¤à
-"-out"¤Ç»ØÄê¤·¤¿¥Ç¥£¥ì¥¯¥È¥ê¤Ë¡¢"<¿ô»ú>.idx"¥Õ¥¡¥¤¥ë¤òºîÀ®
-"-knp" ¤ÇÉ¸½à¥Õ¥©¡¼¥Ş¥Ã¥È¤ËËä¤á¹ş¤Ş¤ì¤¿KNP²òÀÏ·ë²Ì¤«¤é¥¤¥ó¥Ç¥Ã¥¯¥¹¤òºî
-À®¤¹¤ë
-
-[skeiji@nlpc01 scripts]$ ls in
-00000010.xml  00000012.xml  00000014.xml  00000016.xml  00000018.xml
-00000011.xml  00000013.xml  00000015.xml  00000017.xml  00000019.xml
-[skeiji@nlpc01 scripts]$ ls out/
-[skeiji@nlpc01 scripts]$ perl make_idx.pl -in in -out out -knp
-dir=in,file=00000010 (Id=1) done.
-dir=in,file=00000011 (Id=15) done.
-dir=in,file=00000012 (Id=30) done.
-dir=in,file=00000013 (Id=60) done.
-dir=in,file=00000014 (Id=63) done.
-dir=in,file=00000015 (Id=28) done.
-dir=in,file=00000016 (Id=87) done.
-dir=in,file=00000017 (Id=35) done.
-dir=in,file=00000018 (Id=32) done.
-dir=in,file=00000019 (Id=30) done.
-[skeiji@nlpc01 scripts]$ ls out/
-00000010.idx  00000012.idx  00000014.idx  00000016.idx  00000018.idx
-00000011.idx  00000013.idx  00000015.idx  00000017.idx  00000019.idx
-[skeiji@nlpc01 scripts]$ head out/00000010.idx
-¥·¡¼¥Í¥Ã¥È 10:2
-¥·¡¼¥Í¥Ã¥È->£Í£Å£Ô£Á 10:2
-¥À¥ó¥Ü¡¼¥ë¥Ï¥¦¥¹ 10:1
-¥Ç¥£¥Î 10:5
-¥Ç¥£¥Î->³Ú¤·¤¤ 10:5
-Æâ 10:5
-Æâ->³Ú¤·¤¤ 10:3
-³Ú¤·¤¤->Æâ 10:5
-´á¶ñ 10:1
-´á¶ñ->£Í£Å£Ô£Á 10:1
+å„ç¨®ãƒ‰ã‚­ãƒ¥ãƒ¡ãƒ³ãƒˆã¯ã€TSUBAKI Wikiã‚’å‚ç…§ã—ã¦ãã ã•ã„ã€‚
+  http://tsubaki-wiki.ixnlp.nii.ac.jp/index.php
+    user: tsubaki-user
+    pass: tsu8k!
 
 
--------------------------------------------
-2. ·×¿ô¤·¤¿Ã±¸ì¡¦·¸¤ê¼õ¤±¤ÎÉÑÅÙ¤ò¥Ş¡¼¥¸¤¹¤ë
--------------------------------------------
+================
+ã‚¯ã‚¤ãƒƒã‚¯ã‚¹ã‚¿ãƒ¼ãƒˆ
+================
 
-Usage: perl merge_idx.pl -d DIR > merge.idx
+ã‚µãƒ³ãƒ—ãƒ«ãƒ‡ãƒ¼ã‚¿ã‚’ä½¿ã£ã¦ã€TSUBAKIã§æ¤œç´¢ã§ãã‚‹ã‚ˆã†ã«ã™ã‚‹ã¾ã§ã®æ‰‹é †ã‚’ä»¥ä¸‹ã«
+ç¤ºã—ã¾ã™ã€‚
 
-¥Ç¥£¥ì¥¯¥È¥êDIR¤ò³«¤­¡¢³ÈÄ¥»Ò¤¬idx¤Î¥Õ¥¡¥¤¥ë¤òÆÉ¤ß¹ş¤à
-É¸½à½ĞÎÏ¤Ë¡¢¥Ş¡¼¥¸¤·¤¿·ë²Ì¤ò½ĞÎÏ
-
-[skeiji@nlpc01 scripts]$ ls out/
-00000010.idx  00000012.idx  00000014.idx  00000016.idx  00000018.idx
-00000011.idx  00000013.idx  00000015.idx  00000017.idx  00000019.idx
-[skeiji@nlpc01 scripts]$ perl merge_idx.pl -dir out > out.idx
-(10) done.
-[skeiji@nlpc01 scripts]$ lv out.idx
-¤«¤Ê¤ê 16:2
-¤«¤Ê¤ê->Âç¤­¤¤ 16:1
-¤«¤Ê¤ê->¾®¤µ¤¤ 16:1
-¤­ 19:0.5
-¤­->¥«¥¤¥í¥×¥é¥¯¥Æ¥£¥Ã¥¯ 19:0.5
-¤´¤Ã¤³ 11:1
-¤µ 11:1
-¤µ->¹â 11:1
-¤µ¤­¤¬¤± 19:2
-¤µ¤­¤¬¤±->¥ê¥ó¥¯ 19:2
-¤·¤«¤· 17:1
-¤·¤«¤·->¥¹¥¤¥à¥·¥ã¥Ä 17:1
-¤¹¤ë 13:1 17:4 18:1 19:1
-¤¹¤ë->¤Î 13:1
-¤¹¤ë->Í½Äê 18:1
-¤¿¤á 15:1 16:1 17:1
-¤¿¤á->¥¦¥§¥¢ 17:1
-¤¿¤á->¥¹¥¤¥à¥·¥ã¥Ä 15:1 16:1
-¤Ä¤¯ 14:2
-¤Ç 13:1 17:4
-¤Ç->¤¹¤ë 13:1 17:3
-¤È¤Æ¤â 19:1
-¤È¤Æ¤â->³Ú¤·¤¤ 19:1
+* ç›®æ¬¡
+1 å¿…è¦ãªãƒ©ã‚¤ãƒ–ãƒ©ãƒªãªã©ã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«
+2 ã‚¤ãƒ³ãƒ‡ã‚¯ã‚·ãƒ³ã‚°
+3 æ¤œç´¢ã®è¨­å®š
+4 æ¤œç´¢ã®ãƒ†ã‚¹ãƒˆ
+5 ãƒ–ãƒ©ã‚¦ã‚¶ã‹ã‚‰ã®æ¤œç´¢
 
 
-----------------------------------------------------------------------
-3. ¸«½Ğ¤·½ç¤Ë¥½¡¼¥È¤µ¤ì¤¿Ê£¿ô¸Ä¤Î¥¤¥ó¥Ç¥Ã¥¯¥¹¥Õ¥¡¥¤¥ë¡Ê2. ¤Îmerge.idx¡Ë
-¤ò¥Ş¡¼¥¸¤¹¤ë
-----------------------------------------------------------------------
+* 1. å¿…è¦ãªãƒ©ã‚¤ãƒ–ãƒ©ãƒªãªã©ã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«
 
-Usage: perl merge_sorted_idx.pl -d DIR > merge.idx
+- TSUBAKIã®å–å¾—
+  -- cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co SearchEngine
 
-¥Ç¥£¥ì¥¯¥È¥êDIR¤ò³«¤­¡¢³ÈÄ¥»Ò¤¬idx¤Î¥Õ¥¡¥¤¥ë¤òÆÉ¤ß¹ş¤à
-É¸½à½ĞÎÏ¤Ë¡¢¥Ş¡¼¥¸¤·¤¿·ë²Ì¤ò½ĞÎÏ
+- JUMANã€KNPã€Utils, SynGraphãŒå¿…è¦
+  -- JUMAN (http://nlp.ist.i.kyoto-u.ac.jp/index.php?JUMAN)
+  -- KNP (http://nlp.ist.i.kyoto-u.ac.jp/index.php?KNP)
+  -- Utils
+  -- SynGraph
 
+- å¿…è¦ãªãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ã®å–å¾—
+  -- è¤‡åˆåè©ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹:http://reed.kuee.kyoto-u.ac.jp/~skeiji/data/cns.100M.cls.df1000.cdb (128MB)
 
---------------------------------------------------------
-4. idx¥Õ¥¡¥¤¥ë¤ò¥Ğ¥¤¥Ê¥ê²½¤¹¤ë(¥ª¥Õ¥»¥Ã¥ÈÃÍ¤âÆ±»ş¤ËÊİÂ¸)
---------------------------------------------------------
+- å¿…è¦ãªãƒ©ã‚¤ãƒ–ãƒ©ãƒªã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«
+  -- libxml (http://xmlsoft.org/)
+  -- TinyCDB (http://www.corpit.ru/mjt/tinycdb.html)
 
-Usage: perl binarize_idx.pl ./<NAME>.idx
-
-°ú¿ô¤Ë»ØÄê¤µ¤ì¤¿¥Õ¥¡¥¤¥ë(<NAME>.idx)¤«¤é¥Ç¡¼¥¿¤òÆÉ¤ß¡¢¥Ğ¥¤¥Ê¥ê²½
-idx<NAME>.(word|dpnd).dat ¤Ë·ë²Ì¤ò½ĞÎÏoffset<NAME>.(word|dpnd).cdb ¤Ë
-¥ª¥Õ¥»¥Ã¥ÈÃÍ¤òÊİÂ¸(CDB)
-
-[skeiji@nlpc01 scripts]$ perl binarize_idx.pl ./out.idx
-binarizing (1143) done.
-[skeiji@nlpc01 scripts]$ ls idxout.*
-idxout.dpnd.dat  idxout.word.dat
-[skeiji@nlpc01 scripts]$ ls offsetout.*
-offsetout.dpnd.cdb  offsetout.word.cdb
-[skeiji@nlpc01 scripts]$
+- å¿…è¦ãªperlãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ« (CPANã‹ã‚‰ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã€ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«)
+  -- Unicode::Japanese
+  -- PerlIO::gzip
+  -- XML::LibXML
+  -- CDB_File
+  -- Error
 
 
-======================
-¸¡º÷¥¨¥ó¥¸¥ó¤ÎÀßÃÖÊıË¡
-======================
+* 2. ã‚¤ãƒ³ãƒ‡ã‚¯ã‚·ãƒ³ã‚°
+(SearchEngine/sf2index/sample_dataä»¥ä¸‹ã«ã‚ã‚‹ã‚µãƒ³ãƒ—ãƒ«ã®æ¨™æº–ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚’ç”¨ã„ã‚‹å ´åˆ)
 
---------------------------------------------------------------
-1. °Ê²¼¤Î¥Õ¥¡¥¤¥ë¤òcgi¤¬¼Â¹Ô²ÄÇ½¤Ê¡ÊÆ±°ì¤Î¡Ë¥Ç¥£¥ì¥¯¥È¥ê¤ËÃÖ¤¯
---------------------------------------------------------------
-
-* cgi/index.cgi
-* cgi/api.cgi
-* scripts/Indexer.pm
-* cgi/QueryParser.pm
-* cgi/SearchEngine.pm
-* cgi/SnippetMaker.pm
-
-É¬Í×¤Ç¤¢¤ì¤Ğ¡¢index.cgi¤Î$PORT¤ª¤è¤Ó$TOOL_HOME, $LOG_DIR¤òÅ¬ÀÚ¤Ê¿ôÃÍ¡¢
-¥Ç¥£¥ì¥¯¥È¥ê(nkf¤¬¥¤¥ó¥¹¥È¡¼¥ë¤µ¤ì¤Æ¤¤¤ë¥Ç¥£¥ì¥¯¥È¥ê¤È¥¯¥¨¥ê¥í¥°¤òÊİÂ¸
-¤¹¤ë¥Ç¥£¥ì¥¯¥È¥ê)¤ËÊÑ¹¹¤¹¤ë.  Æ±ÍÍ¤Ë¡¢É¬Í×¤Ç¤¢¤ì¤Ğapi.cgi¤Ë¤Ä¤¤¤Æ¤â
-$PORT, $LOG_DIR ÊÑ¿ô¤òÅ¬ÀÚ¤Ê¿ôÃÍ¡¢¥Ç¥£¥ì¥¯¥È¥ê¤ËÊÑ¹¹¤¹¤ë
+1 cd SearchEngine/sf2index
+2 make UtilsDir=/somewhere/Utils
+(UtilsDirã‚’é©åˆ‡ã«è¨­å®šã™ã‚‹ã€‚)
 
 
-----------------------------------------------------------------------
-2. idx*.dat, offset*.dat ¥Õ¥¡¥¤¥ë¤¬¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê¡¢
-index.cgi(api.cgi)¤Ç»ØÄê¤·¤¿¥İ¡¼¥ÈÈÖ¹æ¡¢Ã±¸ì¥¤¥ó¥Ç¥Ã¥¯¥¹¤ÎÊ¸½ñÉÑÅÙDB¡¢
-·¸¤ê¼õ¤±¥¤¥ó¥Ç¥Ã¥¯¥¹¤ÎÊ¸½ñÉÑÅÙDB¤ò°ú¿ô¤È¤·¤ÆÍ¿¤¨¡¢¸¡º÷¥µ¡¼¥Ğ¤òµ¯Æ°¤¹¤ë
-----------------------------------------------------------------------
+* 3. æ¤œç´¢ã®è¨­å®š
 
-¥Ş¥·¥óÌ¾> ready!
+1 SearchEngine/searchä¸‹ã§makeã—ã¦ã€æ¤œç´¢ã‚µãƒ¼ãƒã‚’ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«
+  -- Makefile: TinyCDBã®cdb.hã€libcdb.aã®å ´æ‰€ãªã©ã‚’é©åˆ‡ã«æŒ‡å®š
 
-¤ÈÉ½¼¨¤µ¤ì¤ì¤Ğ¸¡º÷¥µ¡¼¥Ğ¤Îµ¯Æ°¤ÏÀ®¸ù.
+2 SearchEngineç›´ä¸‹ã«ãŠã„ã¦ã€./setup.sh ã‚’å®Ÿè¡Œ (cgi/configureãƒ•ã‚¡ã‚¤ãƒ«ãŒç”Ÿæˆã•ã‚Œã‚‹)
 
-[skeiji@nlpc01 scripts]$ perl se_server.pl /work/ntcir_k 9684 ~/ntcir_dffiles/df
-.cdb.word ~/ntcir_dffiles/df.cdb.dep9
-nlpc01> loading df database...
-nlpc01> done.
-nlpc01> port=9684
-nlpc01> index_dir=/work/ntcir_k
-nlpc01> ready!
+3 SearchEngine/cgi/configureãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã„ã¦ã€ä»¥ä¸‹ã®é …ç›®ã‚’ä¿®æ­£
 
-¤Ê¤ª¡¢df.cdb.word¤ª¤è¤Ódf.cdb.dep9¤Ï°Ê²¼¤Î¥µ¥¤¥È¤«¤é¥À¥¦¥ó¥í¡¼¥É¤Ç¤­¤ë.
+  UTILS_PATH	/home/kawahara/share/tool/Utils/perl
+  COMPOUND_NOUN_DFDB_PATH        /share/text/tsubaki/cns.100M.cls.df1000.cdb (â€» ä¸Šè¨˜ã§ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰ã—ãŸcns.100M.cls.df1000.cdbã®å ´æ‰€)
 
-http://nlp.kuee.kyoto-u.ac.jp/~skeiji/df.cdb.word 1.2GB
-http://nlp.kuee.kyoto-u.ac.jp/~skeiji/df.cdb.dep9 2.4GB
+  -- æ—¥æœ¬èªã®æ¤œç´¢ã‚’ã™ã‚‹å ´åˆã¯ã€ä»¥ä¸‹ã®é …ç›®ã‚‚ä¿®æ­£
+  KNP_COMMAND	/usr/local/bin/knp
+  JUMAN_COMMAND	/usr/local/bin/juman
+  JUMAN_RCFILE	/usr/local/etc/jumanrc
+  KNP_RCFILE	/usr/local/etc/knprc
+  SYNDB_PATH     /home/kawahara/share/tool/SynGraph/syndb/x86_64 (â€» i686ã‹x86_64ã®é¸æŠã¯ã€uname -mã§ç¢ºèª)
+  SYNGRAPH_PM_PATH       /home/kawahara/share/tool/SynGraph/perl
+
+  -- è‹±èªã®æ¤œç´¢ã‚’ã™ã‚‹å ´åˆã¯ã€ä»¥ä¸‹ã®é …ç›®ã‚‚ä¿®æ­£
+  WWW2SF_PATH     /home/kawahara/share/tool/WWW2sf/tool/perl
+  IS_ENGLISH_VERSION	1
+
+  ãªãŠã€ã‚µãƒ³ãƒ—ãƒ«ä»¥å¤–ã®æ¨™æº–ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆã‚’å¯¾è±¡ã«ã™ã‚‹å ´åˆã¯ã€ä»¥ä¸‹ã®é …ç›®ã‚‚å¤‰æ›´ã™ã‚‹ã€‚
+  DIR_PREFIX_FOR_SFS_W_SYNGRAPH  /home/kawahara/public_html/SearchEngine/sf2index/sample_data
+  SYNGRAPH_DFDB_PATH     /home/kawahara/public_html/SearchEngine/sf2index/sample_data
 
 
---------------------------------------------------------
-3. ¼Âºİ¤Ëindex.cgi¤Ë¥Ö¥é¥¦¥¶¤Ç¥¢¥¯¥»¥¹¤·¡¢¸¡º÷¤ò¼Â¹Ô¤¹¤ë
---------------------------------------------------------
+* 4. æ¤œç´¢ãƒ†ã‚¹ãƒˆ [#dc216c8c]
+- ã‚µãƒ³ãƒ—ãƒ«ã®ã‚¯ã‚¨ãƒªãƒ•ã‚¡ã‚¤ãƒ«(SearchEngine/sf2index/query.sample.ja.sexp)ã‚’ç”¨ã„ãŸæ¤œç´¢ãƒ†ã‚¹ãƒˆ
+  -- SearchEngine/sf2indexä¸‹ã§
+     ./search.sh -d sample_data -f query.sample.ja.sexp
+
+
+- ä»»æ„ã®ã‚¯ã‚¨ãƒªã«ã‚ˆã‚‹æ¤œç´¢
+  -- SearchEngine/sf2index/search.shã®utils_dirã‚’é©åˆ‡ã«è¨­å®š
+  -- SearchEngine/sf2indexä¸‹ã§
+     ./search.sh -d sample_data ã‚¯ã‚¨ãƒª(UTF8ã§)
+
+
+* 5. ãƒ–ãƒ©ã‚¦ã‚¶ã‹ã‚‰ã®æ¤œç´¢ [#o26d50ac]
+
+- è¨­å®š
+  -- SearchEngine/conf/tsubaki.confã‚’ä¿®æ­£
+     --- TSUBAKI_DIRã¨CONFIG_FILEã‚’ä¿®æ­£
+
+     # SearchEngineãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã¸ã®ãƒ‘ã‚¹(â˜…è¦å¤‰æ›´)
+     TSUBAKI_DIR=$HOME/public_html/SearchEngine
+     # configureãƒ•ã‚¡ã‚¤ãƒ«ã¸ã®ãƒ‘ã‚¹(â˜…è¦å¤‰æ›´)
+     CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
+
+  -- SearchEngine/data/PORTS.SYNã‚’ä¿®æ­£
+     --- æ—¢å­˜ã®4è¡Œã‚’æ¶ˆã—ã¦ã€æ¬¡ã®ã‚ˆã†ãªä¸€è¡Œã‚’è¨˜å…¥ã™ã‚‹~
+
+     â€» 39999ã¯TSUBAKIã‚¹ãƒ¬ãƒ¼ãƒ–ã‚µãƒ¼ãƒãŒä½¿ã†ãƒãƒ¼ãƒˆç•ªå·(ä»»æ„ã®ç•ªå·ã§OK)
+     /home/kawahara/public_html/SearchEngine/sf2index/sample_data none 39999
+
+  -- SearchEngine/cgi/configureã‚’ä¿®æ­£
+     --- orchid01ã®ãƒãƒ¼ãƒˆ39999ã§TSUBAKIã‚¹ãƒ¬ãƒ¼ãƒ–ã‚µãƒ¼ãƒã€ãƒãƒ¼ãƒˆ59001ã§ã‚¹ãƒ‹ãƒšãƒƒãƒˆã‚µãƒ¼ãƒã‚’ä¸Šã’ã‚‹å ´åˆ
+
+     HOSTS_PREFIX   orchid
+     HOSTS_START    01
+     HOSTS_END      01
+     SEARCH_SERVERS_FOR_SYNGRAPH     orchid01 39999
+     STANDARD_FORMAT_LOCATION        orchid01 59001   000
+
+
+- æ¤œç´¢ã‚µãƒ¼ãƒã¨ã‚¹ãƒ‹ãƒšãƒƒãƒˆã‚µãƒ¼ãƒã®èµ·å‹•
+  -- TSUBAKIæ¤œç´¢ã‚µãƒ¼ãƒã‚’èµ·å‹•
+     --- ä»»æ„ã®ãƒãƒ¼ãƒ‰ã§æ¬¡ã®ã‚³ãƒãƒ³ãƒ‰ã‚’å®Ÿè¡Œ
+     SearchEngine/scripts/tsubaki-server.sh start
+
+     --- æ­¢ã‚ã‚‹å ´åˆã¯æ¬¡ã®ã¨ãŠã‚Š
+     SearchEngine/scripts/tsubaki-server.sh stop
+
+  -- ã‚¹ãƒ‹ãƒšãƒƒãƒˆã‚µãƒ¼ãƒã‚’èµ·å‹•
+     --- ä»»æ„ã®ãƒãƒ¼ãƒ‰ã§æ¬¡ã®ã‚³ãƒãƒ³ãƒ‰ã‚’å®Ÿè¡Œ
+     SearchEngine/scripts/snippet-server.sh start
+
+     --- æ­¢ã‚ã‚‹å ´åˆã¯æ¬¡ã®ã¨ãŠã‚Š
+     SearchEngine/scripts/snippet-server.sh stop
+
+- SearchEngine/cgi/index.cgiã‚’ãƒ–ãƒ©ã‚¦ã‚¶ã§ãŸãŸã„ã¦æ¤œç´¢
