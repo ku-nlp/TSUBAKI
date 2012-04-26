@@ -1,0 +1,19 @@
+# TSUBAKIが利用する設定ファイル
+
+# SearchEngineディレクトリへのパス(★要変更)
+TSUBAKI_DIR=@SearchEnginePath@
+# configureファイルへのパス(★要変更)
+CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
+
+
+# Utilsディレクトリへのパス
+UTILS_DIR=`grep UTILS_PATH $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+# perlへのパス
+PERL=`grep ^PERL $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+# PORTS.SYNファイルへのパス
+PORTS_FILE=`grep PORTS_FILE_PATH $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+
+HOSTS_PREFIX=`grep HOSTS_PREFIX $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+HOSTS_START=`grep HOSTS_START $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+HOSTS_END=`grep HOSTS_END $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+DEGIT=`grep HOSTS_DEGIT $CONFIG_FILE | grep -v \# | awk '{print $2}'`

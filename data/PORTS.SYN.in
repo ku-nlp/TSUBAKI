@@ -1,0 +1,2 @@
+# 1行1ポート, 「#」から始まる行は無視される
+@SearchEnginePath@/sf2index/sample_data none 39999
