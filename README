@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/04/24 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/04/26 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 ============
@@ -41,10 +41,6 @@
   cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co Utils
   cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co SynGraph
 
-- 必要なデータベースの取得
- -- 複合名詞データベース
-    http://reed.kuee.kyoto-u.ac.jp/~skeiji/data/cns.100M.cls.df1000.cdb (128MB)
-
 - 必要なライブラリのインストール
   -- libxml (http://xmlsoft.org/)
   -- TinyCDB (http://www.corpit.ru/mjt/tinycdb.html)
@@ -76,7 +72,6 @@
 3 SearchEngine/cgi/configureファイルを開いて、以下の項目を修正
 
   UTILS_PATH	/home/kawahara/share/tool/Utils/perl
-  COMPOUND_NOUN_DFDB_PATH        /share/text/tsubaki/cns.100M.cls.df1000.cdb (※ 上記でダウンロードしたcns.100M.cls.df1000.cdbの場所)
 
   -- 日本語の検索をする場合は、以下の項目も修正
   KNP_COMMAND	/usr/local/bin/knp
@@ -110,16 +105,8 @@
 * 5. ブラウザからの検索
 
 - 設定
-  -- SearchEngine/conf/tsubaki.confを修正
-     --- TSUBAKI_DIRとCONFIG_FILEを修正
-
-     # SearchEngineディレクトリへのパス(★要変更)
-     TSUBAKI_DIR=$HOME/public_html/SearchEngine
-     # configureファイルへのパス(★要変更)
-     CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
-
   -- SearchEngine/data/PORTS.SYNを修正
-     --- 既存の4行を消して、次のような一行を記入する~
+     --- 次のような一行を記入する~
 
      ※ 39999はTSUBAKIスレーブサーバが使うポート番号(任意の番号でOK)
      /home/kawahara/public_html/SearchEngine/sf2index/sample_data none 39999
