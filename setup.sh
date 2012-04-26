@@ -1,24 +1,56 @@
 #!/bin/sh
 
-CONFIGURE_FILE_IN=cgi/configure.in
-CONFIGURE_FILE=cgi/configure
-TSUBAKI_CONF_FILE_IN=conf/tsubaki.conf.in
-TSUBAKI_CONF_FILE=conf/tsubaki.conf
-PORTS_FILE_IN=data/PORTS.SYN.in
-PORTS_FILE=data/PORTS.SYN
-
 CWD=$(pwd)
+
+CONFIGURE_FILE_IN=$CWD/cgi/configure.in
+CONFIGURE_FILE=$CWD/cgi/configure
+TSUBAKI_CONF_FILE_IN=$CWD/conf/tsubaki.conf.in
+TSUBAKI_CONF_FILE=$CWD/conf/tsubaki.conf
+PORTS_FILE_IN=$CWD/data/PORTS.SYN.in
+PORTS_FILE=$CWD/data/PORTS.SYN
+SF2INDEX_MAKEFILE_IN=$CWD/sf2index/Makefile.in
+SF2INDEX_MAKEFILE=$CWD/sf2index/Makefile
+SF2INDEX_SEARCH_SH_IN=$CWD/sf2index/search.sh.in
+SF2INDEX_SEARCH_SH=$CWD/sf2index/search.sh
 
 NAME_LIST="
 SearchEnginePath
+UtilsPath
 HOME
 "
 
 SearchEnginePath=$CWD
+UtilsPath=$CWD/Utils
+
+usage() {
+    echo "$0 [-u UtilsPath]"
+    exit 1
+}
 
 # getopts
-# 
+while getopts u:h OPT
+do
+    case $OPT in
+        u)  UtilsPath=$OPTARG
+            ;;
+        h)  usage
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`
 
+# check Utils
+if [ ! -d "$UtilsPath" ]; then
+    if [ -d $CWD/../Utils ]; then
+	UtilsPath=$CWD/../Utils
+    else
+	echo "Utils is not found. Please download Utils (see README)."
+	usage
+    fi
+fi
+
+
+# make sed string
 SED_STR=
 for name in $NAME_LIST
 do
@@ -27,6 +59,7 @@ do
     SED_STR=${SED_STR}"s#@${name}@#${val}#g;"
 done
 
+# generation
 echo "generating '${CONFIGURE_FILE}' ... "
 sed -e "${SED_STR}" $CONFIGURE_FILE_IN > $CONFIGURE_FILE
 echo "done."
@@ -35,4 +68,10 @@ sed -e "${SED_STR}" $TSUBAKI_CONF_FILE_IN > $TSUBAKI_CONF_FILE
 echo "done."
 echo "generating '${PORTS_FILE}' ... "
 sed -e "${SED_STR}" $PORTS_FILE_IN > $PORTS_FILE
+echo "done."
+echo "generating '${SF2INDEX_MAKEFILE}' ... "
+sed -e "${SED_STR}" $SF2INDEX_MAKEFILE_IN > $SF2INDEX_MAKEFILE
+echo "done."
+echo "generating '${SF2INDEX_SEARCH_SH}' ... "
+sed -e "${SED_STR}" $SF2INDEX_SEARCH_SH_IN > $SF2INDEX_SEARCH_SH
 echo "done."
