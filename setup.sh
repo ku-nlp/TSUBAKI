@@ -16,22 +16,32 @@ SF2INDEX_SEARCH_SH=$CWD/sf2index/search.sh
 NAME_LIST="
 SearchEnginePath
 UtilsPath
+WWW2sfPath
+SynGraphPath
+MachineType
 HOME
 "
 
 SearchEnginePath=$CWD
 UtilsPath=$CWD/Utils
+SynGraphPath=$CWD/SynGraph
+WWW2sfPath=$CWD/WWW2sf
+MachineType=`uname -m`
 
 usage() {
-    echo "$0 [-u UtilsPath]"
+    echo "Usage: $0 [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath]"
     exit 1
 }
 
 # getopts
-while getopts u:h OPT
+while getopts u:s:w:h OPT
 do
     case $OPT in
         u)  UtilsPath=$OPTARG
+            ;;
+        s)  SynGraphPath=$OPTARG
+            ;;
+        w)  WWW2sfPath=$OPTARG
             ;;
         h)  usage
             ;;
@@ -41,12 +51,19 @@ shift `expr $OPTIND - 1`
 
 # check Utils
 if [ ! -d "$UtilsPath" ]; then
-    if [ -d $CWD/../Utils ]; then
-	UtilsPath=$CWD/../Utils
-    else
-	echo "Utils is not found. Please download Utils (see README)."
-	usage
-    fi
+    echo "Utils is not found. Please download Utils (see README)."
+    usage
+fi
+
+# check SynGraph
+if [ ! -d "$SynGraphPath" ]; then
+    echo "SynGraph is not found. Please download SynGraph (see README)."
+    usage
+fi
+
+# check WWW2sf
+if [ ! -d "$WWW2sfPath" ]; then
+    echo "WWW2sf is not found. Skipped WWW2sf (see README)."
 fi
 
 
