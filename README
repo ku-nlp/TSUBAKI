@@ -36,13 +36,18 @@
   -- JUMAN (http://nlp.ist.i.kyoto-u.ac.jp/index.php?JUMAN)
   -- KNP (http://nlp.ist.i.kyoto-u.ac.jp/index.php?KNP)
 
-- Utils, SynGraphの取得
+- Utils, SynGraphなどの取得
   これらの取得をこのディレクトリ(TSUBAKI直下)で行い、ここにUtilsとSynGraphを置くと、
   以下の設定が自動的に行われるので楽です
 
   cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs login (password: kuro-language)
   cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co Utils
   cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co SynGraph
+
+
+  標準フォーマットを作成する場合と英語で検索する場合は、WWW2sfも取得
+
+  cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co WWW2sf
 
 - 必要なライブラリのインストール
   -- libxml (http://xmlsoft.org/)
@@ -72,15 +77,13 @@
 2 TSUBAKI直下において、./setup.sh を実行 (cgi/configureファイルが生成される)
 
 3 TSUBAKI/cgi/configureファイルを開いて、以下の項目を修正
-  -- 日本語の検索をする場合は、以下の項目も修正
+  -- 日本語の検索をする場合は、以下の項目を修正
   KNP_COMMAND	/usr/local/bin/knp
   JUMAN_COMMAND	/usr/local/bin/juman
   JUMAN_RCFILE	/usr/local/etc/jumanrc
   KNP_RCFILE	/usr/local/etc/knprc
-  SYNDB_PATH     /home/kawahara/share/tool/SynGraph/syndb/x86_64 (※ i686かx86_64の選択は、uname -mで確認)
-  SYNGRAPH_PM_PATH       /home/kawahara/share/tool/SynGraph/perl
 
-  -- 英語の検索をする場合は、以下の項目も修正
+  -- 英語の検索をする場合は、以下の項目を修正
   WWW2SF_PATH     /home/kawahara/share/tool/WWW2sf/tool/perl
   IS_ENGLISH_VERSION	1
 
@@ -103,11 +106,11 @@
 * 5. ブラウザからの検索
 
 - 設定
-  -- TSUBAKI/data/PORTS.SYNを修正
-     --- 次のような一行を記入する~
-
-     ※ 39999はTSUBAKIスレーブサーバが使うポート番号(任意の番号でOK)
+  -- TSUBAKI/data/PORTS.SYNを修正 (サンプル標準フォーマットを使う場合は設定しなくてよい)
+     --- インデックスの場所とポート番号(任意の番号でOK)を記入する
      /home/kawahara/public_html/TSUBAKI/sf2index/sample_data none 39999
+
+     ※ ポート番号(この場合39999)はTSUBAKIスレーブサーバが使う
 
   -- TSUBAKI/cgi/configureを修正
      --- orchid01のポート39999でTSUBAKIスレーブサーバ、ポート59001でスニペットサーバを上げる場合
