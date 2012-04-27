@@ -34,11 +34,11 @@ JUMAN_COMMAND	/usr/local/bin/juman
 JUMAN_RCFILE	/usr/local/etc/jumanrc
 KNP_RCFILE	/usr/local/etc/knprc
 KNP_OPTIONS	-postprocess,-tab,-dpnd
-SYNDB_PATH	@HOME@/cvs/SynGraph/syndb/x86_64
-SYNGRAPH_PM_PATH	@HOME@/cvs/SynGraph/perl
+SYNDB_PATH	@SynGraphPath@/syndb/@MachineType@
+SYNGRAPH_PM_PATH	@SynGraphPath@/perl
 MIDB_PATH	@HOME@/cvs/CalcSimilarityByCF/db/all-mi
 WWW2SF_PATH	@HOME@/cvs/WWW2sf/tool/perl
-UTILS_PATH	@HOME@/cvs/Utils/perl
+UTILS_PATH	@UtilsPath@/perl
 TSUBAKI_SCRIPT_PATH	@SearchEnginePath@/scripts
 TSUBAKI_MODULE_PATH	@SearchEnginePath@/perl
 PORTS_FILE_PATH		@SearchEnginePath@/data/PORTS.SYN
