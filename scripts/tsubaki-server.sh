@@ -10,9 +10,9 @@ SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 
 
 call() {
-    for n in `seq $HOSTS_START $HOSTS_END | awk '{printf "%0'$DEGIT'd\n", $1}'`
+    grep SEARCH_SERVERS_FOR_SYNGRAPH $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
     do
-	h=$HOSTS_PREFIX$n
+	h=`echo $LINE | cut -f 1 -d ' '`
 	ssh -f $h "sh $SCRIPTS_DIR/tsubaki-server-manager.sh $1"
     done
 }
