@@ -2,7 +2,7 @@ ID = 000
 IDX0_SUFFIX = idx0
 IDX1_SUFFIX = idx1
 BASEDIR = $(shell pwd)
-DATADIR = sample_data
+DATADIR = @DocumentPathBase@
 HTMLS = $(wildcard $(DATADIR)/*.html)
 XMLS = $(wildcard $(DATADIR)/*.xml)
 IDXS = $(patsubst %.xml,%.$(IDX0_SUFFIX),$(XMLS))
@@ -16,7 +16,7 @@ URLDB = $(DATADIR)/did2url.cdb
 TITLEDB = $(DATADIR)/did2title.cdb
 
 UtilsDir = @UtilsPath@
-WWW2sfDir = ../../WWW2sf
+WWW2sfDir = @WWW2sfPath@
 
 all: idx_bin idx_length dfdb
 

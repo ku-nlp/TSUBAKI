@@ -10,11 +10,11 @@ usage() {
 
 searchengine_dir=../
 utils_dir=@UtilsPath@
-www2sf_dir=../../WWW2sf
+www2sf_dir=@WWW2sfPath@
 
 file_mode=0
 query_options=-syngraph
-data_dir=sample_data
+data_dir=@DocumentPathBase@
 while getopts d:efh OPT
 do
     case $OPT in
