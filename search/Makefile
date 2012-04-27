@@ -1,16 +1,11 @@
-CXX = g++4
-# CXX = ${HOME}/local/bin/g++
+CXX = g++
 CXXFLAGS = -I lisp -O3 -Wall
-# CXXFLAGS = -I lisp -g -Wall -pg -I /usr/local/include/ -I /home/skeiji/local/include/
-# CXXFLAGS = -I lisp -O3 -Wall -I /usr/local/include/ -I /home/skeiji/local/include/
-# CXXFLAGS = -I lisp -g -Wall -pg -I /usr/local/include/ -I /home/skeiji/local/include/ -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1
-# CXXFLAGS = -I lisp -O3 -Wall -I /usr/local/include/ -I /home/skeiji/local/include/ -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1
+# CXXFLAGS = -I lisp -O3 -Wall -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1
 OBJECTS = slave_server.o document.o documents.o
 HEADERS = hash.h common.h term.h document.h documents.h
 MAKE_DB_OBJECTS = make_db.cc
 LISP_LIB = lisp/lisp.a
 CDB_LIB = -lcdb
-# CDB_LIB = -lcdb -L/home/skeiji/local/lib
 
 all: slave_server make_db
 
