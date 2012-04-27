@@ -5,136 +5,114 @@
 2012/04/27 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
-============
-ドキュメント
-============
+TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)にて開発した
+検索エンジン基盤です。その特徴は、構文・格解析、同義語・句のマッチング
+など深い言語解析技術に基づく検索です。現在のところ、日本語と英語に対応
+しています。
 
-各種ドキュメントは、TSUBAKI Wikiを参照してください。
-  http://tsubaki-wiki.ixnlp.nii.ac.jp/index.php
-    username: tsubaki-user
-    password: tsu8k!
+TSUBAKIで検索を行うには、検索対象文書に対して次の2ステップの処理を行う
+必要があります。
+
+  1. 検索対象文書に言語解析を適用し、その解析結果をXML形式で出力
+     (以後、このXML形式を「標準フォーマット」と呼びます。)
+  2. 標準フォーマットデータからのインデックス生成
 
 
-================
-クイックスタート
-================
+以下では、まず、同梱のサンプル標準フォーマットデータを使ったインデック
+ス生成(上記2の処理)と、それをTSUBAKIで検索できるようにするまでの設定手
+順を示します。
 
-サンプルデータを使って、TSUBAKIで検索できるようにするまでの手順を以下に
-示します。
 
-* 目次
-1 必要なライブラリなどのインストール
-2 インデクシング
-3 検索の設定
-4 検索のテスト
-5 ブラウザからの検索
+==================================
+インデックス生成と検索の準備・設定
+==================================
+
+TSUBAKI/sf2index/sample_data_{ja, en}にある、日本語・英語のサンプル標準
+フォーマットデータを対象にして説明します。サンプル以外の標準フォーマッ
+トを用いる場合に設定が必要な箇所にはその旨を記述しています。
 
 
 * 1. 必要なツール、ライブラリなどのインストール
-
-- JUMAN, KNPの取得、インストール
-  -- JUMAN (http://nlp.ist.i.kyoto-u.ac.jp/index.php?JUMAN)
-  -- KNP (http://nlp.ist.i.kyoto-u.ac.jp/index.php?KNP)
-
-- Utils, SynGraphなどの取得
-  これらの取得をこのディレクトリ(TSUBAKI直下)で行い、ここにUtilsとSynGraphを置くと、
-  以下の設定が自動的に行われるので楽です
-
-  cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs login (password: kuro-language)
-  cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co Utils
-  cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co SynGraph
-
-
-  標準フォーマットを作成する場合と英語で検索する場合は、WWW2sfも取得
-
-  cvs -d :pserver:nobody@reed.kuee.kyoto-u.ac.jp:/share/service/cvs co WWW2sf
 
 - 必要なライブラリのインストール
   -- libxml (http://xmlsoft.org/)
   -- TinyCDB (http://www.corpit.ru/mjt/tinycdb.html)
 
-- 必要なperlモジュールのインストール (CPANからダウンロード、インストール)
+
+- 必要なPerlモジュールのインストール (CPANからダウンロード、インストール)
   -- Unicode::Japanese
   -- PerlIO::gzip
   -- XML::LibXML
   -- CDB_File
-  -- Error
-     Module::Metadata, version, Perl::OSType, Module::Buildも必要
+  -- Error (Module::Metadata, version, Perl::OSType, Module::Buildも必要)
 
 
-* 2. インデクシング
-(TSUBAKI/sf2index/sample_data以下にあるサンプルの標準フォーマットを用いる場合)
+- 日本語の文書を検索する場合
+  -- 日本語形態素解析システムJUMAN,のダウンロード、インストール
+     http://nlp.ist.i.kyoto-u.ac.jp/index.php?JUMAN
 
-1 cd TSUBAKI/sf2index
-2 make
+  -- 日本語構文・格解析システムKNPのダウンロード、インストール
+     http://nlp.ist.i.kyoto-u.ac.jp/index.php?KNP
+
+  -- SynGraph日本語データベース(同義語・句の辞書)のダウンロード
+     http://... を取得し、TSUBAKI直下(このディレクトリ)にて展開してください。
 
 
-* 3. 検索の設定
+- 英語の文書を検索する場合
+  -- Enju - A fast, accurate, and deep parser for Englishのダウンロード、インストール
+     http://www.nactem.ac.uk/enju/index.ja.html
 
-1 TSUBAKI/search下でmakeして、検索サーバをコンパイル
-  -- Makefile: TinyCDBのcdb.h、libcdb.aの場所などを適切に指定
+  ※ SynGraph英語データベースは未リリースです。英語の同義語・句のデータ
+     を別途用意すれば、SynGraphデータベース形式に変換して使うことができ
+     ます。詳細は、SynGraphのドキュメントをご覧ください。
 
-2 TSUBAKI直下において、./setup.sh を実行 (cgi/configureファイルが生成される)
 
-3 TSUBAKI/cgi/configureファイルを開いて、以下の項目を修正
-  -- 日本語の検索をする場合は、以下の項目を修正
-  KNP_COMMAND	/usr/local/bin/knp
-  JUMAN_COMMAND	/usr/local/bin/juman
-  JUMAN_RCFILE	/usr/local/etc/jumanrc
-  KNP_RCFILE	/usr/local/etc/knprc
+* 2. 設定
 
-  -- 英語の検索をする場合は、以下の項目を修正
-  WWW2SF_PATH     /home/kawahara/share/tool/WWW2sf/tool/perl
-  IS_ENGLISH_VERSION	1
+  TSUBAKI直下(このディレクトリ)において、./setup.sh を実行
 
-  なお、サンプル以外の標準フォーマットを対象にする場合は、以下の項目も変更する。
-  DIR_PREFIX_FOR_SFS_W_SYNGRAPH  /home/kawahara/public_html/TSUBAKI/sf2index/sample_data
-  SYNGRAPH_DFDB_PATH     /home/kawahara/public_html/TSUBAKI/sf2index/sample_data
+  ※ 英語の文書を検索する場合は、"-e"を付加
+  ※ サンプル標準フォーマット以外を対象にする場合は、"-d 標準フォーマットデータパス"によって指定
+
+
+* 3. プログラムのコンパイルとインデックス生成
+
+  TSUBAKI直下(このディレクトリ)において、makeを実行
+
+  ※ TSUBAKI/searchでコンパイルが失敗する場合は、TSUBAKI/search/Makefileにおいて、
+     CXXFLAGSとCDB_LIBをcdb.h、libcdb.aのインストール場所に応じて修正する
 
 
 * 4. 検索テスト
-- サンプルのクエリファイル(TSUBAKI/sf2index/query.sample.ja.sexp)を用いた検索テスト
-  -- TSUBAKI/sf2index下で
-     ./search.sh -d sample_data -f query.sample.ja.sexp
 
+- TSUBAKI/sf2index下で "./search.sh クエリ"を実行して検索 (日本語のクエリはUTF8で入力)
 
-- 任意のクエリによる検索
-  -- TSUBAKI/sf2index下で
-     ./search.sh -d sample_data クエリ(UTF8で)
+   日本語の検索例) ./search.sh 旅館	→ hitcountが2になる
+                   ./search.sh 駅	→ hitcountが1になる
 
 
 * 5. ブラウザからの検索
 
-- 設定
-  -- TSUBAKI/data/PORTS.SYNを修正 (サンプル標準フォーマットを使う場合は設定しなくてよい)
-     --- インデックスの場所とポート番号(任意の番号でOK)を記入する
-     /home/kawahara/public_html/TSUBAKI/sf2index/sample_data none 39999
-
-     ※ ポート番号(この場合39999)はTSUBAKIスレーブサーバが使う
-
-  -- TSUBAKI/cgi/configureを修正
-     --- orchid01のポート39999でTSUBAKIスレーブサーバ、ポート59001でスニペットサーバを上げる場合
-
-     HOSTS_PREFIX   orchid
-     HOSTS_START    01
-     HOSTS_END      01
-     SEARCH_SERVERS_FOR_SYNGRAPH     orchid01 39999
-     STANDARD_FORMAT_LOCATION        orchid01 59001   000
-
-
 - 検索サーバとスニペットサーバの起動
-  -- TSUBAKI検索サーバを起動
-     --- 任意のノードで次のコマンドを実行
-     TSUBAKI/scripts/tsubaki-server.sh start
+  TSUBAKI/scripts/server-all.sh start
 
-     --- 止める場合は次のとおり
-     TSUBAKI/scripts/tsubaki-server.sh stop
-
-  -- スニペットサーバを起動
-     --- 任意のノードで次のコマンドを実行
-     TSUBAKI/scripts/snippet-server.sh start
-
-     --- 止める場合は次のとおり
-     TSUBAKI/scripts/snippet-server.sh stop
+  -- 止める場合は次のとおり
+     TSUBAKI/scripts/server-all.sh stop
 
 - TSUBAKI/cgi/index.cgiをブラウザでたたいて検索
+
+
+==========================
+標準フォーマット生成の手順
+==========================
+
+
+
+============
+ドキュメント
+============
+
+より詳細なドキュメントは、TSUBAKI Wikiを参照してください。
+  http://tsubaki-wiki.ixnlp.nii.ac.jp/index.php
+    username: tsubaki-user
+    password: tsu8k!
