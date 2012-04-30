@@ -2,22 +2,27 @@
 
 usage() {
     echo "$0 [-e] query"
+    echo "\t-c conf_file: specify conf_file"
     echo "\t-d dir: specify index_dir"
     echo "\t-e: english mode"
     echo "\t-f: specify query_file instead of query"
     exit 1
 }
 
-searchengine_dir=../
+searchengine_dir=@SearchEnginePath@
 utils_dir=@UtilsPath@
 www2sf_dir=@WWW2sfPath@
 
 file_mode=0
 query_options=-syngraph
-data_dir=@DocumentPathBase@
-while getopts d:efh OPT
+conf_file=@CONFIGURE_FILE@
+data_dir=@DocumentPath@
+while getopts c:d:efh OPT
 do
     case $OPT in
+	c)  conf_file=$OPTARG
+	    data_dir=`grep DIR_PREFIX_FOR_SFS_W_SYNGRAPH $conf_file | grep -ve '^#' | awk '{print $2}'`
+	    ;;
 	d)  data_dir=$OPTARG
 	    ;;
         e)  query_options=-english
