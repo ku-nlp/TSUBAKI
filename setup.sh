@@ -6,8 +6,6 @@ CONFIGURE_FILE_IN=$CWD/cgi/configure.in
 CONFIGURE_FILE=$CWD/cgi/configure
 TSUBAKI_CONF_FILE_IN=$CWD/conf/tsubaki.conf.in
 TSUBAKI_CONF_FILE=$CWD/conf/tsubaki.conf
-PORTS_FILE_IN=$CWD/data/PORTS.SYN.in
-PORTS_FILE=$CWD/data/PORTS.SYN
 SF2INDEX_MAKEFILE_IN=$CWD/sf2index/Makefile.in
 SF2INDEX_MAKEFILE=$CWD/sf2index/Makefile
 SF2INDEX_SEARCH_SH_IN=$CWD/sf2index/search.sh.in
@@ -20,7 +18,7 @@ UtilsPath
 SynGraphPath
 WWW2sfPath
 DocumentPath
-DocumentPathBase
+CONFIGURE_FILE
 MachineType
 EnglishFlag
 SearchServerHost
@@ -37,7 +35,6 @@ UtilsPath=$CWD/Utils
 SynGraphPath=$CWD/SynGraph
 WWW2sfPath=$CWD/WWW2sf
 DocumentPath=$CWD/sf2index/sample_data
-DocumentPathBase=sample_data
 MachineType=`uname -m`
 EnglishFlag=0
 SearchServerHost=localhost
@@ -46,14 +43,16 @@ SnippetServerHost=localhost
 SnippetServerPort=59001
 
 usage() {
-    echo "Usage: $0 [-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d StandardFormatPath]"
+    echo "Usage: $0 [-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d StandardFormatPath] [-c OutputConfFile]"
     exit 1
 }
 
 # getopts
-while getopts eu:s:w:d:h OPT
+while getopts c:eu:s:w:d:h OPT
 do
     case $OPT in
+	c)  CONFIGURE_FILE=$OPTARG
+	    ;;
 	e)  EnglishFlag=1
 	    ;;
         u)  UtilsPath=$OPTARG
@@ -63,7 +62,6 @@ do
         w)  WWW2sfPath=$OPTARG
             ;;
         d)  DocumentPath=$OPTARG
-	    DocumentPathBase=`basename $OPTARG`
             ;;
         h)  usage
             ;;
@@ -140,9 +138,6 @@ sed -e "${SED_STR}" $CONFIGURE_FILE_IN > $CONFIGURE_FILE
 echo "done."
 echo "generating '${TSUBAKI_CONF_FILE}' ... "
 sed -e "${SED_STR}" $TSUBAKI_CONF_FILE_IN > $TSUBAKI_CONF_FILE
-echo "done."
-echo "generating '${PORTS_FILE}' ... "
-sed -e "${SED_STR}" $PORTS_FILE_IN > $PORTS_FILE
 echo "done."
 echo "generating '${SF2INDEX_MAKEFILE}' ... "
 sed -e "${SED_STR}" $SF2INDEX_MAKEFILE_IN > $SF2INDEX_MAKEFILE
