@@ -2,20 +2,18 @@
 
 # $Id$
 
-confdir=`echo $0 | xargs dirname`/../conf
-. $confdir/tsubaki.conf
-
-CGI_DIR=$TSUBAKI_DIR/cgi
-DATA_DIR=$TSUBAKI_DIR/data
-
+TSUBAKI_DIR=`echo $0 | xargs dirname`/..
+CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
 
 hostfile=/
 prefix=
 config=
 datadir=
-while getopts h:p:c:d: OPT
+while getopts ch:p:c:d: OPT
 do
     case $OPT in
+	c)  CONFIG_FILE=$OPTARG
+	    ;;
 	h)  hostfile=$OPTARG
 	    ;;
 	p)  prefix=$OPTARG
@@ -28,8 +26,14 @@ do
 done
 shift `expr $OPTIND - 1`
 
+# configureãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰è¨­å®šæƒ…å ±ã®èª­ã¿è¾¼ã¿
+. $TSUBAKI_DIR/conf/tsubaki.conf
+
+CGI_DIR=$TSUBAKI_DIR/cgi
+DATA_DIR=$TSUBAKI_DIR/data
+
 OPTION=
-# ÄÉ²ÃÍÑ¥Î¡¼¥É¤Ç´ÉÍı¤µ¤ì¤Æ¤¤¤ëSID°ìÍ÷¤ò¼èÆÀ
+# è¿½åŠ ç”¨ãƒãƒ¼ãƒ‰ã§ç®¡ç†ã•ã‚Œã¦ã„ã‚‹SIDä¸€è¦§ã‚’å–å¾—
 if [ -f $hostfile ]; then
     . $config
     gxpc use ssh $prefix
@@ -46,10 +50,10 @@ if [ -f $hostfile ]; then
     OPTION="-sids_on_update_node sids.other.$$"
 fi
 
-# SID¤¬¤É¤Î¥Û¥¹¥È¤Ç´ÉÍı¤µ¤ì¤Æ¤¤¤ë¤«¤òµá¤á¡¢¥Û¥¹¥È¤´¤È¤ËSID¤ò¤Ş¤È¤á¤ë
+# SIDãŒã©ã®ãƒ›ã‚¹ãƒˆã§ç®¡ç†ã•ã‚Œã¦ã„ã‚‹ã‹ã‚’æ±‚ã‚ã€ãƒ›ã‚¹ãƒˆã”ã¨ã«SIDã‚’ã¾ã¨ã‚ã‚‹
 cat $1 | perl -I$CGI_DIR lookup-host-by-sid.perl $OPTION -stdin -save -suffix $$
 
-# ¥¹¥È¥Ã¥×SID¥ê¥¹¥È¤ËÅĞÏ¿
+# ã‚¹ãƒˆãƒƒãƒ—SIDãƒªã‚¹ãƒˆã«ç™»éŒ²
 CDIR=`pwd`
 for f in `ls *.remove-sid.$$`
 do

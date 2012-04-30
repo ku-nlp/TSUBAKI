@@ -2,21 +2,35 @@
 
 # $Id$
 
+TSUBAKI_DIR=`echo $0 | xargs dirname`/..
+CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
 
-# ÀßÄê¥Õ¥¡¥¤¥ë¤ÎÆÉ¤ß¹ş¤ß
-confdir=`echo $0 | xargs dirname`/../conf
-. $confdir/tsubaki.conf
+usage() {
+    echo "Usage: $0 [-c configure_file] start|stop|restart|status"
+    exit 1
+}
 
+while getopts c:h OPT
+do
+    case $OPT in
+	c)  CONFIG_FILE=$OPTARG
+	    ;;
+        h)  usage
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+# configureãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰è¨­å®šæƒ…å ±ã®èª­ã¿è¾¼ã¿
+. $TSUBAKI_DIR/conf/tsubaki.conf
 
 CGI_DIR=$TSUBAKI_DIR/cgi
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 
-# µ¯Æ°»ş¤Î¥ª¥×¥·¥ç¥ó
+# èµ·å‹•æ™‚ã®ã‚ªãƒ—ã‚·ãƒ§ãƒ³
 OPTS="-string_mode -ignore_yomi -z"
 COMMAND=snippet_make_server.pl
 NICE=-4
-
-
 
 
 start() {
@@ -70,7 +84,6 @@ case $1 in
 	status_or_stop status
 	;;
     *)
-	echo "$0 start|stop|restart|status"
-	exit 1
+	usage
 esac
 exit 0

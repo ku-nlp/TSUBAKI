@@ -2,12 +2,29 @@
 
 # $Id$
 
-# apache д╬еэе░е╒ебедеыдЄ╝ш╞└д╖д─д┼д▒дые╟б╝етеє
+# apache уБоуГнуВ░уГХуВбуВдуГлуВТхПЦх╛ЧуБЧуБдуБеуБСуВЛуГЗуГ╝уГвуГ│
 
-# └▀─ъе╒ебедеыд╬╞╔д▀╣■д▀
-confdir=`echo $0 | xargs dirname`/../conf
-. $confdir/tsubaki.conf
+TSUBAKI_DIR=`echo $0 | xargs dirname`/..
+CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
 
+usage() {
+    echo "Usage: $0 [-c configure_file]"
+    exit 1
+}
+
+while getopts c:h OPT
+do
+    case $OPT in
+	c)  CONFIG_FILE=$OPTARG
+	    ;;
+        h)  usage
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+# configureуГХуВбуВдуГлуБЛуВЙшинхоЪцГЕха▒уБошкнуБ┐ш╛╝уБ┐
+. $TSUBAKI_DIR/conf/tsubaki.conf
 
 SLEEP_TIME=5
 

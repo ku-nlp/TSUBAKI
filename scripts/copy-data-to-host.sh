@@ -7,21 +7,19 @@
 # Usage:
 # sh copy-data-to-host.sh -d /data/home/skeiji/tsubaki/test /data2/work/wisdom/newsid/xmls
 
-
-
-# 設定ファイルの読み込み
-confdir=`echo $0 | xargs dirname`/../conf
-. $confdir/tsubaki.conf
-
+TSUBAKI_DIR=`echo $0 | xargs dirname`/..
+CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
 
 workspace=/tmp/$USER/cp.$USER
 distdir=/tmp/$USER/dist.$USER
 hostid=`echo $HOSTNAME | cut -f 1 -d .`
 opt=
 tgz_mode=0
-while getopts d:T:R:t OPT
+while getopts c:d:T:R:th OPT
 do
     case $OPT in
+	c)  CONFIG_FILE=$OPTARG
+	    ;;
 	d)  distdir=$OPTARG
 	    ;;
 	T)  workspace=$OPTARG/cp.$USER
@@ -34,6 +32,8 @@ do
 done
 shift `expr $OPTIND - 1`
 
+# configureファイルから設定情報の読み込み
+. $TSUBAKI_DIR/conf/tsubaki.conf
 
 datadir=$1
 
