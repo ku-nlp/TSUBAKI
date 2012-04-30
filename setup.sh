@@ -4,6 +4,7 @@ CWD=$(pwd)
 
 CONFIGURE_FILE_IN=$CWD/cgi/configure.in
 CONFIGURE_FILE=$CWD/cgi/configure
+CONFIGURE_COPIED_FILE=$CWD/conf/configure
 TSUBAKI_CONF_FILE_IN=$CWD/conf/tsubaki.conf.in
 TSUBAKI_CONF_FILE=$CWD/conf/tsubaki.conf
 SF2INDEX_MAKEFILE_IN=$CWD/sf2index/Makefile.in
@@ -135,6 +136,7 @@ done
 # generation
 echo "generating '${CONFIGURE_FILE}' ... "
 sed -e "${SED_STR}" $CONFIGURE_FILE_IN > $CONFIGURE_FILE
+cp -f $CONFIGURE_FILE $CONFIGURE_COPIED_FILE
 echo "done."
 echo "generating '${TSUBAKI_CONF_FILE}' ... "
 sed -e "${SED_STR}" $TSUBAKI_CONF_FILE_IN > $TSUBAKI_CONF_FILE
