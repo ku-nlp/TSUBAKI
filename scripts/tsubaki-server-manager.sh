@@ -2,14 +2,32 @@
 
 # $Id$
 
-# tsubaki_server.pl¤Îµ¯Æ°¡¿Ää»ß¤ò´ÉÍý¤¹¤ë¥¹¥¯¥ê¥×¥È
-# tsubaki_server.pl¤¬Ää»ß¤·¤Æ¤¤¤ë¾ì¹ç¤Ï¡¢¤½¤ì¤ò¼«Æ°¸¡½Ð¤·ºÆµ¯Æ°¤¹¤ë
+# æ¤œç´¢ã‚µãƒ¼ãƒãƒ¼ã®èµ·å‹•ï¼åœæ­¢ã‚’ç®¡ç†ã™ã‚‹ã‚¹ã‚¯ãƒªãƒ—ãƒˆ
+# æ¤œç´¢ã‚µãƒ¼ãƒãƒ¼ãŒåœæ­¢ã—ã¦ã„ã‚‹å ´åˆã¯ã€ãã‚Œã‚’è‡ªå‹•æ¤œå‡ºã—å†èµ·å‹•ã™ã‚‹
 
-# ÀßÄê¥Õ¥¡¥¤¥ë¤ÎÆÉ¤ß¹þ¤ß
-confdir=`echo $0 | xargs dirname`/../conf
-. $confdir/tsubaki.conf
+TSUBAKI_DIR=`echo $0 | xargs dirname`/..
+CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
 
-# Æ°ºî³ÎÇ§¤ò¹Ô¤¦´Ö³Ö¡ÊÉÃ¡Ë
+usage() {
+    echo "Usage: $0 [-c configure_file] start|stop|restart|status|halt"
+    exit 1
+}
+
+while getopts c:h OPT
+do
+    case $OPT in
+	c)  CONFIG_FILE=$OPTARG
+	    ;;
+        h)  usage
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
+# configureãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰è¨­å®šæƒ…å ±ã®èª­ã¿è¾¼ã¿
+. $TSUBAKI_DIR/conf/tsubaki.conf
+
+# å‹•ä½œç¢ºèªã‚’è¡Œã†é–“éš”ï¼ˆç§’ï¼‰
 INTERVAL=10
 NICE=-4
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
@@ -23,7 +41,7 @@ EXEC_COMMAND=$SLAVE_SERVER_DIR/$COMMAND
 USE_OF_SYNGRAPH="-syngraph"
 MEM=4194304
 
-# ¥í¥°¤Î½ÐÎÏÀè
+# ãƒ­ã‚°ã®å‡ºåŠ›å…ˆ
 LOGFILE=`grep SERVER_LOG_FILE $CONFIG_FILE | awk '{print $2}'`
 
 
@@ -36,39 +54,37 @@ start() {
 
     while [ 1 ];
     do
-	while read LINE
+	grep INDEX_LOCATION $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3,$4}' | while read LINE
 	do
-	    if echo "$LINE" | grep -E '^[^\#]' >/dev/null 2>&1; then
-		PORT=`echo $LINE | cut -f 3 -d ' '`
-		pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep`
+	    PORT=`echo $LINE | cut -f 3 -d ' '`
+	    pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep`
 
-		# $PORTÈÖ¤Çµ¯Æ°¤·¤Æ¤¤¤ë¥×¥í¥»¥¹¤¬¤Ê¤¤¾ì¹ç
-		if [ $? != "0" ] ; then
-		    idxdir=`echo $LINE | cut -f 1 -d ' '`
-		    anchor_idxdir=`echo $LINE | cut -f 2 -d ' '`
-		    dlengthdbdir=$idxdir
-		    if [ $COMMAND = "slave_server" ]; then
-			OPTION="$idxdir $anchor_idxdir $PORT `hostname`"
+	    # $PORTç•ªã§èµ·å‹•ã—ã¦ã„ã‚‹ãƒ—ãƒ­ã‚»ã‚¹ãŒãªã„å ´åˆ
+	    if [ $? != "0" ] ; then
+		idxdir=`echo $LINE | cut -f 1 -d ' '`
+		anchor_idxdir=`echo $LINE | cut -f 2 -d ' '`
+		dlengthdbdir=$idxdir
+		if [ $COMMAND = "slave_server" ]; then
+		    OPTION="$idxdir $anchor_idxdir $PORT `hostname`"
+		else
+		    if [ $anchor_idxdir = "none" ]; then
+			OPTION="-idxdir $idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
 		    else
-			if [ $anchor_idxdir = "none" ]; then
-			    OPTION="-idxdir $idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
-			else
-			    OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
-			fi
+			OPTION="-idxdir $idxdir -idxdir4anchor $anchor_idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
 		    fi
+		fi
 
-		    if [ -d $idxdir ]; then
-			echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\)
-			echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
-			if [ $COMMAND = "slave_server" ]; then
-			    ulimit -Ss $MEM ; nice $NICE $EXEC_COMMAND $OPTION
-			else
-			    ulimit -Ss $MEM ; nice $NICE $EXEC_COMMAND $OPTION &
-			fi
+		if [ -d $idxdir ]; then
+		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\)
+		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
+		    if [ $COMMAND = "slave_server" ]; then
+			ulimit -Ss $MEM ; nice $NICE $EXEC_COMMAND $OPTION
+		    else
+			ulimit -Ss $MEM ; nice $NICE $EXEC_COMMAND $OPTION &
 		    fi
- 		fi
-	    fi
-	done < $PORTS_FILE
+		fi
+ 	    fi
+	done
 
 	sleep $INTERVAL
     done
@@ -76,23 +92,21 @@ start() {
 
 
 status_or_stop() {
-    while read LINE
+    grep INDEX_LOCATION $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3,$4}' | while read LINE
     do
-	if echo "$LINE" | grep -E '^[^\#]' >/dev/null 2>&1; then
-	    PORT=`echo $LINE | cut -f 3 -d ' '`
-	    pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
- 	    if [ -n "$pid" ]; then
- 		if [ "$1" = "stop" ]; then
- 		    kill -KILL $pid
-		    echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=`date`\)
-		    echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=`date`\) >> $LOGFILE
-		else
-		    echo [TSUBAKI SERVER STATUS] \(port\=$PORT host\=`hostname` pid\=$pid\)
-		    echo [TSUBAKI SERVER STATUS] \(port\=$PORT host\=`hostname` pid\=$pid\) >> $LOGFILE
-		fi
- 	    fi
-	fi
-    done < $PORTS_FILE
+	PORT=`echo $LINE | cut -f 3 -d ' '`
+	pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
+ 	if [ -n "$pid" ]; then
+ 	    if [ "$1" = "stop" ]; then
+ 		kill -KILL $pid
+		echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=`date`\)
+		echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=`date`\) >> $LOGFILE
+	    else
+		echo [TSUBAKI SERVER STATUS] \(port\=$PORT host\=`hostname` pid\=$pid\)
+		echo [TSUBAKI SERVER STATUS] \(port\=$PORT host\=`hostname` pid\=$pid\) >> $LOGFILE
+	    fi
+ 	fi
+    done
 }
 
 restart() {
@@ -128,7 +142,6 @@ case $1 in
 	halt
 	;;
     *)
-	echo "$0 start|stop|restart|status|halt"
-	exit 1
+	usage
 esac
 exit 0
