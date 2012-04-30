@@ -2,7 +2,7 @@ ID = 000
 IDX0_SUFFIX = idx0
 IDX1_SUFFIX = idx1
 BASEDIR = $(shell pwd)
-DATADIR = @DocumentPathBase@
+DATADIR = @DocumentPath@
 HTMLS = $(wildcard $(DATADIR)/*.html)
 XMLS = $(wildcard $(DATADIR)/*.xml)
 IDXS = $(patsubst %.xml,%.$(IDX0_SUFFIX),$(XMLS))
@@ -20,7 +20,7 @@ WWW2sfDir = @WWW2sfPath@
 
 all: idx_bin idx_length dfdb
 
-html2xml:
+html2sf:
 	$(WWW2sfDir)/tool/www2sf.sh -x -s $(DATADIR) $(DATADIR)
 
 $(IDXS): $(DATADIR)/%.$(IDX0_SUFFIX) : $(DATADIR)/%.xml
