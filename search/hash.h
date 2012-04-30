@@ -116,7 +116,7 @@ class Dbm {
 	double start = (double) gettimeofday_sec();
 	int _fd;
 	if ((_fd = open(dbfile.c_str(), O_RDONLY)) < 0) {
-	    cerr << "Can't open file: " << dbfile << endl;
+	    // cerr << "Can't open file: " << dbfile << endl;
 	    return NULL;
 	}
 	int ret = cdb_init(db, _fd);

@@ -239,10 +239,10 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
             fin2 >> _sid;
             rmsids.insert(std::pair<string,int>(_sid, 1));
         }
-    } else {
-        cerr << "Not found: " << rmfiles << endl;
+        fin2.close();
     }
-    fin2.close();
+    // else
+    //     cerr << "Not found: " << rmfiles << endl;
 
     std::ifstream fin3(pagerank_file.c_str());
     if (fin3) {
@@ -255,10 +255,10 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
 	    double rank = atof (_rnk);
             tid2prnk.insert(std::pair<int,double>(tid, rank));
         }
-    } else {
-        cerr << "Not found: " << pagerank_file << endl;
+        fin3.close();
     }
-    fin3.close();
+    // else
+    //     cerr << "Not found: " << pagerank_file << endl;
 
     return true;
 }
