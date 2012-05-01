@@ -7,8 +7,9 @@
 #include <sstream>
 #include <string>
 #include <fcntl.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 using std::string;
 using std::cout;
