@@ -2,14 +2,15 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/04/30 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/05/01 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
-都大学黒橋・河原研究室にて開発した検索エンジン基盤です。その特徴は、構
-文・格解析、同義語・句のマッチングなど深い言語解析技術に基づく検索です。
-1CPUあたり100万文書程度の検索が可能で、複数CPUの並列化により大規模文書
-集合の検索に対応しています。日本語文書と英語文書の検索が可能です。
+都大学黒橋・河原研究室が中心となって開発した検索エンジン基盤です。その
+特徴は、構文・格解析、同義語・句のマッチングなど深い言語解析技術に基づ
+く検索です。1CPUあたり100万文書程度の検索が可能で、複数CPUの並列化によ
+り大規模文書集合の検索に対応しています。日本語文書と英語文書の検索が可
+能です。
 
 TSUBAKIで検索を行うには、検索対象文書に対して次の2ステップの処理を行う
 必要があります。
@@ -33,7 +34,7 @@ TSUBAKIで検索を行うには、検索対象文書に対して次の2ステッ
   -- TinyCDB (http://www.corpit.ru/mjt/tinycdb.html)
 
 
-- 必要なPerlモジュールのインストール (CPANからダウンロード、インストール)
+- 必要なPerlモジュールのインストール (CPAN等を用いてインストール)
   -- Unicode::Japanese
   -- PerlIO::gzip
   -- XML::LibXML
@@ -46,10 +47,10 @@ TSUBAKIで検索を行うには、検索対象文書に対して次の2ステッ
 
 - 日本語の文書を検索する場合に必要なツール・データベースのインストール
 
-  -- 日本語形態素解析システムJUMAN,のダウンロード、インストール
+  -- 日本語形態素解析システムJUMANのインストール
      http://nlp.ist.i.kyoto-u.ac.jp/index.php?JUMAN
 
-  -- 日本語構文・格解析システムKNPのダウンロード、インストール
+  -- 日本語構文・格解析システムKNPのインストール
      http://nlp.ist.i.kyoto-u.ac.jp/index.php?KNP
 
   -- SynGraph日本語データベース(同義語・句の辞書)のダウンロード
@@ -58,72 +59,74 @@ TSUBAKIで検索を行うには、検索対象文書に対して次の2ステッ
 
 - 英語の文書を検索する場合に必要なツールのインストール
 
-  -- HPSG構文解析器Enjuのダウンロード、インストール
+  -- HPSG構文解析器Enjuのインストール
      http://www.nactem.ac.uk/enju/index.ja.html
 
-  ※ SynGraph英語データベースは未リリースです。英語の同義語・句のデータ
-     を別途用意すれば、SynGraphデータベース形式に変換して使うことができ
-     ます。詳細は、SynGraphのドキュメントをご覧ください。
+  ※ 英語の同義語・句のデータを別途用意すれば、SynGraphデータベース形式
+     に変換して使うことができます。詳細は、SynGraphのドキュメントをご覧
+     ください。
 
 
 * 設定
 
-検索対象文書データのある場所を指定し、TSUBAKIの設定ファイルを自動生成し
-ます。以下では、このREADMEがあるディレクトリを $TSUBAKI_DIR と表します。
+以下では、このREADMEがあるディレクトリを $TSUBAKI_DIR と表します。
 
-- $TSUBAKI_DIRにおいて、以下のように、./setup.sh を実行
+$TSUBAKI_DIRにおいて以下のように ./setup.shを実行することにより、検索対
+象文書データの場所および解析ツールなどのインストール場所を含むTSUBAKIの
+設定ファイルを自動生成します。
 
   例1) 日本語サンプル文書データを対象にする場合
-       ./setup.sh -d sf2index/sample_data_ja
+       ./setup.sh -d sample_doc/ja
 
   例2) 英語サンプル文書データを対象にする場合
-       ./setup.sh -e -d sf2index/sample_data_en
+       ./setup.sh -e -d sample_doc/en
 
   ※ ./setup.shの重要なオプションの説明
        -d 検索対象文書データパス : 検索対象文書データの場所を指定
+       -j                        : 日本語の文書を検索する場合 (default)
        -e                        : 英語の文書を検索する場合
        -c 出力設定ファイル名	 : 出力する設定ファイル名を指定 (default: $TSUBAKI_DIR/conf/configure)
 
-これによって、解析ツールなどのインストール場所も自動設定され、設定ファ
-イル $TSUBAKI_DIR/conf/configure が生成されます。
+以下では、上記の例1を実行し、日本語サンプル文書データを対象にしていると
+して説明します。日本語サンプル文書データ以外を用いる場合に設定が必要な
+箇所にはその旨を記述しています。
 
 
 * 検索サーバプログラムのコンパイル
 
-- $TSUBAKI_DIRにおいて、make を実行
+$TSUBAKI_DIRにおいて、make を実行してください。
 
   ※ コンパイルが失敗する場合は、$TSUBAKI_DIR/search/Makefileにおいて、
-     CXXFLAGSとCDB_LIBをcdb.h、libcdb.aのインストール場所に応じて修正してください。
+     CXXFLAGSとCDB_LIBをcdb.h、libcdb.aのインストール場所に応じて修正し
+     てください。
 
 
 ===========================
 TSUBAKI標準フォーマット変換
 ===========================
 
-検索対象文書データに言語解析を適用し、TSUBAKI標準フォーマットに変換しま
-す。現在のところ、検索対象文書データの形式として、HTML文書のみに対応し
-ています。
+$TSUBAKI_DIRにおいて次のように実行することによって、検索対象文書データ
+に言語解析を適用し、TSUBAKI標準フォーマットに変換します。
 
-以下では、$TSUBAKI_DIR/sf2index/sample_data_ja にある、日本語のサンプル
-文書データを対象にして説明します。日本語サンプル文書データ以外を用いる
-場合に設定が必要な箇所にはその旨を記述しています。
+  make DATADIR=$TSUBAKI_DIR/sample_doc/ja html2sf
 
-- $TSUBAKI_DIRにおいて、make DATADIR=$TSUBAKI_DIR/sf2index/sample_data_ja html2sf を実行
-
-  ※ 日本語サンプル文書データ以外を対象にする場合は、上記の設定で指定し
-     た文書データパスをDATADIRとして設定してください。
+  ※ DATADIRは絶対パスを指定してください。日本語サンプル文書データ以外
+     を対象にする場合は、上記の設定で指定した文書データパスをDATADIRと
+     して設定してください。
 
 
 ================
 インデックス生成
 ================
 
-TSUBAKI標準フォーマットからインデックスを生成します。
+$TSUBAKI_DIRにおいて次のように実行することによって、TSUBAKI標準フォーマッ
+トからインデックスを生成します。
 
-- $TSUBAKI_DIRにおいて、make DATADIR=$TSUBAKI_DIR/sf2index/sample_data_ja indexing を実行
+  make DATADIR=$TSUBAKI_DIR/sample_doc/ja indexing
 
-  ※ 日本語サンプル文書データ以外を対象にする場合は、上記の設定で指定し
-     た文書データパスをDATADIRとして設定してください。
+  ※ DATADIRは絶対パスを指定してください。日本語サンプル文書データ以外
+     を対象にする場合は、上記の設定で指定した文書データパスをDATADIRと
+     して設定してください。
 
 
 ====
@@ -132,27 +135,40 @@ TSUBAKI標準フォーマットからインデックスを生成します。
 
 * 検索テスト
 
-- $TSUBAKI_DIR/sf2indexにおいて、"./search.sh -c $TSUBAKI_DIR/conf/configure クエリ"
-  を実行して検索 (日本語のクエリはUTF8で入力)
+$TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
+を実行して検索のテストをします。クエリはUTF-8で入力してください。
 
-   例) ./search.sh -c $TSUBAKI_DIR/conf/configure 旅館	→ hitcountが2になる
-       ./search.sh -c $TSUBAKI_DIR/conf/configure 駅	→ hitcountが1になる
+  例) ./search.sh -c conf/configure 京大	→ hitcountが6になる
+      ./search.sh -c conf/configure 紅葉	→ hitcountが5になる
 
 
 * ブラウザからの検索
 
-- 検索サーバとスニペットサーバの起動
+まず、検索サーバとスニペットサーバを起動します。
+
   $TSUBAKI_DIR/scripts/server-all.sh -c $TSUBAKI_DIR/conf/configure start
 
-  -- 止める場合は次のとおり
-     $TSUBAKI_DIR/scripts/server-all.sh -c $TSUBAKI_DIR/conf/configure stop
+  ※ localhostにsshすることによって起動しますので、エラーになる場合は
+     localhostでsshdが上がっていることを確認してください。
 
-- $TSUBAKI_DIR/cgi/index.cgiをブラウザでたたいて検索
+$TSUBAKI_DIR/cgi/index.cgiをWebブラウザでアクセスし、検索します。
+
+※ 検索サーバとスニペットサーバを止める場合は次のように実行します。
+
+  $TSUBAKI_DIR/scripts/server-all.sh -c $TSUBAKI_DIR/conf/configure stop
 
 
-============
-ドキュメント
-============
+
+■ 注意事項
+
+・検索対象文書の形式としては、現在のところ、HTMLのみに対応しています。
+
+・複数の文書セットに対して検索するためには、上記設定において./setup.sh
+  に"-c 出力設定ファイル名"を指定し、異なる名前の設定ファイルを生成して
+  ください。
+
+
+■ ドキュメント
 
 より詳細なドキュメントは、TSUBAKI Wikiを参照してください。
 
