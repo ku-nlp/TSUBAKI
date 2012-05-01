@@ -35,7 +35,7 @@ SearchEnginePath=$CWD
 UtilsPath=$CWD/Utils
 SynGraphPath=$CWD/SynGraph
 WWW2sfPath=$CWD/WWW2sf
-DocumentPath=$CWD/sf2index/sample_data
+DocumentPath=$CWD/sample_doc/ja
 MachineType=`uname -m`
 EnglishFlag=0
 SearchServerHost=localhost
@@ -125,7 +125,7 @@ fi
 
 # check Documents
 if [ ! -d "$DocumentPath" ]; then
-    echo "StandardFormat data are not found in $DocumentPath. Please specify correct path with -d option."
+    echo "Document data are not found in $DocumentPath. Please specify correct path with -d option."
     usage
 fi
 
