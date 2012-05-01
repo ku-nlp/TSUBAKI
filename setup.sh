@@ -9,8 +9,8 @@ TSUBAKI_CONF_FILE_IN=$CWD/conf/tsubaki.conf.in
 TSUBAKI_CONF_FILE=$CWD/conf/tsubaki.conf
 SF2INDEX_MAKEFILE_IN=$CWD/sf2index/Makefile.in
 SF2INDEX_MAKEFILE=$CWD/sf2index/Makefile
-SF2INDEX_SEARCH_SH_IN=$CWD/sf2index/search.sh.in
-SF2INDEX_SEARCH_SH=$CWD/sf2index/search.sh
+SEARCH_SH_IN=$CWD/search.sh.in
+SEARCH_SH=$CWD/search.sh
 
 # target names to be replaced
 NAME_LIST="
@@ -44,17 +44,19 @@ SnippetServerHost=localhost
 SnippetServerPort=59001
 
 usage() {
-    echo "Usage: $0 [-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d StandardFormatPath] [-c OutputConfFile]"
+    echo "Usage: $0 [-j|-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d StandardFormatPath] [-c OutputConfFile]"
     exit 1
 }
 
 # getopts
-while getopts c:eu:s:w:d:h OPT
+while getopts c:eju:s:w:d:h OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
 	    ;;
 	e)  EnglishFlag=1
+	    ;;
+	j)  EnglishFlag=0
 	    ;;
         u)  UtilsPath=$OPTARG
             ;;
@@ -62,7 +64,11 @@ do
             ;;
         w)  WWW2sfPath=$OPTARG
             ;;
-        d)  DocumentPath=$OPTARG
+        d)  if [ -d "$CWD/$OPTARG" ]; then
+	        DocumentPath="$CWD/$OPTARG"
+	    else
+		DocumentPath=$OPTARG
+	    fi
             ;;
         h)  usage
             ;;
@@ -144,6 +150,7 @@ echo "done."
 echo "generating '${SF2INDEX_MAKEFILE}' ... "
 sed -e "${SED_STR}" $SF2INDEX_MAKEFILE_IN > $SF2INDEX_MAKEFILE
 echo "done."
-echo "generating '${SF2INDEX_SEARCH_SH}' ... "
-sed -e "${SED_STR}" $SF2INDEX_SEARCH_SH_IN > $SF2INDEX_SEARCH_SH
+echo "generating '${SEARCH_SH}' ... "
+sed -e "${SED_STR}" $SEARCH_SH_IN > $SEARCH_SH
+chmod +x $SEARCH_SH
 echo "done."

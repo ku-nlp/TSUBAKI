@@ -1,6 +1,9 @@
 all:
 	cd search && make && cd ..
 
+html2sf:
+	cd sf2index && make html2sf && cd ..
+
 indexing:
 	cd sf2index && make && cd ..
 
