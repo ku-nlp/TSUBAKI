@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/05/01 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/05/02 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -21,6 +21,10 @@ TSUBAKIで検索を行うには、検索対象文書に対して次の2ステッ
 
 以下では、準備、TSUBAKI標準フォーマット変換(上記1)、インデックス生成(上
 記2)、検索の順番に説明します。
+
+なお、以下の説明では、1CPU(localhostのみ)で検索を行うことを想定していま
+す。100万件以上の文書を対象にするには、複数のCPU・マシンを利用する必要
+があります。この方法については、本README最後の注意事項をご覧ください。
 
 
 ====
@@ -171,6 +175,16 @@ $TSUBAKI_DIR/cgi/index.cgiをWebブラウザでアクセスし、検索します
 ・複数の文書セットに対して検索するためには、上記設定において./setup.sh
   に"-c 出力設定ファイル名"を指定し、異なる名前の設定ファイルを生成して
   ください。
+
+・100万件以上の文書を検索対象にするには、複数の検索サーバとスニペットサー
+  バを起動する必要があります。このためには、設定ファイル(conf/configure)
+  におけるSEARCH_SERVERSとSNIPPET_SERVERSの行をサーバ台数分コピーし、次
+  のようにサーバ名を記入してください。
+
+  SEARCH_SERVERS	server01	39999
+  SEARCH_SERVERS	server02	39999
+  SNIPPET_SERVERS	server01	59001	000
+  SNIPPET_SERVERS	server02	59001	001
 
 
 ■ ドキュメント
