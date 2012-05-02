@@ -53,6 +53,8 @@ TSUBAKIで検索を行うには、検索対象文書に対して次の2ステッ
   -- 日本語構文・格解析システムKNPのインストール
      http://nlp.ist.i.kyoto-u.ac.jp/index.php?KNP
 
+     ※ JUMAN/KNPのPerlモジュールもインストールしてください。
+
   -- SynGraph日本語データベース(同義語・句の辞書)のダウンロード
      http://... を取得し、TSUBAKI直下(このディレクトリ)にて展開してください。
 
@@ -108,7 +110,7 @@ TSUBAKI標準フォーマット変換
 $TSUBAKI_DIRにおいて次のように実行することによって、検索対象文書データ
 に言語解析を適用し、TSUBAKI標準フォーマットに変換します。
 
-  make DATADIR=$TSUBAKI_DIR/sample_doc/ja html2sf
+  make DATADIR=`pwd`/sample_doc/ja html2sf
 
   ※ DATADIRは絶対パスを指定してください。日本語サンプル文書データ以外
      を対象にする場合は、上記の設定で指定した文書データパスをDATADIRと
@@ -122,7 +124,7 @@ $TSUBAKI_DIRにおいて次のように実行することによって、検索�
 $TSUBAKI_DIRにおいて次のように実行することによって、TSUBAKI標準フォーマッ
 トからインデックスを生成します。
 
-  make DATADIR=$TSUBAKI_DIR/sample_doc/ja indexing
+  make DATADIR=`pwd`/sample_doc/ja indexing
 
   ※ DATADIRは絶対パスを指定してください。日本語サンプル文書データ以外
      を対象にする場合は、上記の設定で指定した文書データパスをDATADIRと
@@ -146,7 +148,7 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 
 まず、検索サーバとスニペットサーバを起動します。
 
-  $TSUBAKI_DIR/scripts/server-all.sh -c $TSUBAKI_DIR/conf/configure start
+  scripts/server-all.sh -c conf/configure start
 
   ※ localhostにsshすることによって起動しますので、エラーになる場合は
      localhostでsshdが上がっていることを確認してください。
@@ -155,7 +157,7 @@ $TSUBAKI_DIR/cgi/index.cgiをWebブラウザでアクセスし、検索します
 
 ※ 検索サーバとスニペットサーバを止める場合は次のように実行します。
 
-  $TSUBAKI_DIR/scripts/server-all.sh -c $TSUBAKI_DIR/conf/configure stop
+  scripts/server-all.sh -c conf/configure stop
 
 
 
