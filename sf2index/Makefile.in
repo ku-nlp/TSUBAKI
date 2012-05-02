@@ -17,11 +17,12 @@ TITLEDB = $(DATADIR)/did2title.cdb
 
 UtilsDir = @UtilsPath@
 WWW2sfDir = @WWW2sfPath@
+SynGraphDir = @SynGraphPath@
 
 all: idx_bin idx_length dfdb
 
 html2sf:
-	$(WWW2sfDir)/tool/www2sf.sh -x -s $(DATADIR) $(DATADIR)
+	$(WWW2sfDir)/tool/www2sf.sh -x -s -d $(SynGraphDir) $(DATADIR) $(DATADIR)
 
 $(IDXS): $(DATADIR)/%.$(IDX0_SUFFIX) : $(DATADIR)/%.xml
 	perl -I ../cgi $(BASEDIR)/sf2term.pl $< > $@
