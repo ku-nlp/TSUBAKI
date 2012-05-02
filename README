@@ -32,6 +32,7 @@ TSUBAKIで検索を行うには、検索対象文書に対して次の2ステッ
 - 必要なライブラリのインストール
   -- libxml (http://xmlsoft.org/)
   -- TinyCDB (http://www.corpit.ru/mjt/tinycdb.html)
+  -- BerkeleyDB (http://www.oracle.com/technetwork/products/berkeleydb/)
 
 
 - 必要なPerlモジュールのインストール (CPAN等を用いてインストール)
@@ -39,6 +40,8 @@ TSUBAKIで検索を行うには、検索対象文書に対して次の2ステッ
   -- PerlIO::gzip
   -- XML::LibXML
   -- CDB_File
+  -- BerkeleyDB
+  -- MLDBM
   -- Text::Darts
   -- Error (Module::Metadata, version, Perl::OSType, Module::Buildも必要)
 
