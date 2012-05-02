@@ -43,6 +43,7 @@ TSUBAKIで検索を行うには、検索対象文書に対して次の2ステッ
   -- Unicode::Japanese
   -- PerlIO::gzip
   -- XML::LibXML
+  -- XML::Writer
   -- CDB_File
   -- BerkeleyDB
   -- MLDBM
