@@ -27,7 +27,7 @@
 # 基本ツールの設定（★要変更）
 ##################################################
 
-PERL	/usr/bin/perl
+PERL	@PerlPath@
 TOOL_HOME	/usr/local/bin
 JUMAN_COMMAND	@JUMANPrefix@/bin/juman
 JUMAN_RCFILE	@JUMANPrefix@/etc/jumanrc
@@ -52,10 +52,10 @@ ENGLISH_PARSER_DIR	@SearchEnginePath@/enju2tsubaki
 # キャッシュページ／標準フォーマット関係の設定
 ##################################################
 
-# キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス（★要変更）
-ORDINARY_SF_PATH	/net2/nlpcf34/disk08/skeiji
+# キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス
+ORDINARY_SF_PATH	@DocumentPath@
 
-# スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス
+# スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス（★要変更）
 DIR_PREFIX_FOR_SFS_W_SYNGRAPH	@DocumentPath@
 
 
@@ -64,9 +64,9 @@ DIR_PREFIX_FOR_SFS_W_SYNGRAPH	@DocumentPath@
 # データベース関係の設定
 ##################################################
 
-# TITLEDB/URLDBを納めたディレクトリへのパス（★要変更）
-TITLE_DB_PATH	/work/skeiji/titledb
-URL_DB_PATH	/work/skeiji/urldb
+# TITLEDB/URLDBを納めたディレクトリへのパス
+TITLE_DB_PATH	@DocumentPath@
+URL_DB_PATH	@DocumentPath@
 
 # 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
 SYNGRAPH_DFDB_PATH	@DocumentPath@
@@ -101,7 +101,7 @@ SEARCH_SERVERS_FOR_SYNGRAPH	 @SearchServerHost@	  @SearchServerPort@
 
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
-# SID_RANGE	/home/skeiji/work/wisdom/sid.range
+# SID_RANGE	/wisdom/sid.range
 
 # スニペットサーバーの設定（★要変更）
 # STANDARD_FORMAT_LOCATION ホスト名 ポート番号 ディスクにおいてある標準フォーマットのID1,...
@@ -116,7 +116,7 @@ STANDARD_FORMAT_LOCATION	@SnippetServerHost@	@SnippetServerPort@	000
 ##################################################
 
 # TSUBAKIの下に出すサブタイトル
-TSUBAKI_SUBTITLE	2010年度版
+# TSUBAKI_SUBTITLE	2010年度版
 
 # 総文書数
 NUMBER_OF_DOCUMENTS	100132750
@@ -152,13 +152,13 @@ MAX_LENGTH_OF_TITLE		50
 MAX_LENGTH_OF_URL		100
 
 # タイトルからキャッシュページへのリンクをはるかどうか　はる(1)/はらない=元ページへのリンク(0)
-LINK_CACHED_HTML_FROM_TITLE	0
+LINK_CACHED_HTML_FROM_TITLE	1
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
-CACHED_HTML_PATH_TEMPLATE	/net2/nlpcf34/disk08/skeiji/h%03d/h%05d/%09d.html.gz
+CACHED_HTML_PATH_TEMPLATE	@DocumentPath@/%s.html
 
 # index.cgiのアドレス（★要変更）
-INDEX_CGI	http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/tsubaki-develop/index.cgi
+INDEX_CGI	./index.cgi
 
 TSUBAKI_BASE_URL	http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/tsubaki-develop
 
@@ -230,7 +230,7 @@ IGNORE_YOMI			1
 DEVELOP_MODE	0
 
 # アンケート収集を行う場合は1, そうでない場合は0
-QUESTIONNAIRE	1
+QUESTIONNAIRE	0
 
 # アンケート収集CGIのアドレス
 QUESTIONNARIE_CGI	http://tsubaki.ixnlp.nii.ac.jp/questionnarie.cgi
@@ -333,6 +333,9 @@ DISABLE_BLOCK_TYPE_DISPLAY	0
 # NTCIRモード
 # IS_NTCIR_MODE			1
 
+# HTML/標準フォーマットをディレクトリ分割せずに置いている場合
+IS_SIMPLE_MODE		1
+
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
 # SIDS_FOR_NTCIR	@SearchEnginePath@/cgi/sid.range.cdb
 
@@ -346,4 +349,4 @@ DISABLE_ANAPHORA_RESOLUTION_DISPLAY	1
 IS_CPP_MODE		1
 
 # 関連語蒸留を呼んで表示するかどうか
-DISABLE_CALL_WEBCLUSTERING	0
+DISABLE_CALL_WEBCLUSTERING	1
