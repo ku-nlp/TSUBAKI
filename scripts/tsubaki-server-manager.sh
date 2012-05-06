@@ -46,7 +46,7 @@ LOGFILE=`grep SERVER_LOG_FILE $CONFIG_FILE | awk '{print $2}'`
 
 
 start() {
-    num=`ps auxww | grep $USER | grep tsubaki-server-manager.sh | grep -v share | grep start | grep -v grep | wc -l`
+    num=`ps auxww | grep $USER | grep tsubaki-server-manager.sh | grep -v ssh | grep start | grep -v grep | wc -l`
     if [ $num -gt 2 ] ; then
 	echo Already running TSUBAKI SERVER MANAGER.
 	exit
