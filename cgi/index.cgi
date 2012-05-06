@@ -55,7 +55,7 @@ sub main {
 	elsif ($CONFIG->{IS_NICT_MODE}) { # e.g., "icccmm010:31056:$did_w_version"
 	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
 	}
-	elsif ($CONFIG->{IS_IPSJ_MODE}) {
+	elsif ($CONFIG->{IS_IPSJ_MODE} || $CONFIG->{IS_SIMPLE_MODE}) {
  	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
  	}
 	else {
