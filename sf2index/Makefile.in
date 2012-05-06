@@ -19,7 +19,7 @@ UtilsDir = @UtilsPath@
 WWW2sfDir = @WWW2sfPath@
 SynGraphDir = @SynGraphPath@
 
-all: idx_bin idx_length dfdb
+all: idx_bin idx_length dfdb url_title_db
 
 html2sf:
 	$(WWW2sfDir)/tool/www2sf.sh -x -s -d $(SynGraphDir) $(DATADIR) $(DATADIR)
