@@ -145,7 +145,7 @@ sub print_copyright {
     print << "END_OF_HTML";
 <DIV style="text-align:center;padding:1em;">
     TSUBAKI利用時の良かった点、問題点などご意見を頂けると幸いです。<br>
-    ご意見は tsubaki-feedback あっと nlp.kuee.kyoto-u.ac.jp までお願い致します。
+    ご意見は tsubaki-feedback あっと nlp.ist.i.kyoto-u.ac.jp までお願い致します。
     <P>
     <DIV><B>&copy;2006 - 2011 黒橋研究室</B></DIV> 
 </DIV>
@@ -501,7 +501,7 @@ sub print_logo {
     if ($params->{query}) {
 	print qq(<TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
 	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
-	printf qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- %s -</SPAN></TD>\n), $CONFIG->{TSUBAKI_SUBTITLE};
+	printf qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- %s -</SPAN></TD>\n), $CONFIG->{TSUBAKI_SUBTITLE} if $CONFIG->{TSUBAKI_SUBTITLE};
 	if ($CONFIG->{IS_IPSJ_MODE}) {
 	    print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
 	}
@@ -509,7 +509,7 @@ sub print_logo {
     else {
 	print qq(<TD align="center">);
 	printf ("<A href=%s><IMG border=0 src=image/logo.png></A>\n", $CONFIG->{INDEX_CGI});
-	printf qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">%s</SPAN>\n), $CONFIG->{TSUBAKI_SUBTITLE};
+	printf qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">%s</SPAN>\n), $CONFIG->{TSUBAKI_SUBTITLE} if $CONFIG->{TSUBAKI_SUBTITLE};
 	print qq(<BR><SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
 	print "</TD></TR>\n";
 	print "<TR>";
@@ -1324,12 +1324,14 @@ sub printOrdinarySearchResult {
 
 	$output .= qq(<BLOCKQUOTE class="snippet">$snippet</BLOCKQUOTE>);
 	my $_url = $results->[$rank]{url};
-        $_url = substr($_url, 0, $CONFIG->{MAX_LENGTH_OF_URL}) . "..." if (length($_url) > $CONFIG->{MAX_LENGTH_OF_URL});
-	if ($CONFIG->{LINK_CACHED_HTML_FROM_TITLE}) { # タイトルがキャッシュページのときは、こちらを元ページへのリンクにする
-	    $output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$_url</A>\n);
-	}
-	else { # タイトルが元ページへのリンクのときは、こちらはリンクなし
-	    $output .= qq(<SPAN class="cache">$_url</SPAN>\n);
+	if ($_url ne 'none') {
+	    $_url = substr($_url, 0, $CONFIG->{MAX_LENGTH_OF_URL}) . "..." if (length($_url) > $CONFIG->{MAX_LENGTH_OF_URL});
+	    if ($CONFIG->{LINK_CACHED_HTML_FROM_TITLE}) { # タイトルがキャッシュページのときは、こちらを元ページへのリンクにする
+		$output .= qq(<A class="cache" href="$results->[$rank]{url}" target="_blank">$_url</A>\n);
+	    }
+	    else { # タイトルが元ページへのリンクのときは、こちらはリンクなし
+		$output .= qq(<SPAN class="cache">$_url</SPAN>\n);
+	    }
 	}
 #	$output .= qq(<A class="cache2" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank">キャッシュ</A>\n);
 
