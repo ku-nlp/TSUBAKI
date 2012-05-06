@@ -11,9 +11,12 @@ SF2INDEX_MAKEFILE_IN=$CWD/sf2index/Makefile.in
 SF2INDEX_MAKEFILE=$CWD/sf2index/Makefile
 SEARCH_SH_IN=$CWD/search.sh.in
 SEARCH_SH=$CWD/search.sh
+INDEX_CGI_IN=$CWD/cgi/index.cgi.in
+INDEX_CGI=$CWD/cgi/index.cgi
 
 # target names to be replaced
 NAME_LIST="
+PerlPath
 SearchEnginePath
 UtilsPath
 SynGraphPath
@@ -44,7 +47,7 @@ SnippetServerHost=localhost
 SnippetServerPort=59001
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d StandardFormatPath] [-c OutputConfFile]"
+    echo "Usage: $0 [-j|-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d DocumentPath] [-c OutputConfFile]"
     exit 1
 }
 
@@ -91,6 +94,12 @@ fi
 # check WWW2sf
 if [ ! -d "$WWW2sfPath" ]; then
     echo "WWW2sf is not found. Skipped WWW2sf."
+fi
+
+# check perl
+PerlPath=`type perl 2> /dev/null | cut -f3 -d' '`
+if [ -z "$PerlPath" ]; then
+    echo "Perl is not found. Please set PATH to 'perl'."
 fi
 
 # JUMAN/KNP is necessary for Japanese
@@ -153,4 +162,8 @@ echo "done."
 echo "generating '${SEARCH_SH}' ... "
 sed -e "${SED_STR}" $SEARCH_SH_IN > $SEARCH_SH
 chmod +x $SEARCH_SH
+echo "done."
+echo "generating '${INDEX_CGI}' ... "
+sed -e "${SED_STR}" $INDEX_CGI_IN > $INDEX_CGI
+chmod +x $INDEX_CGI
 echo "done."
