@@ -61,9 +61,9 @@ sub getDefaultValues {
     $params{trimming} = 1;
     $params{antonym_and_negation_expansion} = 0;
     $params{disable_query_processing} = 0;
-    $params{telic_process} = 1;
+    $params{telic_process} = 0;
     $params{CN_process} = 1;
-    $params{NE_process} = 1;
+    $params{NE_process} = 0;
     $params{modifier_of_NE_process} = 1;
     $params{site} = undef;
     $params{blockTypes} = undef;
