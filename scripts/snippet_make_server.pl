@@ -163,6 +163,7 @@ sub main {
 	    $option->{z} = $opt{z};
 	    $option->{IS_ENGLISH_VERSION} = $CONFIG->{IS_ENGLISH_VERSION};
 	    $option->{USE_NEW_STANDARD_FORMAT} = $CONFIG->{IS_ENGLISH_VERSION} ? 1 : $opt{new_sf};
+	    $option->{verbose} = $opt{verbose};
 
 	    if ($opt{verbose}) {
 		print "begin with snippet creation $client_hostname.\n";
