@@ -14,7 +14,7 @@ use Error qw(:try);
 binmode(STDOUT, ':utf8');
 
 my (%opt);
-GetOptions(\%opt, 'files=s', 'url', 'title');
+GetOptions(\%opt, 'files=s', 'url', 'title', 'verbose');
 
 if (!defined $opt{url} && !defined $opt{title}) {
     $opt{url} = 1;
@@ -59,7 +59,7 @@ sub main {
 		if ($sf_tag =~ /Url=\"([^\"]*)\"/) {
 		    $url = $1;
 		    unless ($url) {
-			print STDERR "$file: URL is empty!\n";
+			print STDERR "$file: URL is empty!\n" if $opt{verbose};
 			$url = 'none';
 		    }
 		}
