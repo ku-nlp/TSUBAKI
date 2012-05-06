@@ -5,15 +5,22 @@
 TSUBAKI_DIR=`echo $0 | xargs dirname`/..
 CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
 
+# 起動時のオプション
+OPTS="-string_mode -ignore_yomi -z -new_sf"
+COMMAND=snippet_make_server.pl
+NICE=-4
+
 usage() {
-    echo "Usage: $0 [-c configure_file] start|stop|restart|status"
+    echo "Usage: $0 [-c configure_file] [-v] start|stop|restart|status"
     exit 1
 }
 
-while getopts c:h OPT
+while getopts c:vh OPT
 do
     case $OPT in
 	c)  CONFIG_FILE=$OPTARG
+	    ;;
+	v)  OPTS="$OPTS -verbose"
 	    ;;
         h)  usage
             ;;
@@ -26,11 +33,6 @@ shift `expr $OPTIND - 1`
 
 CGI_DIR=$TSUBAKI_DIR/cgi
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
-
-# 起動時のオプション
-OPTS="-string_mode -ignore_yomi -z"
-COMMAND=snippet_make_server.pl
-NICE=-4
 
 
 start() {
