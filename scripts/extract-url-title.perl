@@ -52,42 +52,36 @@ sub main {
 	    print STDERR "$file cannot obtain file status.\n";
 	}
 
-	while (<READER>) {
-	    my $sf_tag = <READER>;
-	    my $url;
+	my $url = 'none';
+	my $title = 'none';
+	while (my $sf_tag = <READER>) {
 	    if ($opt{url}) {
-		if ($sf_tag =~ /Url=\"([^\"]+)\"/) {
+		if ($sf_tag =~ /Url=\"([^\"]*)\"/) {
 		    $url = $1;
-		} else {
-		    print STDERR "$file URL parse error.\n";
-		}
-	    }
-
-	    my $title = 'none';
-	    if ($opt{title}) {
-		if ($sf_tag =~ /<RawString>([^<]+)<\/RawString>/) { # first RawString (in the line of sf_tag)
-		    $title = $1;
-		}
-		else {
-		    while (my $header_tag = <READER>) {
-			if ($header_tag =~ /<RawString>([^<]+)<\/RawString>/) { # first RawString (maybe in Header)
-			    $title = $1;
-			    last;
-			}
+		    unless ($url) {
+			print STDERR "$file: URL is empty!\n";
+			$url = 'none';
 		    }
 		}
-		# スペースを_に置換 for English
-		$title =~ s/ /_/g;
 	    }
 
-	    if ($opt{url} && $opt{title}) {
-		print "$name $url $title $size\n";
-	    } elsif ($opt{url}) {
-		print "$name $url $size\n";
-	    } elsif ($opt{title}) {
-		print "$name $title $size\n";
+	    if ($opt{title}) {
+		if ($sf_tag =~ /<RawString>([^<]+)<\/RawString>/) { # first RawString (maybe in Header)
+		    $title = $1;
+		    # スペースを_に置換 for English
+		    $title =~ s/ /_/g;
+		}
 	    }
-	    last;
+	    last if $title ne 'none';
+	}
+	if ($opt{url} && $opt{title}) {
+	    print "$name $url $title $size\n";
+	}
+	elsif ($opt{url}) {
+	    print "$name $url $size\n";
+	}
+	elsif ($opt{title}) {
+	    print "$name $title $size\n";
 	}
 	close(READER);
     }
