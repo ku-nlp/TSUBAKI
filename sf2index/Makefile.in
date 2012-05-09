@@ -3,6 +3,7 @@ IDX0_SUFFIX = idx0
 IDX1_SUFFIX = idx1
 BASEDIR = $(shell pwd)
 DATADIR = @DocumentPath@
+TMPSFDIR = @DocumentPath@/tmp_xml0
 HTMLS = $(wildcard $(DATADIR)/*.html)
 XMLS = $(wildcard $(DATADIR)/*.xml)
 IDXS = $(patsubst %.xml,%.$(IDX0_SUFFIX),$(XMLS))
@@ -14,15 +15,26 @@ XMLLIST = $(DATADIR)/$(ID).xmls
 URL_TITLE_TXT = $(DATADIR)/$(ID).url_title
 URLDB = $(DATADIR)/did2url.cdb
 TITLEDB = $(DATADIR)/did2title.cdb
+CNSDB = $(BASEDIR)/../data/cns.100M.cls.df1000.cdb
+WWW2SF_SENTENCE_LENGTH_MAX = 130
 
 UtilsDir = @UtilsPath@
 WWW2sfDir = @WWW2sfPath@
 SynGraphDir = @SynGraphPath@
+SynDBDir = @SynGraphPath@/syndb/@MachineType@
+SynGraphPerlDir = @SynGraphPath@/perl
+JumanCommand = @JUMANPrefix@/bin/juman
+KnpCommand = @KNPPrefix@/bin/knp
+JumanrcFile = @JUMANPrefix@/etc/jumanrc
+KnprcFile = @KNPPrefix@/etc/knprc
 
 all: idx_bin idx_length dfdb url_title_db
 
 html2sf:
-	$(WWW2sfDir)/tool/www2sf.sh -x -s -d $(SynGraphDir) $(DATADIR) $(DATADIR)
+	mkdir -p $(TMPSFDIR)
+	$(WWW2sfDir)/tool/www2sf.sh -d $(SynGraphDir) -c $(CNSDB) $(DATADIR) $(TMPSFDIR)
+	perl -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(TMPSFDIR) -outdir $(DATADIR) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile add-knp-result-dir.log -embed_result_in_xml
+	rm -rf $(TMPSFDIR) add-knp-result-dir.log
 
 $(IDXS): $(DATADIR)/%.$(IDX0_SUFFIX) : $(DATADIR)/%.xml
 	perl -I ../cgi $(BASEDIR)/sf2term.pl $< > $@
