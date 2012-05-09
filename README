@@ -150,7 +150,8 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
      localhostでsshdが上がっていることを確認してください。また、サーバ
      を止めるには、上記のstartをstopとして実行してください。
 
-次に、$TSUBAKI_DIR/cgi/index.cgiをWebブラウザでアクセスし、検索します。
+次に、検索フロントエンド($TSUBAKI_DIR/cgi/index.cgi)をWebブラウザでアク
+セスし、検索します。
 
   例) /var/www/html が、http://localhost/ でアクセスできる場合は、
       "ln -s `pwd` /var/www/html"を実行し、Webブラウザで
