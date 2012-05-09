@@ -47,7 +47,8 @@ if [ ! -d $outtopdir ]; then
 fi
 
 dcount=0
-outdir=$outtopdir/`printf %06d $dcount`
+dstr=`printf %06d $dcount`
+outdir=$outtopdir/$dstr
 if [ ! -d $outdir ]; then
     ${DRYRUN}mkdir -p $outdir
 fi
@@ -55,13 +56,14 @@ hcount=0
 
 for f in `find $indir -name "*.$EXT"`
 do
-    destf=$outdir/`printf %010d $hcount`.$EXT
+    destf=$outdir/$dstr`printf %04d $hcount`.$EXT
     ${DRYRUN}cp -v $f $destf
 
     hcount=`expr $hcount + 1`
     if [ $hcount -eq $NUM_OF_HTMLS_IN_DIR ]; then
 	dcount=`expr $dcount + 1`
-	outdir=$outtopdir/`printf %06d $dcount`
+	dstr=`printf %06d $dcount`
+	outdir=$outtopdir/$dstr
 	if [ ! -d $outdir ]; then
 	    ${DRYRUN}mkdir -p $outdir
 	fi
