@@ -32,7 +32,7 @@ sub getDefaultValues {
 
     # KNPのオプション
     $params{use_of_case_analysis} = 0;
-    $params{use_of_NE_tagger} = 1;
+    $params{use_of_NE_tagger} = 0;
 
 
     # 検索条件のデフォルト設定
