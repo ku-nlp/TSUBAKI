@@ -47,12 +47,12 @@ SnippetServerHost=localhost
 SnippetServerPort=59001
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d DocumentPath] [-c OutputConfFile]"
+    echo "Usage: $0 [-j|-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d DocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort]"
     exit 1
 }
 
 # getopts
-while getopts c:eju:s:w:d:h OPT
+while getopts c:eju:s:w:d:E:N:h OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -73,6 +73,10 @@ do
 		DocumentPath=$OPTARG
 	    fi
             ;;
+	E)  SearchServerPort=$OPTARG
+	    ;;
+	N)  SnippetServerPort=$OPTARG
+	    ;;
         h)  usage
             ;;
     esac
