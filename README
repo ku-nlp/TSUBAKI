@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/05/09 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/05/13 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -39,6 +39,9 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
   -- Text::Darts
   -- Error (Module::Metadata, version, Perl::OSType, Module::Buildも必要)
 
+  ※ 本パッケージのcpanディレクトリに、上記のPerlモジュールのtarballを
+     同梱していますので、必要に応じてご利用ください。
+
 
 * 言語解析ツール・データベースのインストール
 
@@ -53,8 +56,9 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
      ※ JUMAN/KNPのPerlモジュールもインストールしてください。
 
   -- SynGraph日本語データベース(同義語・句の辞書)のダウンロード
-     http://... を取得し、TSUBAKI直下(このディレクトリ)にて展開してくだ
-     さい。データベースがSynGraph/syndb以下に展開されます。
+     http://nlp.ist.i.kyoto-u.ac.jp/nl-resource/SynGraph/SynGraph-syndb.tar.bz2
+     をダウンロードし、TSUBAKI直下(このディレクトリ)にて展開してください。
+     データベースがSynGraph/syndb以下に展開されます。
 
 
 - 英語の文書を検索する場合に必要なツールのインストール
@@ -76,10 +80,10 @@ $TSUBAKI_DIRにおいて以下のように ./setup.shを実行することによ
 設定ファイルを自動生成します。
 
   例1) 日本語サンプル文書データを対象にする場合
-       ./setup.sh -d sample_doc/ja
+       % ./setup.sh -d sample_doc/ja
 
   例2) 英語サンプル文書データを対象にする場合
-       ./setup.sh -e -d sample_doc/en
+       % ./setup.sh -e -d sample_doc/en
 
   ※ ./setup.shの重要なオプションの説明
        -d 検索対象文書データパス : 検索対象文書データの場所を指定
@@ -108,7 +112,7 @@ $TSUBAKI_DIRにおいて、make を実行してください。
 このXML形式を「TSUBAKI標準フォーマット」と呼びます。$TSUBAKI_DIRにおいて
 次のように実行してください。
 
-  make DATADIR=`pwd`/sample_doc/ja html2sf
+  % make DATADIR=`pwd`/sample_doc/ja html2sf
 
   ※ DATADIRは絶対パスを指定してください。日本語サンプル文書データ以外
      を対象にする場合は、上記の設定で指定した文書データパスをDATADIRと
@@ -121,7 +125,7 @@ $TSUBAKI_DIRにおいて、make を実行してください。
 TSUBAKI標準フォーマットデータからインデックスを生成します。$TSUBAKI_DIR
 において次のように実行してください。
 
-  make DATADIR=`pwd`/sample_doc/ja indexing
+  % make DATADIR=`pwd`/sample_doc/ja indexing
 
   ※ DATADIRは絶対パスを指定してください。日本語サンプル文書データ以外
      を対象にする場合は、上記の設定で指定した文書データパスをDATADIRと
@@ -136,32 +140,40 @@ TSUBAKI標準フォーマットデータからインデックスを生成しま�
 $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 を実行して検索のテストをします。クエリはUTF-8で入力してください。
 
-  例) ./search.sh -c conf/configure 京大	→ hitcountが6になる
-      ./search.sh -c conf/configure 紅葉	→ hitcountが5になる
+  例) % ./search.sh -c conf/configure 京大	→ hitcountが6になる
+      % ./search.sh -c conf/configure 紅葉	→ hitcountが5になる
 
 
 * ブラウザからの検索
 
-まず、次のようにして検索サーバとスニペットサーバを起動します。
+ブラウザから検索するためには、localhostでsshdとhttpdが起動している必要
+があります。次のようにして、sshdとhttpdが起動していることを確認してくだ
+さい。
 
-  scripts/server-all.sh -c conf/configure start
+  % ps aux | grep sshd
+  % ps aux | grep httpd
 
-  ※ localhostにsshすることによって起動しますので、エラーになる場合は
-     localhostでsshdが上がっていることを確認してください。また、サーバ
-     を止めるには、上記のstartをstopとして実行してください。
+これらが起動していない場合は、システム設定を変更して起動してください。
 
-次に、検索フロントエンド($TSUBAKI_DIR/cgi/index.cgi)をWebブラウザでアク
-セスし、検索します。
+検索サーバとスニペットサーバを次のようにして起動します。このスクリプト
+の実行によって、localhostにsshし、これらのサーバを起動しています。
 
-  例) /var/www/html が、http://localhost/ でアクセスできる場合は、
-      "ln -s `pwd` /var/www/html"を実行し、Webブラウザで
-      http://localhost/TSUBAKI/cgi/index.cgi にアクセスします。
+  % scripts/server-all.sh -c conf/configure start
 
-  ※ localhostのhttpdを利用しますので、エラーになる場合はlocalhostで
-     httpdが上がっていることを確認してください。ブラウザでindex.cgiのソー
-     スコードが表示される場合は、httpdの設定でCGIが実行可能となっている
-     かを確認してください(Apacheでは、"Options ExecCGI"と"AddHandler
-     cgi-script .cgi)。
+  ※ サーバを止めるには、上記のstartをstopとして実行してください。
+
+検索フロントエンド($TSUBAKI_DIR/cgi/index.cgi)にWebブラウザでアクセスし、
+クエリを入力して検索を実行します。
+
+  例) http://localhost/ が /var/www/html ディレクトリに対応している場合
+      は、"ln -s `pwd` /var/www/html"を実行することによって、
+      /var/www/html直下にTSUBAKIディレクトリへのシンボリックリンクをは
+      ります。Webブラウザでhttp://localhost/TSUBAKI/cgi/index.cgi にア
+      クセスします。
+
+  ※ ブラウザでindex.cgiのソースコードが表示される場合は、httpdの設定で
+     CGIが実行可能となっていることを確認してください (Apacheでは
+     "Options ExecCGI"と"AddHandler cgi-script .cgi)。
 
 
 

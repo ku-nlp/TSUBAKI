@@ -1,3 +1,71 @@
+2012-05-13  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* cgi/configure.2010, cgi/configure.nict: deleted.
+
+	* cgi/api.cgi, conf/configure.in:
+	Modified a name of configuration to avoid a conflict.
+
+	* conf/configure.in, cgi/RequestParser.pm, cgi/SearchEngine.pm, cgi/Configure.pm, scripts/server_checker.pl, scripts/snippet-server.sh, scripts/tsubaki-server.sh, scripts/watch-server-status.perl:
+	Renamed the names of servers to SEARCH_SERVERS and SNIPPET_SERVERS
+
+	* cgi/Configure.pm, setup.sh, scripts/tsubaki-server.sh, scripts/watch-memory-server.sh, scripts/watch-memory.sh, scripts/watch-server-status.sh, scripts/tsubaki-server-manager.sh, scripts/copy-data-to-host.sh, scripts/query-parse-server.sh, scripts/remove-sid.sh, scripts/snippet-server.sh, scripts/access-log-collecter.sh:
+	Modified the default path of configure.
+
+	* conf/tsubaki.conf, data/PORTS.SYN, cgi/configure, cgi/index.cgi:
+	deleted.
+
+2012-05-11  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* setup.sh:
+	Modified to be able to specify the ports of search servers and snippet servers.
+
+2012-05-09  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* scripts/html-relocation.sh: Modified ID numbering.
+
+	* scripts/html-relocation.sh: added.
+
+	* README: updated.
+
+	* sf2index/Makefile.in:
+	Modified to use -print_progress option for add-knp-result-dir.perl.
+
+	* cgi/RequestParser.pm: Changed the default of use_of_NE_tagger.
+
+	* sf2index/Makefile.in:
+	Modified to use add-knp-result-dir.perl to make sf.
+
+2012-05-06  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* sf2index/Makefile.in: Modified to generate url_title_db.
+
+	* scripts/extract-url-title.perl: Added verbose option.
+
+	* setup.sh: Check perl path and generate index.cgi.
+
+	* scripts/extract-url-title.perl: Code arrangement.
+
+	* scripts/snippet_make_server.pl:
+	Modified to be verbose in modules if specified.
+
+	* scripts/tsubaki-server-manager.sh: Modified check of server manager.
+
+	* scripts/snippet-server.sh: Added -verbose option.
+
+	* cgi/index.cgi.in: added.
+
+	* cgi/index.cgi: Modified cached html path.
+
+	* cgi/configure.in: Added configurations.
+
+	* cgi/RequestParser.pm:
+	Changed the default of telic_process and NE_process.
+
+	* cgi/Renderer.pm:
+	Modified handling of subtitle and url if not specified.
+
+	* cgi/whats.html: deleted.
+
 2012-05-02  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
 
 	* README: Added XML::Writer.
