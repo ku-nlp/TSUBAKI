@@ -233,9 +233,8 @@ QUESTIONNAIRE	0
 # アンケート収集CGIのアドレス
 QUESTIONNARIE_CGI	http://tsubaki.ixnlp.nii.ac.jp/questionnarie.cgi
 
-# スニペットサーバー上の標準フォーマットデータをAPIで配布するかどうか（0:配布しない, 1:配布する）
-
-PROVIDE_SFDAT_ON_SNIPPET_SERVERS	0
+# スニペットサーバ上の標準フォーマットデータをAPIで配布するかどうか（0:配布しない, 1:配布する）
+PROVIDE_SFDAT_ON_SNIPPET_SERVER	0
 
 # キャッシュを利用しないようにする場合は1
 DISABLE_CACHE	1

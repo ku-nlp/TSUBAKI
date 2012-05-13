@@ -240,7 +240,7 @@ sub provideDocumentData {
     }
 
     my $content;
-    if ($fileType eq 'xml' && $CONFIG->{PROVIDE_SFDAT_ON_SNIPPET_SERVERS}) {
+    if ($fileType eq 'xml' && $CONFIG->{PROVIDE_SFDAT_ON_SNIPPET_SERVER}) {
 	require IO::Socket;
 	require IO::Select;
 
