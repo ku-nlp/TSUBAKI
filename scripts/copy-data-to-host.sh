@@ -8,7 +8,7 @@
 # sh copy-data-to-host.sh -d /data/home/skeiji/tsubaki/test /data2/work/wisdom/newsid/xmls
 
 TSUBAKI_DIR=`echo $0 | xargs dirname`/..
-CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
+CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 workspace=/tmp/$USER/cp.$USER
 distdir=/tmp/$USER/dist.$USER

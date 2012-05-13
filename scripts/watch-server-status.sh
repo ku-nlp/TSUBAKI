@@ -5,7 +5,7 @@
 # server の status を取得しつづけるデーモン
 
 TSUBAKI_DIR=`echo $0 | xargs dirname`/..
-CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
+CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 usage() {
     echo "Usage: $0 [-c configure_file]"

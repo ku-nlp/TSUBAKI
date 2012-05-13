@@ -3,7 +3,7 @@
 # $Id$
 
 TSUBAKI_DIR=`echo $0 | xargs dirname`/..
-CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
+CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 usage() {
     echo "Usage: $0 [-c configure_file] start|stop|restart|status"
@@ -14,6 +14,10 @@ while getopts c:h OPT
 do
     case $OPT in
 	c)  CONFIG_FILE=$OPTARG
+	    echo $CONFIG_FILE | grep -q '^/' 2> /dev/null > /dev/null
+	    if [ $? != 0 ]; then
+		CONFIG_FILE=`pwd`/$CONFIG_FILE
+	    fi
 	    ;;
         h)  usage
             ;;
@@ -26,12 +30,17 @@ shift `expr $OPTIND - 1`
 
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Not found: $CONFIG_FILE"
+    usage
+fi
+
 
 call() {
     grep SEARCH_SERVERS_FOR_SYNGRAPH $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
     do
 	h=`echo $LINE | cut -f 1 -d ' '`
-	ssh -f $h "sh $SCRIPTS_DIR/tsubaki-server-manager.sh $1"
+	ssh -f $h "sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE $1"
     done
 }
 

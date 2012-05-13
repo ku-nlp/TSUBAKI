@@ -16,7 +16,7 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 
 my $HOSTNAME = `hostname`;
-my $DIRNAME = dirname($INC{'Configure.pm'});
+my $DIRNAME = dirname($INC{'Configure.pm'}) . '/../conf';
 # 環境によってパスを変える
 my $CONFIG_FILE_PATH =  $DIRNAME . '/' . (($HOSTNAME =~ /iccc/) ? 'configure.nict' : 'configure');
 

@@ -3,7 +3,7 @@
 # $Id$
 
 TSUBAKI_DIR=`echo $0 | xargs dirname`/..
-CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
+CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 hostfile=/
 prefix=

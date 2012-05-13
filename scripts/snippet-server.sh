@@ -3,7 +3,7 @@
 # $Id$
 
 TSUBAKI_DIR=`echo $0 | xargs dirname`/..
-CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
+CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 # 起動時のオプション
 OPTS="-string_mode -ignore_yomi -z -new_sf"
@@ -19,6 +19,10 @@ while getopts c:vh OPT
 do
     case $OPT in
 	c)  CONFIG_FILE=$OPTARG
+	    echo $CONFIG_FILE | grep -q '^/' 2> /dev/null > /dev/null
+	    if [ $? != 0 ]; then
+		CONFIG_FILE=`pwd`/$CONFIG_FILE
+	    fi
 	    ;;
 	v)  OPTS="$OPTS -verbose"
 	    ;;
@@ -33,6 +37,11 @@ shift `expr $OPTIND - 1`
 
 CGI_DIR=$TSUBAKI_DIR/cgi
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Not found: $CONFIG_FILE"
+    usage
+fi
 
 
 start() {

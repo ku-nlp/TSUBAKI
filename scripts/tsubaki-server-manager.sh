@@ -6,7 +6,7 @@
 # 検索サーバーが停止している場合は、それを自動検出し再起動する
 
 TSUBAKI_DIR=`echo $0 | xargs dirname`/..
-CONFIG_FILE=$TSUBAKI_DIR/cgi/configure
+CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 usage() {
     echo "Usage: $0 [-c configure_file] start|stop|restart|status|halt"
