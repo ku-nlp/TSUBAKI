@@ -45,7 +45,7 @@ fi
 
 
 start() {
-    grep STANDARD_FORMAT_LOCATION $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
+    grep SNIPPET_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
     do
 	host=`echo $LINE | cut -f 1 -d ' '`
 	ports=`echo $LINE | cut -f 2 -d ' '`
@@ -60,7 +60,7 @@ start() {
 }
 
 status_or_stop() {
-    grep STANDARD_FORMAT_LOCATION $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
+    grep SNIPPET_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
     do
 	host=`echo $LINE | cut -f 1 -d ' '`
 	ports=`echo $LINE | cut -f 2 -d ' '`

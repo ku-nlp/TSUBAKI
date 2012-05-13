@@ -77,7 +77,7 @@ COMPOUND_NOUN_DFDB_PATH	@SearchEnginePath@/data/cns.100M.cls.df1000.cdb
 
 
 ##################################################
-# 検索サーバー/スニペットサーバー関係の設定
+# 検索サーバ/スニペットサーバの設定
 ##################################################
 
 # TSUBAKIを起動するホストの情報 (conf/tsubaki.confが参照する)
@@ -86,27 +86,25 @@ HOSTS_START	34
 HOSTS_END	70
 HOSTS_DEGIT	2
 
-# サーバーの状態のログを保存するファイルの指定
-# サーバーの設定に入る前に設定すること（サーバーの設定後では反映されません）
+# サーバの状態のログを保存するファイルの指定
+# サーバの設定に入る前に設定すること（サーバの設定後では反映されません）
 SERVER_STATUS_LOG	@SearchEnginePath@/data/server_status
 
-# 検索サーバーが利用するインデックスデータの場所、アンカーインデックスの場所、ポート番号
+# 検索サーバが利用するインデックスデータの場所、アンカーインデックスの場所、ポート番号
 # 複数個指定可能（★要変更）
 INDEX_LOCATION	@DocumentPath@	none	@SearchServerPort@
 
-# SYNGRAPH検索用サーバー（★要変更）
-# SEARCH_SERVERS_FOR_SYNGRAPH ホスト名 ポート番号1,...
-
-SEARCH_SERVERS_FOR_SYNGRAPH	 @SearchServerHost@	  @SearchServerPort@
+# 検索サーバの設定（★要変更）
+# SEARCH_SERVERS	ホスト名	ポート番号1,...
+SEARCH_SERVERS	@SearchServerHost@	@SearchServerPort@
 
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
 # SID_RANGE	/wisdom/sid.range
 
-# スニペットサーバーの設定（★要変更）
-# STANDARD_FORMAT_LOCATION ホスト名 ポート番号 ディスクにおいてある標準フォーマットのID1,...
-
-STANDARD_FORMAT_LOCATION	@SnippetServerHost@	@SnippetServerPort@	000
+# スニペットサーバの設定（★要変更）
+# SNIPPET_SERVERS	ホスト名	ポート番号	ディスクにおいてある標準フォーマットのID1,...
+SNIPPET_SERVERS	@SnippetServerHost@	@SnippetServerPort@	000
 
 
 

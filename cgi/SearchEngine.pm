@@ -25,11 +25,7 @@ sub new {
     my $this = {hosts => []};
 
     my $servers;
-    if ($syngraph > 0) {
-	$servers = $CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH};
-    } else {
-	$servers = $CONFIG->{SEARCH_SERVERS};
-    }
+    $servers = $CONFIG->{SEARCH_SERVERS};
     foreach my $s (@$servers) {
 	push(@{$this->{hosts}}, {name => $s->{name}, port => $s->{port}});
     }

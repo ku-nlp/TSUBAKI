@@ -16,7 +16,6 @@ GetOptions(\%opt, 'syngraph', 'snippet', 'verbose');
 my $CONFIG = Configure::get_instance();
 
 my $servers = $CONFIG->{SEARCH_SERVERS};
-$servers = $CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH} if ($opt{syngraph});
 $servers = $CONFIG->{SNIPPET_SERVERS} if ($opt{snippet});
 
 my $selecter = IO::Select->new();

@@ -15,7 +15,6 @@ my $TIMEOUT = 5;
 
 my @buf;
 push (@buf, @{$CONFIG->{SEARCH_SERVERS}});
-push (@buf, @{$CONFIG->{SEARCH_SERVERS_FOR_SYNGRAPH}});
 push (@buf, @{$CONFIG->{SNIPPET_SERVERS}});
 
 my %hosts = ();

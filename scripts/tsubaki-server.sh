@@ -37,7 +37,7 @@ fi
 
 
 call() {
-    grep SEARCH_SERVERS_FOR_SYNGRAPH $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
+    grep SEARCH_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
     do
 	h=`echo $LINE | cut -f 1 -d ' '`
 	ssh -f $h "sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE $1"

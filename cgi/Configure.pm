@@ -68,7 +68,7 @@ sub _new {
 		push(@{$this->{$key}}, {name => $host, port => $p});
 	    }
 	}
-	elsif ($_ =~ /STANDARD_FORMAT_LOCATION/) {
+	elsif ($_ =~ /SNIPPET_SERVERS/) {
 	    my ($key, $host, $ports, $dids) = split(/\s+/, $_);
 	    $host =~ s/^\s*//;
 	    $host =~ s/\s*$//;
