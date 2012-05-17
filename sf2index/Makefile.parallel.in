@@ -1,0 +1,153 @@
+ID := 000
+IDX0_SUFFIX := idx0
+BASEDIR := @SearchEnginePath@
+
+USERNAME := $(shell whoami)
+TMP_DIR := /tmp/$(USERNAME)/tsubaki_idx_tmp
+
+CNSDB = $(BASEDIR)/data/cns.100M.cls.df1000.cdb
+WWW2SF_SENTENCE_LENGTH_MAX = 130
+
+UtilsDir = @UtilsPath@
+WWW2sfDir = @WWW2sfPath@
+SynGraphDir = @SynGraphPath@
+SynDBDir = @SynGraphPath@/syndb/@MachineType@
+SynGraphPerlDir = @SynGraphPath@/perl
+JumanCommand = @JUMANPrefix@/bin/juman
+KnpCommand = @KNPPrefix@/bin/knp
+JumanrcFile = @JUMANPrefix@/etc/jumanrc
+KnprcFile = @KNPPrefix@/etc/knprc
+
+XML_SUFFIX := xml
+IDX0_SUFFIX := idx0
+IDX1_SUFFIX := idx1
+IDX_SUFFIX := idx
+DF_SUFFIX := $(IDX_SUFFIX).df
+DOC_LENGTH_SUFFIX := doc_length.txt
+SID2TID_SUFFIX := sid2tid
+XML_LIST_SUFFIX := xmllist
+URL_TITLE_SUFFIX := url_title
+URL_DB_SUFFIX := did2url.cdb
+TITLE_DB_SUFFIX := did2title.cdb
+
+DOC_TOP_DIR := /cedar4/kawahara/tsubaki-sample
+HTML_TOP_DIR := $(DOC_TOP_DIR)/html
+XML_TOP_DIR := $(DOC_TOP_DIR)/xml
+IDX_TOP_DIR := $(patsubst %/xml,%/idx,$(XML_TOP_DIR))
+
+HTML_DIRS := $(wildcard $(HTML_TOP_DIR)/??????)
+
+XML_BASE := $(XML_TOP_DIR)/????
+# XML_DIRS := $(wildcard $(XML_BASE)??)
+XML_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS))
+XMLS := $(addsuffix .$(XML_SUFFIX)done, $(XML_DIRS))
+
+IDX_BASE := 0000
+HTML_DIR := $(HTML_TOP_DIR)/000000
+XML_DIR := $(XML_TOP_DIR)/000000
+TMP_XML_DIR = $(TMP_DIR)/tmp_xml_$(notdir $(XML_DIR))
+XML_FILES = $(wildcard $(XML_DIR)/*.$(XML_SUFFIX))
+IDX_FILES = $(patsubst $(XML_TOP_DIR)/%.$(XML_SUFFIX),$(IDX_TOP_DIR)/%.$(IDX0_SUFFIX),$(XML_FILES))
+
+IDX_DIRS := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(XML_DIRS))
+IDXS := $(addsuffix .$(IDX1_SUFFIX), $(IDX_DIRS))
+URL_TITLES := $(addsuffix .$(URL_TITLE_SUFFIX), $(IDX_DIRS))
+
+get_first_four = $(shell echo $(dir) | sed 's/[0-9][0-9]$$//')
+FINAL_IDX_DIRS := $(sort $(foreach dir, $(IDX_DIRS), $(get_first_four)))
+
+IDXIDXS := $(addsuffix /$(ID).$(IDX_SUFFIX), $(FINAL_IDX_DIRS))
+DFS := $(addsuffix /$(ID).$(DF_SUFFIX), $(FINAL_IDX_DIRS))
+DOC_LENGTHS := $(addsuffix /$(ID).$(DOC_LENGTH_SUFFIX), $(FINAL_IDX_DIRS))
+URL_DBS := $(addsuffix /$(ID).$(URL_DB_SUFFIX), $(FINAL_IDX_DIRS))
+BINS := $(addsuffix /idx$(ID).word.dat.conv, $(FINAL_IDX_DIRS))
+
+MERGED_DF_FILE := $(IDX_TOP_DIR)/merged.dffiles
+DFDB := $(IDX_TOP_DIR)/df.word.cdb.0
+
+LAST_MAKEFILE = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
+
+all: indexing
+
+indexing: $(IDXIDXS) $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
+
+html2sf: $(XMLS)
+
+each_sf:
+	if [ ! -d $(TMP_XML_DIR) ]; then mkdir -p $(TMP_XML_DIR); fi && \
+	if [ ! -d $(XML_DIR) ]; then mkdir -p $(XML_DIR); fi && \
+	$(WWW2sfDir)/tool/www2sf.sh -d $(SynGraphDir) -c $(CNSDB) $(HTML_DIR) $(TMP_XML_DIR) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_DIR)).log && \
+	perl -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(TMP_XML_DIR) -outdir $(XML_DIR) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log -embed_result_in_xml -print_progress && \
+	rm -rf $(TMP_XML_DIR) $(TMP_DIR)/www2sf_$(notdir $(XML_DIR)).log $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log
+
+each_idx: $(IDX_FILES)
+
+idxs: $(IDXS)
+
+url_titles: $(URL_TITLES)
+
+$(XML_TOP_DIR)/%.$(XML_SUFFIX)done:
+	$(MAKE) -f $(LAST_MAKEFILE) XML_DIR=$(basename $@) HTML_DIR=$(patsubst $(XML_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(basename $@)) each_sf && \
+	touch $@
+
+$(IDX_FILES): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX)
+	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
+	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
+	perl -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $< > $(TMP_DIR)/$(notdir $@) && \
+	mv $(TMP_DIR)/$(notdir $@) $@
+
+$(IDX_TOP_DIR)/%.idx0done:
+	$(MAKE) -f $(LAST_MAKEFILE) IDX_DIR=$(basename $@) XML_DIR=$(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(basename $@)) each_idx && \
+	touch $@
+
+$(IDXS): $(IDX_TOP_DIR)/%.$(IDX1_SUFFIX): $(IDX_TOP_DIR)/%.idx0done
+	mkdir -p $(basename $@).idx.tmp && \
+	perl $(BASEDIR)/scripts/merge_idx.pl -dir $(basename $@) -suffix $(IDX0_SUFFIX) -outdir $(basename $@).idx.tmp -n 50 && \
+	perl $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $(basename $@).idx.tmp -suffix $(IDX0_SUFFIX) > $@ && \
+	rm -rf $(basename $@).idx.tmp
+
+$(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX):
+	for f in $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(basename $@))/*.$(XML_SUFFIX); do echo $$f; done > $@
+
+$(URL_TITLES): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX)
+	perl $(BASEDIR)/scripts/extract-url-title.perl -files $< > $@
+
+$(IDX_TOP_DIR)/%.idx1done:
+	$(MAKE) -f $(LAST_MAKEFILE) XML_BASE=$(patsubst %/,%,$(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(dir $@))) idxs url_titles && \
+	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
+	touch $@
+
+$(IDX_TOP_DIR)/%.$(SID2TID_SUFFIX): $(IDX_TOP_DIR)/%.idx1done
+	mkdir -p $(dir $@) && \
+	mv -f $(patsubst %/,%,$(dir $@))*.$(IDX1_SUFFIX) $(dir $@) && \
+	perl $(BASEDIR)/scripts/make-mapfile.perl $(dir $@)*.$(IDX1_SUFFIX) > $@ && \
+	ln -s $@ $(dir $@)$(SID2TID_SUFFIX)
+
+$(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.idx1done
+	cat $(patsubst %/,%,$(dir $@))*.$(URL_TITLE_SUFFIX) > $(dir $@)000.$(URL_TITLE_SUFFIX)
+
+$(IDXIDXS): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX): $(IDX_TOP_DIR)/%.$(SID2TID_SUFFIX)
+	perl $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $(dir $@) -mapfile $< -suffix $(IDX1_SUFFIX) > $@
+
+$(BINS): $(IDX_TOP_DIR)/%/idx$(ID).word.dat.conv: $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
+	perl -I $(UtilsDir)/perl -I $(BASEDIR)/scripts $(BASEDIR)/scripts/binarize_idx.pl -syn $<
+
+$(DFS): $(IDX_TOP_DIR)/%.$(DF_SUFFIX): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX)
+	perl $(BASEDIR)/scripts/idx2df.pl $<
+
+$(DOC_LENGTHS): $(IDX_TOP_DIR)/%.$(DOC_LENGTH_SUFFIX): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX)
+	perl $(BASEDIR)/scripts/make-dlength-db.perl -txt $<
+
+$(URL_DBS): $(IDX_TOP_DIR)/%.$(URL_DB_SUFFIX): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX)
+	perl $(BASEDIR)/scripts/make-url-title-cdbs.perl --titledb $(patsubst %.$(URL_DB_SUFFIX),%.$(TITLE_DB_SUFFIX),$@) --urldb $@ $< && \
+	ln -s $@ $(dir $@)$(URL_DB_SUFFIX) && \
+	ln -s $(patsubst %.$(URL_DB_SUFFIX),%.$(TITLE_DB_SUFFIX),$@) $(dir $@)$(TITLE_DB_SUFFIX)
+
+$(MERGED_DF_FILE): $(DFS)
+	perl $(BASEDIR)/scripts/merge_dffiles.perl $^ > $@
+
+$(DFDB): $(MERGED_DF_FILE)
+	perl -I $(UtilsDir)/perl $(BASEDIR)/scripts/make-df-db.perl --dir $(IDX_TOP_DIR) < $<
+
+clean:
+	rm -rf $(TMP_DIR) $(FINAL_IDX_DIRS) $(IDX_DIRS) $(IDXIDXS) $(DFS) $(DOC_LENGTHS) $(IDX_TOP_DIR)/*.$(IDX1_SUFFIX) $(IDX_TOP_DIR)/*.$(IDX1_SUFFIX)done $(IDX_TOP_DIR)/*.$(IDX0_SUFFIX)done $(IDX_TOP_DIR)/*.$(SID2TID_SUFFIX) $(URL_TITLES) $(IDX_TOP_DIR)/*.$(XML_LIST_SUFFIX) $(MERGED_DF_FILE) $(IDX_TOP_DIR)/df.* $(XML_TOP_DIR)/*.$(XML_SUFFIX)done
