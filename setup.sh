@@ -8,6 +8,8 @@ TSUBAKI_CONF_FILE_IN=$CWD/conf/tsubaki.conf.in
 TSUBAKI_CONF_FILE=$CWD/conf/tsubaki.conf
 SF2INDEX_MAKEFILE_IN=$CWD/sf2index/Makefile.in
 SF2INDEX_MAKEFILE=$CWD/sf2index/Makefile
+SF2INDEX_MAKEFILE_PARALLEL_IN=$CWD/sf2index/Makefile.parallel.in
+SF2INDEX_MAKEFILE_PARALLEL=$CWD/sf2index/Makefile.parallel
 SEARCH_SH_IN=$CWD/search.sh.in
 SEARCH_SH=$CWD/search.sh
 INDEX_CGI_IN=$CWD/cgi/index.cgi.in
@@ -160,6 +162,9 @@ sed -e "${SED_STR}" $TSUBAKI_CONF_FILE_IN > $TSUBAKI_CONF_FILE
 echo "done."
 echo "generating '${SF2INDEX_MAKEFILE}' ... "
 sed -e "${SED_STR}" $SF2INDEX_MAKEFILE_IN > $SF2INDEX_MAKEFILE
+echo "done."
+echo "generating '${SF2INDEX_MAKEFILE_PARALLEL}' ... "
+sed -e "${SED_STR}" $SF2INDEX_MAKEFILE_PARALLEL_IN > $SF2INDEX_MAKEFILE_PARALLEL
 echo "done."
 echo "generating '${SEARCH_SH}' ... "
 sed -e "${SED_STR}" $SEARCH_SH_IN > $SEARCH_SH
