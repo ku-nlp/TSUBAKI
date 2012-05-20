@@ -53,10 +53,10 @@ ENGLISH_PARSER_DIR	@SearchEnginePath@/enju2tsubaki
 ##################################################
 
 # キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス
-ORDINARY_SF_PATH	@DocumentPath@
+ORDINARY_SF_PATH	@DocumentPath@/xml
 
 # スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス（★要変更）
-DIR_PREFIX_FOR_SFS_W_SYNGRAPH	@DocumentPath@
+DIR_PREFIX_FOR_SFS_W_SYNGRAPH	@DocumentPath@/xml
 
 
 
@@ -65,11 +65,11 @@ DIR_PREFIX_FOR_SFS_W_SYNGRAPH	@DocumentPath@
 ##################################################
 
 # TITLEDB/URLDBを納めたディレクトリへのパス
-TITLE_DB_PATH	@DocumentPath@
-URL_DB_PATH	@DocumentPath@
+TITLE_DB_PATH	@DocumentPath@/idx
+URL_DB_PATH	@DocumentPath@/idx
 
 # 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
-SYNGRAPH_DFDB_PATH	@DocumentPath@
+SYNGRAPH_DFDB_PATH	@DocumentPath@/idx
 COMPOUND_NOUN_DFDB_PATH	@SearchEnginePath@/data/cns.100M.cls.df1000.cdb
 
 
@@ -92,7 +92,7 @@ SERVER_STATUS_LOG	@SearchEnginePath@/data/server_status
 
 # 検索サーバが利用するインデックスデータの場所、アンカーインデックスの場所、ポート番号
 # 複数個指定可能（★要変更）
-INDEX_LOCATION	@DocumentPath@	none	@SearchServerPort@
+INDEX_LOCATION	@DocumentPath@/idx/0000	none	@SearchServerPort@
 
 # 検索サーバの設定（★要変更）
 # SEARCH_SERVERS	ホスト名	ポート番号1,...
@@ -104,7 +104,7 @@ SEARCH_SERVERS	@SearchServerHost@	@SearchServerPort@
 
 # スニペットサーバの設定（★要変更）
 # SNIPPET_SERVERS	ホスト名	ポート番号	ディスクにおいてある標準フォーマットのID1,...
-SNIPPET_SERVERS	@SnippetServerHost@	@SnippetServerPort@	000
+SNIPPET_SERVERS	@SnippetServerHost@	@SnippetServerPort@	0000
 
 
 
@@ -153,7 +153,7 @@ MAX_LENGTH_OF_URL		100
 LINK_CACHED_HTML_FROM_TITLE	1
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
-CACHED_HTML_PATH_TEMPLATE	@DocumentPath@/%s.html
+CACHED_HTML_PATH_TEMPLATE	@DocumentPath@/html/%04d/%06d/%s.html
 
 # index.cgiのアドレス（★要変更）
 INDEX_CGI	./index.cgi
@@ -331,7 +331,7 @@ DISABLE_BLOCK_TYPE_DISPLAY	0
 # IS_NTCIR_MODE			1
 
 # HTML/標準フォーマットをディレクトリ分割せずに置いている場合
-IS_SIMPLE_MODE		1
+IS_SIMPLE_MODE		0
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
 # SIDS_FOR_NTCIR	@SearchEnginePath@/cgi/sid.range.cdb
