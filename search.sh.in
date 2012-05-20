@@ -16,12 +16,12 @@ www2sf_dir=@WWW2sfPath@
 file_mode=0
 query_options=-syngraph
 conf_file=@CONFIGURE_FILE@
-data_dir=@DocumentPath@
+data_dir=@DocumentPath@/idx/0000
 while getopts c:d:efh OPT
 do
     case $OPT in
 	c)  conf_file=$OPTARG
-	    data_dir=`grep DIR_PREFIX_FOR_SFS_W_SYNGRAPH $conf_file | grep -ve '^#' | awk '{print $2}'`
+	    data_dir=`grep INDEX_LOCATION $conf_file | grep -ve '^#' | awk '{print $2}'`
 	    ;;
 	d)  data_dir=$OPTARG
 	    ;;
