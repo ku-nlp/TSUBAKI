@@ -36,7 +36,7 @@ sub extract_sentences_from_ID {
     } elsif ($CONFIG->{IS_SIMPLE_MODE}) {
 	$xmlfile = sprintf("%s/%s%s", $dir_prefix, $did_w_version, $ext);
     } else {
-	$xmlfile = sprintf("%s/%06d/%s%s", $dir_prefix, $did / 10000, $did_w_version, $ext);
+	$xmlfile = sprintf("%s/%04d/%06d/%s%s", $dir_prefix, $did / 1000000, $did / 10000, $did_w_version, $ext);
     }
 
     if ($opt->{z} && ! -e $xmlfile) { # -z指定されているが、.xml.gzファイルが存在しない場合は、.xmlファイルとして探す

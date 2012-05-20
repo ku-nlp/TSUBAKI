@@ -83,6 +83,9 @@ sub _new {
 	    }
 
 	    foreach my $did (split(/,/, $dids)) {
+		if (length($did) < 4) { # SnippetMakerAgent.pmで4桁でチェックするため、短い場合は0で埋めておく
+		    $did = '0' x (4 - length($did)) . $did;
+		}
 		$this->{DID2HOST}{$did} = $host;
 	    }
 	}

@@ -62,7 +62,7 @@ sub create_snippets {
 	    push(@{$host2dids{$CONFIG->{IPSJ_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{IPSJ_SNIPPET_SERVERS}})]}}, $doc);
 	}
 	else {
-	    push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%03d", $doc->{did} / 1000000)}}}, $doc);
+	    push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%04d", $doc->{did} / 1000000)}}}, $doc);
 	}
     }
 
