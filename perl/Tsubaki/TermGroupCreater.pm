@@ -695,7 +695,7 @@ sub _pushbackDependencyTerms {
 		    text => $midasi,
 		    term_type => (($is_optional_node) ? 'dpnd' : 'force_dpnd'),
 		    gdf => $gdf,
-		    blockTypeFeature => ($blockTypeFeature + $feature),
+		    blockTypeFeature => ($blockTypeFeature + $CONFIG->{USE_OF_DPND_FEATURES} ? $feature : 0),
 		    node_type => 'basic' });
 
 		if ($is_optional_node) {
