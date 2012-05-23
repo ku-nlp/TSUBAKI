@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/05/13 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/05/23 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -86,7 +86,8 @@ $TSUBAKI_DIRにおいて以下のように ./setup.shを実行することによ
        % ./setup.sh -e -d sample_doc/en
 
   ※ ./setup.shの重要なオプションの説明
-       -d 検索対象文書データパス : 検索対象文書データの場所を指定
+       -d データパス             : インデックスなどのデータ出力場所を指定
+       -s 検索対象文書パス       : 検索対象文書の場所を指定 (default: データパス/src_doc)
        -j                        : 日本語の文書を検索する場合 (default)
        -e                        : 英語の文書を検索する場合
        -c 出力設定ファイル名	 : 出力する設定ファイル名を指定 (default: $TSUBAKI_DIR/conf/configure)
@@ -179,7 +180,9 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 
 ■ 注意事項
 
-・検索対象文書の形式としては、現在のところ、HTMLのみに対応しています。
+・サンプル以外の文書セットに対して検索するためには、上記設定において
+  ./setup.shに"-s 検索対象文書パス"を指定してください。検索対象文書の
+  形式としては、現在のところ、HTMLのみに対応しています。
 
 ・複数の文書セットに対して検索するためには、上記設定において./setup.sh
   に"-c 出力設定ファイル名"を指定し、異なる名前の設定ファイルを生成して
@@ -192,8 +195,8 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 
   SEARCH_SERVERS	server01	39999
   SEARCH_SERVERS	server02	39999
-  SNIPPET_SERVERS	server01	59001	000
-  SNIPPET_SERVERS	server02	59001	001
+  SNIPPET_SERVERS	server01	59001	0000
+  SNIPPET_SERVERS	server02	59001	0001
 
 
 ■ ドキュメント

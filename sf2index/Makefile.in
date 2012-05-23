@@ -31,7 +31,7 @@ URL_DB_SUFFIX := did2url.cdb
 TITLE_DB_SUFFIX := did2title.cdb
 
 DATADIR = @DocumentPath@
-HTML_SRC_DIR := $(DATADIR)/src_doc
+HTML_SRC_DIR := @SrcDocumentPath@
 HTML_TOP_DIR := $(DATADIR)/html
 XML_TOP_DIR := $(DATADIR)/xml
 IDX_TOP_DIR := $(DATADIR)/idx

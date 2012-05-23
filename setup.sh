@@ -21,6 +21,7 @@ UtilsPath
 SynGraphPath
 WWW2sfPath
 DocumentPath
+SrcDocumentPath
 CONFIGURE_FILE
 MachineType
 EnglishFlag
@@ -38,20 +39,22 @@ UtilsPath=$CWD/Utils
 SynGraphPath=$CWD/SynGraph
 WWW2sfPath=$CWD/WWW2sf
 DocumentPath=$CWD/sample_doc/ja
+SrcDocumentPath=$DocumentPath/src_doc
 MachineType=`uname -m`
 EnglishFlag=0
 SearchServerHost=localhost
 SearchServerPort=39999
 SnippetServerHost=localhost
 SnippetServerPort=59001
+SrcDocumentPathSpecifiedFlag=0
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-u UtilsPath] [-s SynGraphPath] [-w WWW2sfPath] [-d DocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort]"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName]"
     exit 1
 }
 
 # getopts
-while getopts c:eju:s:w:d:E:N:h OPT
+while getopts c:ejU:S:W:d:s:E:N:n:h OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -60,21 +63,34 @@ do
 	    ;;
 	j)  EnglishFlag=0
 	    ;;
-        u)  UtilsPath=$OPTARG
+        U)  UtilsPath=$OPTARG
             ;;
-        s)  SynGraphPath=$OPTARG
+        S)  SynGraphPath=$OPTARG
             ;;
-        w)  WWW2sfPath=$OPTARG
+        W)  WWW2sfPath=$OPTARG
             ;;
         d)  if [ -d "$CWD/$OPTARG" ]; then
 	        DocumentPath="$CWD/$OPTARG"
 	    else
 		DocumentPath=$OPTARG
 	    fi
+	    if [ $SrcDocumentPathSpecifiedFlag -eq 0 ]; then
+		SrcDocumentPath=$DocumentPath/src_doc
+	    fi
+            ;;
+        s)  if [ -d "$CWD/$OPTARG" ]; then
+	        SrcDocumentPath="$CWD/$OPTARG"
+	    else
+		SrcDocumentPath=$OPTARG
+	    fi
+	    SrcDocumentPathSpecifiedFlag=1
             ;;
 	E)  SearchServerPort=$OPTARG
 	    ;;
 	N)  SnippetServerPort=$OPTARG
+	    ;;
+	n)  SearchServerHost=$OPTARG
+	    SnippetServerHost=$OPTARG
 	    ;;
         h)  usage
             ;;
