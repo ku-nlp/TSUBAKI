@@ -249,16 +249,14 @@ sub provideDocumentData {
 	# ファイルタイプに応じたファイルパスを取得
 	my $filepath;
 	if ($fileType eq 'xml_w_anchor') {
-	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_W_ANCHOR_PATH}, $did / 1000000, $did / 10000, $did);
+	    $filepath = sprintf("%s/%04d/%06d/%s.xml", $CONFIG->{ORDINARY_SF_W_ANCHOR_PATH}, $did / 1000000, $did / 10000, $did);
 	} elsif ($fileType eq 'xml') {
-	    $filepath = sprintf("%s/x%03d/x%05d/%09d.xml", $CONFIG->{ORDINARY_SF_PATH}, $did / 1000000, $did / 10000, $did);
+	    $filepath = sprintf("%s/%04d/%06d/%s.xml", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 10000, $did);
 	} elsif ($fileType eq 'html') {
 	    my $did_w_version = $did;
 	    my ($_did) = ($did_w_version =~ /(^\d+)/);
 
-	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE1}, $_did / 1000000, $_did / 1000, $did_w_version);
-	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE2}, $_did / 1000000, $_did / 1000, $did_w_version) unless (-f $filepath);
-	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE3}, $_did / 1000000, $_did / 1000, $did_w_version) unless (-f $filepath);
+	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $_did / 1000000, $_did / 10000, $did_w_version);
 	}
 
 	if (-e $filepath) {
@@ -314,7 +312,7 @@ sub getStandardFormdatDataFromSnippetServer {
 	require SidRange;
 	$host = (new SidRange())->lookup($did);
     } else {
-	$host = $CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)};
+	$host = $CONFIG->{DID2HOST}{sprintf("%04d", $did / 1000000)};
     }
 
 
@@ -372,7 +370,7 @@ sub getCrawledDateFromSnippetServer {
 	    require SidRange;
 	    $host = (new SidRange())->lookup($did);
 	} else {
-	    $host = $CONFIG->{DID2HOST}{sprintf("%03d", $did / 1000000)};
+	    $host = $CONFIG->{DID2HOST}{sprintf("%04d", $did / 1000000)};
 	}
 	push (@{$host2dids{$host}}, $did);
     }
