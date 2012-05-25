@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/05/23 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/05/25 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -182,7 +182,7 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 
 ・サンプル以外の文書セットに対して検索するためには、上記設定において
   ./setup.shに"-s 検索対象文書パス"を指定してください。検索対象文書の
-  形式としては、現在のところ、HTMLのみに対応しています。
+  形式としては、現在のところHTMLのみに対応しています。
 
 ・複数の文書セットに対して検索するためには、上記設定において./setup.sh
   に"-c 出力設定ファイル名"を指定し、異なる名前の設定ファイルを生成して
@@ -190,11 +190,11 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 
 ・100万件以上の文書を検索対象にするには、複数の検索サーバとスニペットサー
   バを起動する必要があります。このためには、設定ファイル(conf/configure)
-  におけるSEARCH_SERVERSとSNIPPET_SERVERSの行をサーバ台数分コピーし、次
-  のようにサーバ名を記入してください。
+  において、次のようにSEARCH_SERVERSとSNIPPET_SERVERSの行をサーバ台数分
+  コピーし、サーバ名を記入してください。
 
-  SEARCH_SERVERS	server01	39999
-  SEARCH_SERVERS	server02	39999
+  SEARCH_SERVERS	server01	39999	/somewhere/idx/0000	none
+  SEARCH_SERVERS	server02	39999	/somewhere/idx/0001	none
   SNIPPET_SERVERS	server01	59001	0000
   SNIPPET_SERVERS	server02	59001	0001
 
