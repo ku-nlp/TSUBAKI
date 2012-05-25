@@ -27,9 +27,9 @@ shift `expr $OPTIND - 1`
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 
 call() {
-    for n in `seq $HOSTS_START $HOSTS_END | awk '{printf "%0'$DEGIT'd\n", $1}'`
+    grep SEARCH_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $2}' | while read LINE
     do
-	h=$HOSTS_PREFIX$n
+	h=$LINE
 	ssh -f $h "sh $SCRIPTS_DIR/watch-memory.sh $1"
     done
 }

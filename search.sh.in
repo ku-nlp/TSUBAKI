@@ -17,11 +17,13 @@ file_mode=0
 query_options=-syngraph
 conf_file=@CONFIGURE_FILE@
 data_dir=@DocumentPath@/idx/0000
+anchor_data_dir=none
+port=@SearchServerPort@
 while getopts c:d:efh OPT
 do
     case $OPT in
 	c)  conf_file=$OPTARG
-	    data_dir=`grep INDEX_LOCATION $conf_file | grep -ve '^#' | awk '{print $2}'`
+	    data_dir=`grep SEARCH_SERVERS $conf_file | grep -ve '^#' | head -n 1 | awk '{print $4}'`
 	    ;;
 	d)  data_dir=$OPTARG
 	    ;;
@@ -49,7 +51,7 @@ fi
 
 echo "--- QUERY (sexp) ---"
 cat $query_file
-$searchengine_dir/search/slave_server $data_dir none 39999 `hostname` -standalone < $query_file
+$searchengine_dir/search/slave_server $data_dir $anchor_data_dir $port `hostname` -standalone < $query_file
 
 if [ $file_mode -eq 0 ]; then
     rm -f $query_file
