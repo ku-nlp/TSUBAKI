@@ -80,23 +80,16 @@ COMPOUND_NOUN_DFDB_PATH	@SearchEnginePath@/data/cns.100M.cls.df1000.cdb
 # 検索サーバ/スニペットサーバの設定
 ##################################################
 
-# TSUBAKIを起動するホストの情報 (conf/tsubaki.confが参照する)
-HOSTS_PREFIX	nlpc
-HOSTS_START	34
-HOSTS_END	70
-HOSTS_DEGIT	2
-
 # サーバの状態のログを保存するファイルの指定
 # サーバの設定に入る前に設定すること（サーバの設定後では反映されません）
 SERVER_STATUS_LOG	@SearchEnginePath@/data/server_status
 
-# 検索サーバが利用するインデックスデータの場所、アンカーインデックスの場所、ポート番号
-# 複数個指定可能（★要変更）
-INDEX_LOCATION	@DocumentPath@/idx/0000	none	@SearchServerPort@
 
 # 検索サーバの設定（★要変更）
-# SEARCH_SERVERS	ホスト名	ポート番号1,...
-SEARCH_SERVERS	@SearchServerHost@	@SearchServerPort@
+# SEARCH_SERVERS	ホスト名	ポート番号	インデックスの場所	アンカーインデックスの場所(ない場合はnone)
+SEARCH_SERVERS	@SearchServerHost@	@SearchServerPort@	@DocumentPath@/idx/0000	none
+# SEARCH_SERVERS	second_server	@SearchServerPort@	@DocumentPath@/idx/0001	none
+# SEARCH_SERVERS	third_server	@SearchServerPort@	@DocumentPath@/idx/0002	none
 
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
@@ -105,6 +98,8 @@ SEARCH_SERVERS	@SearchServerHost@	@SearchServerPort@
 # スニペットサーバの設定（★要変更）
 # SNIPPET_SERVERS	ホスト名	ポート番号	ディスクにおいてある標準フォーマットのID1,...
 SNIPPET_SERVERS	@SnippetServerHost@	@SnippetServerPort@	0000
+# SNIPPET_SERVERS	second_server	@SnippetServerPort@	0001
+# SNIPPET_SERVERS	third_server	@SnippetServerPort@	0002
 
 
 
