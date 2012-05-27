@@ -12,6 +12,8 @@ SEARCH_SH_IN=$CWD/search.sh.in
 SEARCH_SH=$CWD/search.sh
 INDEX_CGI_IN=$CWD/cgi/index.cgi.in
 INDEX_CGI=$CWD/cgi/index.cgi
+API_CGI_IN=$CWD/cgi/api.cgi.in
+API_CGI=$CWD/cgi/api.cgi
 
 # target names to be replaced
 NAME_LIST="
@@ -184,4 +186,8 @@ echo "done."
 echo "generating '${INDEX_CGI}' ... "
 sed -e "${SED_STR}" $INDEX_CGI_IN > $INDEX_CGI
 chmod +x $INDEX_CGI
+echo "done."
+echo "generating '${API_CGI}' ... "
+sed -e "${SED_STR}" $API_CGI_IN > $API_CGI
+chmod +x $API_CGI
 echo "done."
