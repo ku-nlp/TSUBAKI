@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/05/25 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/05/29 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -75,15 +75,19 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
 
 以下では、このREADMEがあるディレクトリを $TSUBAKI_DIR と表します。
 
-$TSUBAKI_DIRにおいて以下のように ./setup.shを実行することにより、検索対
-象文書データの場所および解析ツールなどのインストール場所を含むTSUBAKIの
-設定ファイルを自動生成します。
+$TSUBAKI_DIRにおいて以下のように ./setup.shを実行することにより、インデッ
+クスデータの場所や解析ツールのインストール場所などを含むTSUBAKIの設定ファ
+イルを自動生成します。
 
   例1) 日本語サンプル文書データを対象にする場合
        % ./setup.sh -d sample_doc/ja
 
   例2) 英語サンプル文書データを対象にする場合
        % ./setup.sh -e -d sample_doc/en
+
+  例3) あるディレクトリ(/somewhere/src_doc_html)以下にあるHTML文書データを対象にする場合
+       % ./setup.sh -d /somewhere/TSUBAKI-data -s /somewhere/src_doc_html
+       (/somewhere/src_doc_html以下の"*.html"ファイルを再帰的に探索します)
 
   ※ ./setup.shの重要なオプションの説明
        -d データパス             : インデックスなどのデータ出力場所を指定
@@ -156,8 +160,10 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 
 これらが起動していない場合は、システム設定を変更して起動してください。
 
-検索サーバとスニペットサーバを次のようにして起動します。このスクリプト
-の実行によって、localhostにsshし、これらのサーバを起動しています。
+TSUBAKIでは、検索サーバとスニペットサーバを利用します(構成図: 
+doc/tsubaki-configuration.pdf)。検索サーバとスニペットサーバを次のよう
+にして起動します。このスクリプトの実行によって、localhostにsshし、これ
+らのサーバを起動しています。
 
   % scripts/server-all.sh -c conf/configure start
 
@@ -180,23 +186,31 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 
 ■ 注意事項
 
-・サンプル以外の文書セットに対して検索するためには、上記設定において
-  ./setup.shに"-s 検索対象文書パス"を指定してください。検索対象文書の
-  形式としては、現在のところHTMLのみに対応しています。
+・検索対象文書の形式としては、現在のところHTMLのみに対応しています。
 
-・複数の文書セットに対して検索するためには、上記設定において./setup.sh
-  に"-c 出力設定ファイル名"を指定し、異なる名前の設定ファイルを生成して
-  ください。
 
-・100万件以上の文書を検索対象にするには、複数の検索サーバとスニペットサー
-  バを起動する必要があります。このためには、設定ファイル(conf/configure)
-  において、次のようにSEARCH_SERVERSとSNIPPET_SERVERSの行をサーバ台数分
-  コピーし、サーバ名を記入してください。
+・大規模文書セットに対するTSUBAKI標準フォーマット変換およびインデックス
+  生成を行う場合に、これらに要する時間を短縮するために並列化することを
+  お勧めします。このためには、"make"に"-j 並列数"オプションを付けて実行
+  します。さらに、クラスタ環境で並列に実行するには、gxp makeを利用する
+  ことができます。詳細は、http://www.logos.ic.i.u-tokyo.ac.jp/gxp/ を参
+  照してください。
 
-  SEARCH_SERVERS	server01	39999	/somewhere/idx/0000	none
-  SEARCH_SERVERS	server02	39999	/somewhere/idx/0001	none
+
+・100万件以上の文書を検索するには、複数の検索サーバとスニペットサーバを
+  起動する必要があります。このためには、設定ファイル(conf/configure)に
+  おいて、次のようにSEARCH_SERVERSとSNIPPET_SERVERSの行をサーバ台数分コ
+  ピーし、サーバ名を記入してください。
+
+  SEARCH_SERVERS	server01	39999	/somewhere/TSUBAKI-data/idx/0000	none
+  SEARCH_SERVERS	server02	39999	/somewhere/TSUBAKI-data/idx/0001	none
   SNIPPET_SERVERS	server01	59001	0000
   SNIPPET_SERVERS	server02	59001	0001
+
+
+・複数の文書セットに対して検索するためには、「TSUBAKI設定ファイルの生成」
+  において、./setup.shに"-c 出力設定ファイル名"を付けて実行し、異なる名
+  前の設定ファイルを生成してください。
 
 
 ■ ドキュメント
