@@ -1,12 +1,15 @@
+CLEANFILES = conf/configure conf/tsubaki.conf sf2index/Makefile search.sh cgi/index.cgi cgi/api.cgi
+
 all:
-	cd search && make && cd ..
+	make -C search
 
 html2sf:
-	cd sf2index && make html2sf && cd ..
+	make -C sf2index html2sf
 
 indexing:
-	cd sf2index && make && cd ..
+	make -C sf2index indexing
 
 clean:
-	cd search && make clean && cd ..
-	cd sf2index && make clean && cd ..
+	make -C search clean
+	make -C sf2index clean
+	rm -f $(CLEANFILES)
