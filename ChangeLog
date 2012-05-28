@@ -1,3 +1,75 @@
+2012-05-28  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* README: updated.
+
+	* doc/tsubaki-configuration.pdf: added.
+
+	* doc/overview.ppt: deleted.
+
+	* scripts/tsubaki-server-manager.sh:
+	Modified extraction of server information from configure.
+
+	* search/common.h: Increased the number of return documents.
+
+	* Makefile: Modified the call of recursive make.
+
+	* sf2index/Makefile.in: Modified clean target.
+
+2012-05-27  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* setup.sh, cgi/api.cgi, cgi/api.cgi.in: Modified to generate api.cgi.
+
+2012-05-25  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* README: updated.
+
+	* scripts/tsubaki-server-manager.sh, scripts/watch-memory-server.sh, search.sh.in:
+	Adapted to the change of configure.
+
+	* conf/configure.in, conf/tsubaki.conf.in:
+	Added sample descriptions of multiple servers.
+
+2012-05-24  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* cgi/api.cgi: Modified to output HTML/XML via API.
+
+2012-05-23  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* sf2index/Makefile.in, README, setup.sh:
+	Added an option to specify source document path.
+
+	* perl/Tsubaki/TermGroupCreater.pm, conf/configure.in:
+	Fixed a search problem using dependency features.
+
+2012-05-20  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* setup.sh: Modified for sf2index/Makefile.
+
+	* search.sh.in: Modification for index location.
+
+	* sf2index/Makefile.in:
+	Support of parallel indexing by default Makefile.
+
+	* sf2index/Makefile.parallel.in: deleted.
+
+	* conf/configure.in: Update for standard directory hierarchy.
+
+	* cgi/Configure.pm, cgi/SnippetMaker.pm, cgi/SnippetMakerAgent.pm:
+	Modifications for standard location of htmls and xmls.
+
+	* scripts/html-relocation.sh: Added verbose option.
+
+	* sample_doc/ja/src_doc/KN001_Keitai_1.html, sample_doc/ja/src_doc/KN001_Kyoto_1.html, sample_doc/ja/src_doc/KN002_Keitai_1.html, sample_doc/ja/src_doc/KN002_Kyoto_1.html, sample_doc/ja/src_doc/KN003_Keitai_1.html, sample_doc/ja/src_doc/KN003_Kyoto_1.html, sample_doc/ja/src_doc/KN004_Keitai_1.html, sample_doc/ja/src_doc/KN004_Kyoto_1.html, sample_doc/ja/src_doc/KN005_Keitai_1.html, sample_doc/ja/src_doc/KN005_Kyoto_1.html, sample_doc/ja/src_doc/KN006_Keitai_1.html, sample_doc/ja/src_doc/KN006_Kyoto_1.html, sample_doc/ja/src_doc/KN007_Keitai_1.html, sample_doc/ja/src_doc/KN007_Kyoto_1.html, sample_doc/ja/src_doc/KN008_Keitai_1.html, sample_doc/ja/src_doc/KN008_Kyoto_1.html, sample_doc/ja/src_doc/KN009_Keitai_1.html, sample_doc/ja/src_doc/KN009_Kyoto_1.html, sample_doc/ja/src_doc/KN011_Keitai_1.html, sample_doc/ja/src_doc/KN011_Kyoto_1.html, sample_doc/ja/src_doc/KN012_Gourmet_1.html, sample_doc/ja/src_doc/KN012_Gourmet_2.html, sample_doc/ja/src_doc/KN012_Gourmet_3.html, sample_doc/ja/src_doc/KN012_Gourmet_4.html, sample_doc/ja/src_doc/KN012_Gourmet_5.html, sample_doc/ja/src_doc/KN012_Gourmet_6.html, sample_doc/ja/src_doc/KN012_Gourmet_7.html, sample_doc/ja/src_doc/KN012_Gourmet_8.html, sample_doc/ja/src_doc/KN012_Gourmet_9.html, sample_doc/ja/src_doc/KN012_Keitai_1.html, sample_doc/ja/src_doc/KN012_Keitai_2.html, sample_doc/ja/src_doc/KN012_Keitai_3.html, sample_doc/ja/src_doc/KN012_Keitai_4.html, sample_doc/ja/src_doc/KN012_Keitai_5.html, sample_doc/ja/src_doc/KN012_Kyoto_01.html, sample_doc/ja/src_doc/KN012_Kyoto_02.html, sample_doc/ja/src_doc/KN012_Kyoto_03.html, sample_doc/ja/src_doc/KN012_Kyoto_04.html, sample_doc/ja/src_doc/KN012_Kyoto_05.html, sample_doc/ja/src_doc/KN012_Kyoto_06.html, sample_doc/ja/src_doc/KN012_Kyoto_07.html, sample_doc/ja/src_doc/KN012_Kyoto_08.html, sample_doc/ja/src_doc/KN012_Kyoto_09.html, sample_doc/ja/src_doc/KN012_Kyoto_10.html, sample_doc/ja/src_doc/KN012_Kyoto_11.html, sample_doc/ja/src_doc/KN012_Sports_1.html, sample_doc/ja/src_doc/KN012_Sports_2.html, sample_doc/ja/src_doc/KN012_Sports_3.html, sample_doc/ja/src_doc/KN013_Keitai_1.html, sample_doc/ja/src_doc/KN013_Kyoto_1.html, sample_doc/ja/0000000006.html, sample_doc/ja/0000000007.html, sample_doc/ja/0000000008.html, sample_doc/ja/0000000009.html, sample_doc/ja/0000000010.html, sample_doc/ja/0000000011.html, sample_doc/ja/0000000012.html, sample_doc/ja/0000000013.html, sample_doc/ja/0000000014.html, sample_doc/ja/0000000015.html, sample_doc/ja/0000000016.html, sample_doc/ja/0000000017.html, sample_doc/ja/0000000018.html, sample_doc/ja/0000000019.html, sample_doc/ja/0000000020.html, sample_doc/ja/0000000021.html, sample_doc/ja/0000000022.html, sample_doc/ja/0000000023.html, sample_doc/ja/0000000024.html, sample_doc/ja/0000000025.html, sample_doc/ja/0000000026.html, sample_doc/ja/0000000027.html, sample_doc/ja/0000000028.html, sample_doc/ja/0000000029.html, sample_doc/ja/0000000030.html, sample_doc/ja/0000000031.html, sample_doc/ja/0000000032.html, sample_doc/ja/0000000033.html, sample_doc/ja/0000000034.html, sample_doc/ja/0000000035.html, sample_doc/ja/0000000036.html, sample_doc/ja/0000000037.html, sample_doc/ja/0000000038.html, sample_doc/ja/0000000039.html, sample_doc/ja/0000000040.html, sample_doc/ja/0000000041.html, sample_doc/ja/0000000042.html, sample_doc/ja/0000000043.html, sample_doc/ja/0000000044.html, sample_doc/ja/0000000045.html, sample_doc/ja/0000000046.html, sample_doc/ja/0000000047.html, sample_doc/ja/0000000048.html, sample_doc/ja/0000000049.html, sample_doc/ja/0000000000.html, sample_doc/ja/0000000001.html, sample_doc/ja/0000000002.html, sample_doc/ja/0000000003.html, sample_doc/ja/0000000004.html, sample_doc/ja/0000000005.html:
+	Renamed original docs of sample_doc/ja.
+
+2012-05-17  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
+
+	* setup.sh: Modified to generate a Makefile for parallel indexing.
+
+	* sf2index/Makefile.parallel.in: added.
+
+	* sf2index/Makefile.large-scale: deleted.
+
 2012-05-13  Daisuke Kawahara  <dk@i.kyoto-u.ac.jp>
 
 	* cgi/configure.2010, cgi/configure.nict: deleted.
