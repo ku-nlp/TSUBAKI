@@ -92,9 +92,9 @@ start() {
 
 
 status_or_stop() {
-    grep SEARCH_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $4,$5,$3}' | while read LINE
+    grep SEARCH_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $3}' | while read LINE
     do
-	PORT=`echo $LINE | cut -f 3 -d ' '`
+	PORT=$LINE
 	pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
  	if [ -n "$pid" ]; then
  	    if [ "$1" = "stop" ]; then
