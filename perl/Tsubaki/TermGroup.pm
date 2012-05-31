@@ -177,7 +177,7 @@ sub _getOperationTag {
     my ($condition, $call_for_anchor) = @_;
 
     # アンカー検索の場合はOR
-    if ($call_for_anchor) {
+    if ($call_for_anchor || $condition->{logical_cond_qkw} eq 'OR') {
 	return 'OR';
     }
 
