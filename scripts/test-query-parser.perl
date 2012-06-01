@@ -20,7 +20,7 @@ push (@INC, $CONFIG->{UTILS_PATH});
 
 
 my (%opt);
-GetOptions(\%opt, 'syngraph', 'english', 'verbose');
+GetOptions(\%opt, 'syngraph', 'english', 'verbose', 'ignore_yomi');
 
 
 my $queryParser = new QueryParser({IS_ENGLISH_VERSION => $opt{english}});

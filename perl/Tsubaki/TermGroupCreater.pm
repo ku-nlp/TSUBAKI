@@ -199,7 +199,7 @@ sub _getRep2RepWithYomi {
     foreach my $i (0 .. scalar (@$kihonkus) - 1) {
 	foreach my $synnodes ($kihonkus->[$i]->synnodes) {
 	    foreach my $synnode ($synnodes->synnode) {
-		$rep2rep_w_yomi{&remove_yomi(lc($synnode->synid))} = $synnode->synid;
+		$rep2rep_w_yomi{$option->{ignore_yomi} ? &remove_yomi(lc($synnode->synid)) : lc($synnode->synid)} = $synnode->synid;
 	    }
 	}
     }
@@ -221,7 +221,7 @@ sub _getRep2Style {
 	foreach my $synnodes ($kihonkus->[$i]->synnodes) {
 	    foreach my $synnode ($synnodes->synnode) {
 		next if ($synnode->synid =~ /s\d+/ && $option->{disable_synnode});
-		my $key = sprintf ("%s%s", &remove_yomi(lc($synnode->synid)), $synnode->feature);
+		my $key = sprintf ("%s%s", $option->{ignore_yomi} ? &remove_yomi(lc($synnode->synid)) : lc($synnode->synid), $synnode->feature);
 		$rep2style{$key} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
 	    }
 	}
@@ -250,7 +250,7 @@ sub _getSynNode2Midasi {
 		# next unless ($synnode->synid =~ /s\d+/);
 
 		# 読みの削除
-		my $_midasi = sprintf ("%s%s", &remove_yomi($synnode->synid), $synnode->feature);
+		my $_midasi = sprintf ("%s%s", $opt->{option}{ignore_yomi} ? &remove_yomi($synnode->synid) : $synnode->synid, $synnode->feature);
 
 		# <反義語><否定>を利用するかどうか
 		if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
@@ -278,7 +278,7 @@ sub _create4phrase {
     foreach my $tid (@$tids) {
 	my $kihonku = $kihonkus->[$tid];
 	foreach my $mrph ($kihonku->mrph) {
-	    my $midasi = sprintf ("%s*", &remove_yomi($mrph->midasi));
+	    my $midasi = sprintf ("%s*", $opt->{option}{ignore_yomi} ? &remove_yomi($mrph->midasi) : $mrph->midasi);
 	    my $gdf = $DFDBS_WORD->get($midasi);
 
 	    # タームグループの作成
@@ -348,6 +348,7 @@ sub _create {
     return (\@terms, \%optionals);
 }
 
+# メモリ使用量減らすためにsynnodeを削除する
 sub reduceSynNode {
     my ($basic_node, $synnodes, $opt) = @_;
 
@@ -360,7 +361,7 @@ sub reduceSynNode {
     my @newNodes = ();
 
     push (@newNodes, $basic_node) if (defined $basic_node);
-    foreach my $node (sort {$DFDBS_WORD->get(&remove_yomi($b->synid)) <=> $DFDBS_WORD->get(&remove_yomi($a->synid)) } @$synnodes) {
+    foreach my $node (sort {$DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($b->synid) : $b->synid) <=> $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($a->synid) : $a->synid) } @$synnodes) {
 	next if ($basic_node == $node);
 	push (@newNodes, $node) if (defined $node);
 	last if (++$count >= $N);
@@ -369,13 +370,14 @@ sub reduceSynNode {
     return \@newNodes;
 }
 
+# DFの取得
 sub _getDF {
-    my ($basicNd, $synNds) = @_;
+    my ($basicNd, $synNds, $opt) = @_;
 
     if ($basicNd) {
-	return $DFDBS_WORD->get(&remove_yomi($basicNd->synid), {exhaustive => 1});
+	return $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($basicNd->synid) : $basicNd->synid, {exhaustive => 1});
     } else {
-	return $DFDBS_WORD->get(&remove_yomi($synNds->[0]->synid), {exhaustive => 1}) if (defined $synNds);
+	return $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($synNds->[0]->synid) : $synNds->[0]->synid, {exhaustive => 1}) if (defined $synNds);
     }
 }
 
@@ -384,13 +386,19 @@ sub remove_yomi {
 
     my @buf;
     foreach my $word (split /\+/, $text) {
-	my ($hyouki, $yomi) = split (/\//, $word);
-	push (@buf, $hyouki);
+	if ($word =~ /^s\d+/) { # use synnode as it is
+	    push (@buf, $word);
+	}
+	else {
+	    my ($hyouki, $yomi) = split (/\//, $word);
+	    push (@buf, $hyouki);
+	}
     }
 
     return join ("+", @buf)
 }
 
+# 基本ノードの取得
 sub getBasicNode {
     my ($synnodes) = @_;
 
@@ -402,6 +410,7 @@ sub getBasicNode {
     return undef;
 }
 
+# 文法素性の削除
 sub removeSyntacticFeatures {
     my ($midasi) = @_;
 
@@ -442,14 +451,14 @@ sub _createTermGroup {
 
     my $basicNd = &getBasicNode($synNds);
     $synNds = &reduceSynNode($basicNd, $synNds, $opt) if ($CONFIG->{MAX_NUMBER_OF_SYNNODES});
-    my $gdf = &_getDF ($basicNd, $synNds);
+    my $gdf = &_getDF ($basicNd, $synNds, $opt);
 
     my @midasis = ();
     foreach my $synNd (@$synNds) {
 	# print $opt->{option}{remove_synids} ." " . $synNd->synid . "\n";
 	next if (exists $opt->{option}{remove_synids}{$synNd->synid});
 
-	my $_midasi = sprintf ("%s%s", &remove_yomi($synNd->synid), $synNd->feature);
+	my $_midasi = sprintf ("%s%s", $opt->{option}{ignore_yomi} ? &remove_yomi($synNd->synid) : $synNd->synid, $synNd->feature);
 	# <反義語><否定>を利用するかどうか
 	if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
 	    # next unless ($opt->{option}{use_of_negation_and_antonym});
@@ -476,7 +485,7 @@ sub _createTermGroup {
 	    $tid,
 	    $gdf,
 	    undef,
-	    ((defined $basicNd) ? &remove_yomi($basicNd->synid) : ''),
+	    ((defined $basicNd) ? ($opt->{option}{ignore_yomi} ? &remove_yomi($basicNd->synid) : $basicNd->synid) : ''),
 	    \@midasis,
 	    $parent,
 	    $children,
@@ -674,8 +683,8 @@ sub _pushbackDependencyTerms {
 	$index->{kakarisaki_kihonku_fstring} = $kihonku->parent->fstring;
 	$index->{kakarisaki_fstring} = ($kihonku->parent->mrph)[0]->fstring;
 	$index->{kakarimoto_fstring} = ($kihonku->mrph)[0]->fstring;
-	$index->{kakarisaki_surf} = &remove_yomi(($kihonku->parent->mrph)[0]->midasi);
-	$index->{kakarimoto_surf} = &remove_yomi(($kihonku->mrph)[0]->midasi);
+	$index->{kakarisaki_surf} = $option->{ignore_yomi} ? &remove_yomi(($kihonku->parent->mrph)[0]->midasi) : ($kihonku->parent->mrph)[0]->midasi;
+	$index->{kakarimoto_surf} = $option->{ignore_yomi} ? &remove_yomi(($kihonku->mrph)[0]->midasi) : ($kihonku->mrph)[0]->midasi;
 
 	foreach my $moto (@$kakarimoto) {
 	    foreach my $saki (@$kakarisaki) {
@@ -714,76 +723,6 @@ sub _pushbackDependencyTerms {
 	    }
 	}
     }
-}
-
-# メモリ使用量減らすためにsynnodeを削除する
-sub reduceSynNode {
-    my ($basic_node, $synnodes, $opt) = @_;
-
-    next unless (defined $synnodes);
-
-    my $N = ($opt->{use_of_antonym_expansion}) ? int (0.5 * ($CONFIG->{MAX_NUMBER_OF_SYNNODES} + 1)) : $CONFIG->{MAX_NUMBER_OF_SYNNODES};
-
-    # 各ノードのgdfを得る
-    my $count = 0;
-    my @newNodes = ();
-
-    push (@newNodes, $basic_node) if (defined $basic_node);
-    foreach my $node (sort {$DFDBS_WORD->get(&remove_yomi($b->synid)) <=> $DFDBS_WORD->get(&remove_yomi($a->synid)) } @$synnodes) {
-	next if ($basic_node == $node);
-	push (@newNodes, $node) if (defined $node);
-	last if (++$count >= $N);
-    }
-
-    return \@newNodes;
-}
-
-# DFの取得
-sub _getDF {
-    my ($basicNd, $synNds) = @_;
-
-    if ($basicNd) {
-	return $DFDBS_WORD->get(&remove_yomi($basicNd->synid), {exhaustive => 1});
-    } else {
-	return $DFDBS_WORD->get(&remove_yomi($synNds->[0]->synid), {exhaustive => 1}) if (defined $synNds);
-    }
-}
-
-# 読みの削除
-sub remove_yomi {
-    my ($text) = @_;
-
-    my @buf;
-    foreach my $word (split /\+/, $text) {
-	my ($hyouki, $yomi) = split (/\//, $word);
-	push (@buf, $hyouki);
-    }
-
-    return join ("+", @buf)
-}
-
-# 基本ノードの取得
-sub getBasicNode {
-    my ($synnodes) = @_;
-
-    foreach my $synnode (@$synnodes) {
-	if ($synnode->synid !~ /^s\d+/ && $synnode->feature eq '') {
-	    return $synnode;
-	}
-    }
-    return undef;
-}
-
-# 文法素性の削除
-sub removeSyntacticFeatures {
-    my ($midasi) = @_;
-
-    $midasi =~ s/<可能>//;
-    $midasi =~ s/<尊敬>//;
-    $midasi =~ s/<受身>//;
-    $midasi =~ s/<使役>//;
-
-    return $midasi;
 }
 
 1;
