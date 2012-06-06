@@ -917,6 +917,12 @@ sub calculate_score_with_sf {
     return ($num_of_queries, scalar(keys %matched_queries), $including_all_indices);
 }
 
+sub remove_yomi {
+    my ($str) = @_;
+    $str =~ s/\/.+$//;
+    return $str;
+}
+
 sub make_word_list_new_sf {
     my ($sf, $opt) = @_;
 
@@ -926,7 +932,7 @@ sub make_word_list_new_sf {
 	my $surf = $word->{str};
 	$surf =~ s/\*$//;
 	push(@words, {surf => $surf,
-		      reps => [$word->{lem}],
+		      reps => [$opt->{ignore_yomi} ? &remove_yomi($word->{repname}) : $word->{repname}],
 		      isContentWord => 1
 		     });
     }
