@@ -669,7 +669,7 @@ sub _pushbackDependencyTerms {
     my ($terms, $optionals, $kihonku, $gid, $count, $option) = @_;
 
     # 係り受けを追加
-    my $indexer = new Indexer({ignore_yomi => 1});
+    my $indexer = new Indexer({ignore_yomi => $option->{ignore_yomi}});
     if (defined $kihonku->parent && $kihonku->fstring !~ /<クエリ削除係り受け>/) {
 	my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 	my $kakarimoto = $indexer->get_repnames2($kihonku);
