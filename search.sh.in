@@ -14,7 +14,7 @@ utils_dir=@UtilsPath@
 www2sf_dir=@WWW2sfPath@
 
 file_mode=0
-query_options="-syngraph -ignore_yomi"
+query_options="-syngraph"
 conf_file=@CONFIGURE_FILE@
 data_dir=@DocumentPath@/idx/0000
 anchor_data_dir=none

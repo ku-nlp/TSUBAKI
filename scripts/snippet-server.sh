@@ -6,7 +6,7 @@ TSUBAKI_DIR=`echo $0 | xargs dirname`/..
 CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 # 起動時のオプション
-OPTS="-string_mode -ignore_yomi -z -new_sf"
+OPTS="-string_mode -z -new_sf"
 COMMAND=snippet_make_server.pl
 NICE=-4
 
