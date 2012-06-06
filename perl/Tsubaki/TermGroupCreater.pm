@@ -117,12 +117,13 @@ sub createTermsFromEnglish {
     foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) {
 	my $count = 0;
 	my $color_num = $gid % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
-	$rep2style->{$sf->{words}{$id}{lem}} = sprintf("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$color_num], (($color_num > 4) ? 'white' : 'black'));
+	my $repname = $sf->{words}{$id}{repname} ? $sf->{words}{$id}{repname} : $sf->{words}{$id}{lem};
+	$rep2style->{$repname} = sprintf("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$color_num], (($color_num > 4) ? 'white' : 'black'));
 	my $term = new Tsubaki::Term ({
 	    tid => sprintf ("%s-%s", $gid, $count++),
-	    text => $sf->{words}{$id}{lem},
+	    text => $repname,
 	    term_type => 'word',
-	    gdf => $DFDBS_WORD->get($sf->{words}{$id}{lem}),
+	    gdf => $DFDBS_WORD->get($repname),
 	    node_type => 'basic' });
 	push (@{$terms}, $term);
 	$gid++;
@@ -131,17 +132,19 @@ sub createTermsFromEnglish {
     # dpnd terms
     foreach my $id (sort {$sf->{phrases}{$a} <=> $sf->{phrases}{$b}} keys %{$sf->{phrases}}) {
 	next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
-	next unless $sf->{phrases}{$id}{lem};
+	my $dep_repname = $sf->{phrases}{$id}{repname} ? $sf->{phrases}{$id}{repname} : $sf->{phrases}{$id}{lem};
+	next unless $dep_repname;
 	for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
 	    next if $head_id == -1;	# skip roots of Japanese (-1)
-	    next unless $sf->{phrases}{$head_id}{lem};
+	    my $head_repname = $sf->{phrases}{$head_id}{repname} ? $sf->{phrases}{$head_id}{repname} : $sf->{phrases}{$head_id}{lem};
+	    next unless $head_repname;
 	    my $count = 0;
-	    my $dpnd_lem = sprintf('%s->%s', $sf->{phrases}{$id}{lem}, $sf->{phrases}{$head_id}{lem});
+	    my $dpnd_term = sprintf('%s->%s', $dep_repname, $head_repname);
 	    my $term = new Tsubaki::Term ({
 		tid => sprintf ("%s-%s", $gid, $count++),
-		text => $dpnd_lem,
+		text => $dpnd_term,
 		term_type => 'dpnd',
-		gdf => $DFDBS_DPND->get($dpnd_lem, {exhaustive => 1}), 
+		gdf => $DFDBS_DPND->get($dpnd_term, {exhaustive => 1}), 
 		blockTypeFeature => $blockTypeFeature,
 		node_type => 'basic' });
 	    $optionals->{$term->get_id()} = $term unless (exists $optionals->{$term->get_id()});
