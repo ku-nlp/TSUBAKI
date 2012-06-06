@@ -217,7 +217,7 @@ MAX_NUM_OF_RETRY	5
 DISABLE_REQUEST_SCHEDULING	0
 
 # 索引表現に読みを考慮するかどうか（0:読みを考慮する, 1:読みを考慮しない）
-IGNORE_YOMI			1
+IGNORE_YOMI			0
 
 # 開発モードとして起動するか(0: サービスモード, 1: 開発モード)
 DEVELOP_MODE	0
