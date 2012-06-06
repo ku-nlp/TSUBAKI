@@ -63,7 +63,7 @@ sub extractTerms {
     my ($sid, $score, $features) = ($1, $2, $3);
 
     # 読みの削除
-    $sid = &remove_yomi($sid);
+    $sid = &remove_yomi($sid) if ($this->{ignore_yomi});
 
     # <上位語>を利用するかどうか
     next if ($features =~ /<上位語>/ && !$opt->{use_of_hypernym});
@@ -808,7 +808,7 @@ sub extractSynNodeTerms {
 
 	    # 読みの削除
 	    my $buf;
-	    $synid = &remove_yomi($synid);
+	    $synid = &remove_yomi($synid) if ($this->{ignore_yomi});
 
 	    # <上位語>を利用するかどうか
 	    if ($features =~ /<上位語>/) {
