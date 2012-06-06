@@ -41,8 +41,9 @@ sub read_annotation_from_node {
 	    my $str = $word_node->getAttribute('str'); # string that appeared
 	    $str .= '*' if $str;
 	    my $lem = $word_node->getAttribute('lem'); # lemma
+	    my $repname = $word_node->getAttribute('repname'); # repname
 	    my $id = $word_node->getAttribute('id');
-	    $this->{words}{$id} = {str => $str, lem => $lem, 
+	    $this->{words}{$id} = {str => $str, lem => $lem, repname => $repname, 
 				   feature => $word_node->getAttribute('feature'), 
 				   content_p => $word_node->getAttribute('content_p'), 
 				   pos => $this->{word_count}};
@@ -64,6 +65,7 @@ sub read_annotation_from_node {
 				 word_head_num => $word_head_num, # head word in this phrase
 				 str => $words[$word_head_num]{str}, 
 				 lem => $words[$word_head_num]{lem}, 
+				 repname => $words[$word_head_num]{repname}, 
 				 pos => $words[$word_head_num]{pos}, 
 				};
     }
