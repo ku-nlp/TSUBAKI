@@ -13,7 +13,8 @@ use StandardFormat;
 binmode(STDOUT, ':utf8');
 
 our %opt;
-&GetOptions(\%opt, 'suffix=s', 'autoout');
+&GetOptions(\%opt, 'suffix=s', 'autoout', 'no-repname', 'ignore_yomi');
+# if you specify 'no-repname', you must set IGNORE_YOMI to 1 in "conf/configure"
 
 our $SF_EXT = 'xml';
 our $IDX_EXT = $opt{suffix} ? $opt{suffix} : 'idx';
@@ -46,7 +47,15 @@ sub xml2term {
 
 	    for my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) { # order: left-to-right
 		my $word = $sf->{words}{$id};
-		for my $term ($word->{str}, $word->{lem}) {
+		my (@terms);
+		push(@terms, $word->{str}); # string that appeared (string*)
+		if (!$opt{'no-repname'} && $word->{repname}) { # if repname exists, use this
+		    push(@terms, $opt{ignore_yomi} ? &remove_yomi($word->{repname}) : $word->{repname});
+		}
+		else { # otherwise str and lem
+		    push(@terms, $word->{lem});
+		}
+		for my $term (@terms) {
 		    next unless $term;
 		    &hash_term(\%terms, $term, $sentence_id, $word->{pos}, 1); # score=1
 		}
@@ -57,13 +66,22 @@ sub xml2term {
 		}
 	    }
 
+	    # dependency
 	    for my $id (sort {$sf->{phrases}{$a} <=> $sf->{phrases}{$b}} keys %{$sf->{phrases}}) {
 		next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
 		for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
 		    next if $head_id == -1; # skip roots of Japanese (-1)
-		    my $dpnd_str = sprintf('%s->%s', $sf->{phrases}{$id}{str}, $sf->{phrases}{$head_id}{str}); # string that appeared
-		    my $dpnd_lem = sprintf('%s->%s', $sf->{phrases}{$id}{lem}, $sf->{phrases}{$head_id}{lem}); # lem
-		    for my $dpnd_term ($dpnd_str, $dpnd_lem) {
+		    my (@terms);
+		    push(@terms, sprintf('%s->%s', $sf->{phrases}{$id}{str}, $sf->{phrases}{$head_id}{str})); # string that appeared (aa*->bb*)
+		    if (!$opt{'no-repname'} && $sf->{phrases}{$id}{repname} && $sf->{phrases}{$head_id}{repname}) { # if repname exists, use this
+			push(@terms, sprintf('%s->%s', 
+					     $opt{ignore_yomi} ? &remove_yomi($sf->{phrases}{$id}{repname}) : $sf->{phrases}{$id}{repname}, 
+					     $opt{ignore_yomi} ? &remove_yomi($sf->{phrases}{$head_id}{repname}) : $sf->{phrases}{$head_id}{repname}));
+		    }
+		    else { # lem->lem
+			push(@terms, sprintf('%s->%s', $sf->{phrases}{$id}{lem}, $sf->{phrases}{$head_id}{lem}));
+		    }
+		    for my $dpnd_term (@terms) {
 			next if $dpnd_term eq '->';
 			&hash_term(\%dpnd_terms, $dpnd_term, $sentence_id, $sf->{phrases}{$id}{pos}, 1); # score=1
 		    }
@@ -103,4 +121,21 @@ sub register_terms {
 
 	printf $OUTPUT "%s %s:%.2f@%s#%s\n", $term, $doc_id, $terms_hr->{$term}{score}, join (',', sort {$a <=> $b} keys %{$terms_hr->{$term}{sentence_ids}}), join ',', @buf;
     }
+}
+
+sub remove_yomi {
+    my ($text) = @_;
+
+    my @buf;
+    foreach my $word (split /\+/, $text) {
+	if ($word =~ /^s\d+/) { # use synnode as it is
+	    push (@buf, $word);
+	}
+	else {
+	    my ($hyouki, $yomi) = split (/\//, $word);
+	    push (@buf, $hyouki);
+	}
+    }
+
+    return join ("+", @buf)
 }
