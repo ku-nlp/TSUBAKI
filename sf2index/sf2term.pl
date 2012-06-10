@@ -62,7 +62,7 @@ sub xml2term {
 		for my $synnode (@{$word->{synnodes}}) { # synonym node
 		    next unless $synnode->{score} < 1; # except the identical expression with the word
 		    my $wordid = (split(',', $synnode->{wordid}))[0]; # the first wordid
-		    &hash_term(\%terms, $synnode->{synid}, $sentence_id, $wordid, $synnode->{score});
+		    &hash_term(\%terms, $synnode->{synid}, $sentence_id, $sf->{words}{$wordid}{pos}, $synnode->{score});
 		}
 	    }
 
