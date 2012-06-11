@@ -445,6 +445,9 @@ sub createQueryKeywordObj {
     # クエリ解析修正結果を反映する
     $this->reflectQueryModificationFeedback($result, $opt) unless $this->{OPTIONS}{is_english_version};
 
+    # クエリ解析結果を上位のパラメータへ代入 (query parseサーバを使わないときのみ有効)
+    $opt->{logical_operator} = $logical_cond_qkw;
+    $opt->{force_dpnd} = $force_dpnd;
 
     # english モードフラグのコピー
     $opt->{english} = $this->{OPTIONS}{is_english_version};
