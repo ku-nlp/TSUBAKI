@@ -39,7 +39,8 @@ SLAVE_SERVER_DIR=$TSUBAKI_DIR/search
 COMMAND=slave_server
 EXEC_COMMAND=$SLAVE_SERVER_DIR/$COMMAND
 USE_OF_SYNGRAPH="-syngraph"
-MEM=4194304
+MEM=8388608
+VMEM=16777216
 
 # ログの出力先
 LOGFILE=`grep SERVER_LOG_FILE $CONFIG_FILE | awk '{print $2}'`
@@ -78,9 +79,9 @@ start() {
 		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\)
 		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
 		    if [ $COMMAND = "slave_server" ]; then
-			ulimit -Ss $MEM ; nice $NICE $EXEC_COMMAND $OPTION
+			ulimit -Ss $MEM -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION
 		    else
-			ulimit -Ss $MEM ; nice $NICE $EXEC_COMMAND $OPTION &
+			ulimit -Ss $MEM -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION &
 		    fi
 		fi
  	    fi
