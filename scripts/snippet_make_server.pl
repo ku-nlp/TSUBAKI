@@ -86,11 +86,8 @@ sub main {
 		    my ($did) = ($did_w_version =~ /(^\d+)/);
 
 		    my $xmlfile;
-		    if ($CONFIG->{IS_NICT_MODE}) {
-			$xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 1000, $did_w_version);
-		    } else {
-			$xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 10000, $did);
-		    }
+		    $xmlfile = sprintf($CONFIG->{XML_PATH_TEMPLATE}, $did / 1000000, $did / 10000, $did_w_version);
+		    $xmlfile .= '.gz' if $opt{z};
 
 		    my $buf;
 		    open(READER, "zcat $xmlfile |");
@@ -113,11 +110,8 @@ sub main {
 		    foreach my $did_w_version (@$dids) {
 			my ($did) = ($did_w_version =~ /(^\d+)/);
 			my $xmlfile;
-			if ($CONFIG->{IS_NICT_MODE}) {
-			    $xmlfile = sprintf("%s/x%04d/x%07d/%s.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 1000, $did_w_version);
-			} else {
-			    $xmlfile = sprintf("%s/x%03d/x%05d/%09d.xml.gz", $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH}, $did / 1000000, $did / 10000, $did);
-			}
+			$xmlfile = sprintf($CONFIG->{XML_PATH_TEMPLATE}, $did / 1000000, $did / 10000, $did_w_version);
+			$xmlfile .= '.gz' if $opt{z};
 
 			open(READER, "zcat $xmlfile |");
 			my $xmldef = <READER>;

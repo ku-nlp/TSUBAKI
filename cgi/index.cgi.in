@@ -49,13 +49,7 @@ sub main {
 	# キャッシュページの出力
 	my $id = $params->{'cache'};
 	my $file;
-	if ($CONFIG->{IS_KUHP_MODE}) {
-	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
-	}
-	elsif ($CONFIG->{IS_NICT_MODE}) { # e.g., "icccmm010:31056:$did_w_version"
-	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
-	}
-	elsif ($CONFIG->{IS_IPSJ_MODE} || $CONFIG->{IS_SIMPLE_MODE}) {
+	if ($CONFIG->{IS_KUHP_MODE} || $CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_IPSJ_MODE} || $CONFIG->{IS_SIMPLE_MODE}) { # in NICT, e.g., "icccmm010:31056:$did_w_version"
  	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
  	}
 	else {

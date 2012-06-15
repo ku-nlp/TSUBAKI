@@ -25,19 +25,16 @@ my $NUM_OF_CHARS_IN_HEADER = 100;
 sub extract_sentences_from_ID {
     my($query, $did_w_version, $opt) = @_;
 
-    my $dir_prefix = $CONFIG->{DIR_PREFIX_FOR_SFS_W_SYNGRAPH};
     my ($did) = ($did_w_version =~ /(^\d+)/);
     my $xmlfile;
-    my $ext = $opt->{z} ? '.xml.gz' : '.xml';
-    if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NII_MODE}) {
-	$xmlfile = sprintf("%s/x%04d/x%07d/%s%s", $dir_prefix, $did / 1000000, $did / 1000, $did_w_version, $ext);
-    } elsif ($CONFIG->{IS_NTCIR_MODE}) {
-	$xmlfile = sprintf("%s/%09d%s", $dir_prefix, $did, $ext);
-    } elsif ($CONFIG->{IS_SIMPLE_MODE}) {
-	$xmlfile = sprintf("%s/%s%s", $dir_prefix, $did_w_version, $ext);
-    } else {
-	$xmlfile = sprintf("%s/%04d/%06d/%s%s", $dir_prefix, $did / 1000000, $did / 10000, $did_w_version, $ext);
+
+    if ($CONFIG->{IS_SIMPLE_MODE}) {
+     	$xmlfile = sprintf($CONFIG->{XML_PATH_TEMPLATE}, $did_w_version);
     }
+    else {
+	$xmlfile = sprintf($CONFIG->{XML_PATH_TEMPLATE}, $did / 1000000, $did / 10000, $did_w_version);
+    }
+    $xmlfile .= '.gz' if $opt->{z};
 
     if ($opt->{z} && ! -e $xmlfile) { # -z指定されているが、.xml.gzファイルが存在しない場合は、.xmlファイルとして探す
 	$xmlfile =~ s/\.gz//;
