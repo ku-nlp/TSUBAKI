@@ -47,19 +47,6 @@ WIKIPEDIA_ENTRY_DB	@SearchEnginePath@/data/wikipedia_entry_trie.db
 ENGLISH_PARSER_DIR	@SearchEnginePath@/enju2tsubaki
 
 
-
-##################################################
-# キャッシュページ／標準フォーマット関係の設定
-##################################################
-
-# キャッシュページ/標準フォーマット全体を置いてあるディレクトリへのパス
-ORDINARY_SF_PATH	@DocumentPath@/xml
-
-# スニペットサーバーのローカルディレクトリに置いてある標準フォーマットのパス（★要変更）
-DIR_PREFIX_FOR_SFS_W_SYNGRAPH	@DocumentPath@/xml
-
-
-
 ##################################################
 # データベース関係の設定
 ##################################################
@@ -73,9 +60,6 @@ SYNGRAPH_DFDB_PATH	@DocumentPath@/idx
 COMPOUND_NOUN_DFDB_PATH	@SearchEnginePath@/data/cns.100M.cls.df1000.cdb
 
 
-
-
-
 ##################################################
 # 検索サーバ/スニペットサーバの設定
 ##################################################
@@ -84,13 +68,11 @@ COMPOUND_NOUN_DFDB_PATH	@SearchEnginePath@/data/cns.100M.cls.df1000.cdb
 # サーバの設定に入る前に設定すること（サーバの設定後では反映されません）
 SERVER_STATUS_LOG	@SearchEnginePath@/data/server_status
 
-
 # 検索サーバの設定（★要変更）
 # SEARCH_SERVERS	ホスト名	ポート番号	インデックスの場所	アンカーインデックスの場所(ない場合はnone)
 SEARCH_SERVERS	@SearchServerHost@	@SearchServerPort@	@DocumentPath@/idx/0000	none
 # SEARCH_SERVERS	second_server	@SearchServerPort@	@DocumentPath@/idx/0001	none
 # SEARCH_SERVERS	third_server	@SearchServerPort@	@DocumentPath@/idx/0002	none
-
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
 # SID_RANGE	/wisdom/sid.range
@@ -100,8 +82,6 @@ SEARCH_SERVERS	@SearchServerHost@	@SearchServerPort@	@DocumentPath@/idx/0000	non
 SNIPPET_SERVERS	@SnippetServerHost@	@SnippetServerPort@	0000
 # SNIPPET_SERVERS	second_server	@SnippetServerPort@	0001
 # SNIPPET_SERVERS	third_server	@SnippetServerPort@	0002
-
-
 
 
 ##################################################
@@ -149,6 +129,11 @@ LINK_CACHED_HTML_FROM_TITLE	1
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
 CACHED_HTML_PATH_TEMPLATE	@DocumentPath@/html/%04d/%06d/%s.html
+
+# IDから標準フォーマットへのパスを求める際のテンプレート（★要変更）
+XML_PATH_TEMPLATE	@DocumentPath@/xml/%04d/%06d/%s.xml
+# IS_NICT_MODE: @DocumentPath@/xml/x%04d/x%07d/%s.xml
+# IS_NTCIR_MODE: @DocumentPath@/xml/%09d.xml
 
 # index.cgiのアドレス（★要変更）
 INDEX_CGI	./index.cgi
