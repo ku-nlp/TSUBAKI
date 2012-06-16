@@ -39,6 +39,7 @@ SearchEnginePath=$CWD
 UtilsPath=$CWD/Utils
 SynGraphPath=$CWD/SynGraph
 WWW2sfPath=$CWD/WWW2sf
+CalcSimilarityByCFPath=$CWD/CalcSimilarityByCF
 DocumentPath=$CWD/sample_doc/ja
 SrcDocumentPath=$DocumentPath/src_doc
 MachineType=`uname -m`
@@ -50,12 +51,12 @@ SnippetServerPort=59001
 SrcDocumentPathSpecifiedFlag=0
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName]"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName]"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:d:s:E:N:n:h OPT
+while getopts c:ejU:S:W:C:d:s:E:N:n:h OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -70,6 +71,8 @@ do
             ;;
         W)  WWW2sfPath=$OPTARG
             ;;
+	C)  CalcSimilarityByCFPath=$OPTARG
+	    ;;
         d)  if [ -d "$CWD/$OPTARG" ]; then
 	        DocumentPath="$CWD/$OPTARG"
 	    else
@@ -113,7 +116,13 @@ fi
 
 # check WWW2sf
 if [ ! -d "$WWW2sfPath" ]; then
-    echo "WWW2sf is not found. Skipped WWW2sf."
+    echo "WWW2sf is not found. Please download WWW2sf (see README)."
+    usage
+fi
+
+# check CalcSimilarityByCF
+if [ ! -d "$CalcSimilarityByCFPath" ]; then
+    echo "CalcSimilarityByCF is not found. Skipped CalcSimilarityByCF."
 fi
 
 # check perl
