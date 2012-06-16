@@ -21,6 +21,7 @@ SearchEnginePath
 UtilsPath
 SynGraphPath
 WWW2sfPath
+CalcSimilarityByCFPath
 DocumentPath
 SrcDocumentPath
 CONFIGURE_FILE
