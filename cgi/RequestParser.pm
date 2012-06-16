@@ -32,7 +32,7 @@ sub getDefaultValues {
 
     # KNPのオプション
     $params{use_of_case_analysis} = 0;
-    $params{use_of_NE_tagger} = 0;
+    $params{use_of_NE_tagger} = $CONFIG->{USE_OF_NE_FOR_QUERY_PROCESS};
 
 
     # 検索条件のデフォルト設定
@@ -61,10 +61,10 @@ sub getDefaultValues {
     $params{trimming} = 1;
     $params{antonym_and_negation_expansion} = 0;
     $params{disable_query_processing} = 0;
-    $params{telic_process} = 0;
+    $params{telic_process} = $CONFIG->{USE_OF_TELIC_FOR_QUERY_PROCESS};
     $params{CN_process} = 1;
-    $params{NE_process} = 0;
-    $params{modifier_of_NE_process} = 1;
+    $params{NE_process} = $CONFIG->{USE_OF_NE_FOR_QUERY_PROCESS};
+    $params{modifier_of_NE_process} = $CONFIG->{USE_OF_NE_FOR_QUERY_PROCESS};
     $params{site} = undef;
     $params{blockTypes} = undef;
     $params{remove_synids} = undef;
