@@ -2,7 +2,11 @@
 
 # $Id$
 
-TSUBAKI_DIR=`echo $0 | xargs dirname`/..
+TSUBAKI_DIR=`dirname $0`/..
+echo $TSUBAKI_DIR | grep -q '^/' 2> /dev/null > /dev/null
+if [ $? -ne 0 ]; then
+    TSUBAKI_DIR=`pwd`/$TSUBAKI_DIR
+fi
 CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 hostfile=/
@@ -25,9 +29,6 @@ do
     esac
 done
 shift `expr $OPTIND - 1`
-
-# configureファイルから設定情報の読み込み
-. $TSUBAKI_DIR/conf/tsubaki.conf
 
 CGI_DIR=$TSUBAKI_DIR/cgi
 DATA_DIR=$TSUBAKI_DIR/data

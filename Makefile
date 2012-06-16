@@ -1,4 +1,4 @@
-CLEANFILES = conf/configure conf/tsubaki.conf sf2index/Makefile search.sh cgi/index.cgi cgi/api.cgi
+CLEANFILES = conf/configure sf2index/Makefile search.sh cgi/index.cgi cgi/api.cgi
 
 all:
 	$(MAKE) -C search

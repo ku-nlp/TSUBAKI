@@ -5,7 +5,7 @@ usage() {
     exit 1
 }
 
-SCRIPTS_DIR=`echo $0 | xargs dirname`
+SCRIPTS_DIR=`dirname $0`
 
 $SCRIPTS_DIR/tsubaki-server.sh $@
 $SCRIPTS_DIR/snippet-server.sh $@

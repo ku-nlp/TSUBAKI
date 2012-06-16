@@ -2,7 +2,11 @@
 
 # $Id$
 
-TSUBAKI_DIR=`echo $0 | xargs dirname`/..
+TSUBAKI_DIR=`dirname $0`/..
+echo $TSUBAKI_DIR | grep -q '^/' 2> /dev/null > /dev/null
+if [ $? -ne 0 ]; then
+    TSUBAKI_DIR=`pwd`/$TSUBAKI_DIR
+fi
 CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 # 起動時のオプション
@@ -20,7 +24,7 @@ do
     case $OPT in
 	c)  CONFIG_FILE=$OPTARG
 	    echo $CONFIG_FILE | grep -q '^/' 2> /dev/null > /dev/null
-	    if [ $? != 0 ]; then
+	    if [ $? -ne 0 ]; then
 		CONFIG_FILE=`pwd`/$CONFIG_FILE
 	    fi
 	    ;;
@@ -32,16 +36,14 @@ do
 done
 shift `expr $OPTIND - 1`
 
-# configureファイルから設定情報の読み込み
-. $TSUBAKI_DIR/conf/tsubaki.conf
-
-CGI_DIR=$TSUBAKI_DIR/cgi
-SCRIPTS_DIR=$TSUBAKI_DIR/scripts
-
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Not found: $CONFIG_FILE"
     usage
 fi
+
+PERL=`grep ^PERL $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+CGI_DIR=$TSUBAKI_DIR/cgi
+SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 
 
 start() {

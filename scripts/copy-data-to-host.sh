@@ -7,7 +7,11 @@
 # Usage:
 # sh copy-data-to-host.sh -d /data/home/skeiji/tsubaki/test /data2/work/wisdom/newsid/xmls
 
-TSUBAKI_DIR=`echo $0 | xargs dirname`/..
+TSUBAKI_DIR=`dirname $0`/..
+echo $TSUBAKI_DIR | grep -q '^/' 2> /dev/null > /dev/null
+if [ $? -ne 0 ]; then
+    TSUBAKI_DIR=`pwd`/$TSUBAKI_DIR
+fi
 CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 
 workspace=/tmp/$USER/cp.$USER
@@ -31,9 +35,6 @@ do
     esac
 done
 shift `expr $OPTIND - 1`
-
-# configureファイルから設定情報の読み込み
-. $TSUBAKI_DIR/conf/tsubaki.conf
 
 datadir=$1
 

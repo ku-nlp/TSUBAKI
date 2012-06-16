@@ -4,8 +4,7 @@ CWD=$(pwd)
 
 CONFIGURE_FILE_IN=$CWD/conf/configure.in
 CONFIGURE_FILE=$CWD/conf/configure
-TSUBAKI_CONF_FILE_IN=$CWD/conf/tsubaki.conf.in
-TSUBAKI_CONF_FILE=$CWD/conf/tsubaki.conf
+CONFIGURE_FILE_BACKUP=$CWD/conf/configure.old
 SF2INDEX_MAKEFILE_IN=$CWD/sf2index/Makefile.in
 SF2INDEX_MAKEFILE=$CWD/sf2index/Makefile
 SEARCH_SH_IN=$CWD/search.sh.in
@@ -145,9 +144,7 @@ if [ $EnglishFlag -eq 0 ]; then
 else
     # check Enju
     ENJUBIN=`type enju 2> /dev/null | cut -f3 -d' '`
-    if [ -n "$ENJUBIN" ]; then
-	ENJUPrefix=`expr $ENJUBIN : "\(.*\)/bin/enju$"`
-    else
+    if [ ! -n "$ENJUBIN" ]; then
 	echo "Enju is not found. Please install Enju (see README)."
 	usage
     fi
@@ -157,6 +154,11 @@ fi
 if [ ! -d "$DocumentPath" ]; then
     echo "Document data are not found in $DocumentPath. Please specify correct path with -d option."
     usage
+fi
+
+# backup the configure file
+if [ -f "$CONFIGURE_FILE" ]; then
+    mv -f $CONFIGURE_FILE $CONFIGURE_FILE_BACKUP
 fi
 
 
@@ -172,9 +174,6 @@ done
 # generation
 echo "generating '${CONFIGURE_FILE}' ... "
 sed -e "${SED_STR}" $CONFIGURE_FILE_IN > $CONFIGURE_FILE
-echo "done."
-echo "generating '${TSUBAKI_CONF_FILE}' ... "
-sed -e "${SED_STR}" $TSUBAKI_CONF_FILE_IN > $TSUBAKI_CONF_FILE
 echo "done."
 echo "generating '${SF2INDEX_MAKEFILE}' ... "
 sed -e "${SED_STR}" $SF2INDEX_MAKEFILE_IN > $SF2INDEX_MAKEFILE
