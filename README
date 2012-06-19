@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/05/29 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/06/19 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -80,18 +80,19 @@ $TSUBAKI_DIRにおいて以下のように ./setup.shを実行することによ
 イルを自動生成します。
 
   例1) 日本語サンプル文書データを対象にする場合
-       % ./setup.sh -d sample_doc/ja
+       % ./setup.sh -s sample_doc/ja/src_doc -d /somewhere/data
+       (/somewhere/data以下にインデックスなどのデータを出力します)
 
   例2) 英語サンプル文書データを対象にする場合
-       % ./setup.sh -e -d sample_doc/en
+       % ./setup.sh -e -s sample_doc/en/src_doc -d /somewhere/data
 
   例3) あるディレクトリ(/somewhere/src_doc_html)以下にあるHTML文書データを対象にする場合
-       % ./setup.sh -d /somewhere/TSUBAKI-data -s /somewhere/src_doc_html
-       (/somewhere/src_doc_html以下の"*.html"ファイルを再帰的に探索します)
+       % ./setup.sh -s /somewhere/src_doc -d /somewhere/TSUBAKI-data
+       (/somewhere/src_doc以下の"*.html"ファイルを再帰的に探索します)
 
   ※ ./setup.shの重要なオプションの説明
+       -s 検索対象文書パス       : 検索対象文書の場所を指定
        -d データパス             : インデックスなどのデータ出力場所を指定
-       -s 検索対象文書パス       : 検索対象文書の場所を指定 (default: データパス/src_doc)
        -j                        : 日本語の文書を検索する場合 (default)
        -e                        : 英語の文書を検索する場合
        -c 出力設定ファイル名	 : 出力する設定ファイル名を指定 (default: $TSUBAKI_DIR/conf/configure)

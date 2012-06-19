@@ -49,6 +49,7 @@ SearchServerHost=localhost
 SearchServerPort=39999
 SnippetServerHost=localhost
 SnippetServerPort=59001
+DocumentPathSpecifiedFlag=0
 SrcDocumentPathSpecifiedFlag=0
 
 usage() {
@@ -82,6 +83,7 @@ do
 	    if [ $SrcDocumentPathSpecifiedFlag -eq 0 ]; then
 		SrcDocumentPath=$DocumentPath/src_doc
 	    fi
+	    DocumentPathSpecifiedFlag=1
             ;;
         s)  if [ -d "$CWD/$OPTARG" ]; then
 	        SrcDocumentPath="$CWD/$OPTARG"
@@ -160,10 +162,23 @@ else
     fi
 fi
 
-# check Documents
-if [ ! -d "$DocumentPath" ]; then
-    echo "Document data are not found in $DocumentPath. Please specify correct path with -d option."
+# check source documents
+if [ ! -d "$SrcDocumentPath" ]; then
+    echo "Please specify correct SrcDocumentPath with -s option."
     usage
+fi
+
+# check Documents
+if [ $DocumentPathSpecifiedFlag -eq 0 ]; then
+    echo "Please specify DataPath with -d option."
+    usage
+fi
+if [ ! -d "$DocumentPath" ]; then
+    mkdir -p $DocumentPath
+    if [ ! -d "$DocumentPath" ]; then
+	echo "Cannot mkdir $DocumentPath"
+	usage
+    fi
 fi
 
 # backup the configure file
