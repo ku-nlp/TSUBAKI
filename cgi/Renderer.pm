@@ -178,9 +178,10 @@ sub print_query {
     my($this, $query) = @_;
 
     print qq(<TABLE width="100%" border="0" class="querynavi"><TR><TD width="*" style="padding: 0.25em 1em; background-color:#f1f4ff;">\n);
-    if (scalar(@{$query->{keywords}}) > 0) {
+    my $keyword_num = scalar(@{$query->{keywords}});
+    if ($keyword_num > 0) {
 	my @buf;
-	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
+	for (my $i = 0; $i < $keyword_num; $i++) {
 	    my $kwd = $query->{keywords}[$i];
 	    push(@buf, sprintf (qq(<SPAN class="query" id="query%d">%s</SPAN>), $i, $kwd->{rawstring}));
 	}
@@ -306,7 +307,8 @@ unless ($query->{rawstring}) {
 	printf "Event.observe('query%d', 'click',  showQueryEditWindow);\n", 0;
 	print "}\n";
     } else {
-	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
+	my $keywords_num = scalar(@{$query->{keywords}});
+	for (my $i = 0; $i < $keywords_num; $i++) {
 	    printf "Event.observe('query%d', 'click',  showQueryEditWindow);\n", 0;
 #	    printf "Event.observe('query%d', 'mouseout',  hide_query_result);\n", $i;
 #	    printf "Event.observe('query%d', 'mousemove', show_query_result%d);\n", $i, $i;
@@ -314,7 +316,7 @@ unless ($query->{rawstring}) {
 	print "}\n";
 
 	my $colorOffset = 0;
-	for (my $i = 0; $i < scalar(@{$query->{keywords}}); $i++) {
+	for (my $i = 0; $i < $keywords_num; $i++) {
 	    my ($width, $height, $coffset, $jscode) = $query->{keywords}[$i]->getPaintingJavaScriptCode($colorOffset);
 	    $colorOffset = $coffset;
 
