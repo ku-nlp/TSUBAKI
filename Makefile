@@ -12,5 +12,10 @@ indexing:
 
 clean:
 	$(MAKE) -C search clean
+	$(MAKE) -C enju2tsubaki/StandOffManager clean
+
+indexclean:
 	$(MAKE) -C sf2index clean
+
+mostlyclean: clean indexclean
 	rm -f $(CLEANFILES)
