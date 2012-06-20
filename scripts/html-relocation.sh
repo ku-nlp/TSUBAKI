@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # indirからfindしたHTMLファイルを対象に、10桁IDのファイル名にコピーし、1ディレクトリ10000個ずつ格納する
+# マッピング(outdir/filename2sid)を出力
 # -n : dryrun
 # -v : verbose
 
@@ -44,6 +45,7 @@ if [ -z "$1" -o -z "$2" ]; then
 fi
 indir=$1
 outtopdir=$2
+FILENAME2SID=$outtopdir/filename2sid
 
 if [ ! -d $outtopdir ]; then
     ${DRYRUN}mkdir -p $outtopdir
@@ -52,7 +54,10 @@ if [ ! -d $outtopdir ]; then
     fi
 fi
 
-dcount=0
+if [ -z "$DRYRUN" ]; then
+    ${DRYRUN}: > $FILENAME2SID
+fi
+cdcount=0
 dstr=`printf %06d $dcount`
 dstr4=`expr $dstr : "^\([0-9][0-9][0-9][0-9]\)"`
 outdir=$outtopdir/$dstr4/$dstr
@@ -61,10 +66,16 @@ if [ ! -d $outdir ]; then
 fi
 hcount=0
 
-for f in `find $indir -name "*.$EXT"`
+for srcf in `find $indir -name "*.$EXT"`
 do
-    destf=$outdir/$dstr`printf %04d $hcount`.$EXT
-    ${DRYRUN}$COMMAND $COMMAND_ARGS $f $destf
+    basesrcf=`basename $srcf`
+    basedestid=$dstr`printf %04d $hcount`
+    basedestf=$basedestid.$EXT
+    destf=$outdir/$basedestf
+    if [ -z "$DRYRUN" ]; then
+	echo "$basesrcf $basedestid" >> $FILENAME2SID
+    fi
+    ${DRYRUN}$COMMAND $COMMAND_ARGS $srcf $destf
 
     hcount=`expr $hcount + 1`
     if [ $hcount -eq $NUM_OF_HTMLS_IN_DIR ]; then
