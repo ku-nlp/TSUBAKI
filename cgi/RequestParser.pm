@@ -110,7 +110,6 @@ sub getDefaultValues {
     $params{query_verbose} = 0;
     $params{sort_by} = 'score';
     $params{sort_by_CR} = 0;
-    $params{from_portal} = 0;
     $params{score_verbose} = 0;
     $params{tarball} = 0;
     $params{get_jscode_for_parse_result} = 0;
@@ -570,14 +569,10 @@ sub parseQuery {
     $query->{WEIGHT_OF_TSUBAKI_SCORE} = $params->{weight_of_tsubaki_score};
     $query->{C_PAGERANK} = $params->{c_pagerank};
 
-
     # 検索語にインターフェースより得られる検索制約を追加
     foreach my $qk (@{$query->{keywords}}) {
 	$qk->{force_dpnd} = 1 if ($params->{force_dpnd});
     }
-
-    # ポータルからのアクセスかどうかのログをとる
-    $logger->setParameterAs('portal', $params->{from_portal}) if ($logger);
 
     return $query;
 }

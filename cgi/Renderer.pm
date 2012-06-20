@@ -1225,10 +1225,6 @@ sub printOrdinarySearchResult {
 	$title =~ s/_/ / if $CONFIG->{IS_ENGLISH_VERSION}; # extract-url-title.perlでスペースを_に置換しているのを戻す
 	$output .= $title . "</a>";
 
-	if ($params->{from_portal}) {
-	    $output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN>\n);
-	}
-
 	$output .= qq(</TD></TR>\n);
 	$output .= qq(<TR><TD>&nbsp</TD>\n);
 	$output .= qq(<TD>\n);
@@ -1239,10 +1235,8 @@ sub printOrdinarySearchResult {
 	###############################################################################
 
 	$output .= qq(<DIV class="meta">\n);
-	# ポータルからのアクセスでなければ文書IDとスコアを表示する
-	if (!$params->{from_portal}) {
-	    $output .= sprintf qq(id=%s, %s), $did, $score;
-	}
+	# 文書IDとスコアを表示する
+	$output .= sprintf qq(id=%s, %s), $did, $score;
 
 	# score_verbose が指定去れている場合は内訳を表示する
 	if ($params->{score_verbose}) {
@@ -1364,22 +1358,18 @@ sub printOrdinarySearchResult {
 	    $output .= qq(<DIV class="similar">);
 	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	    $output .= $sim_page->{title} . "</a>";
-	    if ($params->{from_portal}) {
-		# $output .= qq(<SPAN style="color: white">id=$did, score=$score</SPAN><BR>\n);
-		$output .= qq(<BR>\n);
-	    } else {
-		$output .= qq(<DIV class="meta">id=$did, score=$score);
-		# score_verbose が指定去れている場合は内訳を表示する
-		if ($params->{score_verbose}) {
-		    my $score_w = $results->[$rank]{score_word};
-		    my $score_d = $results->[$rank]{score_dpnd};
-		    my $score_n = $results->[$rank]{score_dist};
-		    my $score_aw = $results->[$rank]{score_word_anchor};
-		    my $score_dw = $results->[$rank]{score_dpnd_anchor};
-		    $output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
-		}
-		$output .= "</DIV>\n";
+	    $output .= qq(<DIV class="meta">id=$did, score=$score);
+	    # score_verbose が指定されている場合は内訳を表示する
+	    if ($params->{score_verbose}) {
+		my $score_w = $results->[$rank]{score_word};
+		my $score_d = $results->[$rank]{score_dpnd};
+		my $score_n = $results->[$rank]{score_dist};
+		my $score_aw = $results->[$rank]{score_word_anchor};
+		my $score_dw = $results->[$rank]{score_dpnd_anchor};
+		$output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
 	    }
+	    $output .= "</DIV>\n";
+
 	    # $output .= "<BLOCKQUOTE class=\"snippet\">$snippet</BLOCKQUOTE>";
 	    $output .= "<A class=\"cache\" href=\"$sim_page->{url}\">$sim_page->{url}</A>\n";
 	    $output .= "</DIV>";
