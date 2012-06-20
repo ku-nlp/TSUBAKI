@@ -55,7 +55,7 @@ start() {
 	for port in `echo $ports | perl -pe 's/,/ /g'`
 	do
 	    command="ssh -f $host $PERL -I $CGI_DIR -I $SCRIPTS_DIR $SCRIPTS_DIR/$COMMAND -port $port $OPTS"
-	    echo $command
+	    echo [SNIPPET SERVER] START\ \ \(host=$host, port=$port, time=`date`\)
 	    $command
 	done
     done
@@ -73,7 +73,11 @@ status_or_stop() {
  	    if [ "$1" = "stop" -a -n "$pid" ]; then
  		ssh -f $host kill $pid
  	    fi
-	    echo "$host: $pid"
+	    if [ "$1" = "stop" ]; then
+		echo [SNIPPET SERVER] STOP\ \ \ \(host=$host, port=$port, pid=$pid, time=`date`\)
+	    else
+		echo [SNIPPET SERVER] STATUS\ \(host=$host, port=$port, pid=$pid, time=`date`\)
+	    fi
 	done
     done
 }
