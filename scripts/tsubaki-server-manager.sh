@@ -32,11 +32,11 @@ shift `expr $OPTIND - 1`
 INTERVAL=10
 NICE=-4
 SLAVE_SERVER_DIR=$TSUBAKI_DIR/search
-# PERL=`grep ^PERL $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+# PERL=`grep '^PERL' $CONFIG_FILE | awk '{print $2}'`
 # SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 # CGI_DIR=$TSUBAKI_DIR/cgi
 # MODULE_DIR=$TSUBAKI_DIR/perl
-# UTILS_DIR=`grep UTILS_PATH $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+# UTILS_DIR=`grep '^UTILS_PATH' $CONFIG_FILE | awk '{print $2}'`
 # COMMAND=tsubaki_server.pl
 # EXEC_COMMAND="$PERL -I $CGI_DIR -I $SCRIPTS_DIR -I $MODULE_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND"
 COMMAND=slave_server
@@ -44,9 +44,10 @@ EXEC_COMMAND=$SLAVE_SERVER_DIR/$COMMAND
 USE_OF_SYNGRAPH="-syngraph"
 MEM=8388608
 VMEM=16777216
+DATE=`LANG=C date`
 
 # ログの出力先
-LOGFILE=`grep SERVER_LOG_FILE $CONFIG_FILE | awk '{print $2}'`
+LOGFILE=`grep '^SERVER_LOG_FILE' $CONFIG_FILE | awk '{print $2}'`
 
 
 start() {
@@ -58,7 +59,7 @@ start() {
 
     while [ 1 ];
     do
-	grep SEARCH_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $4,$5,$3}' | while read LINE
+	grep '^SEARCH_SERVERS' $CONFIG_FILE | awk '{print $4,$5,$3}' | while read LINE
 	do
 	    PORT=`echo $LINE | cut -f 3 -d ' '`
 	    pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep`
@@ -79,8 +80,8 @@ start() {
 		fi
 
 		if [ -d $idxdir ]; then
-		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\)
-		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
+		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=$DATE\)
+		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=$DATE\) >> $LOGFILE
 		    if [ $COMMAND = "slave_server" ]; then
 			ulimit -Ss $MEM -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION
 		    else
@@ -96,18 +97,18 @@ start() {
 
 
 status_or_stop() {
-    grep SEARCH_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $3}' | while read LINE
+    grep '^SEARCH_SERVERS' $CONFIG_FILE | awk '{print $3}' | while read LINE
     do
 	PORT=$LINE
 	pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
  	if [ -n "$pid" ]; then
  	    if [ "$1" = "stop" ]; then
  		kill -KILL $pid
-		echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=`date`\)
-		echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=`date`\) >> $LOGFILE
+		echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=$DATE\)
+		echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=$DATE\) >> $LOGFILE
 	    else
-		echo [TSUBAKI SERVER STATUS] \(port\=$PORT host\=`hostname` pid\=$pid\)
-		echo [TSUBAKI SERVER STATUS] \(port\=$PORT host\=`hostname` pid\=$pid\) >> $LOGFILE
+		echo [TSUBAKI SERVER] STATUS \(host\=`hostname`, port\=$PORT, pid\=$pid, time\=$DATE\)
+		echo [TSUBAKI SERVER] STATUS \(host\=`hostname`, port\=$PORT, pid\=$pid, time\=$DATE\) >> $LOGFILE
 	    fi
  	fi
     done
@@ -124,8 +125,8 @@ halt() {
     pid=`ps auxww | grep tsubaki-server-manager | grep start | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
     if [ -n "$pid" ]; then
  	kill -KILL $pid
-	echo [TSUBAKI SERVER] HALT\ \ \ \(pid=$pid, host=`hostname`, port=$PORT, time=`date`\)
-	echo [TSUBAKI SERVER] HALT\ \ \ \(pid=$pid, host=`hostname`, port=$PORT, time=`date`\) >> $LOGFILE
+	echo [TSUBAKI SERVER] HALT\ \ \ \(host=`hostname`, pid=$pid, time=$DATE\)
+	echo [TSUBAKI SERVER] HALT\ \ \ \(host=`hostname`, pid=$pid, time=$DATE\) >> $LOGFILE
     fi
 }
 
