@@ -439,12 +439,7 @@ END_OF_HTML
     # クエリ解析結果表示用の領域を確保
     $this->print_canvas();
 
-#   print qq(<DIV style="font-size:11pt; width: 100%; text-align: right; padding:0em 0em 0em 0em;">\n);
     print qq(<DIV style="font-size:11pt; width: 100%; border: 0px solid red; text-align: right; margin-top:5pt; marging-right: 5pt;">\n);
-#    if ($status eq 'search' || $status eq 'cache') {
-#	print qq(<A href="http://tsubaki.ixnlp.nii.ac.jp/index.cgi">2007年度文書セットはこちら</A>); # unless ($CONFIG->{IS_NICT_MODE});
-#	print qq(&nbsp;|&nbsp;);
-#    }
     print qq(<A href="tutorial.html">使い方</A><BR>\n);
 
     # 混雑具合を表示
@@ -895,9 +890,6 @@ sub printSlaveServerLogs {
 		$buf->{$k} = ($localLogger) ? $localLogger->getParameter($k) : '---';
 	    }
 
-	    # print Dumper::dump_as_HTML($localLogger) . "\n";
-	    # print "<HR>\n";
-
 	    push (@buff, $buf);
 	}
     }
@@ -1236,7 +1228,7 @@ sub printOrdinarySearchResult {
 	# 文書IDとスコアを表示する
 	$output .= sprintf qq(id=%s, %s), $did, $score;
 
-	# score_verbose が指定去れている場合は内訳を表示する
+	# score_verbose が指定されている場合は内訳を表示する
 	if ($params->{score_verbose}) {
 	    my $score_w = $results->[$rank]{score_word};
 	    my $score_d = $results->[$rank]{score_dpnd};
