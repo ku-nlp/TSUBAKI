@@ -23,7 +23,7 @@ while getopts c:d:efh OPT
 do
     case $OPT in
 	c)  conf_file=$OPTARG
-	    data_dir=`grep SEARCH_SERVERS $conf_file | grep -ve '^#' | head -n 1 | awk '{print $4}'`
+	    data_dir=`grep '^SEARCH_SERVERS' $conf_file | grep -ve '^#' | head -n 1 | awk '{print $4}'`
 	    ;;
 	d)  data_dir=$OPTARG
 	    ;;
@@ -41,6 +41,11 @@ if [ $file_mode -eq 0 ]; then
     query=$1
     if [ -z "$query" ]; then
 	usage
+    fi
+
+    ignore_yomi=`grep '^IGNORE_YOMI' $conf_file | grep -ve '^#' | awk '{print $2}'`
+    if [ $ignore_yomi -eq 1 ]; then
+	query_options="$query_options -ignore_yomi"
     fi
 
     query_file=tmp_query_sexp_$$

@@ -13,6 +13,7 @@ CONFIG_FILE=$TSUBAKI_DIR/conf/configure
 OPTS="-string_mode -z -new_sf"
 COMMAND=snippet_make_server.pl
 NICE=-4
+DATE=`LANG=C date`
 
 usage() {
     echo "Usage: $0 [-c configure_file] [-v] start|stop|restart|status"
@@ -41,13 +42,17 @@ if [ ! -f "$CONFIG_FILE" ]; then
     usage
 fi
 
-PERL=`grep ^PERL $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+PERL=`grep '^PERL' $CONFIG_FILE | awk '{print $2}'`
 CGI_DIR=$TSUBAKI_DIR/cgi
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 
+IGNORE_YOMI=`grep '^IGNORE_YOMI' $CONFIG_FILE | awk '{print $2}'`
+if [ $IGNORE_YOMI -eq 1 ]; then
+    OPTS="$OPTS -ignore_yomi"
+fi
 
 start() {
-    grep SNIPPET_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
+    grep '^SNIPPET_SERVERS' $CONFIG_FILE | awk '{print $2,$3}' | while read LINE
     do
 	host=`echo $LINE | cut -f 1 -d ' '`
 	ports=`echo $LINE | cut -f 2 -d ' '`
@@ -55,14 +60,14 @@ start() {
 	for port in `echo $ports | perl -pe 's/,/ /g'`
 	do
 	    command="ssh -f $host $PERL -I $CGI_DIR -I $SCRIPTS_DIR $SCRIPTS_DIR/$COMMAND -port $port $OPTS"
-	    echo [SNIPPET SERVER] START\ \ \(host=$host, port=$port, time=`date`\)
+	    echo [SNIPPET SERVER] START\ \ \(host=$host, port=$port, time=$DATE\)
 	    $command
 	done
     done
 }
 
 status_or_stop() {
-    grep SNIPPET_SERVERS $CONFIG_FILE | grep -ve '^#' | awk '{print $2,$3}' | while read LINE
+    grep '^SNIPPET_SERVERS' $CONFIG_FILE | awk '{print $2,$3}' | while read LINE
     do
 	host=`echo $LINE | cut -f 1 -d ' '`
 	ports=`echo $LINE | cut -f 2 -d ' '`
@@ -70,13 +75,13 @@ status_or_stop() {
 	for port in `echo $ports | perl -pe 's/,/ /g'`
 	do
 	    pid=`ssh -f $host ps auxww | grep $COMMAND | grep $port | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
- 	    if [ "$1" = "stop" -a -n "$pid" ]; then
- 		ssh -f $host kill $pid
- 	    fi
-	    if [ "$1" = "stop" ]; then
-		echo [SNIPPET SERVER] STOP\ \ \ \(host=$host, port=$port, pid=$pid, time=`date`\)
-	    else
-		echo [SNIPPET SERVER] STATUS\ \(host=$host, port=$port, pid=$pid, time=`date`\)
+ 	    if [ -n "$pid" ]; then
+		if [ "$1" = "stop" ]; then
+ 		    ssh -f $host kill $pid
+		    echo [SNIPPET SERVER] STOP\ \ \ \(host=$host, port=$port, pid=$pid, time=$DATE\)
+		else
+		    echo [SNIPPET SERVER] STATUS\ \(host=$host, port=$port, pid=$pid, time=$DATE\)
+		fi
 	    fi
 	done
     done
