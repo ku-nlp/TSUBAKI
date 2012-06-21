@@ -62,10 +62,8 @@ sub printQuery {
 		printf("のうち <B>%s</B> を含む文書", decode('utf8', $params->{cluster_label}));
 	    }
 	}
-
-	print qq(<INPUT type="button" class='button' value="クエリ解析結果の確認・修正" onclick="javascript:showQueryEditWindow();">) unless $CONFIG->{IS_ENGLISH_VERSION};
-	print "</TD>\n";
     }
+    print qq(<INPUT type="button" class='button' value="クエリ解析結果の確認・修正" onclick="javascript:showQueryEditWindow();">) unless $CONFIG->{IS_ENGLISH_VERSION};
 }
 
 sub printSearchTime {
