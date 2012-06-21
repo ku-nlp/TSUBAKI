@@ -46,6 +46,10 @@ DIV.bottom_message{
 	color: red;
 }
 
+a.title:visited{
+	color: blue;
+}
+
 a:visited{
 	color: green;
 }
