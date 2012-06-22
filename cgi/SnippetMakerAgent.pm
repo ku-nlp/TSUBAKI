@@ -51,16 +51,13 @@ sub create_snippets {
     my $count = 0;
     foreach my $doc (@$docs) {
 	if ($CONFIG->{IS_KUHP_MODE}) {
-	    push(@{$host2dids{$CONFIG->{IPSJ_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{IPSJ_SNIPPET_SERVERS}})]}}, $doc);
+	    push(@{$host2dids{$CONFIG->{KUHP_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{KUHP_SNIPPET_SERVERS}})]}}, $doc);
 	}
  	elsif ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NII_MODE}) {
  	    my $did = sprintf ("%09d", $doc->{did});
  	    my $host = $range->lookup($did);
  	    push(@{$host2dids{$host}}, $doc);
  	}
-	elsif ($CONFIG->{IS_IPSJ_MODE}) {
-	    push(@{$host2dids{$CONFIG->{IPSJ_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{IPSJ_SNIPPET_SERVERS}})]}}, $doc);
-	}
 	else {
 	    push(@{$host2dids{$CONFIG->{DID2HOST}{sprintf("%04d", $doc->{did} / 1000000)}}}, $doc);
 	}
@@ -260,8 +257,6 @@ sub get_snippets_for_each_did {
 	    foreach my $reps (@{$qk->{words}}) {
 		foreach my $rep (@$reps) {
 		    foreach my $string (split (/\+/, $rep->{string})) {
-			# 論文検索モードであれば、領域タグを削除する
-#			$string =~ s/^[A-Z][A-Z]:// if ($CONFIG->{USE_OF_BLOCK_TYPES});
 			$rep2style->{$string} = $rep->{stylesheet};
 		    }
 		}

@@ -367,7 +367,6 @@ sub broadcastSearch {
     my($this, $query, $logger, $opt) = @_;
 
     my $_start = Time::HiRes::time;
-    $query->{sort_by_year} = $opt->{sort_by_year};
 
     ##################
     # 検索クエリの送信

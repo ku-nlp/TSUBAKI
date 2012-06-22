@@ -130,9 +130,9 @@ sub _new {
     close(READER);
 
 
-    if ($this->{IS_IPSJ_MODE} || $this->{IS_KUHP_MODE}) {
+    if ($this->{IS_KUHP_MODE}) {
 	foreach my $host (@{$this->{SNIPPET_SERVERS}}) {
-	    push (@{$this->{IPSJ_SNIPPET_SERVERS}}, $host->{name});
+	    push (@{$this->{KUHP_SNIPPET_SERVERS}}, $host->{name});
 	}
     }
 

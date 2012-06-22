@@ -131,22 +131,6 @@ sub getDefaultValues {
     # 根拠サーチ用パラメータ
     $params{conjunctive_particle} = undef;    
 
-
-
-    #######################################################
-    # 論文検索用
-    #######################################################
-
-    # メタデータ表示に利用
-    $params{did} = 0;
-    $params{type} = 0;
-
-    # 参考文献込インデックスをひくかどうかのスイッチ
-    $params{reference} = 0;
-
-    # 年代順にソートするかどうかのスイッチ
-    $params{sort_by_year} = 0;
-
     return \%params;
 }
 

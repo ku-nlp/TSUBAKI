@@ -363,7 +363,6 @@ sub print_header {
 
     my $canvasName = 'canvas';
     my $title = "情報爆発プロジェクト 検索エンジン基盤 TSUBAKI";
-    $title .= " (情報処理学会 論文検索版)" if ($CONFIG->{IS_IPSJ_MODE});
 
     print << "END_OF_HTML";
 <HTML>
@@ -497,15 +496,11 @@ sub print_logo {
 	print qq(<TD width="220" align="center" valign="middle" style="border: 0px solid red;">\n);
 	printf ("<A href=%s><IMG border=0 src=image/logo-mini.png></A><BR>\n", $CONFIG->{INDEX_CGI});
 	printf qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">- %s -</SPAN></TD>\n), $CONFIG->{TSUBAKI_SUBTITLE} if $CONFIG->{TSUBAKI_SUBTITLE};
-	if ($CONFIG->{IS_IPSJ_MODE}) {
-	    print qq(<SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN></TD>\n);
-	}
     }
     else {
 	print qq(<TD align="center">);
 	printf ("<A href=%s><IMG border=0 src=image/logo.png></A>\n", $CONFIG->{INDEX_CGI});
 	printf qq(<SPAN style="color:#F60000; font-size:small; font-weight:bold;">%s</SPAN>\n), $CONFIG->{TSUBAKI_SUBTITLE} if $CONFIG->{TSUBAKI_SUBTITLE};
-	print qq(<BR><SPAN style="color:#F60000; font-size:x-small; font-weight:bold;">- 情報処理学会 論文検索版 -</SPAN>\n) if ($CONFIG->{IS_IPSJ_MODE});
 	print "</TD></TR>\n";
 	print "<TR>";
     }
@@ -1061,11 +1056,10 @@ sub printSearchResultForBrowserAccess {
     $this->printSearchTime($logger, $params, $size, $query->{keywords}, $status);
 
 
-    ############################################
-    # KWIC or 論文検索 or 通常版の検索結果を表示
-    ############################################
-    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) :
-	(($CONFIG->{IS_IPSJ_MODE}) ? $this->printIPSJSearchResult($logger, $params, $results, $query, $start, $end, $did2snippets) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end, $did2snippets));
+    ################################
+    # KWIC or 通常版の検索結果を表示
+    ################################
+    ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end, $did2snippets);
 
     ################
     # フッターの表示
@@ -1400,140 +1394,6 @@ END_OF_HTML
     }
 }
 
-sub printIPSJSearchResult {
-    my ($this, $logger, $params, $results, $query, $start, $end, $did2snippets) = @_;
-
-    ################
-    # 検索結果を表示
-    ################
-    my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
-    for (my $rank = $start; $rank < $end; $rank++) {
-	my $did = $results->[$rank]{did};
-	my $bibdat = $results->[$rank]{bibdat};
-	if ($bibdat) {
-	    my ($authors, $booktitle, $voln, $spage, $epage, $year) = split (" ", $bibdat);
- 	    my ($volume, $number) = split (",", $voln);
- 	    $number =~ s/　//;
-	    push (@{$results->[$rank]{authors}}, $authors);
-	    $results->[$rank]{booktitle} = $booktitle;
-	    $results->[$rank]{volume} = $volume;
-	    $results->[$rank]{number} = $number;
-	    $results->[$rank]{page} = sprintf qq(%s-%s), $spage, $epage;
-	    $results->[$rank]{year} = $year;
-	}
-
-	$results->[$rank]{rank} = $rank + 1;
-	$results->[$rank]{snippet} = $did2snippets->{$did};
-
-	# 一件分を作成して表示する
-	print $this->_printIPSJSearchResult($results->[$rank], $query);
-    }
-}
-
-
-sub _printIPSJSearchResult {
-    my ($this, $result, $query) = @_;
-
-    ################
-    # 検索結果を表示
-    ################
-
-    my $uri_escaped_search_keys = $this->get_uri_escaped_query($query);
-    my $rank = $result->{rank};
-    my $did = $result->{did};
-    my $score = sprintf("%.4f", $result->{score_total});
-    my $snippet = $result->{snippet};
-    my $title = $result->{title};
-    my $abst = $result->{abst};
-    my $abstAll = $result->{abstAll};
-
-    my $output = qq(<DIV class="result">);
-
-
-
-    ###############################################################################
-    # 順位とタイトル
-    ###############################################################################
-
-    $output .= qq(<TABLE cellpadding="0" border="0" width="100%">\n);
-    $output .= qq(<TR><TD style="width: 1em; text-align: center; vertical-align: top;"><SPAN class="rank" nowrap>) . ($rank) . "</SPAN></TD>\n";
-
-    $output .= qq(<TD>\n);
-    $title = substr($title, 0, $CONFIG->{MAX_LENGTH_OF_TITLE}) . "..." if (length($title) > $CONFIG->{MAX_LENGTH_OF_TITLE});
-    if (defined $result->{url}) {
-	$output .= qq(<A class="title" href="$result->{url}" target="_blank">$title</A>\n) if (defined $result->{url});
-    } else {
-	$output .= sprintf qq(<SPAN stype="color; black;">$title</SPAN>\n), $title;
-    }
-    $output .= qq(<SPAN style="font-size:small;">);
-    $output .= sprintf qq(<A href="http://ci.nii.ac.jp/lognavi?name=nels&lang=jp&type=pdf&id=%s" target="_blank">[PDF]</A>&nbsp;&nbsp;\n), $result->{artid} if ($result->{artid});
-    $output .= sprintf qq(<A href="javascript:void($rank);" onclick="toggle_ipsj_verbose_view('test1_$rank', 'test2_$rank', 'test3_$rank', 'test4_$rank', this, '%s', '%s');">[ABST・本文の詳細]</A>\n), "[ABST・本文の詳細]", "[元に戻す]" if ($abstAll);
-    $output .= sprintf qq(<FONT color="white">%s</FONT>), $result->{did};
-    $output .= "</SPAN>";
-
-    $output .= qq(</TD></TR>\n);
-    $output .= qq(<TR><TD>&nbsp</TD>\n);
-    $output .= qq(<TD>\n);
-
-#     my $score_w = $result->{score_word};
-#     my $score_d = $result->{score_dpnd};
-#     my $score_n = $result->{score_dist};
-#     my $score_aw = $result->{score_word_anchor};
-#     my $score_dw = $result->{score_dpnd_anchor};
-#     my $score_pr = $result->{pagerank};
-#     $output .= sprintf qq((w=%.3f, d=%.3f, n=%.3f, aw=%.3f, ad=%.3f)), $score_w, $score_d, $score_n, $score_aw, $score_dw;
-
-    ###############################################################################
-    # タイトルの下
-    ###############################################################################
-
-    # クエリとマッチした著者名を太字で表示
-    my $_authors = "";
-    if (defined $result->{authors}) {
-	$_authors = join ("，", @{$result->{authors}});
-	foreach my $kwd (@{$query->{keywords}}) {
-	    foreach my $word (@{$kwd->{words}}) {
-		foreach my $w (@{$word}) {
-		    $_authors =~ s!\Q$w->{string}\E!<B>$w->{string}</B>!g;
-		}
-	    }
-	}
-    }
-
-    $output .= sprintf qq(<BLOCKQUOTE class="bib">);
-    $output .= "$_authors;" if ($_authors);
-    $output .= "$result->{booktitle} " if ($result->{booktitle});
-    $output .= "$result->{volume} " if ($result->{volume});
-    $output .= "($result->{number})" if ($result->{number});
-
-    $output .= sprintf qq(, %s), $result->{page} if ($result->{page});
-    $output .= sprintf qq(, %s年), $result->{year} if ($result->{year} =~ /^\d\d\d\d$/);
-    $output .= sprintf qq(</BLOCKQUOTE>\n);
-
-
-    ###############################################################################
-    # スニペット
-    ###############################################################################
-
-    my $MAX_LENGTH_OF_SHORT_SNIPPET = 100;
-    if ($abstAll) {
-	my $short_abst = (defined $abst) ? $abst : $this->makeShortSnippet($abstAll, $MAX_LENGTH_OF_SHORT_SNIPPET);
-
-	$output .= qq(<BLOCKQUOTE id="test1_$rank" style="display: block;" class="snippet"><SPAN style="border: 0px solid black; background-color:maroon; color:white; font-weight:bold; padding:0em 0.5em; margin-right:0.5em;">ABST</SPAN>$short_abst...</BLOCKQUOTE>);
-	$output .= qq(<BLOCKQUOTE id="test2_$rank" style="display: none;" class="snippet"><SPAN style="border: 0px solid black; background-color:maroon; color:white; font-weight:bold; padding:0em 0.5em; margin-right:0.5em;">ABST</SPAN>$abstAll</BLOCKQUOTE>);
-    }
-
-    my $short_snippet = $this->makeShortSnippet($snippet, $MAX_LENGTH_OF_SHORT_SNIPPET);
-    $short_snippet = $snippet unless ($abstAll);
-    $output .= qq(<BLOCKQUOTE id="test3_$rank" style="display: block;" class="snippet"><SPAN style="border: 0px solid black; background-color:navy; color:white; font-weight:bold; padding:0em 0.5em; margin-right:0.5em;">本文</SPAN>$short_snippet...</BLOCKQUOTE>);
-    $output .= qq(<BLOCKQUOTE id="test4_$rank" style="display: none;"  class="snippet"><SPAN style="border: 0px solid black; background-color:navy; color:white; font-weight:bold; padding:0em 0.5em; margin-right:0.5em;">本文</SPAN>$snippet</BLOCKQUOTE>);
-
-    $output .= "</TABLE>";
-    $output .= "</DIV>";
-
-    return $output;
-}
-
 sub makeShortSnippet {
     my ($this, $string, $MAX_LENGTH_OF_SHORT_SNIPPET) = @_;
 
@@ -1853,80 +1713,6 @@ sub getSearchResultForAPICall {
 	    $writer->endTag('End');
 	}
 
-
-
-	##################################################
-	# 論文検索用タグ
-	##################################################
-	if ($CONFIG->{IS_IPSJ_MODE}) {
-	    my $abst = $page->{abstAll};
-	    my $artid = $page->{artid};
-	    my ($authors, $booktitle, $voln, $spage, $epage, $year) = split (" ", $page->{bibdat});
-	    my ($volume, $number) = split (",　", $voln);
-
-	    if ($params->{Author} > 0) {
-		$writer->startTag('Authors');
-		foreach my $author (split (/，/, $authors)) {
-		    next if ($author eq '');
-
-		    $writer->startTag('Author');
-		    $writer->characters($author);
-		    $writer->endTag('Author');
-		}
-		$writer->endTag('Authors');
-	    }
-
-	    if ($params->{Abstract} > 0) {
-		$writer->startTag('Abstract');
-		$writer->characters($abst);
-		$writer->endTag('Abstract');
-	    }
-
-
-	    if ($params->{Year} > 0) {
-		$writer->startTag('Year');
-		$writer->characters($year);
-		$writer->endTag('Year');
-	    }
-
-	    if ($params->{Booktitle} > 0) {
-		$writer->startTag('Booktitle');
-		$writer->characters($booktitle);
-		$writer->endTag('Booktitle');
-	    }
-
-
-	    if ($params->{Volume} > 0) {
-		$writer->startTag('Volume');
-		$writer->characters($volume);
-		$writer->endTag('Volume');
-	    }
-
-
-	    if ($params->{Number} > 0) {
-		$writer->startTag('Number');
-		$writer->characters($number);
-		$writer->endTag('Number');
-	    }
-
-
-	    if ($params->{Page} > 0) {
-		if (defined $spage && defined $epage) {
-		    $writer->startTag('Page');
-		    $writer->characters(sprintf ("%s-%s", $spage, $epage));
-		    $writer->endTag('Page');
-		}
-	    }
-
-
-	    if ($params->{ArtID} > 0) {
-		$writer->startTag('ArtID');
-		$writer->characters($artid);
-		$writer->endTag('ArtID');
-	    }
-	}
-
-
 	if ($params->{Snippet} > 0) {
 	    if ($params->{kwic}) {
 		foreach my $kwic (@{$did2snippets->{$did}}) {
@@ -1977,44 +1763,6 @@ sub getSearchResultForAPICall {
 
     return $search_result_string;
 }
-
-sub printIPSJMetadata {
-    my ($this, $metadata) = @_;
-
-    my @attrs = ("ID", "IPSJ", "KJ", "NCID", "TITLE", "ETITLE", "AUTH", "EAUTH", "JRNL", "EJRNL", "VOLN", "SPAGE" ,"EPAGE", "URL", "YEAR", "KYWD", "EKYWD", "ABST", "EABST", "CITID", "UCITID");
-
-    my %buf;
-    foreach my $tagname (@attrs) {
-	while ($metadata =~ m/<$tagname>(.+?)<\/$tagname>/g) {
-	    my $value = $1;
-	    next if ($value eq '');
-
-	    if ($tagname =~ /AUTH/) {
-		while ($value =~ m/<AUTH_NAME>(.+?)<\/AUTH_NAME>/g) {
-		    push (@{$buf{$tagname}}, $1);
-		}
-	    } else {
-		$buf{$tagname} = $value;
-	    }
-	}
-    }
-
-
-    print "<TABLE border=1>\n";
-    foreach my $tagname (@attrs) {
-	next if (!defined $buf{$tagname} || $buf{$tagname} eq "");
-
-	print "<TR><TD>$tagname</TD><TD>";
-	if ($tagname =~ /AUTH/) {
-	    print join (", ", @{$buf{$tagname}});
-	} else {
-	    print $buf{$tagname};
-	}
-	print "</TD></TR>\n";
-    }
-    print "</TABLE>\n";
-}
-
 
 # クラスメソッド
 sub printErrorMessage {

@@ -59,7 +59,7 @@ sub new {
     close $READER;
 
     my $encoding;
-    if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_IPSJ_MODE}) {
+    if ($CONFIG->{IS_NICT_MODE}) {
 	$encoding = 'utf8';
 	$buf = decode ('utf8', $buf);
 	$buf =~ tr/\x00-\x09\x0b-\x1f\x7f-\x9f//d;

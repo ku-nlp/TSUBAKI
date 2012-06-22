@@ -49,7 +49,7 @@ sub main {
 	# キャッシュページの出力
 	my $id = $params->{'cache'};
 	my $file;
-	if ($CONFIG->{IS_KUHP_MODE} || $CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_IPSJ_MODE} || $CONFIG->{IS_SIMPLE_MODE}) { # in NICT, e.g., "icccmm010:31056:$did_w_version"
+	if ($CONFIG->{IS_KUHP_MODE} || $CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_SIMPLE_MODE}) { # in NICT, e.g., "icccmm010:31056:$did_w_version"
  	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
  	}
 	else {
@@ -85,26 +85,8 @@ sub main {
 	    print "</TR>\n";
 
 	    print "</TABLE><BODY></HTML>";
-	}
-	elsif ($CONFIG->{IS_IPSJ_MODE}) {
-	    print $cachedHTML->to_string_for_ipsj();
 	} else {
 	    print $cachedHTML->to_string();
-	}
-    } elsif ($params->{'did'}) {
-	# 論文のメタ情報を表示（論文検索用）
-	if ($CONFIG->{IS_IPSJ_MODE}) {
-	    my $type = $params->{'type'};
-
-	    if ($type eq 'meta') {
-		tie my %metadb, 'CDB_File', $CONFIG->{IPSJ_METADB_PATH} or die $! . "\n";
-		my $metadata = $metadb{$params->{'did'}};
-
-		my $renderer = new Renderer(0);
-		$renderer->printIPSJMetadata($metadata);
-
-		untie %metadb;
-	    }
 	}
     } else {
 	my $renderer = new Renderer(0);

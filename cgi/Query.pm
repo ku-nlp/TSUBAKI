@@ -55,7 +55,6 @@ sub normalize {
 	next if ($memberName eq 'rep2style');
 	next if ($memberName eq 'result');
 	next if ($memberName eq 's_exp');
-	next if ($memberName eq 'sort_by_year');
 
 	if ($memberName eq 'option') {
 	    foreach my $k (sort keys %{$this->{option}}) {
