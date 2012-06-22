@@ -4,7 +4,6 @@ CWD=$(pwd)
 
 CONFIGURE_FILE_IN=$CWD/conf/configure.in
 CONFIGURE_FILE=$CWD/conf/configure
-CONFIGURE_FILE_BACKUP=$CWD/conf/configure.old
 SF2INDEX_MAKEFILE_IN=$CWD/sf2index/Makefile.in
 SF2INDEX_MAKEFILE=$CWD/sf2index/Makefile
 SEARCH_SH_IN=$CWD/search.sh.in
@@ -105,6 +104,11 @@ do
 done
 shift `expr $OPTIND - 1`
 
+CONFIGURE_FILE_BACKUP=$CONFIGURE_FILE.old
+CONFIGURE_FILE_BASE=$CONFIGURE_FILE.base
+CONFIGURE_FILE_DIFF=$CONFIGURE_FILE.diff
+CONFIGURE_FILE_REJ=$CONFIGURE_FILE.rej
+
 # check Utils
 if [ ! -d "$UtilsPath" ]; then
     echo "Utils is not found. Please download Utils (see README)."
@@ -181,8 +185,18 @@ if [ ! -d "$DocumentPath" ]; then
     fi
 fi
 
-# backup the configure file
+# take a diff of the configure file and backup it
 if [ -f "$CONFIGURE_FILE" ]; then
+    if [ -f "$CONFIGURE_FILE_BASE" ]; then
+	if [ -f $CONFIGURE_FILE_REJ ]; then
+	    rm -f $CONFIGURE_FILE_REJ
+	fi
+	diff -u $CONFIGURE_FILE_BASE $CONFIGURE_FILE > $CONFIGURE_FILE_DIFF
+	if [ ! -s $CONFIGURE_FILE_DIFF ]; then
+	    rm -f $CONFIGURE_FILE_DIFF
+	fi
+    fi
+
     mv -f $CONFIGURE_FILE $CONFIGURE_FILE_BACKUP
 fi
 
@@ -199,6 +213,16 @@ done
 # generation
 echo "generating '${CONFIGURE_FILE}' ... "
 sed -e "${SED_STR}" $CONFIGURE_FILE_IN > $CONFIGURE_FILE
+cp $CONFIGURE_FILE $CONFIGURE_FILE_BASE
+# merge the diffrence that was manually added
+if [ -f $CONFIGURE_FILE_DIFF ]; then
+    patch -p0 < $CONFIGURE_FILE_DIFF
+    if [ -f $CONFIGURE_FILE_REJ ]; then
+	echo "the following changes are not merged into $CONFIGURE_FILE"
+	cat $CONFIGURE_FILE_REJ
+    fi
+    rm -f $CONFIGURE_FILE_DIFF
+fi
 echo "done."
 echo "generating '${SF2INDEX_MAKEFILE}' ... "
 sed -e "${SED_STR}" $SF2INDEX_MAKEFILE_IN > $SF2INDEX_MAKEFILE
