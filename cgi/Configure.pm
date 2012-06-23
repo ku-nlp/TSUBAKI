@@ -16,9 +16,13 @@ use Data::Dumper;
 $Data::Dumper::Useperl = 1;
 
 my $HOSTNAME = `hostname`;
-my $DIRNAME = dirname($INC{'Configure.pm'}) . '/../conf';
-# 環境によってパスを変える
-my $CONFIG_FILE_PATH =  $DIRNAME . '/' . (($HOSTNAME =~ /iccc/) ? 'configure.nict' : 'configure');
+my $DIRNAME = dirname($INC{'Configure.pm'});
+my $CONFDIRNAME = $DIRNAME . '/../conf';
+
+# 設定ファイル名(default: configure)をtsubaki-cgi.confから読み込む
+our $CONFIG_FILE_NAME;
+require "$DIRNAME/tsubaki-cgi.conf";
+my $CONFIG_FILE_PATH =  $CONFDIRNAME . '/' . $CONFIG_FILE_NAME;
 
 my %titledbs = ();
 my %urldbs = ();
