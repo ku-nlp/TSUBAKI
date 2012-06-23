@@ -230,11 +230,6 @@ sub extract_sentences_from_content_using_position_new_sf {
 sub isMatch {
     my ($listQ, $listS) = @_;
 
-#    use Data::Dumper;
-#    print Dumper($listS) . "\n";
-#    print Dumper($listQ) . "\n";
-
-
     my $end = -1;
     my $matchQ = 0;
     for (my $i = 0; $i < scalar(@$listS); $i++) {
@@ -271,10 +266,6 @@ sub isMatch {
 
 sub isMatch2 {
     my ($listQ, $listS) = @_;
-
-#     use Data::Dumper;
-#     print Dumper($listS) . "\n";
-#     print Dumper($listQ) . "\n";
 
     my $start = -1;
     my $end = -1;
@@ -881,12 +872,6 @@ sub calculate_score_with_sf {
 	    $buf{$dpnd_lem}++;
 	}
     }
-
-#     if ($opt->{debug}) {
-# 	print "index terms in a sentence\n";
-# 	print Dumper (\%buf) . "\n";
-# 	print "-----\n";
-#     }
 
     my $including_all_indices = 1;
     for (my $q = 0; $q < scalar(@{$query}); $q++) {
