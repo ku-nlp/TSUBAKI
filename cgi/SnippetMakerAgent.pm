@@ -38,14 +38,9 @@ sub create_snippets {
     # 文書IDを標準フォーマットを管理しているホストに割り振る
     my %host2dids = ();
     my $range = undef;
-    if ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NII_MODE}) {
+    if ($CONFIG->{SID_RANGE} || $CONFIG->{SID_CDB} || $CONFIG->{USE_OF_HASH_FOR_SID_LOOKUP}) {
  	require SidRange;
- 	if ($CONFIG->{IS_NTCIR_MODE}) {
- 	    $range = new SidRange({sids_for_ntcir => $CONFIG->{SIDS_FOR_NTCIR}});
- 	}
-	else {
- 	    $range = new SidRange({nict2nii => $CONFIG->{NICT2NII}});
- 	}
+	$range = new SidRange();
     }
 
     my $count = 0;
@@ -53,7 +48,7 @@ sub create_snippets {
 	if ($CONFIG->{IS_KUHP_MODE}) {
 	    push(@{$host2dids{$CONFIG->{KUHP_SNIPPET_SERVERS}[$count++%scalar(@{$CONFIG->{KUHP_SNIPPET_SERVERS}})]}}, $doc);
 	}
- 	elsif ($CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_NII_MODE}) {
+ 	elsif ($range) { # SidRangeを使うとき
  	    my $did = sprintf ("%09d", $doc->{did});
  	    my $host = $range->lookup($did);
  	    push(@{$host2dids{$host}}, $doc);

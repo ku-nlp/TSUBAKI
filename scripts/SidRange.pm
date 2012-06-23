@@ -2,7 +2,11 @@ package SidRange;
 
 # $Id$
 
-# �W���t�H�[�}�b�g���Ǘ����Ă���z�X�g�����Ǘ�����N���X
+# 標準フォーマットを管理しているホスト情報を管理するクラス
+
+# $opt->{sid_range} (default: $CONFIG->{SID_RANGE}): SIDの範囲に対するノード名を示したファイルを利用
+# $opt->{sid_cdb} (default: $CONFIG->{SID_CDB}): SIDに対するノード名を示したCDBを利用
+# $CONFIG->{USE_OF_HASH_FOR_SID_LOOKUP}: SIDをキーとするハッシュ関数を利用
 
 use strict;
 use utf8;
@@ -23,7 +27,7 @@ sub new {
 	    last unless (defined $sid);
 
 
-	    # 00000-99��99���폜
+	    # 00000-99の99を削除
 	    $sid =~ s/\-\d+$//g;
 
 	    $this->{SID2HOST}{$sid} = $host;
@@ -43,13 +47,15 @@ sub new {
 	close (F);
     }
 
-    if (-f $opt->{sids_for_ntcir}) {
+    my $sid_cdb = $opt->{sid_cdb} ? $opt->{sid_cdb} : $CONFIG->{SID_CDB};
+    if ($sid_cdb && -f $sid_cdb) {
 	require CDB_File;
-	tie %{$this->{SID2HOST_FOR_NTCIR}}, 'CDB_File', $opt->{sids_for_ntcir} or die "$0: can't tie to $opt->{sids_for_ntcir} $!\n";
+	tie %{$this->{SID_CDB}}, 'CDB_File', $opt->{sid_cdb} or die "$0: can't tie to $opt->{sid_cdb} $!\n";
     }
 
-    if (-f $opt->{nict2nii}) {
-	open (F, $opt->{nict2nii}) or die "$!";	
+    my $nict2nii = $opt->{nict2nii} ? $opt->{nict2nii} : $CONFIG->{NICT2NII};
+    if ($nict2nii && -f $nict2nii) {
+	open (F, $nict2nii) or die "$!";
 	while (<F>) {
 	    chop;
 	    my ($nictNode, $niiNode) = split(/\s+/, $_);
@@ -65,8 +71,8 @@ sub new {
 sub DESTROY {
     my ($this) = @_;
 
-    if ($this->{SID2HOST_FOR_NTCIR}) {
-	untie $this->{SID2HOST_FOR_NTCIR};
+    if ($this->{SID_CDB}) {
+	untie $this->{SID_CDB};
     }
 }
 
@@ -95,10 +101,10 @@ sub _lookup {
     my $host = $this->{SID2HOST_FOR_UPDATE_NODE}{$did};
     return $host if (defined $host);
 
-    my $host = $this->{SID2HOST_FOR_NTCIR}{$did};
+    $host = $this->{SID_CDB}{$did};
     return $host if (defined $host);
 
-    # 00000-99��99���폜
+    # 00000-99の99を削除
     $did =~ s/\-\d+$//g;
 
     my $found = 0;

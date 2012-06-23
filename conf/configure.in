@@ -74,9 +74,6 @@ SEARCH_SERVERS	@SearchServerHost@	@SearchServerPort@	@DocumentPath@/idx/0000	non
 # SEARCH_SERVERS	second_server	@SearchServerPort@	@DocumentPath@/idx/0001	none
 # SEARCH_SERVERS	third_server	@SearchServerPort@	@DocumentPath@/idx/0002	none
 
-# どのホストがどのSIDを持つデータを管理しているかを表す対応表
-# SID_RANGE	/wisdom/sid.range
-
 # スニペットサーバの設定（★要変更）
 # SNIPPET_SERVERS	ホスト名	ポート番号	ディスクにおいてある標準フォーマットのID1,...
 SNIPPET_SERVERS	@SnippetServerHost@	@SnippetServerPort@	0000
@@ -319,7 +316,10 @@ USE_OF_DPND_FEATURES		0
 IS_SIMPLE_MODE		0
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
-# SIDS_FOR_NTCIR	@SearchEnginePath@/cgi/sid.range.cdb
+# SID_RANGE	@SearchEnginePath@/data/sid.range
+
+# どのホストがどのSIDを持つデータを管理しているかを表す対応表(CDB)
+# SID_CDB	@SearchEnginePath@/data/sid.range.cdb
 
 # ハッシュ関数を利用して標準フォーマットが置いてあるノードを探すかどうか
 USE_OF_HASH_FOR_SID_LOOKUP	0
