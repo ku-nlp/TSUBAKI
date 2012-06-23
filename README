@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/06/19 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2012/06/23 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -211,7 +211,8 @@ doc/tsubaki-configuration.pdf)。検索サーバとスニペットサーバを�
 
 ・複数の文書セットに対して検索するためには、「TSUBAKI設定ファイルの生成」
   において、./setup.shに"-c 出力設定ファイル名"を付けて実行し、異なる名
-  前の設定ファイルを生成してください。
+  前の設定ファイルを生成してください。また、cgi/tsubaki-cgi.confにその
+  設定ファイル名を記入してください。
 
 
 ■ ドキュメント
