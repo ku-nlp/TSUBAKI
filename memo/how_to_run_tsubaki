@@ -1,8 +1,0 @@
-# $Id;$
-
-# TSUBAKIの起動方法
-
-memo/how_to_install_tsubaki に従ってcgi/configure, data/PORTS.*ファイルを
-変更した後、以下のコマンドを実行する。
-
-sh scripts/tsubaki-server.sh -syn start
