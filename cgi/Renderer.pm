@@ -522,9 +522,6 @@ sub print_form {
     print qq(<INPUT type="button" class="button" value="検索" onclick="submitQuery();"/>\n);
     # print qq(<INPUT type="button" value="クリア" onclick="document.all.query.value=''"/><BR>\n);
 
-    # NTCIRモードの場合はクエリを表示
-    $this->print_ntcir_queries($params) if ($CONFIG->{IS_NTCIR_MODE});
-
     # 検索に利用するブロックタイプを選択するチェックボックスを表示
     $this->printBlockTypeCheckbox($params);
 
@@ -536,26 +533,6 @@ sub print_form {
 
     print qq(</FORM>\n);
     print qq(</TD>\n);
-}
-
-# NTCIRのクエリを表示
-sub print_ntcir_queries {
-    my ($this, $params) = @_;
-
-    print qq(<SELECT name="ntcir_query" style="display: inline; margin-top: 0.2em;">\n);
-    open (READER, "<:encoding(euc-jp)", $CONFIG->{TSUBAKI_SCRIPT_PATH} . "/../data/qs-fml-ntcir34") or die "$!";
-    while (<READER>) {
-	chop;
-	my ($qid, $string) = split (/ /, $_);
-	if ($string eq $params->{ntcir_query}) {
-	    printf qq(<OPTION value="%s" selected>%s: %s\n), $string, $qid, $string;
-	} else {
-	    printf qq(<OPTION value="%s">%s: %s\n), $string, $qid, $string;
-	}
-    }
-    close (READER);
-    print "</SELECT> ";
-    print qq(<INPUT type="button" value="入力" onclick="document.search.qbox.value = document.search.ntcir_query.options[document.search.ntcir_query.selectedIndex].value;"/><BR>\n);
 }
 
 # 開発モード用オプションを表示
@@ -1128,44 +1105,6 @@ sub printKwicView {
 sub printOrdinarySearchResult {
     my ($this, $logger, $params, $results, $query, $start, $end, $did2snippets) = @_;
 
-
-    my $evaldat = ();
-    my %evalmap = ();
-    if ($CONFIG->{IS_NTCIR_MODE}) {
-#	tie my %_cdb, 'CDB_File', $CONFIG->{NTCIR_EVAL_DAT} or die $!;
-	tie my %_cdb, 'CDB_File', "/home/skeiji/public_html/tsubaki-ntcir/SearchEngine/cgi/ntcir34-query-eval.cdb" or die $!;
-	require Storable;
-	$evaldat = Storable::thaw($_cdb{$params->{ntcir_query}});
-	untie %_cdb;
-
-	$evalmap{'H'} = '◎';
-	$evalmap{'S'} = '◎';
-	$evalmap{'A'} = '○';
-	$evalmap{'B'} = '△';
-	$evalmap{'C'} = 'Ｘ';
-    }
-
-
-    if ($CONFIG->{IS_NTCIR_MODE}) {
-	my %num_of_judges = ();
-	for (my $rank = $start; $rank < $end; $rank++) {
-	    my $did = $results->[$rank]{did};
-	    my $judge = $evalmap{$evaldat->{sprintf("%09d", $did)}};
-	    $judge = '？' unless ($judge);
-	    $num_of_judges{$judge}++;
-	}
-
-	print qq(<DIV style="font-size:small; text-align: left; background-color:#f1f4ff; mergin:0px; margin-top:-0.2em; padding-left:1em;">\n);
-	print "評価結果：";
-	foreach my $judge (('◎', '○', '△', 'Ｘ', '？')) {
-	    my $num = $num_of_judges{$judge};
-	    $num = 0 unless (defined $num);
-
-	    printf "%s %s　", $judge, $num;
-	}
-	print "</DIV>\n";
-    }
-
     ################
     # 検索結果を表示
     ################
@@ -1191,19 +1130,13 @@ sub printOrdinarySearchResult {
 	$output .= qq(<TR><TD style="width: 1em; text-align: center;"><SPAN class="rank" nowrap>) . ($rank + 1) . "</SPAN></TD>\n";
 
 	$output .= qq(<TD>\n);
-	if ($CONFIG->{IS_NTCIR_MODE}) {
-	    $output .= qq(<A class="title" href="http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/skeiji/ntcir/ntcir-api.cgi?action=show_page&id=$did&format=html" class="ex">);
-	    my $judge = $evalmap{$evaldat->{sprintf("%09d", $did)}};
-	    $judge = '？' unless ($judge);
-	    $title = sprintf ("%s: %s", $judge, $title);
-	} else {
-	    if ($CONFIG->{LINK_CACHED_HTML_FROM_TITLE}) { # タイトルからキャッシュへのリンクをはるとき
-		$output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
-	    }
-	    else { # 元ページへのリンク
-		$output .= qq(<A class="title" href="$results->[$rank]{url}" target="_blank" class="ex">);
-	    }
+	if ($CONFIG->{LINK_CACHED_HTML_FROM_TITLE}) { # タイトルからキャッシュへのリンクをはるとき
+	    $output .= qq(<A class="title" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank" class="ex">);
 	}
+	else { # 元ページへのリンク
+	    $output .= qq(<A class="title" href="$results->[$rank]{url}" target="_blank" class="ex">);
+	}
+
 	# 全角英数字を半角に
 	$title =~ tr/[Ａ-Ｚａ-ｚ０-９．／＠　]/[A-Za-z0-9.\/@ ]/;
 	$title =~ s/_/ / if $CONFIG->{IS_ENGLISH_VERSION}; # extract-url-title.perlでスペースを_に置換しているのを戻す
@@ -1314,15 +1247,6 @@ sub printOrdinarySearchResult {
 	    }
 	}
 #	$output .= qq(<A class="cache2" href="index.cgi?cache=$did&KEYS=) . $uri_escaped_search_keys . qq(" target="_blank">キャッシュ</A>\n);
-
-	if ($CONFIG->{USE_OF_BLOCK_TYPES} && !$CONFIG->{IS_KUHP_MODE}) {
-	    # ページの構造解析結果へのリンクを生成
-	    my $basecgi = 'http://orchid.kuee.kyoto-u.ac.jp/~funayama/ISA/index_dev.cgi?';
-	    my $pageurl = "http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/skeiji/ntcir/ntcir-api.cgi?action=show_page\@id=$did\@format=html";
-	    my $block_type_detect_url = sprintf ("%sDetectBlocks_ROOT=%%2Fhome%%2Ffunayama%%2FDetectBlocks&DetectSender_ROOT=%%2Fhome%%2Ffunayama%%2FDetectSender&inputurl=%s&DetectSender_flag=&rel2abs=&input_type=url", $basecgi, $pageurl);
-
-#	    $output .= qq(&nbsp;<A class="cache" href="$block_type_detect_url" target="_blank"><SMALL>構造解析結果</SMALL></A>\n);
-	}
 	$output .= "</DIV>";
 
 

@@ -130,7 +130,6 @@ CACHED_HTML_PATH_TEMPLATE	@DocumentPath@/html/%04d/%06d/%s.html
 # IDから標準フォーマットへのパスを求める際のテンプレート（★要変更）
 XML_PATH_TEMPLATE	@DocumentPath@/xml/%04d/%06d/%s.xml
 # IS_NICT_MODE: @DocumentPath@/xml/x%04d/x%07d/%s.xml
-# IS_NTCIR_MODE: @DocumentPath@/xml/%09d.xml
 
 # index.cgiのアドレス（★要変更）
 INDEX_CGI	./index.cgi
@@ -308,9 +307,6 @@ BLOCK_TYPE_DEFINITION		@SearchEnginePath@/data/blocktype.WEB
 # 係り受け素性を検索で利用するかどうか
 USE_OF_DPND_FEATURES		0
 
-
-# NTCIRモード
-# IS_NTCIR_MODE			1
 
 # HTML/標準フォーマットをディレクトリ分割せずに置いている場合
 IS_SIMPLE_MODE		0

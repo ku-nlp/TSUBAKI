@@ -114,7 +114,6 @@ sub getDefaultValues {
     $params{tarball} = 0;
     $params{get_jscode_for_parse_result} = 0;
     $params{use_of_anaphora_resolution} = 0;
-    $params{ntcir_query} = undef;
 
 
     # NICT用 TSUBAKI用スコアとページランクの値の内訳を表示
@@ -129,7 +128,7 @@ sub getDefaultValues {
     #######################################################
 
     # 根拠サーチ用パラメータ
-    $params{conjunctive_particle} = undef;    
+    $params{conjunctive_particle} = undef;
 
     return \%params;
 }
@@ -293,10 +292,6 @@ sub setParametersOfGetRequest {
 	$params->{query} = undef;
     }
     $params->{no_use_of_Zwhitespace_as_delimiter} = $params->{disable_Zwhitespace_delimiter};
-
-    # utf8フラグを立てる
-    $params->{ntcir_query} = decode('utf8', $params->{ntcir_query});
-
 
 
     # 取得する検索件数の設定
@@ -536,7 +531,6 @@ sub parseQuery {
 
 	$query->{results} = int(1 + $M * $alpha);
     }
-    $query->{results} = 1000 if ($CONFIG->{IS_NTCIR_MODE});
     $logger->setParameterAs('request_results_for_slave_server', $query->{results}) if ($logger);
 
     # 係り受けと近接のスコアを考慮するようにする
