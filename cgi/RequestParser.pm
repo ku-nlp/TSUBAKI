@@ -201,12 +201,7 @@ sub setParametersOfGetRequest {
 		}
 
 		foreach my $tag (@values) {
-		    if ($CONFIG->{IS_NICT_MODE}) { # attach blocktype backward if NICT
-			$types{":" . $tag} = 1;
-		    }
-		    else {
-			$types{$tag . ":"} = 1;
-		    }
+		    $types{$tag} = 1;
 		    $CONFIG->{BLOCK_TYPE_DATA}{$tag}{isChecked} = 1;
 		}
 	    }
@@ -257,7 +252,17 @@ sub setParametersOfGetRequest {
 	    }
 	}
     }
-    $types{""} = 1 unless ($CONFIG->{USE_OF_BLOCK_TYPES});
+
+    if ($CONFIG->{USE_OF_BLOCK_TYPES}) {
+	unless (%types) { # 指定されていないときはdefaultのblocktype
+	    foreach my $tag (keys %{$CONFIG->{BLOCK_TYPE_DATA}}) {
+		$types{$tag} = 1 if $CONFIG->{BLOCK_TYPE_DATA}{$tag}{isChecked};
+	    }
+	}
+    }
+    else {
+	$types{''} = 1;
+    }
     $params->{blockTypes} = \%types;
 
 
