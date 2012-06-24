@@ -20,8 +20,10 @@ push (@INC, $CONFIG->{UTILS_PATH});
 
 
 my (%opt);
-GetOptions(\%opt, 'syngraph', 'english', 'verbose', 'ignore_yomi');
-
+GetOptions(\%opt, 'syngraph', 'english', 'verbose', 'ignore_yomi', 'blocktype');
+if ($opt{blocktype}) {
+    $opt{blockTypes} = {'TT' => 1, 'MT' => 1, 'UB' => 1};
+}
 
 my $queryParser = new QueryParser({IS_ENGLISH_VERSION => $opt{english}});
 while (<STDIN>) {
