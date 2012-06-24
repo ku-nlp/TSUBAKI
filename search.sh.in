@@ -48,6 +48,11 @@ if [ $file_mode -eq 0 ]; then
 	query_options="$query_options -ignore_yomi"
     fi
 
+    use_of_block_types=`grep '^USE_OF_BLOCK_TYPES' $conf_file | grep -ve '^#' | awk '{print $2}'`
+    if [ $use_of_block_types -eq 1 ]; then
+	query_options="$query_options -blocktype"
+    fi
+
     query_file=tmp_query_sexp_$$
     echo $query | perl -I$www2sf_dir/tool/perl -I$utils_dir/perl -I$searchengine_dir/cgi -I$searchengine_dir/perl -I$searchengine_dir/scripts $searchengine_dir/scripts/test-query-parser.perl $query_options > $query_file
 else

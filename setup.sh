@@ -21,11 +21,13 @@ UtilsPath
 SynGraphPath
 WWW2sfPath
 CalcSimilarityByCFPath
+DetectBlocksPath
 DocumentPath
 SrcDocumentPath
 CONFIGURE_FILE
 MachineType
 EnglishFlag
+UseBlockTypeFlag
 SearchServerHost
 SearchServerPort
 SnippetServerHost
@@ -40,10 +42,12 @@ UtilsPath=$CWD/Utils
 SynGraphPath=$CWD/SynGraph
 WWW2sfPath=$CWD/WWW2sf
 CalcSimilarityByCFPath=$CWD/CalcSimilarityByCF
+DetectBlocksPath=$CWD/DetectBlocks
 DocumentPath=$CWD/sample_doc/ja
 SrcDocumentPath=$DocumentPath/src_doc
 MachineType=`uname -m`
 EnglishFlag=0
+UseBlockTypeFlag=0
 SearchServerHost=localhost
 SearchServerPort=39999
 SnippetServerHost=localhost
@@ -52,12 +56,12 @@ DocumentPathSpecifiedFlag=0
 SrcDocumentPathSpecifiedFlag=0
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName]"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType)"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:d:s:E:N:n:h OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Th OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -73,6 +77,8 @@ do
         W)  WWW2sfPath=$OPTARG
             ;;
 	C)  CalcSimilarityByCFPath=$OPTARG
+	    ;;
+	D)  DetectBlocksPath=$OPTARG
 	    ;;
         d)  if [ -d "$CWD/$OPTARG" ]; then
 	        DocumentPath="$CWD/$OPTARG"
@@ -97,6 +103,8 @@ do
 	    ;;
 	n)  SearchServerHost=$OPTARG
 	    SnippetServerHost=$OPTARG
+	    ;;
+	T)  UseBlockTypeFlag=1
 	    ;;
         h)  usage
             ;;
@@ -130,6 +138,11 @@ fi
 # check CalcSimilarityByCF
 if [ ! -d "$CalcSimilarityByCFPath" ]; then
     echo "CalcSimilarityByCF is not found. Skipped CalcSimilarityByCF."
+fi
+
+# check DetectBlocks
+if [ ! -d "$DetectBlocksPath" ]; then
+    echo "DetectBlocks is not found. Skipped DetectBlocks."
 fi
 
 # check perl

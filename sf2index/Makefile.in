@@ -6,6 +6,7 @@ USERNAME := $(shell whoami)
 TMP_DIR := /tmp/$(USERNAME)/tsubaki_idx_tmp
 
 CNSDB = $(BASEDIR)/data/cns.100M.cls.df1000.cdb
+BLOCKTYPE_DEFINITION = $(BASEDIR)/data/blocktype.WEB
 WWW2SF_SENTENCE_LENGTH_MAX = 130
 
 UtilsDir = @UtilsPath@
@@ -13,10 +14,20 @@ WWW2sfDir = @WWW2sfPath@
 SynGraphDir = @SynGraphPath@
 SynDBDir = @SynGraphPath@/syndb/@MachineType@
 SynGraphPerlDir = @SynGraphPath@/perl
+DetectBlocksDir = @DetectBlocksPath@
 JumanCommand = @JUMANPrefix@/bin/juman
 KnpCommand = @KNPPrefix@/bin/knp
 JumanrcFile = @JUMANPrefix@/etc/jumanrc
 KnprcFile = @KNPPrefix@/etc/knprc
+UseBlockTypeFlag = @UseBlockTypeFlag@
+
+ifeq "$(UseBlockTypeFlag)" "1"
+WWW2sf_args = -d $(SynGraphDir) -c $(CNSDB) -D $(DetectBlocksDir) -T
+sf2term_args = --blocktype $(BLOCKTYPE_DEFINITION)
+else
+WWW2sf_args = -d $(SynGraphDir) -c $(CNSDB)
+sf2term_args = 
+endif
 
 XML_SUFFIX := xml
 IDX0_SUFFIX := idx0
@@ -84,7 +95,7 @@ xml: $(XMLS)
 each_sf:
 	if [ ! -d $(TMP_XML_DIR) ]; then mkdir -p $(TMP_XML_DIR); fi && \
 	if [ ! -d $(XML_DIR) ]; then mkdir -p $(XML_DIR); fi && \
-	$(WWW2sfDir)/tool/www2sf.sh -d $(SynGraphDir) -c $(CNSDB) $(HTML_DIR) $(TMP_XML_DIR) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_DIR)).log && \
+	$(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR) $(TMP_XML_DIR) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_DIR)).log && \
 	perl -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(TMP_XML_DIR) -outdir $(XML_DIR) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log -embed_result_in_xml -print_progress && \
 	rm -rf $(TMP_XML_DIR) $(TMP_DIR)/www2sf_$(notdir $(XML_DIR)).log $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log
 
@@ -101,7 +112,7 @@ $(XML_TOP_DIR)/%.$(XML_SUFFIX)done:
 $(IDX_FILES): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX)
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
 	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
-	perl -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $< > $(TMP_DIR)/$(notdir $@) && \
+	perl -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $(sf2term_args) $< > $(TMP_DIR)/$(notdir $@) && \
 	mv $(TMP_DIR)/$(notdir $@) $@
 
 $(IDX_TOP_DIR)/%.idx0done:

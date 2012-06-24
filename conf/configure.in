@@ -296,13 +296,13 @@ IS_ENGLISH_VERSION	@EnglishFlag@
 
 
 # ブロックタイプを検索で利用するかどうか
-USE_OF_BLOCK_TYPES		0
+USE_OF_BLOCK_TYPES		@UseBlockTypeFlag@
 
 # ブロックタイプを選択するcheckboxを表示するかどうか
-DISABLE_BLOCK_TYPE_DISPLAY	0
+DISABLE_BLOCK_TYPE_DISPLAY	1
 
 # ブロックタイプに関する情報を定義したファイル
-# BLOCK_TYPE_DEFINITION		@SearchEnginePath@/data/blocktype.WEB
+BLOCK_TYPE_DEFINITION		@SearchEnginePath@/data/blocktype.WEB
 
 
 # 係り受け素性を検索で利用するかどうか
