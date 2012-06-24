@@ -549,14 +549,8 @@ sub setGroupID {
 		my ($moto, $saki);
 		if ($this->{OPTIONS}{use_of_block_types}) {
 		    my ($blocktag);
-		    if ($CONFIG->{IS_NICT_MODE}) { # blocktype is attached backward if NICT
-			($moto, $saki, $blocktag) = ($rep->{string} =~ /^(.+?)\-\>(.+(:..))$/);
-			$moto .= $blocktag; # add blocktype to also moto
-		    }
-		    else {
-			($moto, $blocktag, $saki) = ($rep->{string} =~ /^((..:).+?)\-\>(.+)$/);
-			$saki = $blocktag . $saki; # add blocktype to also saki
-		    }
+		    ($moto, $saki, $blocktag) = ($rep->{string} =~ /^(.+?)\-\>(.+(:..))$/);
+		    $moto .= $blocktag; # add blocktype to also moto
 		}
 		else {
 		    ($moto, $saki) = ($rep->{string} =~ /^(.+?)\-\>(.+)$/);
@@ -599,7 +593,7 @@ sub setProperties {
 
 		    # ブロックタイプを考慮する場合は、ブロックの重みを考慮する
 		    if ($this->{OPTIONS}{use_of_block_types}) {
-			foreach my $tag (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
+			foreach my $tag (keys %{$CONFIG->{BLOCK_TYPE_DATA}}) {
 			    $properties->{qid2qtf}{$qid} *= $CONFIG->{BLOCK_TYPE_DATA}{$tag}{weight} if ($rep->{string} =~ /\Q$tag\E:/);
 			}
 		    }
@@ -859,22 +853,12 @@ sub get_DF {
     # ブロックタイプを考慮していない場合
     unless ($this->{OPTIONS}{use_of_block_types}) {
 	my $DFDBs = (index($term_w_blocktag, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
-
-#	$term_w_blocktag =~ s/\$$//;
-#	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag, {exhaustive => 1}) : 0;
-#	$term_w_blocktag =~ s/\$$//;
-#	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag, {exhaustive => 1}) : 0;
 	return (defined $DFDBs) ? $DFDBs->get($term_w_blocktag) : 0;
     }
     # ブロックタイプを考慮している場合
     else {
 	my ($term);
-	if ($CONFIG->{IS_NICT_MODE}) { # blocktype is attached backward if NICT
-	    ($term) = ($term_w_blocktag =~ /^(.+):..$/);
-	}
-	else {
-	    ($term) = ($term_w_blocktag =~ /^(?:..:)(.+)$/);
-	}
+	($term) = ($term_w_blocktag =~ /^(.+):..$/);
 	my $df = $this->{CACHED_DF}{$term};
 	if ($df) {
 	    return $df;

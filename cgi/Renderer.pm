@@ -641,7 +641,7 @@ sub printBlockTypeCheckbox {
 
     if ($CONFIG->{USE_OF_BLOCK_TYPES} && !$CONFIG->{DISABLE_BLOCK_TYPE_DISPLAY}) {
 	print qq(<DIV style="padding-top:1em; border: 0px solid green;">\n);
-	foreach my $key (@{$CONFIG->{BLOCK_TYPE_KEYS}}) {
+	foreach my $key (keys %{$CONFIG->{BLOCK_TYPE_DATA}}) {
 	    my $tag = $CONFIG->{BLOCK_TYPE_DATA}{$key}{tag};
 	    my $label = $CONFIG->{BLOCK_TYPE_DATA}{$key}{label};
 	    my $flag = ($CONFIG->{BLOCK_TYPE_DATA}{$key}{isChecked}) ? 'checked' : '';

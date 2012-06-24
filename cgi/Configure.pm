@@ -97,7 +97,7 @@ sub _new {
 	    my ($key, $file) = split (/\s+/, $_);
 	    open (FILE, '<:utf8', $file) or die "$!";
 	    while (<FILE>) {
-		chop;
+		chomp;
 		my $line = $_;
 		$line =~ s/#.*$//;
 		next if ($line eq '');
@@ -110,7 +110,6 @@ sub _new {
 		$this->{BLOCK_TYPE_DATA}{$tag}{isDefaultChecked} = $chk_flag;
 		$this->{BLOCK_TYPE_DATA}{$tag}{weight} = $weight;
 		$this->{BLOCK_TYPE_DATA}{$tag}{mask} = $mask;
-		push (@{$this->{BLOCK_TYPE_KEYS}}, $tag);
 	    }
 	    close (FILE);
 	}
