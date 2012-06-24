@@ -28,7 +28,7 @@ sub extract_sentences_from_ID {
     my ($did) = ($did_w_version =~ /(^\d+)/);
     my $xmlfile;
 
-    if ($CONFIG->{IS_SIMPLE_MODE}) {
+    if (scalar(split('%', $CONFIG->{XML_PATH_TEMPLATE})) == 2) { # 標準フォーマットをディレクトリ分割せずに置いている場合 (代入文字が一つのみ)
      	$xmlfile = sprintf($CONFIG->{XML_PATH_TEMPLATE}, $did_w_version);
     }
     else {

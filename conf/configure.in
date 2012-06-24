@@ -308,9 +308,6 @@ BLOCK_TYPE_DEFINITION		@SearchEnginePath@/data/blocktype.WEB
 USE_OF_DPND_FEATURES		0
 
 
-# HTML/標準フォーマットをディレクトリ分割せずに置いている場合
-IS_SIMPLE_MODE		0
-
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
 # SID_RANGE	@SearchEnginePath@/data/sid.range
 

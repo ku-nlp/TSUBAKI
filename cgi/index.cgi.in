@@ -49,7 +49,8 @@ sub main {
 	# キャッシュページの出力
 	my $id = $params->{'cache'};
 	my $file;
-	if ($CONFIG->{IS_KUHP_MODE} || $CONFIG->{IS_NICT_MODE} || $CONFIG->{IS_SIMPLE_MODE}) { # in NICT, e.g., "icccmm010:31056:$did_w_version"
+	if (scalar(split('%', $CONFIG->{CACHED_HTML_PATH_TEMPLATE})) == 2) { # HTMLをディレクトリ分割せずに置いている場合 (代入文字が一つのみ)
+	    # in NICT, e.g., "icccmm010:31056:$did_w_version"
  	    $file = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $id);
  	}
 	else {
