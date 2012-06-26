@@ -14,7 +14,7 @@ clean:
 	$(MAKE) -C search clean
 	$(MAKE) -C enju2tsubaki/StandOffManager clean
 
-indexclean:
+cleanindex:
 	$(MAKE) -C sf2index clean
 
 mostlyclean: clean indexclean
