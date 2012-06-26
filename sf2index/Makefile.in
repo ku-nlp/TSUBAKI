@@ -92,6 +92,7 @@ $(HTML_TOP_DIR):
 
 xml: $(XMLS)
 
+# XML files of 10000 docs
 each_sf:
 	if [ ! -d $(TMP_XML_DIR) ]; then mkdir -p $(TMP_XML_DIR); fi && \
 	if [ ! -d $(XML_DIR) ]; then mkdir -p $(XML_DIR); fi && \
@@ -105,20 +106,24 @@ idxs: $(IDXS)
 
 url_titles: $(URL_TITLES)
 
+# XML files of 10000 docs
 $(XML_TOP_DIR)/%.$(XML_SUFFIX)done:
 	$(MAKE) -f $(LAST_MAKEFILE) XML_DIR=$(basename $@) HTML_DIR=$(patsubst $(XML_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(basename $@)) each_sf && \
 	touch $@
 
+# an idx file of 10000 docs
 $(IDX_FILES): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX)
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
 	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
 	perl -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $(sf2term_args) $< > $(TMP_DIR)/$(notdir $@) && \
 	mv $(TMP_DIR)/$(notdir $@) $@
 
+# an idx file of 10000 docs
 $(IDX_TOP_DIR)/%.idx0done:
 	$(MAKE) -f $(LAST_MAKEFILE) IDX_DIR=$(basename $@) XML_DIR=$(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(basename $@)) each_idx && \
 	touch $@
 
+# 100 idx files of 10000 docs
 $(IDXS): $(IDX_TOP_DIR)/%.$(IDX1_SUFFIX): $(IDX_TOP_DIR)/%.idx0done
 	mkdir -p $(basename $@).idx.tmp && \
 	perl $(BASEDIR)/scripts/merge_idx.pl -dir $(basename $@) -suffix $(IDX0_SUFFIX) -outdir $(basename $@).idx.tmp -n 50 && \
@@ -131,11 +136,13 @@ $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX):
 $(URL_TITLES): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX)
 	perl $(BASEDIR)/scripts/extract-url-title.perl -files $< > $@
 
+# 100 idx files of 10000 docs
 $(IDX_TOP_DIR)/%.idx1done:
 	$(MAKE) -f $(LAST_MAKEFILE) XML_BASE=$(patsubst %/,%,$(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(dir $@))) idxs url_titles && \
 	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
 	touch $@
 
+# mapfile for 1M docs
 $(IDX_TOP_DIR)/%.$(SID2TID_SUFFIX): $(IDX_TOP_DIR)/%.idx1done
 	mkdir -p $(dir $@) && \
 	perl $(BASEDIR)/scripts/make-mapfile.perl $(dir $@)*.$(IDX1_SUFFIX) > $@ && \
@@ -144,6 +151,7 @@ $(IDX_TOP_DIR)/%.$(SID2TID_SUFFIX): $(IDX_TOP_DIR)/%.idx1done
 $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.idx1done
 	cat $(dir $@)*.$(URL_TITLE_SUFFIX) > $(dir $@)000.$(URL_TITLE_SUFFIX)
 
+# index files of 1M docs (0000/000.idx, 0001/000.idx, ...)
 $(IDXIDXS): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX): $(IDX_TOP_DIR)/%.$(SID2TID_SUFFIX)
 	perl $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $(dir $@) -mapfile $< -suffix $(IDX1_SUFFIX) > $@
 
