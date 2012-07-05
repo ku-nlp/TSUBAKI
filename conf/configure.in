@@ -125,7 +125,7 @@ MAX_LENGTH_OF_URL		100
 LINK_CACHED_HTML_FROM_TITLE	1
 
 # IDからキャッシュページへのパスを求める際のテンプレート（★要変更）
-CACHED_HTML_PATH_TEMPLATE	@DocumentPath@/html/%04d/%06d/%s.html
+CACHED_HTML_PATH_TEMPLATE	@DocumentPath@/html/%04d/%06d/%s.@HTMLExt@
 
 # IDから標準フォーマットへのパスを求める際のテンプレート（★要変更）
 XML_PATH_TEMPLATE	@DocumentPath@/xml/%04d/%06d/%s.xml

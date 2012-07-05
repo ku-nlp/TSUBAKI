@@ -20,7 +20,7 @@ sub new {
     my $filename = $opts->{file};
     my $READER;
     if ($filename =~ /\.gz$/) {
-	open($READER, "zcat $filename |");
+	open($READER, "gzip -dc $filename |");
     } elsif ($filename =~ /^(.*[0-9]+):([0-9]+):([0-9-]+)$/) {
 	use IO::Socket;
 	$READER = IO::Socket::INET->new(PeerAddr => $1, PeerPort => $2, Proto => 'tcp') or die "cannot connect:$1:$2 $!\n";

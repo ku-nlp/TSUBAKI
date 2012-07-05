@@ -24,13 +24,20 @@ KnpCommand = @KNPPrefix@/bin/knp
 JumanrcFile = @JUMANPrefix@/etc/jumanrc
 KnprcFile = @KNPPrefix@/etc/knprc
 UseBlockTypeFlag = @UseBlockTypeFlag@
+HTMLExt = @HTMLExt@
+
+WWW2sf_args = -c $(CNSDB)
+sf2term_args = 
+html_relocation_args = 
 
 ifeq "$(UseBlockTypeFlag)" "1"
-WWW2sf_args = -d $(SynGraphDir) -c $(CNSDB) -D $(DetectBlocksDir) -T
-sf2term_args = --blocktype $(BLOCKTYPE_DEFINITION)
-else
-WWW2sf_args = -d $(SynGraphDir) -c $(CNSDB)
-sf2term_args = 
+WWW2sf_args += -D $(DetectBlocksDir) -T
+sf2term_args += --blocktype $(BLOCKTYPE_DEFINITION)
+endif
+
+ifeq "$(HTMLExt)" "html.gz"
+WWW2sf_args += -z
+html_relocation_args += -e $(HTMLExt)
 endif
 
 XML_SUFFIX := xml
@@ -92,7 +99,7 @@ html2sf: $(HTML_TOP_DIR)
 html: $(HTML_TOP_DIR)
 
 $(HTML_TOP_DIR):
-	$(BASEDIR)/scripts/html-relocation.sh $(HTML_SRC_DIR) $(HTML_TOP_DIR)
+	$(BASEDIR)/scripts/html-relocation.sh $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR)
 
 xml: $(XMLS)
 

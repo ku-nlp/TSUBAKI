@@ -35,6 +35,7 @@ SnippetServerPort
 JUMANPrefix
 KNPPrefix
 HOME
+HTMLExt
 "
 
 SearchEnginePath=$CWD
@@ -54,14 +55,15 @@ SnippetServerHost=localhost
 SnippetServerPort=59001
 DocumentPathSpecifiedFlag=0
 SrcDocumentPathSpecifiedFlag=0
+HTMLExt=html
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType)"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz)"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Th OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzh OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -105,6 +107,8 @@ do
 	    SnippetServerHost=$OPTARG
 	    ;;
 	T)  UseBlockTypeFlag=1
+	    ;;
+	z)  HTMLExt=html.gz
 	    ;;
         h)  usage
             ;;
