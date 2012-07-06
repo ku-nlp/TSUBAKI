@@ -142,10 +142,12 @@ $(IDXS): $(IDX_TOP_DIR)/%.$(IDX1_SUFFIX): $(IDX_TOP_DIR)/%.idx0done
 	rm -rf $(basename $@).idx.tmp
 
 $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX):
-	for f in $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(basename $@))/*.$(XML_SUFFIX); do echo $$f; done > $@
+	mkdir -p $(dir $@) && for f in $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(basename $@))/*.$(XML_SUFFIX); do echo $$f; done > $@
 
 $(URL_TITLES): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX)
-	$(PERL) $(BASEDIR)/scripts/extract-url-title.perl -files $< > $@
+	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
+	$(PERL) $(BASEDIR)/scripts/extract-url-title.perl -files $< > $(TMP_DIR)/$(notdir $@) && \
+	mv $(TMP_DIR)/$(notdir $@) $@
 
 # 100 idx files of 10000 docs
 $(IDX_TOP_DIR)/%.idx1done:
