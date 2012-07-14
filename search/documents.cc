@@ -633,6 +633,10 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 		    doc->set_gdf(term_df);
 
 		    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
+                    if (__buf == NULL) {
+                        cerr << "Cannot allocate memory for pos." << endl;
+                        exit(1);
+                    }
 		    memcpy (__buf, (head_of_posdat + pos_offset), SIZEOFINT * (pos_num + 1));
 		    doc->set_pos_char(__buf);
 
@@ -664,6 +668,10 @@ bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_
 	    doc->set_gdf(term_df);
 //	    cerr << "score = "<< score << " pos_off = " << pos_offset << " pos_num = " << pos_num << endl;
 	    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
+            if (__buf == NULL) {
+                cerr << "Cannot allocate memory for pos." << endl;
+                exit(1);
+            }
 	    memcpy (__buf, (buffer + ldf * 12 + pos_offset), SIZEOFINT * (pos_num + 1));
 	    doc->set_pos_char(__buf);
 
@@ -691,6 +699,10 @@ bool Documents::appendDocument (int i, int did, int load_dids, unsigned char *of
 
     doc->set_gdf(term_df);
     unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (2 * num_of_pos + 1));
+    if (__buf == NULL) {
+        cerr << "Cannot allocate memory for pos." << endl;
+        exit(1);
+    }
     memcpy (__buf, (posdat + pos_offset), SIZEOFINT * (2 * num_of_pos + 1));
     doc->set_pos_char(__buf);
 
@@ -807,6 +819,7 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
     index_stream->read((char *) _buf, SIZEOFINT);
 
     index_size = intchar2int(_buf);
+    delete[] _buf;
 #ifdef DEBUG
     cerr << "INDEX SIZE: " << index_size << std::endl;
 #endif
@@ -837,6 +850,7 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
 	cout << "      create index = " << 1000 * (end - start) << " [ms]" <<  " " << ldf << endl;
 
     read_dids_with_feature(buffer, offset, ldf, term_type, _already_retrieved_docs, featureBits);
+    delete[] buffer;
 
     double end1 = (double) gettimeofday_sec();
     if (VERBOSE)

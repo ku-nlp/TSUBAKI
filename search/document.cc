@@ -55,7 +55,6 @@ std::vector<int> *Document::get_pos(int featureBit) {
 	pos_list = new std::vector<int>;
 	if (pos_buf) {
 	    score = 0;
-	    pos_list = new std::vector<int>;
 	    pos_num = intchar2int(pos_buf);
 	    poslist = new int[pos_num];
 	    pos_buf += sizeof (int);

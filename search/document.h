@@ -44,9 +44,10 @@ class Document {
     }
 
     ~Document () {
-	if (pos_list != NULL) {
+	if (pos_list)
 	    delete pos_list;
-	}
+        if (pos_buf)
+            free(pos_buf);
     }
 
     int get_id() {
