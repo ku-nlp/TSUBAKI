@@ -59,7 +59,7 @@ sub new {
     close $READER;
 
     my $encoding;
-    if ($CONFIG->{IS_NICT_MODE}) {
+    if ($CONFIG->{CACHED_HTML_ENCODING_UTF8}) {
 	$encoding = 'utf8';
 	$buf = decode ('utf8', $buf);
 	$buf =~ tr/\x00-\x09\x0b-\x1f\x7f-\x9f//d;
