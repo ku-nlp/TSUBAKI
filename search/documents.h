@@ -101,7 +101,6 @@ class DocumentBuffer {
 class Documents {
     int featureBits;
     documents_type type;
-    std::string term;
     double term_df;
     // std::istream *index_stream;
     // Dbm *term_db;
@@ -137,6 +136,7 @@ class Documents {
 
 	prox_dist = PROXIMATE_LENGTH;
 	label = "none";
+        featureBits = 0;
     }
 
     ~Documents() {
@@ -156,14 +156,15 @@ class Documents {
 */
     }
 
+    int get_featureBits() {
+        return featureBits;
+    }
 
-    bool set_label (string _label, int type) {
-	if (type > 1) {
-	    _label += "_LK";
-	}
-
+    void set_label (const char* _label, const int type) {
 	label = _label;
-	return true;
+	if (type > 1) {
+	    label += "_LK";
+	}
     }
 
     string get_label () {
@@ -297,11 +298,11 @@ class Documents {
     }
 
     bool or_operation(std::vector<Document *> *docs1, std::vector<Document *> *docs2, std::vector<Document *> *dest_documents);
-    bool merge_and(Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs);
-    bool merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs);
+    bool merge_and(CELL *cell, DocumentBuffer *_already_retrieved_docs);
+    bool merge_phrase(CELL *cell, DocumentBuffer *_already_retrieved_docs);
     bool dup_check_operation(std::vector<Document *> *docs1, std::vector<Document *> *docs2, std::vector<Document *> *dest_documents);
-    bool merge_or(Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs);
-    Documents *merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs);
+    bool merge_or(CELL *cell, DocumentBuffer *_already_retrieved_docs);
+    void merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs);
 
     int get_prox_dist() {
 	return prox_dist;

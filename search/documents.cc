@@ -113,12 +113,13 @@ bool Documents::or_operation(std::vector<Document *> *docs1, std::vector<Documen
     return true;
 }
 
-bool Documents::merge_and(Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs) {
-    Documents *current_documents = merge_and_or(car(cell), _already_retrieved_docs);
+bool Documents::merge_and(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
+    Documents *current_documents = new Documents(index_streams, offset_dbs);
+    current_documents->merge_and_or(car(cell), _already_retrieved_docs);
     double start = (double) gettimeofday_sec();
     DocumentBuffer *already_retrieved_docs  = (_already_retrieved_docs == NULL) ? current_documents->getDocumentIDs() : _already_retrieved_docs;
 
-    parent->push_back_child_documents(current_documents);
+    push_back_child_documents(current_documents);
     s_documents = *(current_documents->get_s_documents());
     l_documents = *(current_documents->get_l_documents());
     double end = (double) gettimeofday_sec();
@@ -128,8 +129,9 @@ bool Documents::merge_and(Documents *parent, CELL *cell, DocumentBuffer *_alread
 
     while (!Lisp_Null(cdr(cell))) {
 	Documents backup_documents = *this;
-	Documents *next_documents = merge_and_or(car(cdr(cell)), already_retrieved_docs);
-	parent->push_back_child_documents(next_documents);
+        Documents *next_documents = new Documents(index_streams, offset_dbs);
+	next_documents->merge_and_or(car(cdr(cell)), already_retrieved_docs);
+	push_back_child_documents(next_documents);
 
 	if (next_documents->get_type() == DOCUMENTS_TERM_OPTIONAL) {
 	    cell = cdr(cell);
@@ -223,12 +225,13 @@ bool Documents::merge_and(Documents *parent, CELL *cell, DocumentBuffer *_alread
 /*
  * フレーズ制約を満たすかどうかをチェックし、s_documents を絞る
  */
-bool Documents::merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs) {
-    Documents *current_documents = merge_and_or(car(cell), _already_retrieved_docs);
+bool Documents::merge_phrase (CELL *cell, DocumentBuffer *_already_retrieved_docs) {
+    Documents *current_documents = new Documents(index_streams, offset_dbs);
+    current_documents->merge_and_or(car(cell), _already_retrieved_docs);
     double start = (double) gettimeofday_sec();
     DocumentBuffer *already_retrieved_docs  = (_already_retrieved_docs == NULL) ? current_documents->getDocumentIDs() : _already_retrieved_docs;
 
-    parent->push_back_child_documents(current_documents);
+    push_back_child_documents(current_documents);
     s_documents = *(current_documents->get_s_documents());
     l_documents = *(current_documents->get_l_documents());
     double end = (double) gettimeofday_sec();
@@ -241,8 +244,9 @@ bool Documents::merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_al
      */
     while (!Lisp_Null(cdr(cell))) {
 	Documents backup_documents = *this;
-	Documents *next_documents = merge_and_or(car(cdr(cell)), already_retrieved_docs);
-	parent->push_back_child_documents(next_documents);
+        Documents *next_documents = new Documents(index_streams, offset_dbs);
+	next_documents->merge_and_or(car(cdr(cell)), already_retrieved_docs);
+	push_back_child_documents(next_documents);
 
 	already_retrieved_docs = next_documents->getDocumentIDs();
 
@@ -289,7 +293,7 @@ bool Documents::merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_al
 		notFound = true;
 		break;
 	    }
-	    pos_list_list.push_back(_doc->get_pos(featureBits));
+	    pos_list_list.push_back(_doc->get_pos((*_it)->get_featureBits()));
 	}
 	if (notFound)
 	    continue;
@@ -304,12 +308,12 @@ bool Documents::merge_phrase (Documents *parent, CELL *cell, DocumentBuffer *_al
 
 	for (int i = 0; i < target_num - 1; i++) {
 	    for (int j = 0; j < target_num - i - 1; j++) {
-		if (pos_list_list[sorted_int[i]]->front() == -1 ||
-		    (pos_list_list[sorted_int[i + 1]]->front() != -1 &&
-		     (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
-		    int temp = sorted_int[i];
-		    sorted_int[i] = sorted_int[i + 1];
-		    sorted_int[i + 1] = temp;
+		if (pos_list_list[sorted_int[j]]->front() == -1 ||
+		    (pos_list_list[sorted_int[j + 1]]->front() != -1 &&
+		     (pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()))) {
+		    int temp = sorted_int[j];
+		    sorted_int[j] = sorted_int[j + 1];
+		    sorted_int[j + 1] = temp;
 		}
 	    }
 	}
@@ -416,10 +420,11 @@ bool Documents::dup_check_operation(std::vector<Document *> *docs1, std::vector<
     return true;
 }
 
-bool Documents::merge_or(Documents *parent, CELL *cell, DocumentBuffer *_already_retrieved_docs) {
+bool Documents::merge_or(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
     double _start = (double) gettimeofday_sec();
-    Documents *current_documents = merge_and_or(car(cell), _already_retrieved_docs);
-    parent->push_back_child_documents(current_documents);
+    Documents *current_documents = new Documents(index_streams, offset_dbs);
+    current_documents->merge_and_or(car(cell), _already_retrieved_docs);
+    push_back_child_documents(current_documents);
     s_documents = *(current_documents->get_s_documents());
     l_documents = *(current_documents->get_l_documents());
 
@@ -429,9 +434,10 @@ bool Documents::merge_or(Documents *parent, CELL *cell, DocumentBuffer *_already
 
     while (!Lisp_Null(cdr(cell))) {
 	Documents backup_documents = *this;
-	Documents *next_documents = merge_and_or(car(cdr(cell)), _already_retrieved_docs);
+        Documents *next_documents = new Documents(index_streams, offset_dbs);
+	next_documents->merge_and_or(car(cdr(cell)), _already_retrieved_docs);
 
-	parent->push_back_child_documents(next_documents);
+	push_back_child_documents(next_documents);
 
 	if (next_documents->get_type() == DOCUMENTS_TERM_OPTIONAL) {
 	    cell = cdr(cell);
@@ -488,13 +494,11 @@ bool Documents::merge_or(Documents *parent, CELL *cell, DocumentBuffer *_already
     return true;
 }
 
-Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
-    Documents *documents = new Documents(index_streams, offset_dbs);
-
+void Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
     if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "ROOT")) {
-	documents->set_type(DOCUMENTS_ROOT);
+	set_type(DOCUMENTS_ROOT);
 	double start = (double) gettimeofday_sec();
-	documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
+	merge_and(cdr(cell), _already_retrieved_docs);
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE) {
 	    cout << "root = " << 1000 * (end - start) << " [ms]" << endl;
@@ -502,47 +506,47 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 	}
     }
     else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "PHRASE")) {
-	documents->set_type(DOCUMENTS_PHRASE);
+	set_type(DOCUMENTS_PHRASE);
 	double start = (double) gettimeofday_sec();
-	documents->merge_phrase(documents, cdr(cell), _already_retrieved_docs);
+	merge_phrase(cdr(cell), _already_retrieved_docs);
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "merge_phr = " << 1000 * (end - start) << " [ms]" << endl;
     }
     else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "PROX")) {
 	int prox_dist = atoi((char *)_Atom(car(cdr(cell))));
-	documents->set_type(DOCUMENTS_PROX);
-	documents->set_prox_dist(prox_dist);
+	set_type(DOCUMENTS_PROX);
+	set_prox_dist(prox_dist);
 
 	double start = (double) gettimeofday_sec();
-	documents->merge_and(documents, cdr(cdr(cell)), _already_retrieved_docs);
+	merge_and(cdr(cdr(cell)), _already_retrieved_docs);
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "merge_and = " << 1000 * (end - start) << " [ms]" << endl;
     }
     else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "ORDERED_PROX")) {
 	int prox_dist = atoi((char *)_Atom(car(cdr(cell))));
-	documents->set_type(DOCUMENTS_ORDERED_PROX);
-	documents->set_prox_dist(prox_dist);
+	set_type(DOCUMENTS_ORDERED_PROX);
+	set_prox_dist(prox_dist);
 
 	double start = (double) gettimeofday_sec();
-	documents->merge_and(documents, cdr(cdr(cell)), _already_retrieved_docs);
+	merge_and(cdr(cdr(cell)), _already_retrieved_docs);
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "merge_and = " << 1000 * (end - start) << " [ms]" << endl;
     }
     else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "AND")) {
-	documents->set_type(DOCUMENTS_AND);
+	set_type(DOCUMENTS_AND);
 	double start = (double) gettimeofday_sec();
-	documents->merge_and(documents, cdr(cell), _already_retrieved_docs);
+	merge_and(cdr(cell), _already_retrieved_docs);
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "merge_and = " << 1000 * (end - start) << " [ms]" << endl;
     }
     else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "OR")) {
-	documents->set_type(DOCUMENTS_OR);
+	set_type(DOCUMENTS_OR);
 	double start = (double) gettimeofday_sec();
-	documents->merge_or(documents, cdr(cell), _already_retrieved_docs);
+	merge_or(cdr(cell), _already_retrieved_docs);
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "merge_or = " << 1000 * (end - start) << " [ms]" << endl;
@@ -560,33 +564,28 @@ Documents *Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieve
 	// Feature bits
 	featureBits = atoi((char *)_Atom(car(cdr(cdr(cdr(cdr(cdr(car(cell)))))))));
 
-	term = current_term;
-	// cerr << term << endl;
-	documents->set_label(term, file);
+	set_label(current_term, file);
 	if (term_type == 1) {
-	    documents->set_type(DOCUMENTS_TERM_STRICT);
+	    set_type(DOCUMENTS_TERM_STRICT);
 	}
 	else if (term_type == 2) {
-	    documents->set_type(DOCUMENTS_TERM_LENIENT);
+	    set_type(DOCUMENTS_TERM_LENIENT);
 	}
 	else if (term_type == 3) {
-	    documents->set_type(DOCUMENTS_TERM_OPTIONAL);
+	    set_type(DOCUMENTS_TERM_OPTIONAL);
 	}
 
-	documents->setIsRetrievedByBasicNode(_isRetrievedByBasicNode);
-	documents->set_gdf(term_df);
+	setIsRetrievedByBasicNode(_isRetrievedByBasicNode);
 	double _start = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "    before lookup = " << 1000 * (_start - start) << " [ms] file = " << file << endl;
 
-	documents->lookup_index(current_term, term_type, index_streams->at(file), offset_dbs->at(file), _already_retrieved_docs, featureBits);
+	lookup_index(current_term, term_type, index_streams->at(file), offset_dbs->at(file), _already_retrieved_docs, featureBits);
 
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "    lookup = " << 1000 * (end - _start) << " [ms] file = " << file << endl;
     }
-
-    return documents;
 }
 
 // obsolete read_dids function for old index (without features)
@@ -889,7 +888,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    doc->set_length(doc_ptr->get_length());
 
 	    // load positions
-	    pos_list_list.push_back(doc->get_pos(featureBits));
+	    pos_list_list.push_back(doc->get_pos((*it)->get_featureBits()));
 
 
 	    string term = (*it)->get_label();
@@ -990,11 +989,11 @@ bool Documents::walk_or(Document *doc_ptr) {
     // std::sort(&(sorted_int[0]), &(sorted_int[pos_list_list.size()]), sort_by_term_pos);
     for (int i = 0; i < target_num - 1; i++) {
 	for (int j = 0; j < target_num - i - 1; j++) {
-	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
-		pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()) {
-		int temp = sorted_int[i];
-		sorted_int[i] = sorted_int[i + 1];
-		sorted_int[i + 1] = temp;
+	    if (pos_list_list[sorted_int[j]]->front() == -1 ||
+		pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()) {
+		int temp = sorted_int[j];
+		sorted_int[j] = sorted_int[j + 1];
+		sorted_int[j + 1] = temp;
 	    }
 	}
     }
@@ -1080,7 +1079,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    }
 
             // get pos and score for all types of documents (including DOCUMENTS_TERM_OPTIONAL)
-            std::vector<int> *pos_list = doc->get_pos(featureBits);
+            std::vector<int> *pos_list = doc->get_pos((*it)->get_featureBits());
 
 	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT ||
 		(*it)->get_type() == DOCUMENTS_AND ||
@@ -1150,11 +1149,11 @@ bool Documents::walk_and(Document *doc_ptr) {
 
     for (int i = 0; i < target_num - 1; i++) {
 	for (int j = 0; j < target_num - i - 1; j++) {
-	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
-		pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()) {
-		int temp = sorted_int[i];
-		sorted_int[i] = sorted_int[i + 1];
-		sorted_int[i + 1] = temp;
+	    if (pos_list_list[sorted_int[j]]->front() == -1 ||
+		pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()) {
+		int temp = sorted_int[j];
+		sorted_int[j] = sorted_int[j + 1];
+		sorted_int[j + 1] = temp;
 	    }
 	}
     }
@@ -1257,6 +1256,14 @@ bool Documents::walk_and(Document *doc_ptr) {
 	update_sorted_int(sorted_int, tid2idx, &pos_list_list, target_num, skip_first);
     } // end of while
 
+#ifdef DEBUG
+    cerr << "POS LIST: ";
+    for (int i = 0; i < pos_list.size(); i++) {
+	cerr << i << ":" << pos_list[i] << " ";
+    }
+    cerr << endl;
+#endif
+
     if (region == MAX_LENGTH_OF_DOCUMENT && (get_type() == DOCUMENTS_ORDERED_PROX || get_type() == DOCUMENTS_PROX)) {
 	// remove
 	remove_doc(doc_ptr->get_id());
@@ -1307,7 +1314,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 	// for TERM_OPTIONAL documents
 	if (doc) {
 	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_OR_OPTIONAL || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
-		pos_list_list.push_back(doc->get_pos(featureBits));
+		pos_list_list.push_back(doc->get_pos((*it)->get_featureBits()));
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
@@ -1324,12 +1331,12 @@ bool Documents::check_phrase (Document *doc_ptr) {
 
     for (int i = 0; i < target_num - 1; i++) {
 	for (int j = 0; j < target_num - i - 1; j++) {
-	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
-		(pos_list_list[sorted_int[i + 1]]->front() != -1 &&
-		 (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
-		int temp = sorted_int[i];
-		sorted_int[i] = sorted_int[i + 1];
-		sorted_int[i + 1] = temp;
+	    if (pos_list_list[sorted_int[j]]->front() == -1 ||
+		(pos_list_list[sorted_int[j + 1]]->front() != -1 &&
+		 (pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()))) {
+		int temp = sorted_int[j];
+		sorted_int[j] = sorted_int[j + 1];
+		sorted_int[j + 1] = temp;
 	    }
 	}
     }

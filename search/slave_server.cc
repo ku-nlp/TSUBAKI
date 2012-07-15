@@ -38,11 +38,11 @@ std::vector<double> *search (std::string *query,
 
     char *_query = (char*)query->c_str();
     CELL *query_cell = s_read_from_string (&_query);
-    Documents *root_docs = new Documents(index_streams, offset_dbs);
+    Documents *result_docs = new Documents(index_streams, offset_dbs);
 
     // searching
     double search_bgn = (double) gettimeofday_sec();
-    Documents *result_docs = root_docs->merge_and_or(car(query_cell), NULL);
+    result_docs->merge_and_or(car(query_cell), NULL);
     double search_end = (double) gettimeofday_sec();
 
     int count = 0;

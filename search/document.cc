@@ -86,6 +86,10 @@ std::vector<int> *Document::get_pos(int featureBit) {
 	    pos_list->push_back(-1);
 	    score = calc_okapi(freq, gdf);
 	}
+        else {
+            pos_num = 0;
+	    pos_list->push_back(-1);
+        }
     }
 
     return pos_list;
