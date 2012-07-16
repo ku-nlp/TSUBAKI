@@ -585,6 +585,10 @@ sub appendDpndFeature {
 	$CASE_F_ID = $1;
 	$CASE_ELMT = $2;
     }
+    elsif ($kihonkuF =~ /<格解析結果:([^:]+:[^:]+(?::[PC]+)?\d+):([^>]+)>/) {
+	$CASE_F_ID = $1;
+	$CASE_ELMT = $2;
+    }
     my ($N_CASE_F_ID, $N_CASE_ELMT);
     if ($kihonkuF =~ /<正規化格解析結果-0:([^:]+:[^:]+(?::[PC]+)?\d+):([^>]+)>/) {
 	$N_CASE_F_ID = $1;
