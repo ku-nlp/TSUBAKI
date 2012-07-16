@@ -99,7 +99,7 @@ class DocumentBuffer {
 };
 
 class Documents {
-    int featureBits;
+    unsigned int featureBits;
     documents_type type;
     double term_df;
     // std::istream *index_stream;
@@ -156,7 +156,7 @@ class Documents {
 */
     }
 
-    int get_featureBits() {
+    unsigned int get_featureBits() {
         return featureBits;
     }
 
@@ -256,7 +256,7 @@ class Documents {
 	return __documents_index;
     }
 
-    Document *get_doc (int doc_id) {
+    Document *get_doc(int doc_id) {
         int p;
 	if ((p = s_documents_index->get(doc_id)) > -1) {
 	    return s_documents[p];
@@ -270,7 +270,7 @@ class Documents {
 	}
     }
 
-    bool remove_doc (int doc_id) {
+    bool remove_doc(int doc_id) {
 	if (s_documents_index->get(doc_id) > -1) {
 	    s_documents_index->add(doc_id, -1);
 	}
@@ -294,7 +294,7 @@ class Documents {
 
     bool and_operation(std::vector<Document *> *docs1, std::vector<Document *> *docs2, std::vector<Document *> *dest_documents);
 
-    bool _ascending_order_sort_by_size (std::vector<Document *> *left, std::vector<Document *> *right) {
+    bool _ascending_order_sort_by_size(std::vector<Document *> *left, std::vector<Document *> *right) {
 	return (left->size() < right->size());
     }
 
@@ -323,9 +323,9 @@ class Documents {
     }
 
     bool read_dids(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs);
-    bool read_dids_with_feature(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBit);
-    bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs, int featureBit);
-    bool read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBit);
+    bool read_dids_with_feature(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs);
+    bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs);
+    bool read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs);
 
     void _push_back_documents_index(int did, int value) {
 	__documents_index->add(did, value);

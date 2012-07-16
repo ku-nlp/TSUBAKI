@@ -107,7 +107,7 @@ class Dbm {
 	return available;
     }
 
-    cdb* tieCDB (string dbfile) {
+    cdb* tieCDB(string dbfile) {
 	struct cdb *db = (cdb*)malloc(sizeof(cdb));
 	if (!db) {
 	    cerr << "Can't allocate memory @ hash.h." << endl;
@@ -132,7 +132,7 @@ class Dbm {
 	return db;
     }
 
-    string getDirName (string filepath) {
+    string getDirName(string filepath) {
 	unsigned int loc = filepath.find_last_of("/");
 	string dirname = string(filepath, 0, loc);
 	return dirname;
@@ -142,7 +142,7 @@ class Dbm {
 	return available;
     }
 
-    string get (string key) {
+    string get(string key) {
 	if (defined_keymap) {
 	    return _get(key);
 	} else {
@@ -150,7 +150,7 @@ class Dbm {
 	}
     }
 
-    string get (const char *key) {
+    string get(const char *key) {
 	if (defined_keymap) {
 	    const string k = key;
 	    return _get(k);
@@ -159,7 +159,7 @@ class Dbm {
 	}
     }
 
-    string get (const char *key, cdb* db) {
+    string get(const char *key, cdb* db) {
 	string ret_value;
 	unsigned vlen, vpos;
 	if (cdb_find(db, key, strlen(key)) > 0) {
@@ -179,9 +179,9 @@ class Dbm {
 	return ret_value;
     }
 
-    string _get (string key) {
+    string _get(string key) {
 	if (IS_32BIT_CPU_MODE)
-	    return _get_for_32bit_mode (key);
+	    return _get_for_32bit_mode(key);
 	
 	cdb *db = k2db[0].second;
 	for (std::vector<std::pair<string, cdb*> >::iterator it = k2db.begin(); it != k2db.end(); ++it) {
@@ -191,12 +191,12 @@ class Dbm {
 	    db = (*it).second;
 	}
 
-	string ret = get ((const char*)key.c_str(), db);
+	string ret = get((const char*)key.c_str(), db);
 
 	return ret;
     }
 
-    string _get_for_32bit_mode (string key) {
+    string _get_for_32bit_mode(string key) {
 	string file = k2dbfile[0].second;
 	for (std::vector<std::pair<string, string> >::iterator it = k2dbfile.begin(); it != k2dbfile.end(); ++it) {
 	    if (key < (string)(*it).first) {

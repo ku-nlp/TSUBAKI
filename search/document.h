@@ -40,7 +40,7 @@ class Document {
 	pos_buf = NULL;
     }
 
-    ~Document () {
+    ~Document() {
         delete pos_list;
         if (pos_buf)
             free(pos_buf);
@@ -54,27 +54,27 @@ class Document {
 	return pos_num;
     }
 
-    bool set_best_pos (int pos) {
+    bool set_best_pos(int pos) {
 	best_pos = pos;
 	return true;
     }
 
-    int get_best_pos () const {
+    int get_best_pos() const {
 	return best_pos;
     }
 
-    bool set_best_region (int begin, int end) {
+    bool set_best_region(int begin, int end) {
 	best_begin = begin;
 	best_end = end;
 	return true;
     }
 
-    bool set_pos_char (unsigned char *pos_char) {
+    bool set_pos_char(unsigned char *pos_char) {
 	pos_buf = pos_char;
 	return true;
     }
 
-    std::string to_string ();
+    std::string to_string();
 
     bool set_length(int in_length) {
       length = in_length;
@@ -114,7 +114,7 @@ class Document {
 
     bool calc_score();
     bool set_term_pos(std::string term, std::vector<int> const *in_pos_list);
-    std::vector<int> *get_pos(int featureBit);
+    std::vector<int> *get_pos(unsigned int featureBit);
 
     bool set_freq(double in_freq) {
 	freq = in_freq;

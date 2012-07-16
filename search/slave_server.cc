@@ -24,12 +24,12 @@ double gettimeofday_sec() {
     return tv.tv_sec + (double)tv.tv_usec*1e-6;
 }
 
-bool sort_by_final_score (Document *left, Document *right) {
+bool sort_by_final_score(Document *left, Document *right) {
     return (left->get_final_score() > right->get_final_score());
 }
 
 // 検索に要した時間を収めたvectorを返すように
-std::vector<double> *search (std::string *query,
+std::vector<double> *search(std::string *query,
 	     std::vector<std::ifstream*> *index_streams,
 	     std::vector<Dbm *> *offset_dbs,
 	     MAP_IMPL<int, string> *tid2sid,
@@ -119,11 +119,11 @@ std::vector<double> *search (std::string *query,
     double sort_end = (double) gettimeofday_sec();
 
     // embed pos info.
-    int _count = 1;
+    int _count = 0;
     for (std::vector<Document *>::iterator it = docs->begin(); it != docs->end(); it++) {
 	// termの出現位置を取得
 	result_docs->collectTermPosition((*it), (*it)->getTermPosition());
-        if (++_count > NUM_OF_RETURN_DOCUMENTS)
+        if (++_count >= NUM_OF_RETURN_DOCUMENTS)
             break;
     }
 
@@ -137,7 +137,7 @@ std::vector<double> *search (std::string *query,
     return logdata;
 }
 
-bool pushback_file_handle (string file) {
+bool pushback_file_handle(string file) {
     std::ifstream *fin = new std::ifstream(file.c_str());
     if (fin) {
 	index_streams.push_back(fin);
@@ -148,7 +148,7 @@ bool pushback_file_handle (string file) {
     return true;
 }
 
-bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
+bool init(string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
     std::string index_word_file         = index_dir + "/idx000.word.dat.conv";
     std::string index_dpnd_file         = index_dir + "/idx000.dpnd.dat.conv";
     std::string offset_word_file        = index_dir + "/offset000.word.conv.cdb.keymap";
@@ -263,9 +263,9 @@ bool init (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, ch
     return true;
 }
 
-bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
+bool standalone_mode(string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
 
-    init (index_dir, anchor_index_dir,TSUBAKI_SLAVE_PORT, HOSTNAME);
+    init(index_dir, anchor_index_dir,TSUBAKI_SLAVE_PORT, HOSTNAME);
 
     char buf[102400];
 
@@ -287,7 +287,7 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 //	    std::string url = (*(MAP_IMPL<int, string>::iterator)tid2url.find((*it)->get_id())).second;
 
 //	    sbuf << ((*it)->to_string()) << " score=" << (*it)->get_final_score() << endl;
-	    cerr << ((*it)->to_string()) << " " << (*it)->get_final_score() << endl;
+	    cerr << ((*it)->to_string()) << endl;
 	    /*
 	     * フレーズ検索
 	    if ((*it)->get_phrase_feature() > 0) {
@@ -295,7 +295,7 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 	    }
 	    */
 
-	    if (++count > NUM_OF_RETURN_DOCUMENTS)
+	    if (++count >= NUM_OF_RETURN_DOCUMENTS)
 	    	break;
 	}
 	cerr << endl;
@@ -314,7 +314,7 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
     return true;
 }
 
-bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
+bool server_mode(string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
     int i, status;
     struct sockaddr_in sin;
     int sfd, fd;
@@ -433,7 +433,7 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
 		}
 		sbuf << sid << " " << title << " " << url << " " << ((*it)->to_string()) << endl;
 
-		if (++count > NUM_OF_RETURN_DOCUMENTS)
+		if (++count >= NUM_OF_RETURN_DOCUMENTS)
 		    break;
 	    }
 	    int hitcount = docs.size();
@@ -464,7 +464,7 @@ bool server_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_P
     return false;
 }
 
-int main (int argc, char** argv) {
+int main(int argc, char** argv) {
 
     if (strcmp(argv[argc - 1], "-standalone") == 0) {
 	standalone_mode (argv[1], argv[2], (int)atoi(argv[3]), argv[4]);

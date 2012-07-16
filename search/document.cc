@@ -1,7 +1,7 @@
 #include "common.h"
 #include "document.h"
 
-std::string Document::to_string () {
+std::string Document::to_string() {
     std::ostringstream _str;
     _str << id << " "
 	 << get_final_score() << " "
@@ -19,11 +19,9 @@ std::string Document::to_string () {
     _str << " [";
     for (MAP_IMPL<const char*, std::vector<int> *>::iterator it = term2pos.begin(); it != term2pos.end(); it++) {
 	_str << it->first;
-//	_str << "term=" << it->first;
 	for (std::vector<int>::iterator _it = it->second->begin(); _it != it->second->end(); _it++) {
 	    if ((*_it) == -1) break;
 	    _str << "," << (*_it);
-//	    _str << ",pos=" << (*_it);
 	}
 	_str << "#";
     }
@@ -45,7 +43,7 @@ bool Document::set_term_pos(std::string term, std::vector<int> const *in_pos_lis
     }
 }
 
-std::vector<int> *Document::get_pos(int featureBit) {
+std::vector<int> *Document::get_pos(unsigned int featureBit) {
     if (pos_list == NULL) {
 	pos_list = new std::vector<int>;
 	if (pos_buf) {
@@ -57,7 +55,7 @@ std::vector<int> *Document::get_pos(int featureBit) {
 
 	    freq = 0;
 	    for (int i = 0; i < pos_num; i++) {
-		int feature = intchar2int(pos_buf_ptr);
+		unsigned int feature = intchar2int(pos_buf_ptr);
 		pos_buf_ptr += sizeof(int);
                 // no features are given or feature matches featureBit
 		if (featureBit == 0 || (feature & featureBit & CONDITION_FEATURE_MASK)) {

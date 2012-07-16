@@ -577,7 +577,7 @@ void Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs
 	if (VERBOSE)
 	    cout << "    before lookup = " << 1000 * (_start - start) << " [ms] file = " << file << endl;
 
-	lookup_index(current_term, term_type, index_streams->at(file), offset_dbs->at(file), _already_retrieved_docs, featureBits);
+	lookup_index(current_term, term_type, index_streams->at(file), offset_dbs->at(file), _already_retrieved_docs);
 
 	double end = (double) gettimeofday_sec();
 	if (VERBOSE)
@@ -712,7 +712,7 @@ bool Documents::appendDocument (int i, int did, int load_dids, unsigned char *of
 }
 
 
-bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBits) {
+bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs) {
     int load_dids = 0;
     s_documents.reserve(ldf);
     bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
@@ -741,7 +741,7 @@ bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int l
 		}
                 else {
                     int i = (head + tail) / 2;
-		    int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
+		    unsigned int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
                     // no features (in query) are given or
 		    // 文書Dにおける term の feature bit とクエリで与えられた feature bit と CONDITION_FEATURE_MASKの論理積をとる
 		    if (featureBits == 0 || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
@@ -756,7 +756,7 @@ bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int l
 	}
     } else {
 	for (int i = 0; i < ldf; i++) {
-	    int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
+	    unsigned int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
             // no features (in query) are given or
 	    // 文書Dにおける term の feature bit とクエリで与えられた feature bit の論理積をとる
 	    if (featureBits == 0 || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
@@ -769,7 +769,7 @@ bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int l
     return true;
 }
 
-bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs, int featureBits) {
+bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs) {
     std::string term_string = in_term;
     std::string address_str;
     if (term_db->is_open()) {
@@ -788,7 +788,7 @@ bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_s
 	if (VERBOSE)
 	    cout << "      seek index = " << 1000 * (end - start) << " [ms]" <<  " " << address << " [byte]" << endl;
 
-	return read_index(index_stream, term_type, _already_retrieved_docs, featureBits);
+	return read_index(index_stream, term_type, _already_retrieved_docs);
     }
     else {
 #ifdef DEBUG
@@ -808,7 +808,7 @@ bool Documents::lookup_index(char *in_term, int term_type, std::istream *index_s
     }
 }
 
-bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBits) {
+bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs) {
     int index_size = 0, offset = 0;
     unsigned char *buffer, *_buf;
 
@@ -846,7 +846,7 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
     if (VERBOSE)
 	cout << "      create index = " << 1000 * (end - start) << " [ms]" <<  " " << ldf << endl;
 
-    read_dids_with_feature(buffer, offset, ldf, term_type, _already_retrieved_docs, featureBits);
+    read_dids_with_feature(buffer, offset, ldf, term_type, _already_retrieved_docs);
     delete[] buffer;
 
     double end1 = (double) gettimeofday_sec();
@@ -1407,7 +1407,7 @@ bool Documents::walk_and_or(Document *doc_ptr) {
     }
 
     if (!approximate_check_for_children) {
-	remove_doc (doc_ptr->get_id());
+	remove_doc(doc_ptr->get_id());
 	return false;
     }
 
