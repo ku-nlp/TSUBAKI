@@ -140,7 +140,7 @@ bool Documents::merge_and(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 	// get_type() == DOCUMENTS_ROOT でここに来る場合は、オプショナル or アンカーに関するターム
 	else if (get_type() == DOCUMENTS_ROOT) {
 	    if (next_documents->get_type() == DOCUMENTS_OR)
-		next_documents->set_type (DOCUMENTS_OR_OPTIONAL);
+		next_documents->set_type(DOCUMENTS_OR_OPTIONAL);
 	    cell = cdr(cell);
 	    continue;
 	}
@@ -168,7 +168,7 @@ bool Documents::merge_and(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 		      &temp_documents);
 
 	std::vector<Document *> backup_l_documents = l_documents;
-	l_documents.clear(); // *** FIX ME: clear the contents ***
+	l_documents.clear();
 	or_operation(&backup_l_documents,
 		     &temp_documents,
 		     &l_documents);
@@ -178,8 +178,8 @@ bool Documents::merge_and(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 	and_operation(backup_documents.get_l_documents(),
 		      next_documents->get_l_documents(),
 		      &temp_documents);
-	backup_l_documents = l_documents; // *** FIX ME: clear the contents ***
-	l_documents.clear(); // *** FIX ME: clear the contents ***
+	backup_l_documents = l_documents;
+	l_documents.clear();
 	or_operation(&backup_l_documents,
 		     &temp_documents,
 		     &l_documents);
@@ -191,7 +191,7 @@ bool Documents::merge_and(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 
     // inf nanode tyouhuku ga arieru
     std::vector<Document *> backup_l_documents = l_documents;
-    l_documents.clear(); // *** FIX ME: clear the contents ***
+    l_documents.clear();
     dup_check_operation(&backup_l_documents, &s_documents, &l_documents);
 
 #ifdef DEBUG
@@ -299,7 +299,8 @@ bool Documents::merge_phrase (CELL *cell, DocumentBuffer *_already_retrieved_doc
 	    continue;
 
 	int target_num = pos_list_list.size();
-	int sorted_int[target_num], pos_record[target_num];
+	int pos_record[target_num];
+        unsigned int sorted_int[target_num];
 	for (int i = 0; i < target_num; i++) {
 	    sorted_int[i] = i;
 	    pos_record[i] = -1;
@@ -311,9 +312,7 @@ bool Documents::merge_phrase (CELL *cell, DocumentBuffer *_already_retrieved_doc
 		if (pos_list_list[sorted_int[j]]->front() == -1 ||
 		    (pos_list_list[sorted_int[j + 1]]->front() != -1 &&
 		     (pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()))) {
-		    int temp = sorted_int[j];
-		    sorted_int[j] = sorted_int[j + 1];
-		    sorted_int[j + 1] = temp;
+                    std::swap(sorted_int[j], sorted_int[j + 1]);
 		}
 	    }
 	}
@@ -353,9 +352,7 @@ bool Documents::merge_phrase (CELL *cell, DocumentBuffer *_already_retrieved_doc
 		if (pos_list_list[sorted_int[i]]->front() == -1 ||
 		    (pos_list_list[sorted_int[i + 1]]->front() != -1 &&
 		     (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
-		    int temp = sorted_int[i];
-		    sorted_int[i] = sorted_int[i + 1];
-		    sorted_int[i + 1] = temp;
+                    std::swap(sorted_int[i], sorted_int[i + 1]);
 		}
 	    }
 	} // end of while
@@ -444,7 +441,7 @@ bool Documents::merge_or(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 	    continue;
 	}
 
-	s_documents.clear(); // *** FIX ME: clear the contents ***
+	s_documents.clear();
 	or_operation(backup_documents.get_s_documents(),
 		     next_documents->get_s_documents(),
 		     &s_documents);
@@ -697,12 +694,12 @@ bool Documents::appendDocument (int i, int did, int load_dids, unsigned char *of
     int num_of_pos = intchar2int(posdat + pos_offset);
 
     doc->set_gdf(term_df);
-    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (2 * num_of_pos + 1));
+    unsigned char *__buf = (unsigned char*)malloc(SIZEOFINT * (2 * num_of_pos + 1));
     if (__buf == NULL) {
         cerr << "Cannot allocate memory for pos." << endl;
         exit(1);
     }
-    memcpy (__buf, (posdat + pos_offset), SIZEOFINT * (2 * num_of_pos + 1));
+    memcpy(__buf, (posdat + pos_offset), SIZEOFINT * (2 * num_of_pos + 1));
     doc->set_pos_char(__buf);
 
     s_documents.push_back(doc);
@@ -715,7 +712,7 @@ bool Documents::appendDocument (int i, int did, int load_dids, unsigned char *of
 }
 
 
-bool Documents::read_dids_with_feature (unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBits) {
+bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs, int featureBits) {
     int load_dids = 0;
     s_documents.reserve(ldf);
     bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
@@ -728,7 +725,7 @@ bool Documents::read_dids_with_feature (unsigned char *buffer, int &offset, int 
 	// load dids with conversion
 	int *docids = new int[ldf];
 	for (int i = 0; i < ldf; i++)
-	    *(docids + i) = intchar2int(buffer + i * SIZEOFINT);
+	    docids[i] = intchar2int(buffer + i * SIZEOFINT);
 
 	// binary search
 	int head = 0;
@@ -736,21 +733,23 @@ bool Documents::read_dids_with_feature (unsigned char *buffer, int &offset, int 
 	for (std::vector<int>::iterator it = did_list->begin(), end = did_list->end(); it != end; ++it) {
 	    int tail = ldf - 1;
 	    while (head <= tail) {
-		if (*(docids + ((head + tail) >> 1)) - (*it) > 0) {
-		    tail = ((head + tail) >> 1) - 1;
-		} else if (*(docids + ((head + tail) >> 1)) - (*it) < 0) {
-		    head = ((head + tail) >> 1) + 1;
-		} else {
-		    int i = (head + tail) >> 1;
+                if (docids[(head + tail) / 2] > (*it)) {
+                    tail = (head + tail) / 2 - 1;
+                }
+                else if (docids[(head + tail) / 2] < (*it)) {
+                    head = (head + tail) / 2 + 1;
+		}
+                else {
+                    int i = (head + tail) / 2;
 		    int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
                     // no features (in query) are given or
 		    // 文書Dにおける term の feature bit とクエリで与えられた feature bit と CONDITION_FEATURE_MASKの論理積をとる
 		    if (featureBits == 0 || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
-			appendDocument (i, *it, load_dids, head_of_offdat, head_of_posdat);
+			appendDocument(i, *it, load_dids, head_of_offdat, head_of_posdat);
 			load_dids++;
 		    }
 
-		    head = ((head + tail) >> 1) + 1;
+                    head = (head + tail) / 2 + 1;
 		    break;
 		}
 	    }
@@ -762,7 +761,7 @@ bool Documents::read_dids_with_feature (unsigned char *buffer, int &offset, int 
 	    // 文書Dにおける term の feature bit とクエリで与えられた feature bit の論理積をとる
 	    if (featureBits == 0 || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
 		int did = intchar2int(buffer + i * SIZEOFINT);
-		appendDocument (i, did, load_dids, head_of_offdat, head_of_posdat);
+		appendDocument(i, did, load_dids, head_of_offdat, head_of_posdat);
 		load_dids++;
 	    }
 	}
@@ -835,7 +834,6 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
     offset += SIZEOFINT;
 #ifdef DEBUG
     cerr << "LDF: " << ldf << endl;
-    cerr << "DIDS:";
 #endif
 
     double start = (double) gettimeofday_sec();
@@ -854,10 +852,6 @@ bool Documents::read_index(std::istream *index_stream, int term_type, DocumentBu
     double end1 = (double) gettimeofday_sec();
     if (VERBOSE)
 	cout << "      read dids = " << 1000 * (end1 - end) << " [ms]" <<  " " << ldf << endl;
-
-#ifdef DEBUG
-    cerr << std::endl;
-#endif
 
     // l_documents is infinite for lenient term
     if (term_type == 2) {
@@ -916,9 +910,11 @@ bool Documents::walk_or(Document *doc_ptr) {
 		    term = "PROX"; break;
 		case DOCUMENTS_ORDERED_PROX:
 		    term = "ORDERED_PROX"; break;
+                default:
+                    ;
 		}
 	    }
-	    doc_ptr->pushbackTerm (new Term(&term, doc->get_score(), doc->get_freq(), doc->get_gdf()));
+	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf())));
 
 	    // load scores
 	    gdf = (*it)->get_gdf();
@@ -965,13 +961,8 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    score = syn_node_score_list[1];
 	}
     } else {
-	for (std::vector<double>::iterator it = syn_node_score_list.begin(), end = syn_node_score_list.end(); it != end; ++it) {
-	    score += (*it);
-	}
-
-	for (std::vector<double>::iterator it = basic_node_score_list.begin(), end = basic_node_score_list.end(); it != end; ++it) {
-	    score += (*it);
-	}
+        score = std::accumulate(syn_node_score_list.begin(), syn_node_score_list.end(), score);
+        score = std::accumulate(basic_node_score_list.begin(), basic_node_score_list.end(), score);
     }
     document->set_score(score);
 #ifdef DEBUG
@@ -980,7 +971,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 
 
     int target_num = pos_list_list.size();
-    int sorted_int[target_num], tid2idx[target_num];
+    unsigned int sorted_int[target_num], tid2idx[target_num];
     for (int i = 0, size = pos_list_list.size(); i < size; ++i) {
 	tid2idx[i] = 0;
 	sorted_int[i] = i;
@@ -991,9 +982,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	for (int j = 0; j < target_num - i - 1; j++) {
 	    if (pos_list_list[sorted_int[j]]->front() == -1 ||
 		pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()) {
-		int temp = sorted_int[j];
-		sorted_int[j] = sorted_int[j + 1];
-		sorted_int[j + 1] = temp;
+                std::swap(sorted_int[j], sorted_int[j + 1]);
 	    }
 	}
     }
@@ -1020,9 +1009,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	for (int i = 0; i < target_num - 1; i++) {
 	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
 		pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()) {
-		int temp = sorted_int[i];
-		sorted_int[i] = sorted_int[i + 1];
-		sorted_int[i + 1] = temp;
+                std::swap(sorted_int[i], sorted_int[i + 1]);
 	    }
 	}
     } // end of while
@@ -1031,7 +1018,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 #ifdef DEBUG
     cerr << "OR DID: " << doc_ptr->get_id();
     cerr << " POS LIST: ";
-    for (int i = 0; i < pos_list.size(); i++) {
+    for (unsigned int i = 0; i < pos_list.size(); i++) {
 	cerr << i << ":" << pos_list[i] << " ";
     }
     cerr << endl;
@@ -1076,6 +1063,8 @@ bool Documents::walk_and(Document *doc_ptr) {
 		term = "PROX"; break;
 	    case DOCUMENTS_ORDERED_PROX:
 		term = "ORDERED_PROX"; break;
+            default:
+                ;
 	    }
 
             // get pos and score for all types of documents (including DOCUMENTS_TERM_OPTIONAL)
@@ -1093,7 +1082,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
-	    doc_ptr->pushbackTerm (new Term(&term, doc->get_score(), doc->get_freq(), doc->get_gdf()));
+	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf())));
 
 #ifdef DEBUG
 	    if (get_type() == DOCUMENTS_ROOT) {
@@ -1123,7 +1112,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	cerr << endl;
 #endif
 
-	if (*(pos_list_list[0]->begin()) != -1) {
+        if (pos_list_list[0]->front() != -1) {
 	    document->set_proximate_feature();
 	}
 
@@ -1140,7 +1129,8 @@ bool Documents::walk_and(Document *doc_ptr) {
     // pos_record ... tid2pos
     // sorted_int ... pos2tid
     int target_num = pos_list_list.size();
-    int sorted_int[target_num], pos_record[target_num], tid2idx[target_num];
+    int pos_record[target_num];
+    unsigned int sorted_int[target_num], tid2idx[target_num];
     for (int i = 0; i < target_num; i++) {
 	sorted_int[i] = i;
 	pos_record[i] = -2; // Initailized by -2 because -1 means the end of pos_list.
@@ -1151,9 +1141,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	for (int j = 0; j < target_num - i - 1; j++) {
 	    if (pos_list_list[sorted_int[j]]->front() == -1 ||
 		pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()) {
-		int temp = sorted_int[j];
-		sorted_int[j] = sorted_int[j + 1];
-		sorted_int[j + 1] = temp;
+                std::swap(sorted_int[j], sorted_int[j + 1]);
 	    }
 	}
     }
@@ -1162,7 +1150,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     int best_pos = -1;
     int best_begin = -1;
     int region = MAX_LENGTH_OF_DOCUMENT;
-    int backup_tid2idx[target_num];
+    unsigned int backup_tid2idx[target_num];
     std::vector<int> pos_list;
     bool skip_first = false;
     while (1) {
@@ -1258,7 +1246,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 
 #ifdef DEBUG
     cerr << "POS LIST: ";
-    for (int i = 0; i < pos_list.size(); i++) {
+    for (unsigned int i = 0; i < pos_list.size(); i++) {
 	cerr << i << ":" << pos_list[i] << " ";
     }
     cerr << endl;
@@ -1279,14 +1267,12 @@ bool Documents::walk_and(Document *doc_ptr) {
 }
 
 
-bool Documents::update_sorted_int (int *sorted_int, int *tid2idx, std::vector<std::vector<int> *> *pos_list_list, int target_num, bool skip_first) {
+bool Documents::update_sorted_int(unsigned int *sorted_int, unsigned int *tid2idx, std::vector<std::vector<int> *> *pos_list_list, int target_num, bool skip_first) {
     for (int i = 0; i < target_num - 1; i++) {
 	if (pos_list_list->at(sorted_int[i])->at(tid2idx[sorted_int[i]]) == -1 ||
 	    (pos_list_list->at(sorted_int[i + 1])->at(tid2idx[sorted_int[i + 1]]) != -1 &&
 	     (pos_list_list->at(sorted_int[i])->at(tid2idx[sorted_int[i]]) > pos_list_list->at(sorted_int[i + 1])->at(tid2idx[sorted_int[i + 1]])))) {
-	    int temp = sorted_int[i];
-	    sorted_int[i] = sorted_int[i + 1];
-	    sorted_int[i + 1] = temp;
+            std::swap(sorted_int[i], sorted_int[i + 1]);
 	}
     }
 
@@ -1323,7 +1309,8 @@ bool Documents::check_phrase (Document *doc_ptr) {
     document->set_score(score);
 
     int target_num = pos_list_list.size();
-    int sorted_int[target_num], pos_record[target_num];
+    int pos_record[target_num];
+    unsigned int sorted_int[target_num];
     for (int i = 0; i < target_num; i++) {
 	sorted_int[i] = i;
 	pos_record[i] = -1;
@@ -1334,9 +1321,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 	    if (pos_list_list[sorted_int[j]]->front() == -1 ||
 		(pos_list_list[sorted_int[j + 1]]->front() != -1 &&
 		 (pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()))) {
-		int temp = sorted_int[j];
-		sorted_int[j] = sorted_int[j + 1];
-		sorted_int[j + 1] = temp;
+                std::swap(sorted_int[j], sorted_int[j + 1]);
 	    }
 	}
     }
@@ -1380,9 +1365,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
 		(pos_list_list[sorted_int[i + 1]]->front() != -1 &&
 		 (pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()))) {
-		int temp = sorted_int[i];
-		sorted_int[i] = sorted_int[i + 1];
-		sorted_int[i + 1] = temp;
+                std::swap(sorted_int[i], sorted_int[i + 1]);
 	    }
 	}
     } // end of while
@@ -1428,24 +1411,26 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 	return false;
     }
 
-    if (type == DOCUMENTS_ROOT) {
+    switch(type) {
+    case DOCUMENTS_ROOT:
 	return walk_and(doc_ptr);
-    }
-    else if (type == DOCUMENTS_AND ||
-	     type == DOCUMENTS_PHRASE ||
-	     type == DOCUMENTS_PROX ||
-	     type == DOCUMENTS_ORDERED_PROX) {
-	return walk_and(doc_ptr);
-    }
-    else if (type == DOCUMENTS_OR ||
-	     type == DOCUMENTS_OR_OPTIONAL) {
-	return walk_or(doc_ptr);
-    }
 
-    return true;
+    case DOCUMENTS_AND:
+    case DOCUMENTS_PHRASE:
+    case DOCUMENTS_PROX:
+    case DOCUMENTS_ORDERED_PROX:        
+	return walk_and(doc_ptr);
+
+    case DOCUMENTS_OR:
+    case DOCUMENTS_OR_OPTIONAL:
+	return walk_or(doc_ptr);
+
+    default:
+        return true;
+    }
 }
 
-bool Documents::collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, std::vector<int> *> *term2pos) {
+bool Documents::collectTermPosition(Document *doc_ptr, MAP_IMPL<const char*, std::vector<int> *> *term2pos) {
     if (get_type() == DOCUMENTS_TERM_STRICT   ||
  	get_type() == DOCUMENTS_TERM_LENIENT  ||
  	get_type() == DOCUMENTS_TERM_OPTIONAL ||
@@ -1456,12 +1441,8 @@ bool Documents::collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, st
 	    std::vector<int> *poslist = new std::vector<int>;
 	    std::vector<int> *org = document->get_pos(featureBits);
 	    // コピーしないと消える
-	    int prev = -1;
- 	    for (std::vector<int>::iterator it = org->begin(); it != org->end(); it++) {
- 		if (prev - (*it) != 0)
- 		    poslist->push_back((*it));
- 		prev = (*it);
- 	    }
+            poslist->reserve(org->size());
+            std::unique_copy(org->begin(), org->end(), std::back_inserter(*poslist));
 	    term2pos->insert(std::pair<const char*, std::vector<int> *>(get_label().c_str(), poslist));
 	}
     }

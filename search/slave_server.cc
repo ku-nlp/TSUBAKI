@@ -269,13 +269,13 @@ bool standalone_mode (string index_dir, string anchor_index_dir, int TSUBAKI_SLA
 
     char buf[102400];
 
-    while (fgets(buf, 102400, stdin)) {
+    while (fgets(buf, sizeof(buf), stdin)) {
 	std::vector<Document *> docs;
-	double search_bgn = (double) gettimeofday_sec();
 	string _query = buf;
 
+	double search_bgn = gettimeofday_sec();
 	std::vector<double> *logdata = search (&_query, &index_streams, &offset_dbs, &tid2sid, &tid2len, &docs);
-	double search_end = (double) gettimeofday_sec();
+	double search_end = gettimeofday_sec();
 
 	int count = 0;
 	std::ostringstream sbuf;

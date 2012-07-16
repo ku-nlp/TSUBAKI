@@ -10,6 +10,7 @@
 #include <ext/hash_map>
 #include <set>
 #include <algorithm>
+#include <numeric>
 #include <cstdlib>
 #include <ios>
 #include <iomanip>

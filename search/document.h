@@ -21,8 +21,6 @@ class Document {
     MAP_IMPL<const char *, std::vector<int> *> term2pos;
 
     std::vector<int> *pos_list;
-    int *poslist;
-//  std::vector<std::string *> terms;
     std::vector<Term *> terms;
   public:
     Document(int in_id) {
@@ -38,23 +36,21 @@ class Document {
 	proximate_feature = 0;
 	strict_term_feature = 0;
 	phrase_feature = 0;
-//	pos_list = new std::vector<int>;
 	pos_list = NULL;
 	pos_buf = NULL;
     }
 
     ~Document () {
-	if (pos_list)
-	    delete pos_list;
+        delete pos_list;
         if (pos_buf)
             free(pos_buf);
     }
 
-    int get_id() {
+    int get_id() const {
 	return id;
     }
 
-    int get_pos_num() {
+    int get_pos_num() const {
 	return pos_num;
     }
 
@@ -63,7 +59,7 @@ class Document {
 	return true;
     }
 
-    int get_best_pos () {
+    int get_best_pos () const {
 	return best_pos;
     }
 
@@ -80,14 +76,12 @@ class Document {
 
     std::string to_string ();
 
-    int* get_poslist ();
-
     bool set_length(int in_length) {
       length = in_length;
       return true;
     }
 
-    int get_length() {
+    int get_length() const {
 	return length;
     }
 
@@ -96,7 +90,7 @@ class Document {
       return true;
     }
 
-    bool get_proximate_feature() {
+    bool get_proximate_feature() const {
       return proximate_feature;
     }
 
@@ -105,7 +99,7 @@ class Document {
       return true;
     }
 
-    bool get_strict_term_feature() {
+    bool get_strict_term_feature() const {
       return strict_term_feature;
     }
 
@@ -114,26 +108,26 @@ class Document {
       return true;
     }
 
-    bool get_phrase_feature() {
+    bool get_phrase_feature() const {
 	return phrase_feature;
     }
 
     bool calc_score();
-    bool set_term_pos(std::string term, std::vector<int> *in_pos_list);
+    bool set_term_pos(std::string term, std::vector<int> const *in_pos_list);
     std::vector<int> *get_pos(int featureBit);
 
     bool set_freq(double in_freq) {
 	freq = in_freq;
 	return true;
     }
-    double get_freq() {
+    double get_freq() const {
 	return freq;
     }
     bool set_gdf(double in_gdf) {
 	gdf = in_gdf;
 	return true;
     }
-    double get_gdf() {
+    double get_gdf() const {
 	return gdf;
     }
     bool set_score(double in_score) {
@@ -141,12 +135,12 @@ class Document {
 	return true;
     }
 
-    bool set_pagerank (double _pagerank) {
+    bool set_pagerank(double _pagerank) {
 	pagerank = _pagerank;
 	return true;
     }
 
-    double get_pagerank () {
+    double get_pagerank() const {
 	return pagerank;
     }
 
@@ -175,7 +169,7 @@ class Document {
 	return score;
     }
 
-    bool pushbackTerm (Term *term) {
+    bool pushbackTerm(Term *term) {
 	terms.push_back(term);
 	return true;
     }

@@ -233,9 +233,9 @@ class Documents {
 	return type = in_type;
     }
 
-    bool appendDocument (int i, int did, int load_dids, unsigned char *offdat, unsigned char *posdat);
+    bool appendDocument(int i, int did, int load_dids, unsigned char *offdat, unsigned char *posdat);
 
-    bool update_sorted_int (int *sorted_int, int *tid2idx, std::vector<std::vector<int> *> *pos_list_list, int target_num, bool skip_first);
+    bool update_sorted_int(unsigned int *sorted_int, unsigned int *tid2idx, std::vector<std::vector<int> *> *pos_list_list, int target_num, bool skip_first);
 
     documents_type get_type() {
 	return type;
@@ -257,11 +257,12 @@ class Documents {
     }
 
     Document *get_doc (int doc_id) {
-	if (s_documents_index->get(doc_id) > -1) {
-	    return s_documents[s_documents_index->get(doc_id)];
+        int p;
+	if ((p = s_documents_index->get(doc_id)) > -1) {
+	    return s_documents[p];
 	}
-	else if (l_documents_index->get(doc_id) > -1) {
-	    return l_documents[l_documents_index->get(doc_id)];
+	else if ((p = l_documents_index->get(doc_id)) > -1) {
+	    return l_documents[p];
 	}
 	else {
 	    // Not ists
