@@ -18,7 +18,6 @@ class Document {
     double score;
     double pagerank;
     unsigned char *pos_buf;
-    MAP_IMPL<const char *, std::vector<int> *> term2pos;
 
     std::vector<int> *pos_list;
     std::vector<Term *> terms;
@@ -174,16 +173,12 @@ class Document {
 	return true;
     }
 
-    MAP_IMPL<const char*, std::vector<int> *> *getTermPosition () {
-	return &term2pos;
-    }
-
-    std::vector<Term *>* getTerms () {
+    std::vector<Term *>* getTerms() {
 	return &terms;
     }
 
     bool print() {
-	cout << " " << id; // << ":";
+        std::cout << " " << id; // << ":";
 	// for (std::vector<Term *>::iterator it = terms.begin(); it != terms.end(); it++) {
 	//     (*it)->print();
 	// }

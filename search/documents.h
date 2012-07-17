@@ -322,7 +322,6 @@ class Documents {
 	return tv.tv_sec + (double)tv.tv_usec*1e-6;
     }
 
-    bool read_dids(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs);
     bool read_dids_with_feature(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs);
     bool lookup_index(char *in_term, int term_type, std::istream *index_stream, Dbm *term_db, DocumentBuffer *_already_retrieved_docs);
     bool read_index(std::istream *index_stream, int term_type, DocumentBuffer *_already_retrieved_docs);
@@ -351,7 +350,6 @@ class Documents {
     bool walk_and(Document *doc_ptr);
     bool check_phrase (Document *doc_ptr);
     bool walk_and_or(Document *doc_ptr);
-    bool collectTermPosition (Document *doc_ptr, MAP_IMPL<const char*, std::vector<int> *> *term2pos);
 };
 
 class sort_by_term_pos {

@@ -17,9 +17,10 @@ std::string Document::to_string() {
     _str << "]";
 
     _str << " [";
-    for (MAP_IMPL<const char*, std::vector<int> *>::iterator it = term2pos.begin(); it != term2pos.end(); it++) {
-	_str << it->first;
-	for (std::vector<int>::iterator _it = it->second->begin(); _it != it->second->end(); _it++) {
+    for (std::vector<Term*>::iterator it = terms.begin(); it != terms.end(); it++) {
+	_str << (*it)->get_term();
+        std::vector<int> *pos_list_ptr = (*it)->get_pos_list();
+	for (std::vector<int>::iterator _it = pos_list_ptr->begin(); _it != pos_list_ptr->end(); _it++) {
 	    if ((*_it) == -1) break;
 	    _str << "," << (*_it);
 	}

@@ -29,8 +29,8 @@ bool Documents::and_operation(std::vector<Document *> *docs1, std::vector<Docume
 	    }
 	}
 	else {
-	    dest_documents->push_back(new Document((*it1)->get_id()));
-	    // dest_documents->push_back((*it1));
+	    // dest_documents->push_back(new Document((*it1)->get_id()));
+	    dest_documents->push_back((*it1));
 	    if (++it1 == docs1->end()) {
 		break;
 	    }
@@ -65,44 +65,44 @@ bool Documents::or_operation(std::vector<Document *> *docs1, std::vector<Documen
 
     while (1) {
 	if ((*it2)->get_id() < (*it1)->get_id()) {
-	    // dest_documents->push_back((*it2));
-	    dest_documents->push_back(new Document((*it2)->get_id()));
+	    dest_documents->push_back((*it2));
+	    // dest_documents->push_back(new Document((*it2)->get_id()));
 
 	    if (++it2 == docs2->end()) {
 		for (; it1 != docs1->end(); it1++) {
-		    // dest_documents->push_back((*it1));
-		    dest_documents->push_back(new Document((*it1)->get_id()));
+		    dest_documents->push_back((*it1));
+		    // dest_documents->push_back(new Document((*it1)->get_id()));
 		}
 		break;
 	    }
 	}
 	else if ((*it1)->get_id() < (*it2)->get_id()) {
-	    // dest_documents->push_back((*it1));
-	    dest_documents->push_back(new Document((*it1)->get_id()));
+	    dest_documents->push_back((*it1));
+	    // dest_documents->push_back(new Document((*it1)->get_id()));
 
 	    if (++it1 == docs1->end()) {
 		for (; it2 != docs2->end(); it2++) {
-		    // dest_documents->push_back((*it2));
-		    dest_documents->push_back(new Document((*it2)->get_id()));
+		    dest_documents->push_back((*it2));
+		    // dest_documents->push_back(new Document((*it2)->get_id()));
 		}
 		break;
 	    }
 	}
 	else { // id1 == id2
-	    // dest_documents->push_back((*it1));
-	    dest_documents->push_back(new Document((*it1)->get_id()));
+	    dest_documents->push_back((*it1));
+	    // dest_documents->push_back(new Document((*it1)->get_id()));
 
 	    if (it1 + 1 == docs1->end()) {
 		for (it2++; it2 != docs2->end(); it2++) {
-		    // dest_documents->push_back((*it2));
-		    dest_documents->push_back(new Document((*it2)->get_id()));
+		    dest_documents->push_back((*it2));
+		    // dest_documents->push_back(new Document((*it2)->get_id()));
 		}
 		break;
 	    }
 	    if (it2 + 1 == docs2->end()) {
 		for (it1++; it1 != docs1->end(); it1++) {
-		    // dest_documents->push_back((*it1));
-		    dest_documents->push_back(new Document((*it1)->get_id()));
+		    dest_documents->push_back((*it1));
+		    // dest_documents->push_back(new Document((*it1)->get_id()));
 		}
 		break;
 	    }
@@ -389,13 +389,15 @@ bool Documents::dup_check_operation(std::vector<Document *> *docs1, std::vector<
 	if ((*it2)->get_id() < (*it1)->get_id()) {
 	    if (++it2 == docs2->end()) {
 		for (; it1 != docs1->end(); it1++) {
-		    dest_documents->push_back(new Document((*it1)->get_id()));
+		    // dest_documents->push_back(new Document((*it1)->get_id()));
+                    dest_documents->push_back((*it1));
 		}
 		break;
 	    }
 	}
 	else if ((*it1)->get_id() < (*it2)->get_id()) {
-	    dest_documents->push_back(new Document((*it1)->get_id()));
+	    // dest_documents->push_back(new Document((*it1)->get_id()));
+            dest_documents->push_back((*it1));
 	    if (++it1 == docs1->end()) {
 		break;
 	    }
@@ -406,7 +408,8 @@ bool Documents::dup_check_operation(std::vector<Document *> *docs1, std::vector<
 	    }
 	    if (it2 + 1 == docs2->end()) {
 		for (it1++; it1 != docs1->end(); it1++) {
-		    dest_documents->push_back(new Document((*it1)->get_id()));
+		    // dest_documents->push_back(new Document((*it1)->get_id()));
+                    dest_documents->push_back((*it1));
 		}
 		break;
 	    }
@@ -585,110 +588,7 @@ void Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs
     }
 }
 
-// obsolete read_dids function for old index (without features)
-bool Documents::read_dids(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs) {
-    int load_dids = 0;
-    bool already_retrieved_docs_exists = (_already_retrieved_docs != NULL && term_type == 1) ? true : false;
-    s_documents.reserve(ldf);
-    buffer += offset;
-    unsigned char *head_of_offdat = buffer + ldf * SIZEOFINT * 2;
-    unsigned char *head_of_posdat = buffer + ldf * SIZEOFINT * 3;
-    if (already_retrieved_docs_exists) {
-	// load dids with conversion
-	int *docids = new int[ldf];
-	for (int i = 0; i < ldf; i++) {
-	    *(docids + i) = intchar2int(buffer + i * SIZEOFINT);
-	}
-
-	// binary search
-	int head = 0;
-	std::vector<int> *did_list = _already_retrieved_docs->get_list();
-	for (std::vector<int>::iterator it = did_list->begin(), end = did_list->end(); it != end; ++it) {
-	    int tail = ldf - 1;
-	    while (head <= tail) {
-		if (*(docids + ((head + tail) >> 1)) - (*it) > 0) {
-		    tail = ((head + tail) >> 1) - 1;
-		}
-		else if (*(docids + ((head + tail) >> 1)) - (*it) < 0) {
-		    head = ((head + tail) >> 1) + 1;
-		}
-		else {
-		    int i = (head + tail) >> 1;
-		    Document *doc = new Document(*it);
-		    double score = 0.001 * intchar2int(buffer + ldf * 1 * SIZEOFINT + i * SIZEOFINT);
-
-		    int pos_offset = intchar2int(head_of_offdat + i * SIZEOFINT);
-		    int pos_num = intchar2int(head_of_posdat + pos_offset);
-
-
-#ifdef DEBUG
-		    cerr << " " << (*it);
-#endif
-
-		    doc->set_freq(score);
-		    doc->set_gdf(term_df);
-
-		    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
-                    if (__buf == NULL) {
-                        cerr << "Cannot allocate memory for pos." << endl;
-                        exit(1);
-                    }
-		    memcpy (__buf, (head_of_posdat + pos_offset), SIZEOFINT * (pos_num + 1));
-		    doc->set_pos_char(__buf);
-
-		    s_documents.push_back(doc);
-
-		    // map index
-		    __documents_index->add(*it, load_dids);
-		    s_documents_index->add(*it, load_dids);
-		    load_dids++;
-
-		    head = ((head + tail) >> 1) + 1;
-		    break;
-		}
-	    } // end of while
-	}
-    } else {
-	for (int i = 0; i < ldf; i++) {
-	    int did = intchar2int(buffer + i * SIZEOFINT);
-
-#ifdef DEBUG
-	    cerr << " " << did;
-#endif
-	    Document *doc = new Document(did);
-	    double score = 0.001 * intchar2int(buffer + ldf * 1 * SIZEOFINT + i * SIZEOFINT);
-
-	    int pos_offset = intchar2int(buffer + ldf * 2 * SIZEOFINT + i * SIZEOFINT);
-	    int pos_num = intchar2int(buffer + ldf * 3 * SIZEOFINT + pos_offset);
-	    doc->set_freq(score);
-	    doc->set_gdf(term_df);
-//	    cerr << "score = "<< score << " pos_off = " << pos_offset << " pos_num = " << pos_num << endl;
-	    unsigned char *__buf = (unsigned char*) malloc(SIZEOFINT * (pos_num + 1));
-            if (__buf == NULL) {
-                cerr << "Cannot allocate memory for pos." << endl;
-                exit(1);
-            }
-	    memcpy (__buf, (buffer + ldf * 12 + pos_offset), SIZEOFINT * (pos_num + 1));
-	    doc->set_pos_char(__buf);
-
-	    s_documents.push_back(doc);
-
-	    // map index
-	    __documents_index->add(did, load_dids);
-	    s_documents_index->add(did, load_dids);
-
-	    load_dids++;
-
-#ifdef DEBUG
-//		cerr << " i=" << i << " did=" << did << endl;
-#endif
-	}
-    }
-    return true;
-}
-
-
-bool Documents::appendDocument (int i, int did, int load_dids, unsigned char *offdat, unsigned char *posdat) {
+bool Documents::appendDocument(int i, int did, int load_dids, unsigned char *offdat, unsigned char *posdat) {
     Document *doc = new Document(did);
     int pos_offset = intchar2int(offdat + i * SIZEOFINT);
     int num_of_pos = intchar2int(posdat + pos_offset);
@@ -882,8 +782,8 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    doc->set_length(doc_ptr->get_length());
 
 	    // load positions
-	    pos_list_list.push_back(doc->get_pos((*it)->get_featureBits()));
-
+            std::vector<int> *pos_list = doc->get_pos((*it)->get_featureBits());
+	    pos_list_list.push_back(pos_list);
 
 	    string term = (*it)->get_label();
 	    if ((*it)->get_type() == DOCUMENTS_ROOT ||
@@ -914,7 +814,7 @@ bool Documents::walk_or(Document *doc_ptr) {
                     ;
 		}
 	    }
-	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf())));
+	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));
 
 	    // load scores
 	    gdf = (*it)->get_gdf();
@@ -952,7 +852,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	cerr << endl;
 #endif
 
-	score = doc_ptr->calc_okapi(freq, gdf);
+	score = document->calc_okapi(freq, gdf);
     }
     else if (basic_node_score_list.size() == 0 && syn_node_score_list.size() == 2 && include_non_terminal_documents) {
 	if (syn_node_score_list[0] > syn_node_score_list[1]) {
@@ -1082,7 +982,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
-	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf())));
+	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));
 
 #ifdef DEBUG
 	    if (get_type() == DOCUMENTS_ROOT) {
@@ -1428,27 +1328,4 @@ bool Documents::walk_and_or(Document *doc_ptr) {
     default:
         return true;
     }
-}
-
-bool Documents::collectTermPosition(Document *doc_ptr, MAP_IMPL<const char*, std::vector<int> *> *term2pos) {
-    if (get_type() == DOCUMENTS_TERM_STRICT   ||
- 	get_type() == DOCUMENTS_TERM_LENIENT  ||
- 	get_type() == DOCUMENTS_TERM_OPTIONAL ||
- 	get_type() == DOCUMENTS_OR_OPTIONAL) {
-	Document *document = get_doc(doc_ptr->get_id());
-
-	if (document != NULL) {
-	    std::vector<int> *poslist = new std::vector<int>;
-	    std::vector<int> *org = document->get_pos(featureBits);
-	    // コピーしないと消える
-            poslist->reserve(org->size());
-            std::unique_copy(org->begin(), org->end(), std::back_inserter(*poslist));
-	    term2pos->insert(std::pair<const char*, std::vector<int> *>(get_label().c_str(), poslist));
-	}
-    }
-
-    for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it)
-	(*it)->collectTermPosition(doc_ptr, term2pos);
-
-    return true;
 }

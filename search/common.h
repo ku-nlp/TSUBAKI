@@ -177,9 +177,4 @@ extern "C" int length(CELL *list);
 extern "C" void error_in_lisp(void);
 extern "C" void *my_alloc(int n);
 
-// from cdb.h
-extern "C" int cdb_init(struct cdb *cdbp, int fd);
-extern "C" int cdb_find(struct cdb *cdbp, const void *key, unsigned klen);
-extern "C" int cdb_read(const struct cdb *cdbp, void *buf, unsigned len, unsigned pos);
-
 #endif
