@@ -60,38 +60,119 @@ IDX_TOP_DIR := $(DATADIR)/idx
 
 HTML_BASE := $(HTML_TOP_DIR)/????/????
 HTML_DIRS := $(wildcard $(HTML_BASE)??)
+HTML_FIRST_DIRS := $(wildcard $(HTML_TOP_DIR)/????)
 
 XML_BASE := $(XML_TOP_DIR)/????
-XML_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS))
+XML_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS)))
+XML_FIRST_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_FIRST_DIRS))
 XMLS := $(addsuffix .$(XML_SUFFIX)done, $(XML_DIRS))
 
-IDX_BASE := 0000
 HTML_DIR := $(HTML_TOP_DIR)/0000/000000
 XML_DIR := $(XML_TOP_DIR)/0000/000000
 TMP_XML_DIR = $(TMP_DIR)/tmp_xml_$(notdir $(XML_DIR))
-XML_FILES = $(wildcard $(XML_DIR)/*.$(XML_SUFFIX))
-IDX_FILES = $(patsubst $(XML_TOP_DIR)/%.$(XML_SUFFIX),$(IDX_TOP_DIR)/%.$(IDX0_SUFFIX),$(XML_FILES))
+
 
 IDX_DIRS := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(XML_DIRS))
-IDXS := $(addsuffix .$(IDX1_SUFFIX), $(IDX_DIRS))
-URL_TITLES := $(addsuffix .$(URL_TITLE_SUFFIX), $(IDX_DIRS))
 
-FINAL_IDX_DIRS := $(sort $(patsubst %/,%,$(dir $(IDX_DIRS))))
+IDX_FIRST_DIRS := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(XML_FIRST_DIRS))
 
-IDXIDXS := $(addsuffix /$(ID).$(IDX_SUFFIX), $(FINAL_IDX_DIRS))
-DFS := $(addsuffix /$(ID).$(DF_SUFFIX), $(FINAL_IDX_DIRS))
-DOC_LENGTHS := $(addsuffix /$(ID).$(DOC_LENGTH_SUFFIX), $(FINAL_IDX_DIRS))
-URL_DBS := $(addsuffix /$(ID).$(URL_DB_SUFFIX), $(FINAL_IDX_DIRS))
-BINS := $(addsuffix /idx$(ID).word.dat.conv, $(FINAL_IDX_DIRS))
+IDXIDXS := $(addsuffix /$(ID).$(IDX_SUFFIX), $(IDX_FIRST_DIRS))
+DFS := $(addsuffix /$(ID).$(DF_SUFFIX), $(IDX_FIRST_DIRS))
+DOC_LENGTHS := $(patsubst $(IDX_TOP_DIR)/%.$(IDX_SUFFIX), $(IDX_TOP_DIR)/%.$(DOC_LENGTH_SUFFIX), $(IDXIDXS))
+URL_DBS := $(addsuffix /$(ID).$(URL_DB_SUFFIX), $(IDX_FIRST_DIRS))
+BINS := $(addsuffix /idx$(ID).word.dat.conv, $(IDX_FIRST_DIRS))
 
 MERGED_DF_FILE := $(IDX_TOP_DIR)/merged.dffiles
 DFDB := $(IDX_TOP_DIR)/df.word.cdb.0
 
 LAST_MAKEFILE = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 
+# $1: /somewhere/idx/0000/000011
+define make_idx1
+$(eval IDX1_FILE_$1 := $(1).$(IDX1_SUFFIX))
+$(eval XML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
+$(eval XML_FILES_$1 := $(sort $(wildcard $(XML_DIR_$1)/*.$(XML_SUFFIX))))
+$(eval IDX0_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%.$(XML_SUFFIX),$(IDX_TOP_DIR)/%.$(IDX0_SUFFIX),$(XML_FILES_$1)))
+$(IDX1_FILE_$1): $(IDX0_FILES_$1)
+	mkdir -p $$(basename $$@).idx.tmp && \
+	$(PERL) $(BASEDIR)/scripts/merge_idx.pl -dir $$(basename $$@) -suffix $(IDX0_SUFFIX) -outdir $$(basename $$@).idx.tmp -n 50 && \
+	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $$(basename $$@).idx.tmp -suffix $(IDX0_SUFFIX) > $$@ && \
+	rm -rf $$(basename $$@).idx.tmp
+# an idx file of 10000 docs
+$(IDX0_FILES_$1): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX)
+	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
+	if [ ! -d "$$(dir $$@)" ]; then mkdir -p $$(dir $$@); fi && \
+	$(PERL) -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $(sf2term_args) $$< > $(TMP_DIR)/$$(notdir $$@) && \
+	mv $(TMP_DIR)/$$(notdir $$@) $$@
+endef
+
+$(foreach IDX_DIR, $(IDX_DIRS), \
+  $(eval $(call make_idx1,$(IDX_DIR))))
+
+# $1: /somewhere/idx/0000/000011
+define make_xmllist
+$(eval XML_LIST_FILE_$1 := $(1).$(XML_LIST_SUFFIX))
+$(eval XML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
+$(eval XML_FILES_$1 := $(sort $(wildcard $(XML_DIR_$1)/*.$(XML_SUFFIX))))
+$(XML_LIST_FILE_$1): $(XML_FILES_$1)
+	mkdir -p $$(dir $$@) && for f in $$^; do echo $$$$f; done > $$@
+endef
+
+$(foreach IDX_DIR, $(IDX_DIRS), \
+  $(eval $(call make_xmllist,$(IDX_DIR))))
+
+
+# $1: /somewhere/idx/0000
+define make_sid2tid
+$(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
+$(eval XML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
+$(eval XML_DIRS_EACH_$1 := $(wildcard $(XML_FIRST_DIR_$1)/??????))
+$(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
+$(SID2TID_FILE_$1): $(IDX1_FILES_$1)
+	mkdir -p $$(dir $$@) && \
+	$(PERL) $(BASEDIR)/scripts/make-mapfile.perl $$(dir $$@)*.$(IDX1_SUFFIX) > $$(dir $$@)/000.$(SID2TID_SUFFIX) && \
+	if [ -e $$@ ]; then rm -f $$@; fi && ln -s $$(dir $$@)000.$(SID2TID_SUFFIX) $$@
+endef
+
+$(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
+  $(eval $(call make_sid2tid,$(IDX_FIRST_DIR))))
+
+# $1: /somewhere/idx/0000
+define make_idxidx
+$(eval IDXIDX_FILE_$1 := $(1)/000.$(IDX_SUFFIX))
+$(eval XML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
+$(eval XML_DIRS_EACH_$1 := $(wildcard $(XML_FIRST_DIR_$1)/??????))
+$(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
+$(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
+$(IDXIDX_FILE_$1): $(IDX1_FILES_$1) $(SID2TID_FILE_$1)
+	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $$(dir $$@) -mapfile $(SID2TID_FILE_$1) -suffix $(IDX1_SUFFIX) > $$@
+endef
+
+$(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
+  $(eval $(call make_idxidx,$(IDX_FIRST_DIR))))
+
+# $1: /somewhere/idx/0000
+define make_urltitle_all
+$(eval URL_TITLE_FILE_$1 := $(1)/000.$(URL_TITLE_SUFFIX))
+$(eval XML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
+$(eval XML_DIRS_EACH_$1 := $(sort $(wildcard $(XML_FIRST_DIR_$1)/??????)))
+$(eval XML_LIST_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX),$(XML_DIRS_EACH_$1)))
+$(eval URL_TITLE_FILES_$1 := $(patsubst $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX),$(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX),$(XML_LIST_FILES_$1)))
+$(URL_TITLE_FILE_$1):$(URL_TITLE_FILES_$1)
+	cat $$^ > $$@
+
+$(URL_TITLE_FILES_$1): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX)
+	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
+	$(PERL) $(BASEDIR)/scripts/extract-url-title.perl -files $$< > $(TMP_DIR)/$$(notdir $$@) && \
+	mv $(TMP_DIR)/$$(notdir $$@) $$@
+endef
+
+$(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
+  $(eval $(call make_urltitle_all,$(IDX_FIRST_DIR))))
+
 all: indexing
 
-indexing: $(IDXIDXS) $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
+indexing: $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
 
 html2sf: $(HTML_TOP_DIR)
 	$(MAKE) -f $(LAST_MAKEFILE) DATADIR=$(DATADIR) xml
@@ -111,62 +192,10 @@ each_sf:
 	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(TMP_XML_DIR) -outdir $(XML_DIR) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log -embed_result_in_xml -print_progress && \
 	rm -rf $(TMP_XML_DIR) $(TMP_DIR)/www2sf_$(notdir $(XML_DIR)).log $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log
 
-each_idx: $(IDX_FILES)
-
-idxs: $(IDXS)
-
-url_titles: $(URL_TITLES)
-
 # XML files of 10000 docs
 $(XML_TOP_DIR)/%.$(XML_SUFFIX)done:
 	$(MAKE) -f $(LAST_MAKEFILE) XML_DIR=$(basename $@) HTML_DIR=$(patsubst $(XML_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(basename $@)) each_sf && \
 	touch $@
-
-# an idx file of 10000 docs
-$(IDX_FILES): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX)
-	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
-	$(PERL) -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $(sf2term_args) $< > $(TMP_DIR)/$(notdir $@) && \
-	mv $(TMP_DIR)/$(notdir $@) $@
-
-# an idx file of 10000 docs
-$(IDX_TOP_DIR)/%.idx0done:
-	$(MAKE) -f $(LAST_MAKEFILE) IDX_DIR=$(basename $@) XML_DIR=$(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(basename $@)) each_idx && \
-	touch $@
-
-# 100 idx files of 10000 docs
-$(IDXS): $(IDX_TOP_DIR)/%.$(IDX1_SUFFIX): $(IDX_TOP_DIR)/%.idx0done
-	mkdir -p $(basename $@).idx.tmp && \
-	$(PERL) $(BASEDIR)/scripts/merge_idx.pl -dir $(basename $@) -suffix $(IDX0_SUFFIX) -outdir $(basename $@).idx.tmp -n 50 && \
-	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $(basename $@).idx.tmp -suffix $(IDX0_SUFFIX) > $@ && \
-	rm -rf $(basename $@).idx.tmp
-
-$(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX):
-	mkdir -p $(dir $@) && for f in $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(basename $@))/*.$(XML_SUFFIX); do echo $$f; done > $@
-
-$(URL_TITLES): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX)
-	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	$(PERL) $(BASEDIR)/scripts/extract-url-title.perl -files $< > $(TMP_DIR)/$(notdir $@) && \
-	mv $(TMP_DIR)/$(notdir $@) $@
-
-# 100 idx files of 10000 docs
-$(IDX_TOP_DIR)/%.idx1done:
-	$(MAKE) -f $(LAST_MAKEFILE) XML_BASE=$(patsubst %/,%,$(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(dir $@))) idxs url_titles && \
-	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
-	touch $@
-
-# mapfile for 1M docs
-$(IDX_TOP_DIR)/%.$(SID2TID_SUFFIX): $(IDX_TOP_DIR)/%.idx1done
-	mkdir -p $(dir $@) && \
-	$(PERL) $(BASEDIR)/scripts/make-mapfile.perl $(dir $@)*.$(IDX1_SUFFIX) > $@ && \
-	ln -s $@ $(dir $@)$(SID2TID_SUFFIX)
-
-$(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.idx1done
-	cat $(dir $@)*.$(URL_TITLE_SUFFIX) > $(dir $@)000.$(URL_TITLE_SUFFIX)
-
-# index files of 1M docs (0000/000.idx, 0001/000.idx, ...)
-$(IDXIDXS): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX): $(IDX_TOP_DIR)/%.$(SID2TID_SUFFIX)
-	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $(dir $@) -mapfile $< -suffix $(IDX1_SUFFIX) > $@
 
 $(BINS): $(IDX_TOP_DIR)/%/idx$(ID).word.dat.conv: $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
 	$(PERL) -I $(UtilsDir)/perl -I $(BASEDIR)/scripts $(BASEDIR)/scripts/binarize_idx.pl -syn $<
@@ -189,4 +218,4 @@ $(DFDB): $(MERGED_DF_FILE)
 	$(PERL) -I $(UtilsDir)/perl $(BASEDIR)/scripts/make-df-db.perl --dir $(IDX_TOP_DIR) < $<
 
 clean:
-	rm -rf $(TMP_DIR) $(FINAL_IDX_DIRS) $(IDX_DIRS) $(IDXIDXS) $(DFS) $(DOC_LENGTHS) $(IDX_TOP_DIR)/*.$(IDX1_SUFFIX) $(IDX_TOP_DIR)/*.$(IDX1_SUFFIX)done $(IDX_TOP_DIR)/*.$(IDX0_SUFFIX)done $(IDX_TOP_DIR)/*.$(SID2TID_SUFFIX) $(URL_TITLES) $(IDX_TOP_DIR)/*.$(XML_LIST_SUFFIX) $(MERGED_DF_FILE) $(IDX_TOP_DIR)/df.* $(XML_TOP_DIR)/*.$(XML_SUFFIX)done $(HTML_TOP_DIR) $(XML_TOP_DIR) $(IDX_TOP_DIR)
+	rm -rf $(TMP_DIR) $(HTML_TOP_DIR) $(XML_TOP_DIR) $(IDX_TOP_DIR)
