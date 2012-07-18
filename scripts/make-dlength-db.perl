@@ -13,8 +13,6 @@ use utf8;
 use Getopt::Long;
 use Storable;
 
-binmode(STDOUT, ':encoding(euc-jp)');
-
 my (%opt); GetOptions(\%opt, 'z', 'txt');
 
 foreach my $fp (@ARGV) {
