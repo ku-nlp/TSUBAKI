@@ -223,7 +223,7 @@ sub _getRep2Style {
 	my $j = $i % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
 	foreach my $synnodes ($kihonkus->[$i]->synnodes) {
 	    foreach my $synnode ($synnodes->synnode) {
-		next if ($synnode->synid =~ /s\d+/ && $option->{disable_synnode});
+		next if ($synnode->synid =~ /^s\d+/ && $option->{disable_synnode});
 		my $key = sprintf ("%s%s", $option->{ignore_yomi} ? &remove_yomi(lc($synnode->synid)) : lc($synnode->synid), $synnode->feature);
 		$rep2style{$key} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
 	    }
@@ -301,7 +301,7 @@ sub _create4phrase {
 	}
 
 	# 係り受けタームの追加
-	&_pushbackDependencyTerms(\@terms, \%optionals, $kihonku, $gid, $count, $opt);
+	&_pushbackDependencyTerms(\@terms, \%optionals, $kihonku, $gid, $count, $opt) if $opt->{option}{flag_of_dpnd_use};
     }
 
     return (\@terms, \%optionals);
@@ -345,7 +345,7 @@ sub _create {
 	}
 
 	# 係り受けタームの追加
-	&_pushbackDependencyTerms (\@terms, \%optionals, $kihonku, $gid, $count, $option);
+	&_pushbackDependencyTerms(\@terms, \%optionals, $kihonku, $gid, $count, $option) if $option->{flag_of_dpnd_use};
     }
 
     return (\@terms, \%optionals);
@@ -468,7 +468,7 @@ sub _createTermGroup {
 	}
 
 	# SYNノードを利用しない場合
-	next if ($_midasi =~ /s\d+/ && $opt->{option}{disable_synnode});
+	next if ($_midasi =~ /^s\d+/ && $opt->{option}{disable_synnode});
 
 	# 文法素性の削除
 	$_midasi = &removeSyntacticFeatures($_midasi);
