@@ -48,15 +48,15 @@ foreach my $fp (@ARGV) {
     }
     close(READER);
 
-    $fp =~ s/.idx(.gz)?$//;
+    $fp =~ s|[^/]*.idx(.gz)?$||; # get the dirname
     if ($opt{txt}) { # txt形式
-	open(OUT, "> $fp.doc_length.txt") or die;
+	open(OUT, "> ${fp}doc_length.txt") or die;
 	foreach my $did (keys %doc_length) {
 	    printf OUT "%s %d\n", $did, $doc_length{$did};
 	}
 	close(OUT);
     }
     else { # Storable形式
-	store(\%doc_length, "$fp.doc_length.bin") or die;
+	store(\%doc_length, "${fp}doc_length.bin") or die;
     }
 }
