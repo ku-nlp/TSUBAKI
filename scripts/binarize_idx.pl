@@ -143,18 +143,18 @@ sub main4create {
 	my $lcnt = 0;
 	my $bins;
 	if ($opt{syn}) {
-	    my $idxf_w = ($opt{legacy_mode}) ? "${DIR}/idx$NAME.word.dat" : "${DIR}/idx$NAME.word.dat.conv";
-	    my $idxf_d = ($opt{legacy_mode}) ? "${DIR}/idx$NAME.dpnd.dat" : "${DIR}/idx$NAME.dpnd.dat.conv";
-	    my $offf_w = ($opt{legacy_mode}) ? "${DIR}/offset$NAME.word.cdb" : "${DIR}/offset$NAME.word.conv.cdb";
-	    my $offf_d = ($opt{legacy_mode}) ? "${DIR}/offset$NAME.dpnd.cdb" : "${DIR}/offset$NAME.dpnd.conv.cdb";
+	    my $idxf_w = "${DIR}/idx.word.dat";
+	    my $idxf_d = "${DIR}/idx.dpnd.dat";
+	    my $offf_w = "${DIR}/offset.word.cdb";
+	    my $offf_d = "${DIR}/offset.dpnd.cdb";
 	    $bins = {
 		word => new SynGraphBinarizer($wordth, $idxf_w, $offf_w, 1, $opt{legacy_mode}, $opt{verbose}, $opt{'32bit'}),
 		dpnd => new SynGraphBinarizer($dpndth, $idxf_d, $offf_d, 1, $opt{legacy_mode}, $opt{verbose}, $opt{'32bit'})
 	    };
 	} else {
 	    $bins = {
-		word => new Binarizer($wordth, "${DIR}/idx$NAME.word.dat", "${DIR}/offset$NAME.word.cdb", 1, $opt{verbose}),
-		dpnd => new Binarizer($dpndth, "${DIR}/idx$NAME.dpnd.dat", "${DIR}/offset$NAME.dpnd.cdb", 1, $opt{verbose})
+		word => new Binarizer($wordth, "${DIR}/idx.word.dat", "${DIR}/offset.word.cdb", 1, $opt{verbose}),
+		dpnd => new Binarizer($dpndth, "${DIR}/idx.dpnd.dat", "${DIR}/offset.dpnd.cdb", 1, $opt{verbose})
 	    };
 	}
 
