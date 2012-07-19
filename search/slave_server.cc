@@ -139,20 +139,20 @@ bool pushback_file_handle(string file) {
 }
 
 bool init(string index_dir, string anchor_index_dir, int TSUBAKI_SLAVE_PORT, char *HOSTNAME) {
-    std::string index_word_file         = index_dir + "/idx000.word.dat.conv";
-    std::string index_dpnd_file         = index_dir + "/idx000.dpnd.dat.conv";
-    std::string offset_word_file        = index_dir + "/offset000.word.conv.cdb.keymap";
-    std::string offset_dpnd_file        = index_dir + "/offset000.dpnd.conv.cdb.keymap";
+    std::string index_word_file         = index_dir + "/idx.word.dat";
+    std::string index_dpnd_file         = index_dir + "/idx.dpnd.dat";
+    std::string offset_word_file        = index_dir + "/offset.word.cdb.keymap";
+    std::string offset_dpnd_file        = index_dir + "/offset.dpnd.cdb.keymap";
     std::string tid2sid_file            = index_dir + "/sid2tid";
     std::string sid2url_file            = index_dir + "/did2url.cdb";
     std::string sid2title_file          = index_dir + "/did2title.cdb";
-    std::string tid2length_file         = index_dir + "/000.doc_length.txt";
+    std::string tid2length_file         = index_dir + "/doc_length.txt";
     std::string rmfiles                 = index_dir + "/rmfiles";
     std::string pagerank_file           = index_dir + "/pagerank.txt";
-    std::string anchor_index_word_file  = anchor_index_dir + "/idx000.word.dat.conv";
-    std::string anchor_index_dpnd_file  = anchor_index_dir + "/idx000.dpnd.dat.conv";
-    std::string anchor_offset_word_file = anchor_index_dir + "/offset000.word.conv.cdb.keymap";
-    std::string anchor_offset_dpnd_file = anchor_index_dir + "/offset000.dpnd.conv.cdb.keymap";
+    std::string anchor_index_word_file  = anchor_index_dir + "/idx.word.dat";
+    std::string anchor_index_dpnd_file  = anchor_index_dir + "/idx.dpnd.dat";
+    std::string anchor_offset_word_file = anchor_index_dir + "/offset.word.cdb.keymap";
+    std::string anchor_offset_dpnd_file = anchor_index_dir + "/offset.dpnd.cdb.keymap";
 
     pushback_file_handle (index_word_file);
     pushback_file_handle (index_dpnd_file);

@@ -1,4 +1,4 @@
-ID := 000
+ID := all
 IDX0_SUFFIX := idx0
 BASEDIR := @SearchEnginePath@
 
@@ -78,9 +78,9 @@ IDX_FIRST_DIRS := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(XML_FIRST_DIRS)
 
 IDXIDXS := $(addsuffix /$(ID).$(IDX_SUFFIX), $(IDX_FIRST_DIRS))
 DFS := $(addsuffix /$(ID).$(DF_SUFFIX), $(IDX_FIRST_DIRS))
-DOC_LENGTHS := $(patsubst $(IDX_TOP_DIR)/%.$(IDX_SUFFIX), $(IDX_TOP_DIR)/%.$(DOC_LENGTH_SUFFIX), $(IDXIDXS))
-URL_DBS := $(addsuffix /$(ID).$(URL_DB_SUFFIX), $(IDX_FIRST_DIRS))
-BINS := $(addsuffix /idx$(ID).word.dat.conv, $(IDX_FIRST_DIRS))
+DOC_LENGTHS := $(patsubst $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX), $(IDX_TOP_DIR)/%/$(DOC_LENGTH_SUFFIX), $(IDXIDXS))
+URL_DBS := $(addsuffix /$(URL_DB_SUFFIX), $(IDX_FIRST_DIRS))
+BINS := $(addsuffix /idx.word.dat, $(IDX_FIRST_DIRS))
 
 MERGED_DF_FILE := $(IDX_TOP_DIR)/merged.dffiles
 DFDB := $(IDX_TOP_DIR)/df.word.cdb.0
@@ -130,8 +130,7 @@ $(eval XML_DIRS_EACH_$1 := $(wildcard $(XML_FIRST_DIR_$1)/??????))
 $(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
 $(SID2TID_FILE_$1): $(IDX1_FILES_$1)
 	mkdir -p $$(dir $$@) && \
-	$(PERL) $(BASEDIR)/scripts/make-mapfile.perl $$(dir $$@)*.$(IDX1_SUFFIX) > $$(dir $$@)/000.$(SID2TID_SUFFIX) && \
-	if [ -e $$@ ]; then rm -f $$@; fi && ln -s $$(dir $$@)000.$(SID2TID_SUFFIX) $$@
+	$(PERL) $(BASEDIR)/scripts/make-mapfile.perl $$(dir $$@)*.$(IDX1_SUFFIX) > $$@
 endef
 
 $(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
@@ -139,7 +138,7 @@ $(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
 
 # $1: /somewhere/idx/0000
 define make_idxidx
-$(eval IDXIDX_FILE_$1 := $(1)/000.$(IDX_SUFFIX))
+$(eval IDXIDX_FILE_$1 := $(1)/$(ID).$(IDX_SUFFIX))
 $(eval XML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
 $(eval XML_DIRS_EACH_$1 := $(wildcard $(XML_FIRST_DIR_$1)/??????))
 $(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
@@ -153,7 +152,7 @@ $(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
 
 # $1: /somewhere/idx/0000
 define make_urltitle_all
-$(eval URL_TITLE_FILE_$1 := $(1)/000.$(URL_TITLE_SUFFIX))
+$(eval URL_TITLE_FILE_$1 := $(1)/$(URL_TITLE_SUFFIX))
 $(eval XML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
 $(eval XML_DIRS_EACH_$1 := $(sort $(wildcard $(XML_FIRST_DIR_$1)/??????)))
 $(eval XML_LIST_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX),$(XML_DIRS_EACH_$1)))
@@ -197,19 +196,17 @@ $(XML_TOP_DIR)/%.$(XML_SUFFIX)done:
 	$(MAKE) -f $(LAST_MAKEFILE) XML_DIR=$(basename $@) HTML_DIR=$(patsubst $(XML_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(basename $@)) each_sf && \
 	touch $@
 
-$(BINS): $(IDX_TOP_DIR)/%/idx$(ID).word.dat.conv: $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
+$(BINS): $(IDX_TOP_DIR)/%/idx.word.dat: $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
 	$(PERL) -I $(UtilsDir)/perl -I $(BASEDIR)/scripts $(BASEDIR)/scripts/binarize_idx.pl -syn $<
 
 $(DFS): $(IDX_TOP_DIR)/%.$(DF_SUFFIX): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX)
 	$(PERL) $(BASEDIR)/scripts/idx2df.pl $<
 
-$(DOC_LENGTHS): $(IDX_TOP_DIR)/%.$(DOC_LENGTH_SUFFIX): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX)
+$(DOC_LENGTHS): $(IDX_TOP_DIR)/%/$(DOC_LENGTH_SUFFIX): $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
 	$(PERL) $(BASEDIR)/scripts/make-dlength-db.perl -txt $<
 
-$(URL_DBS): $(IDX_TOP_DIR)/%.$(URL_DB_SUFFIX): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX)
-	$(PERL) $(BASEDIR)/scripts/make-url-title-cdbs.perl --titledb $(patsubst %.$(URL_DB_SUFFIX),%.$(TITLE_DB_SUFFIX),$@) --urldb $@ $< && \
-	ln -s $@ $(dir $@)$(URL_DB_SUFFIX) && \
-	ln -s $(patsubst %.$(URL_DB_SUFFIX),%.$(TITLE_DB_SUFFIX),$@) $(dir $@)$(TITLE_DB_SUFFIX)
+$(URL_DBS): $(IDX_TOP_DIR)/%$(URL_DB_SUFFIX): $(IDX_TOP_DIR)/%$(URL_TITLE_SUFFIX)
+	$(PERL) $(BASEDIR)/scripts/make-url-title-cdbs.perl --titledb $(patsubst %$(URL_DB_SUFFIX),%$(TITLE_DB_SUFFIX),$@) --urldb $@ $<
 
 $(MERGED_DF_FILE): $(DFS)
 	$(PERL) $(BASEDIR)/scripts/merge_dffiles.perl $^ > $@
