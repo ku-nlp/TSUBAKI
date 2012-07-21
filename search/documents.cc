@@ -139,7 +139,7 @@ bool Documents::merge_and(CELL *cell, DocumentBuffer *_already_retrieved_docs) {
 	}
 	// get_type() == DOCUMENTS_ROOT でここに来る場合は、オプショナル or アンカーに関するターム
 	else if (get_type() == DOCUMENTS_ROOT) {
-	    if (next_documents->get_type() == DOCUMENTS_OR)
+	    if (next_documents->get_type() == DOCUMENTS_OR || next_documents->get_type() == DOCUMENTS_OR_MAX)
 		next_documents->set_type(DOCUMENTS_OR_OPTIONAL);
 	    cell = cdr(cell);
 	    continue;
@@ -551,6 +551,14 @@ void Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs
 	if (VERBOSE)
 	    cout << "merge_or = " << 1000 * (end - start) << " [ms]" << endl;
     }
+    else if (Atomp(car(cell)) && !strcmp((char *)_Atom(car(cell)), "OR_MAX")) {
+	set_type(DOCUMENTS_OR_MAX);
+	double start = (double) gettimeofday_sec();
+	merge_or(cdr(cell), _already_retrieved_docs);
+	double end = (double) gettimeofday_sec();
+	if (VERBOSE)
+	    cout << "merge_or = " << 1000 * (end - start) << " [ms]" << endl;
+    }
     else {
 	double start = (double) gettimeofday_sec();
 
@@ -772,7 +780,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::vector<double> syn_node_score_list;
     std::vector<double> syn_node_freq_list;
     std::vector<std::vector<int> *> pos_list_list;
-    double gdf = 0;
+    std::vector<std::vector<double> *> score_list_list;
     bool include_non_terminal_documents = false;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	Document *doc = (*it)->get_doc(doc_ptr->get_id());
@@ -784,12 +792,14 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    // load positions
             std::vector<int> *pos_list = doc->get_pos((*it)->get_featureBits());
 	    pos_list_list.push_back(pos_list);
+	    score_list_list.push_back(doc->get_score_list());
 
 	    string term = (*it)->get_label();
 	    if ((*it)->get_type() == DOCUMENTS_ROOT ||
 		(*it)->get_type() == DOCUMENTS_AND ||
 		(*it)->get_type() == DOCUMENTS_OR ||
 		(*it)->get_type() == DOCUMENTS_OR_OPTIONAL ||
+		(*it)->get_type() == DOCUMENTS_OR_MAX ||
 		(*it)->get_type() == DOCUMENTS_PHRASE ||
 		(*it)->get_type() == DOCUMENTS_PROX ||
 		(*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
@@ -806,6 +816,8 @@ bool Documents::walk_or(Document *doc_ptr) {
 		    term = "OR"; break;
 		case DOCUMENTS_OR_OPTIONAL:
 		    term = "OR_OPTIONAL"; break;
+		case DOCUMENTS_OR_MAX:
+		    term = "OR_MAX"; break;
 		case DOCUMENTS_PROX:
 		    term = "PROX"; break;
 		case DOCUMENTS_ORDERED_PROX:
@@ -817,13 +829,9 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));
 
 	    // load scores
-	    gdf = (*it)->get_gdf();
 	    if ((*it)->isRetrievedByBasicNode()) {
 		basic_node_score_list.push_back(doc->get_score());
 		basic_node_freq_list.push_back(doc->get_freq());
-#ifdef DEBUG
-		cerr << "GDF: " << gdf << endl;
-#endif
 	    } else {
 		syn_node_score_list.push_back(doc->get_score());
 		syn_node_freq_list.push_back(doc->get_freq());
@@ -831,48 +839,9 @@ bool Documents::walk_or(Document *doc_ptr) {
 	}
     }
 
-    // calculate scores
-    double score = 0;
-    if (!include_non_terminal_documents) {
-	double basic_node_freq = (basic_node_freq_list.size() > 0) ? basic_node_freq_list.front() : syn_node_freq_list.front();
-	double freq = basic_node_freq;
-#ifdef DEBUG
-	cerr << "NODE FREQ " << freq;
-#endif
-	for (std::vector<double>::iterator it = syn_node_freq_list.begin(), end = syn_node_freq_list.end(); it != end; ++it) {
-	    double diff = (*it) - basic_node_freq;
-	    if (diff > 0) {
-		freq += diff;
-#ifdef DEBUG
-		cerr << " + " << diff;
-#endif
-	    }
-	}
-#ifdef DEBUG
-	cerr << endl;
-#endif
-
-	score = document->calc_okapi(freq, gdf);
-    }
-    else if (basic_node_score_list.size() == 0 && syn_node_score_list.size() == 2 && include_non_terminal_documents) {
-	if (syn_node_score_list[0] > syn_node_score_list[1]) {
-	    score = syn_node_score_list[0];
-	} else {
-	    score = syn_node_score_list[1];
-	}
-    } else {
-        score = std::accumulate(syn_node_score_list.begin(), syn_node_score_list.end(), score);
-        score = std::accumulate(basic_node_score_list.begin(), basic_node_score_list.end(), score);
-    }
-    document->set_score(score);
-#ifdef DEBUG
-    cerr << "OR DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
-#endif
-
-
     int target_num = pos_list_list.size();
     unsigned int sorted_int[target_num], tid2idx[target_num];
-    for (int i = 0, size = pos_list_list.size(); i < size; ++i) {
+    for (int i = 0; i < target_num; i++) {
 	tid2idx[i] = 0;
 	sorted_int[i] = i;
     }
@@ -881,7 +850,8 @@ bool Documents::walk_or(Document *doc_ptr) {
     for (int i = 0; i < target_num - 1; i++) {
 	for (int j = 0; j < target_num - i - 1; j++) {
 	    if (pos_list_list[sorted_int[j]]->front() == -1 ||
-		pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()) {
+		(pos_list_list[sorted_int[j + 1]]->front() != -1 &&
+                 pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front())) {
                 std::swap(sorted_int[j], sorted_int[j + 1]);
 	    }
 	}
@@ -890,30 +860,53 @@ bool Documents::walk_or(Document *doc_ptr) {
     int best_pos = -1;
     int prev_pos = -1;
     std::vector<int> pos_list;
+    std::vector<double> score_list;
+    double freq = 0;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
-//	int cur_pos = pos_list_list[sorted_int[0]]->front();
-//	pos_list_list[sorted_int[0]]->erase(pos_list_list[sorted_int[0]]->begin());
 	if (cur_pos == -1) {
 	    break;
 	}
+        double cur_score = score_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
 	best_pos = cur_pos;
 	tid2idx[sorted_int[0]]++;
 
 	// remove duplicate position
-	if (cur_pos > prev_pos)
+	if (cur_pos > prev_pos) {
 	    pos_list.push_back(cur_pos);
+            score_list.push_back(cur_score);
+            freq += cur_score;
+        }
 	prev_pos = cur_pos;
 
 	// std::sort(&(sorted_int[0]), &(sorted_int[pos_list_list.size()]), sort_by_term_pos);
 	for (int i = 0; i < target_num - 1; i++) {
-	    if (pos_list_list[sorted_int[i]]->front() == -1 ||
-		pos_list_list[sorted_int[i]]->front() > pos_list_list[sorted_int[i + 1]]->front()) {
+	    if (pos_list_list[sorted_int[i]]->at(tid2idx[sorted_int[i]]) == -1 ||
+                (pos_list_list[sorted_int[i + 1]]->at(tid2idx[sorted_int[i + 1]]) != -1 &&
+                 pos_list_list[sorted_int[i]]->at(tid2idx[sorted_int[i]]) > pos_list_list[sorted_int[i + 1]]->at(tid2idx[sorted_int[i + 1]]))) {
                 std::swap(sorted_int[i], sorted_int[i + 1]);
 	    }
 	}
-    } // end of while
+    }
     pos_list.push_back(-1);
+
+    // calculate scores
+    double score = 0;
+    if (!include_non_terminal_documents || type == DOCUMENTS_OR_MAX) {
+#ifdef DEBUG
+	cerr << "NODE FREQ " << freq << endl;
+#endif
+	document->set_freq(freq);
+	score = document->calc_okapi(freq);
+    }
+    else {
+        score = std::accumulate(syn_node_score_list.begin(), syn_node_score_list.end(), score);
+        score = std::accumulate(basic_node_score_list.begin(), basic_node_score_list.end(), score);
+    }
+    document->set_score(score);
+#ifdef DEBUG
+    cerr << "OR DID: " << doc_ptr->get_id() << " TOTAL_SCORE: " << document->get_score() << endl;
+#endif
 
 #ifdef DEBUG
     cerr << "OR DID: " << doc_ptr->get_id();
@@ -924,7 +917,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     cerr << endl;
 #endif
 
-    document->set_term_pos("OR", &pos_list);
+    document->set_term_pos("OR", &pos_list, &score_list);
     document->set_best_pos(best_pos);
     document->set_best_region(best_pos, best_pos);
 
@@ -939,6 +932,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 
     double score = 0;
     std::vector<std::vector<int> *> pos_list_list;
+    std::vector<std::vector<double> *> score_list_list;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	Document *doc = (*it)->get_doc(doc_ptr->get_id());
 
@@ -959,6 +953,8 @@ bool Documents::walk_and(Document *doc_ptr) {
 		term = "OR"; break;
 	    case DOCUMENTS_OR_OPTIONAL:
 		term = "OR_OPTIONAL"; break;
+	    case DOCUMENTS_OR_MAX:
+		term = "OR_MAX"; break;
 	    case DOCUMENTS_PROX:
 		term = "PROX"; break;
 	    case DOCUMENTS_ORDERED_PROX:
@@ -974,11 +970,13 @@ bool Documents::walk_and(Document *doc_ptr) {
 		(*it)->get_type() == DOCUMENTS_AND ||
 		(*it)->get_type() == DOCUMENTS_OR ||
 		(*it)->get_type() == DOCUMENTS_OR_OPTIONAL ||
+		(*it)->get_type() == DOCUMENTS_OR_MAX ||
 		(*it)->get_type() == DOCUMENTS_ROOT ||
 		(*it)->get_type() == DOCUMENTS_PHRASE ||
 		(*it)->get_type() == DOCUMENTS_PROX ||
 		(*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		pos_list_list.push_back(pos_list);
+                score_list_list.push_back(doc->get_score_list());
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();
@@ -1016,11 +1014,9 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    document->set_proximate_feature();
 	}
 
-	document->set_term_pos("ROOT", pos_list_list[0]);
-
+	document->set_term_pos("ROOT", pos_list_list[0], score_list_list[0]);
 	return true;
     }
-
 
     /*
      * 近接のチェック
@@ -1040,7 +1036,8 @@ bool Documents::walk_and(Document *doc_ptr) {
     for (int i = 0; i < target_num - 1; i++) {
 	for (int j = 0; j < target_num - i - 1; j++) {
 	    if (pos_list_list[sorted_int[j]]->front() == -1 ||
-		pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front()) {
+		(pos_list_list[sorted_int[j + 1]]->front() != -1 &&
+                 pos_list_list[sorted_int[j]]->front() > pos_list_list[sorted_int[j + 1]]->front())) {
                 std::swap(sorted_int[j], sorted_int[j + 1]);
 	    }
 	}
@@ -1052,6 +1049,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     int region = MAX_LENGTH_OF_DOCUMENT;
     unsigned int backup_tid2idx[target_num];
     std::vector<int> pos_list;
+    std::vector<double> score_list;
     bool skip_first = false;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
@@ -1070,15 +1068,15 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    }
 	    backup_tid2idx[0]++;
 	}
+
+        double cur_score = score_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
 	tid2idx[sorted_int[0]]++;
 	pos_record[sorted_int[0]] = cur_pos;
-
 
 	bool flag = true;
 	int begin = pos_record[0];
 	int end = 0;
 	int total = 0;
-
 	if (get_type() == DOCUMENTS_ORDERED_PROX) {
 	    for (int i = 0; i < target_num; i++) {
 		if (pos_record[i] < 0) {
@@ -1126,9 +1124,9 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    best_pos = ave;
 
 	    pos_list.push_back(ave);
+            score_list.push_back(cur_score);
 	    document->set_phrase_feature();
 	}
-
 
 	if (flag && get_type() == DOCUMENTS_ORDERED_PROX) {
 	    for (int i = 0; i < target_num; i++) {
@@ -1159,7 +1157,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     }
 
     pos_list.push_back(-1);
-    document->set_term_pos("AND", &pos_list);
+    document->set_term_pos("AND", &pos_list, &score_list);
     document->set_best_pos(best_pos);
     document->set_best_region(best_begin, best_begin + region);
 
@@ -1199,7 +1197,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 
 	// for TERM_OPTIONAL documents
 	if (doc) {
-	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_OR_OPTIONAL || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
+	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_OR_OPTIONAL || (*it)->get_type() == DOCUMENTS_OR_MAX || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
 		pos_list_list.push_back(doc->get_pos((*it)->get_featureBits()));
 		document->set_best_pos(doc->get_best_pos());
 	    }
@@ -1229,7 +1227,6 @@ bool Documents::check_phrase (Document *doc_ptr) {
     std::vector<int> pos_list;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->front();
-
 	pos_list_list[sorted_int[0]]->erase(pos_list_list[sorted_int[0]]->begin());
 	if (cur_pos == -1) {
 	    break;
@@ -1289,13 +1286,12 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 	return true;
     }
 
-
-    bool approximate_check_for_children = (get_type() == DOCUMENTS_OR) ? false : true;
+    bool approximate_check_for_children = (get_type() == DOCUMENTS_OR || get_type() == DOCUMENTS_OR_MAX) ? false : true;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	bool ret = (*it)->walk_and_or(doc_ptr);
 
 	// 自分が OR ならば...
-	if (get_type() == DOCUMENTS_OR) {
+	if (get_type() == DOCUMENTS_OR || get_type() == DOCUMENTS_OR_MAX) {
 	    if (ret) {
 		approximate_check_for_children = true;
 	    }
@@ -1323,6 +1319,7 @@ bool Documents::walk_and_or(Document *doc_ptr) {
 
     case DOCUMENTS_OR:
     case DOCUMENTS_OR_OPTIONAL:
+    case DOCUMENTS_OR_MAX:
 	return walk_or(doc_ptr);
 
     default:

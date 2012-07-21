@@ -31,7 +31,7 @@ std::string Document::to_string() {
     return _str.str();
 }
 
-bool Document::set_term_pos(std::string term, std::vector<int> const *in_pos_list) {
+bool Document::set_term_pos(std::string term, std::vector<int> const *in_pos_list, std::vector<double> const *in_score_list) {
     if (pos_list == in_pos_list) { // do nothing if input is the pointer of this->pos_list
 	return true;
     }
@@ -40,6 +40,13 @@ bool Document::set_term_pos(std::string term, std::vector<int> const *in_pos_lis
         delete pos_list;
 
         pos_list = new std::vector<int>(*in_pos_list);
+
+        delete score_list;
+        if (in_score_list)
+            score_list = new std::vector<double>(*in_score_list);
+        else
+            score_list = NULL;
+
 	return true;
     }
 }
@@ -48,6 +55,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit) {
     if (pos_list == NULL) {
 	pos_list = new std::vector<int>;
 	if (pos_buf) {
+            score_list = new std::vector<double>;
             unsigned char *pos_buf_ptr = pos_buf;
 	    score = 0;
 	    pos_num = intchar2int(pos_buf_ptr);
@@ -73,7 +81,9 @@ std::vector<int> *Document::get_pos(unsigned int featureBit) {
                             weight *= WEIGHT_OF_DPND_TYPE_FEATURE_MISMATCH;
                     }
 
-		    freq += (weight * frq);
+                    double cur_freq = weight * frq;
+		    score_list->push_back(cur_freq);
+		    freq += cur_freq;
 		}
 		pos_buf_ptr += sizeof(int);
 	    }
