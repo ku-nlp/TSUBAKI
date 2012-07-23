@@ -60,6 +60,7 @@ sub getDefaultValues {
     $params{query_filtering} = 1;
     $params{trimming} = 1;
     $params{antonym_and_negation_expansion} = 0;
+    $params{hypernym_expansion} = 0;
     $params{disable_query_processing} = 0;
     $params{telic_process} = $CONFIG->{USE_OF_TELIC_FOR_QUERY_PROCESS};
     $params{CN_process} = 1;
