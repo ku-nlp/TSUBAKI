@@ -28,74 +28,31 @@ sub new {
     bless $this;
 }
 
-# 否定、反義語で拡張する
-sub expandAntonymAndNegationTerm {
-    my ($this, $_buf) = @_;
-
-    # 反義情報の削除
-    my $midasi = lc($this->{text});
-    $midasi =~ s/<反義語>//;
-
-    my @features;
-    # <否定>の付け変え
-    if ($midasi =~ /<否定>/) {
-	$midasi =~ s/<否定>//;
-	push (@features, '');
-    } else {
-	push (@features, '<反義語><否定>');
-    }
-
-    foreach my $feature (@features) {
-	push (@$_buf, sprintf ("%s%s", $midasi, $feature));
-    }
-}
-
-# <上位語>を付けることで下位語を検索可能にする
-sub expandHypernymTerm {
-    my ($this, $_buf, $opt) = @_;
-
-    # 反義情報の削除
-    my $midasi = lc($this->{text});
-
-    # フレーズの場合は付けない
-    unless ($midasi =~ /\*$/) {
-	$midasi .= '<上位語>';
-	unless (exists $opt->{remove_synids}{$midasi}) {
-	    push (@$_buf, $midasi);
-	}
-    }
-}
-
 # S式を出力
 sub to_S_exp {
     my ($this, $indent, $condition, $opt, $call_for_anchor) = @_;
 
-    # 係り受けタームの場合は<上位語>の付与、否定・反義語による拡張を行わない
-    if ($this->{term_type} =~ /dpnd/) {
-	my $midasi = lc($this->{text});
-	$this->{blockType} =~ s/://;
-	my $term_type = $TYPE2INT{$this->{term_type}};
-	my $index_type = (($this->{term_type} =~ /word/) ? 0 : 1);
-	my $featureBit = $this->{blockTypeFeature};
+    my $midasi = lc($this->{text});
+    $this->{blockType} =~ s/://;
+    my $term_type = $TYPE2INT{$this->{term_type}};
+    my $index_type = (($this->{term_type} =~ /word/) ? 0 : 1);
+    my $featureBit = $this->{blockTypeFeature};
 
-	# アンカーインデックス用に変更
-	if ($call_for_anchor) {
-	    $term_type = 3;
-	    $index_type += 2;
-	    $featureBit = 0;
-	}
-
-	return sprintf("%s((%s %d %d %d %d %d))\n",
-		       (($this->{term_type} =~ /dpnd/) ? $indent : $indent . $Tsubaki::TermGroup::INDENT_CHAR),
-		       $midasi,
-		       $term_type,
-		       $this->{gdf},
-		       (($this->{node_type} eq 'basic')? 1 : 0),
-		       $index_type,
-		       $featureBit);
-    } else {
-	return $this->createORNode($indent, $opt, $call_for_anchor);
+    # アンカーインデックス用に変更
+    if ($call_for_anchor) {
+	$term_type = 3;
+	$index_type += 2;
+	$featureBit = 0;
     }
+
+    return sprintf("%s((%s %d %d %d %d %d))\n",
+		   (($this->{term_type} =~ /dpnd/) ? $indent : $indent . $Tsubaki::TermGroup::INDENT_CHAR),
+		   $midasi,
+		   $term_type,
+		   $this->{gdf},
+		   (($this->{node_type} eq 'basic')? 1 : 0),
+		   $index_type,
+		   $featureBit);
 }
 
 # 拡張されたタームをORでまとめたノードを作成
@@ -103,10 +60,7 @@ sub createORNode {
     my ($this, $indent, $opt, $call_for_anchor) = @_;
 
     my @midasis = ();
-    push (@midasis, lc($this->{text}));
-
-    # タームを拡張する
-    push (@midasis, @{$this->termExpansion($opt)}) unless $opt->{english}; # 上位語や否定による拡張 (日本語のみ)
+    push(@midasis, lc($this->{text}));
 
     # <上位語>が付与されたターム、否定・反義語で拡張されたタームをORでまとめる
     my $term_str;
@@ -134,23 +88,6 @@ sub createORNode {
 		    $indent,
 		    $term_str,
 		    $indent);
-}
-
-# termを拡張する
-sub termExpansion {
-    my ($this, $opt) = @_;
-
-    my @buf;
-    # <上位語>を付与して下位語を検索可能にする
-    $opt->{hypernym_expansion} = 1;
-    $this->expandHypernymTerm (\@buf, $opt) if ($opt->{hypernym_expansion});
-
-    # 否定・反義語でタームを拡張する
-    $opt->{antonym_and_negation_expansion} = 1;
-    # 拡張されるのは最後の基本句のみ
-    $this->expandAntonymAndNegationTerm (\@buf) if ($opt->{antonym_and_negation_expansion} && $this->{is_last_kihonku});
-
-    return \@buf;
 }
 
 sub to_uri_escaped_string {

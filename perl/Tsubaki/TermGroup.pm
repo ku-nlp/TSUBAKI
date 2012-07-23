@@ -44,6 +44,19 @@ sub new {
     bless $this;
 }
 
+sub is_basic_node_from_str {
+    my ($midasi) = @_;
+
+    # previous: $midasi eq $basic_node
+
+    if ($midasi !~ /^s\d+/ && $midasi !~ /<反義語>/ && $midasi !~ /<上位語>/) {
+	return 1;
+    }
+    else {
+	return 0;
+    }
+}
+
 # termの追加
 sub pushbackTerms {
     my ($this, $basic_node, $synnodes, $gid, $pos, $opt) = @_;
@@ -74,7 +87,7 @@ sub pushbackTerms {
 	    pos => $pos,
 	    text => $midasi,
 	    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
-	    node_type => ($midasi eq $basic_node) ? 'basic' : 'syn',
+	    node_type => (&is_basic_node_from_str($midasi)) ? 'basic' : 'syn',
 	    gdf => $this->{gdf},
 	    # 最後の基本句から抽出されたタームかどうか
 	    is_last_kihonku => $opt->{is_last_kihonku},
@@ -148,13 +161,20 @@ sub _to_S_exp {
     # 要素数が1の場合インデントを下げない
     my $_indent = ($is_single_node) ? $indent : ($indent . $INDENT_CHAR);
 
-
     # S式の作成
     my $S_exp;
-    $S_exp = sprintf ("%s(OR\n", $indent) unless ($is_single_node);
-    foreach my $term (@{$this->{terms}}) {
-	$S_exp .= $term->to_S_exp ($_indent, $condition, $opt, $call_for_anchor);
+    if ($this->{hasChild}) {
+	$S_exp = sprintf ("%s(OR\n", $indent) unless ($is_single_node);
     }
+    else {
+	$S_exp = sprintf ("%s(OR_MAX\n", $indent) unless ($is_single_node);
+    }
+
+    $S_exp .= sprintf ("%s(OR_MAX\n", $_indent) if $this->{hasChild} && scalar(@{$this->{terms}}) > 1;
+    foreach my $term (@{$this->{terms}}) {
+	$S_exp .= $term->to_S_exp ($_indent . $INDENT_CHAR, $condition, $opt, $call_for_anchor);
+    }
+    $S_exp .= sprintf ("%s)\n", $_indent) if $this->{hasChild} && scalar(@{$this->{terms}}) > 1;
 
     # 子要素についてS式を作成
     if ($this->{hasChild}) {

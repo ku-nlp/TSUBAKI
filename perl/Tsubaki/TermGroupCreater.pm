@@ -401,12 +401,23 @@ sub remove_yomi {
     return join ("+", @buf)
 }
 
+sub is_basic_node {
+    my ($synnode) = @_;
+
+    if ($synnode->synid !~ /^s\d+/ && $synnode->feature !~ /<反義語>/) {
+	return 1;
+    }
+    else {
+	return 0;
+    }
+}
+
 # 基本ノードの取得
 sub getBasicNode {
     my ($synnodes) = @_;
 
     foreach my $synnode (@$synnodes) {
-	if ($synnode->synid !~ /^s\d+/ && $synnode->feature eq '') {
+	if (&is_basic_node($synnode)) {
 	    return $synnode;
 	}
     }
@@ -425,25 +436,62 @@ sub removeSyntacticFeatures {
     return $midasi;
 }
 
-sub expandAntonymAndNegationTerms {
-    my ($midasi, $opt) = @_;
+# <上位語>を付けることで下位語を検索可能にする
+sub expandHypernymTerm {
+    my ($midasi, $_buf, $opt) = @_;
 
-    my @buf;
-    push (@buf, $midasi);
-    # 最後の基本句に含まれるタームのみ拡張する
-    if ($opt->{option}{antonym_and_negation_expansion} &&
-	$opt->{is_last_kihonku}) {
-	# 反義情報の削除
-	$midasi =~ s/<反義語>//;
-
-	# <否定>の付け変え
-	if ($midasi =~ /<否定>/) {
-	    $midasi =~ s/<否定>//;
-	} else {
-	    $midasi .= '<否定>';
+    # フレーズの場合は付けない
+    unless ($midasi =~ /\*$/) {
+	$midasi .= '<上位語>';
+	unless (exists $opt->{remove_synids}{$midasi}) {
+	    push (@$_buf, $midasi);
 	}
-	push (@buf, $midasi);
     }
+}
+
+# 否定、反義語で拡張する
+sub expandAntonymAndNegationTerms {
+    my ($midasi, $_buf, $opt) = @_;
+    my (@features);
+
+    return if $midasi =~ /<反義語>/;
+
+    if ($midasi =~ /<否定>/) { # すでに<否定>がついている場合
+	$midasi =~ s/<否定>//;
+
+	# 行く<否定> -> 行く<反義語><否定>
+	push(@features, '<反義語><否定>');
+
+	if ($opt->{option}{antonym_and_negation_expansion}) {
+	    push(@features, '');
+	    push(@features, '<反義語>');
+	}
+    }
+    else {
+	# (行く -> 行く<反義語>)
+	push(@features, '<反義語>');
+
+	if ($opt->{option}{antonym_and_negation_expansion}) {
+	    push(@features, '<否定>');
+	    push(@features, '<反義語><否定>');
+	}
+    }
+
+    foreach my $feature (@features) {
+	push(@$_buf, sprintf("%s%s", $midasi, $feature));
+    }
+}
+
+# termを拡張する
+sub termExpansion {
+    my ($midasi, $opt) = @_;
+    my @buf;
+
+    # <上位語>を付与して下位語を検索可能にする
+    &expandHypernymTerm($midasi, \@buf, $opt) if ($opt->{option}{hypernym_expansion});
+
+    # 否定・反義語でタームを拡張する, 拡張されるのは最後の基本句のみ
+    &expandAntonymAndNegationTerms($midasi, \@buf, $opt) if ($opt->{is_last_kihonku});
 
     return \@buf;
 }
@@ -462,22 +510,28 @@ sub _createTermGroup {
 	next if (exists $opt->{option}{remove_synids}{$synNd->synid});
 
 	my $_midasi = sprintf ("%s%s", $opt->{option}{ignore_yomi} ? &remove_yomi($synNd->synid) : $synNd->synid, $synNd->feature);
-	# <反義語><否定>を利用するかどうか
-	if ($_midasi =~ /<反義語>/ && $_midasi =~ /<否定>/) {
-	    # next unless ($opt->{option}{use_of_negation_and_antonym});
+
+	# SynGraphが返す<反義語>ノードは利用する必要はない
+	if ($_midasi =~ /<反義語>/) {
+	    next;
 	}
 
 	# SYNノードを利用しない場合
-	next if ($_midasi =~ /^s\d+/ && $opt->{option}{disable_synnode});
+	if ($opt->{option}{disable_synnode} && !&is_basic_node($synNd)) {
+	    next;
+	}
 
 	# 文法素性の削除
 	$_midasi = &removeSyntacticFeatures($_midasi);
 
-	push (@midasis, $_midasi);
-    }
+	push(@midasis, $_midasi);
 
-    # 反義語を使ってタームを拡張する
-    # my $_midasis = &expandAntonymAndNegationTerms($_midasi, $opt);
+	# 上位語や否定によってタームを拡張する
+	if (!$opt->{english} && !$opt->{option}{disable_synnode}) { # 日本語のみ
+	    my $_midasis = &termExpansion($_midasi, $opt);
+	    push(@midasis, @$_midasis) if @$_midasis;
+	}
+    }
 
     # タームグループの作成
     if (scalar (@midasis) < 1) {
