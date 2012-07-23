@@ -18,6 +18,8 @@ class Document {
     double score;
     double pagerank;
     unsigned char *pos_buf;
+    bool retrieved_by_basic_node;
+    bool retrieved_by_dpnd_node;
 
     std::vector<int> *pos_list;
     std::vector<double> *score_list;
@@ -32,6 +34,8 @@ class Document {
 	best_end = -1;
 	freq = -1;
 	gdf = -1;
+        retrieved_by_basic_node = false;
+        retrieved_by_dpnd_node = false;
 
 	proximate_feature = 0;
 	strict_term_feature = 0;
@@ -184,6 +188,20 @@ class Document {
 
     std::vector<Term *>* getTerms() {
 	return &terms;
+    }
+
+    void set_retrieved_by_basic_node(bool flag) {
+	retrieved_by_basic_node = flag;
+    }
+    bool get_retrieved_by_basic_node() {
+	return retrieved_by_basic_node;
+    }
+
+    void set_retrieved_by_dpnd_node(bool flag) {
+	retrieved_by_dpnd_node = flag;
+    }
+    bool get_retrieved_by_dpnd_node() {
+	return retrieved_by_dpnd_node;
     }
 
     bool print() {

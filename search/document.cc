@@ -73,11 +73,16 @@ std::vector<int> *Document::get_pos(unsigned int featureBit) {
 		    int pos = posfreq >> FREQ_BIT_SIZE;
 		    pos_list->push_back(pos);
 		    double weight = 1.0;
+                    if (!retrieved_by_basic_node && !retrieved_by_dpnd_node) // synnode
+                        weight *= WEIGHT_OF_SYN_NODE;
+                    if (retrieved_by_dpnd_node)
+                        weight *= WEIGHT_OF_DPND_NODE;
+                    if (featureBit & CASE_FEATURE_MASK) { // case feature is specified in query
+                        if (feature & featureBit & CASE_FEATURE_MASK)
+                            weight *= WEIGHT_OF_CASE_FEATURE_MATCH;
+                    }
                     if (featureBit > 0) {
-                        if (!(featureBit & CASE_FEATURE_MASK))
-                            weight *= WEIGHT_OF_CASE_FEATURE_MISMATCH;
-
-                        if (!(featureBit & DPND_TYPE_FEATURE_MASK))
+                        if ((featureBit & DPND_TYPE_FEATURE_MASK) != (feature & DPND_TYPE_FEATURE_MASK))
                             weight *= WEIGHT_OF_DPND_TYPE_FEATURE_MISMATCH;
                     }
 
@@ -88,7 +93,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit) {
 		pos_buf_ptr += sizeof(int);
 	    }
 	    pos_list->push_back(-1);
-	    score = calc_okapi(freq, gdf);
+	    score = calc_okapi(freq);
 
             // shrink_to_fit
             // std::vector<int>(*pos_list).swap(*pos_list);

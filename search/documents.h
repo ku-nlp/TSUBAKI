@@ -102,21 +102,15 @@ class Documents {
     unsigned int featureBits;
     documents_type type;
     double term_df;
-    // std::istream *index_stream;
-    // Dbm *term_db;
     std::vector<std::ifstream *> *index_streams;
     std::vector<Dbm *> *offset_dbs;
-    bool retrievedByBasicNode;
+    bool retrieved_by_basic_node;
+    bool retrieved_by_dpnd_node;
     std::vector<Document *> s_documents;
     std::vector<Document *> l_documents;
-    // std::vector<int> s_documents_index;
-    // std::vector<int> l_documents_index;
     DocumentBuffer *__documents_index;
     Hashmap *s_documents_index;
     Hashmap *l_documents_index;
-    // MAP_IMPL<int, int> s_documents_index;
-    // MAP_IMPL<int, int> l_documents_index;
-    // bool l_documents_inf;
     int prox_dist;
     string label;
     std::vector<Term *> terms;
@@ -132,7 +126,8 @@ class Documents {
 	l_documents_index = NULL;
 
 	offset_dbs = in_offset_dbs;
-	retrievedByBasicNode = false;
+	retrieved_by_basic_node = false;
+        retrieved_by_dpnd_node = false;
 
 	prox_dist = PROXIMATE_LENGTH;
 	label = "none";
@@ -284,12 +279,18 @@ class Documents {
 	return true;
     }
 
-    bool setIsRetrievedByBasicNode(int flag) {
-	retrievedByBasicNode = (flag == 1) ? true : false;
-	return true;
+    void set_retrieved_by_basic_node(int flag) {
+	retrieved_by_basic_node = (flag == 1) ? true : false;
     }
-    bool isRetrievedByBasicNode() {
-	return retrievedByBasicNode;
+    bool get_retrieved_by_basic_node() {
+	return retrieved_by_basic_node;
+    }
+
+    void set_retrieved_by_dpnd_node(int flag) {
+	retrieved_by_dpnd_node = (flag == 1 || flag == 3) ? true : false;
+    }
+    bool get_retrieved_by_dpnd_node() {
+	return retrieved_by_dpnd_node;
     }
 
     bool and_operation(std::vector<Document *> *docs1, std::vector<Document *> *docs2, std::vector<Document *> *dest_documents);

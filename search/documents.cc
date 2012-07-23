@@ -583,7 +583,8 @@ void Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs
 	    set_type(DOCUMENTS_TERM_OPTIONAL);
 	}
 
-	setIsRetrievedByBasicNode(_isRetrievedByBasicNode);
+	set_retrieved_by_basic_node(_isRetrievedByBasicNode);
+        set_retrieved_by_dpnd_node(file);
 	double _start = (double) gettimeofday_sec();
 	if (VERBOSE)
 	    cout << "    before lookup = " << 1000 * (_start - start) << " [ms] file = " << file << endl;
@@ -602,6 +603,9 @@ bool Documents::appendDocument(int i, int did, int load_dids, unsigned char *off
     int num_of_pos = intchar2int(posdat + pos_offset);
 
     doc->set_gdf(term_df);
+    doc->set_retrieved_by_basic_node(retrieved_by_basic_node);
+    doc->set_retrieved_by_dpnd_node(retrieved_by_dpnd_node);
+
     unsigned char *__buf = (unsigned char*)malloc(SIZEOFINT * (2 * num_of_pos + 1));
     if (__buf == NULL) {
         cerr << "Cannot allocate memory for pos." << endl;
@@ -618,7 +622,6 @@ bool Documents::appendDocument(int i, int did, int load_dids, unsigned char *off
 
     return true;
 }
-
 
 bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int ldf, int term_type, DocumentBuffer *_already_retrieved_docs) {
     int load_dids = 0;
@@ -775,13 +778,9 @@ bool Documents::walk_or(Document *doc_ptr) {
 	return false;
     }
 
-    std::vector<double> basic_node_score_list;
-    std::vector<double> basic_node_freq_list;
-    std::vector<double> syn_node_score_list;
-    std::vector<double> syn_node_freq_list;
+    double raw_score = 0;
     std::vector<std::vector<int> *> pos_list_list;
     std::vector<std::vector<double> *> score_list_list;
-    bool include_non_terminal_documents = false;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	Document *doc = (*it)->get_doc(doc_ptr->get_id());
 
@@ -803,7 +802,6 @@ bool Documents::walk_or(Document *doc_ptr) {
 		(*it)->get_type() == DOCUMENTS_PHRASE ||
 		(*it)->get_type() == DOCUMENTS_PROX ||
 		(*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
-		include_non_terminal_documents = true;
 
 		switch ((*it)->get_type()) {
 		case DOCUMENTS_ROOT:
@@ -826,16 +824,14 @@ bool Documents::walk_or(Document *doc_ptr) {
                     ;
 		}
 	    }
-	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));
 
-	    // load scores
-	    if ((*it)->isRetrievedByBasicNode()) {
-		basic_node_score_list.push_back(doc->get_score());
-		basic_node_freq_list.push_back(doc->get_freq());
-	    } else {
-		syn_node_score_list.push_back(doc->get_score());
-		syn_node_freq_list.push_back(doc->get_freq());
-	    }
+            double one_score = doc->get_score();
+            if ((*it)->get_retrieved_by_dpnd_node())
+                one_score *= LAMBDA_OF_DPND_NODE;
+	    doc_ptr->pushbackTerm(new Term(&term, one_score, doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));
+
+	    // accumulate scores
+            raw_score += one_score;
 	}
     }
 
@@ -876,8 +872,16 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    pos_list.push_back(cur_pos);
             score_list.push_back(cur_score);
             freq += cur_score;
+            prev_pos = cur_pos;
         }
-	prev_pos = cur_pos;
+        else if (cur_pos == prev_pos) {
+            double last_score = score_list.back();
+            if (cur_score > last_score) { // replace the score with the maximum score
+                score_list.pop_back();
+                score_list.push_back(cur_score);
+                freq = freq - last_score + cur_score;
+            }
+        }
 
 	// std::sort(&(sorted_int[0]), &(sorted_int[pos_list_list.size()]), sort_by_term_pos);
 	for (int i = 0; i < target_num - 1; i++) {
@@ -892,7 +896,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 
     // calculate scores
     double score = 0;
-    if (!include_non_terminal_documents || type == DOCUMENTS_OR_MAX) {
+    if (type == DOCUMENTS_OR_MAX) {
 #ifdef DEBUG
 	cerr << "NODE FREQ " << freq << endl;
 #endif
@@ -900,8 +904,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	score = document->calc_okapi(freq);
     }
     else {
-        score = std::accumulate(syn_node_score_list.begin(), syn_node_score_list.end(), score);
-        score = std::accumulate(basic_node_score_list.begin(), basic_node_score_list.end(), score);
+        score = raw_score;
     }
     document->set_score(score);
 #ifdef DEBUG
@@ -979,8 +982,12 @@ bool Documents::walk_and(Document *doc_ptr) {
                 score_list_list.push_back(doc->get_score_list());
 		document->set_best_pos(doc->get_best_pos());
 	    }
-	    score += doc->get_score();
-	    doc_ptr->pushbackTerm(new Term(&term, doc->get_score(), doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));
+
+            double one_score = doc->get_score();
+            if ((*it)->get_retrieved_by_dpnd_node())
+                one_score *= LAMBDA_OF_DPND_NODE;
+	    score += one_score;
+	    doc_ptr->pushbackTerm(new Term(&term, one_score, doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));
 
 #ifdef DEBUG
 	    if (get_type() == DOCUMENTS_ROOT) {
