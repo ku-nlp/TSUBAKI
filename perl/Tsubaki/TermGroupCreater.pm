@@ -338,7 +338,7 @@ sub _create {
 
 	foreach my $termGroup (@$termGroups) {
 	    if ($is_optional_node) {
-		$optionals{$termGroup->{text}} = $termGroup unless (defined ($optionals{$termGroup->{text}}));
+		$optionals{$termGroup->text()} = $termGroup unless (defined ($optionals{$termGroup->text()}));
 	    } else {
 		unshift (@terms, $termGroup);
 	    }

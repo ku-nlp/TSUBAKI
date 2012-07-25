@@ -21,7 +21,7 @@ sub new {
     my ($class, $gid, $pos, $gdf, $parentGroup, $basic_node, $synnodes, $parent, $children, $opt) = @_;
 
     my $this;
-    $this->{hasChild} = (defined $children) ? 1 : 0;
+    $this->{hasChild} = (defined $children && @$children) ? 1 : 0;
     $this->{children} = $children;
     $this->{parentGroup} = $parentGroup;
     $this->{groupID} = $gid;
@@ -75,6 +75,7 @@ sub pushbackTerms {
     foreach my $midasi (@$synnodes) {
 	next if (exists $alreadyPushedTexts{$midasi});
 	$alreadyPushedTexts{$midasi} = 1;
+	$this->{text} = $midasi unless exists($this->{text});
 
 	my $blockTypeFeature = 0;
 	foreach my $tag (keys %{$blockTypes}) {
