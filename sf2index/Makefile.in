@@ -65,16 +65,16 @@ HTML_FIRST_DIRS := $(wildcard $(HTML_TOP_DIR)/????)
 XML_BASE := $(XML_TOP_DIR)/????
 XML_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS)))
 XML_FIRST_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_FIRST_DIRS))
-XMLS := $(addsuffix .$(XML_SUFFIX)done, $(XML_DIRS))
 
 HTML_DIR := $(HTML_TOP_DIR)/0000/000000
 XML_DIR := $(XML_TOP_DIR)/0000/000000
 TMP_XML_DIR = $(TMP_DIR)/tmp_xml_$(notdir $(XML_DIR))
 
+HTML_RELOCATION_DONE := $(DATADIR)/html.relocation.done
 
 IDX_DIRS := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(XML_DIRS))
 
-IDX_FIRST_DIRS := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(XML_FIRST_DIRS))
+IDX_FIRST_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(HTML_FIRST_DIRS))
 
 IDXIDXS := $(addsuffix /$(ID).$(IDX_SUFFIX), $(IDX_FIRST_DIRS))
 DFS := $(addsuffix /$(ID).$(DF_SUFFIX), $(IDX_FIRST_DIRS))
@@ -87,11 +87,50 @@ DFDB := $(IDX_TOP_DIR)/df.word.cdb.0
 
 LAST_MAKEFILE = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 
+all: $(HTML_RELOCATION_DONE)
+	$(MAKE) -f $(LAST_MAKEFILE) indexing
+
+indexing: $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
+
+html: $(HTML_RELOCATION_DONE)
+
+$(HTML_RELOCATION_DONE): $(HTML_SRC_DIR)
+	$(BASEDIR)/scripts/html-relocation.sh $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR) && touch $@
+
+
+define make_dummy_xml
+$(2): $(1)
+endef
+
+# $1: /somewhere/xml/0000/000011
+define make_xml
+$(eval HTML_DIR_$1 := $(patsubst $(XML_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_FILES_$1 := $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt)))
+$(eval XML_FILES_$1 := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1)))
+$(eval XML_FILE_FIRST_$1 := $(firstword $(XML_FILES_$1)))
+$(eval XML_REST_FILES_$1 := $(filter-out $(XML_FILE_FIRST_$1), $(XML_FILES_$1)))
+$(eval TMP_XML_DIR_$1 := $(TMP_DIR)/tmp_xml_$(notdir $(1)))
+$(foreach XML_REST_FILE, $(XML_REST_FILES_$1), \
+  $(eval $(call make_dummy_xml,$(XML_FILE_FIRST_$1),$(XML_REST_FILE))))
+$(XML_FILE_FIRST_$1): $(HTML_FILES_$1)
+	if [ ! -d $(TMP_XML_DIR_$1) ]; then mkdir -p $(TMP_XML_DIR_$1); fi && \
+	if [ ! -d $(1) ]; then mkdir -p $(1); fi && \
+	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR_$1) $(TMP_XML_DIR_$1) 2> $(TMP_DIR)/www2sf_$(notdir $(1)).log && \
+	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(TMP_XML_DIR_$1) -outdir $(1) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log -embed_result_in_xml -print_progress && \
+	rm -rf $(TMP_XML_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(1)).log $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log
+endef
+
+$(foreach XML_DIR, $(XML_DIRS), \
+  $(eval $(call make_xml,$(XML_DIR))))
+
+
 # $1: /somewhere/idx/0000/000011
 define make_idx1
 $(eval IDX1_FILE_$1 := $(1).$(IDX1_SUFFIX))
 $(eval XML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
-$(eval XML_FILES_$1 := $(sort $(wildcard $(XML_DIR_$1)/*.$(XML_SUFFIX))))
+$(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_FILES_$1 := $(sort $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt))))
+$(eval XML_FILES_$1 := $(sort $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1))))
 $(eval IDX0_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%.$(XML_SUFFIX),$(IDX_TOP_DIR)/%.$(IDX0_SUFFIX),$(XML_FILES_$1)))
 $(IDX1_FILE_$1): $(IDX0_FILES_$1)
 	mkdir -p $$(basename $$@).idx.tmp && \
@@ -112,8 +151,9 @@ $(foreach IDX_DIR, $(IDX_DIRS), \
 # $1: /somewhere/idx/0000/000011
 define make_xmllist
 $(eval XML_LIST_FILE_$1 := $(1).$(XML_LIST_SUFFIX))
-$(eval XML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
-$(eval XML_FILES_$1 := $(sort $(wildcard $(XML_DIR_$1)/*.$(XML_SUFFIX))))
+$(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_FILES_$1 := $(sort $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt)))) 
+$(eval XML_FILES_$1 := $(sort $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1))))
 $(XML_LIST_FILE_$1): $(XML_FILES_$1)
 	mkdir -p $$(dir $$@) && for f in $$^; do echo $$$$f; done > $$@
 endef
@@ -125,8 +165,9 @@ $(foreach IDX_DIR, $(IDX_DIRS), \
 # $1: /somewhere/idx/0000
 define make_sid2tid
 $(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
-$(eval XML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
-$(eval XML_DIRS_EACH_$1 := $(wildcard $(XML_FIRST_DIR_$1)/??????))
+$(eval HTML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_DIRS_EACH_$1 := $(wildcard $(HTML_FIRST_DIR_$1)/??????))
+$(eval XML_DIRS_EACH_$1 := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS_EACH_$1)))
 $(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
 $(SID2TID_FILE_$1): $(IDX1_FILES_$1)
 	mkdir -p $$(dir $$@) && \
@@ -139,8 +180,9 @@ $(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
 # $1: /somewhere/idx/0000
 define make_idxidx
 $(eval IDXIDX_FILE_$1 := $(1)/$(ID).$(IDX_SUFFIX))
-$(eval XML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
-$(eval XML_DIRS_EACH_$1 := $(wildcard $(XML_FIRST_DIR_$1)/??????))
+$(eval HTML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_DIRS_EACH_$1 := $(sort $(wildcard $(HTML_FIRST_DIR_$1)/??????)))
+$(eval XML_DIRS_EACH_$1 := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS_EACH_$1)))
 $(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
 $(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
 $(IDXIDX_FILE_$1): $(IDX1_FILES_$1) $(SID2TID_FILE_$1)
@@ -153,8 +195,9 @@ $(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
 # $1: /somewhere/idx/0000
 define make_urltitle_all
 $(eval URL_TITLE_FILE_$1 := $(1)/$(URL_TITLE_SUFFIX))
-$(eval XML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
-$(eval XML_DIRS_EACH_$1 := $(sort $(wildcard $(XML_FIRST_DIR_$1)/??????)))
+$(eval HTML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_DIRS_EACH_$1 := $(sort $(wildcard $(HTML_FIRST_DIR_$1)/??????)))
+$(eval XML_DIRS_EACH_$1 := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS_EACH_$1)))
 $(eval XML_LIST_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX),$(XML_DIRS_EACH_$1)))
 $(eval URL_TITLE_FILES_$1 := $(patsubst $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX),$(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX),$(XML_LIST_FILES_$1)))
 $(URL_TITLE_FILE_$1):$(URL_TITLE_FILES_$1)
@@ -169,32 +212,6 @@ endef
 $(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
   $(eval $(call make_urltitle_all,$(IDX_FIRST_DIR))))
 
-all: indexing
-
-indexing: $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
-
-html2sf: $(HTML_TOP_DIR)
-	$(MAKE) -f $(LAST_MAKEFILE) DATADIR=$(DATADIR) xml
-
-html: $(HTML_TOP_DIR)
-
-$(HTML_TOP_DIR):
-	$(BASEDIR)/scripts/html-relocation.sh $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR)
-
-xml: $(XMLS)
-
-# XML files of 10000 docs
-each_sf:
-	if [ ! -d $(TMP_XML_DIR) ]; then mkdir -p $(TMP_XML_DIR); fi && \
-	if [ ! -d $(XML_DIR) ]; then mkdir -p $(XML_DIR); fi && \
-	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR) $(TMP_XML_DIR) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_DIR)).log && \
-	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(TMP_XML_DIR) -outdir $(XML_DIR) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log -embed_result_in_xml -print_progress && \
-	rm -rf $(TMP_XML_DIR) $(TMP_DIR)/www2sf_$(notdir $(XML_DIR)).log $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log
-
-# XML files of 10000 docs
-$(XML_TOP_DIR)/%.$(XML_SUFFIX)done:
-	$(MAKE) -f $(LAST_MAKEFILE) XML_DIR=$(basename $@) HTML_DIR=$(patsubst $(XML_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(basename $@)) each_sf && \
-	touch $@
 
 $(BINS): $(IDX_TOP_DIR)/%/idx.word.dat: $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
 	$(PERL) -I $(UtilsDir)/perl -I $(BASEDIR)/scripts $(BASEDIR)/scripts/binarize_idx.pl -syn $<
@@ -215,4 +232,4 @@ $(DFDB): $(MERGED_DF_FILE)
 	$(PERL) -I $(UtilsDir)/perl $(BASEDIR)/scripts/make-df-db.perl --dir $(IDX_TOP_DIR) < $<
 
 clean:
-	rm -rf $(TMP_DIR) $(HTML_TOP_DIR) $(XML_TOP_DIR) $(IDX_TOP_DIR)
+	rm -rf $(TMP_DIR) $(HTML_TOP_DIR) $(HTML_RELOCATION_DONE) $(XML_TOP_DIR) $(IDX_TOP_DIR)
