@@ -4,11 +4,11 @@ all:
 	$(MAKE) -C search
 	$(MAKE) -C enju2tsubaki/StandOffManager
 
-html2sf:
-	$(MAKE) -C sf2index html2sf
+html:
+	$(MAKE) -C sf2index html
 
 indexing:
-	$(MAKE) -C sf2index indexing
+	$(MAKE) -C sf2index
 
 clean:
 	$(MAKE) -C search clean
