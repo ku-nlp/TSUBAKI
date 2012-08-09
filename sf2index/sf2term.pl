@@ -50,18 +50,20 @@ close(XML);
 
 sub xml2term {
     my ($parser, $doc_id, $xmldat, $output_file) = @_;
-
-    my $doc = $parser->parse_string($xmldat);
     my (%terms, %dpnd_terms);
 
-    for my $title_node ($doc->getElementsByTagName('Title')) { # title node
-	&process_one_sentence($title_node, 0, 'title', \%terms, \%dpnd_terms);
-    }
+    if ($xmldat) { # if xml has content
+	my $doc = $parser->parse_string($xmldat);
 
-    for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
-	my $sentence_id = $sentence_node->getAttribute('Id');
-	my $blocktype = $sentence_node->getAttribute('BlockType');
-	&process_one_sentence($sentence_node, $sentence_id, $blocktype, \%terms, \%dpnd_terms);
+	for my $title_node ($doc->getElementsByTagName('Title')) { # title node
+	    &process_one_sentence($title_node, 0, 'title', \%terms, \%dpnd_terms);
+	}
+
+	for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
+	    my $sentence_id = $sentence_node->getAttribute('Id');
+	    my $blocktype = $sentence_node->getAttribute('BlockType');
+	    &process_one_sentence($sentence_node, $sentence_id, $blocktype, \%terms, \%dpnd_terms);
+	}
     }
 
     # register word terms and dpnd terms
