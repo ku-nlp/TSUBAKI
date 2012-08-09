@@ -26,7 +26,7 @@ KnprcFile = @KNPPrefix@/etc/knprc
 UseBlockTypeFlag = @UseBlockTypeFlag@
 HTMLExt = @HTMLExt@
 
-WWW2sf_args = -c $(CNSDB)
+WWW2sf_args = -f -c $(CNSDB)
 sf2term_args = 
 html_relocation_args = 
 
