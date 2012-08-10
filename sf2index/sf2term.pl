@@ -13,7 +13,7 @@ use StandardFormat;
 binmode(STDOUT, ':utf8');
 
 our %opt;
-&GetOptions(\%opt, 'suffix=s', 'autoout', 'no-repname', 'ignore_yomi', 'feature', 'blocktype=s');
+&GetOptions(\%opt, 'suffix=s', 'autoout', 'no-repname', 'ignore_yomi', 'feature', 'blocktype=s', 'no_check_filename');
 # if you specify 'no-repname', you must set IGNORE_YOMI to 1 in "conf/configure"
 
 our %BLOCKTYPE2FEATURE;
@@ -37,7 +37,7 @@ our $sf = new StandardFormat;
 
 my $file = $ARGV[0];
 my ($prefix, $doc_id) = ($file =~ /^(.*?)([-\d]+)\.$SF_EXT$/);
-die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT\n" unless defined($doc_id);
+die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT\n" if !$opt{no_check_filename} && !defined($doc_id);
 my $output_file = $prefix . $doc_id . '.' . $IDX_EXT;
 
 my $xmldat;
