@@ -55,6 +55,7 @@ TITLE_DB_SUFFIX := did2title.cdb
 DATADIR = @DocumentPath@
 HTML_SRC_DIR := @SrcDocumentPath@
 HTML_TOP_DIR := $(DATADIR)/html
+XML_SIMPLE_TOP_DIR := $(DATADIR)/xml_simple
 XML_TOP_DIR := $(DATADIR)/xml
 IDX_TOP_DIR := $(DATADIR)/idx
 
@@ -63,6 +64,7 @@ HTML_DIRS := $(wildcard $(HTML_BASE)??)
 HTML_FIRST_DIRS := $(wildcard $(HTML_TOP_DIR)/????)
 
 XML_BASE := $(XML_TOP_DIR)/????
+XML_SIMPLE_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(HTML_DIRS)))
 XML_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS)))
 XML_FIRST_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_FIRST_DIRS))
 
@@ -102,22 +104,43 @@ define make_dummy_xml
 $(2): $(1)
 endef
 
+# $1: /somewhere/xml_simple/0000/000011
+define make_xml_simple
+$(eval HTML_DIR_$1 := $(patsubst $(XML_SIMPLE_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_FILES_$1 := $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt)))
+$(eval XML_SIMPLE_FILES_$1 := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1)))
+$(eval XML_SIMPLE_FILE_FIRST_$1 := $(firstword $(XML_SIMPLE_FILES_$1)))
+$(eval XML_SIMPLE_REST_FILES_$1 := $(filter-out $(XML_SIMPLE_FILE_FIRST_$1), $(XML_SIMPLE_FILES_$1)))
+$(eval TMP_XML_SIMPLE_DIR_$1 := $(TMP_DIR)/tmp_xml_simple_$(notdir $(1)))
+$(foreach XML_SIMPLE_REST_FILE, $(XML_SIMPLE_REST_FILES_$1), \
+  $(eval $(call make_dummy_xml,$(XML_SIMPLE_FILE_FIRST_$1),$(XML_SIMPLE_REST_FILE))))
+$(XML_SIMPLE_FILE_FIRST_$1): $(HTML_FILES_$1)
+	if [ ! -d $(TMP_XML_SIMPLE_DIR_$1) ]; then mkdir -p $(TMP_XML_SIMPLE_DIR_$1); fi && \
+	if [ ! -d $(1) ]; then mkdir -p $(1); fi && \
+	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR_$1) $(TMP_XML_SIMPLE_DIR_$1) 2> $(TMP_DIR)/www2sf_$(notdir $(1)).log && \
+	mv $(TMP_XML_SIMPLE_DIR_$1)/* $(1) && \
+	rm -rf $(TMP_XML_SIMPLE_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(1)).log 
+endef
+
+$(foreach XML_SIMPLE_DIR, $(XML_SIMPLE_DIRS), \
+  $(eval $(call make_xml_simple,$(XML_SIMPLE_DIR))))
+
 # $1: /somewhere/xml/0000/000011
 define make_xml
 $(eval HTML_DIR_$1 := $(patsubst $(XML_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
 $(eval HTML_FILES_$1 := $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt)))
+$(eval XML_SIMPLE_TOP_DIR_$1 := $(patsubst $(XML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(1)))
+$(eval XML_SIMPLE_FILES_$1 := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1)))
 $(eval XML_FILES_$1 := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1)))
 $(eval XML_FILE_FIRST_$1 := $(firstword $(XML_FILES_$1)))
 $(eval XML_REST_FILES_$1 := $(filter-out $(XML_FILE_FIRST_$1), $(XML_FILES_$1)))
 $(eval TMP_XML_DIR_$1 := $(TMP_DIR)/tmp_xml_$(notdir $(1)))
 $(foreach XML_REST_FILE, $(XML_REST_FILES_$1), \
   $(eval $(call make_dummy_xml,$(XML_FILE_FIRST_$1),$(XML_REST_FILE))))
-$(XML_FILE_FIRST_$1): $(HTML_FILES_$1)
-	if [ ! -d $(TMP_XML_DIR_$1) ]; then mkdir -p $(TMP_XML_DIR_$1); fi && \
+$(XML_FILE_FIRST_$1): $(XML_SIMPLE_FILES_$1)
 	if [ ! -d $(1) ]; then mkdir -p $(1); fi && \
-	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR_$1) $(TMP_XML_DIR_$1) 2> $(TMP_DIR)/www2sf_$(notdir $(1)).log && \
-	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(TMP_XML_DIR_$1) -outdir $(1) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log -embed_result_in_xml -print_progress && \
-	rm -rf $(TMP_XML_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(1)).log $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log
+	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(XML_SIMPLE_TOP_DIR_$1) -outdir $(1) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log -embed_result_in_xml -print_progress && \
+	rm -f $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log
 endef
 
 $(foreach XML_DIR, $(XML_DIRS), \
