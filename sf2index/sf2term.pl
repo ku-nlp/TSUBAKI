@@ -109,7 +109,7 @@ sub process_one_sentence {
 	for my $id (sort {$sf->{phrases}{$a} <=> $sf->{phrases}{$b}} keys %{$sf->{phrases}}) {
 	    next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
 	    for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
-		next if $head_id == -1; # skip roots of Japanese (-1)
+		next if $head_id eq 'c-1'; # skip roots of Japanese (-1)
 		my (@terms);
 		push(@terms, sprintf('%s->%s', $sf->{phrases}{$id}{str}, $sf->{phrases}{$head_id}{str})); # string that appeared (aa*->bb*)
 		if (!$opt{'no-repname'} && $sf->{phrases}{$id}{repname} && $sf->{phrases}{$head_id}{repname}) { # if repname exists, use this
