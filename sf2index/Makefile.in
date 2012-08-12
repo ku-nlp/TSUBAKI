@@ -116,9 +116,9 @@ $(foreach XML_SIMPLE_REST_FILE, $(XML_SIMPLE_REST_FILES_$1), \
   $(eval $(call make_dummy_xml,$(XML_SIMPLE_FILE_FIRST_$1),$(XML_SIMPLE_REST_FILE))))
 $(XML_SIMPLE_FILE_FIRST_$1): $(HTML_FILES_$1)
 	if [ ! -d $(TMP_XML_SIMPLE_DIR_$1) ]; then mkdir -p $(TMP_XML_SIMPLE_DIR_$1); fi && \
-	if [ ! -d $(1) ]; then mkdir -p $(1); fi && \
+	if [ ! -d $$(dir $(1)) ]; then mkdir -p $$(dir $(1)); fi && \
 	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR_$1) $(TMP_XML_SIMPLE_DIR_$1) 2> $(TMP_DIR)/www2sf_$(notdir $(1)).log && \
-	mv $(TMP_XML_SIMPLE_DIR_$1)/* $(1) && \
+	mv $(TMP_XML_SIMPLE_DIR_$1) $(1) && \
 	rm -rf $(TMP_XML_SIMPLE_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(1)).log 
 endef
 
