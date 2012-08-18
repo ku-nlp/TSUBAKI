@@ -35,12 +35,12 @@ sub read_annotation_from_node {
     undef $this->{words};
     undef $this->{phrases};
 
-    for my $phrase_node ($annotation_node->getElementsByTagName('phrase')) {
+    for my $phrase_node ($annotation_node->getElementsByTagName('Chunk')) {
 	my (@words);
-	for my $word_node ($phrase_node->getElementsByTagName('word')) {
-	    my $str = $word_node->getAttribute('str'); # string that appeared
+	for my $word_node ($phrase_node->getElementsByTagName('Token')) {
+	    my $str = $word_node->getAttribute('surf'); # string that appeared
 	    $str .= '*' if $str;
-	    my $lem = $word_node->getAttribute('lem'); # lemma
+	    my $lem = $word_node->getAttribute('orig'); # lemma
 	    my $repname = $word_node->getAttribute('repname'); # repname
 	    my $id = $word_node->getAttribute('id');
 	    $this->{words}{$id} = {str => $str, lem => $lem, repname => $repname, 
