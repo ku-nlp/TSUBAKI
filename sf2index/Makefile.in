@@ -178,7 +178,7 @@ $(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
 $(eval HTML_FILES_$1 := $(sort $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt)))) 
 $(eval XML_FILES_$1 := $(sort $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1))))
 $(XML_LIST_FILE_$1): $(XML_FILES_$1)
-	mkdir -p $$(dir $$@) && for f in $$^; do echo $$$$f; done > $$@
+	mkdir -p $$(dir $$@) && find $$(dir $$<) -type f -name "*.$(XML_SUFFIX)" -print | sort > $$@
 endef
 
 $(foreach IDX_DIR, $(IDX_DIRS), \
