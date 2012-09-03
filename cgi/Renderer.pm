@@ -1463,6 +1463,7 @@ sub getSearchResultForAPICall {
 	    $logger->getParameter('document_scoring');
 
 	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
+			  query_s_exp => $query->{s_exp},
 			  totalResultsAvailable => $hitcount,
 			  totalResultsReturned => $end - $from,
 			  firstResultPosition => $params->{'start'} + 1,
@@ -1493,6 +1494,7 @@ sub getSearchResultForAPICall {
 	    );
     } else {
 	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
+			  query_s_exp => $query->{s_exp},
 			  totalResultsAvailable => $hitcount,
 			  totalResultsReturned => $end - $from,
 			  firstResultPosition => $params->{'start'} + 1,
@@ -1565,12 +1567,14 @@ sub getSearchResultForAPICall {
 	my $cache_location = sprintf ("%s?cache=%s&KEYS=%s", $CONFIG->{INDEX_CGI}, $did, $uri_escaped_search_keys);
 	my $cache_size = $page->{cache_size};
 
-	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, Score => 3, DetailScore => 4);
+	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, Score => 3, DetailScore => 4, flagOfStrictTerm => 5, flagOfProxConst => 6);
 	my %attrs_of_result_tag = ();
 	$attrs_of_result_tag{Id} = $did if ($params->{Id} > 0);
 	$attrs_of_result_tag{Rank} = $rank + 1;
 	$attrs_of_result_tag{Score} = sprintf("%.5f", $score) if ($params->{Score} > 0);
 	$attrs_of_result_tag{DetailScore} = sprintf("Tsubaki:%.5f, PageRank:%s", $page->{tsubaki_score}, $page->{pagerank}) if ($params->{detail_score});
+	$attrs_of_result_tag{flagOfStrictTerm} = $page->{terminfo}{flagOfStrictTerm};
+	$attrs_of_result_tag{flagOfProxConst} = $page->{terminfo}{flagOfProxConst};
 
 	# 開始タグの表示
 	$writer->startTag('Result', map {$_ => $attrs_of_result_tag{$_}} sort {$attrs_of_result_tag_order{$a} <=> $attrs_of_result_tag_order{$b}} keys %attrs_of_result_tag);

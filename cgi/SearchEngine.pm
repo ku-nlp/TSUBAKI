@@ -233,6 +233,11 @@ sub parse_recieved_data_for_cpp {
  	    $doc->{url} = $url;
  	    $doc->{score_total} = $score;
 
+	    $doc->{terminfo}{length} = $length;
+	    $doc->{terminfo}{pagerank} = $pagerank;
+	    $doc->{terminfo}{flagOfStrictTerm} = $flagOfStrictTerm;
+	    $doc->{terminfo}{flagOfProxConst} = $flagOfProxConst;
+
  	    # Set log data
  	    my $gid = 0;
  	    my $dumy = join (" ", @logdata);
@@ -246,10 +251,6 @@ sub parse_recieved_data_for_cpp {
 		    $doc->{terminfo}{terms}{$gid}{gdf} = $gdf;
 		    $gid++;
 		}
-		$doc->{terminfo}{length} = $length;
-		$doc->{terminfo}{pagerank} = $pagerank;
-		$doc->{terminfo}{flagOfStrictTerm} = $flagOfStrictTerm;
-		$doc->{terminfo}{flagOfProxConst} = $flagOfProxConst;
 	    }
 
 	    foreach my $term2posStr (split (/\#/, $_position)) {
