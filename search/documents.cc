@@ -826,7 +826,11 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    }
 
             double one_score = doc->get_score();
-            if ((*it)->get_retrieved_by_dpnd_node())
+            if (doc->get_match_dpnd_node_with_case()) {
+                one_score *= LAMBDA_OF_DPND_NODE_WITH_CASE_MATCH;
+                doc->set_match_dpnd_node_with_case(false);
+            }
+            else if ((*it)->get_retrieved_by_dpnd_node())
                 one_score *= LAMBDA_OF_DPND_NODE;
 	    doc_ptr->pushbackTerm(new Term(&term, one_score, doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));
 
@@ -984,7 +988,11 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    }
 
             double one_score = doc->get_score();
-            if ((*it)->get_retrieved_by_dpnd_node())
+            if (doc->get_match_dpnd_node_with_case()) {
+                one_score *= LAMBDA_OF_DPND_NODE_WITH_CASE_MATCH;
+                doc->set_match_dpnd_node_with_case(false);
+            }
+            else if ((*it)->get_retrieved_by_dpnd_node())
                 one_score *= LAMBDA_OF_DPND_NODE;
 	    score += one_score;
 	    doc_ptr->pushbackTerm(new Term(&term, one_score, doc->get_freq(), static_cast<int>(doc->get_gdf()), pos_list));

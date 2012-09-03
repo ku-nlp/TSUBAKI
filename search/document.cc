@@ -78,8 +78,10 @@ std::vector<int> *Document::get_pos(unsigned int featureBit) {
                     if (retrieved_by_dpnd_node)
                         weight *= WEIGHT_OF_DPND_NODE;
                     if (featureBit & CASE_FEATURE_MASK) { // case feature is specified in query
-                        if (feature & featureBit & CASE_FEATURE_MASK)
+                        if (feature & featureBit & CASE_FEATURE_MASK) {
+                            set_match_dpnd_node_with_case(true);
                             weight *= WEIGHT_OF_CASE_FEATURE_MATCH;
+                        }
                     }
                     if (featureBit > 0) {
                         if ((featureBit & DPND_TYPE_FEATURE_MASK) != (feature & DPND_TYPE_FEATURE_MASK))

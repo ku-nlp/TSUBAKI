@@ -20,6 +20,7 @@ class Document {
     unsigned char *pos_buf;
     bool retrieved_by_basic_node;
     bool retrieved_by_dpnd_node;
+    bool retrieved_by_dpnd_node_with_case_match;
 
     std::vector<int> *pos_list;
     std::vector<double> *score_list;
@@ -36,6 +37,7 @@ class Document {
 	gdf = -1;
         retrieved_by_basic_node = false;
         retrieved_by_dpnd_node = false;
+        retrieved_by_dpnd_node_with_case_match = false;
 
 	proximate_feature = 0;
 	strict_term_feature = 0;
@@ -174,7 +176,7 @@ class Document {
 	if (freq < 0) {
 	    score = 0;
 	} else {
-	    double tf = 1 * (3 * in_freq) / ((0.5 + 1.5 * length / AVERAGE_DOC_LENGTH) + in_freq);
+	    double tf = 1 * (2 * in_freq) / ((0.4 + 0.6 * length / AVERAGE_DOC_LENGTH) + in_freq);
 	    double idf = log((TOTAL_NUMBUER_OF_DOCS - in_gdf + 0.5) / (in_gdf + 0.5));
 	    score = tf * idf;
 	}
@@ -202,6 +204,13 @@ class Document {
     }
     bool get_retrieved_by_dpnd_node() {
 	return retrieved_by_dpnd_node;
+    }
+
+    void set_match_dpnd_node_with_case(bool flag) {
+	retrieved_by_dpnd_node_with_case_match = flag;
+    }
+    bool get_match_dpnd_node_with_case() {
+	return retrieved_by_dpnd_node_with_case_match;
     }
 
     bool print() {
