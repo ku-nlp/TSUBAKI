@@ -649,18 +649,13 @@ sub appendDpndFeature {
 	$N_CASE_ELMT = $2;
     }
 
-    if ($CASE_F_ID =~ /CP/) {
+    if ($CASE_F_ID =~ m|\+(?:さ)?せる/(?:さ)?せる|) {
 	push (@dpndTypes, '使役');
-	push (@dpndTypes, '受動');
-	$suffix = '<使役><受動>';
+	$suffix .= '<使役>';
     }
-    elsif ($CASE_F_ID =~ /C/) {
-	push (@dpndTypes, '使役');
-	$suffix = '<使役>';
-    }
-    elsif ($CASE_F_ID =~ /P/) {
+    if ($CASE_F_ID =~ m|\+(?:ら)?れる/(?:ら)?れる|) {
 	push (@dpndTypes, '受動');
-	$suffix = '<受動>';
+	$suffix .= '<受動>';
     }
 
     # 正規化格解析
@@ -762,7 +757,7 @@ sub _pushbackDependencyTerms {
 
 		my $term = new Tsubaki::Term ({
 		    tid => sprintf ("%s-%s", $gid, $count++),
-		    text => $midasi,
+		    text => $CONFIG->{USE_OF_DPND_FEATURES} ? $midasi : $_midasi,
 		    term_type => (($is_optional_node) ? 'dpnd' : 'force_dpnd'),
 		    gdf => $gdf,
 		    blockTypeFeature => $blockTypeFeature + ($CONFIG->{USE_OF_DPND_FEATURES} ? $feature : 0),
