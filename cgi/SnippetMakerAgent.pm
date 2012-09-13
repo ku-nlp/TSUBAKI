@@ -170,38 +170,6 @@ sub create_snippets {
     }
 }
 
-
-
-# サーバから受信したスコア付きの文リストからスニペットで使う文だけを選び出す
-sub select_snippets {
-    my ($sentences) = @_;
-
-    my $wordcnt = 0;
-    my @snippets = ();
-
-    # スコアの高い順に処理
-    my %sbuf = ();
-    foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score}} @{$sentences}) {
-	next if (exists($sbuf{$sentence->{rawstring}}));
-	$sbuf{$sentence->{rawstring}} = 1;
-
-	my $sid = $sentence->{sid};
-	my $length = $sentence->{length};
-	my $num_of_whitespaces = $sentence->{num_of_whitespaces};
-
-	next if ($num_of_whitespaces / $length > 0.2);
-
-	$sentence = decode('utf8', $sentence) unless (utf8::is_utf8($sentence));
-	push(@snippets, $sentence);
-	$wordcnt += scalar(@{$sentence->{reps}});
-
-	# スニペットが N 単語を超えたら終了
-	last if ($wordcnt > $CONFIG->{MAX_NUM_OF_WORDS_IN_SNIPPET});
-    }
-
-    return \@snippets;
-}
-
 sub makeKWICForAPICall {
     my ($this, $opt) = @_;
 
