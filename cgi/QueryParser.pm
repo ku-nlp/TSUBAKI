@@ -641,7 +641,9 @@ sub _postprocess {
 
     if ($CONFIG->{MAX_NUMBER_OF_SYNNODES}) {
 	foreach my $qk (@$qks) {
-	    $qk->reduceSynnodes($opt->{antonym_and_negation_expansion});
+	    if (!$this->{OPTIONS}{is_cpp_mode}) {
+		$qk->reduceSynnodes($opt->{antonym_and_negation_expansion});
+	    }
 	}
     }
 
@@ -718,6 +720,7 @@ sub parse {
 		while (my ($k, $v) = each %{$qk->{synnode2midasi}}) {
 		    $synnode2midasi->{lc($k)} = $v;
 		}
+		push(@qks, $qk);
 	    }
 	    elsif ($CONFIG->{FORCE_APPROXIMATE_BTW_EXPRESSIONS} && scalar(@qks) > 0) {
 		push (@{$qks[0]->{words}}, @{$qk->{words}}) if (scalar(@{$qk->{words}}) > 0);

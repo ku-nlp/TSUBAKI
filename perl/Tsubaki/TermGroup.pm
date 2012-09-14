@@ -36,6 +36,8 @@ sub new {
 	$this->{rep2style} = $opt->{rep2style};
 	$this->{rep2rep_w_yomi} = $opt->{rep2rep_w_yomi};
 	$this->{synnode2midasi} = $opt->{synnode2midasi};
+	$this->{words} = [map({[{gid => 0, string => $_->{text}}]} @$children)];
+	$this->{logger} => new Logger(0);
     } else {
 	$this->{gdf} = $gdf;
 	&pushbackTerms ($this, $basic_node, $synnodes, $gid, $pos, $opt);
