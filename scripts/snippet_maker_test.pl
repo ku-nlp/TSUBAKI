@@ -8,11 +8,6 @@ use Getopt::Long;
 use Encode;
 use Data::Dumper;
 
-my $TOOL_HOME = "$ENV{HOME}/local/bin";
-my $KNP_PATH = $TOOL_HOME;
-my $JUMAN_PATH = $TOOL_HOME;
-my $SYNDB_PATH = "$ENV{HOME}/cvs/SynGraph/syndb/i686";
-
 my (%opt);
 GetOptions(\%opt,
 	   'query=s',
@@ -40,14 +35,13 @@ GetOptions(\%opt,
 	   'new_sf'
     );
 
-$SYNDB_PATH = $opt{syndb} if ($opt{syndb});
 $opt{kwic_window_size} = 5 unless ($opt{kwic_window_size});
 
-require SynGraph if ($opt{syngraph});
 $opt{encoding} = 'utf8' unless ($opt{encoding});
 
 $opt{IS_ENGLISH_VERSION} = $opt{english};
 $opt{USE_NEW_STANDARD_FORMAT} = $opt{IS_ENGLISH_VERSION} ? 1 : $opt{new_sf};
+$opt{logical_cond_qk} = 'AND';
 
 $opt{verbose} = 1 if $opt{debug};
 
@@ -60,7 +54,7 @@ binmode(STDERR, ":encoding($opt{encoding})");
 sub main {
     # クエリの解析
     my $q_parser = new QueryParser(\%opt);
-    my $query = $q_parser->parse(decode($opt{encoding}, $opt{query}), {logical_cond_qk => 'AND', syngraph => $opt{syngraph}});
+    my $query = $q_parser->parse(decode($opt{encoding}, $opt{query}), \%opt);
 
     if ($opt{debug}) {
 	print "*** QUERY ***\n";
@@ -72,7 +66,6 @@ sub main {
     foreach my $p (split (/,/, $opt{pos})) {
 	$pos2qid{$p} = $k++;
     }
-    $pos2qid{628}--;
     $opt{pos2qid} = \%pos2qid;
 
     foreach my $file (@ARGV) {
