@@ -758,6 +758,7 @@ sub parse {
 	dpnd_map => $properties->{dpnd_map},
 	antonym_and_negation_expansion => $opt->{antonym_and_negation_expansion},
 	option => $opt,
+	is_cpp_mode => $this->{OPTIONS}{is_cpp_mode},
 	rawstring => $rawstring,
 	result    => $result,
 	rep2style => $rep2style,
