@@ -30,7 +30,8 @@ sub new {
 	rawstring => $params->{rawstring},
 	rep2style => $params->{rep2style},
 	synnode2midasi => $params->{synnode2midasi},
-	escaped_query => $params->{escaped_query}
+	escaped_query => $params->{escaped_query},
+	is_cpp_mode => $params->{is_cpp_mode},
     };
 
     bless $this;
@@ -87,10 +88,12 @@ sub normalize {
 	}
     }
 
-    my $i = 0;
-    foreach my $keyword (sort {$a->{rawstring} cmp $b->{rawstring}} @{$this->{keywords}}) {
-	push(@buf, "keyword${i}[" . $keyword->normalize() . ']');
-	$i++;
+    if (!$this->{is_cpp_mode}) {
+	my $i = 0;
+	foreach my $keyword (sort {$a->{rawstring} cmp $b->{rawstring}} @{$this->{keywords}}) {
+	    push(@buf, "keyword${i}[" . $keyword->normalize() . ']');
+	    $i++;
+	}
     }
 
     my $normalizedQueryString = join(',', @buf);
