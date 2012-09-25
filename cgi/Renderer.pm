@@ -1429,6 +1429,10 @@ sub printSearchResultForAPICall {
 sub getSearchResultForAPICall {
     my ($this, $logger, $params, $result, $query, $hitcount) = @_;
 
+    if ($params->{OrigId} && $CONFIG->{ID2ORIGID_CDB}) {
+	tie %{$this->{ID2ORIGID}}, 'CDB_File', $CONFIG->{ID2ORIGID_CDB} or die $!;
+    }
+    
     my $from = $params->{start};
     my $end = (scalar(@$result) < $params->{results}) ?  scalar (@$result) : $params->{results}; # paramsのresultsはstartを足したもの (RequestParser:setParametersOfGetRequest)
 
@@ -1586,6 +1590,7 @@ sub getSearchResultForAPICall {
 	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, Score => 3, DetailScore => 4, flagOfStrictTerm => 5, flagOfProxConst => 6);
 	my %attrs_of_result_tag = ();
 	$attrs_of_result_tag{Id} = $did if ($params->{Id} > 0);
+	$attrs_of_result_tag{OrigId} = $this->{ID2ORIGID}{$did} if $params->{OrigId};
 	$attrs_of_result_tag{Rank} = $rank + 1;
 	$attrs_of_result_tag{Score} = sprintf("%.5f", $score) if ($params->{Score} > 0);
 	$attrs_of_result_tag{DetailScore} = sprintf("Tsubaki:%.5f, PageRank:%s", $page->{tsubaki_score}, $page->{pagerank}) if ($params->{detail_score});
@@ -1714,6 +1719,8 @@ sub getSearchResultForAPICall {
     }
     $writer->endTag('ResultSet');
     $writer->end();
+
+    untie $this->{ID2ORIGID} if $this->{ID2ORIGID};
 
     return $search_result_string;
 }
