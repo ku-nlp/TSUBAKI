@@ -213,7 +213,7 @@ sub get_snippets_for_each_did {
     if ($opt->{highlight}) {
 	$rep2style = $query->{rep2style};
 	foreach my $qk (@{$query->{keywords}}) {
-	    next if ($qk->{is_phrasal_search} > 0);
+	    next if ($qk->{condition}{is_phrasal_search} > 0);
 
 	    foreach my $reps (@{$qk->{words}}) {
 		foreach my $rep (@$reps) {
@@ -247,7 +247,7 @@ sub get_snippets_for_each_did {
 	    $sbuf{$sentence->{rawstring}} = 1;
 
 	    my $sid = $sentence->{sid};
-	    $sid =~ s/^\w+//; # 文ID先頭にアルファベット列があれば削除
+	    $sid =~ s/^\w+(\d+)$/$1/; # 文ID先頭にアルファベット列があれば削除
 	    next if (defined $opt->{usedSIDs}{$did} && !exists $opt->{usedSIDs}{$did}{$sid});
 
 	    my $length = $sentence->{length};
@@ -345,7 +345,7 @@ sub get_snippets_for_each_did {
 	# フレーズの強調表示
 	if ($opt->{highlight}) {
 	    foreach my $qk (@{$query->{keywords}}){
-		next if ($qk->{is_phrasal_search} < 0);
+		next if ($qk->{condition}{is_phrasal_search} < 0);
 		$snippet =~ s!$qk->{rawstring}!<b>$qk->{rawstring}</b>!g;
 	    }
 	}
