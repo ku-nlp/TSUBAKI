@@ -72,10 +72,8 @@ sub create_snippets {
 	foreach my $doc (@$dids) {
 	    $this->{did2region}{$doc->{did}}{start} = $doc->{start};
 	    $this->{did2region}{$doc->{did}}{end} = $doc->{end};
-#	    print $doc->{did} . " " . $doc->{start} . " " . $doc->{end}. "<BR>\n";
-	    push(@{$port2docs{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}[$count++ % $num_of_ports]}}, $doc);
 
-#	    print Dumper ($doc) . "<BR>\n";
+	    push(@{$port2docs{$CONFIG->{SNIPPET_SERVERS}[$i]{ports}[$count++ % $num_of_ports]}}, $doc);
 	}
 
 
@@ -242,6 +240,8 @@ sub get_snippets_for_each_did {
 
 	my $flag_of_drawline = 0;
 	next unless (defined $sentences);
+
+	my $rawstring_num = 0;
 	foreach my $sentence (sort {$b->{smoothed_score} <=> $a->{smoothed_score} || $a->{sid} <=> $b->{sid}} @{$sentences}) {
 	    next if (exists($sbuf{$sentence->{rawstring}}));
 	    $sbuf{$sentence->{rawstring}} = 1;
@@ -254,6 +254,13 @@ sub get_snippets_for_each_did {
 	    my $num_of_whitespaces = $sentence->{num_of_whitespaces};
 
 	    next if ($sentence->{number_of_included_query_types} < 1 && $num_of_whitespaces / $length > 0.2);
+
+	    if ($opt->{rawstring}) {
+		next if $sentence->{smoothed_score} == 0 || !$sentence->{rawstring};
+		push @{$did2snippets{$did}}, $sentence;
+		last if ++$rawstring_num >= $opt->{rawstring_max_num};
+		next;
+	    }
 
 	    # 単語の位置
 	    my $start_pos = $sentence->{start_pos};
@@ -344,6 +351,11 @@ sub get_snippets_for_each_did {
 	}
 
 	$snippet =~ s/S\-ID:\d+//g;
+
+	if ($opt->{rawstring}) {
+	    next;
+	}
+
 	if ($opt->{debug} > 1) {
 	    $did2snippets{$did} = $did . " " . $this->{did2region}{$did}{start} . " " . $this->{did2region}{$did}{end} . " " . $snippet;
 	} else {

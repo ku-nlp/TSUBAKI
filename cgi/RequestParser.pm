@@ -73,6 +73,7 @@ sub getDefaultValues {
     $params{dpnd_states} = undef;
     $params{disable_Zwhitespace_delimiter} = 0;
     $params{call_from_api} = $call_from_API;
+    $params{rawstring_max_num} = 5 unless $params{rawstring_max_num};
 
     # 英語用
     $params{lemma} = 0;
@@ -108,6 +109,7 @@ sub getDefaultValues {
     $params{develop_mode} = $CONFIG->{DEVELOP_MODE};
     $params{ignore_yomi} = $CONFIG->{IGNORE_YOMI};
     $params{disable_cache} = $CONFIG->{DISABLE_CACHE};
+    $params{verbose} = 0;
     $params{query_verbose} = 0;
     $params{sort_by} = 'score';
     $params{sort_by_CR} = 0;
@@ -408,7 +410,9 @@ sub parseAPIRequest {
 	$params->{'no_snippets'} = 1;
     }
 
-
+    if (defined $cgi->param('verbose')) {
+	$params->{'verbose'} = 1;
+    }
     return $params;
 }
 

@@ -84,7 +84,7 @@ sub extract_sentences_from_standard_format {
 	    return &extract_sentences_from_content_for_kwic($query, $content, $opt);
 	} else {
 	    # Title, Keywords, Description から重要文を抽出しない
-	    if (1 || $opt->{start} > $NUM_OF_CHARS_IN_HEADER) { # 常にこちらを利用
+	    if (!$opt->{rawstring}) { # RawStringを得る場合以外はこちらを利用
 		# スレーブサーバが返すベストpositionを使う手法
 		if ($opt->{IS_ENGLISH_VERSION} || $opt->{USE_NEW_STANDARD_FORMAT}) {
 		    return &extract_sentences_from_content_using_position_new_sf($query, $content, $opt);
@@ -196,7 +196,7 @@ sub extract_sentences_from_content_using_position_new_sf {
     my $sf = new StandardFormat;
 
     for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
-	my $sentence_id = $sentence_node->getAttribute('id');
+	my $sentence_id = $sentence_node->getAttribute('Id');
 	for my $annotation_node ($sentence_node->getElementsByTagName('Annotation')) { # parse
 	    $sf->read_annotation_from_node($annotation_node);
 
@@ -520,7 +520,7 @@ sub make_sentence {
 	push(@{$sentence->{surfs}}, $surf);
 	push(@{$sentence->{reps}}, $w->{reps});
     }
-    $sentence->{rawstring} = join(($opt->{IS_ENGLISH_VERSION} || $opt->{USE_NEW_STANDARD_FORMAT}) ? ' ' : '', @{$sentence->{surfs}});
+    $sentence->{rawstring} = join($opt->{IS_ENGLISH_VERSION} ? ' ' : '', @{$sentence->{surfs}});
 
     my $length = scalar(@{$sentence->{surfs}});
     $length = 1 if ($length < 1);
@@ -675,7 +675,7 @@ sub extract_sentences_from_content_new_sf {
     my $sf = new StandardFormat;
 
     for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
-	my $sentence_id = $sentence_node->getAttribute('id');
+	my $sentence_id = $sentence_node->getAttribute('Id');
 	for my $annotation_node ($sentence_node->getElementsByTagName('Annotation')) { # parse
 	    $sf->read_annotation_from_node($annotation_node);
 
@@ -862,7 +862,7 @@ sub calculate_score_with_sf {
     my %buf;
     foreach my $id (keys %{$sf->{words}}) {
 	my $word = $sf->{words}{$id};
-	$buf{$word->{lem}}++;
+	$buf{$word->{repname}}++;
     }
     foreach my $id (keys %{$sf->{phrases}}) {
 	next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)

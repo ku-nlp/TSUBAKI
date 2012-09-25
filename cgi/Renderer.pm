@@ -762,7 +762,7 @@ sub get_uri_escaped_query2 {
 }
 
 sub get_snippets {
-    my ($this, $opt, $result, $query, $from, $end) = @_;
+    my ($this, $opt, $result, $query, $from, $end, $rawstring_option) = @_;
 
     my @docs = ();
     # スニペット生成のため、類似ページも含め、表示されるページのIDを取得
@@ -789,6 +789,8 @@ sub get_snippets {
 						lightweight => 1,
 						extract_from_abstract_only => 0,
 
+						rawstring => $rawstring_option->{rawstring},
+
 						# options for kwic
 						kwic => $opt->{kwic},
 						kwic_window_size => $opt->{kwic_window_size},
@@ -806,6 +808,9 @@ sub get_snippets {
 	} else {
 	    return $sni_obj->makeKWICForBrowserAccess({sort_by_contextR => $opt->{sort_by_CR}});
 	}
+    }
+    elsif ($rawstring_option->{rawstring}) {
+	return $sni_obj->get_snippets_for_each_did($query, {rawstring => 1, debug => $opt->{debug}, rawstring_max_num => $opt->{rawstring_max_num}});
     } else {
 	# スニペッツを取得
 	return $sni_obj->get_snippets_for_each_did($query, {highlight => $opt->{highlight}, debug => $opt->{debug}});
@@ -1428,8 +1433,13 @@ sub getSearchResultForAPICall {
     my $end = (scalar(@$result) < $params->{results}) ?  scalar (@$result) : $params->{results}; # paramsのresultsはstartを足したもの (RequestParser:setParametersOfGetRequest)
 
     my $did2snippets = {};
+    my $did2rawstring = {};
     if ($params->{no_snippets} < 1 || $params->{Snippet} > 0) {
 	$did2snippets = $this->get_snippets($params, $result, $query, $from, $end);
+    }
+
+    if ($params->{RawString} > 0) {
+	$did2rawstring = $this->get_snippets($params, $result, $query, $from, $end, { rawstring => 1 });
     }
 
     my $queryString;
@@ -1493,24 +1503,30 @@ sub getSearchResultForAPICall {
 			  site => (defined $params->{site}) ? $params->{site} : 'null'
 	    );
     } else {
-	$writer->startTag('ResultSet', time => $timestamp, query => $queryString,
-			  query_s_exp => $query->{s_exp},
-			  totalResultsAvailable => $hitcount,
-			  totalResultsReturned => $end - $from,
-			  firstResultPosition => $params->{'start'} + 1,
-			  logicalOperator => $params->{'logical_operator'},
-			  forceDpnd => $params->{'force_dpnd'},
-			  dpnd => $params->{'dpnd'},
-			  anchor => $params->{flag_of_anchor_use},
-			  filterSimpages => $params->{'filter_simpages'},
-			  sort_by => $params->{'sort_by'},
-			  site => (defined $params->{site}) ? $params->{site} : 'null'
-	    );
+	my %attribute = (
+			 time => $timestamp, query => $queryString,
+			 totalResultsAvailable => $hitcount,
+			 totalResultsReturned => $end - $from,
+			 firstResultPosition => $params->{'start'} + 1,
+			 );
+
+	if ($params->{'verbose'}) {
+	    $attribute{query_s_exp} = $query->{s_exp};
+	    $attribute{sort_by} => $params->{'sort_by'};
+	    $attribute{filterSimpages} = $params->{'filter_simpages'};
+	    $attribute{logicalOperator} = $params->{'logical_operator'};
+	    $attribute{forceDpnd} = $params->{'force_dpnd'};
+	    $attribute{dpnd} = $params->{'dpnd'};
+	    $attribute{anchor} = $params->{flag_of_anchor_use};
+	    $attribute{site} = (defined $params->{site}) ? $params->{site} : 'null';
+	}
+
+	$writer->startTag('ResultSet', %attribute);
     }
 
 
     # エラーメッセージを出力
-    if (scalar($logger->getParameter('ERROR_MSGS')) > 0) {
+    if (scalar(@{$logger->getParameter('ERROR_MSGS')}) > 0) {
 	my $eid = 1;
 	$writer->startTag('ErrorMessages');
 	foreach my $errObj (@{$logger->getParameter('ERROR_MSGS')}) {
@@ -1573,8 +1589,8 @@ sub getSearchResultForAPICall {
 	$attrs_of_result_tag{Rank} = $rank + 1;
 	$attrs_of_result_tag{Score} = sprintf("%.5f", $score) if ($params->{Score} > 0);
 	$attrs_of_result_tag{DetailScore} = sprintf("Tsubaki:%.5f, PageRank:%s", $page->{tsubaki_score}, $page->{pagerank}) if ($params->{detail_score});
-	$attrs_of_result_tag{flagOfStrictTerm} = $page->{terminfo}{flagOfStrictTerm};
-	$attrs_of_result_tag{flagOfProxConst} = $page->{terminfo}{flagOfProxConst};
+	$attrs_of_result_tag{flagOfStrictTerm} = $page->{terminfo}{flagOfStrictTerm} if $params->{'verbose'};
+	$attrs_of_result_tag{flagOfProxConst} = $page->{terminfo}{flagOfProxConst} if $params->{'verbose'};
 
 	# 開始タグの表示
 	$writer->startTag('Result', map {$_ => $attrs_of_result_tag{$_}} sort {$attrs_of_result_tag_order{$a} <=> $attrs_of_result_tag_order{$b}} keys %attrs_of_result_tag);
@@ -1682,6 +1698,16 @@ sub getSearchResultForAPICall {
 	    $writer->characters($cache_size);
 	    $writer->endTag('Size');
 	    $writer->endTag('Cache');
+	}
+
+	if ($params->{RawString} > 0) {
+	    $writer->startTag('RawStrings');
+	    for my $sentence (@{$did2rawstring->{$did}}) {
+		$writer->startTag('RawString', 'Sid' => $sentence->{sid}, 'Score' => sprintf("%.3f", $sentence->{smoothed_score}));
+		$writer->characters($sentence->{rawstring});
+		$writer->endTag('RawString');
+	    }
+	    $writer->endTag('RawStrings');
 	}
 
 	$writer->endTag('Result');
