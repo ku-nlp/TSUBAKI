@@ -1587,7 +1587,7 @@ sub getSearchResultForAPICall {
 	my $cache_location = sprintf ("%s?cache=%s&KEYS=%s", $CONFIG->{INDEX_CGI}, $did, $uri_escaped_search_keys);
 	my $cache_size = $page->{cache_size};
 
-	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, Score => 3, DetailScore => 4, flagOfStrictTerm => 5, flagOfProxConst => 6);
+	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, OrigId=> 3, Score => 4, DetailScore => 5, flagOfStrictTerm => 6, flagOfProxConst => 7);
 	my %attrs_of_result_tag = ();
 	$attrs_of_result_tag{Id} = $did if ($params->{Id} > 0);
 	$attrs_of_result_tag{OrigId} = $this->{ID2ORIGID}{$did} if $params->{OrigId};
