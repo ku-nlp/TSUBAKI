@@ -177,16 +177,18 @@ sub print_query {
 
     print qq(<TABLE width="100%" border="0" class="querynavi"><TR><TD width="*" style="padding: 0.25em 1em; background-color:#f1f4ff;">\n);
     my $keyword_num = scalar(@{$query->{keywords}});
-    if ($keyword_num > 0) {
+    if ($query->{s_exp}) {
+	printf qq(<SPAN class="query" id="query%d">%s</SPAN>), 0, $query->{rawstring};
+    }
+    elsif ($keyword_num > 0) {
 	my @buf;
 	for (my $i = 0; $i < $keyword_num; $i++) {
 	    my $kwd = $query->{keywords}[$i];
 	    push(@buf, sprintf (qq(<SPAN class="query" id="query%d">%s</SPAN>), $i, $kwd->{rawstring}));
 	}
 	print join('&nbsp;', @buf);
-    } elsif ($query->{s_exp}) {
-	printf qq(<SPAN class="query" id="query%d">%s</SPAN>), 0, $query->{rawstring};
-    } else {
+    }
+    else {
 	printf ("site:%s", $query->{option}{site});
     }
 }
