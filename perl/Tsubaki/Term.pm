@@ -32,7 +32,7 @@ sub new {
 sub to_S_exp {
     my ($this, $indent, $condition, $opt, $call_for_anchor) = @_;
 
-    my $midasi = lc($this->{text});
+    my $midasi = $this->{text};
     $this->{blockType} =~ s/://;
     my $term_type = $TYPE2INT{$this->{term_type}};
     my $index_type = (($this->{term_type} =~ /word/) ? 0 : 1);
@@ -60,7 +60,7 @@ sub createORNode {
     my ($this, $indent, $opt, $call_for_anchor) = @_;
 
     my @midasis = ();
-    push(@midasis, lc($this->{text}));
+    push(@midasis, $this->{text});
 
     # <上位語>が付与されたターム、否定・反義語で拡張されたタームをORでまとめる
     my $term_str;
