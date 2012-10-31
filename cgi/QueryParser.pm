@@ -620,7 +620,7 @@ sub setProperties {
 		    if (exists $styleBuf->{$rep->{string}}) {
 			$rep->{stylesheet} = $styleBuf->{$rep->{string}};
 		    } else {
-			$rep->{stylesheet} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$color], (($color > 4) ? 'white' : 'black'));
+			$rep->{stylesheet} = sprintf ("background-color: #%s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$color], (($color > 4) ? 'white' : 'black'));
 			$styleBuf->{$rep->{string}} = $rep->{stylesheet};
 		    }
 		}
