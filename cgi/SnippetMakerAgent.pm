@@ -333,11 +333,11 @@ sub get_snippets_for_each_did {
 		    $snippet .= " ... " unless ($snippet =~ /\.\.\.$/);
 		}
 	    }
-	    if ($CONFIG->{IS_ENGLISH_VERSION} || $snippet =~ /。$/) { # 英語もしくは日本語で句点で終わっているなら、そのままcat
+	    if (!$snippet || $CONFIG->{IS_ENGLISH_VERSION} || $snippet =~ /。$/) { # 先頭、英語もしくは日本語で句点で終わっているなら、そのままcat
 		$snippet .= ($snippets{$sid});
-	    } else {
+	    } else { # 文間にスペースを空ける
 		$snippet .= ("&nbsp;&nbsp;" . $snippets{$sid});
-	    }		
+	    }
 
 	    $prev_sid = $sid;
 	}
