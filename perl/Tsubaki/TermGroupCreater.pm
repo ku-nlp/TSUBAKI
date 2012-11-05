@@ -118,7 +118,7 @@ sub createTermsFromEnglish {
 	my $count = 0;
 	my $color_num = $gid % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
 	my $repname = $sf->{words}{$id}{repname} ? $sf->{words}{$id}{repname} : $sf->{words}{$id}{lem};
-	$rep2style->{$repname} = sprintf("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$color_num], (($color_num > 4) ? 'white' : 'black'));
+	$rep2style->{$repname} = sprintf("background-color: #%s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$color_num], (($color_num > 4) ? 'white' : 'black'));
 	my $term = new Tsubaki::Term ({
 	    tid => sprintf ("%s-%s", $gid, $count++),
 	    text => $repname,
@@ -225,7 +225,7 @@ sub _getRep2Style {
 	    foreach my $synnode ($synnodes->synnode) {
 		next if ($synnode->synid =~ /^s\d+/ && $option->{disable_synnode});
 		my $key = sprintf ("%s%s", $option->{ignore_yomi} ? &remove_yomi(lc($synnode->synid)) : lc($synnode->synid), $synnode->feature);
-		$rep2style{$key} = sprintf ("background-color: %s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
+		$rep2style{$key} = sprintf ("background-color: #%s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$j], (($j > 4) ? 'white' : 'black'));
 	    }
 	}
     }
