@@ -7,6 +7,12 @@ all:
 html:
 	$(MAKE) -C sf2index html
 
+xml_simple:
+	$(MAKE) -C sf2index xml_simple
+
+xml:
+	$(MAKE) -C sf2index xml
+
 indexing:
 	$(MAKE) -C sf2index
 
