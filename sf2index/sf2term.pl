@@ -84,7 +84,7 @@ sub process_one_sentence {
     for my $annotation_node ($sentence_node->getElementsByTagName('Annotation')) { # parse
 	$sf->read_annotation_from_node($annotation_node);
 
-	for my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) { # order: left-to-right
+	for my $id (sort {$sf->{words}{$a}{position} <=> $sf->{words}{$b}{position}} keys %{$sf->{words}}) { # order: left-to-right
 	    my $word = $sf->{words}{$id};
 	    my (@terms);
 	    push(@terms, $word->{str}); # string that appeared (string*)
@@ -96,12 +96,12 @@ sub process_one_sentence {
 	    }
 	    for my $term (@terms) {
 		next unless $term;
-		&hash_term($terms_hr, $term, $sentence_id, $word->{pos}, 1, &create_feature($blocktype)); # score=1
+		&hash_term($terms_hr, $term, $sentence_id, $word->{position}, 1, &create_feature($blocktype)); # score=1
 	    }
 	    for my $synnode (@{$word->{synnodes}}) { # synonym node
 		next unless $synnode->{score} < 1; # except the identical expression with the word
 		my $wordid = (split(',', $synnode->{wordid}))[0]; # the first wordid
-		&hash_term($terms_hr, $synnode->{synid}, $sentence_id, $sf->{words}{$wordid}{pos}, $synnode->{score}, &create_feature($blocktype));
+		&hash_term($terms_hr, $synnode->{synid}, $sentence_id, $sf->{words}{$wordid}{position}, $synnode->{score}, &create_feature($blocktype));
 	    }
 	}
 
@@ -122,7 +122,7 @@ sub process_one_sentence {
 		}
 		for my $dpnd_term (@terms) {
 		    next if $dpnd_term eq '->';
-		    &hash_term($dpnd_terms_hr, $dpnd_term, $sentence_id, $sf->{phrases}{$id}{pos}, 1, &create_feature($blocktype)); # score=1
+		    &hash_term($dpnd_terms_hr, $dpnd_term, $sentence_id, $sf->{phrases}{$id}{position}, 1, &create_feature($blocktype)); # score=1
 		}
 	    }
 	}
@@ -134,7 +134,7 @@ sub hash_term {
 
     $terms_hr->{$term}{score} += $score;
     $terms_hr->{$term}{sentence_ids}{$sentence_id}++;
-    $terms_hr->{$term}{pos}{$word_count} = {score => $score, feature => $feature};
+    $terms_hr->{$term}{position}{$word_count} = {score => $score, feature => $feature};
 }
 
 sub register_terms {
@@ -142,10 +142,10 @@ sub register_terms {
 
     for my $term (keys %{$terms_hr}) {
 	my @buf;
-	for my $pos (sort {$a <=> $b} keys %{$terms_hr->{$term}{pos}}) {
-	    my $str = sprintf "%s&%s", $pos, $terms_hr->{$term}{pos}{$pos}{score};
+	for my $position (sort {$a <=> $b} keys %{$terms_hr->{$term}{position}}) {
+	    my $str = sprintf "%s&%s", $position, $terms_hr->{$term}{position}{$position}{score};
 	    if ($opt{feature}) { # when use features
-		$str .= '&' . $terms_hr->{$term}{pos}{$pos}{feature};
+		$str .= '&' . $terms_hr->{$term}{position}{$position}{feature};
 	    }
 	    push(@buf, $str);
 	}
