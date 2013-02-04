@@ -909,7 +909,7 @@ sub make_word_list_new_sf {
     my ($sf, $opt) = @_;
 
     my (@words);
-    foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) { # order: left-to-right
+    foreach my $id (sort {$sf->{words}{$a}{position} <=> $sf->{words}{$b}{position}} keys %{$sf->{words}}) { # order: left-to-right
 	my $word = $sf->{words}{$id};
 	my $surf = $word->{str};
 	$surf =~ s/\*$//;
