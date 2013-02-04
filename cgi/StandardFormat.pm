@@ -44,9 +44,10 @@ sub read_annotation_from_node {
 	    my $repname = $word_node->getAttribute('repname'); # repname
 	    my $id = $word_node->getAttribute('id');
 	    $this->{words}{$id} = {str => $str, lem => $lem, repname => $repname, 
+				   pos => $word_node->getAttribute('pos1'), 
 				   feature => $word_node->getAttribute('feature'), 
 				   content_p => $word_node->getAttribute('content_p'), 
-				   pos => $this->{word_count}};
+				   position => $this->{word_count}};
 	    push(@words, $this->{words}{$id});
 	    $this->{word_count}++;
 
@@ -66,7 +67,7 @@ sub read_annotation_from_node {
 				 str => $words[$word_head_num]{str}, 
 				 lem => $words[$word_head_num]{lem}, 
 				 repname => $words[$word_head_num]{repname}, 
-				 pos => $words[$word_head_num]{pos}, 
+				 position => $words[$word_head_num]{position}, 
 				};
     }
 }
