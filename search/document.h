@@ -3,6 +3,9 @@
 
 #include "term.h"
 
+#define OKAPI_K1 1
+#define OKAPI_B 0.6
+
 class Document {
     int id;
     int length;
@@ -176,7 +179,7 @@ class Document {
 	if (freq < 0) {
 	    score = 0;
 	} else {
-	    double tf = 1 * (2 * in_freq) / ((0.4 + 0.6 * length / AVERAGE_DOC_LENGTH) + in_freq);
+	    double tf = ((OKAPI_K1 + 1) * in_freq) / (OKAPI_K1 * ((1 - OKAPI_B) + OKAPI_B * length / AVERAGE_DOC_LENGTH) + in_freq);
 	    double idf = log((TOTAL_NUMBUER_OF_DOCS - in_gdf + 0.5) / (in_gdf + 0.5));
 	    score = tf * idf;
 	}
