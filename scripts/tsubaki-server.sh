@@ -8,13 +8,14 @@ if [ $? -ne 0 ]; then
     TSUBAKI_DIR=`pwd`/$TSUBAKI_DIR
 fi
 CONFIG_FILE=$TSUBAKI_DIR/conf/configure
+USE_SSH_FLAG=1
 
 usage() {
-    echo "Usage: $0 [-c configure_file] start|stop|restart|status"
+    echo "Usage: $0 [-c configure_file] [-s] start|stop|restart|status"
     exit 1
 }
 
-while getopts c:h OPT
+while getopts c:sh OPT
 do
     case $OPT in
 	c)  CONFIG_FILE=$OPTARG
@@ -22,6 +23,8 @@ do
 	    if [ $? -ne 0 ]; then
 		CONFIG_FILE=`pwd`/$CONFIG_FILE
 	    fi
+	    ;;
+	s)  USE_SSH_FLAG=0
 	    ;;
         h)  usage
             ;;
@@ -41,7 +44,11 @@ call() {
     grep '^SEARCH_SERVERS' $CONFIG_FILE | awk '{print $2,$3}' | while read LINE
     do
 	h=`echo $LINE | cut -f 1 -d ' '`
-	ssh -f $h "sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE $1"
+	if [ $USE_SSH_FLAG -eq 1 ]; then
+	    ssh -f $h "sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE $1"
+	else
+	    sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE $1
+	fi
     done
 }
 
