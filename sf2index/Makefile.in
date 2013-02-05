@@ -8,6 +8,7 @@ TMP_DIR := /tmp/$(USERNAME)/tsubaki_idx_tmp
 NICE_VALUE := 19
 
 PERL := nice -n $(NICE_VALUE) perl
+JavaCommand := /usr/bin/java
 
 CNSDB = $(BASEDIR)/data/cns.100M.cls.df1000.cdb
 BLOCKTYPE_DEFINITION = $(BASEDIR)/data/blocktype.WEB
@@ -25,8 +26,10 @@ JumanrcFile = @JUMANPrefix@/etc/jumanrc
 KnprcFile = @KNPPrefix@/etc/knprc
 UseBlockTypeFlag = @UseBlockTypeFlag@
 HTMLExt = @HTMLExt@
+EnglishFlag = @EnglishFlag@
 
 WWW2sf_args = -f -c $(CNSDB)
+AddKNPResult_args = -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -embed_result_in_xml -print_progress
 sf2term_args = 
 html_relocation_args = 
 
@@ -38,6 +41,13 @@ endif
 ifeq "$(HTMLExt)" "html.gz"
 WWW2sf_args += -z
 html_relocation_args += -e $(HTMLExt)
+endif
+
+ifeq "$(EnglishFlag)" "1"
+WWW2sf_args += -E
+AddKNPResult_args += -english -javacmd $(JavaCommand)
+else
+AddKNPResult_args += -syngraph -syndbdir $(SynDBDir) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) 
 endif
 
 XML_SUFFIX := xml
@@ -147,7 +157,7 @@ $(foreach XML_REST_FILE, $(XML_REST_FILES_$1), \
 $(XML_FILE_FIRST_$1): $(XML_SIMPLE_FILES_$1)
 	if [ ! -d $(1) ]; then mkdir -p $(1); fi && \
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl -syngraph -syndbdir $(SynDBDir) -indir $(XML_SIMPLE_TOP_DIR_$1) -outdir $(1) -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log -embed_result_in_xml -print_progress && \
+	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl $(AddKNPResult_args) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log -indir $(XML_SIMPLE_TOP_DIR_$1) -outdir $(1) && \
 	rm -f $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log
 endef
 
