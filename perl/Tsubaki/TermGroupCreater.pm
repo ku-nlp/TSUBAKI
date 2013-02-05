@@ -114,7 +114,7 @@ sub createTermsFromEnglish {
 
     # word terms
     my $gid = 0;
-    foreach my $id (sort {$sf->{words}{$a}{pos} <=> $sf->{words}{$b}{pos}} keys %{$sf->{words}}) {
+    foreach my $id (sort {$sf->{words}{$a}{position} <=> $sf->{words}{$b}{position}} keys %{$sf->{words}}) {
 	my $count = 0;
 	my $color_num = $gid % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
 	my $repname = $sf->{words}{$id}{repname} ? $sf->{words}{$id}{repname} : $sf->{words}{$id}{lem};
