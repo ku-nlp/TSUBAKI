@@ -44,7 +44,8 @@ TSUBAKI_MODULE_PATH	@SearchEnginePath@/perl
 WIKIPEDIA_ENTRY_DB	@SearchEnginePath@/data/wikipedia_entry_trie.db
 
 # 英語版
-ENGLISH_PARSER_DIR	@SearchEnginePath@/enju2tsubaki
+ENGLISH_PARSER_DIR	@EnglishParserPath@
+JAVA_COMMAND		@JavaPath@
 
 
 ##################################################

@@ -27,6 +27,8 @@ SrcDocumentPath
 CONFIGURE_FILE
 MachineType
 EnglishFlag
+EnglishParserPath
+JavaPath
 UseBlockTypeFlag
 SearchServerHost
 SearchServerPort
@@ -48,6 +50,8 @@ DocumentPath=$CWD/sample_doc/ja
 SrcDocumentPath=$DocumentPath/src_doc
 MachineType=`uname -m`
 EnglishFlag=0
+MaltParserPath=
+JavaPath=/usr/bin/java
 UseBlockTypeFlag=0
 SearchServerHost=localhost
 SearchServerPort=39999
@@ -58,12 +62,12 @@ SrcDocumentPathSpecifiedFlag=0
 HTMLExt=html
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz)"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath]"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzh OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:h OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -110,6 +114,8 @@ do
 	    ;;
 	z)  HTMLExt=html.gz
 	    ;;
+        m)  MaltParserPath=$OPTARG
+            ;;
         h)  usage
             ;;
     esac
@@ -175,11 +181,29 @@ if [ $EnglishFlag -eq 0 ]; then
 	usage
     fi
 else
-    # check Enju
-    ENJUBIN=`type enju 2> /dev/null | cut -f3 -d' '`
-    if [ ! -n "$ENJUBIN" ]; then
-	echo "Enju is not found. Please install Enju (see README)."
-	usage
+    if [ -n "$MaltParserPath" ]; then
+	# check MaltParser
+	if [ -f $MaltParserPath/malt.jar ]; then
+	    EnglishParserPath=$MaltParserPath
+            # check Java
+	    JAVABIN=`type java 2> /dev/null | cut -f3 -d' '`
+	    if [ ! -n "$JAVABIN" ]; then
+		echo "Java is not found. Please install JDK to use MaltParser."
+		exit 1
+	    fi
+	    JavaPath=$JAVABIN
+	else
+	    echo "MaltParser is not found in $MaltParserPath."
+	    usage
+	fi
+    else
+        # check Enju
+	ENJUBIN=`type enju 2> /dev/null | cut -f3 -d' '`
+	if [ ! -n "$ENJUBIN" ]; then
+	    echo "Enju is not found. Please install Enju (see README)."
+	    usage
+	fi
+	EnglishParserPath=$SearchEnginePath/enju2tsubaki
     fi
 fi
 
