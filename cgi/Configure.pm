@@ -174,11 +174,19 @@ sub getEnglishParserObj {
     my ($this) = @_;
 
     unless (defined $instance->{ENGLISH_PARSER}) {
-	require EnjuWrapper; # currently use enju directly
-	$instance->{ENGLISH_PARSER} = new EnjuWrapper(
-	    {
-		parser_dir   => $this->{ENGLISH_PARSER_DIR},
-	    });
+	if ($this->{ENGLISH_PARSER_DIR} =~ /malt/) {
+	    require MaltParser;
+	    $instance->{ENGLISH_PARSER} = new MaltParser({lemmatize    => 1,
+							  output_sf    => 1,
+							  parser_dir   => $this->{ENGLISH_PARSER_DIR},
+							  java_command => $this->{JAVA_COMMAND}
+							 });
+	}
+	else {
+	    require EnjuWrapper;
+	    $instance->{ENGLISH_PARSER} = new EnjuWrapper({parser_dir  => $this->{ENGLISH_PARSER_DIR},
+							  });
+	}
     }
 
     return $instance->{ENGLISH_PARSER};
