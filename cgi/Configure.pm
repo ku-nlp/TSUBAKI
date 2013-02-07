@@ -179,6 +179,7 @@ sub getEnglishParserObj {
 	    $instance->{ENGLISH_PARSER} = new MaltParser({lemmatize    => 1,
 							  output_sf    => 1,
 							  parser_dir   => $this->{ENGLISH_PARSER_DIR},
+							  tagger_dir   => $this->{ENGLISH_TAGGER_DIR},
 							  java_command => $this->{JAVA_COMMAND}
 							 });
 	}
