@@ -108,7 +108,7 @@ sub main {
 
 	    # 検索クエリの構造体を取得
 	    my $query = RequestParser::parseQuery($params, $logger);
-	    $query->{keywords}[0]->print_for_web() if ($params->{debug} && defined $query->{keywords}[0]);
+	    # $query->{keywords}[0]->print_for_web() if ($params->{debug} && defined $query->{keywords}[0]);
 
 	    if ($params->{debug} > 1) {
 		print "<hr>\n";
