@@ -28,6 +28,7 @@ CONFIGURE_FILE
 MachineType
 EnglishFlag
 EnglishParserPath
+EnglishTaggerPath
 JavaPath
 UseBlockTypeFlag
 SearchServerHost
@@ -62,12 +63,12 @@ SrcDocumentPathSpecifiedFlag=0
 HTMLExt=html
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath]"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath]"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:h OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:h OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -115,6 +116,8 @@ do
 	z)  HTMLExt=html.gz
 	    ;;
         m)  MaltParserPath=$OPTARG
+            ;;
+        t)  TsuruokaTaggerPath=$OPTARG
             ;;
         h)  usage
             ;;
@@ -183,7 +186,7 @@ if [ $EnglishFlag -eq 0 ]; then
 else
     if [ -n "$MaltParserPath" ]; then
 	# check MaltParser
-	if [ -f $MaltParserPath/malt.jar ]; then
+	if [ -f $MaltParserPath/malt*.jar ]; then
 	    EnglishParserPath=$MaltParserPath
             # check Java
 	    JAVABIN=`type java 2> /dev/null | cut -f3 -d' '`
@@ -192,6 +195,13 @@ else
 		exit 1
 	    fi
 	    JavaPath=$JAVABIN
+
+	    if [ -x "$TsuruokaTaggerPath/tagger" ]; then
+		EnglishTaggerPath=$TsuruokaTaggerPath
+	    else
+		echo "TsuruokaTagger is not found. Please specify valid path of TsuruokaTagger by -t option."
+		usage
+	    fi
 	else
 	    echo "MaltParser is not found in $MaltParserPath."
 	    usage
