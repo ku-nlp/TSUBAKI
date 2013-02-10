@@ -15,7 +15,7 @@
 # ：
 
 usage() {
-    echo "Usage: $0 [-e file_extention] [-n] [-v] indir outdir"
+    echo "Usage: $0 [-e file_extention] [-s start_dir_id] [-n] [-v] indir outdir"
     exit 1
 }
 
@@ -24,11 +24,14 @@ NUM_OF_HTMLS_IN_DIR=10000
 DRYRUN=
 COMMAND=cp
 COMMAND_ARGS=
+dcount=0
 
-while getopts e:nvh OPT
+while getopts e:s:nvh OPT
 do
     case $OPT in
 	e)  EXT=$OPTARG
+	    ;;
+	s)  dcount=$OPTARG
 	    ;;
 	n)  DRYRUN="echo "
 	    ;;
@@ -57,7 +60,7 @@ fi
 if [ -z "$DRYRUN" ]; then
     ${DRYRUN}: > $FILENAME2SID
 fi
-cdcount=0
+
 dstr=`printf %06d $dcount`
 dstr4=`expr $dstr : "^\([0-9][0-9][0-9][0-9]\)"`
 outdir=$outtopdir/$dstr4/$dstr

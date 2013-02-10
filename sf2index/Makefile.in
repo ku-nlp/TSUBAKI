@@ -13,6 +13,7 @@ JavaCommand := /usr/bin/java
 CNSDB = $(BASEDIR)/data/cns.100M.cls.df1000.cdb
 BLOCKTYPE_DEFINITION = $(BASEDIR)/data/blocktype.WEB
 WWW2SF_SENTENCE_LENGTH_MAX = 130
+START_DIR_ID = 0
 
 UtilsDir = @UtilsPath@
 WWW2sfDir = @WWW2sfPath@
@@ -31,7 +32,7 @@ EnglishFlag = @EnglishFlag@
 WWW2sf_args = -f -c $(CNSDB)
 AddKNPResult_args = -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -embed_result_in_xml -print_progress
 sf2term_args = 
-html_relocation_args = 
+html_relocation_args = -s $(START_DIR_ID)
 
 ifeq "$(UseBlockTypeFlag)" "1"
 WWW2sf_args += -D $(DetectBlocksDir) -T
