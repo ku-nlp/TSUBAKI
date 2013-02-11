@@ -45,6 +45,7 @@ WIKIPEDIA_ENTRY_DB	@SearchEnginePath@/data/wikipedia_entry_trie.db
 
 # 英語版
 ENGLISH_PARSER_DIR	@EnglishParserPath@
+ENGLISH_PARSER_OPTIONS	@EnglishParserOptions@
 ENGLISH_TAGGER_DIR	@EnglishTaggerPath@
 JAVA_COMMAND		@JavaPath@
 

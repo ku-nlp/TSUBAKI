@@ -120,7 +120,7 @@ sub _new {
 	    }
 	}
 	else {
-	    my ($key, $value) = split(/\s+/, $_);
+	    my ($key, $value) = split(/\s+/, $_, 2);
 
 	    if ($value =~ /,/) {
 		my @values = split(/,/, $value);
@@ -178,7 +178,7 @@ sub getEnglishParserObj {
 	    require MaltParser;
 	    $instance->{ENGLISH_PARSER} = new MaltParser({lemmatize    => 1,
 							  output_sf    => 1,
-							  parser_dir   => $this->{ENGLISH_PARSER_DIR},
+							  parser_options => $this->{ENGLISH_PARSER_OPTIONS},
 							  tagger_dir   => $this->{ENGLISH_TAGGER_DIR},
 							  java_command => $this->{JAVA_COMMAND}
 							 });

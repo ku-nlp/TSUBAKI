@@ -28,6 +28,7 @@ CONFIGURE_FILE
 MachineType
 EnglishFlag
 EnglishParserPath
+EnglishParserOptions
 EnglishTaggerPath
 JavaPath
 UseBlockTypeFlag
@@ -186,8 +187,22 @@ if [ $EnglishFlag -eq 0 ]; then
 else
     if [ -n "$MaltParserPath" ]; then
 	# check MaltParser
-	if [ -f $MaltParserPath/malt*.jar ]; then
+	if [ -d $MaltParserPath ]; then
 	    EnglishParserPath=$MaltParserPath
+	    ParserJarPath=`echo $MaltParserPath/malt*.jar`
+	    if [ ! -f $ParserJarPath ]; then
+	     	echo "Jar file (malt.jar) of Malt Parser is not found."
+		exit 1
+	    fi
+
+	    ParserModelPath=`echo $MaltParserPath/engmalt*.mco`
+	    if [ ! -f $ParserModelPath ]; then
+	     	echo "Model file (engmalt) for Malt Parser is not found. Please place it to $MaltParserPath."
+		exit 1
+	    fi
+	    ParserModelFile=`basename $ParserModelPath`
+	    EnglishParserOptions="-jar $ParserJarPath -w $MaltParserPath -c $ParserModelFile -m parse"
+
             # check Java
 	    JAVABIN=`type java 2> /dev/null | cut -f3 -d' '`
 	    if [ ! -n "$JAVABIN" ]; then
