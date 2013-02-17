@@ -41,7 +41,7 @@ die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT\n" if !$opt{no_c
 my $output_file = $prefix . $doc_id . '.' . $IDX_EXT;
 
 my $xmldat;
-open(XML, '< :utf8', $file) or die;
+open(XML, '< :utf8', $file) or die "Cannot open an input XML: $file\n";
 while (<XML>) {
     $xmldat .= $_;
 }
