@@ -3,7 +3,8 @@ IDX0_SUFFIX := idx0
 BASEDIR := @SearchEnginePath@
 
 USERNAME := $(shell whoami)
-TMP_DIR := /tmp/$(USERNAME)/tsubaki_idx_tmp
+TMP_DIR_BASE := /tmp/$(USERNAME)
+TMP_DIR := $(TMP_DIR_BASE)/tsubaki_idx_tmp
 
 NICE_VALUE := 19
 
