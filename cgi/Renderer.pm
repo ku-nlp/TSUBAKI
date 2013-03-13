@@ -1146,7 +1146,7 @@ sub printOrdinarySearchResult {
 
 	# 全角英数字を半角に
 	$title =~ tr/[Ａ-Ｚａ-ｚ０-９．／＠　]/[A-Za-z0-9.\/@ ]/;
-	$title =~ s/_/ / if $CONFIG->{IS_ENGLISH_VERSION}; # extract-url-title.perlでスペースを_に置換しているのを戻す
+	$title =~ tr/_/ / if $CONFIG->{IS_ENGLISH_VERSION}; # extract-url-title.perlでスペースを_に置換しているのを戻す
 	$output .= $title . "</a>";
 
 	$output .= qq(</TD></TR>\n);
@@ -1610,6 +1610,7 @@ sub getSearchResultForAPICall {
 	    $title =~ s/\x0b//g;
 	    $title =~ s/\x0c//g;
 	    $title =~ s/\x0d//g;
+	    $title =~ tr/_/ / if $CONFIG->{IS_ENGLISH_VERSION}; # extract-url-title.perlでスペースを_に置換しているのを戻す
 
 	    $writer->characters($title);
 	    $writer->endTag('Title');
