@@ -22,6 +22,11 @@ sub new {
 	called_from_API => $called_from_API
     };
 
+    # 文書IDの表示に元のIDを用いる場合
+    if ($CONFIG->{USE_ORIGID_FOR_SID} && -f $CONFIG->{SID2ORIGID_DB_PATH}) {
+	tie(%{$this->{SID2ORIGID_DB}}, 'CDB_File', $CONFIG->{SID2ORIGID_DB_PATH});
+    }
+
     bless $this;
 }
 
@@ -30,6 +35,9 @@ sub DESTROY {
 
     if (defined $this->{SYNONYM_DB}) {
 	untie %$this->{SYNONYM_DB};
+    }
+    if (defined $this->{SID2ORIGID_DB}) {
+	untie %$this->{SID2ORIGID_DB};
     }
 }
 
@@ -1160,7 +1168,9 @@ sub printOrdinarySearchResult {
 
 	$output .= qq(<DIV class="meta">\n);
 	# 文書IDとスコアを表示する
-	$output .= sprintf qq(id=%s, %s), $did, $score;
+	$output .= sprintf qq(id=%s, ), $did;
+	$output .= sprintf qq(orig_id=%s, ), $this->{SID2ORIGID_DB}{$did} if defined($this->{SID2ORIGID_DB});
+	$output .= sprintf qq(%s), $score;
 
 	# score_verbose が指定されている場合は内訳を表示する
 	if ($params->{score_verbose}) {
@@ -1431,10 +1441,6 @@ sub printSearchResultForAPICall {
 sub getSearchResultForAPICall {
     my ($this, $logger, $params, $result, $query, $hitcount) = @_;
 
-    if ($params->{OrigId} && $CONFIG->{ID2ORIGID_CDB}) {
-	tie %{$this->{ID2ORIGID}}, 'CDB_File', $CONFIG->{ID2ORIGID_CDB} or die $!;
-    }
-    
     my $from = $params->{start};
     my $end = (scalar(@$result) < $params->{results}) ?  scalar (@$result) : $params->{results}; # paramsのresultsはstartを足したもの (RequestParser:setParametersOfGetRequest)
 
@@ -1592,7 +1598,7 @@ sub getSearchResultForAPICall {
 	my %attrs_of_result_tag_order = (Rank => 1, Id => 2, OrigId=> 3, Score => 4, DetailScore => 5, flagOfStrictTerm => 6, flagOfProxConst => 7);
 	my %attrs_of_result_tag = ();
 	$attrs_of_result_tag{Id} = $did if ($params->{Id} > 0);
-	$attrs_of_result_tag{OrigId} = $this->{ID2ORIGID}{$did} if $params->{OrigId};
+	$attrs_of_result_tag{OrigId} = $this->{SID2ORIGID_DB}{$did} if $params->{OrigId} && defined($this->{SID2ORIGID_DB});
 	$attrs_of_result_tag{Rank} = $rank + 1;
 	$attrs_of_result_tag{Score} = sprintf("%.5f", $score) if ($params->{Score} > 0);
 	$attrs_of_result_tag{DetailScore} = sprintf("Tsubaki:%.5f, PageRank:%s", $page->{tsubaki_score}, $page->{pagerank}) if ($params->{detail_score});
@@ -1722,8 +1728,6 @@ sub getSearchResultForAPICall {
     }
     $writer->endTag('ResultSet');
     $writer->end();
-
-    untie $this->{ID2ORIGID} if $this->{ID2ORIGID};
 
     return $search_result_string;
 }

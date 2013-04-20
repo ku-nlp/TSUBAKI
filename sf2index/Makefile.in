@@ -9,7 +9,7 @@ TMP_DIR := $(TMP_DIR_BASE)/tsubaki_idx_tmp
 NICE_VALUE := 19
 
 PERL := nice -n $(NICE_VALUE) perl
-JavaCommand := /usr/bin/java
+JavaCommand := @JavaPath@
 
 CNSDB = $(BASEDIR)/data/cns.100M.cls.df1000.cdb
 BLOCKTYPE_DEFINITION = $(BASEDIR)/data/blocktype.WEB
@@ -71,6 +71,9 @@ XML_SIMPLE_TOP_DIR := $(DATADIR)/xml_simple
 XML_TOP_DIR := $(DATADIR)/xml
 IDX_TOP_DIR := $(DATADIR)/idx
 
+FILENAME2SID := $(HTML_TOP_DIR)/filename2sid
+SID2ORIGID_DB := $(HTML_TOP_DIR)/sid2origid.cdb
+
 HTML_BASE := $(HTML_TOP_DIR)/????/????
 HTML_DIRS := $(wildcard $(HTML_BASE)??)
 find_htmls = $(wildcard $(dir)/*.$(HTMLExt))
@@ -116,7 +119,8 @@ xml_simple: $(XML_SIMPLES)
 xml: $(XMLS)
 
 $(HTML_RELOCATION_DONE): $(HTML_SRC_DIR)
-	$(BASEDIR)/scripts/html-relocation.sh $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR) && touch $@
+	$(BASEDIR)/scripts/html-relocation.sh $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR) && \
+	$(BASEDIR)/scripts/make-sid2origid-db.perl $(SID2ORIGID_DB) < $(FILENAME2SID) && touch $@
 
 
 define make_dummy_xml

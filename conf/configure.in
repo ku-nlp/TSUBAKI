@@ -58,6 +58,10 @@ JAVA_COMMAND		@JavaPath@
 TITLE_DB_PATH	@DocumentPath@/idx
 URL_DB_PATH	@DocumentPath@/idx
 
+# 文書IDから元のID(HTMLファイル名)へのDB
+SID2ORIGID_DB_PATH	@DocumentPath@/html/sid2origid.cdb
+USE_ORIGID_FOR_SID	0
+
 # 単語・係り受け・同義表現・同義表現係り受けのDFDBを納めたディレクトリへのパス（★要変更）
 SYNGRAPH_DFDB_PATH	@DocumentPath@/idx
 COMPOUND_NOUN_DFDB_PATH	@SearchEnginePath@/data/cns.100M.cls.df1000.cdb
