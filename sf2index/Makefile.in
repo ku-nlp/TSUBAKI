@@ -27,6 +27,7 @@ KnpCommand = @KNPPrefix@/bin/knp
 JumanrcFile = @JUMANPrefix@/etc/jumanrc
 KnprcFile = @KNPPrefix@/etc/knprc
 UseBlockTypeFlag = @UseBlockTypeFlag@
+UsePredicateArgumentStructureFlag = @UsePredicateArgumentStructureFlag@
 HTMLExt = @HTMLExt@
 EnglishFlag = @EnglishFlag@
 
@@ -50,6 +51,11 @@ WWW2sf_args += -E
 AddKNPResult_args += -english -javacmd $(JavaCommand)
 else
 AddKNPResult_args += -syngraph -syndbdir $(SynDBDir) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) 
+endif
+
+ifeq "$(UsePredicateArgumentStructureFlag)" "1"
+AddKNPResult_args += -case
+sf2term_args += --feature
 endif
 
 XML_SUFFIX := xml

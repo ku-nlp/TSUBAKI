@@ -32,6 +32,7 @@ EnglishParserOptions
 EnglishTaggerPath
 JavaPath
 UseBlockTypeFlag
+UsePredicateArgumentStructureFlag
 SearchServerHost
 SearchServerPort
 SnippetServerHost
@@ -55,6 +56,7 @@ EnglishFlag=0
 MaltParserPath=
 JavaPath=/usr/bin/java
 UseBlockTypeFlag=0
+UsePredicateArgumentStructureFlag=0
 SearchServerHost=localhost
 SearchServerPort=39999
 SnippetServerHost=localhost
@@ -64,12 +66,12 @@ SrcDocumentPathSpecifiedFlag=0
 HTMLExt=html
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath]"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-p](UsePredicateArgumentStructure)"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:h OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:ph OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -120,6 +122,8 @@ do
             ;;
         t)  TsuruokaTaggerPath=$OPTARG
             ;;
+	p)  UsePredicateArgumentStructureFlag=1
+	    ;;
         h)  usage
             ;;
     esac

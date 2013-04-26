@@ -315,7 +315,7 @@ BLOCK_TYPE_DEFINITION		@SearchEnginePath@/data/blocktype.WEB
 
 
 # 係り受け素性を検索で利用するかどうか
-USE_OF_DPND_FEATURES		0
+USE_OF_DPND_FEATURES		@UsePredicateArgumentStructureFlag@
 
 
 # どのホストがどのSIDを持つデータを管理しているかを表す対応表
