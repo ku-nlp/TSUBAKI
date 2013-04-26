@@ -30,6 +30,23 @@ if ($opt{blocktype}) {
     close (F);
 }
 
+our %CASE_FEATURE_BIT = ();
+$CASE_FEATURE_BIT{ga}      = (2 ** 9);
+$CASE_FEATURE_BIT{wo}      = (2 ** 10);
+$CASE_FEATURE_BIT{ni}      = (2 ** 11);
+$CASE_FEATURE_BIT{he}      = (2 ** 12);
+$CASE_FEATURE_BIT{to}      = (2 ** 13);
+$CASE_FEATURE_BIT{de}      = (2 ** 14);
+$CASE_FEATURE_BIT{kara}    = (2 ** 15);
+$CASE_FEATURE_BIT{made}    = (2 ** 16);
+$CASE_FEATURE_BIT{yori}    = (2 ** 17);
+$CASE_FEATURE_BIT{mod}     = (2 ** 18);
+$CASE_FEATURE_BIT{time}    = (2 ** 19);
+$CASE_FEATURE_BIT{no}      = (2 ** 20);
+$CASE_FEATURE_BIT{nitsuku} = (2 ** 21);
+$CASE_FEATURE_BIT{tosuru}  = (2 ** 22);
+$CASE_FEATURE_BIT{other}   = (2 ** 23);
+
 our $SF_EXT = 'xml';
 our $IDX_EXT = $opt{suffix} ? $opt{suffix} : 'idx';
 our $parser = new XML::LibXML;
@@ -110,19 +127,29 @@ sub process_one_sentence {
 	    next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
 	    for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
 		next if $head_id eq 'c-1'; # skip roots of Japanese (-1)
-		my (@terms);
-		push(@terms, sprintf('%s->%s', $sf->{phrases}{$id}{str}, $sf->{phrases}{$head_id}{str})); # string that appeared (aa*->bb*)
-		if (!$opt{'no-repname'} && $sf->{phrases}{$id}{repname} && $sf->{phrases}{$head_id}{repname}) { # if repname exists, use this
+		my $mod_w_id = $sf->{phrases}{$id}{word_head_id}; # the word id of modifier
+		my $head_w_id = $sf->{phrases}{$head_id}{word_head_id}; # the word id of head
+		my (@terms, $case_relation);
+
+		# predicate-argument relation if exists
+		if (exists($sf->{words}{$head_w_id}{arguments}) && exists($sf->{words}{$head_w_id}{arguments}{$mod_w_id})) {
+		    $case_relation = $sf->{words}{$head_w_id}{arguments}{$mod_w_id};
+		}
+
+		# terms
+		push(@terms, sprintf('%s->%s', $sf->{words}{$mod_w_id}{str}, $sf->{words}{$head_w_id}{str})); # string that appeared (aa*->bb*)
+		if (!$opt{'no-repname'} && $sf->{words}{$mod_w_id}{repname} && $sf->{words}{$head_w_id}{repname}) { # if repname exists, use this
 		    push(@terms, sprintf('%s->%s', 
-					 $opt{ignore_yomi} ? &remove_yomi($sf->{phrases}{$id}{repname}) : $sf->{phrases}{$id}{repname}, 
-					 $opt{ignore_yomi} ? &remove_yomi($sf->{phrases}{$head_id}{repname}) : $sf->{phrases}{$head_id}{repname}));
+					 $opt{ignore_yomi} ? &remove_yomi($sf->{words}{$mod_w_id}{repname}) : $sf->{words}{$mod_w_id}{repname}, 
+					 $opt{ignore_yomi} ? &remove_yomi($sf->{words}{$head_w_id}{repname}) : $sf->{words}{$head_w_id}{repname}));
 		}
 		else {			# lem->lem
-		    push(@terms, sprintf('%s->%s', $sf->{phrases}{$id}{lem}, $sf->{phrases}{$head_id}{lem}));
+		    push(@terms, sprintf('%s->%s', $sf->{words}{$mod_w_id}{lem}, $sf->{words}{$head_w_id}{lem}));
 		}
+
 		for my $dpnd_term (@terms) {
 		    next if $dpnd_term eq '->';
-		    &hash_term($dpnd_terms_hr, $dpnd_term, $sentence_id, $sf->{phrases}{$id}{position}, 1, &create_feature($blocktype)); # score=1
+		    &hash_term($dpnd_terms_hr, $dpnd_term, $sentence_id, $sf->{phrases}{$id}{position}, 1, &create_feature($blocktype, $case_relation)); # score=1
 		}
 	    }
 	}
@@ -172,11 +199,16 @@ sub remove_yomi {
 }
 
 sub create_feature {
-    my ($blocktype) = @_;
+    my ($blocktype, $case_relation) = @_;
+
+    return 0 unless $opt{feature};
 
     my $feature = 0;
     if ($blocktype && exists($BLOCKTYPE2FEATURE{$blocktype})) {
 	$feature += $BLOCKTYPE2FEATURE{$blocktype};
+    }
+    if ($case_relation && exists($CASE_FEATURE_BIT{$case_relation})) {
+	$feature += $CASE_FEATURE_BIT{$case_relation};
     }
 
     return $feature;
