@@ -43,11 +43,22 @@ sub read_annotation_from_node {
 	    my $lem = $word_node->getAttribute('orig'); # lemma
 	    my $repname = $word_node->getAttribute('repname'); # repname
 	    my $id = $word_node->getAttribute('id');
-	    $this->{words}{$id} = {str => $str, lem => $lem, repname => $repname, 
+	    $this->{words}{$id} = {id => $id, 
+				   str => $str, lem => $lem, repname => $repname, 
 				   pos => $word_node->getAttribute('pos1'), 
 				   feature => $word_node->getAttribute('feature'), 
 				   content_p => $word_node->getAttribute('content_p'), 
 				   position => $this->{word_count}};
+
+	    # predicate-argument structure
+	    my @predicate_node = $word_node->getElementsByTagName('Predicate');
+	    if (@predicate_node) {
+		$this->{words}{$id}{arguments} = {};
+		for my $attr_node ($predicate_node[0]->attributes()) { # e.g., ga="t21"
+		    $this->{words}{$id}{arguments}{$attr_node->getValue()} = $attr_node->getName(); # id => case
+		}
+	    }
+
 	    push(@words, $this->{words}{$id});
 	    $this->{word_count}++;
 
@@ -61,9 +72,11 @@ sub read_annotation_from_node {
 	}
 	my $id = $phrase_node->getAttribute('id');
 	my $word_head_num = &get_phrase_head_num(\@words);
-	$this->{phrases}{$id} = {head_ids => [split('/', $phrase_node->getAttribute('head'))], 
+	$this->{phrases}{$id} = {id => $id, 
+				 head_ids => [split('/', $phrase_node->getAttribute('head'))], 
 				 words => \@words, 
 				 word_head_num => $word_head_num, # head word in this phrase
+				 word_head_id => $words[$word_head_num]{id}, # the id of head word in this phrase
 				 str => $words[$word_head_num]{str}, 
 				 lem => $words[$word_head_num]{lem}, 
 				 repname => $words[$word_head_num]{repname}, 
