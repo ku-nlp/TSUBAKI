@@ -125,7 +125,7 @@ xml_simple: $(XML_SIMPLES)
 xml: $(XMLS)
 
 $(HTML_RELOCATION_DONE): $(HTML_SRC_DIR)
-	$(BASEDIR)/scripts/html-relocation.sh $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR) && \
+	$(BASEDIR)/scripts/html-relocation.perl $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR) && \
 	$(BASEDIR)/scripts/make-sid2origid-db.perl $(SID2ORIGID_DB) < $(FILENAME2SID) && touch $@
 
 
