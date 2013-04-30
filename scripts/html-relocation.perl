@@ -1,0 +1,110 @@
+#!/usr/bin/env perl
+
+# indirからfindしたHTMLファイルを対象に、10桁IDのファイル名にコピーし、1ディレクトリ10000個(default)ずつ格納する
+# マッピング(outdir/filename2sid)を出力
+# -d : dryrun
+# -v : verbose
+# -e html|html.gz : specify extention (default: html)
+# -s start_dir_id : specify beginning dir id (default: 0)
+# -n num_of_htmls_in_dir : specify # of htmls in a dir (default: 10000)
+
+# Output:
+# outdir/0000/000000/0000000000.html
+# outdir/0000/000000/0000000001.html
+# ：
+# outdir/0000/000000/0000009999.html
+# outdir/0000/000001/0000000000.html
+# outdir/0000/000001/0000000001.html
+# ：
+
+use File::Find;
+use File::Copy;
+use File::Spec;
+use Cwd;
+use Getopt::Long;
+use strict;
+use warnings;
+
+sub usage {
+    print "Usage: $0 [--ext file_extention] [--dryrun] [--verbose] [--start start_dir_id] [--num num_of_htmls_in_dir] indir ourdir\n";
+    exit 1;
+}
+
+our %opt;
+&GetOptions(\%opt, 'dryrun', 'ext=s', 'start=i', 'num=i', 'verbose');
+
+if (@ARGV != 2 || ! -d $ARGV[0]) {
+    &usage();
+}
+
+our $SRC_DIR = $ARGV[0];
+our $DEST_DIR = $ARGV[1];
+our $BASE_DIR = Cwd::getcwd(); # current directory
+our $HTML_EXT = $opt{ext} ? $opt{ext} : 'html';
+our $FILENAME2SID_NAME = 'filename2sid';
+our $NUM_OF_HTMLS_IN_DIR = $opt{num} ? $opt{num} : 10000;
+our $DIGIT_OF_LOWEST_HTML_FILE = int(log($NUM_OF_HTMLS_IN_DIR + 1) / log(10));
+our $DIGIT_OF_LOWEST_DIR = 10 - $DIGIT_OF_LOWEST_HTML_FILE;
+
+our $hcount = 0;
+our $dcount = $opt{start} ? $opt{start} : 0;
+our $dstr = sprintf("%0${DIGIT_OF_LOWEST_DIR}d", $dcount);
+our $dstr4 = substr($dstr, 0, 4);
+our $outdir = "$DEST_DIR/$dstr4/$dstr";
+
+unless ($opt{dryrun}) {
+    &mkdir_outdir();
+
+    open(FILENAME2SID, "> $DEST_DIR/$FILENAME2SID_NAME") or die "Cannot open $DEST_DIR/$FILENAME2SID_NAME\n";
+}
+
+find({wanted => \&process_file, follow => 1}, $SRC_DIR);
+
+unless ($opt{dryrun}) {
+    close(FILENAME2SID);
+}
+
+
+sub process_file {
+    if (/([^\/]+\Q.$HTML_EXT\E)$/) {
+	my $src_basename = $1;
+	my $src_file = $File::Find::name;
+	my $src_fullname = $File::Find::fullname;
+
+	my $dest_id = $dstr . sprintf("%0${DIGIT_OF_LOWEST_HTML_FILE}d", $hcount);
+	my $dest_file = "$outdir/$dest_id.$HTML_EXT";
+	my $dest_fullname = File::Spec->rel2abs($dest_file, $BASE_DIR);
+
+	if ($opt{dryrun}) {
+	    print "$src_fullname -> $dest_fullname\n";
+	}
+	else {
+	    print "$src_fullname -> $dest_fullname\n" if $opt{verbose};
+	    print FILENAME2SID "$src_basename $dest_id\n";
+	    copy($src_fullname, $dest_fullname);
+	    print STDERR "$src_fullname -> $dest_fullname: $!\n" if $!; # error
+	}
+
+	$hcount++;
+	if ($hcount >= $NUM_OF_HTMLS_IN_DIR) {
+	    $dcount++;
+	    $dstr = sprintf("%0${DIGIT_OF_LOWEST_DIR}d", $dcount);
+	    $dstr4 = substr($dstr, 0, 4);
+	    $outdir = "$DEST_DIR/$dstr4/$dstr";
+	    &mkdir_outdir() unless $opt{dryrun};
+	    $hcount = 0;
+	}
+    }
+}
+
+sub mkdir_outdir {
+    if (! -d $outdir) {
+	if (! -d "$DEST_DIR/$dstr4") {
+	    if (! -d $DEST_DIR) {
+		mkdir $DEST_DIR;
+	    }
+	    mkdir "$DEST_DIR/$dstr4";
+	}
+	mkdir "$outdir";
+    }
+}
