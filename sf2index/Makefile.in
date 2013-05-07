@@ -26,6 +26,7 @@ JumanCommand = @JUMANPrefix@/bin/juman
 KnpCommand = @KNPPrefix@/bin/knp
 JumanrcFile = @JUMANPrefix@/etc/jumanrc
 KnprcFile = @KNPPrefix@/etc/knprc
+EnglishParserDir = @EnglishParserPath@
 UseBlockTypeFlag = @UseBlockTypeFlag@
 UsePredicateArgumentStructureFlag = @UsePredicateArgumentStructureFlag@
 HTMLExt = @HTMLExt@
@@ -48,7 +49,7 @@ endif
 
 ifeq "$(EnglishFlag)" "1"
 WWW2sf_args += -E
-AddKNPResult_args += -english -javacmd $(JavaCommand)
+AddKNPResult_args += -english -javacmd $(JavaCommand) -english_parser_dir $(EnglishParserDir)
 else
 AddKNPResult_args += -syngraph -syndbdir $(SynDBDir) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) 
 endif
