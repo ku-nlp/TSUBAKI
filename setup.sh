@@ -54,6 +54,7 @@ SrcDocumentPath=$DocumentPath/src_doc
 MachineType=`uname -m`
 EnglishFlag=0
 MaltParserPath=
+StanfordParserPath=
 JavaPath=/usr/bin/java
 UseBlockTypeFlag=0
 UsePredicateArgumentStructureFlag=0
@@ -66,12 +67,12 @@ SrcDocumentPathSpecifiedFlag=0
 HTMLExt=html
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-p](UsePredicateArgumentStructure)"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure)"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:ph OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:pf:h OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -122,6 +123,8 @@ do
             ;;
         t)  TsuruokaTaggerPath=$OPTARG
             ;;
+	f)  StanfordParserPath=$OPTARG
+	    ;;
 	p)  UsePredicateArgumentStructureFlag=1
 	    ;;
         h)  usage
@@ -223,6 +226,22 @@ else
 	    fi
 	else
 	    echo "MaltParser is not found in $MaltParserPath."
+	    usage
+	fi
+    elif [ -n "$StanfordParserPath" ]; then
+	# check Stanford Parser
+	if [ -d $StanfordParserPath ]; then
+	    EnglishParserPath=$StanfordParserPath
+
+            # check Java
+	    JAVABIN=`type java 2> /dev/null | cut -f3 -d' '`
+	    if [ ! -n "$JAVABIN" ]; then
+		echo "Java is not found. Please install JDK to use Stanford Parser."
+		exit 1
+	    fi
+	    JavaPath=$JAVABIN
+	else
+	    echo "Stanford Parser is not found in $StanfordParserPath."
 	    usage
 	fi
     else
