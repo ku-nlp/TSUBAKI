@@ -183,6 +183,14 @@ sub getEnglishParserObj {
 							  java_command => $this->{JAVA_COMMAND}
 							 });
 	}
+	elsif ($this->{ENGLISH_PARSER_DIR} =~ /stanford-parser/) {
+	    require StanfordParser;
+	    $instance->{ENGLISH_PARSER} = new StanfordParser({lemmatize    => 1,
+							      output_sf    => 1,
+							      parser_options => $this->{ENGLISH_PARSER_OPTIONS},
+							      java_command => $this->{JAVA_COMMAND}
+							     });
+	}
 	else {
 	    require EnjuWrapper;
 	    $instance->{ENGLISH_PARSER} = new EnjuWrapper({parser_dir  => $this->{ENGLISH_PARSER_DIR},
