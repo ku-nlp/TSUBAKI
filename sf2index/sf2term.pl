@@ -13,7 +13,7 @@ use StandardFormat;
 binmode(STDOUT, ':utf8');
 
 our %opt;
-&GetOptions(\%opt, 'suffix=s', 'autoout', 'no-repname', 'ignore_yomi', 'feature', 'blocktype=s', 'no_check_filename', 'pa');
+&GetOptions(\%opt, 'suffix=s', 'autoout', 'no-repname', 'ignore_yomi', 'feature', 'blocktype=s', 'no_check_filename', 'pa=s');
 # if you specify 'no-repname', you must set IGNORE_YOMI to 1 in "conf/configure"
 
 our %BLOCKTYPE2FEATURE;
@@ -32,21 +32,50 @@ if ($opt{blocktype}) {
 $opt{feature} = 1 if $opt{pa}; # use predicate-argument structures (case feature)
 
 our %CASE_FEATURE_BIT = ();
-$CASE_FEATURE_BIT{ga}      = (2 ** 9);
-$CASE_FEATURE_BIT{wo}      = (2 ** 10);
-$CASE_FEATURE_BIT{ni}      = (2 ** 11);
-$CASE_FEATURE_BIT{he}      = (2 ** 12);
-$CASE_FEATURE_BIT{to}      = (2 ** 13);
-$CASE_FEATURE_BIT{de}      = (2 ** 14);
-$CASE_FEATURE_BIT{kara}    = (2 ** 15);
-$CASE_FEATURE_BIT{made}    = (2 ** 16);
-$CASE_FEATURE_BIT{yori}    = (2 ** 17);
-$CASE_FEATURE_BIT{mod}     = (2 ** 18);
-$CASE_FEATURE_BIT{time}    = (2 ** 19);
-$CASE_FEATURE_BIT{no}      = (2 ** 20);
-$CASE_FEATURE_BIT{nitsuku} = (2 ** 21);
-$CASE_FEATURE_BIT{tosuru}  = (2 ** 22);
-$CASE_FEATURE_BIT{other}   = (2 ** 23);
+if ($opt{pa} =~ /stanford/i) { # Stanford dependency
+    $CASE_FEATURE_BIT{nsubj}   = (2 ** 9);
+    $CASE_FEATURE_BIT{dobj}    = (2 ** 10);
+    $CASE_FEATURE_BIT{iobj}    = (2 ** 11);
+    $CASE_FEATURE_BIT{tmod}    = (2 ** 12);
+    $CASE_FEATURE_BIT{advmod}  = (2 ** 13);
+    $CASE_FEATURE_BIT{ccomp}   = (2 ** 14);
+    $CASE_FEATURE_BIT{prep_in} = (2 ** 15);
+    $CASE_FEATURE_BIT{prep_to} = (2 ** 16);
+    $CASE_FEATURE_BIT{prep_for} = (2 ** 17);
+    $CASE_FEATURE_BIT{prep_on} = (2 ** 18);
+    $CASE_FEATURE_BIT{prep_at} = (2 ** 19);
+    $CASE_FEATURE_BIT{prep_with} = (2 ** 20);
+    $CASE_FEATURE_BIT{prep_as} = (2 ** 21);
+    $CASE_FEATURE_BIT{prep_by} = (2 ** 22);
+
+    $CASE_FEATURE_BIT{xsubj}    = $CASE_FEATURE_BIT{nsubj};
+    $CASE_FEATURE_BIT{csubj}    = $CASE_FEATURE_BIT{nsubj};
+    $CASE_FEATURE_BIT{xcomp}    = $CASE_FEATURE_BIT{ccomp};
+
+    $CASE_FEATURE_BIT{nsbjpass} = $CASE_FEATURE_BIT{dobj};
+    $CASE_FEATURE_BIT{agent}    = $CASE_FEATURE_BIT{nsubj};
+}
+elsif ($opt{pa} =~ /knp/i) { # KNP definition for Japanese
+    $CASE_FEATURE_BIT{ga}      = (2 ** 9);
+    $CASE_FEATURE_BIT{wo}      = (2 ** 10);
+    $CASE_FEATURE_BIT{ni}      = (2 ** 11);
+    $CASE_FEATURE_BIT{he}      = (2 ** 12);
+    $CASE_FEATURE_BIT{to}      = (2 ** 13);
+    $CASE_FEATURE_BIT{de}      = (2 ** 14);
+    $CASE_FEATURE_BIT{kara}    = (2 ** 15);
+    $CASE_FEATURE_BIT{made}    = (2 ** 16);
+    $CASE_FEATURE_BIT{yori}    = (2 ** 17);
+    $CASE_FEATURE_BIT{mod}     = (2 ** 18);
+    $CASE_FEATURE_BIT{time}    = (2 ** 19);
+    $CASE_FEATURE_BIT{no}      = (2 ** 20);
+    $CASE_FEATURE_BIT{nitsuku} = (2 ** 21);
+    $CASE_FEATURE_BIT{tosuru}  = (2 ** 22);
+    $CASE_FEATURE_BIT{other}   = (2 ** 23);
+}
+else {
+    warn("The definition of predicate-argument structures \"$opt{pa}\" is not supported\n");
+    $opt{pa} = undef;
+}
 
 our $SF_EXT = 'xml';
 our $IDX_EXT = $opt{suffix} ? $opt{suffix} : 'idx';
@@ -210,6 +239,9 @@ sub create_feature {
     }
     if ($case_relation && exists($CASE_FEATURE_BIT{$case_relation})) {
 	$feature += $CASE_FEATURE_BIT{$case_relation};
+    }
+    elsif ($case_relation) {
+	warn "CASE $case_relation\n";
     }
 
     return $feature;
