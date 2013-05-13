@@ -13,7 +13,7 @@ use StandardFormat;
 binmode(STDOUT, ':utf8');
 
 our %opt;
-&GetOptions(\%opt, 'suffix=s', 'autoout', 'no-repname', 'ignore_yomi', 'feature', 'blocktype=s', 'no_check_filename');
+&GetOptions(\%opt, 'suffix=s', 'autoout', 'no-repname', 'ignore_yomi', 'feature', 'blocktype=s', 'no_check_filename', 'pa');
 # if you specify 'no-repname', you must set IGNORE_YOMI to 1 in "conf/configure"
 
 our %BLOCKTYPE2FEATURE;
@@ -29,6 +29,7 @@ if ($opt{blocktype}) {
     }
     close (F);
 }
+$opt{feature} = 1 if $opt{pa}; # use predicate-argument structures (case feature)
 
 our %CASE_FEATURE_BIT = ();
 $CASE_FEATURE_BIT{ga}      = (2 ** 9);
@@ -132,7 +133,7 @@ sub process_one_sentence {
 		my (@terms, $case_relation);
 
 		# predicate-argument relation if exists
-		if (exists($sf->{words}{$head_w_id}{arguments}) && exists($sf->{words}{$head_w_id}{arguments}{$mod_w_id})) {
+		if ($opt{pa} && exists($sf->{words}{$head_w_id}{arguments}) && exists($sf->{words}{$head_w_id}{arguments}{$mod_w_id})) {
 		    $case_relation = $sf->{words}{$head_w_id}{arguments}{$mod_w_id};
 		}
 

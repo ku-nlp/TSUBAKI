@@ -56,7 +56,7 @@ endif
 
 ifeq "$(UsePredicateArgumentStructureFlag)" "1"
 AddKNPResult_args += -case
-sf2term_args += --feature
+sf2term_args += --pa
 endif
 
 XML_SUFFIX := xml
