@@ -240,9 +240,6 @@ sub create_feature {
     if ($case_relation && exists($CASE_FEATURE_BIT{$case_relation})) {
 	$feature += $CASE_FEATURE_BIT{$case_relation};
     }
-    elsif ($case_relation) {
-	warn "CASE $case_relation\n";
-    }
 
     return $feature;
 }
