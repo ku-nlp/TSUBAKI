@@ -187,7 +187,7 @@ sub getEnglishParserObj {
 	    require StanfordParser;
 	    $instance->{ENGLISH_PARSER} = new StanfordParser({lemmatize    => 1,
 							      output_sf    => 1,
-							      parser_options => $this->{ENGLISH_PARSER_OPTIONS},
+							      parser_dir    => $this->{ENGLISH_PARSER_DIR},
 							      java_command => $this->{JAVA_COMMAND}
 							     });
 	}
