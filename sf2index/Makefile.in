@@ -29,6 +29,7 @@ KnprcFile = @KNPPrefix@/etc/knprc
 EnglishParserDir = @EnglishParserPath@
 UseBlockTypeFlag = @UseBlockTypeFlag@
 UsePredicateArgumentStructureFlag = @UsePredicateArgumentStructureFlag@
+PredicateArgumentDefinition = @PredicateArgumentDefinition@
 HTMLExt = @HTMLExt@
 EnglishFlag = @EnglishFlag@
 
@@ -56,7 +57,7 @@ endif
 
 ifeq "$(UsePredicateArgumentStructureFlag)" "1"
 AddKNPResult_args += -case
-sf2term_args += --pa
+sf2term_args += --pa $(PredicateArgumentDefinition)
 endif
 
 XML_SUFFIX := xml

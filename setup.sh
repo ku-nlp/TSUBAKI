@@ -33,6 +33,7 @@ EnglishTaggerPath
 JavaPath
 UseBlockTypeFlag
 UsePredicateArgumentStructureFlag
+PredicateArgumentDefinition
 SearchServerHost
 SearchServerPort
 SnippetServerHost
@@ -58,6 +59,7 @@ StanfordParserPath=
 JavaPath=/usr/bin/java
 UseBlockTypeFlag=0
 UsePredicateArgumentStructureFlag=0
+PredicateArgumentDefinition=KNP
 SearchServerHost=localhost
 SearchServerPort=39999
 SnippetServerHost=localhost
@@ -197,6 +199,7 @@ else
 	if [ -d $MaltParserPath ]; then
 	    EnglishParserPath=$MaltParserPath
 	    ParserJarPath=`echo $MaltParserPath/malt*.jar`
+	    PredicateArgumentDefinition=Malt
 	    if [ ! -f $ParserJarPath ]; then
 	     	echo "Jar file (malt.jar) of Malt Parser is not found."
 		exit 1
@@ -232,6 +235,7 @@ else
 	# check Stanford Parser
 	if [ -d $StanfordParserPath ]; then
 	    EnglishParserPath=$StanfordParserPath
+	    PredicateArgumentDefinition=Stanford
 
             # check Java
 	    JAVABIN=`type java 2> /dev/null | cut -f3 -d' '`
@@ -252,6 +256,7 @@ else
 	    usage
 	fi
 	EnglishParserPath=$SearchEnginePath/enju2tsubaki
+	PredicateArgumentDefinition=Enju
     fi
 fi
 
