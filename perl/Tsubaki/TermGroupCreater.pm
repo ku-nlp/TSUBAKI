@@ -124,30 +124,35 @@ sub createTermsFromEnglish {
 	    text => $repname,
 	    term_type => 'word',
 	    gdf => $DFDBS_WORD->get($repname),
+	    blockTypeFeature => $blockTypeFeature,
 	    node_type => 'basic' });
 	push (@{$terms}, $term);
 	$gid++;
     }
 
     # dpnd terms
-    foreach my $id (sort {$sf->{phrases}{$a} <=> $sf->{phrases}{$b}} keys %{$sf->{phrases}}) {
-	next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
-	my $dep_repname = $sf->{phrases}{$id}{repname} ? $sf->{phrases}{$id}{repname} : $sf->{phrases}{$id}{lem};
-	next unless $dep_repname;
-	for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
-	    next if $head_id == -1;	# skip roots of Japanese (-1)
-	    my $head_repname = $sf->{phrases}{$head_id}{repname} ? $sf->{phrases}{$head_id}{repname} : $sf->{phrases}{$head_id}{lem};
-	    next unless $head_repname;
-	    my $count = 0;
-	    my $dpnd_term = sprintf('%s->%s', $dep_repname, $head_repname);
-	    my $term = new Tsubaki::Term ({
-		tid => sprintf ("%s-%s", $gid, $count++),
-		text => $dpnd_term,
-		term_type => 'dpnd',
-		gdf => $DFDBS_DPND->get($dpnd_term, {exhaustive => 1}), 
-		blockTypeFeature => $blockTypeFeature,
-		node_type => 'basic' });
-	    $optionals->{$term->get_id()} = $term unless (exists $optionals->{$term->get_id()});
+    if ($option->{flag_of_dpnd_use}) {
+	foreach my $id (sort {$sf->{phrases}{$a} <=> $sf->{phrases}{$b}} keys %{$sf->{phrases}}) {
+	    next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
+	    my $mod_w_id = $sf->{phrases}{$id}{word_head_id}; # the word id of modifier
+	    my $dep_repname = $sf->{words}{$mod_w_id}{repname} ? $sf->{words}{$mod_w_id}{repname} : $sf->{words}{$mod_w_id}{lem};
+	    next unless $dep_repname;
+	    for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
+		next if $head_id eq 'c-1'; # skip roots of Japanese (-1)
+		my $head_w_id = $sf->{phrases}{$head_id}{word_head_id}; # the word id of head
+		my $head_repname = $sf->{words}{$head_w_id}{repname} ? $sf->{words}{$head_w_id}{repname} : $sf->{words}{$head_w_id}{lem};
+		next unless $head_repname;
+		my $count = 0;
+		my $dpnd_term = sprintf('%s->%s', $dep_repname, $head_repname);
+		my $term = new Tsubaki::Term ({
+					       tid => sprintf ("%s-%s", $gid, $count++),
+					       text => $dpnd_term,
+					       term_type => 'dpnd',
+					       gdf => $DFDBS_DPND->get($dpnd_term, {exhaustive => 1}), 
+					       blockTypeFeature => $blockTypeFeature,
+					       node_type => 'basic' });
+		$optionals->{$term->get_id()} = $term unless (exists $optionals->{$term->get_id()});
+	    }
 	}
     }
 
