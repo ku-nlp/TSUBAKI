@@ -53,8 +53,18 @@ sub create {
     my ($terms, $optionals, $rep2style, $rep2rep_w_yomi, $synnode2midasi);
     if ($option->{english}) {
 	# 英語用
+	my %stopwords; # stop words
+	if ($CONFIG->{STOPWORD_LIST_FILE} && -f $CONFIG->{STOPWORD_LIST_FILE}) {
+	    if (open(STOPWORDS, $CONFIG->{STOPWORD_LIST_FILE})) {
+		while (<STOPWORDS>) {
+		    chomp;
+		    $stopwords{$_} = 1;
+		}
+		close(STOPWORDS);
+	    }
+	}
 	$rep2style = {};
-	($terms, $optionals) = &createTermsFromEnglish($result, $option, $rep2style);
+	($terms, $optionals) = &createTermsFromEnglish($result, $option, $rep2style, \%stopwords);
     } else {
 	# 日本語用
 	my @ids = ();
@@ -95,7 +105,7 @@ sub create {
 
 # termオブジェクトを生成（英語）
 sub createTermsFromEnglish {
-    my ($result, $option, $rep2style) = @_;
+    my ($result, $option, $rep2style, $stopwords_hr) = @_;
 
     # make blocktype features
     my $blockTypes = ($CONFIG->{USE_OF_BLOCK_TYPES}) ? $option->{blockTypes} : {"" => 1};
@@ -118,6 +128,7 @@ sub createTermsFromEnglish {
 	my $count = 0;
 	my $color_num = $gid % scalar(@{$CONFIG->{HIGHLIGHT_COLOR}});
 	my $repname = $sf->{words}{$id}{repname} ? $sf->{words}{$id}{repname} : $sf->{words}{$id}{lem};
+	next if exists($stopwords_hr->{$repname}); # stop word
 	$rep2style->{$repname} = sprintf("background-color: #%s; color: %s; margin:0.1em 0.25em;", $CONFIG->{HIGHLIGHT_COLOR}[$color_num], (($color_num > 4) ? 'white' : 'black'));
 	my $term = new Tsubaki::Term ({
 	    tid => sprintf ("%s-%s", $gid, $count++),
@@ -137,11 +148,13 @@ sub createTermsFromEnglish {
 	    my $mod_w_id = $sf->{phrases}{$id}{word_head_id}; # the word id of modifier
 	    my $dep_repname = $sf->{words}{$mod_w_id}{repname} ? $sf->{words}{$mod_w_id}{repname} : $sf->{words}{$mod_w_id}{lem};
 	    next unless $dep_repname;
+	    next if exists($stopwords_hr->{$dep_repname}); # stop word
 	    for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
 		next if $head_id eq 'c-1'; # skip roots of Japanese (-1)
 		my $head_w_id = $sf->{phrases}{$head_id}{word_head_id}; # the word id of head
 		my $head_repname = $sf->{words}{$head_w_id}{repname} ? $sf->{words}{$head_w_id}{repname} : $sf->{words}{$head_w_id}{lem};
 		next unless $head_repname;
+		next if exists($stopwords_hr->{$head_repname}); # stop word
 		my $count = 0;
 		my $dpnd_term = sprintf('%s->%s', $dep_repname, $head_repname);
 		my $term = new Tsubaki::Term ({
