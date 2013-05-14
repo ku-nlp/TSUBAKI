@@ -29,48 +29,11 @@ if ($opt{blocktype}) {
     }
     close (F);
 }
-$opt{feature} = 1 if $opt{pa}; # use predicate-argument structures (case feature)
 
-our %CASE_FEATURE_BIT = ();
-if ($opt{pa} =~ /stanford/i) { # Stanford dependency
-    $CASE_FEATURE_BIT{nsubj}   = (2 ** 9);
-    $CASE_FEATURE_BIT{dobj}    = (2 ** 10);
-    $CASE_FEATURE_BIT{iobj}    = (2 ** 11);
-    $CASE_FEATURE_BIT{tmod}    = (2 ** 12);
-    $CASE_FEATURE_BIT{advmod}  = (2 ** 13);
-    $CASE_FEATURE_BIT{ccomp}   = (2 ** 14);
-    $CASE_FEATURE_BIT{prep_in} = (2 ** 15);
-    $CASE_FEATURE_BIT{prep_to} = (2 ** 16);
-    $CASE_FEATURE_BIT{prep_for} = (2 ** 17);
-    $CASE_FEATURE_BIT{prep_on} = (2 ** 18);
-    $CASE_FEATURE_BIT{prep_at} = (2 ** 19);
-    $CASE_FEATURE_BIT{prep_with} = (2 ** 20);
-    $CASE_FEATURE_BIT{prep_as} = (2 ** 21);
-    $CASE_FEATURE_BIT{prep_by} = (2 ** 22);
-
-    $CASE_FEATURE_BIT{xsubj}    = $CASE_FEATURE_BIT{nsubj};
-    $CASE_FEATURE_BIT{csubj}    = $CASE_FEATURE_BIT{nsubj};
-    $CASE_FEATURE_BIT{xcomp}    = $CASE_FEATURE_BIT{ccomp};
-
-    $CASE_FEATURE_BIT{nsbjpass} = $CASE_FEATURE_BIT{dobj};
-    $CASE_FEATURE_BIT{agent}    = $CASE_FEATURE_BIT{nsubj};
-}
-elsif ($opt{pa} =~ /knp/i) { # KNP definition for Japanese
-    $CASE_FEATURE_BIT{ga}      = (2 ** 9);
-    $CASE_FEATURE_BIT{wo}      = (2 ** 10);
-    $CASE_FEATURE_BIT{ni}      = (2 ** 11);
-    $CASE_FEATURE_BIT{he}      = (2 ** 12);
-    $CASE_FEATURE_BIT{to}      = (2 ** 13);
-    $CASE_FEATURE_BIT{de}      = (2 ** 14);
-    $CASE_FEATURE_BIT{kara}    = (2 ** 15);
-    $CASE_FEATURE_BIT{made}    = (2 ** 16);
-    $CASE_FEATURE_BIT{yori}    = (2 ** 17);
-    $CASE_FEATURE_BIT{mod}     = (2 ** 18);
-    $CASE_FEATURE_BIT{time}    = (2 ** 19);
-    $CASE_FEATURE_BIT{no}      = (2 ** 20);
-    $CASE_FEATURE_BIT{nitsuku} = (2 ** 21);
-    $CASE_FEATURE_BIT{tosuru}  = (2 ** 22);
-    $CASE_FEATURE_BIT{other}   = (2 ** 23);
+# use predicate-argument structures (case feature)
+if ($opt{pa} =~ /stanford/i || $opt{pa} =~ /knp/i) { # Stanford dependency or KNP definition for Japanese
+    require PredicateArgumentFeatureBit;
+    $opt{feature} = 1;
 }
 else {
     warn("The definition of predicate-argument structures \"$opt{pa}\" is not supported\n");
@@ -155,9 +118,9 @@ sub process_one_sentence {
 	# dependency
 	for my $id (sort {$sf->{phrases}{$a} <=> $sf->{phrases}{$b}} keys %{$sf->{phrases}}) {
 	    next if !$sf->{phrases}{$id}{head_ids}; # skip roots of English (undef)
+	    my $mod_w_id = $sf->{phrases}{$id}{word_head_id}; # the word id of modifier
 	    for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
 		next if $head_id eq 'c-1'; # skip roots of Japanese (-1)
-		my $mod_w_id = $sf->{phrases}{$id}{word_head_id}; # the word id of modifier
 		my $head_w_id = $sf->{phrases}{$head_id}{word_head_id}; # the word id of head
 		my (@terms, $case_relation);
 
@@ -237,8 +200,8 @@ sub create_feature {
     if ($blocktype && exists($BLOCKTYPE2FEATURE{$blocktype})) {
 	$feature += $BLOCKTYPE2FEATURE{$blocktype};
     }
-    if ($case_relation && exists($CASE_FEATURE_BIT{$case_relation})) {
-	$feature += $CASE_FEATURE_BIT{$case_relation};
+    if ($case_relation && exists($PredicateArgumentFeatureBit::CASE_FEATURE_BIT{$case_relation})) {
+	$feature += $PredicateArgumentFeatureBit::CASE_FEATURE_BIT{$case_relation};
     }
 
     return $feature;
