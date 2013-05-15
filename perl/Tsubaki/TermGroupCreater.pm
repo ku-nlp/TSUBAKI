@@ -10,6 +10,7 @@ use CDB_File;
 use Encode;
 use Tsubaki::TermGroup;
 use KNP::Result;
+use PredicateArgumentFeatureBit;
 use Data::Dumper;
 
 my $CONFIG = Configure::get_instance();
@@ -17,35 +18,6 @@ my $CONFIG = Configure::get_instance();
 my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 
-####################
-# 係り受け素性を追加
-####################
-my %CASE_FEATURE_BIT = ();
-$CASE_FEATURE_BIT{ガ}     = (2 ** 9);
-$CASE_FEATURE_BIT{ヲ}     = (2 ** 10);
-$CASE_FEATURE_BIT{ニ}     = (2 ** 11);
-$CASE_FEATURE_BIT{ヘ}     = (2 ** 12);
-$CASE_FEATURE_BIT{ト}     = (2 ** 13);
-$CASE_FEATURE_BIT{デ}     = (2 ** 14);
-$CASE_FEATURE_BIT{カラ}   = (2 ** 15);
-$CASE_FEATURE_BIT{マデ}   = (2 ** 16);
-$CASE_FEATURE_BIT{ヨリ}   = (2 ** 17);
-$CASE_FEATURE_BIT{修飾}   = (2 ** 18);
-$CASE_FEATURE_BIT{時間}   = (2 ** 19);
-$CASE_FEATURE_BIT{ノ}     = (2 ** 20);
-$CASE_FEATURE_BIT{ニツク} = (2 ** 21);
-$CASE_FEATURE_BIT{トスル} = (2 ** 22);
-$CASE_FEATURE_BIT{その他} = (2 ** 23);
-
-my %DPND_TYPE_FEATURE_BIT = ();
-$DPND_TYPE_FEATURE_BIT{未格}   = (2 ** 24);
-$DPND_TYPE_FEATURE_BIT{連体}   = (2 ** 25);
-$DPND_TYPE_FEATURE_BIT{省略}   = (2 ** 26);
-$DPND_TYPE_FEATURE_BIT{受動}   = (2 ** 27);
-$DPND_TYPE_FEATURE_BIT{使役}   = (2 ** 28);
-$DPND_TYPE_FEATURE_BIT{可能}   = (2 ** 29);
-$DPND_TYPE_FEATURE_BIT{自動}   = (2 ** 30);
-$DPND_TYPE_FEATURE_BIT{授動詞} = (2 ** 31);
 
 sub create {
     my ($result, $condition, $option) = @_;
@@ -155,6 +127,13 @@ sub createTermsFromEnglish {
 		my $head_repname = $sf->{words}{$head_w_id}{repname} ? $sf->{words}{$head_w_id}{repname} : $sf->{words}{$head_w_id}{lem};
 		next unless $head_repname;
 		next if exists($stopwords_hr->{$head_repname}); # stop word
+		my $pa_feature = 0;
+		if ($CONFIG->{USE_OF_DPND_FEATURES} && # predicate-argument relation if exists
+		    exists($sf->{words}{$head_w_id}{arguments}) && exists($sf->{words}{$head_w_id}{arguments}{$mod_w_id})) {
+		    if (exists($PredicateArgumentFeatureBit::CASE_FEATURE_BIT{$sf->{words}{$head_w_id}{arguments}{$mod_w_id}})) {
+			$pa_feature += $PredicateArgumentFeatureBit::CASE_FEATURE_BIT{$sf->{words}{$head_w_id}{arguments}{$mod_w_id}};
+		    }
+		}
 		my $count = 0;
 		my $dpnd_term = sprintf('%s->%s', $dep_repname, $head_repname);
 		my $term = new Tsubaki::Term ({
@@ -162,7 +141,7 @@ sub createTermsFromEnglish {
 					       text => $dpnd_term,
 					       term_type => 'dpnd',
 					       gdf => $DFDBS_DPND->get($dpnd_term, {exhaustive => 1}), 
-					       blockTypeFeature => $blockTypeFeature,
+					       blockTypeFeature => $blockTypeFeature + $pa_feature,
 					       node_type => 'basic' });
 		$optionals->{$term->get_id()} = $term unless (exists $optionals->{$term->get_id()});
 	    }
@@ -727,10 +706,10 @@ sub appendDpndFeature {
     push (@dpndTypes, '自動')   if ($mrphF =~ /<自他動詞:他/);
     push (@dpndTypes, '授動詞') if ($mrphF =~ /<授受動詞:受/);
 
-    my $featureBit = $CASE_FEATURE_BIT{$case};
+    my $featureBit = $PredicateArgumentFeatureBit::CASE_FEATURE_BIT{$case};
     my @featureBuf = ($case);
     foreach my $dpndType (@dpndTypes) {
-	$featureBit |= $DPND_TYPE_FEATURE_BIT{$dpndType};
+	$featureBit |= $PredicateArgumentFeatureBit::DPND_TYPE_FEATURE_BIT{$dpndType};
 	push (@featureBuf, $dpndType);
     }
     # print "*** " . $midasi . " " . join (",", @featureBuf) . " $featureBit\n";
