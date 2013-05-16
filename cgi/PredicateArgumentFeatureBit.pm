@@ -26,8 +26,18 @@ $CASE_FEATURE_BIT{xsubj}     = $CASE_FEATURE_BIT{nsubj};
 $CASE_FEATURE_BIT{csubj}     = $CASE_FEATURE_BIT{nsubj};
 $CASE_FEATURE_BIT{xcomp}     = $CASE_FEATURE_BIT{ccomp};
 
-$CASE_FEATURE_BIT{nsbjpass}  = $CASE_FEATURE_BIT{dobj};
+# passive
+$CASE_FEATURE_BIT{nsubjpass}  = $CASE_FEATURE_BIT{dobj};
 $CASE_FEATURE_BIT{agent}     = $CASE_FEATURE_BIT{nsubj};
+
+$DPND_TYPE_FEATURE_BIT{topic}        = (2 ** 24);
+$DPND_TYPE_FEATURE_BIT{relative}     = (2 ** 25);
+$DPND_TYPE_FEATURE_BIT{omission}     = (2 ** 26);
+$DPND_TYPE_FEATURE_BIT{passive}      = (2 ** 27);
+$DPND_TYPE_FEATURE_BIT{causative}    = (2 ** 28);
+$DPND_TYPE_FEATURE_BIT{ability}      = (2 ** 29);
+$DPND_TYPE_FEATURE_BIT{intransitive} = (2 ** 30);
+$DPND_TYPE_FEATURE_BIT{giving}       = (2 ** 31);
 
 
 # KNP definition for Japanese
