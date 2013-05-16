@@ -31,7 +31,7 @@ sub getDefaultValues {
 
 
     # KNPのオプション
-    $params{use_of_case_analysis} = $CONFIG->{USE_OF_DPND_FEATURES}; # 係り受け素性を使うなら格解析を行う
+    $params{use_of_case_analysis} = !$CONFIG->{IS_ENGLISH_VERSION} & $CONFIG->{USE_OF_DPND_FEATURES}; # 係り受け素性を使うなら格解析を行う (日本語)
     $params{use_of_NE_tagger} = $CONFIG->{USE_OF_NE_FOR_QUERY_PROCESS};
 
 
