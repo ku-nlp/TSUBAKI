@@ -67,7 +67,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit) {
 		unsigned int feature = intchar2int(pos_buf_ptr);
 		pos_buf_ptr += sizeof(int);
                 // no features are given or feature matches featureBit
-		if (featureBit == 0 || (feature & featureBit & CONDITION_FEATURE_MASK)) {
+		if (!(featureBit & CONDITION_FEATURE_MASK) || (feature & featureBit & CONDITION_FEATURE_MASK)) {
 		    int posfreq = intchar2int(pos_buf_ptr);
 		    double frq = 0.001 * (posfreq & FREQ_MASK);
 		    int pos = posfreq >> FREQ_BIT_SIZE;
@@ -81,11 +81,20 @@ std::vector<int> *Document::get_pos(unsigned int featureBit) {
                         if (feature & featureBit & CASE_FEATURE_MASK) {
                             set_match_dpnd_node_with_case(true);
                             weight *= WEIGHT_OF_CASE_FEATURE_MATCH;
+#ifdef DEBUG
+                            std::cerr << "Case feature match! : " << (feature & featureBit & CASE_FEATURE_MASK) << std::endl;
+#endif
                         }
+#ifdef DEBUG
+                        else
+                            std::cerr << "Case feature mismatch!" << std::endl;
+#endif
                     }
                     if (featureBit > 0) {
-                        if ((featureBit & DPND_TYPE_FEATURE_MASK) != (feature & DPND_TYPE_FEATURE_MASK))
+                        if ((featureBit & DPND_TYPE_FEATURE_MASK) != (feature & DPND_TYPE_FEATURE_MASK)) {
+                            std::cerr << (featureBit & DPND_TYPE_FEATURE_MASK) << " : " << (feature & DPND_TYPE_FEATURE_MASK) << std::endl;
                             weight *= WEIGHT_OF_DPND_TYPE_FEATURE_MISMATCH;
+                        }
                     }
 
                     double cur_freq = weight * frq;

@@ -655,7 +655,7 @@ bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int l
 		    unsigned int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
                     // no features (in query) are given or
 		    // 文書Dにおける term の feature bit とクエリで与えられた feature bit と CONDITION_FEATURE_MASKの論理積をとる
-		    if (featureBits == 0 || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
+		    if (!(featureBits & CONDITION_FEATURE_MASK) || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
 			appendDocument(i, *it, load_dids, head_of_offdat, head_of_posdat);
 			load_dids++;
 		    }
@@ -670,7 +670,7 @@ bool Documents::read_dids_with_feature(unsigned char *buffer, int &offset, int l
 	    unsigned int fbits_in_d = intchar2int(head_of_feature + i * SIZEOFINT);
             // no features (in query) are given or
 	    // 文書Dにおける term の feature bit とクエリで与えられた feature bit の論理積をとる
-	    if (featureBits == 0 || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
+	    if (!(featureBits & CONDITION_FEATURE_MASK) || (fbits_in_d & featureBits & CONDITION_FEATURE_MASK)) {
 		int did = intchar2int(buffer + i * SIZEOFINT);
 		appendDocument(i, did, load_dids, head_of_offdat, head_of_posdat);
 		load_dids++;
