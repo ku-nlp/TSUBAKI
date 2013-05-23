@@ -35,7 +35,7 @@ if ($opt{pa} =~ /stanford/i || $opt{pa} =~ /knp/i) { # Stanford dependency or KN
     require PredicateArgumentFeatureBit;
     $opt{feature} = 1;
 }
-else {
+elsif ($opt{pa})  {
     warn("The definition of predicate-argument structures \"$opt{pa}\" is not supported\n");
     $opt{pa} = undef;
 }
