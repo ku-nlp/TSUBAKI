@@ -6,7 +6,6 @@ package Configure;
 use strict;
 use utf8;
 use File::Basename;
-use KNP;
 use Error qw(:try);
 use Data::Dumper;
 {
@@ -153,6 +152,7 @@ sub _new {
     try {
 	# 英語モード以外ではKNPオブジェクトを作る
 	unless ($this->{IS_ENGLISH_VERSION}) {
+	    require KNP;
 	    $this->{KNP} = new KNP(
 		-Command      => $this->{KNP_COMMAND},
 		-Option       => join(' ', @{$this->{KNP_OPTIONS}}),
