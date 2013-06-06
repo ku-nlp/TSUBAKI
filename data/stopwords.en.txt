@@ -409,3 +409,13 @@ your
 yours
 yourself
 yourselves
+,
+.
+?
+/
+:
+;
+'
+"
+(
+)
