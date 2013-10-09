@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2012/08/02 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2013/10/09 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -63,8 +63,8 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
 
 - 英語の文書を検索する場合に必要なツールのインストール
 
-  -- HPSG構文解析器Enjuのインストール
-     http://www.nactem.ac.uk/enju/index.ja.html
+  -- Stanford Parserのインストール
+     http://nlp.stanford.edu/software/lex-parser.shtml
 
   ※ 英語の同義語・句のデータを別途用意すれば、SynGraphデータベース形式
      に変換して使うことができます。詳細は、SynGraphのドキュメントをご覧
@@ -84,7 +84,7 @@ $TSUBAKI_DIRにおいて以下のように ./setup.shを実行することによ
        (/somewhere/data以下にインデックスなどのデータを出力します)
 
   例2) 英語サンプル文書データを対象にする場合
-       % ./setup.sh -e -s sample_doc/en/src_doc -d /somewhere/data
+       % ./setup.sh -e -s sample_doc/en/src_doc -d /somewhere/data -f /somewhere/stanford-parser-full-2013-06-20
 
   例3) あるディレクトリ(/somewhere/src_doc_html)以下にあるHTML文書データを対象にする場合
        % ./setup.sh -s /somewhere/src_doc -d /somewhere/data
@@ -95,6 +95,7 @@ $TSUBAKI_DIRにおいて以下のように ./setup.shを実行することによ
        -d 出力データパス         : インデックスなどのデータ出力場所を指定
        -j                        : 日本語の文書を検索する場合 (default)
        -e                        : 英語の文書を検索する場合
+       -f Parserのパス           : 英語の文書を検索する場合に、Stanford Parserの場所を指定
        -c 出力設定ファイル名	 : 出力する設定ファイル名を指定 (default: $TSUBAKI_DIR/conf/configure)
        -z                        : 検索対象文書がgzip圧縮されている場合に指定
 
