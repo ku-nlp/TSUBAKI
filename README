@@ -2,7 +2,7 @@
 # 検索エンジン基盤 TSUBAKI README #
 ###################################
 
-2013/10/09 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
+2013/11/11 Daisuke Kawahara <dk@i.kyoto-u.ac.jp>
 
 
 TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)において、京
@@ -24,7 +24,6 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
 
 - 必要なライブラリのインストール
   -- libxml (http://xmlsoft.org/)
-  -- TinyCDB (http://www.corpit.ru/mjt/tinycdb.html)
   -- BerkeleyDB (http://www.oracle.com/technetwork/products/berkeleydb/)
 
 
@@ -107,10 +106,6 @@ $TSUBAKI_DIRにおいて以下のように ./setup.shを実行することによ
 * 検索サーバプログラムのコンパイル
 
 $TSUBAKI_DIRにおいて、make を実行してください。
-
-  ※ コンパイルが失敗する場合は、$TSUBAKI_DIR/search/Makefileにおいて、
-     CXXFLAGSとCDB_LIBをcdb.h、libcdb.aのインストール場所に応じて修正し
-     てください。
 
 
 2. ID付与
@@ -218,6 +213,4 @@ doc/tsubaki-configuration.pdf)。検索サーバとスニペットサーバを�
 
 より詳細なドキュメントは、TSUBAKI Wikiを参照してください。
 
-TSUBAKI Wiki: http://tsubaki-wiki.ixnlp.nii.ac.jp/index.php
-              username: tsubaki-user
-              password: tsu8k!
+TSUBAKI Wiki: http://orchid.kuee.kyoto-u.ac.jp/tsubaki-wiki/
