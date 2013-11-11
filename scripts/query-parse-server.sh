@@ -25,6 +25,7 @@ do
 done
 shift `expr $OPTIND - 1`
 
+USE=`grep ^USE_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 PERL=`grep ^PERL $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 UTILS_DIR=`grep UTILS_PATH $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
@@ -33,6 +34,10 @@ CGI_DIR=$TSUBAKI_DIR/cgi
 COMMAND=query_parse_server.pl
 NICE=-4
 PORT=`grep PORT_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+
+if [ $USE -eq 0 ]; then
+    exit 0
+fi
 
 start() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}' | perl -pe 's/,/ /g'`
