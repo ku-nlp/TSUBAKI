@@ -195,7 +195,12 @@ sub extract_sentences_from_content_using_position_new_sf {
     my $doc = $parser->parse_string($content);
     my $sf = new StandardFormat;
 
-    for my $sentence_node ($doc->getElementsByTagName('S')) { # sentence loop
+    my @sentence_nodes = $doc->getElementsByTagName('Title');
+    # push(@sentence_nodes, $doc->getElementsByTagName('Keywords'));
+    # push(@sentence_nodes, $doc->getElementsByTagName('Description'));
+    push(@sentence_nodes, $doc->getElementsByTagName('S'));
+
+    for my $sentence_node (@sentence_nodes) { # sentence loop
 	my $sentence_id = $sentence_node->getAttribute('Id');
 	for my $annotation_node ($sentence_node->getElementsByTagName('Annotation')) { # parse
 	    $sf->read_annotation_from_node($annotation_node);
