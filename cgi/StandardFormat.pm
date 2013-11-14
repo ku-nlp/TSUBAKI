@@ -45,6 +45,7 @@ sub read_annotation_from_node {
 	    my $id = $word_node->getAttribute('id');
 	    $this->{words}{$id} = {id => $id, 
 				   str => $str, lem => $lem, repname => $repname, 
+				   synnodes => [], 
 				   pos => $word_node->getAttribute('pos1'), 
 				   feature => $word_node->getAttribute('feature'), 
 				   content_p => $word_node->getAttribute('content_p'), 

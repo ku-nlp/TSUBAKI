@@ -918,8 +918,13 @@ sub make_word_list_new_sf {
 	my $word = $sf->{words}{$id};
 	my $surf = $word->{str};
 	$surf =~ s/\*$//;
+	my @reps;
+	push(@reps, $opt->{ignore_yomi} ? &remove_yomi($word->{repname}) : $word->{repname});
+	for my $synnode (@{$word->{synnodes}}) { # synnodes
+	    push(@reps, $synnode->{synid});
+	}
 	push(@words, {surf => $surf,
-		      reps => [$opt->{ignore_yomi} ? &remove_yomi($word->{repname}) : $word->{repname}],
+		      reps => \@reps,
 		      isContentWord => 1
 		     });
     }
