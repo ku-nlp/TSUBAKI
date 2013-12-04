@@ -86,6 +86,85 @@ sub read_annotation_from_node {
     }
 }
 
+sub convert_knp_format {
+    my ($this, $annotation_node) = @_;
+
+    my $knp_format_string;
+
+    my %parent_tid;
+    my %bnst_span;
+    my $current_bnst_id = -1;
+    my %tid2bid;
+    # to recover the tree structure
+    for my $phrase_node ($annotation_node->getElementsByTagName('Chunk')) {
+	my $id = $phrase_node->getAttribute('id');
+	$id =~ s/^c//;
+	my $head_id = $phrase_node->getAttribute('head');
+	$head_id =~ s/^c//;
+	my $phrase_feature = $phrase_node->getAttribute('feature');
+
+	# bnst start
+	if ($phrase_feature =~ /文節:(\d+)\-(\d+)/) {
+	    my $start_tid = $1;
+	    my $end_tid = $2;
+	    $bnst_span{$start_tid} = $end_tid;
+
+	    $current_bnst_id++;
+	    for my $id ($start_tid .. $end_tid) {
+		$tid2bid{$id} = $current_bnst_id;
+	    }
+	}
+	$parent_tid{$id} = $head_id;
+    }
+
+    for my $phrase_node ($annotation_node->getElementsByTagName('Chunk')) {
+	my $id = $phrase_node->getAttribute('id');
+	$id =~ s/^c//;
+
+	my $head_id = $phrase_node->getAttribute('head');
+	$head_id =~ s/^c//;
+	my $dpnd_type = $phrase_node->getAttribute('type');
+	my $phrase_feature = $phrase_node->getAttribute('feature');
+	$phrase_feature =~ s/&lt;/</g;
+	$phrase_feature =~ s/&gt;/>/g;
+
+	# bnst info.
+	if (defined $bnst_span{$id}) {
+	    my $head_bnst_id = !defined $tid2bid{$parent_tid{$bnst_span{$id}}} ? '-1' : $tid2bid{$parent_tid{$bnst_span{$id}}};
+
+	    $knp_format_string .= "* $head_bnst_id$dpnd_type $phrase_feature\n";
+	}
+
+	$knp_format_string .= "+ $head_id$dpnd_type $phrase_feature\n";
+	for my $word_node ($phrase_node->getElementsByTagName('Token')) {
+	    my $str = $word_node->getAttribute('surf');
+	    my $read = $word_node->getAttribute('read');
+	    my $lem = $word_node->getAttribute('orig');
+
+	    my $pos1 = $word_node->getAttribute('pos1');
+	    $pos1 = '*' unless $pos1;
+	    my $pos2 = $word_node->getAttribute('pos2');
+	    $pos2 = '*' unless $pos2;
+	    my $pos3 = $word_node->getAttribute('pos3');
+	    $pos3 = '*' unless $pos3;
+	    my $pos4 = $word_node->getAttribute('pos4');
+	    $pos4 = '*' unless $pos4;
+
+	    my $word_feature = $word_node->getAttribute('feature');
+	    $word_feature =~ s/&lt;/</g;
+	    $word_feature =~ s/&gt;/>/g;
+
+	    # the numbers are tentative
+	    $knp_format_string .= "$str $read $lem $pos1 1 $pos2 1 $pos3 1 $pos4 1 NULL $word_feature\n";
+
+	}
+    }
+
+    $knp_format_string .= "EOS\n";
+    return $knp_format_string;
+}
+
+
 # get the number of headword in the phrase
 sub get_phrase_head_num {
     my ($words_ar) = @_;
