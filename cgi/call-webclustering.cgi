@@ -1,4 +1,4 @@
-#!/home/skeiji/local/bin/perl
+#!/usr/bin/env perl
 
 # $Id$
 
@@ -60,6 +60,7 @@ sub main {
     # cache のチェック
     unless ($xmldat) {
 	$xmldat = &getClusteringResult();
+	$xmldat = decode('utf-8', $xmldat);
 	# ログの保存
 	$cache->save($key, $xmldat, 'TXT');
     } else {
