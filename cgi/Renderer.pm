@@ -1028,7 +1028,6 @@ sub printSearchResultForBrowserAccess {
 	$rank++;
 	# last if ($rank > 100);
     }
-    $this->printAjax($params, join (",", @__buf)) if ($status ne "busy") && !$CONFIG->{IS_ENGLISH_VERSION};
 
     ############################
     # 必要ならばスニペットを生成
@@ -1052,6 +1051,8 @@ sub printSearchResultForBrowserAccess {
     # KWIC or 通常版の検索結果を表示
     ################################
     ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end, $did2snippets);
+
+    $this->printAjax($params, join (",", @__buf)) if ($status ne "busy") && !$CONFIG->{IS_ENGLISH_VERSION};
 
     ################
     # フッターの表示
@@ -1318,7 +1319,7 @@ sub printOrdinarySearchResult {
 
 <TR>
 <TD style='border-left:1px solid silver;'><IMG src="image/bottom-left.png" width=1></TD>
-<TD><DIV id='msg'><CENTER><IMG width='1em' src='image/loading.gif' border='0'>&nbsp;関連語蒸留中...</CENTER></DIV></TD>
+<TD><DIV id='msg'><CENTER><IMG width='1em' src='image/loading.gif' border='0'>&nbsp;関連語・主要対立表現作成中...</CENTER></DIV></TD>
 <TD style='border-right:1px solid silver;'><IMG src="image/bottom-left.png" width=1></TD>
 </TR>
 
