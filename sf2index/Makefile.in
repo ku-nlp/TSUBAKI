@@ -34,7 +34,7 @@ HTMLExt = @HTMLExt@
 EnglishFlag = @EnglishFlag@
 
 WWW2sf_args = -f -c $(CNSDB)
-AddKNPResult_args = -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -embed_result_in_xml -print_progress
+AddKNPResult_args = -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -embed_result_in_xml
 sf2term_args = 
 html_relocation_args = -s $(START_DIR_ID)
 
@@ -52,7 +52,7 @@ ifeq "$(EnglishFlag)" "1"
 WWW2sf_args += -E
 AddKNPResult_args += -english -javacmd $(JavaCommand) -english_parser_dir $(EnglishParserDir)
 else
-AddKNPResult_args += -syngraph -syndbdir $(SynDBDir) -all -syndb_on_memory -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) 
+AddKNPResult_args += -syngraph -syndbdir $(SynDBDir) -all -jmncmd $(JumanCommand) -knpcmd $(KnpCommand) -jmnrc $(JumanrcFile) -knprc $(KnprcFile) 
 endif
 
 ifeq "$(UsePredicateArgumentStructureFlag)" "1"
@@ -171,12 +171,20 @@ $(foreach XML_REST_FILE, $(XML_REST_FILES_$1), \
 $(XML_FILE_FIRST_$1): $(XML_SIMPLE_FILES_$1)
 	if [ ! -d $(1) ]; then mkdir -p $(1); fi && \
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl $(AddKNPResult_args) -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log -indir $(XML_SIMPLE_TOP_DIR_$1) -outdir $(1) && \
+	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl $(AddKNPResult_args) -print_progress -syndb_on_memory -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log -indir $(XML_SIMPLE_TOP_DIR_$1) -outdir $(1) && \
 	rm -f $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log
 endef
 
+ifdef ADD_KNP_RESULT_PARALLEL
+$(XMLS): $(XML_TOP_DIR)/%.$(XML_SUFFIX): $(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX)
+	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
+	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
+	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result.perl $(AddKNPResult_args) -usemodule < $< > $(TMP_DIR)/$(notdir $@) && \
+	mv $(TMP_DIR)/$(notdir $@) $@; touch $@
+else
 $(foreach XML_DIR, $(XML_DIRS), \
   $(eval $(call make_xml,$(XML_DIR))))
+endif
 
 
 # $1: /somewhere/idx/0000/000011
