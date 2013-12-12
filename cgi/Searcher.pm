@@ -137,6 +137,9 @@ sub filterSearchResult {
 	    foreach my $doc ($cluster->getElementsByTagName('Doc')) {
 		$dids{$doc->getAttribute('Id')} = 1;
 	    }
+	    foreach my $doc ($cluster->getElementsByTagName('KWIC')) {
+		$dids{$doc->getAttribute('DocID')} = 1;
+	    }
 	}
     }
 
