@@ -55,7 +55,7 @@ sub search {
 	    $result = $this->broadcastSearch($query, $logger, $opt);
 
 	    # キャッシュを利用しない、英語モード、ヒット件数が0件のときはキャッシュしない
-	    unless ($opt->{disable_cache} || $CONFIG->{IS_ENGLISH_VERSION} || $result->{hitcount} < 1) {
+	    unless ($opt->{disable_cache} || $CONFIG->{IS_ENGLISH_VERSION} || $result->{hitcount} < 1 || defined $opt->{cluster_id}) {
 		$cache->save($query->normalize(), $result);
 	    }
 
