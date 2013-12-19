@@ -395,7 +395,7 @@ END_OF_HTML
 	</script>
 	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/wz_jsgraphics.js"></script>
 	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/prototype.js"></script>
-	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/tsubaki.js"></script>
+	<script type="text/javascript" src="javascript/tsubaki.js"></script>
 END_OF_HTML
 
     # クエリ解析結果を描画するjavascriptコードの出力
@@ -1319,7 +1319,7 @@ sub printOrdinarySearchResult {
 
 <TR>
 <TD style='border-left:1px solid silver;'><IMG src="image/bottom-left.png" width=1></TD>
-<TD><DIV id='msg'><CENTER><IMG width='1em' src='image/loading.gif' border='0'>&nbsp;関連語・主要対立表現作成中...</CENTER></DIV></TD>
+<TD><DIV id='msg'><CENTER><IMG width='1em' src='image/loading.gif' border='0'>&nbsp;関連語, 主要・対立表現作成中...</CENTER></DIV></TD>
 <TD style='border-right:1px solid silver;'><IMG src="image/bottom-left.png" width=1></TD>
 </TR>
 
@@ -1756,7 +1756,7 @@ sub getPaintingJavaScriptCode {
     my ($this, $result, $opt) = @_;
 
     my $jscode;
-    $jscode .= qq(<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/drawResult.js"></script>\n);
+    $jscode .= qq(<script type="text/javascript" src="javascript/drawResult.js"></script>\n);
     $jscode .= qq(<script language="JavaScript">\n);
 
     # 単語・同義表現グループを描画する
@@ -1788,7 +1788,12 @@ sub getPaintingJavaScriptCode {
     $jscode .= qq(function createTerms () {\n);
     $jscode .= qq(var termGroups = new Array\(\);\n);
     $jscode .= qq(var basicWords = new Array\() . join (",", map {sprintf "\"%s\"", $_} @surfs) . qq(\);\n);
-    $jscode .= qq(var importance = new Array\() . join (",", map {sprintf "%s", $synos{$_}->{importance}} @surfs) . qq(\);\n);
+
+    $jscode .= qq(var importance = new Array\(\)\n);
+    for (@surfs) {
+	$jscode .= qq(importance.push($synos{$_}->{importance})\n);
+    }
+
     $jscode .= qq(for (var i = 0; i < basicWords.length; i++) {\n);
     $jscode .= qq(\ttermGroups[i] = new TermGroup(i, basicWords[i], importance[i]);\n);
     $jscode .= qq(}\n\n);
