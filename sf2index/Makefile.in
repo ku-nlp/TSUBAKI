@@ -145,7 +145,7 @@ endif
 
 
 # $1: /somewhere/idx/0000/000011
-define make_idx1
+define make_idx1_xmllist
 $(eval IDX1_FILE_$1 := $(1).$(IDX1_SUFFIX))
 $(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
 $(eval HTML_FILES_$1 := $(sort $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt))))
@@ -195,61 +195,38 @@ $(IDX0_FILES_$1): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX
 	if [ ! -d "$$(dir $$@)" ]; then mkdir -p $$(dir $$@); fi && \
 	$(PERL) -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $(sf2term_args) $$< > $(TMP_DIR)/$$(notdir $$@) && \
 	mv $(TMP_DIR)/$$(notdir $$@) $$@
-endef
 
-$(foreach IDX_DIR, $(IDX_DIRS), \
-  $(eval $(call make_idx1,$(IDX_DIR))))
-
-# $1: /somewhere/idx/0000/000011
-define make_xmllist
 $(eval XML_LIST_FILE_$1 := $(1).$(XML_LIST_SUFFIX))
-$(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
-$(eval HTML_FILES_$1 := $(sort $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt)))) 
-$(eval XML_FILES_$1 := $(sort $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1))))
 $(XML_LIST_FILE_$1): $(XML_FILES_$1)
 	mkdir -p $$(dir $$@) && find $$(dir $$<) -type f -name "*.$(XML_SUFFIX)" -print | sort > $$@
 endef
 
 $(foreach IDX_DIR, $(IDX_DIRS), \
-  $(eval $(call make_xmllist,$(IDX_DIR))))
+  $(eval $(call make_idx1_xmllist,$(IDX_DIR))))
 
 
 # $1: /somewhere/idx/0000
-define make_sid2tid
+define make_sid2tid_idxidx_urltitle
 $(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
+$(eval IDXIDX_FILE_$1 := $(1)/$(ID).$(IDX_SUFFIX))
+$(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
+$(eval URL_TITLE_FILE_$1 := $(1)/$(URL_TITLE_SUFFIX))
+
 $(eval HTML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
 $(eval HTML_DIRS_EACH_$1 := $(wildcard $(HTML_FIRST_DIR_$1)/??????))
 $(eval XML_DIRS_EACH_$1 := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS_EACH_$1)))
+
+ # sid2tid
 $(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
 $(SID2TID_FILE_$1): $(IDX1_FILES_$1)
 	mkdir -p $$(dir $$@) && \
 	$(PERL) $(BASEDIR)/scripts/make-mapfile.perl $$(dir $$@)*.$(IDX1_SUFFIX) > $$@
-endef
 
-$(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
-  $(eval $(call make_sid2tid,$(IDX_FIRST_DIR))))
-
-# $1: /somewhere/idx/0000
-define make_idxidx
-$(eval IDXIDX_FILE_$1 := $(1)/$(ID).$(IDX_SUFFIX))
-$(eval HTML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
-$(eval HTML_DIRS_EACH_$1 := $(sort $(wildcard $(HTML_FIRST_DIR_$1)/??????)))
-$(eval XML_DIRS_EACH_$1 := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS_EACH_$1)))
-$(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
-$(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
+ # idxidx
 $(IDXIDX_FILE_$1): $(IDX1_FILES_$1) $(SID2TID_FILE_$1)
 	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $$(dir $$@) -mapfile $(SID2TID_FILE_$1) -suffix $(IDX1_SUFFIX) > $$@
-endef
 
-$(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
-  $(eval $(call make_idxidx,$(IDX_FIRST_DIR))))
-
-# $1: /somewhere/idx/0000
-define make_urltitle_all
-$(eval URL_TITLE_FILE_$1 := $(1)/$(URL_TITLE_SUFFIX))
-$(eval HTML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
-$(eval HTML_DIRS_EACH_$1 := $(sort $(wildcard $(HTML_FIRST_DIR_$1)/??????)))
-$(eval XML_DIRS_EACH_$1 := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS_EACH_$1)))
+ # urltitle
 $(eval XML_LIST_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX),$(XML_DIRS_EACH_$1)))
 $(eval URL_TITLE_FILES_$1 := $(patsubst $(IDX_TOP_DIR)/%.$(XML_LIST_SUFFIX),$(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX),$(XML_LIST_FILES_$1)))
 $(URL_TITLE_FILE_$1):$(URL_TITLE_FILES_$1)
@@ -262,7 +239,7 @@ $(URL_TITLE_FILES_$1): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(IDX_TOP_DIR)/%.$(
 endef
 
 $(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
-  $(eval $(call make_urltitle_all,$(IDX_FIRST_DIR))))
+  $(eval $(call make_sid2tid_idxidx_urltitle,$(IDX_FIRST_DIR))))
 
 
 $(BINS): $(IDX_TOP_DIR)/%/idx.word.dat: $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
