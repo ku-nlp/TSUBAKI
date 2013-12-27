@@ -135,10 +135,23 @@ define make_dummy_xml
 $(2): $(1)
 endef
 
-# $1: /somewhere/xml_simple/0000/000011
-define make_xml_simple
-$(eval HTML_DIR_$1 := $(patsubst $(XML_SIMPLE_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
-$(eval HTML_FILES_$1 := $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt)))
+ifdef ADD_KNP_RESULT_PARALLEL
+$(XMLS): $(XML_TOP_DIR)/%.$(XML_SUFFIX): $(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX)
+	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
+	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
+	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result.perl $(AddKNPResult_args) -usemodule < $< > $(TMP_DIR)/$(notdir $@) && \
+	mv $(TMP_DIR)/$(notdir $@) $@; touch $@
+endif
+
+
+# $1: /somewhere/idx/0000/000011
+define make_idx1
+$(eval IDX1_FILE_$1 := $(1).$(IDX1_SUFFIX))
+$(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_FILES_$1 := $(sort $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt))))
+
+ # xml_simple
+$(eval XML_SIMPLE_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(1)))
 $(eval XML_SIMPLE_FILES_$1 := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1)))
 $(eval XML_SIMPLE_FILE_FIRST_$1 := $(firstword $(XML_SIMPLE_FILES_$1)))
 $(eval XML_SIMPLE_REST_FILES_$1 := $(filter-out $(XML_SIMPLE_FILE_FIRST_$1), $(XML_SIMPLE_FILES_$1)))
@@ -147,60 +160,36 @@ $(foreach XML_SIMPLE_REST_FILE, $(XML_SIMPLE_REST_FILES_$1), \
   $(eval $(call make_dummy_xml,$(XML_SIMPLE_FILE_FIRST_$1),$(XML_SIMPLE_REST_FILE))))
 $(XML_SIMPLE_FILE_FIRST_$1): $(HTML_FILES_$1)
 	if [ ! -d $(TMP_XML_SIMPLE_DIR_$1) ]; then mkdir -p $(TMP_XML_SIMPLE_DIR_$1); fi && \
-	if [ ! -d $$(dir $(1)) ]; then mkdir -p $$(dir $(1)); fi && \
-	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR_$1) $(TMP_XML_SIMPLE_DIR_$1) 2> $(TMP_DIR)/www2sf_$(notdir $(1)).log && \
-	mv $(TMP_XML_SIMPLE_DIR_$1) $(1) && \
-	rm -rf $(TMP_XML_SIMPLE_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(1)).log 
-endef
+	if [ ! -d $$(dir $(XML_SIMPLE_DIR_$1)) ]; then mkdir -p $$(dir $(XML_SIMPLE_DIR_$1)); fi && \
+	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR_$1) $(TMP_XML_SIMPLE_DIR_$1) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR_$1)).log && \
+	mv $(TMP_XML_SIMPLE_DIR_$1) $(XML_SIMPLE_DIR_$1) && \
+	rm -rf $(TMP_XML_SIMPLE_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR_$1)).log 
 
-$(foreach XML_SIMPLE_DIR, $(XML_SIMPLE_DIRS), \
-  $(eval $(call make_xml_simple,$(XML_SIMPLE_DIR))))
-
-# $1: /somewhere/xml/0000/000011
-define make_xml
-$(eval HTML_DIR_$1 := $(patsubst $(XML_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
-$(eval HTML_FILES_$1 := $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt)))
-$(eval XML_SIMPLE_TOP_DIR_$1 := $(patsubst $(XML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(1)))
-$(eval XML_SIMPLE_FILES_$1 := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1)))
-$(eval XML_FILES_$1 := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1)))
+ # xml
+$(eval XML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
+$(eval XML_FILES_$1 := $(sort $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1))))
 $(eval XML_FILE_FIRST_$1 := $(firstword $(XML_FILES_$1)))
 $(eval XML_REST_FILES_$1 := $(filter-out $(XML_FILE_FIRST_$1), $(XML_FILES_$1)))
-$(eval TMP_XML_DIR_$1 := $(TMP_DIR)/tmp_xml_$(notdir $(1)))
+$(eval TMP_XML_DIR_$1 := $(TMP_DIR)/tmp_xml_$(notdir $(XML_DIR_$1)))
+ifndef ADD_KNP_RESULT_PARALLEL
 $(foreach XML_REST_FILE, $(XML_REST_FILES_$1), \
   $(eval $(call make_dummy_xml,$(XML_FILE_FIRST_$1),$(XML_REST_FILE))))
-$(XML_FILE_FIRST_$1): $(XML_SIMPLE_FILES_$1)
-	if [ ! -d $(1) ]; then mkdir -p $(1); fi && \
-	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl $(AddKNPResult_args) -print_progress -syndb_on_memory -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log -indir $(XML_SIMPLE_TOP_DIR_$1) -outdir $(1) && \
-	rm -f $(TMP_DIR)/add-knp-result-dir_$(notdir $(1)).log
-endef
 
-ifdef ADD_KNP_RESULT_PARALLEL
-$(XMLS): $(XML_TOP_DIR)/%.$(XML_SUFFIX): $(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX)
+$(XML_FILE_FIRST_$1): $(XML_SIMPLE_FILES_$1)
+	if [ ! -d $(XML_DIR_$1) ]; then mkdir -p $(XML_DIR_$1); fi && \
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
-	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result.perl $(AddKNPResult_args) -usemodule < $< > $(TMP_DIR)/$(notdir $@) && \
-	mv $(TMP_DIR)/$(notdir $@) $@; touch $@
-else
-$(foreach XML_DIR, $(XML_DIRS), \
-  $(eval $(call make_xml,$(XML_DIR))))
+	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl $(AddKNPResult_args) -print_progress -syndb_on_memory -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR_$1)).log -indir $(XML_SIMPLE_DIR_$1) -outdir $(XML_DIR_$1) && \
+	rm -f $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR_$1)).log
 endif
 
-
-# $1: /somewhere/idx/0000/000011
-define make_idx1
-$(eval IDX1_FILE_$1 := $(1).$(IDX1_SUFFIX))
-$(eval XML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
-$(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
-$(eval HTML_FILES_$1 := $(sort $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt))))
-$(eval XML_FILES_$1 := $(sort $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1))))
+ # idx0
 $(eval IDX0_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%.$(XML_SUFFIX),$(IDX_TOP_DIR)/%.$(IDX0_SUFFIX),$(XML_FILES_$1)))
 $(IDX1_FILE_$1): $(IDX0_FILES_$1)
 	mkdir -p $$(basename $$@).idx.tmp && \
 	$(PERL) $(BASEDIR)/scripts/merge_idx.pl -dir $$(basename $$@) -suffix $(IDX0_SUFFIX) -outdir $$(basename $$@).idx.tmp -n 50 && \
 	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $$(basename $$@).idx.tmp -suffix $(IDX0_SUFFIX) > $$@ && \
 	rm -rf $$(basename $$@).idx.tmp
-# an idx file of 10000 docs
+ # an idx file of 10000 docs
 $(IDX0_FILES_$1): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX)
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
 	if [ ! -d "$$(dir $$@)" ]; then mkdir -p $$(dir $$@); fi && \
