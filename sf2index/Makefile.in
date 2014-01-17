@@ -84,20 +84,13 @@ SID2ORIGID_DB := $(HTML_TOP_DIR)/sid2origid.cdb
 
 HTML_BASE := $(HTML_TOP_DIR)/????/????
 HTML_DIRS := $(wildcard $(HTML_BASE)??)
-find_htmls = $(wildcard $(dir)/*.$(HTMLExt))
-HTMLS := $(foreach dir, $(HTML_DIRS), $(find_htmls))
 HTML_FIRST_DIRS := $(wildcard $(HTML_TOP_DIR)/????)
 
 XML_BASE := $(XML_TOP_DIR)/????
 XML_SIMPLE_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(HTML_DIRS)))
-find_xmls = $(wildcard $(dir)/*.$(XML_SUFFIX))
-XML_SIMPLES := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX),$(HTMLS))
 XML_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS)))
 XML_FIRST_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_FIRST_DIRS))
-XMLS := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTMLS))
 
-HTML_DIR := $(HTML_TOP_DIR)/0000/000000
-XML_DIR := $(XML_TOP_DIR)/0000/000000
 TMP_XML_DIR = $(TMP_DIR)/tmp_xml_$(notdir $(XML_DIR))
 
 HTML_RELOCATION_DONE := $(DATADIR)/html.relocation.done
@@ -117,93 +110,91 @@ DFDB := $(IDX_TOP_DIR)/df.word.cdb.0
 
 LAST_MAKEFILE = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 
+.PHONY: $(IDX_DIRS)
 all: $(HTML_RELOCATION_DONE)
 	$(MAKE) -f $(LAST_MAKEFILE) indexing
-
-indexing: $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
-
-html: $(HTML_RELOCATION_DONE)
-xml_simple: $(XML_SIMPLES)
-xml: $(XMLS)
 
 $(HTML_RELOCATION_DONE): $(HTML_SRC_DIR)
 	$(BASEDIR)/scripts/html-relocation.perl $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR) && \
 	$(BASEDIR)/scripts/make-sid2origid-db.perl $(SID2ORIGID_DB) < $(FILENAME2SID) && touch $@
 
+indexing: $(IDX_DIRS)
+	$(MAKE) -f $(LAST_MAKEFILE) _indexing
+
+_indexing: $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
+
+$(IDX_DIRS):
+	$(MAKE) -f $(LAST_MAKEFILE) idx1_xmllist IDX_DIR=$@
 
 define make_dummy_xml
 $(2): $(1)
 endef
 
-ifdef ADD_KNP_RESULT_PARALLEL
-$(XMLS): $(XML_TOP_DIR)/%.$(XML_SUFFIX): $(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX)
+IDX1_FILE := $(IDX_DIR).$(IDX1_SUFFIX)
+HTML_DIR := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(IDX_DIR))
+HTML_FILES := $(sort $(wildcard $(HTML_DIR)/*.$(HTMLExt)))
+XML_SIMPLE_DIR := $(patsubst $(IDX_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(IDX_DIR))
+XML_SIMPLE_FILES := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES))
+XML_SIMPLE_FILE_FIRST := $(firstword $(XML_SIMPLE_FILES))
+XML_SIMPLE_REST_FILES := $(filter-out $(XML_SIMPLE_FILE_FIRST), $(XML_SIMPLE_FILES))
+TMP_XML_SIMPLE_DIR := $(TMP_DIR)/tmp_xml_simple_$(notdir $(IDX_DIR))
+XML_LIST_FILE := $(IDX_DIR).$(XML_LIST_SUFFIX)
+
+idx1_xmllist: $(IDX1_FILE) $(XML_LIST_FILE)
+
+$(XML_SIMPLE_FILE_FIRST): $(HTML_FILES)
+	if [ ! -d $(TMP_XML_SIMPLE_DIR) ]; then mkdir -p $(TMP_XML_SIMPLE_DIR); fi && \
+	if [ ! -d $(dir $(XML_SIMPLE_DIR)) ]; then mkdir -p $(dir $(XML_SIMPLE_DIR)); fi && \
+	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR) $(TMP_XML_SIMPLE_DIR) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR)).log && \
+	mv $(TMP_XML_SIMPLE_DIR) $(XML_SIMPLE_DIR) && \
+	rm -rf $(TMP_XML_SIMPLE_DIR) $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR)).log 
+
+$(foreach XML_SIMPLE_REST_FILE, $(XML_SIMPLE_REST_FILES), \
+  $(eval $(call make_dummy_xml,$(XML_SIMPLE_FILE_FIRST),$(XML_SIMPLE_REST_FILE))))
+
+ # xml
+XML_DIR := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(IDX_DIR))
+XML_FILES := $(sort $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES)))
+XML_FILE_FIRST := $(firstword $(XML_FILES))
+XML_REST_FILES := $(filter-out $(XML_FILE_FIRST), $(XML_FILES))
+TMP_XML_DIR := $(TMP_DIR)/tmp_xml_$(notdir $(XML_DIR))
+ifndef ADD_KNP_RESULT_PARALLEL
+$(foreach XML_REST_FILE, $(XML_REST_FILES), \
+  $(eval $(call make_dummy_xml,$(XML_FILE_FIRST),$(XML_REST_FILE))))
+
+$(XML_FILE_FIRST): $(XML_SIMPLE_FILES)
+	if [ ! -d $(XML_DIR) ]; then mkdir -p $(XML_DIR); fi && \
+	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
+	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl $(AddKNPResult_args) -print_progress -syndb_on_memory -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log -indir $(XML_SIMPLE_DIR) -outdir $(TMP_XML_DIR)  && \
+	mv $(TMP_XML_DIR)/* $(XML_DIR) && \
+	rm -fr $(TMP_XML_DIR) && \
+	rm -f $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR)).log
+else
+$(XML_FILES): $(XML_TOP_DIR)/%.$(XML_SUFFIX): $(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX)
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
 	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
 	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result.perl $(AddKNPResult_args) -usemodule < $< > $(TMP_DIR)/$(notdir $@) && \
 	mv $(TMP_DIR)/$(notdir $@) $@; touch $@
 endif
 
-
-# $1: /somewhere/idx/0000/000011
-define make_idx1_xmllist
-$(eval IDX1_FILE_$1 := $(1).$(IDX1_SUFFIX))
-$(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
-$(eval HTML_FILES_$1 := $(sort $(wildcard $(HTML_DIR_$1)/*.$(HTMLExt))))
-
- # xml_simple
-$(eval XML_SIMPLE_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(1)))
-$(eval XML_SIMPLE_FILES_$1 := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1)))
-$(eval XML_SIMPLE_FILE_FIRST_$1 := $(firstword $(XML_SIMPLE_FILES_$1)))
-$(eval XML_SIMPLE_REST_FILES_$1 := $(filter-out $(XML_SIMPLE_FILE_FIRST_$1), $(XML_SIMPLE_FILES_$1)))
-$(eval TMP_XML_SIMPLE_DIR_$1 := $(TMP_DIR)/tmp_xml_simple_$(notdir $(1)))
-$(foreach XML_SIMPLE_REST_FILE, $(XML_SIMPLE_REST_FILES_$1), \
-  $(eval $(call make_dummy_xml,$(XML_SIMPLE_FILE_FIRST_$1),$(XML_SIMPLE_REST_FILE))))
-$(XML_SIMPLE_FILE_FIRST_$1): $(HTML_FILES_$1)
-	if [ ! -d $(TMP_XML_SIMPLE_DIR_$1) ]; then mkdir -p $(TMP_XML_SIMPLE_DIR_$1); fi && \
-	if [ ! -d $$(dir $(XML_SIMPLE_DIR_$1)) ]; then mkdir -p $$(dir $(XML_SIMPLE_DIR_$1)); fi && \
-	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR_$1) $(TMP_XML_SIMPLE_DIR_$1) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR_$1)).log && \
-	mv $(TMP_XML_SIMPLE_DIR_$1) $(XML_SIMPLE_DIR_$1) && \
-	rm -rf $(TMP_XML_SIMPLE_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR_$1)).log 
-
- # xml
-$(eval XML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
-$(eval XML_FILES_$1 := $(sort $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTML_FILES_$1))))
-$(eval XML_FILE_FIRST_$1 := $(firstword $(XML_FILES_$1)))
-$(eval XML_REST_FILES_$1 := $(filter-out $(XML_FILE_FIRST_$1), $(XML_FILES_$1)))
-$(eval TMP_XML_DIR_$1 := $(TMP_DIR)/tmp_xml_$(notdir $(XML_DIR_$1)))
-ifndef ADD_KNP_RESULT_PARALLEL
-$(foreach XML_REST_FILE, $(XML_REST_FILES_$1), \
-  $(eval $(call make_dummy_xml,$(XML_FILE_FIRST_$1),$(XML_REST_FILE))))
-
-$(XML_FILE_FIRST_$1): $(XML_SIMPLE_FILES_$1)
-	if [ ! -d $(XML_DIR_$1) ]; then mkdir -p $(XML_DIR_$1); fi && \
-	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl $(AddKNPResult_args) -print_progress -syndb_on_memory -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR_$1)).log -indir $(XML_SIMPLE_DIR_$1) -outdir $(XML_DIR_$1) && \
-	rm -f $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR_$1)).log
-endif
-
  # idx0
-$(eval IDX0_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%.$(XML_SUFFIX),$(IDX_TOP_DIR)/%.$(IDX0_SUFFIX),$(XML_FILES_$1)))
-$(IDX1_FILE_$1): $(IDX0_FILES_$1)
-	mkdir -p $$(basename $$@).idx.tmp && \
-	$(PERL) $(BASEDIR)/scripts/merge_idx.pl -dir $$(basename $$@) -suffix $(IDX0_SUFFIX) -outdir $$(basename $$@).idx.tmp -n 50 && \
-	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $$(basename $$@).idx.tmp -suffix $(IDX0_SUFFIX) > $$@ && \
-	rm -rf $$(basename $$@).idx.tmp
+IDX0_FILES := $(patsubst $(XML_TOP_DIR)/%.$(XML_SUFFIX),$(IDX_TOP_DIR)/%.$(IDX0_SUFFIX),$(XML_FILES))
+$(IDX1_FILE): $(IDX0_FILES)
+	mkdir -p $(basename $@).idx.tmp && \
+	$(PERL) $(BASEDIR)/scripts/merge_idx.pl -dir $(basename $@) -suffix $(IDX0_SUFFIX) -outdir $(basename $@).idx.tmp -n 50 && \
+	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $(basename $@).idx.tmp -suffix $(IDX0_SUFFIX) > $@ && \
+	rm -rf $(basename $@).idx.tmp
  # an idx file of 10000 docs
-$(IDX0_FILES_$1): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX)
+$(IDX0_FILES): $(IDX_TOP_DIR)/%.$(IDX0_SUFFIX): $(XML_TOP_DIR)/%.$(XML_SUFFIX)
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	if [ ! -d "$$(dir $$@)" ]; then mkdir -p $$(dir $$@); fi && \
-	$(PERL) -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $(sf2term_args) $$< > $(TMP_DIR)/$$(notdir $$@) && \
-	mv $(TMP_DIR)/$$(notdir $$@) $$@
+	if [ ! -d "$(dir $@)" ]; then mkdir -p $(dir $@); fi && \
+	$(PERL) -I $(BASEDIR)/cgi $(BASEDIR)/sf2index/sf2term.pl $(sf2term_args) $< > $(TMP_DIR)/$(notdir $@) && \
+	mv $(TMP_DIR)/$(notdir $@) $@
 
-$(eval XML_LIST_FILE_$1 := $(1).$(XML_LIST_SUFFIX))
-$(XML_LIST_FILE_$1): $(XML_FILES_$1)
-	mkdir -p $$(dir $$@) && find $$(dir $$<) -type f -name "*.$(XML_SUFFIX)" -print | sort > $$@
-endef
+$(XML_LIST_FILE): $(XML_FILES)
+	mkdir -p $(dir $@) && find $(dir $<) -type f -name "*.$(XML_SUFFIX)" -print | sort > $@
 
-$(foreach IDX_DIR, $(IDX_DIRS), \
-  $(eval $(call make_idx1_xmllist,$(IDX_DIR))))
-
+html: $(HTML_RELOCATION_DONE)
 
 # $1: /somewhere/idx/0000
 define make_sid2tid_idxidx_urltitle
