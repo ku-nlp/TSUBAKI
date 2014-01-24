@@ -338,4 +338,4 @@ sub get_term_type {
     }
 }
 
--1;
+1;

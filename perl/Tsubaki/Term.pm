@@ -183,4 +183,4 @@ sub get_term_type {
     return $TYPE2INT{$this->{term_type}};
 }
 
--1;
+1;
