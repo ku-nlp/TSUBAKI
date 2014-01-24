@@ -252,7 +252,7 @@ else
         # check Enju
 	ENJUBIN=`type enju 2> /dev/null | cut -f3 -d' '`
 	if [ ! -n "$ENJUBIN" ]; then
-	    echo "Enju is not found. Please install Enju (see README)."
+	    echo "An English parser is not found. Please install it (see README)."
 	    usage
 	fi
 	EnglishParserPath=$SearchEnginePath/enju2tsubaki
