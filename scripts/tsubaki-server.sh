@@ -41,13 +41,12 @@ fi
 
 
 call() {
-    grep '^SEARCH_SERVERS' $CONFIG_FILE | awk '{print $2,$3}' | while read LINE
+    for h in `grep '^SEARCH_SERVERS' $CONFIG_FILE | awk '{print $2}' | LANG=C sort | LANG=C uniq`
     do
-	h=`echo $LINE | cut -f 1 -d ' '`
 	if [ $USE_SSH_FLAG -eq 1 ]; then
-	    ssh -f $h "sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE $1"
+	    ssh -f $h "sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE -n $h $1"
 	else
-	    sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE $1
+	    sh $SCRIPTS_DIR/tsubaki-server-manager.sh -c $CONFIG_FILE -s $1
 	fi
     done
 }

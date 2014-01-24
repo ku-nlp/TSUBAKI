@@ -11,16 +11,22 @@ if [ $? -ne 0 ]; then
     TSUBAKI_DIR=`pwd`/$TSUBAKI_DIR
 fi
 CONFIG_FILE=$TSUBAKI_DIR/conf/configure
+TARGET_HOSTNAME=localhost
+HOSTNAME=`hostname`
 
 usage() {
-    echo "Usage: $0 [-c configure_file] start|stop|restart|status|halt"
+    echo "Usage: $0 [-c configure_file] [-n hostname] [-s] start|stop|restart|status|halt"
     exit 1
 }
 
-while getopts c:h OPT
+while getopts c:n:sh OPT
 do
     case $OPT in
 	c)  CONFIG_FILE=$OPTARG
+	    ;;
+	n)  TARGET_HOSTNAME=$OPTARG
+	    ;;
+	s)  TARGET_HOSTNAME=SEARCH_SERVERS
 	    ;;
         h)  usage
             ;;
@@ -59,7 +65,7 @@ start() {
 
     while [ 1 ];
     do
-	grep '^SEARCH_SERVERS' $CONFIG_FILE | awk '{print $4,$5,$3}' | while read LINE
+	grep '^SEARCH_SERVERS' $CONFIG_FILE | grep $TARGET_HOSTNAME | awk '{print $4,$5,$3}' | while read LINE
 	do
 	    PORT=`echo $LINE | cut -f 3 -d ' '`
 	    pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep`
@@ -70,7 +76,7 @@ start() {
 		anchor_idxdir=`echo $LINE | cut -f 2 -d ' '`
 		dlengthdbdir=$idxdir
 		if [ $COMMAND = "slave_server" ]; then
-		    OPTION="$idxdir $anchor_idxdir $PORT `hostname`"
+		    OPTION="$idxdir $anchor_idxdir $PORT $HOSTNAME"
 		else
 		    if [ $anchor_idxdir = "none" ]; then
 			OPTION="-idxdir $idxdir -dlengthdbdir $dlengthdbdir -port $PORT $USE_OF_SYNGRAPH"
@@ -80,8 +86,8 @@ start() {
 		fi
 
 		if [ -d $idxdir ]; then
-		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=$DATE\)
-		    echo [TSUBAKI SERVER] START\ \ \(host=`hostname`, port=$PORT, time=$DATE\) >> $LOGFILE
+		    echo [TSUBAKI SERVER] START\ \ \(host=$HOSTNAME, port=$PORT, time=$DATE\)
+		    echo [TSUBAKI SERVER] START\ \ \(host=$HOSTNAME, port=$PORT, time=$DATE\) >> $LOGFILE
 		    if [ $COMMAND = "slave_server" ]; then
 			ulimit -Ss $MEM -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION
 		    else
@@ -97,18 +103,18 @@ start() {
 
 
 status_or_stop() {
-    grep '^SEARCH_SERVERS' $CONFIG_FILE | awk '{print $3}' | while read LINE
+    grep '^SEARCH_SERVERS' $CONFIG_FILE | grep $TARGET_HOSTNAME | awk '{print $3}' | while read LINE
     do
 	PORT=$LINE
 	pid=`ps auxww | grep $COMMAND | grep $PORT | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
  	if [ -n "$pid" ]; then
  	    if [ "$1" = "stop" ]; then
  		kill -KILL $pid
-		echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=$DATE\)
-		echo [TSUBAKI SERVER] STOP\ \ \ \(host=`hostname`, port=$PORT, pid=$pid, time=$DATE\) >> $LOGFILE
+		echo [TSUBAKI SERVER] STOP\ \ \ \(host=$HOSTNAME, port=$PORT, pid=$pid, time=$DATE\)
+		echo [TSUBAKI SERVER] STOP\ \ \ \(host=$HOSTNAME, port=$PORT, pid=$pid, time=$DATE\) >> $LOGFILE
 	    else
-		echo [TSUBAKI SERVER] STATUS \(host\=`hostname`, port\=$PORT, pid\=$pid, time\=$DATE\)
-		echo [TSUBAKI SERVER] STATUS \(host\=`hostname`, port\=$PORT, pid\=$pid, time\=$DATE\) >> $LOGFILE
+		echo [TSUBAKI SERVER] STATUS \(host\=$HOSTNAME, port\=$PORT, pid\=$pid, time\=$DATE\)
+		echo [TSUBAKI SERVER] STATUS \(host\=$HOSTNAME, port\=$PORT, pid\=$pid, time\=$DATE\) >> $LOGFILE
 	    fi
  	fi
     done
@@ -125,8 +131,8 @@ halt() {
     pid=`ps auxww | grep $USER | grep $CONFIG_FILE | grep tsubaki-server-manager.sh | grep -v ssh | grep start | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
     if [ -n "$pid" ]; then
  	kill -KILL $pid
-	echo [TSUBAKI SERVER] HALT\ \ \ \(host=`hostname`, pid=$pid, time=$DATE\)
-	echo [TSUBAKI SERVER] HALT\ \ \ \(host=`hostname`, pid=$pid, time=$DATE\) >> $LOGFILE
+	echo [TSUBAKI SERVER] HALT\ \ \ \(host=$HOSTNAME, pid=$pid, time=$DATE\)
+	echo [TSUBAKI SERVER] HALT\ \ \ \(host=$HOSTNAME, pid=$pid, time=$DATE\) >> $LOGFILE
     fi
 }
 
