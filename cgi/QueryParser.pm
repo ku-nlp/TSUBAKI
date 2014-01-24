@@ -342,9 +342,7 @@ sub _linguisticAnalysis {
   	print "Exception at line ",$err->{-line}," in ",$err->{-file},"<BR>\n";
   	print "Dumpping messages of the parser object is following.<BR>\n";
 	if ($this->{OPTIONS}{is_english_version}) {
-	    print Dumper::dump_as_HTML($CONFIG->{TSURUOKA_TAGGER}) . "<BR>\n";
-	    print "<HR>\n";
-	    print Dumper::dump_as_HTML($CONFIG->{MALT_PARSER}) . "<BR>\n";
+	    print Dumper::dump_as_HTML($CONFIG->{ENGLISH_PARSER}) . "<BR>\n";
 	} else {
 	    print Dumper::dump_as_HTML($CONFIG->{KNP}) . "<BR>\n";
 	}
@@ -868,7 +866,7 @@ sub get_DF {
 	    return $df;
 	} else {
 	    my $DFDBs = (index($term, '->') > 0) ? $this->{DFDBS_DPND} : $this->{DFDBS_WORD};
-	    my $df = $DFDBs->get($term);
+	    my $df = (defined $DFDBs) ? $DFDBs->get($term) : 0;
 
 	    $this->{CACHED_DF}{$term} = $df;
 	    return $df;
