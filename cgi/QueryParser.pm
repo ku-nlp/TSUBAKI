@@ -761,7 +761,7 @@ sub parse {
 	result    => $result,
 	rep2style => $rep2style,
 	synnode2midasi => $synnode2midasi,
-	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((AND %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0])),
+	s_exp => ((scalar(@sexps) > 1) ? sprintf ("((PROX $CONFIG->{DEFAULT_APPROXIMATE_DIST} %s ))", join (" ", @sexps)) : sprintf ("( %s )", $sexps[0])),
 	escaped_query => join (",", @escapedStrings)
 			});
 
