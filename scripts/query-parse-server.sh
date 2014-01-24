@@ -28,6 +28,7 @@ shift `expr $OPTIND - 1`
 USE=`grep ^USE_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 PERL=`grep ^PERL $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 UTILS_DIR=`grep UTILS_PATH $CONFIG_FILE | grep -v \# | awk '{print $2}'`
+WWW2SF_DIR=`grep WWW2SF_PATH $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 SCRIPTS_DIR=$TSUBAKI_DIR/scripts
 MODULE_DIR=$TSUBAKI_DIR/perl
 CGI_DIR=$TSUBAKI_DIR/cgi
@@ -42,8 +43,8 @@ fi
 start() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
-	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $SCRIPTS_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $PORT"
-	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $SCRIPTS_DIR -I $UTILS_DIR $SCRIPTS_DIR/$COMMAND $PORT"
+	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $SCRIPTS_DIR -I $UTILS_DIR -I $WWW2SF_DIR $SCRIPTS_DIR/$COMMAND $PORT"
+	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $SCRIPTS_DIR -I $UTILS_DIR -I $WWW2SF_DIR $SCRIPTS_DIR/$COMMAND $PORT"
     done
 }
 
