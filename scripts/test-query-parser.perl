@@ -20,12 +20,12 @@ push (@INC, $CONFIG->{UTILS_PATH});
 
 
 my (%opt);
-GetOptions(\%opt, 'syngraph', 'english', 'verbose', 'ignore_yomi', 'blocktype');
+GetOptions(\%opt, 'syngraph', 'english', 'verbose', 'ignore_yomi', 'blocktype', 'use_of_case_analysis');
 if ($opt{blocktype}) {
     $opt{blockTypes} = {'TT' => 1, 'MT' => 1, 'UB' => 1};
 }
 
-my $queryParser = new QueryParser({IS_ENGLISH_VERSION => $opt{english}});
+my $queryParser = new QueryParser({IS_ENGLISH_VERSION => $opt{english}, DFDB_DIR => $CONFIG->{SYNGRAPH_DFDB_PATH}, use_of_case_analysis => $opt{use_of_case_analysis}});
 while (<STDIN>) {
     chop;
 
