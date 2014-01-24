@@ -34,6 +34,7 @@ MODULE_DIR=$TSUBAKI_DIR/perl
 CGI_DIR=$TSUBAKI_DIR/cgi
 COMMAND=query_parse_server.pl
 NICE=-4
+DATE=`LANG=C date`
 PORT=`grep PORT_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}'`
 
 if [ $USE -eq 0 ]; then
@@ -43,7 +44,7 @@ fi
 start() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
-	echo ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $SCRIPTS_DIR -I $UTILS_DIR -I $WWW2SF_DIR $SCRIPTS_DIR/$COMMAND $PORT"
+	echo [QUERY PARSE SERVER] START\ \ \(host=$h, port=$PORT, time=$DATE\)
 	ssh -f $h "ulimit -Ss unlimited ; nice $NICE $PERL -I $MODULE_DIR -I $CGI_DIR -I $SCRIPTS_DIR -I $UTILS_DIR -I $WWW2SF_DIR $SCRIPTS_DIR/$COMMAND $PORT"
     done
 }
@@ -52,10 +53,14 @@ status_or_stop() {
     for h in `grep HOST_OF_QUERY_PARSE_SERVER $CONFIG_FILE | grep -v \# | awk '{print $2}' | perl -pe 's/,/ /g'`
     do
 	pid=`ssh -f $h ps auxww | grep $COMMAND | grep $PORT | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
- 	if [ "$1" = "stop" -a -n "$pid" ]; then
- 	    ssh -f $h kill $pid
+ 	if [ -n "$pid" ]; then
+	    if [ "$1" = "stop" ]; then
+ 		ssh -f $h kill $pid
+		echo [QUERY PARSE SERVER] STOP\ \ \ \(host=$h, port=$PORT, pid=$pid, time=$DATE\)
+	    else
+		echo [QUERY PARSE SERVER] STATUS\ \(host=$h, port=$PORT, pid=$pid, time=$DATE\)
+	    fi
  	fi
-	echo "$h: $pid"
     done
 }
 
