@@ -268,7 +268,8 @@ sub get_snippets_for_each_did {
 	    my $flag_of_underline = 0; # ($this->{did2region}{$did}{start} > 50 && $this->{did2region}{$did}{end} - $this->{did2region}{$did}{start} < 50) ? 1 : 0;
 
 	    my $pos = $start_pos;
-	    for (my $i = 0; $i < scalar(@{$sentence->{reps}}); $i++) {
+	    my $rep_num = scalar(@{$sentence->{reps}});
+	    for (my $i = 0; $i < $rep_num; $i++) {
 		my $highlighted = -1;
 		my $surf = $sentence->{surfs}[$i];
 		if ($CONFIG->{IS_ENGLISH_VERSION}) { # add a white space for English
