@@ -188,11 +188,12 @@ $(IDX0_DONE_$1): $(XML_DONE_$1)
 	if [ ! -d $(TMP_IDX0_DIR_$1) ]; then mkdir -p $(TMP_IDX0_DIR_$1); fi && \
 	if [ ! -d $$(dir $1) ]; then mkdir -p $$(dir $1); fi && \
 	nice -n $(NICE_VALUE) $(BASEDIR)/sf2index/sf2term.sh -a "$(sf2term_args)" -i $(XML_DIR_$1) -o $(TMP_IDX0_DIR_$1) -s $(XML_SUFFIX) -x $(IDX0_SUFFIX) -b $(BASEDIR) && \
-	mv $(TMP_IDX0_DIR_$1) $1
+	mv $(TMP_IDX0_DIR_$1) $1 && \
+	touch $$@
 
 $(eval XML_LIST_FILE_$1 := $(1).$(XML_LIST_SUFFIX))
 $(XML_LIST_FILE_$1): $(XML_DONE_$1)
-	mkdir -p $$(dir $$@) && find $$(dir $$<) -type f -name "*.$(XML_SUFFIX)" -print | sort > $$@
+	mkdir -p $$(dir $$@) && find $$(basename $$<) -type f -name "*.$(XML_SUFFIX)" -print | sort > $$@
 endef
 
 $(foreach IDX_DIR, $(IDX_DIRS), \
