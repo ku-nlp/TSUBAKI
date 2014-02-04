@@ -170,7 +170,7 @@ $(XML_DONE_$1): $(XML_SIMPLE_DONE_$1)
 	if [ ! -d $(TMP_XML_DIR_$1) ]; then mkdir -p $(TMP_XML_DIR_$1); fi && \
 	if [ ! -d $$(dir $(XML_DIR_$1)) ]; then mkdir -p $$(dir $(XML_DIR_$1)); fi && \
 	$(PERL) -I $(WWW2sfDir)/tool/perl -I $(SynGraphPerlDir) $(WWW2sfDir)/tool/scripts/add-knp-result-dir.perl $(AddKNPResult_args) -print_progress -syndb_on_memory -logfile $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR_$1)).log -indir $(XML_SIMPLE_DIR_$1) -outdir $(TMP_XML_DIR_$1) && \
-	mv $(TMP_XML_DIR_$1) $(XML_DIR_$1)
+	mv $(TMP_XML_DIR_$1) $(XML_DIR_$1) && \
 	rm -f $(TMP_DIR)/add-knp-result-dir_$(notdir $(XML_DIR_$1)).log && \
 	touch $$@
 endif
