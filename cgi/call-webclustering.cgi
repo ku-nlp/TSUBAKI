@@ -24,7 +24,6 @@ use Tsubaki::CacheManager;
 
 binmode (STDOUT, 'utf8');
 
-# binmode (STDOUT, ':utf8');
 print header(-charset => 'utf-8');
 
 my $CGI = new CGI();
