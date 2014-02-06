@@ -338,3 +338,7 @@ IS_CPP_MODE		1
 
 # 関連語蒸留を呼んで表示するかどうか
 DISABLE_CALL_WEBCLUSTERING	1
+
+# 関連語蒸留BASE_URL
+WEBCLUSTERING_BASE_URL	http://nlpc06.ixnlp.nii.ac.jp/cgi-bin/shibata/WebClusteringDemo/api.cgi
+
