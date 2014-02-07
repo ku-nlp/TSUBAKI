@@ -395,7 +395,7 @@ END_OF_HTML
 	</script>
 	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/wz_jsgraphics.js"></script>
 	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/prototype.js"></script>
-	<script type="text/javascript" src="javascript/tsubaki.js"></script>
+	<script type="text/javascript" src="javascript/tsubaki.js?140207"></script>
 END_OF_HTML
 
     # クエリ解析結果を描画するjavascriptコードの出力
@@ -1756,7 +1756,7 @@ sub getPaintingJavaScriptCode {
     my ($this, $result, $opt) = @_;
 
     my $jscode;
-    $jscode .= qq(<script type="text/javascript" src="javascript/drawResult.js"></script>\n);
+    $jscode .= qq(<script type="text/javascript" src="javascript/drawResult.js?140207"></script>\n);
     $jscode .= qq(<script language="JavaScript">\n);
 
     # 単語・同義表現グループを描画する
@@ -1849,7 +1849,7 @@ sub getPaintingJavaScriptCode {
     # termGroup に係り受け関係を追加
     while (my ($i, $_dpnds) = each %dpnds) {
 	$jscode .= qq(var dpnds$i = new Array \() . join (", ", @$_dpnds) . ");\n";
-	$jscode .= qq(termGroups[$i].setDependancy(dpnds$i);\n);
+	$jscode .= qq(termGroups[$i].setDependency(dpnds$i);\n);
     }
 
     # 表示する
@@ -2086,7 +2086,7 @@ sub generateJavascriptCode4Dpnd {
     my $importance = 'OPTIONAL';
     $importance = 'NECCESARY'   if ($kakarimoto->fstring() =~ /クエリ必須係り受け/);
     $importance = 'UNNECCESARY' if ($kakarimoto->fstring() =~ /クエリ削除係り受け/ || $kakarisaki->fstring() =~ /クエリ削除語/);
-    return sprintf ("new Dependancy(termGroups[%d], termGroups[%d], $importance)", $tag2i->{$kakarisaki}, $tag2i->{$kakarimoto});
+    return sprintf ("new Dependency(termGroups[%d], termGroups[%d], $importance)", $tag2i->{$kakarisaki}, $tag2i->{$kakarimoto});
 }
 
 1;

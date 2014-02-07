@@ -35,7 +35,7 @@ function paint () {
     GRAPHICS.clear();
 
     for (var i = 0; i < termGroups.length; i++) {
-	termGroups[i].drawDependancy();
+	termGroups[i].drawDependency();
     }
 
     for (var i = 0; i < termGroups.length; i++) {
@@ -161,7 +161,7 @@ function TermGroup (id, basicWord, importance) {
 	}
     }
 
-    this.setDependancy = function (dpnd) {
+    this.setDependency = function (dpnd) {
 	this.dependancy = dpnd;
 	for (var i = 0; i < dpnd.length; i++) {
 	    this.child_id++;
@@ -169,11 +169,11 @@ function TermGroup (id, basicWord, importance) {
 	}
     }
 
-    this.getDependancy = function (dpnd) {
+    this.getDependency = function (dpnd) {
 	return this.dependancy;
     }
 
-    this.drawDependancy = function () {
+    this.drawDependency = function () {
 	for (var i = 0; i < this.dependancy.length; i++) {
 	    this.dependancy[i].paint(i * ARROW_SIZE, 'black');
 	}
@@ -274,7 +274,7 @@ function TermGroup (id, basicWord, importance) {
     }
 }
 
-function Dependancy (parent, child, importance) {
+function Dependency (parent, child, importance) {
     this.id = 0;
     this.parent = parent;
     this.child = child;

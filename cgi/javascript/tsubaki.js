@@ -65,7 +65,6 @@ function toggle_ipsj_verbose_view (id1, id2, id3, id4, obj, open_label, close_la
 
 function submitQuery () {
     document.search.submit();
-    parent.stmap.location = "http://www.cl.ecei.tohoku.ac.jp/stmap/api/evidence_search.cgi?q=" + encodeURI(document.all.query.value);
 }
 
 function submitQuery2 () {
@@ -74,7 +73,7 @@ function submitQuery2 () {
     var termStates = new Array();
     for (var i = 0; i < termGroups.length; i++) {
         var states = termGroups[i].getState().split(",");
-	var dpnds  = termGroups[i].getDependancy();
+	var dpnds  = termGroups[i].getDependency();
 
         termStates.push(termGroups[i].getID() + "=" + termGroups[i].getImportance());
 
