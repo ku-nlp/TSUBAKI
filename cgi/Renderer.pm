@@ -153,7 +153,7 @@ sub print_copyright {
     TSUBAKI利用時の良かった点、問題点などご意見を頂けると幸いです。<br>
     ご意見は tsubaki-feedback あっと nlp.ist.i.kyoto-u.ac.jp までお願い致します。
     <P>
-    <DIV><B>&copy;2006 - 2011 黒橋研究室</B></DIV> 
+    <DIV><B>&copy;2006 - 2014 黒橋研究室</B></DIV> 
 </DIV>
 </BODY>
 </HTML>
