@@ -395,7 +395,7 @@ END_OF_HTML
 	</script>
 	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/wz_jsgraphics.js"></script>
 	<script type="text/javascript" src="http://nlp.ist.i.kyoto-u.ac.jp/tsubaki/prototype.js"></script>
-	<script type="text/javascript" src="javascript/tsubaki.js?140207"></script>
+	<script type="text/javascript" src="javascript/tsubaki.js"></script>
 END_OF_HTML
 
     # クエリ解析結果を描画するjavascriptコードの出力
@@ -410,7 +410,11 @@ END_OF_HTML
 sub print_body {
     my ($this, $params, $query, $status) = @_;
 
-    print qq(<BODY style="padding: 0.2em 0.6em; margin:0em; z-index:1;" onload="javascript:init();javascript:init2('query_edit_canvas'); javascript:createTerms();">\n);
+    print qq(<BODY style="padding: 0.2em 0.6em; margin:0em; z-index:1;");
+    if ($query->{rawstring}) {
+	print qq( onload="javascript:init();javascript:init2('query_edit_canvas'); javascript:createTerms();");
+    }
+    print qq(>\n);
     print << "END_OF_HTML";
 
 <TABLE cellpadding="0" cellspacing="0" border="0" id="query_edit_window" style="z-index: 2; display:none; position: absolute; top: 20%; align: center; left: 20%; display: none;">
