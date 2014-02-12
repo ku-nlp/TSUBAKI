@@ -419,7 +419,7 @@ sub _runQueryProcessing {
 
 # QueryKeywordオブジェクトの構築
 sub createQueryKeywordObj {
-    my ($this, $_search_expression, $opt) = @_;
+    my ($this, $_search_expression, $opt, $qid) = @_;
 
     # 検索表現の解析
     my ($search_expression,
@@ -441,7 +441,7 @@ sub createQueryKeywordObj {
     my $result = $this->_linguisticAnalysis($search_expression, $opt);
 
     # クエリ解析修正結果を反映する
-    $this->reflectQueryModificationFeedback($result, $opt) unless $this->{OPTIONS}{is_english_version};
+    $this->reflectQueryModificationFeedback($result, $opt, $qid) unless $this->{OPTIONS}{is_english_version};
 
     # クエリ解析結果を上位のパラメータへ代入 (query parseサーバを使わないときのみ有効)
     $opt->{logical_operator} = $logical_cond_qkw;
@@ -484,33 +484,37 @@ sub createQueryKeywordObj {
 
 # クエリ解析修正結果を反映する
 sub reflectQueryModificationFeedback {
-    my ($this, $result, $opt) = @_;
+    my ($this, $result, $opt, $qid) = @_;
 
     my @kihonkus = $result->tag;
-    while (my ($i, $dpndState) = each %{$opt->{dpnd_states}}) {
-	my $fstring = $kihonkus[$i]->fstring();
-	$fstring =~ s/<クエリ必須係り受け>//g;
-	$fstring =~ s/<クエリ削除係り受け>//g;
-	if ($dpndState == 0) {
-	    $fstring .= '<クエリ必須係り受け>';
+    if (defined $opt->{dpnd_states}{$qid}) {
+	while (my ($child_id, $dpndState) = each %{$opt->{dpnd_states}{$qid}}) {
+	    my $fstring = $kihonkus[$child_id]->fstring();
+	    $fstring =~ s/<クエリ必須係り受け>//g;
+	    $fstring =~ s/<クエリ削除係り受け>//g;
+	    if ($dpndState == 0) {
+		$fstring .= '<クエリ必須係り受け>';
+	    }
+	    elsif ($dpndState == 2) {
+		$fstring .= '<クエリ削除係り受け>';
+	    }
+	    $kihonkus[$child_id]->{fstring} = $fstring;
 	}
-	elsif ($dpndState == 2) {
-	    $fstring .= '<クエリ削除係り受け>';
-	}
-	$kihonkus[$i]->{fstring} = $fstring;
     }
 
-    while (my ($i, $termState) = each %{$opt->{term_states}}) {
-	my $fstring = $kihonkus[$i]->fstring();
-	$fstring =~ s/<クエリ削除語>//g;
-	$fstring =~ s/<クエリ不要語>//g;
-	if ($termState == 1) {
-	    $fstring .= '<クエリ不要語>';
+    if (defined $opt->{term_states}{$qid}) {
+	while (my ($term_group_id, $termState) = each %{$opt->{term_states}{$qid}}) {
+	    my $fstring = $kihonkus[$term_group_id]->fstring();
+	    $fstring =~ s/<クエリ削除語>//g;
+	    $fstring =~ s/<クエリ不要語>//g;
+	    if ($termState == 1) {
+		$fstring .= '<クエリ不要語>';
+	    }
+	    elsif ($termState == 2) {
+		$fstring .= '<クエリ削除語>';
+	    }
+	    $kihonkus[$term_group_id]->{fstring} = $fstring;
 	}
-	elsif ($termState == 2) {
-	    $fstring .= '<クエリ削除語>';
-	}
-	$kihonkus[$i]->{fstring} = $fstring;
     }
 }
 
@@ -682,6 +686,7 @@ sub parse {
     my $rep2style;
     my $synnode2midasi;
     my $result;
+    my $qid = 0;
     # $delimで区切る
     foreach my $search_expression (split(/$delim/, $qks_str)) {
 	# 空文字はスキップ
@@ -704,7 +709,7 @@ sub parse {
 
 	try {
 	    # QueryKeywordオブジェクトの構築
-	    my $qk = $this->createQueryKeywordObj($search_expression, $opt);
+	    my $qk = $this->createQueryKeywordObj($search_expression, $opt, $qid);
 
 	    if ($this->{OPTIONS}{is_cpp_mode}) {
 		push (@sexps, $qk->to_S_exp("", undef, $opt));
@@ -728,6 +733,7 @@ sub parse {
 		push(@qks, $qk);
 		$rawstring .= (" " . $qk->{rawstring});
 	    }
+	    $qid++;
 	} catch Error with {
 	    my $err = shift;
 	    push (@errMsgs, {owner => 'QueryParser.pm', msg => $err->{-text}});

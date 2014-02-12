@@ -71,21 +71,23 @@ function submitQuery2 () {
     var removeSynids = new Array();
     var dpndStates = new Array();
     var termStates = new Array();
-    for (var i = 0; i < termGroups.length; i++) {
-        var states = termGroups[i].getState().split(",");
-	var dpnds  = termGroups[i].getDependency();
+    for (var i = 0; i < queryGroups.length; i++) {
+	for (var j = 0; j < queryGroups[i].termGroups.length; j++) {
+            var states = queryGroups[i].termGroups[j].getState().split(",");
+	    var dpnds  = queryGroups[i].termGroups[j].getDependency();
 
-        termStates.push(termGroups[i].getID() + "=" + termGroups[i].getImportance());
+            termStates.push(queryGroups[i].getID() + "=" + queryGroups[i].termGroups[j].getID() + "=" + queryGroups[i].termGroups[j].getImportance());
 
-	for (var j = 0; j < dpnds.length; j++) {
-            dpndStates.push(dpnds[j].child.getID() + "=" + dpnds[j].getImportance());
-        }
-        for (var j = 0; j < states.length; j++) {
-            var kv = states[j].split("=");
-            if (kv[1] == 0) {
-                removeSynids.push(kv[0]);
+	    for (var k = 0; k < dpnds.length; k++) {
+		dpndStates.push(queryGroups[i].getID() + "=" + dpnds[k].child.getID() + "=" + dpnds[k].getImportance());
             }
-        }
+            for (var k = 0; k < states.length; k++) {
+		var kv = states[k].split("=");
+		if (kv[1] == 0) {
+                    removeSynids.push(kv[0]);
+		}
+            }
+	}
     }
     document.getElementById("rm_synids").value  = removeSynids.join(",");
     document.getElementById("trm_states").value = termStates.join(",");

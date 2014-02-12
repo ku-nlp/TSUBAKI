@@ -221,14 +221,14 @@ sub setParametersOfGetRequest {
 	    }
 	    elsif ($name eq 'term_states') {
 		foreach my $state (split (/,/, decode('utf8', $cgi->param($name)))) {
-		    my ($k, $v) = split ("=", $state);
-		    $params->{$name}{$k} = $v;
+		    my ($qid, $term_group_id, $v) = split ("=", $state);
+		    $params->{$name}{$qid}{$term_group_id} = $v;
 		}
 	    }
 	    elsif ($name eq 'dpnd_states') {
 		foreach my $state (split (/,/, decode('utf8', $cgi->param($name)))) {
-		    my ($k, $v) = split ("=", $state);
-		    $params->{$name}{$k} = $v;
+		    my ($qid, $term_group_id, $v) = split ("=", $state);
+		    $params->{$name}{$qid}{$term_group_id} = $v;
 		}
 	    }
 	    else {

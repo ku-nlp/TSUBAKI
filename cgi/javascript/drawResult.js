@@ -6,6 +6,7 @@ var NECCESARY   = 0;
 var OPTIONAL    = 1;
 var UNNECCESARY = 2;
 
+var queryGroups;
 var termGroups;
 var canvasName = '';
 var IMPORTANCE_CHARS = new Array ("○", "△", "×");
@@ -19,14 +20,20 @@ function init2 (_canvasName) {
     canvasName = _canvasName;
 }
 
+function setQueryGroups (_queryGroups) {
+    queryGroups = _queryGroups;
+}
+
 function setTermGroups (_termGroups) {
     termGroups = _termGroups;
 }
 
 function paint () {
     var htmlCode = '';
-    for (var i = 0; i < termGroups.length; i++) {
-        htmlCode += termGroups[i].paint();
+    for (var i = 0; i < queryGroups.length; i++) {
+	for (var j = 0; j < queryGroups[i].termGroups.length; j++) {
+            htmlCode += queryGroups[i].termGroups[j].paint();
+	}
     }
     Element.update(canvasName, htmlCode);
 
@@ -34,12 +41,14 @@ function paint () {
     GRAPHICS.setFont('ＭＳゴシック', "10pt", 0);
     GRAPHICS.clear();
 
-    for (var i = 0; i < termGroups.length; i++) {
-	termGroups[i].drawDependency();
-    }
+    for (var i = 0; i < queryGroups.length; i++) {
+	for (var j = 0; j < queryGroups[i].termGroups.length; j++) {
+	    queryGroups[i].termGroups[j].drawDependency();
+	}
 
-    for (var i = 0; i < termGroups.length; i++) {
-	termGroups[i].drawImportance();
+	for (var j = 0; j < queryGroups[i].termGroups.length; j++) {
+	    queryGroups[i].termGroups[j].drawImportance();
+	}
     }
     GRAPHICS.paint();
 }
@@ -53,12 +62,13 @@ function hideQueryEditWindow () {
     document.getElementById('query_edit_window').style.display = "none";
 }
 
-function onclickPerformed (id) {
+function onclickPerformed (qid, id) {
     var ids = id.split("-");
-    termGroups[ids[0]].onclick(ids[1]);
+    queryGroups[qid].termGroups[ids[0]].onclick(ids[1]);
 }
 
-function Term (initState, id, synid, strings, type, color) {
+function Term (qid, initState, id, synid, strings, type, color) {
+    this.qid = qid;
     this.id = id;
     this.synid = synid;
     this.strings = strings;
@@ -84,22 +94,22 @@ function Term (initState, id, synid, strings, type, color) {
             }
 
             if (this.state % 2) {
-	        return ("<DIV id=" + this.id + " onclick='onclickPerformed(this.id)' class='term' style='cursor: pointer; color:" + this.fgcolor + "; background-color:" + this.bgcolor + "; border: 1px solid " + this.borderColor + ";'>" + _buf.join("<BR>") + "</DIV>");
+	        return ("<DIV id=" + this.qid + "-" + this.id + " onclick='onclickPerformed(\"" + this.qid + "\",\"" + this.id + "\")' class='term' style='cursor: pointer; color:" + this.fgcolor + "; background-color:" + this.bgcolor + "; border: 1px solid " + this.borderColor + ";'>" + _buf.join("<BR>") + "</DIV>");
             } else {
-	        return ("<DIV id=" + this.id + " onclick='onclickPerformed(this.id)' class='term' style='cursor: pointer; color: gray; background-color: lightGray; border: 1px solid " + this.borderColor + ";'>" + _buf.join("<BR>") + "</DIV>");
+	        return ("<DIV id=" + this.qid + "-" + this.id + " onclick='onclickPerformed(\"" + this.qid + "\",\"" + this.id + "\")' class='term' style='cursor: pointer; color: gray; background-color: lightGray; border: 1px solid " + this.borderColor + ";'>" + _buf.join("<BR>") + "</DIV>");
             }
 	}
     }
 
     this.disable = function () {
-	document.getElementById(this.id).style.color = "gray";
-	document.getElementById(this.id).style.backgroundColor = "lightGray";
+	document.getElementById(this.qid + "-" + this.id).style.color = "gray";
+	document.getElementById(this.qid + "-" + this.id).style.backgroundColor = "lightGray";
 	this.state = 0;
     }
 
     this.enable = function () {
-	document.getElementById(this.id).style.color = this.fgcolor;
-	document.getElementById(this.id).style.backgroundColor = this.bgcolor;
+	document.getElementById(this.qid + "-" + this.id).style.color = this.fgcolor;
+	document.getElementById(this.qid + "-" + this.id).style.backgroundColor = this.bgcolor;
 	this.state = 1;
     }
 
@@ -141,56 +151,71 @@ function Term (initState, id, synid, strings, type, color) {
     }
 }
 
-function TermGroup (id, basicWord, importance) {
+function QueryGroup (id) {
+    this.id = id;
+
+    this.termGroups = new Array();
+
+    this.getID = function () {
+	return this.id;
+    }
+
+    this.push = function (termGroup) {
+	this.termGroups.push(termGroup);
+    }
+}
+
+function TermGroup (qid, id, basicWord, importance) {
+    this.qid = qid;
     this.id = id;
     this.basicWord = basicWord;
     this.importance = importance;
     this.child_id = 0;
     this.children = new Array();
-    this.dependancy = new Array();
+    this.dependency = new Array();
     this.fgcolor = DARK_COLOR[this.id];
     this.bgcolor = PALE_COLOR[this.id];
 
-    this.children.push(new Term(1, this.id + "-" + this.child_id, "", basicWord, "basic", this.id));
+    this.children.push(new Term(this.qid, 1, this.id + "-" + this.child_id, "", basicWord, "basic", this.id));
 
     this.drawImportance = function () {
-	var string = "<DIV class='imp' id='" + this.id + "-imp' onclick='onclickPerformed(this.id)'>" + IMPORTANCE_CHARS[this.importance] + "</DIV>";
+	var string = "<DIV class='imp' id='" + this.qid + "-" + this.id + "-imp' onclick='onclickPerformed(\"" + this.qid + "\",\"" + this.id + "-imp\")'>" + IMPORTANCE_CHARS[this.importance] + "</DIV>";
 	GRAPHICS.drawStringRect(string, this.getX(), this.getY() - (1.4 * FONT_SIZE), FONT_SIZE * 2, 'right');
-	for (var i = 0; i < this.dependancy.length; i++) {
-	    this.dependancy[i].drawImportance();
+	for (var i = 0; i < this.dependency.length; i++) {
+	    this.dependency[i].drawImportance();
 	}
     }
 
     this.setDependency = function (dpnd) {
-	this.dependancy = dpnd;
+	this.dependency = dpnd;
 	for (var i = 0; i < dpnd.length; i++) {
 	    this.child_id++;
-	    this.dependancy[i].setID(this.id + "-" + this.child_id);
+	    this.dependency[i].setID(this.id + "-" + this.child_id);
 	}
     }
 
     this.getDependency = function (dpnd) {
-	return this.dependancy;
+	return this.dependency;
     }
 
     this.drawDependency = function () {
-	for (var i = 0; i < this.dependancy.length; i++) {
-	    this.dependancy[i].paint(i * ARROW_SIZE, 'black');
+	for (var i = 0; i < this.dependency.length; i++) {
+	    this.dependency[i].paint(i * ARROW_SIZE, 'black');
 	}
     }
 
     this.onclick = function (child_id) {
 	if (child_id == "imp") {
 	    this.importance = (this.importance + 1)%IMPORTANCE_CHARS.length;
-	    document.getElementById(this.id + "-imp").innerHTML = IMPORTANCE_CHARS[this.importance];
+	    document.getElementById(this.qid + "-" + this.id + "-imp").innerHTML = IMPORTANCE_CHARS[this.importance];
 	    if (this.importance == UNNECCESARY) {
-		document.getElementById(this.id).style.color = "gray";
-		document.getElementById(this.id).style.backgroundColor = "lightGray";
-		document.getElementById(this.id).style.borderColor = "gray";
+		document.getElementById(this.qid + "-" + this.id).style.color = "gray";
+		document.getElementById(this.qid + "-" + this.id).style.backgroundColor = "lightGray";
+		document.getElementById(this.qid + "-" + this.id).style.borderColor = "gray";
 	    } else {
-		document.getElementById(this.id).style.color = "black";
-		document.getElementById(this.id).style.backgroundColor = this.bgcolor;
-		document.getElementById(this.id).style.borderColor = this.fgcolor;
+		document.getElementById(this.qid + "-" + this.id).style.color = "black";
+		document.getElementById(this.qid + "-" + this.id).style.backgroundColor = this.bgcolor;
+		document.getElementById(this.qid + "-" + this.id).style.borderColor = this.fgcolor;
 	    }
 
 	    // skip basic word
@@ -205,13 +230,13 @@ function TermGroup (id, basicWord, importance) {
 	else if (child_id < this.children.length) {
 	    this.children[child_id].onclick();
 	} else {
-	    this.dependancy[child_id - this.children.length].onclick();
+	    this.dependency[child_id - this.children.length].onclick();
 	}
     }
   
     this.push = function (initState, synid, strings) {
 	this.child_id++;
-	this.children.push(new Term(initState, this.id + "-" + this.child_id, synid, strings, "syn", this.id));
+	this.children.push(new Term(this.qid, initState, this.id + "-" + this.child_id, synid, strings, "syn", this.id));
     }
 
     this.getID = function () {
@@ -228,7 +253,7 @@ function TermGroup (id, basicWord, importance) {
 	var buf = "";
 	var maxWidth = this.children[0].width();
 	if (this.importance == UNNECCESARY) {
-	    buf = "<DIV id='" + this.id + "' class='termGroup' style='width: " + (maxWidth + 1) + "em; border: 2px solid gray; background-color: lightGray;'>" + this.basicWord + "</DIV>";
+	    buf = "<DIV id='" + this.qid + "-" + this.id + "' class='termGroup' style='width: " + (maxWidth + 1) + "em; border: 2px solid gray; background-color: lightGray;'>" + this.basicWord + "</DIV>";
 	} else {
 	    for (var i = 0; i < this.children.length; i++) {
 		if (this.children[i].width() > maxWidth) {
@@ -236,7 +261,7 @@ function TermGroup (id, basicWord, importance) {
 		}
 		buf += this.children[i].paint();
 	    }
-	    buf = "<DIV id='" + this.id + "' class='termGroup' style='width: " + (maxWidth + 1) + "em; border: 2px solid " + DARK_COLOR[this.id] + "; background-color:" + PALE_COLOR[this.id] + ";'>" + buf + "</DIV>";
+	    buf = "<DIV id='" + this.qid + "-" + this.id + "' class='termGroup' style='width: " + (maxWidth + 1) + "em; border: 2px solid " + DARK_COLOR[this.id] + "; background-color:" + PALE_COLOR[this.id] + ";'>" + buf + "</DIV>";
 	}
 	return buf;
     }
@@ -254,27 +279,28 @@ function TermGroup (id, basicWord, importance) {
     }
 
     this.getX = function () {
-	return document.getElementById(this.id).offsetLeft;
+	return document.getElementById(this.qid + "-" + this.id).offsetLeft;
     }
 
     this.getCX = function () {
-	return document.getElementById(this.id).offsetLeft + this.getWidth() / 2;
+	return document.getElementById(this.qid + "-" + this.id).offsetLeft + this.getWidth() / 2;
     }
 
     this.getY = function () {
-	return document.getElementById(this.id).offsetTop;
+	return document.getElementById(this.qid + "-" + this.id).offsetTop;
     }
 
     this.getWidth = function () {
-	return document.getElementById(this.id).offsetWidth;
+	return document.getElementById(this.qid + "-" + this.id).offsetWidth;
     }
 
     this.getHeight = function () {
-	return document.getElementById(this.id).offsetHeight;
+	return document.getElementById(this.qid + "-" + this.id).offsetHeight;
     }
 }
 
-function Dependency (parent, child, importance) {
+function Dependency (qid, parent, child, importance) {
+    this.qid = qid;
     this.id = 0;
     this.parent = parent;
     this.child = child;
@@ -286,7 +312,7 @@ function Dependency (parent, child, importance) {
     this.onclick = function () {
 	this.paint(this.offsetX, "white");
 	this.importance = (this.importance + 1)%IMPORTANCE_CHARS.length;
-	document.getElementById(this.id).innerHTML = IMPORTANCE_CHARS[this.importance];
+	document.getElementById(this.qid + "-" + this.id).innerHTML = IMPORTANCE_CHARS[this.importance];
 	this.paint(this.offsetX, "black");
 	GRAPHICS.paint();
     }
@@ -310,7 +336,7 @@ function Dependency (parent, child, importance) {
     this.drawImportance = function () {
 	var top  = document.getElementById(canvasName).style.top;
 	var _top = this.height - (1.4 * FONT_SIZE);
-	var string = "<DIV class='imp' id='" + this.id + "' onclick='onclickPerformed(this.id)'>" + IMPORTANCE_CHARS[this.importance] + "</DIV>";
+	var string = "<DIV class='imp' id='" + this.qid + "-" + this.id + "' onclick='onclickPerformed(\"" + this.qid + "\",\"" + this.id + "\")'>" + IMPORTANCE_CHARS[this.importance] + "</DIV>";
 	GRAPHICS.drawStringRect(string, this.offsetX + child.getCX(), _top, FONT_SIZE * 2 + 5, 'right');
     }
 

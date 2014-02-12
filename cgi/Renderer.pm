@@ -1052,7 +1052,7 @@ sub printSearchResultForBrowserAccess {
     ################################
     ($params->{kwic}) ? $this->printKwicView($params, $results, $query) : $this->printOrdinarySearchResult($logger, $params, $results, $query, $start, $end, $did2snippets);
 
-    $this->printAjax($params, join (",", @__buf)) if ($status ne "busy") && !$CONFIG->{IS_ENGLISH_VERSION};
+    $this->printAjax($params, join (",", @__buf)) if ($status ne "busy") && !$CONFIG->{IS_ENGLISH_VERSION} && scalar @$results > 0;
 
     ################
     # フッターの表示
@@ -1746,115 +1746,129 @@ sub printErrorMessage {
 sub printQueryEditPain {
     my ($this, $params, $query) = @_;
 
-    my $jscode = $this->getPaintingJavaScriptCode($query->{result}, $params);
+    my $jscode = $this->getPaintingJavaScriptCode($query->{keywords}, $params);
 
     print $jscode . "\n";
 }
 
 
 sub getPaintingJavaScriptCode {
-    my ($this, $result, $opt) = @_;
+    my ($this, $keywords, $opt) = @_;
 
     my $jscode;
-    $jscode .= qq(<script type="text/javascript" src="javascript/drawResult.js?140207"></script>\n);
+    $jscode .= qq(<script type="text/javascript" src="javascript/drawResult.js"></script>\n);
     $jscode .= qq(<script language="JavaScript">\n);
-
-    # 単語・同義表現グループを描画する
-    my @kihonkus = $result->tag;
-    my $syngraph = Configure::getSynGraphObj();
-    
-    my %tid2syns = ();
-    my @surfs = ();
-    my %synos = ();
-    my %tag2i = ();
-    for (my $i = 0; $i < scalar(@kihonkus); $i++) {
-	my $tag = $kihonkus[$i];
-	$tag2i{$tag} = $i;
-	my ($synbuf, $max_num_of_words) = &_getExpressions($i, $tag, \%tid2syns, $syngraph, $opt);
-
-	my ($white_space_flag, $_surf) = (1, '');
-	foreach my $m ($tag->mrph) {
-	    if ($white_space_flag && $m->fstring !~ /内容語/) {
-		$_surf .= ' ';
-		$white_space_flag = 0;
-	    }
-	    $_surf .= $m->midasi;
-	}
-	push (@surfs, $_surf);
-	$synos{$surfs[-1]}->{importance} = ($tag->fstring() =~ /クエリ削除語/) ? "UNNECCESARY" : (($tag->fstring() =~ /クエリ不要語/) ?  "OPTIONAL" : "NECCESARY");
-	$synos{$surfs[-1]}->{synonyms} = $synbuf;
-    }
-
     $jscode .= qq(function createTerms () {\n);
-    $jscode .= qq(var termGroups = new Array\(\);\n);
-    $jscode .= qq(var basicWords = new Array\() . join (",", map {sprintf "\"%s\"", $_} @surfs) . qq(\);\n);
 
-    $jscode .= qq(var importance = new Array\(\)\n);
-    for (@surfs) {
-	$jscode .= qq(importance.push($synos{$_}->{importance})\n);
-    }
+    $jscode .= qq(var queryGroups = new Array\(\);\n);
 
-    $jscode .= qq(for (var i = 0; i < basicWords.length; i++) {\n);
-    $jscode .= qq(\ttermGroups[i] = new TermGroup(i, basicWords[i], importance[i]);\n);
-    $jscode .= qq(}\n\n);
+    my $query_group_num = 0;
+    for my $keyword (@$keywords) {
+	$jscode .= qq(queryGroups[$query_group_num] = new QueryGroup($query_group_num);\n);
 
-    foreach my $i (0..scalar(@surfs) - 1) {
-	my $surf = $surfs[$i];
-	while (my ($synid, $synonyms) = each %{$synos{$surf}->{synonyms}}) {
-	    my $strs = qq(new Array\() . join (",", map {sprintf "\"%s\"", $_} @$synonyms) . qq(\));
-	    my $initState = (exists $opt->{remove_synids}{$synid}) ? 0 : 1;
-	    $jscode .= qq(termGroups[$i].push($initState, "$synid", $strs);\n);
+	my $result = $keyword->{result};
+	# 単語・同義表現グループを描画する
+	my @kihonkus = $result->tag;
+	my $syngraph = Configure::getSynGraphObj();
+	
+	my %tid2syns = ();
+	my @surfs = ();
+	my %synos = ();
+	my %tag2i = ();
+	for (my $i = 0; $i < scalar(@kihonkus); $i++) {
+	    my $tag = $kihonkus[$i];
+	    $tag2i{$tag} = $i;
+	    my ($synbuf, $max_num_of_words) = &_getExpressions($i, $tag, \%tid2syns, $syngraph, $opt);
+
+	    my ($white_space_flag, $_surf) = (1, '');
+	    foreach my $m ($tag->mrph) {
+		if ($white_space_flag && $m->fstring !~ /内容語/) {
+		    $_surf .= ' ';
+		    $white_space_flag = 0;
+		}
+		$_surf .= $m->midasi;
+	    }
+	    push (@surfs, $_surf);
+	    $synos{$surfs[-1]}->{importance} = ($tag->fstring() =~ /クエリ削除語/) ? "UNNECCESARY" : (($tag->fstring() =~ /クエリ不要語/) ?  "OPTIONAL" : "NECCESARY");
+	    $synos{$surfs[-1]}->{synonyms} = $synbuf;
 	}
-    }
 
+	$jscode .= qq(var termGroups = new Array\(\);\n);
+	$jscode .= qq(var basicWords = new Array\() . join (",", map {sprintf "\"%s\"", $_} @surfs) . qq(\);\n);
 
-    my %dpnds = ();
-    foreach my $kihonku (@kihonkus) {
-	my $kakarimoto = $kihonku;
-	my $kakarisaki = $kihonku->parent;
-	# 係り先がない場合は next
-	next unless (defined $kakarisaki);
-
-	# 並列句の処理１
-	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 日本->政治, 日本->経済 の部分
-	my $buf = $kakarisaki;
-	&generateDependencyTermsForParaType1(\%dpnds, $kakarimoto, $kakarisaki, \%tag2i);
-
-
-	# 並列句の処理2
-	# 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 政治->正す, 経済->正す の部分
-	my $buf = $kakarimoto;
-	while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
-	    $buf = $kakarisaki;
-	    $kakarisaki = $kakarisaki->parent;
+	$jscode .= qq(var importance = new Array\(\)\n);
+	for (@surfs) {
+	    $jscode .= qq(importance.push($synos{$_}->{importance})\n);
 	}
-	# 係り受けオブジェクトの生成
-	push (@{$dpnds{$tag2i{$kakarisaki}}}, &generateJavascriptCode4Dpnd($kakarimoto, $kakarisaki, \%tag2i));
 
+	$jscode .= qq(for (var i = 0; i < basicWords.length; i++) {\n);
+	$jscode .= qq(\ttermGroups[i] = new TermGroup($query_group_num, i, basicWords[i], importance[i]);\n);
+	$jscode .= qq(}\n\n);
 
-	# クエリ解析により追加された係り受けオブジェクトの生成
-	if ($kakarimoto->fstring() !~ /<クエリ削除係り受け>/ &&
-	    $kakarisaki->fstring() =~ /<クエリ不要語>/ &&
-	    $kakarisaki->fstring() !~ /<クエリ削除語>/ &&
-	    $kakarisaki->fstring() !~ /<固有表現を修飾>/) {
-	    my $_kakarisaki = $kakarisaki->parent();
-
-	    # 係り先の係り先への係り受けを描画
-	    if (defined $_kakarisaki) {
-		push (@{$dpnds{$tag2i{$_kakarisaki}}}, &generateJavascriptCode4Dpnd($kakarimoto, $_kakarisaki, \%tag2i));
+	foreach my $i (0..scalar(@surfs) - 1) {
+	    my $surf = $surfs[$i];
+	    while (my ($synid, $synonyms) = each %{$synos{$surf}->{synonyms}}) {
+		my $strs = qq(new Array\() . join (",", map {sprintf "\"%s\"", $_} @$synonyms) . qq(\));
+		my $initState = (exists $opt->{remove_synids}{$synid}) ? 0 : 1;
+		$jscode .= qq(termGroups[$i].push($initState, "$synid", $strs);\n);
 	    }
 	}
-    }
 
-    # termGroup に係り受け関係を追加
-    while (my ($i, $_dpnds) = each %dpnds) {
-	$jscode .= qq(var dpnds$i = new Array \() . join (", ", @$_dpnds) . ");\n";
-	$jscode .= qq(termGroups[$i].setDependency(dpnds$i);\n);
+
+	my %dpnds = ();
+	foreach my $kihonku (@kihonkus) {
+	    my $kakarimoto = $kihonku;
+	    my $kakarisaki = $kihonku->parent;
+	    # 係り先がない場合は next
+	    next unless (defined $kakarisaki);
+
+	    # 並列句の処理１
+	    # 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 日本->政治, 日本->経済 の部分
+	    my $buf = $kakarisaki;
+	    &generateDependencyTermsForParaType1($query_group_num, \%dpnds, $kakarimoto, $kakarisaki, \%tag2i);
+
+
+	    # 並列句の処理2
+	    # 日本の政治と経済を正す -> 日本->政治, 日本->経済. 政治->正す, 経済->正す のうち 政治->正す, 経済->正す の部分
+	    my $buf = $kakarimoto;
+	    while ($buf->dpndtype eq 'P' && defined $kakarisaki->parent) {
+		$buf = $kakarisaki;
+		$kakarisaki = $kakarisaki->parent;
+	    }
+	    # 係り受けオブジェクトの生成
+	    push (@{$dpnds{$tag2i{$kakarisaki}}}, &generateJavascriptCode4Dpnd($query_group_num, $kakarimoto, $kakarisaki, \%tag2i));
+
+
+	    # クエリ解析により追加された係り受けオブジェクトの生成
+	    if ($kakarimoto->fstring() !~ /<クエリ削除係り受け>/ &&
+		$kakarisaki->fstring() =~ /<クエリ不要語>/ &&
+		$kakarisaki->fstring() !~ /<クエリ削除語>/ &&
+		$kakarisaki->fstring() !~ /<固有表現を修飾>/) {
+		my $_kakarisaki = $kakarisaki->parent();
+
+		# 係り先の係り先への係り受けを描画
+		if (defined $_kakarisaki) {
+		    push (@{$dpnds{$tag2i{$_kakarisaki}}}, &generateJavascriptCode4Dpnd($query_group_num, $kakarimoto, $_kakarisaki, \%tag2i));
+		}
+	    }
+	}
+
+	# termGroup に係り受け関係を追加
+	while (my ($i, $_dpnds) = each %dpnds) {
+	    $jscode .= qq(var dpnds$i = new Array \() . join (", ", @$_dpnds) . ");\n";
+	    $jscode .= qq(termGroups[$i].setDependency(dpnds$i);\n);
+	}
+
+	$jscode .= qq(for (var i = 0; i < basicWords.length; i++) {\n);
+	$jscode .= qq(\tqueryGroups[$query_group_num].push(termGroups[i]);\n);
+	$jscode .= qq(}\n\n);
+	$query_group_num++;
     }
 
     # 表示する
-    $jscode .= "setTermGroups(termGroups);\n";
-    $jscode .= "paint(termGroups);\n";
+    $jscode .= "setQueryGroups(queryGroups);\n";
+    $jscode .= "paint();\n";
+
     $jscode .= "}\n";
     $jscode .= "</script>\n";
     return $jscode;
@@ -2063,7 +2077,7 @@ sub _getExpressions {
 }
 
 sub generateDependencyTermsForParaType1 {
-    my ($dpnds, $kakarimoto, $kakarisaki, $tag2i) = @_;
+    my ($query_group_num, $dpnds, $kakarimoto, $kakarisaki, $tag2i) = @_;
 
     if (defined $kakarisaki->child) {
 	foreach my $child ($kakarisaki->child) {
@@ -2071,22 +2085,22 @@ sub generateDependencyTermsForParaType1 {
 	    # 係り受け関係を追加する際、係り元のノード以前は無視する
 	    # ex) 緑茶やピロリ菌
 	    if ($child->dpndtype eq 'P' && $child->id > $kakarimoto->id) {
-		push (@{$dpnds->{$tag2i->{$kakarisaki}}}, &generateJavascriptCode4Dpnd($kakarimoto, $child, $tag2i));
+		push (@{$dpnds->{$tag2i->{$kakarisaki}}}, &generateJavascriptCode4Dpnd($query_group_num, $kakarimoto, $child, $tag2i));
 
 		# 子の子についても処理する
-		&generateDependencyTermsForParaType1($dpnds, $kakarimoto, $child, $tag2i);
+		&generateDependencyTermsForParaType1($query_group_num, $dpnds, $kakarimoto, $child, $tag2i);
 	    }
 	}
     }
 }
 
 sub generateJavascriptCode4Dpnd {
-    my ($kakarimoto, $kakarisaki, $tag2i) = @_;
+    my ($qid, $kakarimoto, $kakarisaki, $tag2i) = @_;
 
     my $importance = 'OPTIONAL';
     $importance = 'NECCESARY'   if ($kakarimoto->fstring() =~ /クエリ必須係り受け/);
     $importance = 'UNNECCESARY' if ($kakarimoto->fstring() =~ /クエリ削除係り受け/ || $kakarisaki->fstring() =~ /クエリ削除語/);
-    return sprintf ("new Dependency(termGroups[%d], termGroups[%d], $importance)", $tag2i->{$kakarisaki}, $tag2i->{$kakarimoto});
+    return sprintf ("new Dependency(%d, termGroups[%d], termGroups[%d], $importance)", $qid, $tag2i->{$kakarisaki}, $tag2i->{$kakarimoto});
 }
 
 1;
