@@ -712,8 +712,11 @@ sub parse {
 	    my $qk = $this->createQueryKeywordObj($search_expression, $opt, $qid);
 
 	    if ($this->{OPTIONS}{is_cpp_mode}) {
-		push (@sexps, $qk->to_S_exp("", undef, $opt));
-		push (@escapedStrings, $qk->to_uri_escaped_string());
+		my $sexps = $qk->to_S_exp("", undef, $opt);
+		if ($sexps ne "(ROOT\n)") { # skip empty node
+		    push (@sexps, $sexps);
+		    push (@escapedStrings, $qk->to_uri_escaped_string());
+		}
 		$rawstring = $qks_str;
 		$result = $qk->{result};
 		while (my ($k, $v) = each %{$qk->{rep2style}}) {
