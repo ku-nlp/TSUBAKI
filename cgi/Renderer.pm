@@ -1026,7 +1026,6 @@ sub printSearchResultForBrowserAccess {
     foreach my $doc (@$results) {
 	push (@__buf, $doc->{did});
 	$rank++;
-	# last if ($rank > 100);
     }
 
     ############################
@@ -1756,7 +1755,7 @@ sub getPaintingJavaScriptCode {
     my ($this, $keywords, $opt) = @_;
 
     my $jscode;
-    $jscode .= qq(<script type="text/javascript" src="javascript/drawResult.js"></script>\n);
+    $jscode .= qq(<script type="text/javascript" src="javascript/drawResult.js?140212"></script>\n);
     $jscode .= qq(<script language="JavaScript">\n);
     $jscode .= qq(function createTerms () {\n);
 
