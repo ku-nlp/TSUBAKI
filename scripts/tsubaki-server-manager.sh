@@ -93,6 +93,9 @@ start() {
 		    else
 			ulimit -Ss $MEM -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION &
 		    fi
+		else
+		    echo "Can't find an idxdir ($idxdir)!"
+		    exit
 		fi
  	    fi
 	done
