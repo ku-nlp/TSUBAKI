@@ -20,18 +20,18 @@
 use File::Find;
 use File::Copy;
 use File::Spec;
-use Cwd;
+use POSIX;
 use Getopt::Long;
 use strict;
 use warnings;
 
 sub usage {
-    print "Usage: $0 [--ext file_extention] [--dryrun] [--verbose] [--start start_dir_id] [--num num_of_htmls_in_dir] indir ourdir\n";
+    print "Usage: $0 [--ext file_extention] [--dryrun] [--copy] [--verbose] [--start start_dir_id] [--num num_of_htmls_in_dir] indir ourdir\n";
     exit 1;
 }
 
 our %opt;
-&GetOptions(\%opt, 'dryrun', 'ext=s', 'start=i', 'num=i', 'verbose');
+&GetOptions(\%opt, 'dryrun', 'ext=s', 'start=i', 'num=i', 'copy', 'verbose');
 
 if (@ARGV != 2 || ! -d $ARGV[0]) {
     &usage();
@@ -81,8 +81,13 @@ sub process_file {
 	else {
 	    print "$src_fullname -> $dest_fullname\n" if $opt{verbose};
 	    print FILENAME2SID "$src_basename $dest_id\n";
-	    copy($src_fullname, $dest_fullname);
-	    print STDERR "$src_fullname -> $dest_fullname: $!\n" if $!; # error
+	    if ($opt{copy}) {
+		copy($src_fullname, $dest_fullname);
+	    }
+	    else {
+		symlink($src_fullname, $dest_fullname);
+	    }
+	    print STDERR "$src_fullname -> $dest_fullname: $!\n" if $! && $! != POSIX::ENOTTY; # error (do not regard ENOTTY as an error)
 	}
 
 	$hcount++;
