@@ -28,6 +28,7 @@ JumanrcFile = @JUMANPrefix@/etc/jumanrc
 KnprcFile = @KNPPrefix@/etc/knprc
 EnglishParserDir = @EnglishParserPath@
 UseBlockTypeFlag = @UseBlockTypeFlag@
+UseCopyForHTMLFlag = @UseCopyForHTMLFlag@
 UsePredicateArgumentStructureFlag = @UsePredicateArgumentStructureFlag@
 PredicateArgumentDefinition = @PredicateArgumentDefinition@
 HTMLExt = @HTMLExt@
@@ -46,6 +47,10 @@ endif
 ifeq "$(HTMLExt)" "html.gz"
 WWW2sf_args += -z
 html_relocation_args += -e $(HTMLExt)
+endif
+
+ifeq "$(UseCopyForHTMLFlag)" "1"
+html_relocation_args += --copy
 endif
 
 ifeq "$(EnglishFlag)" "1"
