@@ -76,7 +76,7 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
 }
 
 my @INDEX = sort {$a->{midasi} cmp $b->{midasi}} @tmp_INDEX;
-my $buf;
+my ($pre_midasi, @indices);
 
 # @INDEXのある限り次の行を読み込む
 while (@INDEX) {
@@ -84,29 +84,31 @@ while (@INDEX) {
     my $index = shift(@INDEX);
 
     # 見出し語が同じ時はbufの後に追加
-    if ($buf->{midasi} eq $index->{midasi}) {
-	$buf->{data} .= " " . $index->{data};
+    if ($pre_midasi && $pre_midasi eq $index->{midasi}) {
+	push(@indices, split(/ /, $index->{data}));
     }
     # 見出し語が変化した場合はbufを出力して、見出し語を変える
     else {
 	# 文書IDのソート
 	if ($opt{mapfile}) {
 	    my @buf2 = ();
-	    foreach my $doc (split(/ /, $buf->{data})) {
+	    # print STDERR encode_utf8($pre_midasi), ' ', scalar(@indices), "\n";
+	    foreach my $doc (@indices) {
 		my ($fid, $string) = split (/:/, $doc);
 		push (@buf2, sprintf ("%s:%s", $sid2tid{$fid}, $string)) if (exists $sid2tid{$fid});
 	    }
-	    $buf->{data} = join (" ", @buf2);
+	    @indices = @buf2;
 	}
 
-	$buf->{data} = join(' ', sort {$a <=> $b} (split(/ /, $buf->{data})));
+	@indices = sort({$a <=> $b} @indices);
 
-	if ($buf->{midasi}) {
-	    print $buf->{midasi} . " " . $buf->{data} . "\n";
+	if ($pre_midasi) {
+	    print $pre_midasi, ' ', join(' ', @indices), "\n";
 	}
 
-	$buf->{midasi} = $index->{midasi};
-	$buf->{data} = $index->{data};
+	$pre_midasi = $index->{midasi};
+	@indices = ();
+	push(@indices, split(/ /, $index->{data}));
     }
 
     # 先ほど取り出したファイル番号について，新しい行を取り出し，@INDEXの適当な位置に挿入
@@ -136,14 +138,16 @@ while (@INDEX) {
 
 if ($opt{mapfile}) {
     my @buf2 = ();
-    foreach my $doc (split(/ /, $buf->{data})) {
+    foreach my $doc (@indices) {
 	my ($fid, $string) = split (/:/, $doc);
 	push (@buf2, sprintf ("%s:%s", $sid2tid{$fid}, $string)) if (exists $sid2tid{$fid});
     }
-    $buf->{data} = join (" ", @buf2);
+    @indices = @buf2;
 }
 
-print $buf->{midasi} . " " . $buf->{data} . "\n" if ($buf->{midasi});
+@indices = sort({$a <=> $b} @indices);
+
+print $pre_midasi, ' ', join(' ', @indices), "\n" if $pre_midasi;
 
 # ファイルをクローズする
 for (my $f_num = 0; $f_num < $FILE_NUM; $f_num++) {
