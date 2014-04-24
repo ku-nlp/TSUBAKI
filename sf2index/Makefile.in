@@ -37,6 +37,7 @@ EnglishFlag = @EnglishFlag@
 WWW2sf_args = -f -c $(CNSDB)
 AddKNPResult_args = -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -embed_result_in_xml
 sf2term_args = 
+sf2term_sh_args =
 html_relocation_args = -s $(START_DIR_ID)
 
 ifeq "$(UseBlockTypeFlag)" "1"
@@ -47,6 +48,7 @@ endif
 ifeq "$(HTMLExt)" "html.gz"
 WWW2sf_args += -z
 html_relocation_args += -e $(HTMLExt)
+sf2term_sh_args += -z
 endif
 
 ifeq "$(UseCopyForHTMLFlag)" "1"
@@ -192,7 +194,7 @@ $(IDX1_FILE_$1): $(IDX0_DONE_$1)
 $(IDX0_DONE_$1): $(XML_DONE_$1)
 	if [ ! -d $(TMP_IDX0_DIR_$1) ]; then mkdir -p $(TMP_IDX0_DIR_$1); fi && \
 	if [ ! -d $$(dir $1) ]; then mkdir -p $$(dir $1); fi && \
-	nice -n $(NICE_VALUE) $(BASEDIR)/sf2index/sf2term.sh -a "$(sf2term_args)" -i $(XML_DIR_$1) -o $(TMP_IDX0_DIR_$1) -s $(XML_SUFFIX) -x $(IDX0_SUFFIX) -b $(BASEDIR) && \
+	nice -n $(NICE_VALUE) $(BASEDIR)/sf2index/sf2term.sh $(sf2term_sh_args) -a "$(sf2term_args)" -i $(XML_DIR_$1) -o $(TMP_IDX0_DIR_$1) -s $(XML_SUFFIX) -x $(IDX0_SUFFIX) -b $(BASEDIR) && \
 	mv $(TMP_IDX0_DIR_$1) $1 && \
 	touch $$@
 

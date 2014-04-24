@@ -46,12 +46,19 @@ our $parser = new XML::LibXML;
 our $sf = new StandardFormat;
 
 my $file = $ARGV[0];
+$SF_EXT .= '.gz' if $file =~ /\.gz$/;
 my ($prefix, $doc_id) = ($file =~ /^(.*?)([-\d]+)\.$SF_EXT$/);
 die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT\n" if !$opt{no_check_filename} && !defined($doc_id);
 my $output_file = $prefix . $doc_id . '.' . $IDX_EXT;
 
 my $xmldat;
-open(XML, '< :utf8', $file) or die "Cannot open an input XML: $file\n";
+if ($file =~ /\.gz$/) {
+	open(XML, '< :gzip', $file) or die "Cannot open an input XML: $file\n";
+	binmode (XML, ':utf8');
+}
+else {
+	open(XML, '< :utf8', $file) or die "Cannot open an input XML: $file\n";
+}
 while (<XML>) {
     $xmldat .= $_;
 }
