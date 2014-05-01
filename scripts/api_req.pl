@@ -13,8 +13,9 @@ use Getopt::Long;
 use strict;
 
 my (%opt);
-GetOptions(\%opt, 'query=s', 'start=i', 'results=i', 'download=s', 'proxy', 'proxy_server=s', 'format=s', 'verbose', 'getdoc');
+GetOptions(\%opt, 'query=s', 'start=i', 'results=i', 'download=s', 'proxy', 'proxy_server=s', 'format=s', 'verbose', 'getdoc', 'base_url=s');
 
+$opt{base_url} = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi' unless ($opt{base_url});
 $opt{proxy_server} = 'http://proxy.kuins.net:8080' if ($opt{proxy} && !$opt{proxy_server});
 $opt{format} = 'xml' unless ($opt{format});
 
@@ -26,8 +27,7 @@ if ($opt{getdoc}) {
 
 sub main4getdoc {
     # リクエストURLを作成
-    my $base_url = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi';
-    my $req_url = "$base_url?format=xml";
+    my $req_url = "$opt{base_url}?format=xml";
     while (<STDIN>) {
 	chop;
 
@@ -56,16 +56,12 @@ sub main4getdoc {
 
 sub main {
     # 検索したいキーワード (utf8)をURIエンコードする
-    # my $encoding = guess_encoding($opt{query}, qw/ascii euc-jp shiftjis 7bit-jis utf8/)->name();
-    my $encoding = 'euc-jp';
-    Encode::from_to($opt{query}, $encoding, 'utf8');
     my $uri_escaped_query = uri_escape($opt{query});
 
     # リクエストURLを作成
-    my $base_url = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi';
     my $results = (defined $opt{results}) ? $opt{results} : 10;
     my $start = (defined $opt{start}) ? $opt{start} : 1;
-    my $req_url = "$base_url?query=$uri_escaped_query&results=$results&start=$start";
+    my $req_url = "$opt{base_url}?query=$uri_escaped_query&results=$results&start=$start";
     $req_url .= "&logical_operator=AND&dpnd=1&force_dpnd=0&no_snippets=1&result_items=Id";
 
     print STDERR $req_url . "\n" if ($opt{verbose});
@@ -107,7 +103,7 @@ sub main {
 	    my $rank = $1;
 	    my $did = $2;
 
-	    my $requestURL = "$base_url?id=$did&format=$opt{format}";
+	    my $requestURL = "$opt{base_url}?id=$did&format=$opt{format}";
 
 	    # リクエストの送信
 	    my $req = HTTP::Request->new(GET => $requestURL);
