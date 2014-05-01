@@ -95,6 +95,7 @@ sub convert_knp_format {
     my %bnst_span;
     my $current_bnst_id = -1;
     my %tid2bid;
+    my %phrase_feature;
     # to recover the tree structure
     for my $phrase_node ($annotation_node->getElementsByTagName('Chunk')) {
 	my $id = $phrase_node->getAttribute('id');
@@ -102,6 +103,7 @@ sub convert_knp_format {
 	my $head_id = $phrase_node->getAttribute('head');
 	$head_id =~ s/^c//;
 	my $phrase_feature = $phrase_node->getAttribute('feature');
+	$phrase_feature{$id} = $phrase_feature;
 
 	# bnst start
 	if ($phrase_feature =~ /文節:(\d+)\-(\d+)/) {
@@ -132,7 +134,8 @@ sub convert_knp_format {
 	if (defined $bnst_span{$id}) {
 	    my $head_bnst_id = !defined $tid2bid{$parent_tid{$bnst_span{$id}}} ? '-1' : $tid2bid{$parent_tid{$bnst_span{$id}}};
 
-	    $knp_format_string .= "* $head_bnst_id$dpnd_type $phrase_feature\n";
+	    my $bnst_feature = $phrase_feature{$bnst_span{$id}};
+	    $knp_format_string .= "* $head_bnst_id$dpnd_type $bnst_feature\n";
 	}
 
 	$knp_format_string .= "+ $head_id$dpnd_type $phrase_feature\n";

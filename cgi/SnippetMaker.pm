@@ -219,7 +219,7 @@ sub extract_sentences_from_content_using_position_new_sf {
 	    last if (!$showFlag && $pos > $end);
 
 	    if ($showFlag) {
-		my $sentence = &make_sentence($sentence_id, 0, $number_of_included_queries, scalar (keys %included_query_types), undef, undef, undef, undef, $sf, $opt, $start_pos, $pos - 1);
+		my $sentence = &make_sentence($sentence_id, 0, $number_of_included_queries, scalar (keys %included_query_types), undef, undef, $content, undef, $sf, $opt, $start_pos, $pos - 1);
 		push(@sentences, $sentence);
 	    }
 	}
@@ -687,7 +687,8 @@ sub extract_sentences_from_content_new_sf {
 	    # 各文をスコアリング
 	    my ($num_of_queries, $num_of_types, $including_all_indices) = &calculate_score_with_sf($query, $sf, $opt);
 
-	    my $sentence = &make_sentence($sentence_id, 0, $num_of_queries, $num_of_types, $including_all_indices, 0, undef, undef, $sf, $opt);
+	    my $annotation = $annotation_node->toString;
+	    my $sentence = &make_sentence($sentence_id, 0, $num_of_queries, $num_of_types, $including_all_indices, 0, $annotation, undef, $sf, $opt);
 	    push(@sentences, $sentence);
 
 	    $th = $count + $opt->{window_size} if ($sentence->{score} > 0 && $th < 0);
@@ -886,7 +887,7 @@ sub calculate_score_with_sf {
 	    foreach my $rep (@{$reps}) {
 		my $k = $rep->{string};
 		$k =~ s/(a|v)$// unless ($opt->{string_mode});
-		print $k . " is exists? -> " if ($opt->{debug});
+		print $k . " exists? -> " if ($opt->{debug});
 		if (exists($buf{$k})) {
 		    print "true.\n" if ($opt->{debug});
 		    $num_of_queries += $buf{$k};
