@@ -13,7 +13,7 @@ use Getopt::Long;
 use strict;
 
 my (%opt);
-GetOptions(\%opt, 'query=s', 'start=i', 'results=i', 'download=s', 'proxy', 'proxy_server=s', 'format=s', 'verbose', 'getdoc', 'base_url=s');
+GetOptions(\%opt, 'query=s', 'start=i', 'results=i', 'download=s', 'proxy', 'proxy_server=s', 'format=s', 'verbose', 'getdoc', 'base_url=s', 'snippet', 'title');
 
 $opt{base_url} = 'http://tsubaki.ixnlp.nii.ac.jp/api.cgi' unless ($opt{base_url});
 $opt{proxy_server} = 'http://proxy.kuins.net:8080' if ($opt{proxy} && !$opt{proxy_server});
@@ -61,8 +61,11 @@ sub main {
     # リクエストURLを作成
     my $results = (defined $opt{results}) ? $opt{results} : 10;
     my $start = (defined $opt{start}) ? $opt{start} : 1;
+	my $result_items = 'Id';
+	$result_items .= ':Snippet' if ($opt{snippet});
+	$result_items .= ':Title' if ($opt{title});
     my $req_url = "$opt{base_url}?query=$uri_escaped_query&results=$results&start=$start";
-    $req_url .= "&logical_operator=AND&dpnd=1&force_dpnd=0&no_snippets=1&result_items=Id";
+    $req_url .= "&logical_operator=AND&dpnd=1&force_dpnd=0&no_snippets=1&result_items=$result_items";
 
     print STDERR $req_url . "\n" if ($opt{verbose});
 
