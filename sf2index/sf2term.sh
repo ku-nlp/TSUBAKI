@@ -24,17 +24,13 @@ do
 	    ;;
 	x)  IDX0_SUFFIX=$OPTARG
 	    ;;
-	z)  GZIP=1
-	    ;;
         h)  usage
             ;;
     esac
 done
 shift `expr $OPTIND - 1`
 
-if [ $GZIP -eq 1 ]; then
-	XML_SUFFIX="${XML_SUFFIX}.gz"
-fi
+
 for f in $INDIR/*.$XML_SUFFIX; do
     basename=`basename $f .$XML_SUFFIX`
     perl -I$BASEDIR/cgi sf2term.pl $ARGS $f > $OUTDIR/$basename.$IDX0_SUFFIX
