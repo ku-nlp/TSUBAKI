@@ -185,10 +185,10 @@ endif
 $(eval IDX0_DONE_$1 := $(1).idx0.done)
 $(eval TMP_IDX0_DIR_$1 := $(TMP_DIR)/tmp_idx0_$(notdir $1))
 $(IDX1_FILE_$1): $(IDX0_DONE_$1)
-	mkdir -p $$(basename $$@).idx.tmp && \
-	$(PERL) $(BASEDIR)/scripts/merge_idx.pl -dir $$(basename $$@) -suffix $(IDX0_SUFFIX) -outdir $$(basename $$@).idx.tmp -n 50 && \
-	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $$(basename $$@).idx.tmp -suffix $(IDX0_SUFFIX) > $$@ && \
-	rm -rf $$(basename $$@).idx.tmp
+	if [ ! -d $(TMP_IDX0_DIR_$1)/$$(basename $$@).idx.tmp ]; then mkdir -p $(TMP_IDX0_DIR_$1)/$$(notdir $$@).idx.tmp; fi && \
+	$(PERL) $(BASEDIR)/scripts/merge_idx.pl -dir $$(basename $$@) -suffix $(IDX0_SUFFIX) -outdir $(TMP_IDX0_DIR_$1)/$$(notdir $$@).idx.tmp -n 50 && \
+	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $(TMP_IDX0_DIR_$1)/$$(notdir $$@).idx.tmp -suffix $(IDX0_SUFFIX) > $$@ && \
+	rm -rf $(TMP_IDX0_DIR_$1)/$$(notdir $$@).idx.tmp
  # an idx file of 10000 docs
 $(IDX0_DONE_$1): $(XML_DONE_$1)
 	if [ ! -d $(TMP_IDX0_DIR_$1) ]; then mkdir -p $(TMP_IDX0_DIR_$1); fi && \
