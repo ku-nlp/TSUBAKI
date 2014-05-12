@@ -95,12 +95,11 @@ find_htmls = $(wildcard $(dir)/*.$(HTMLExt))
 HTML_FIRST_DIRS := $(wildcard $(HTML_TOP_DIR)/????)
 
 XML_BASE := $(XML_TOP_DIR)/????
-XML_SIMPLE_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(HTML_DIRS)))
-find_xmls = $(wildcard $(dir)/*.$(XML_SUFFIX))
-# XML_SIMPLES := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_SIMPLE_TOP_DIR)/%.$(XML_SUFFIX),$(HTMLS))
+XML_SIMPLE_DONES := $(addsuffix .done, $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(HTML_DIRS))))
 XML_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS)))
 XML_FIRST_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_FIRST_DIRS))
-# XMLS := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTMLS))
+XMLS := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTMLS))
+XML_DONES := $(addsuffix .done, $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS))))
 
 HTML_DIR := $(HTML_TOP_DIR)/0000/000000
 XML_DIR := $(XML_TOP_DIR)/0000/000000
@@ -129,8 +128,8 @@ all: $(HTML_RELOCATION_DONE)
 indexing: $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
 
 html: $(HTML_RELOCATION_DONE)
-# xml_simple: $(XML_SIMPLES)
-# xml: $(XMLS)
+xml_simple: $(XML_SIMPLE_DONES)
+xml: $(XML_DONES)
 
 $(HTML_RELOCATION_DONE): $(HTML_SRC_DIR)
 	$(BASEDIR)/scripts/html-relocation.perl $(html_relocation_args) $(HTML_SRC_DIR) $(HTML_TOP_DIR) && \
