@@ -11,6 +11,7 @@ use XML::LibXML;
 use StandardFormat;
 
 binmode(STDOUT, ':utf8');
+binmode(STDERR, ':utf8');
 
 our %opt;
 &GetOptions(\%opt, 'suffix=s', 'autoout', 'no-repname', 'ignore_yomi', 'feature', 'blocktype=s', 'no_check_filename', 'pa=s');
@@ -128,7 +129,9 @@ sub process_one_sentence {
 	    my $mod_w_id = $sf->{phrases}{$id}{word_head_id}; # the word id of modifier
 	    for my $head_id (@{$sf->{phrases}{$id}{head_ids}}) {
 		next if $head_id eq 'c-1'; # skip roots of Japanese (-1)
+		next if !defined $sf->{phrases}{$head_id};
 		my $head_w_id = $sf->{phrases}{$head_id}{word_head_id}; # the word id of head
+		next if !defined $head_w_id;
 		my (@terms, $case_relation);
 
 		# predicate-argument relation if exists

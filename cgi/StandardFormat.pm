@@ -37,6 +37,12 @@ sub read_annotation_from_node {
 
     for my $phrase_node ($annotation_node->getElementsByTagName('Chunk')) {
 	my (@words);
+	my $skip_chunk_flag = 0;
+	for my $word_node ($phrase_node->getElementsByTagName('Token')) {
+	    my $str = $word_node->getAttribute('surf'); # string that appeared
+	    $skip_chunk_flag = 1 if $str =~ /\p{Specials}/; # mojibake
+	}
+
 	for my $word_node ($phrase_node->getElementsByTagName('Token')) {
 	    my $str = $word_node->getAttribute('surf'); # string that appeared
 	    $str .= '*' if $str;
@@ -49,7 +55,7 @@ sub read_annotation_from_node {
 				   pos => $word_node->getAttribute('pos1'), 
 				   feature => $word_node->getAttribute('feature'), 
 				   content_p => $word_node->getAttribute('content_p'), 
-				   position => $this->{word_count}};
+				   position => $this->{word_count}} if (!$skip_chunk_flag);
 
 	    # predicate-argument structure
 	    my @predicate_node = $word_node->getElementsByTagName('Predicate');
@@ -60,7 +66,7 @@ sub read_annotation_from_node {
 		}
 	    }
 
-	    push(@words, $this->{words}{$id});
+	    push(@words, $this->{words}{$id}) if (!$skip_chunk_flag);
 	    $this->{word_count}++;
 
 	    for my $synnode ($word_node->getElementsByTagName('synnode')) { # synonym node
@@ -68,7 +74,7 @@ sub read_annotation_from_node {
 		my $score = $synnode->getAttribute('score');
 		next unless $score < 1; # except the identical expression with the word
 		my $wordid = (split(',', $synnode->getAttribute('wordid')))[0]; # the first wordid
-		push(@{$this->{words}{$id}{synnodes}}, {synid => $synid, score => $score, wordid => $wordid});
+		push(@{$this->{words}{$id}{synnodes}}, {synid => $synid, score => $score, wordid => $wordid}) if (!$skip_chunk_flag);
 	    }
 	}
 	my $id = $phrase_node->getAttribute('id');
@@ -82,7 +88,7 @@ sub read_annotation_from_node {
 				 lem => $words[$word_head_num]{lem}, 
 				 repname => $words[$word_head_num]{repname}, 
 				 position => $words[$word_head_num]{position}, 
-				};
+	} if (!$skip_chunk_flag);
     }
 }
 
