@@ -33,6 +33,7 @@ UsePredicateArgumentStructureFlag = @UsePredicateArgumentStructureFlag@
 PredicateArgumentDefinition = @PredicateArgumentDefinition@
 HTMLExt = @HTMLExt@
 EnglishFlag = @EnglishFlag@
+HTMLisUTF8Flag = @HTMLisUTF8Flag@
 
 WWW2sf_args = -f -c $(CNSDB)
 AddKNPResult_args = -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -embed_result_in_xml
@@ -42,6 +43,10 @@ html_relocation_args = -s $(START_DIR_ID)
 ifeq "$(UseBlockTypeFlag)" "1"
 WWW2sf_args += -D $(DetectBlocksDir) -T
 sf2term_args += --blocktype $(BLOCKTYPE_DEFINITION)
+endif
+
+ifeq "$(HTMLisUTF8Flag)" "1"
+WWW2sf_args += -U
 endif
 
 ifeq "$(UseCopyForHTMLFlag)" "1"

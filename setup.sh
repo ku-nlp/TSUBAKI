@@ -34,6 +34,7 @@ JavaPath
 UseBlockTypeFlag
 UsePredicateArgumentStructureFlag
 UseCopyForHTMLFlag
+HTMLisUTF8Flag
 PredicateArgumentDefinition
 SearchServerHost
 SearchServerPort
@@ -68,15 +69,16 @@ SnippetServerHost=localhost
 SnippetServerPort=59001
 DocumentPathSpecifiedFlag=0
 SrcDocumentPathSpecifiedFlag=0
+HTMLisUTF8Flag=0
 HTMLExt=html
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML)"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8)"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:pf:Lh OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:pf:Luh OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -132,6 +134,8 @@ do
 	p)  UsePredicateArgumentStructureFlag=1
 	    ;;
 	L)  UseCopyForHTMLFlag=1
+	    ;;
+	u)  HTMLisUTF8Flag=1
 	    ;;
         h)  usage
             ;;
