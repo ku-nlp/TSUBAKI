@@ -93,11 +93,9 @@ IDX_TOP_DIR := $(DATADIR)/idx
 FILENAME2SID := $(HTML_TOP_DIR)/filename2sid
 SID2ORIGID_DB := $(HTML_TOP_DIR)/sid2origid.cdb
 
-HTML_BASE := $(HTML_TOP_DIR)/????/????
-HTML_DIRS := $(wildcard $(HTML_BASE)??)
-find_htmls = $(wildcard $(dir)/*.$(HTMLExt))
-# HTMLS := $(foreach dir, $(HTML_DIRS), $(find_htmls))
-HTML_FIRST_DIRS := $(wildcard $(HTML_TOP_DIR)/????)
+HTML_FIRST_DIR := $(HTML_TOP_DIR)/????
+HTML_FIRST_DIRS := $(wildcard $(HTML_FIRST_DIR))
+HTML_DIRS := $(wildcard $(HTML_FIRST_DIR)/??????)
 
 XML_BASE := $(XML_TOP_DIR)/????
 XML_SIMPLE_DONES := $(addsuffix .done, $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(HTML_DIRS))))
