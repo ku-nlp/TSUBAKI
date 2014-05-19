@@ -213,6 +213,9 @@ doc/tsubaki-configuration.pdf)。検索サーバとスニペットサーバを�
   SNIPPET_SERVERS	server01	59001	0000
   SNIPPET_SERVERS	server02	59001	0001
 
+  ※ scripts/copy-idx-localdisk.sh を使ってidxファイルをローカルディス
+  クに配置して下さい。使い方は scripts/copy-idx-localdisk.sh を参照して
+  下さい。
 
 ・複数の文書セットに対して検索するためには、「TSUBAKI設定ファイルの生成」
   において、./setup.shに"-c 出力設定ファイル名"を付けて実行し、異なる名
