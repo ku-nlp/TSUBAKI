@@ -212,7 +212,6 @@ $(foreach IDX_DIR, $(IDX_DIRS), \
 define make_sid2tid_idxidx_urltitle
 $(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
 $(eval IDXIDX_FILE_$1 := $(1)/$(ID).$(IDX_SUFFIX))
-$(eval SID2TID_FILE_$1 := $(1)/$(SID2TID_SUFFIX))
 $(eval URL_TITLE_FILE_$1 := $(1)/$(URL_TITLE_SUFFIX))
 
 $(eval HTML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
