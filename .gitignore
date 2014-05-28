@@ -1,0 +1,68 @@
+
+# generated files
+cgi/api.cgi
+cgi/index.cgi
+conf/configure
+conf/configure.base
+conf/configure.old
+
+# generated binaries
+enju2tsubaki/StandOffManager/som
+log/*
+search.sh
+search/cdb/cdb
+search/make_db
+search/slave_server
+sf2index/Makefile
+*.cdb
+
+# sub modules
+SynGraph
+Utils
+WWW2sf
+
+#################################################
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+
+# automake
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache/
+config.*
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+m4/
+missing
+stamp-h?
+.deps/
+.dirstamp
+.libs/
+*.l[ao]
+*~
