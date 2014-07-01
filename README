@@ -55,7 +55,7 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
      ※ JUMAN/KNPのPerlモジュールもインストールしてください。
 
   -- SynGraph日本語データベース(同義語・句の辞書)のダウンロード
-     http://nlp.ist.i.kyoto-u.ac.jp/nl-resource/SynGraph/SynGraph-syndb.tar.bz2
+     http://nlp.ist.i.kyoto-u.ac.jp/nl-resource/SynGraph/SynGraph-wikipedia-syndb.tar.bz2
      をダウンロードし、TSUBAKI直下(このディレクトリ)にて展開してください。
      データベースがSynGraph/syndb以下に展開されます。
 
