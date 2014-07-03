@@ -92,6 +92,21 @@ sub read_annotation_from_node {
     }
 }
 
+sub get_knp_objects {
+    my ($this, $xmldat) = @_;
+
+    my $doc = $this->{parser}->parse_string($xmldat);
+
+    my @knp_objects;
+    for my $annotation_node ($doc->getElementsByTagName('Annotation')) { # parse
+	my $knp_string = $this->convert_knp_format($annotation_node);
+	next if $knp_string eq "EOS\n";
+	push @knp_objects, new KNP::Result($knp_string);
+    }
+
+    return \@knp_objects;
+}
+
 sub convert_knp_format {
     my ($this, $annotation_node) = @_;
 
