@@ -49,7 +49,7 @@ our $sf = new StandardFormat;
 my $file = $ARGV[0];
 $SF_EXT .= '.gz' if $file =~ /\.gz$/;
 my ($prefix, $doc_id) = ($file =~ /^(.*?)([-\d]+)\.$SF_EXT$/);
-die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT\n" if !$opt{no_check_filename} && !defined($doc_id);
+die "Please rename the input filename to hogehoge[0-9]+.$SF_EXT ($file)\n" if !$opt{no_check_filename} && !defined($doc_id);
 my $output_file = $prefix . $doc_id . '.' . $IDX_EXT;
 
 my $xmldat;
