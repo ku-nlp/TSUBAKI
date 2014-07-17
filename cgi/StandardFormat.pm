@@ -163,8 +163,11 @@ sub convert_knp_format {
 	    $word_feature =~ s/&lt;/</g;
 	    $word_feature =~ s/&gt;/>/g;
 
+	    my $repname = $word_node->getAttribute('repname');
+	    my $imis = defined $repname ? "代表表記:$repname" : 'NULL';
+
 	    # the numbers are tentative
-	    $knp_format_string .= "$str $read $lem $pos1 1 $pos2 1 $pos3 1 $pos4 1 NULL $word_feature\n";
+	    $knp_format_string .= "$str $read $lem $pos1 1 $pos2 1 $pos3 1 $pos4 1 $imis $word_feature\n";
 
 	}
     }
