@@ -7,6 +7,7 @@ package StandardFormat;
 use strict;
 use XML::LibXML;
 use utf8;
+use KNP;
 
 sub new {
     my ($this) = @_;
@@ -93,15 +94,27 @@ sub read_annotation_from_node {
 }
 
 sub get_knp_objects {
-    my ($this, $xmldat) = @_;
+    my ($this, $xmldat, $file_id) = @_;
 
     my $doc = $this->{parser}->parse_string($xmldat);
 
     my @knp_objects;
-    for my $annotation_node ($doc->getElementsByTagName('Annotation')) { # parse
-	my $knp_string = $this->convert_knp_format($annotation_node);
-	next if $knp_string eq "EOS\n";
-	push @knp_objects, new KNP::Result($knp_string);
+    for my $tag_type ('Title', 'S') {
+	for my $node ($doc->getElementsByTagName($tag_type)) {
+	    my $Sid = $node->getAttribute('Id');
+	    $Sid = 0 if !defined $Sid;
+	    for my $annotation_node ($node->getElementsByTagName('Annotation')) { # parse
+		my $knp_string;
+		$knp_string .= '# S-ID:';
+		$knp_string .= "${file_id}-" if defined $file_id;
+		$knp_string .= "$Sid\n";
+		my $knp_string_main = $this->convert_knp_format($annotation_node);
+		next if $knp_string_main eq "EOS\n";
+
+		$knp_string .= $knp_string_main;
+		push @knp_objects, new KNP::Result($knp_string);
+	    }
+	}
     }
 
     return \@knp_objects;
