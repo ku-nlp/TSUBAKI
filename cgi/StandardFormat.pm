@@ -137,6 +137,9 @@ sub convert_knp_format {
 	my $head_id = $phrase_node->getAttribute('head');
 	$head_id =~ s/^c//;
 	my $phrase_feature = $phrase_node->getAttribute('feature');
+	my $category = $phrase_node->getAttribute('category');
+	$phrase_feature .= "<$category>" if $category;
+
 	$phrase_feature{$id} = $phrase_feature;
 
 	# bnst start
@@ -163,6 +166,8 @@ sub convert_knp_format {
 	my $phrase_feature = $phrase_node->getAttribute('feature');
 	$phrase_feature =~ s/&lt;/</g;
 	$phrase_feature =~ s/&gt;/>/g;
+	my $category = $phrase_node->getAttribute('category');
+	$phrase_feature .= "<$category>" if $category;
 
 	# bnst info.
 	if (defined $bnst_span{$id}) {
