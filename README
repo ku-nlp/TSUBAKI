@@ -147,7 +147,14 @@ $TSUBAKI_DIR において次のように実行してください。
 
      make DATADIR=/somewhere/data TMP_DIR_BASE=/somewhere/tmp indexing
 
-
+  ※ indexingを一度にすべてではなく、例えば、1,000万ページずつ行いたい場合、
+    sf2index/Makefileの$(HTML_FIRST_DIR)を修正する。
+    以下の例では0000,0001, ..., 0009以下だけをindexingの対象とする(=合計1,000万ページ)。
+    (修正前)
+    HTML_FIRST_DIR := $(HTML_TOP_DIR)/????
+    (修正後)
+    HTML_FIRST_DIR := $(HTML_TOP_DIR)/000?
+  
 4. 検索
 -------
 
