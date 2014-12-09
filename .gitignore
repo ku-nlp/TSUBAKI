@@ -15,6 +15,7 @@ search/make_db
 search/slave_server
 sf2index/Makefile
 *.cdb
+*.inc
 
 # sub modules
 SynGraph
