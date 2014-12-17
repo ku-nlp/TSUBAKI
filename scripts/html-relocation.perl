@@ -91,12 +91,11 @@ sub process_file {
 	    print "$src_fullname -> $dest_fullname\n" if $opt{verbose};
 	    print FILENAME2SID "$src_basename $dest_id\n";
 	    if ($opt{copy}) {
-		copy($src_fullname, $dest_fullname);
+		copy($src_fullname, $dest_fullname) or die "$! (copy: $src_fullname -> $dest_fullname)";
 	    }
 	    else {
-		symlink($src_fullname, $dest_fullname);
+		symlink($src_fullname, $dest_fullname) or die "$! (symlink: $src_fullname -> $dest_fullname)";
 	    }
-	    print STDERR "$src_fullname -> $dest_fullname: $!\n" if $! && $! != POSIX::ENOTTY; # error (do not regard ENOTTY as an error)
 	}
 
 	$hcount++;
