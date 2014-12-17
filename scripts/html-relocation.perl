@@ -71,6 +71,15 @@ sub process_file {
 	my $src_file = $File::Find::name;
 	my $src_fullname = $File::Find::fullname;
 
+	if ($hcount >= $NUM_OF_HTMLS_IN_DIR) {
+	    $dcount++;
+	    $dstr = sprintf("%0${DIGIT_OF_LOWEST_DIR}d", $dcount);
+	    $dstr4 = substr($dstr, 0, 4);
+	    $outdir = "$DEST_DIR/$dstr4/$dstr";
+	    &mkdir_outdir() unless $opt{dryrun};
+	    $hcount = 0;
+	}
+
 	my $dest_id = $dstr . sprintf("%0${DIGIT_OF_LOWEST_HTML_FILE}d", $hcount);
 	my $dest_file = "$outdir/$dest_id.$HTML_EXT";
 	my $dest_fullname = File::Spec->rel2abs($dest_file, $BASE_DIR);
@@ -91,14 +100,6 @@ sub process_file {
 	}
 
 	$hcount++;
-	if ($hcount >= $NUM_OF_HTMLS_IN_DIR) {
-	    $dcount++;
-	    $dstr = sprintf("%0${DIGIT_OF_LOWEST_DIR}d", $dcount);
-	    $dstr4 = substr($dstr, 0, 4);
-	    $outdir = "$DEST_DIR/$dstr4/$dstr";
-	    &mkdir_outdir() unless $opt{dryrun};
-	    $hcount = 0;
-	}
     }
 }
 
