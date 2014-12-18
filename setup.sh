@@ -12,6 +12,7 @@ INDEX_CGI_IN=$CWD/cgi/index.cgi.in
 INDEX_CGI=$CWD/cgi/index.cgi
 API_CGI_IN=$CWD/cgi/api.cgi.in
 API_CGI=$CWD/cgi/api.cgi
+CNS_CDB=$CWD/data/cns.100M.cls.df1000.cdb
 
 # target names to be replaced
 NAME_LIST="
@@ -174,6 +175,12 @@ fi
 # check DetectBlocks
 if [ ! -d "$DetectBlocksPath" ]; then
     echo "DetectBlocks is not found. Skipped DetectBlocks."
+fi
+
+# check CNS_CDB
+if [ ! -e "$CNS_CDB" ]; then
+    echo "CNS_CDB is not found. Please download cns.100M.cls.df1000.cdb (see README)."
+    exit 1
 fi
 
 # check perl
