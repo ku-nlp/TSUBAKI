@@ -11,6 +11,7 @@ use Indexer;
 use Configure;
 use StandardFormatData;
 use PerlIO::gzip;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -36,7 +37,7 @@ sub extract_sentences_from_ID {
     }
     $xmlfile .= '.gz' if $opt->{z};
 
-    if ($opt->{z} && ! -e $xmlfile) { # -z指定されているが、.xml.gzファイルが存在しない場合は、.xmlファイルとして探す
+    if (!$CONFIG->{USE_OF_ZIP_FOR_XMLS} && $opt->{z} && ! -e $xmlfile) { # -z指定されているが、.xml.gzファイルが存在しない場合は、.xmlファイルとして探す
 	$xmlfile =~ s/\.gz//;
     }
 
@@ -53,32 +54,68 @@ sub extract_sentences_from_standard_format {
 	print Dumper($opt) . "\n";
     }
 
-    # XMLファイルがない場合
-    return () unless (-e $xmlfile);
-
-    if ($xmlfile =~ /\.gz$/) {
-	open (READER, '<:gzip', $xmlfile) or die $!;
-    } else {
-	open(READER, $xmlfile) or die "$!";
-    }
-    binmode(READER, ':utf8');
-
-
     my $content;
-    if ($opt->{extract_from_abstract_only}) { # 論文サーチ用
-	while (<READER>) {
-	    last  if ($_ =~ /<\/Header>/);
-	    $content .= $_;
-	}
-	close(READER);
+    if ($CONFIG->{USE_OF_ZIP_FOR_XMLS}) {
+	require Archive::Zip;
+	require Archive::Zip::MemberRead;
 
+	# /somewhere/xml/0000/000000/0000000029.xml.gz
+	if ($xmlfile =~ /^(.+?)\/([^\/]+)\/([^\/]+)$/) {
+	    my $dirname = $1;
+	    my $dirname2 = $2;
+	    my $basename = $3;
+	    my $zipfile = "$dirname/$dirname2.zip";
+	    my $xml_path = "$dirname2/$basename";
+
+	    my $zip = Archive::Zip->new();
+	    unless ($zip->read($zipfile) == 'Archive::Zip::AZ_OK') {
+		print STDERR "Can't find a zip file ($zipfile)\n";
+		return ();
+	    }
+	    my $tmp = $zip->contents($xml_path);
+	    if ($opt->{z}) {
+		my $text;
+		IO::Uncompress::Gunzip::gunzip \$tmp => \$text or die "$GunzipError";
+		$content = decode('utf-8', $text);
+	    }
+	    else {
+		$content = decode('utf-8', $tmp);
+	    }
+	}
+	else {
+	    print STDERR "File Format Error in SnippetMaker.pm ($xmlfile)\n";
+	    return ();
+	}
+    }
+    else {
+	# XMLファイルがない場合
+	return () unless (-e $xmlfile);
+
+	if ($xmlfile =~ /\.gz$/) {
+	    open (READER, '<:gzip', $xmlfile) or die $!;
+	} else {
+	    open(READER, $xmlfile) or die "$!";
+	}
+	binmode(READER, ':utf8');
+
+	if ($opt->{extract_from_abstract_only}) { # 論文サーチ用
+	    while (<READER>) {
+		last  if ($_ =~ /<\/Header>/);
+		$content .= $_;
+	    }
+	    close(READER);
+	} else {
+	    my $_wk = $/;
+	    $/ = undef;
+	    $content = <READER>;
+	    close(READER);
+	    $/ = $_wk;
+	}
+    }
+
+    if ($opt->{extract_from_abstract_only}) { # 論文サーチ用
 	return &extract_sentences_from_metadata($query, $content, $opt);
     } else {
-	my $_wk = $/;
-	$/ = undef;
-	$content = <READER>;
-	close(READER);
-	$/ = $_wk;
 
 	if ($opt->{kwic}) {
 	    return &extract_sentences_from_content_for_kwic($query, $content, $opt);
