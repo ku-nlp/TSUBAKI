@@ -22,6 +22,8 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
 - 必要なPerlモジュールのインストール (CPAN等を用いてインストール)
     - Unicode::Japanese
     - PerlIO::gzip
+    - IO::Uncompress::Gunzip
+    - Archive::Zip
     - XML::LibXML
     - XML::Writer
     - CDB_File
