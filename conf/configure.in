@@ -141,6 +141,9 @@ CACHED_HTML_PATH_TEMPLATE	@DocumentPath@/html/%04d/%06d/%s.@HTMLExt@
 XML_PATH_TEMPLATE	@DocumentPath@/xml/%04d/%06d/%s.xml
 # IS_NICT_MODE: @DocumentPath@/xml/x%04d/x%07d/%s.xml
 
+# XMLファイルをzipで固めているかどうか
+USE_OF_ZIP_FOR_XMLS	1
+
 # index.cgiのアドレス（★要変更）
 INDEX_CGI	./index.cgi
 
