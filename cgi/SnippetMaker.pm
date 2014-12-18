@@ -12,6 +12,9 @@ use Configure;
 use StandardFormatData;
 use PerlIO::gzip;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use Archive::Zip;
+use Archive::Zip::MemberRead;
+
 use Data::Dumper;
 {
     package Data::Dumper;
@@ -56,9 +59,6 @@ sub extract_sentences_from_standard_format {
 
     my $content;
     if ($CONFIG->{USE_OF_ZIP_FOR_XMLS}) {
-	require Archive::Zip;
-	require Archive::Zip::MemberRead;
-
 	# /somewhere/xml/0000/000000/0000000029.xml.gz
 	if ($xmlfile =~ /^(.+?)\/([^\/]+)\/([^\/]+)$/) {
 	    my $dirname = $1;
@@ -68,18 +68,21 @@ sub extract_sentences_from_standard_format {
 	    my $xml_path = "$dirname2/$basename";
 
 	    my $zip = Archive::Zip->new();
-	    unless ($zip->read($zipfile) == 'Archive::Zip::AZ_OK') {
-		print STDERR "Can't find a zip file ($zipfile)\n";
+	    unless ($zip->read($zipfile) == Archive::Zip::AZ_OK) {
+		print STDERR "Can't read a zip file ($zipfile)\n";
 		return ();
 	    }
-	    my $tmp = $zip->contents($xml_path);
-	    if ($opt->{z}) {
+	    my ($tmp) = $zip->contents($xml_path);
+	    # if zip can't read a gz file, try to read a file (without gz)
+	    unless ($tmp) {
+		$xml_path =~ s/\.gz$//;
+		$tmp = $zip->contents($xml_path);
+		$content = decode('utf-8', $tmp);
+	    }
+	    else {
 		my $text;
 		IO::Uncompress::Gunzip::gunzip \$tmp => \$text or die "$GunzipError";
 		$content = decode('utf-8', $text);
-	    }
-	    else {
-		$content = decode('utf-8', $tmp);
 	    }
 	}
 	else {

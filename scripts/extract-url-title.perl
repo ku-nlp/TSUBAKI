@@ -45,7 +45,12 @@ sub main {
 	    my $file = $member->fileName();
 	    $zip->extractMember($file, "$opt{zip_tmp_dir}/$file");
 	    my ($name) = ($file =~ /([^\/]+)\.xml/);
-	    open(READER, '<:gzip', "$opt{zip_tmp_dir}/$file") or die "$!";
+	    if ($file =~ /\.gz$/) {
+		open(READER, '<:gzip', "$opt{zip_tmp_dir}/$file") or die "$!";
+	    }
+	    else {
+		open(READER, "$opt{zip_tmp_dir}/$file") or die "$!";
+	    }
 	    binmode(READER, ':utf8');
 	    &read_file("$opt{zip_tmp_dir}/$file", $name, *READER);
 	    close READER;
