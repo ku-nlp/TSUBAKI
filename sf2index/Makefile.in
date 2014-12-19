@@ -40,7 +40,7 @@ HTMLisUTF8Flag = @HTMLisUTF8Flag@
 WWW2sf_args = -f -c $(CNSDB)
 AddKNPResult_args = -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -embed_result_in_xml
 sf2term_args = 
-html_relocation_args = -s $(START_DIR_ID)
+html_relocation_args = -s $(START_DIR_ID) -zip
 
 ifeq "$(UseBlockTypeFlag)" "1"
 WWW2sf_args += -D $(DetectBlocksDir) -T
@@ -97,14 +97,13 @@ SID2ORIGID_DB := $(HTML_TOP_DIR)/sid2origid.cdb
 
 HTML_FIRST_DIR := $(HTML_TOP_DIR)/????
 HTML_FIRST_DIRS := $(wildcard $(HTML_FIRST_DIR))
-HTML_DIRS := $(wildcard $(HTML_FIRST_DIR)/??????)
+HTML_ZIPS := $(wildcard $(HTML_FIRST_DIR)/??????.zip)
 
 XML_BASE := $(XML_TOP_DIR)/????
-XML_SIMPLE_ZIPS := $(addsuffix .zip, $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(HTML_DIRS))))
-XML_DIRS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS)))
+XML_SIMPLE_ZIPS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(HTML_ZIPS)))
 XML_FIRST_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_FIRST_DIRS))
 XMLS := $(patsubst $(HTML_TOP_DIR)/%.$(HTMLExt),$(XML_TOP_DIR)/%.$(XML_SUFFIX),$(HTMLS))
-XML_ZIPS := $(addsuffix .zip, $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS))))
+XML_ZIPS := $(sort $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_ZIPS)))
 
 HTML_DIR := $(HTML_TOP_DIR)/0000/000000
 XML_DIR := $(XML_TOP_DIR)/0000/000000
@@ -112,11 +111,11 @@ TMP_XML_DIR = $(TMP_DIR)/tmp_xml_$(notdir $(XML_DIR))
 
 HTML_RELOCATION_DONE := $(DATADIR)/html.relocation.done
 
-IDX_DIRS := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(XML_DIRS))
+IDX_DIRS := $(patsubst $(XML_TOP_DIR)/%.zip,$(IDX_TOP_DIR)/%,$(XML_ZIPS))
 
 IDX_FIRST_DIRS := $(patsubst $(HTML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(HTML_FIRST_DIRS))
 
-IDX1S := $(addsuffix .idx1, $(sort $(patsubst $(HTML_TOP_DIR)/%,$(IDX_TOP_DIR)/%,$(HTML_DIRS))))
+IDX1S := $(addsuffix .idx1, $(sort $(patsubst $(HTML_TOP_DIR)/%.zip,$(IDX_TOP_DIR)/%,$(HTML_ZIPS))))
 
 IDXIDXS := $(addsuffix /$(ID).$(IDX_SUFFIX), $(IDX_FIRST_DIRS))
 DFS := $(addsuffix /$(ID).$(DF_SUFFIX), $(IDX_FIRST_DIRS))
@@ -160,18 +159,22 @@ endif
 # $1: /somewhere/idx/0000/000011
 define make_idx1_xmllist
 $(eval IDX1_FILE_$1 := $(1).$(IDX1_SUFFIX))
-$(eval HTML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
+$(eval HTML_ZIP_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%.zip,$(1)))
 
  # xml_simple
 $(eval XML_SIMPLE_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%,$(1)))
 $(eval XML_SIMPLE_ZIP_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_SIMPLE_TOP_DIR)/%.zip,$(1)))
-$(eval TMP_XML_SIMPLE_DIR_$1 := $(TMP_DIR)/$(notdir $(1)))
-$(XML_SIMPLE_ZIP_$1): $(HTML_DIR_$1)
-	if [ ! -d $(TMP_XML_SIMPLE_DIR_$1) ]; then mkdir -p $(TMP_XML_SIMPLE_DIR_$1); fi && \
+$(eval TMP_XML_SIMPLE_IN_DIR_$1 := $(TMP_DIR)/$(notdir $(1))/in)
+$(eval TMP_XML_SIMPLE_OUT_DIR_$1 := $(TMP_DIR)/$(notdir $(1))/out)
+$(XML_SIMPLE_ZIP_$1): $(HTML_ZIP_$1)
+	if [ ! -d $(TMP_XML_SIMPLE_IN_DIR_$1) ]; then mkdir -p $(TMP_XML_SIMPLE_IN_DIR_$1); fi && \
+	if [ ! -d $(TMP_XML_SIMPLE_OUT_DIR_$1)/$$(basename $$(notdir $$<)) ]; then mkdir -p $(TMP_XML_SIMPLE_OUT_DIR_$1)/$$(basename $$(notdir $$<)); fi && \
 	if [ ! -d $$(dir $(XML_SIMPLE_DIR_$1)) ]; then mkdir -p $$(dir $(XML_SIMPLE_DIR_$1)); fi && \
-	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(HTML_DIR_$1) $(TMP_XML_SIMPLE_DIR_$1) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR_$1)).log && \
-	cd $(TMP_DIR) && $(ZIP) -0 $$(notdir $$@) $$(basename $$(notdir $$@))/*.$(XML_SUFFIX) && mv $$(notdir $$@) $$@ && cd - && \
-	rm -rf $(TMP_XML_SIMPLE_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR_$1)).log
+	cp $$< $(TMP_XML_SIMPLE_IN_DIR_$1) && \
+	$(UNZIP) $(TMP_XML_SIMPLE_IN_DIR_$1)/$$(notdir $$<) -d $(TMP_XML_SIMPLE_IN_DIR_$1) && \
+	nice -n $(NICE_VALUE) $(WWW2sfDir)/tool/www2sf.sh $(WWW2sf_args) $(TMP_XML_SIMPLE_IN_DIR_$1)/$$(basename $$(notdir $$<)) $(TMP_XML_SIMPLE_OUT_DIR_$1)/$$(basename $$(notdir $$<)) 2> $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR_$1)).log && \
+	cd $(TMP_XML_SIMPLE_OUT_DIR_$1) && $(ZIP) -0 $$(notdir $$@) $$(basename $$(notdir $$@))/*.$(XML_SUFFIX) && mv $$(notdir $$@) $$@ && cd - && \
+	rm -rf $(TMP_XML_SIMPLE_IN_DIR_$1) $(TMP_XML_SIMPLE_OUT_DIR_$1) $(TMP_DIR)/www2sf_$(notdir $(XML_SIMPLE_DIR_$1)).log
 
  # xml
 $(eval XML_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(1)))
@@ -222,11 +225,11 @@ $(eval IDXIDX_FILE_$1 := $(1)/$(ID).$(IDX_SUFFIX))
 $(eval URL_TITLE_FILE_$1 := $(1)/$(URL_TITLE_SUFFIX))
 
 $(eval HTML_FIRST_DIR_$1 := $(patsubst $(IDX_TOP_DIR)/%,$(HTML_TOP_DIR)/%,$(1)))
-$(eval HTML_DIRS_EACH_$1 := $(wildcard $(HTML_FIRST_DIR_$1)/??????))
-$(eval XML_DIRS_EACH_$1 := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_DIRS_EACH_$1)))
+$(eval HTML_ZIPS_EACH_$1 := $(wildcard $(HTML_FIRST_DIR_$1)/??????.zip))
+$(eval XML_ZIPS_EACH_$1 := $(patsubst $(HTML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(HTML_ZIPS_EACH_$1)))
 
  # sid2tid
-$(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_DIRS_EACH_$1)))
+$(eval IDX1_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%.zip,$(IDX_TOP_DIR)/%.$(IDX1_SUFFIX),$(XML_ZIPS_EACH_$1)))
 $(SID2TID_FILE_$1): $(IDX1_FILES_$1)
 	mkdir -p $$(dir $$@) && \
 	$(PERL) $(BASEDIR)/scripts/make-mapfile.perl $$(dir $$@)*.$(IDX1_SUFFIX) > $$@
@@ -236,7 +239,7 @@ $(IDXIDX_FILE_$1): $(IDX1_FILES_$1) $(SID2TID_FILE_$1)
 	$(PERL) $(BASEDIR)/scripts/merge_sorted_idx.pl -dir $$(dir $$@) -mapfile $(SID2TID_FILE_$1) -suffix $(IDX1_SUFFIX) > $$@
 
  # urltitle
-$(eval XML_ZIP_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(XML_TOP_DIR)/%.zip,$(XML_DIRS_EACH_$1)))
+$(eval XML_ZIP_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%,$(XML_TOP_DIR)/%,$(XML_ZIPS_EACH_$1)))
 $(eval URL_TITLE_FILES_$1 := $(patsubst $(XML_TOP_DIR)/%.zip,$(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX),$(XML_ZIP_FILES_$1)))
 $(URL_TITLE_FILE_$1):$(URL_TITLE_FILES_$1)
 	cat $$^ > $$@
