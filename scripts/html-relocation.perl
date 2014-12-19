@@ -24,6 +24,7 @@ use POSIX;
 use Getopt::Long;
 use strict;
 use warnings;
+use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 
 sub usage {
     print "Usage: $0 [--ext file_extention] [--dryrun] [--copy] [--verbose] [--start start_dir_id] [--num num_of_htmls_in_dir] indir ourdir\n";
@@ -31,7 +32,7 @@ sub usage {
 }
 
 our %opt;
-&GetOptions(\%opt, 'dryrun', 'ext=s', 'start=i', 'num=i', 'copy', 'verbose');
+&GetOptions(\%opt, 'dryrun', 'ext=s', 'start=i', 'num=i', 'copy', 'verbose', 'zip');
 
 if (@ARGV != 2 || ! -d $ARGV[0]) {
     &usage();
@@ -51,6 +52,11 @@ our $dcount = $opt{start} ? $opt{start} : 0;
 our $dstr = sprintf("%0${DIGIT_OF_LOWEST_DIR}d", $dcount);
 our $dstr4 = substr($dstr, 0, 4);
 our $outdir = "$DEST_DIR/$dstr4/$dstr";
+our ($outzip, $zip);
+if ($opt{zip}) {
+    $outzip = "$DEST_DIR/$dstr4/$dstr.zip";
+    $zip = Archive::Zip->new();
+}
 
 unless ($opt{dryrun}) {
     &mkdir_outdir();
@@ -72,10 +78,20 @@ sub process_file {
 	my $src_fullname = $File::Find::fullname;
 
 	if ($hcount >= $NUM_OF_HTMLS_IN_DIR) {
+	    if ($opt{zip}) {
+		unless ( $zip->writeToFileNamed($outzip) == AZ_OK ) {
+		    die "write error ($outzip)\n";
+		}
+	    }
+
 	    $dcount++;
 	    $dstr = sprintf("%0${DIGIT_OF_LOWEST_DIR}d", $dcount);
 	    $dstr4 = substr($dstr, 0, 4);
 	    $outdir = "$DEST_DIR/$dstr4/$dstr";
+	    if ($opt{zip}) {
+		$outzip = "$DEST_DIR/$dstr4/$dstr.zip";
+		$zip = Archive::Zip->new();
+	    }
 	    &mkdir_outdir() unless $opt{dryrun};
 	    $hcount = 0;
 	}
@@ -90,15 +106,32 @@ sub process_file {
 	else {
 	    print "$src_fullname -> $dest_fullname\n" if $opt{verbose};
 	    print FILENAME2SID "$src_basename $dest_id\n";
-	    if ($opt{copy}) {
-		copy($src_fullname, $dest_fullname) or die "$! (copy: $src_fullname -> $dest_fullname)";
+	    if ($opt{zip}) {
+		if ($opt{copy}) {
+		    $zip->addFile($src_fullname, "$dstr/$dest_id.$HTML_EXT");
+		}
+		else {
+		    my $member = $zip->addString($src_fullname, "$dstr/$dest_id.$HTML_EXT");
+		    $member->{'externalFileAttributes'} = 0xA1FF0000;
+		}
 	    }
 	    else {
-		symlink($src_fullname, $dest_fullname) or die "$! (symlink: $src_fullname -> $dest_fullname)";
+		if ($opt{copy}) {
+		    copy($src_fullname, $dest_fullname) or die "$! (copy: $src_fullname -> $dest_fullname)";
+		}
+		else {
+		    symlink($src_fullname, $dest_fullname) or die "$! (symlink: $src_fullname -> $dest_fullname)";
+		}
 	    }
 	}
 
 	$hcount++;
+    }
+}
+
+if ($opt{zip}) {
+    unless ( $zip->writeToFileNamed($outzip) == AZ_OK ) {
+	die "write error ($outzip)\n";
     }
 }
 
@@ -110,6 +143,6 @@ sub mkdir_outdir {
 	    }
 	    mkdir "$DEST_DIR/$dstr4";
 	}
-	mkdir "$outdir";
+	mkdir "$outdir" unless $opt{zip};
     }
 }
