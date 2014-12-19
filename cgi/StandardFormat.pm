@@ -7,7 +7,11 @@ package StandardFormat;
 use strict;
 use XML::LibXML;
 use utf8;
+use Encode;
 use KNP;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use Archive::Zip;
+use Archive::Zip::MemberRead;
 
 sub new {
     my ($this) = @_;
@@ -220,6 +224,42 @@ sub get_phrase_head_num {
 	}
     }
     return $#{$words_ar}; # default is the last one in the phrase
+}
+
+sub get_content_from_zip_archive {
+    my ($this, $file) = @_;
+
+    my $content;
+    # /somewhere/xml/0000/000000/0000000029.xml.gz
+    if ($file =~ /^(.+?)\/([^\/]+)\/([^\/]+)$/) {
+	my $dirname = $1;
+	my $dirname2 = $2;
+	my $basename = $3;
+	my $zipfile = "$dirname/$dirname2.zip";
+	my $path = "$dirname2/$basename";
+
+	my $zip = Archive::Zip->new();
+	unless ($zip->read($zipfile) == Archive::Zip::AZ_OK) {
+	    print STDERR "Can't read a zip file ($zipfile)\n";
+	    return ();
+	}
+	my ($tmp) = $zip->contents($path);
+	# if zip can't read a gz file, try to read a file (without gz)
+	unless ($tmp) {
+	    $path =~ s/\.gz$//;
+	    $tmp = $zip->contents($path);
+	    $content = decode('utf-8', $tmp);
+	}
+	else {
+	    my $text;
+	    IO::Uncompress::Gunzip::gunzip \$tmp => \$text or die "$GunzipError";
+	    $content = decode('utf-8', $text);
+	}
+	return $content;
+    }
+    else {
+	print STDERR "Can't parse a file name ($file)\n";
+    }
 }
 
 1;
