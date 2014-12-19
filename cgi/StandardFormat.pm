@@ -248,7 +248,13 @@ sub get_content_from_zip_archive {
 	unless ($tmp) {
 	    $path =~ s/\.gz$//;
 	    $tmp = $zip->contents($path);
-	    $content = decode('utf-8', $tmp);
+	    # read file
+	    if (-e $tmp) {
+		$content = &get_file_content($tmp);
+	    }
+	    else {
+		$content = decode('utf-8', $tmp);
+	    }
 	}
 	else {
 	    my $text;
@@ -260,6 +266,18 @@ sub get_content_from_zip_archive {
     else {
 	print STDERR "Can't parse a file name ($file)\n";
     }
+}
+
+sub get_file_content {
+    my ($file) = @_;
+
+    my $buf;
+    open F, "<:encoding(utf-8)", $file or die;
+    while (<F>) {
+	$buf .= $_;
+    }
+    close F;
+    return $buf;
 }
 
 1;

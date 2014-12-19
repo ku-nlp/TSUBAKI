@@ -19,49 +19,60 @@ sub new {
 
     my $filename = $opts->{file};
     my $READER;
-    if ($filename =~ /\.gz$/) {
-	open($READER, "gzip -dc $filename |");
-    } elsif ($filename =~ /^(.*[0-9]+):([0-9]+):([0-9-]+)$/) {
-	use IO::Socket;
-	$READER = IO::Socket::INET->new(PeerAddr => $1, PeerPort => $2, Proto => 'tcp') or die "cannot connect:$1:$2 $!\n";
-	printf $READER "html ".$3."\n";
-	$READER->flush();
-    } else {
-	open($READER, $filename);
-    }
-#   binmode($READER, ':utf8');
-
     my $flag = -1;
     my $crawler_html = 0;
-    my $buf;
     my $url;
     my $crawled_date;
-
-    while (<$READER>) {
-	if (!$buf && /^HTML (\S+)/) {
+    my $buf;
+    if ($CONFIG->{USE_OF_ZIP_FOR_XMLS}) {
+	require StandardFormat;
+	my $sf = new StandardFormat;
+	$filename .= '.gz';
+	$buf = $sf->get_content_from_zip_archive($filename);
+	if ($buf =~ s/HTML (\S+)//) {
 	    $url = $1;
 	    $crawler_html = 1;
 	}
-
-	if (/^Date: (.+)$/) {
-	    $crawled_date = &convertTimeFormat($1);
-	}
-
-	# ヘッダーが読み終わるまでバッファリングしない
-	if (!$crawler_html || $flag > 0) {
-	    $buf .= $_;
+    }
+    else {
+	if ($filename =~ /\.gz$/) {
+	    open($READER, "gzip -dc $filename |");
+	} elsif ($filename =~ /^(.*[0-9]+):([0-9]+):([0-9-]+)$/) {
+	    use IO::Socket;
+	    $READER = IO::Socket::INET->new(PeerAddr => $1, PeerPort => $2, Proto => 'tcp') or die "cannot connect:$1:$2 $!\n";
+	    printf $READER "html ".$3."\n";
+	    $READER->flush();
 	} else {
-	    if ($_ =~ /^(\x0D\x0A|\x0D|\x0A|\r)$/) {
-		$flag = 1;
+	    open($READER, $filename);
+	}
+#   binmode($READER, ':utf8');
+
+	while (<$READER>) {
+	    if (!$buf && /^HTML (\S+)/) {
+		$url = $1;
+		$crawler_html = 1;
+	    }
+
+	    if (/^Date: (.+)$/) {
+		$crawled_date = &convertTimeFormat($1);
+	    }
+
+	    # ヘッダーが読み終わるまでバッファリングしない
+	    if (!$crawler_html || $flag > 0) {
+		$buf .= $_;
+	    } else {
+		if ($_ =~ /^(\x0D\x0A|\x0D|\x0A|\r)$/) {
+		    $flag = 1;
+		}
 	    }
 	}
+	close $READER;
     }
-    close $READER;
 
     my $encoding;
     if ($CONFIG->{CACHED_HTML_ENCODING_UTF8}) {
 	$encoding = 'utf8';
-	$buf = decode ('utf8', $buf);
+	$buf = decode ('utf8', $buf) unless $CONFIG->{USE_OF_ZIP_FOR_XMLS};
 	$buf =~ tr/\x00-\x09\x0b-\x1f\x7f-\x9f//d;
     } else {
 	require HtmlGuessEncoding;

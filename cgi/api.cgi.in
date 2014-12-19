@@ -45,6 +45,7 @@ use Searcher;
 use Renderer;
 use Logger;
 use RequestParser;
+use StandardFormat;
 use MIME::Base64;
 use Data::Dumper;
 {
@@ -257,17 +258,24 @@ sub provideDocumentData {
 	    $filepath = sprintf($CONFIG->{CACHED_HTML_PATH_TEMPLATE}, $_did / 1000000, $_did / 10000, $did_w_version);
 	}
 
-	if (-e $filepath) {
-	    my $CAT_COMMAND = ($filepath =~ /gz$/) ? 'zcat' : 'cat';
-	    $content = ($cgi->param('no_encoding')) ?
-		`$CAT_COMMAND $filepath` :
-		`$CAT_COMMAND $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
-	} else {
-	    $filepath .= ".gz";
+	my $sf = new StandardFormat;
+	if ($CONFIG->{USE_OF_ZIP_FOR_XMLS}) {
+	    $filepath .= '.gz';
+	    $content = $sf->get_content_from_zip_archive($filepath);
+	}
+	else {
 	    if (-e $filepath) {
+		my $CAT_COMMAND = ($filepath =~ /gz$/) ? 'zcat' : 'cat';
 		$content = ($cgi->param('no_encoding')) ?
-		    `zcat $filepath` :
-		    `zcat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+		    `$CAT_COMMAND $filepath` :
+		    `$CAT_COMMAND $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+	    } else {
+		$filepath .= ".gz";
+		if (-e $filepath) {
+		    $content = ($cgi->param('no_encoding')) ?
+			`zcat $filepath` :
+			`zcat $filepath | $CONFIG->{TOOL_HOME}/nkf --utf8`;
+		}
 	    }
 	}
     }
