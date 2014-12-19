@@ -133,7 +133,7 @@ sub new {
 
 		    $synonym =~ s/<[^>]+>//g;
 		    push(@patterns, {key => $synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$synonym<\/span>)});
-		    my $h_synonym = Unicode::Japanese->new($synonym)->z2h->get;
+		    my $h_synonym = Unicode::Japanese->new($synonym)->z2h->getu;
 		    push(@patterns, {key => $h_synonym, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$h_synonym<\/span>)});
 		}
 	    }
@@ -155,7 +155,7 @@ sub new {
 		}
 		push(@patterns, {key => $word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$word<\/span>)});
 
-		my $h_word = Unicode::Japanese->new($word)->z2h->get;
+		my $h_word = Unicode::Japanese->new($word)->z2h->getu;
 		push(@patterns, {key => $h_word, regexp => qq(<span style="color: black; background-color:#$CONFIG->{HIGHLIGHT_COLOR}[$color];">$h_word<\/span>)});
 	    }
 	}
