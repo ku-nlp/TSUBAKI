@@ -45,6 +45,7 @@ JUMANPrefix
 KNPPrefix
 HOME
 HTMLExt
+CACHED_HTML_ENCODING_UTF8
 "
 
 SearchEnginePath=$CWD
@@ -72,6 +73,7 @@ DocumentPathSpecifiedFlag=0
 SrcDocumentPathSpecifiedFlag=0
 HTMLisUTF8Flag=0
 HTMLExt=html
+CACHED_HTML_ENCODING_UTF8=0
 
 usage() {
     echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8)"
@@ -137,6 +139,7 @@ do
 	L)  UseCopyForHTMLFlag=1
 	    ;;
 	u)  HTMLisUTF8Flag=1
+	    CACHED_HTML_ENCODING_UTF8=1
 	    ;;
         h)  usage
             ;;
