@@ -272,7 +272,13 @@ sub get_file_content {
     my ($file) = @_;
 
     my $buf;
-    open F, "<:encoding(utf-8)", $file or die;
+    if ($file =~ /\.gz$/) {
+	open (F, '<:gzip', $file) or die $!;
+    }
+    else {
+	open F, $file or die;
+    }
+    binmode(F, ':utf8');
     while (<F>) {
 	$buf .= $_;
     }
