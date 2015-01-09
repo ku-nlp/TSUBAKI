@@ -46,6 +46,7 @@ KNPPrefix
 HOME
 HTMLExt
 CACHED_HTML_ENCODING_UTF8
+InputisZip
 "
 
 SearchEnginePath=$CWD
@@ -73,15 +74,16 @@ DocumentPathSpecifiedFlag=0
 SrcDocumentPathSpecifiedFlag=0
 HTMLisUTF8Flag=0
 HTMLExt=html
+InputisZip=0 
 CACHED_HTML_ENCODING_UTF8=0
 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8)"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8) [-Z](InputisZip)"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:pf:Luh OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZ OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -141,6 +143,8 @@ do
 	u)  HTMLisUTF8Flag=1
 	    CACHED_HTML_ENCODING_UTF8=1
 	    ;;
+	Z)  InputisZip=1
+	    ;;
         h)  usage
             ;;
     esac
@@ -183,6 +187,11 @@ fi
 # check CNS_CDB
 if [ ! -e "$CNS_CDB" ]; then
     echo "CNS_CDB is not found. Please download cns.100M.cls.df1000.cdb (see README)."
+    exit 1
+fi
+
+if [ $InputisZip -eq 1 -a $HTMLExt != 'html.gz' ]; then
+    echo "When you use -Z (InputisZip) option, please specify -z (html.gz) option."
     exit 1
 fi
 
