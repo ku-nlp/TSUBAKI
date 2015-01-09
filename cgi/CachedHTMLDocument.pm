@@ -27,7 +27,7 @@ sub new {
     if ($CONFIG->{USE_OF_ZIP_FOR_XMLS}) {
 	require StandardFormat;
 	my $sf = new StandardFormat;
-	$filename .= '.gz';
+	$filename .= '.gz' if $filename !~ /\.gz/;
 	$buf = $sf->get_content_from_zip_archive($filename);
 	if ($buf =~ s/HTML (\S+)//) {
 	    $url = $1;
@@ -61,7 +61,11 @@ sub new {
 	    if (!$crawler_html || $flag > 0) {
 		$buf .= $_;
 	    } else {
-		if ($_ =~ /^(\x0D\x0A|\x0D|\x0A|\r)$/) {
+		if ($_ =~ /<html/i) {
+		    $flag = 1;
+		    $buf .= $_;
+		}
+		elsif ($_ =~ /^(\x0D\x0A|\x0D|\x0A|\r)$/) {
 		    $flag = 1;
 		}
 	    }
