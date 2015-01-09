@@ -195,6 +195,11 @@ if [ $InputisZip -eq 1 -a $HTMLExt != 'html.gz' ]; then
     exit 1
 fi
 
+if [ $HTMLExt = 'html' -a $UseCopyForHTMLFlag -eq 0 ]; then
+    echo "When a htmlext is html, please use -L (UseCopyForHTML) or gzip htmlfiles beforehand."
+    exit 1
+fi
+
 # check perl
 PerlPath=`type perl 2> /dev/null | cut -f3 -d' '`
 if [ -z "$PerlPath" ]; then
