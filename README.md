@@ -87,7 +87,7 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
 -z                        : 検索対象文書がgzip圧縮されている場合に指定
 -L                        : 検索対象文書をシンボリックリンクではなくコピーする場合に指定
 -u                        : HTMLがUTF-8化されている場合に指定
--Z			  : 検索対象文書がzipで固められている場合に指定
+-Z                        : 検索対象文書がzipで固められている場合に指定
 ```
 
 以下では、上記の例1を実行し、日本語サンプル文書データを対象にしていると
@@ -116,6 +116,10 @@ make DATADIR=/somewhere/data html
 
 DATADIRは、上記setup.shの-dで指定したディレクトリを絶対パスで指定してください。
 
+setup.shで-Zオプションを利用した場合はテンポラリディレクトリが大きい必要があるので、/tmpよりも大きいディレクトリをTMP_DIR_BASEオプションで指定してください。
+```
+make DATADIR=/somewhere/data TMP_DIR_BASE=/somewhere/tmp html
+```
 
 ## TSUBAKI標準フォーマット変換, インデックス生成
 
@@ -229,4 +233,3 @@ SNIPPET_SERVERS	server02	59001	0001
 ## ドキュメント
 
 より詳細なドキュメントは、[TSUBAKI Wiki](http://orchid.kuee.kyoto-u.ac.jp/tsubaki-wiki/)を参照してください。
-
