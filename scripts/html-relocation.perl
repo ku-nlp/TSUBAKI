@@ -62,6 +62,7 @@ if ($opt{zip} && !$opt{input_is_zip}) {
 if ($opt{input_is_zip} && $opt{zip_tmp_dir}) {
     $ENV{'TMPDIR'} = $opt{zip_tmp_dir};
 }
+our @tmp_gzip_files = ();
 
 unless ($opt{dryrun}) {
     &mkdir_outdir();
@@ -163,6 +164,8 @@ sub process_file {
 	    }
 	    &mkdir_outdir() unless $opt{dryrun};
 	    $hcount = 0;
+	    &clear_gzip_tmp_files(\@tmp_gzip_files);
+	    @tmp_gzip_files = ();
 	}
 
 	my $dest_id = $dstr . sprintf("%0${DIGIT_OF_LOWEST_HTML_FILE}d", $hcount);
@@ -177,7 +180,22 @@ sub process_file {
 	    print FILENAME2SID "$src_basename $dest_id\n";
 	    if ($opt{zip}) {
 		if ($opt{copy}) {
-		    $zip->addFile($src_fullname, "$dstr/$dest_id.$HTML_EXT");
+		    # gzip圧縮されていなかったら、gzipし、それをzipに固める
+		    if ($HTML_EXT !~ /\.gz$/) {
+			my $tmp_out = "$DEST_DIR/$dstr4/$dest_id.$HTML_EXT.gz";
+			my $FH_OUT = FileHandle->new("| gzip -c > $tmp_out") or die "$! Can't open $tmp_out";
+			open (F, "< $src_fullname");
+			while (<F>) {
+			    $FH_OUT->print($_);
+			}
+			close F;
+			$FH_OUT->close;
+			$zip->addFile($tmp_out, "$dstr/$dest_id.$HTML_EXT.gz");
+			push @tmp_gzip_files, $tmp_out;
+		    }
+		    else {
+			$zip->addFile($src_fullname, "$dstr/$dest_id.$HTML_EXT");
+		    }
 		}
 		else {
 		    my $member = $zip->addString($src_fullname, "$dstr/$dest_id.$HTML_EXT");
@@ -202,6 +220,7 @@ if ($opt{zip} && !$opt{input_is_zip}) {
     unless ( $zip->writeToFileNamed($outzip) == AZ_OK ) {
 	die "write error ($outzip)\n";
     }
+    &clear_gzip_tmp_files(\@tmp_gzip_files);
 }
 
 sub mkdir_outdir {
@@ -213,5 +232,13 @@ sub mkdir_outdir {
 	    mkdir "$DEST_DIR/$dstr4";
 	}
 	mkdir "$outdir" unless $opt{zip} || $opt{input_is_zip};
+    }
+}
+
+sub clear_gzip_tmp_files {
+    my ($tmp_gzip_files) = @_;
+
+    for my $tmp_gzip_file (@$tmp_gzip_files) {
+	unlink($tmp_gzip_file) or die "$! Can't unlink $tmp_gzip_file";
     }
 }
