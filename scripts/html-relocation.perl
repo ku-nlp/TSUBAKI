@@ -59,7 +59,7 @@ if ($opt{zip} && !$opt{input_is_zip}) {
     $zip = Archive::Zip->new();
 }
 
-if ($opt{zip} || $opt{input_is_zip}) {
+if ($opt{input_is_zip} && $opt{zip_tmp_dir}) {
     $ENV{'TMPDIR'} = $opt{zip_tmp_dir};
 }
 
