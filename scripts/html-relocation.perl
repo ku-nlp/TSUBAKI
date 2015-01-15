@@ -118,11 +118,12 @@ sub process_zip_file {
 
 		$hcount++;
 		if ($hcount > $NUM_OF_HTMLS_IN_DIR) {
-		    print STDERR "Number of htmlfiles exceed $NUM_OF_HTMLS_IN_DIR\n";
+		    print STDERR "Number of htmlfiles exceeds $NUM_OF_HTMLS_IN_DIR\n";
 		    $over_num_flag = 1;
 		}
 	    }
 	    else {
+		print STDERR "Skip: $filename\n" if $filename !~ /\/$/;
 		$zip->removeMember($member);
 	    }
 	}
