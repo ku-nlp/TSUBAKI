@@ -252,7 +252,7 @@ $(URL_TITLE_FILE_$1):$(URL_TITLE_FILES_$1)
 
 $(URL_TITLE_FILES_$1): $(IDX_TOP_DIR)/%.$(URL_TITLE_SUFFIX): $(XML_TOP_DIR)/%.zip
 	if [ ! -d $(TMP_DIR) ]; then mkdir -p $(TMP_DIR); fi && \
-	if [ ! -d $$(dir $$@) ]; then mkdir -p $$(dir $$1); fi && \
+	if [ ! -d $$(dir $$@) ]; then mkdir -p $$(dir $1); fi && \
 	$(PERL) $(BASEDIR)/scripts/extract-url-title.perl -zip $$< -zip_tmp_dir $(TMP_DIR)/$$(basename $$(notdir $$@))_zip > $(TMP_DIR)/$$(notdir $$@) && \
 	mv $(TMP_DIR)/$$(notdir $$@) $$@ && \
 	rm -fr $(TMP_DIR)/$$(basename $$(notdir $$@))_zip
