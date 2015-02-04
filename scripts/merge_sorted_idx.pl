@@ -7,7 +7,9 @@
 ############################################################################
 
 use strict;
-use encoding 'utf8';
+use utf8;
+binmode(STDIN,  ":utf8");
+binmode(STDOUT, ":utf8");
 use Encode;
 use Getopt::Long;
 use FileHandle;
@@ -68,8 +70,8 @@ foreach my $ftmp (sort {$a <=> $b} readdir(DIR)) {
 	    push(@tmp_INDEX, {midasi => $1, data => $2, file_num => $FILE_NUM});
 	    last;
 	} else {
-	    print STDERR "Format error!!\n";
-	    print STDERR encode('utf8', $_) . "\n";
+#	    print STDERR "Format error!!\n";
+#	    print STDERR encode('utf8', $_) . "\n";
 	}
     }
     $FILE_NUM++;
