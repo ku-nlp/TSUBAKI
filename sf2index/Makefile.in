@@ -263,7 +263,7 @@ $(foreach IDX_FIRST_DIR, $(IDX_FIRST_DIRS), \
 
 
 $(BINS): $(IDX_TOP_DIR)/%/idx.word.dat: $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
-	$(PERL) -I $(UtilsDir)/perl -I $(BASEDIR)/scripts $(BASEDIR)/scripts/binarize_idx.pl -syn $<
+	$(PERL) -I $(UtilsDir)/perl -I $(BASEDIR)/scripts $(BASEDIR)/scripts/binarize_idx.pl -quiet -syn $<
 
 $(DFS): $(IDX_TOP_DIR)/%.$(DF_SUFFIX): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX)
 	$(PERL) $(BASEDIR)/scripts/idx2df.pl $<
