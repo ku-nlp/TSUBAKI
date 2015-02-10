@@ -47,6 +47,7 @@ HOME
 HTMLExt
 CACHED_HTML_ENCODING_UTF8
 InputisZip
+StartDirID
 "
 
 SearchEnginePath=$CWD
@@ -76,14 +77,16 @@ HTMLisUTF8Flag=0
 HTMLExt=html
 InputisZip=0 
 CACHED_HTML_ENCODING_UTF8=0
-
+AddHtml=0
+StartDirID=0
+ 
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8) [-Z](InputisZip)"
+    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8) [-Z](InputisZip) [-a](AddHtml)"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZ OPT
+while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZa OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -144,6 +147,8 @@ do
 	    CACHED_HTML_ENCODING_UTF8=1
 	    ;;
 	Z)  InputisZip=1
+	    ;;
+	a)  AddHtml=1
 	    ;;
         h)  usage
             ;;
@@ -308,6 +313,18 @@ if [ ! -d "$DocumentPath" ]; then
     if [ ! -d "$DocumentPath" ]; then
 	echo "Cannot mkdir $DocumentPath"
 	usage
+    fi
+fi
+
+# AddHTML
+if [ $AddHtml -eq 1 ]; then
+    endid=`tail -1 $DocumentPath/html/filename2sid | awk '{print $2}'`
+    StartDirID=`expr $endid / 10000 + 1`
+    if [ -f $DocumentPath/html.relocation.done ]; then
+	rm -fv $DocumentPath/html.relocation.done
+    fi
+    if [ -f $DocumentPath/html/sid2origid.cdb ]; then
+	rm -fv $DocumentPath/html/sid2origid.cdb
     fi
 fi
 

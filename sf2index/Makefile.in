@@ -16,7 +16,7 @@ JavaCommand := @JavaPath@
 CNSDB = $(BASEDIR)/data/cns.100M.cls.df1000.cdb
 BLOCKTYPE_DEFINITION = $(BASEDIR)/data/blocktype.WEB
 WWW2SF_SENTENCE_LENGTH_MAX = 130
-START_DIR_ID = 0
+START_DIR_ID = @StartDirID@
 
 UtilsDir = @UtilsPath@
 WWW2sfDir = @WWW2sfPath@

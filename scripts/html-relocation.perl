@@ -67,7 +67,8 @@ our @tmp_gzip_files = ();
 unless ($opt{dryrun}) {
     &mkdir_outdir();
 
-    open(FILENAME2SID, "> $DEST_DIR/$FILENAME2SID_NAME") or die "Cannot open $DEST_DIR/$FILENAME2SID_NAME\n";
+    my $output_type = $opt{start} > 0 ? '>>' : '>';
+    open(FILENAME2SID, "$output_type $DEST_DIR/$FILENAME2SID_NAME") or die "Cannot open $DEST_DIR/$FILENAME2SID_NAME\n";
 }
 
 if ($opt{input_is_zip}) {
