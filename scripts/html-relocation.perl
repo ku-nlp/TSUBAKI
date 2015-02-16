@@ -95,10 +95,13 @@ sub process_zip_file {
 	    &mkdir_outdir() unless $opt{dryrun};
 	}
 
+        print "$src_fullname -> $outzip\n" if $opt{verbose};
 	copy($src_fullname, $outzip) or die "$! (copy: $src_fullname -> $outzip)";
 
+        my $outzipfh = IO::File->new( $outzip, 'r' );
 	$zip = Archive::Zip->new();
-	die "$! ($src_fullname)" unless $zip->read($outzip) == Archive::Zip::AZ_OK;
+        my $status = $zip->readFromFileHandle( $outzipfh );
+        die "$! ($src_fullname)" unless $status == Archive::Zip::AZ_OK;
 
 	$hcount = 0;
 	my %filename2destid;
@@ -129,7 +132,10 @@ sub process_zip_file {
 	    }
 	}
 
-	unless ( $zip->overwrite == AZ_OK ) {
+        my $stat = $zip->writeToFileNamed($outzip . ".new.tmp");
+        $outzipfh->close();
+        File::Copy::move($outzip . ".new.tmp", $outzip);
+        unless ( $stat == AZ_OK ) {
 	    print STDERR "write error ($outzip) -> skip\n";
 	    unlink($outzip) or die "$!";
 	}
