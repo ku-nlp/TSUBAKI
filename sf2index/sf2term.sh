@@ -32,6 +32,9 @@ shift `expr $OPTIND - 1`
 
 
 for f in $INDIR/*.$XML_SUFFIX; do
-    basename=`basename $f .$XML_SUFFIX`
-    perl -I$BASEDIR/cgi sf2term.pl $ARGS $f > $OUTDIR/$basename.$IDX0_SUFFIX
+    if echo $f | grep -q -v '*'; then
+        # *.xml.gzというファイルなどは無視
+        basename=`basename $f .$XML_SUFFIX`
+        perl -I$BASEDIR/cgi sf2term.pl $ARGS $f > $OUTDIR/$basename.$IDX0_SUFFIX
+    fi
 done
