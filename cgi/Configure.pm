@@ -18,7 +18,9 @@ my $HOSTNAME = `hostname`;
 my $DIRNAME = dirname($INC{'Configure.pm'});
 
 # 設定ファイル名
-my $CONFIG_FILE_PATH =  '../conf/configure'; #XXX
+use File::Spec;
+my $THISPATH = File::Spec->rel2abs( dirname(__FILE__) );
+my $CONFIG_FILE_PATH =  $THISPATH . '/../conf/configure'; #XXX
 
 my %titledbs = ();
 my %urldbs = ();
