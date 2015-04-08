@@ -1,7 +1,6 @@
 #!/usr/bin/env perl
 
 use strict;
-use utf8;
 use CDB_File;
 use Getopt::Long;
 
@@ -19,7 +18,7 @@ sub main {
     my $titlecdb = new CDB_File ($titlecdb_name, "$titlecdb_name.$$") or die;
     my $urlcdb = new CDB_File ($urlcdb_name, "$urlcdb_name.$$") or die;
 
-    open(READER, '<:utf8', $fp);
+    open(READER, $fp);
     while(<READER>){
 	chop($_);
 	my ($did, $url, @title_elements) = split(' ', $_);
