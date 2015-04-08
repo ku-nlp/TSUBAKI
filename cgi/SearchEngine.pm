@@ -222,7 +222,7 @@ sub parse_recieved_data_for_cpp {
 	    last;
 	} else {
  	    $recieved_data .= $_;
- 	    my ($sid, $title, $url, $tid, $score, $length, $pagerank, $flagOfStrictTerm, $flagOfProxConst, $start, $end, @logdata) = split (/ /, $_);
+ 	    my ($sid, $title, $url, $tid, $score, $length, $pagerank, $flagOfStrictTerm, $flagOfProxConst, $start, $end, @logdata) = split (/\t/, $_);
   	    $url =~ s/@/%/g;
 
  	    my $doc;
