@@ -244,7 +244,7 @@ sub parse_recieved_data_for_cpp {
  	    my ($_logdata, $_position) = ($dumy =~ /^\[(.+?),\] \[(.+?)\]$/);
 	    if ($opt->{debug}) {
 		foreach my $__data (split (",", $_logdata)) {
-		    my ($term, $score, $freq, $gdf) = split (' ', $__data);
+		    my ($term, $score, $freq, $gdf) = split (/ /, $__data);
 		    $doc->{terminfo}{terms}{$gid}{str} = decode ('utf8', $term);
 		    $doc->{terminfo}{terms}{$gid}{okp} = $score;
 		    $doc->{terminfo}{terms}{$gid}{frq} = $freq;

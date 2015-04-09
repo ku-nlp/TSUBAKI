@@ -17,7 +17,7 @@ my $dpnd_cdb = new CDB_Writer("$opt{dir}/df.dpnd.cdb", "df.dpnd.cdb.keymap", 2.5
 
 while (<STDIN>) {
     chop($_);
-    my($k, $v) = split(' ', $_);
+    my($k, $v) = split(/ /, $_);
     if ($k =~ /\-\>/) {
 	$dpnd_cdb->add($k, $v);
     } else {

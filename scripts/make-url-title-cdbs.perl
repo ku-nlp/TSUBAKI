@@ -21,7 +21,7 @@ sub main {
     open(READER, $fp);
     while(<READER>){
 	chop($_);
-	my ($did, $url, @title_elements) = split(' ', $_);
+	my ($did, $url, @title_elements) = split(/ /, $_);
 	pop(@title_elements); # 最後のサイズを捨てる
 	my $title = join(' ', @title_elements);
 

@@ -40,7 +40,7 @@ foreach my $ftmp (sort {$a cmp $b} @ARGV) {
     # 各ファイルの1行目を読み込み、ソートする前の初期@INDEX(@tmpINDEX)を作成する
     if ($_ = $FH[$FILE_NUM]->getline) {
 	chop($_);
-	my @fields = split(' ', $_);
+	my @fields = split(/ /, $_);
 	my $key = $fields[$opt{n}];
 	splice(@fields, $opt{n}, 1);
 	my $val = join(' ', @fields);
@@ -87,7 +87,7 @@ while (@INDEX) {
     # 先ほど取り出したファイル番号について，新しい行を取り出し，@INDEXの適当な位置に挿入
     if (($_ = $FH[$index->{file_num}]->getline)) {
 	chop($_);
-	my @fields = split(' ', $_);
+	my @fields = split(/ /, $_);
 	my $key = $fields[$opt{n}];
 	splice(@fields, $opt{n}, 1);
 	my $val = join(' ', @fields);

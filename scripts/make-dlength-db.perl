@@ -37,7 +37,7 @@ foreach my $fp (@ARGV) {
 # 	next if ($_ =~ /<[^>]+>/);
 
 	chop($_);
-	my ($word, @did_freqs) = split(' ', $_);
+	my ($word, @did_freqs) = split(/ /, $_);
 
 	foreach my $did_freq (@did_freqs) {
 	    my ($did, $freq) = split(':', $did_freq);

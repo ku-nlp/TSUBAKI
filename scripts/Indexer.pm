@@ -324,7 +324,7 @@ sub makeIndexFromEnglishData {
     my $gid = 0;
     my @terms = ();
     foreach my $line (split (/\n/, $result)) {
-	my @midasis = split (" ", $line);
+	my @midasis = split (/ /, $line);
 	$midasis[-1] .= "*";
 
 	foreach my $midasi (@midasis) {

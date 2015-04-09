@@ -50,7 +50,7 @@ foreach my $cdbfp (@ARGV) {
 	    # 各ファイルの1行目を読み込み、ソートする前の初期@INDEX(@tmpINDEX)を作成する
 	    if ($_ = $FH[$FILE_NUM]->getline) {
 		chop($_);
-		my ($key, $val) = split(' ', $_);
+		my ($key, $val) = split(/ /, $_);
 		push(@tmp_INDEX, {midasi => $key, data => $val, file_num => $FILE_NUM});
 	    }
 	    $FILE_NUM++;  
@@ -80,7 +80,7 @@ foreach my $cdbfp (@ARGV) {
 	    # 先ほど取り出したファイル番号について，新しい行を取り出し，@INDEXの適当な位置に挿入
 	    if (($_ = $FH[$index->{file_num}]->getline)) {
 		chop($_);
-		my ($key, $val) = split(' ', $_);
+		my ($key, $val) = split(/ /, $_);
 		$index->{midasi} = $key;
 		$index->{data} = $val;
 	    

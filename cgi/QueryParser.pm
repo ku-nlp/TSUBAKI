@@ -164,7 +164,7 @@ sub parse_for_english {
 	$lemmatizer = new Lemmatize();
     }
 
-    foreach my $word (split (" ", $qks_str)) {
+    foreach my $word (split (/ /, $qks_str)) {
 	my @terms;
 
 	print $word . " -> " if ($opt->{debug});

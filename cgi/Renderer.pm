@@ -671,7 +671,7 @@ sub getCongestion {
     open(READER, "cat $logfile | tac |");
     my $buf = undef;
     while (<READER>) {
-	my @data = split(' ', $_);
+	my @data = split(/ /, $_);
 	my ($date, $hour, $min, $sec) = split(":", $data[3]);
 	$buf = 60 + $min unless (defined $buf);
 
