@@ -89,9 +89,9 @@ start() {
 		    echo [TSUBAKI SERVER] START\ \ \(host=$HOSTNAME, port=$PORT, time=$DATE\)
 		    echo [TSUBAKI SERVER] START\ \ \(host=$HOSTNAME, port=$PORT, time=$DATE\) >> $LOGFILE
 		    if [ $COMMAND = "slave_server" ]; then
-			ulimit -Ss $MEM -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION
+			ulimit -Ss $MEM; ulimit -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION
 		    else
-			ulimit -Ss $MEM -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION &
+			ulimit -Ss $MEM; ulimit -v $VMEM; nice $NICE $EXEC_COMMAND $OPTION &
 		    fi
 		else
 		    echo "Can't find an idxdir ($idxdir)!"
