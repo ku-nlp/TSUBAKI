@@ -38,7 +38,7 @@ EnglishFlag = @EnglishFlag@
 HTMLisUTF8Flag = @HTMLisUTF8Flag@
 InputisZip = @InputisZip@
 
-WWW2sf_args = -f -c $(CNSDB)
+WWW2sf_args = -z -f -c $(CNSDB)
 AddKNPResult_args = -sentence_length_max $(WWW2SF_SENTENCE_LENGTH_MAX) -embed_result_in_xml
 sf2term_args = 
 html_relocation_args = -s $(START_DIR_ID) -zip
@@ -68,7 +68,7 @@ AddKNPResult_args += -case
 sf2term_args += --pa $(PredicateArgumentDefinition)
 endif
 
-XML_SUFFIX := xml
+XML_SUFFIX := xml.gz
 IDX0_SUFFIX := idx0
 IDX1_SUFFIX := idx1
 IDX_SUFFIX := idx
@@ -81,9 +81,7 @@ URL_DB_SUFFIX := did2url.cdb
 TITLE_DB_SUFFIX := did2title.cdb
 
 ifeq "$(HTMLExt)" "html.gz"
-WWW2sf_args += -z
 html_relocation_args += -e $(HTMLExt)
-XML_SUFFIX := $(XML_SUFFIX).gz
 endif
 
 ifeq "$(InputisZip)" "1"
