@@ -66,6 +66,7 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
 ./setup.sh -s sample_doc/ja/src_doc -d /somewhere/data
 ```
 (/somewhere/data以下にインデックスなどのデータを出力します)
+
 - 例2: 英語サンプル文書データを対象にする場合
 ```
 ./setup.sh -e -s sample_doc/en/src_doc -d /somewhere/data -f /somewhere/stanford-parser-full-2013-06-20
