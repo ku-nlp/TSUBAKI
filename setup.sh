@@ -201,7 +201,7 @@ if [ $InputisZip -eq 1 -a $HTMLExt != 'html.gz' ]; then
 fi
 
 if [ $HTMLExt = 'html' -a $UseCopyForHTMLFlag -eq 0 ]; then
-    echo "When a htmlext is html, please use -L (UseCopyForHTML) or gzip htmlfiles beforehand."
+    echo "When an htmlext is html, please use -L (UseCopyForHTML) or gzip htmlfiles beforehand."
     exit 1
 fi
 
