@@ -202,7 +202,9 @@ scripts/server-all.sh -c conf/configure start
 CGIが実行可能となっていることを確認してください (Apacheでは
 ``Options ExecCGI``と``AddHandler cgi-script .cgi``)。
 
+### APIによる検索
 
+``samplecode/`` 以下にC, Java, Perl, Pythonによるサンプルコードがありますので、そちらを参照して下さい。
 
 ## 注意事項
 
