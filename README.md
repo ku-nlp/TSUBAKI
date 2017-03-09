@@ -204,7 +204,7 @@ CGIが実行可能となっていることを確認してください (Apacheで
 
 ### APIによる検索
 
-``($TSUBAKI_DIR/samplecode/)`` 以下にC, Java, Perl, Pythonによるサンプルコードがありますので、そちらを参照して下さい。
+``samplecode/`` 以下にC, Java, Perl, Pythonによるサンプルコードがありますので、そちらを参照して下さい。
 
 ## 注意事項
 
