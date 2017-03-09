@@ -64,7 +64,7 @@ sub search {
 	$opt->{LOGGER} = $logger;
 
 	push(@$results, $this->{tsubaki}->search($query, $query->{qid2df}, $opt));
-	$hitcount = scalar(@$results->[0]);
+	$hitcount = scalar(@{$results->[0]});
 	$status = 'search';
     } else {
 	my $se_obj = new SearchEngine($opt->{syngraph});
