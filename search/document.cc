@@ -6,7 +6,7 @@ std::string Document::to_string() {
     _str << id << "\t" << get_final_score() << "\t" << get_length() << "\t"
          << get_pagerank() << "\t" << get_strict_term_feature() << "\t"
          << get_proximate_feature() << "\t" << best_begin << "\t" << best_end
-         << " [";
+         << "\t[";
     for (std::vector<Term *>::iterator it = terms.begin(); it != terms.end();
          it++) {
         _str << (*it)->to_string() << ",";
