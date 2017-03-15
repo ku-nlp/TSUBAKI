@@ -188,6 +188,9 @@ USE_OF_HYPERNYM	0
 
 USE_OF_NEGATION_AND_ANTONYM	1
 
+# SYNGRAPH検索において<反義語>や<否定>などのfeatureを使うかどうか　しない(0)/する(1)
+USE_OF_FEATURE	1
+
 # 同義語展開を行わないために、Wikipediaエントリの情報を付与するかどうか　しない(0)/する(1)
 NO_ATTACH_SYNNODE_IN_WIKIPEDIA_ENTRY	0
 
