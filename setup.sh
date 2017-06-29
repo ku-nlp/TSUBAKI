@@ -81,12 +81,12 @@ AddHtml=0
 StartDirID=0
  
 usage() {
-    echo "Usage: $0 [-j|-e] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8) [-Z](InputisZip) [-a](AddHtml)"
+    echo "Usage: $0 [-j|-e] [-J JUMANPrefix ] [-K KNPPrefix ] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8) [-Z](InputisZip) [-a](AddHtml)"
     exit 1
 }
 
 # getopts
-while getopts c:ejU:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZa OPT
+while getopts c:ejJ:K:U:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZa OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -133,6 +133,10 @@ do
 	    ;;
 	z)  HTMLExt=html.gz
 	    ;;
+	J)  JUMANPrefix=$OPTARG
+            ;;
+	K)  KNPPrefix=$OPTARG
+            ;;
         m)  MaltParserPath=$OPTARG
             ;;
         t)  TsuruokaTaggerPath=$OPTARG
@@ -213,22 +217,36 @@ fi
 
 # JUMAN/KNP is necessary for Japanese
 if [ $EnglishFlag -eq 0 ]; then
-    # check JUMAN
-    JUMANBIN=`type juman 2> /dev/null | cut -f3 -d' '`
-    if [ -n "$JUMANBIN" ]; then
-	JUMANPrefix=`expr $JUMANBIN : "\(.*\)/bin/juman$"`
+    if [ -n "$JUMANPrefix" ]; then
+	if [ ! -x "$JUMANPrefix/bin/juman" ]; then
+	    echo "Specified JUMANPath is not found."
+	    usage
+	fi
     else
-	echo "JUMAN is not found. Please install JUMAN (see README)."
-	usage
+       # check JUMAN
+       JUMANBIN=`type juman 2> /dev/null | cut -f3 -d' '`
+       if [ -n "$JUMANBIN" ]; then
+	   JUMANPrefix=`expr $JUMANBIN : "\(.*\)/bin/juman$"`
+       else
+	   echo "JUMAN is not found. Please install JUMAN (see README)."
+	   usage
+       fi
     fi
 
-    # check KNP
-    KNPBIN=`type knp 2> /dev/null | cut -f3 -d' '`
-    if [ -n "$KNPBIN" ]; then
-	KNPPrefix=`expr $KNPBIN : "\(.*\)/bin/knp$"`
+    if [ -n "$KNPPrefix" ]; then
+	if [ ! -x "$KNPPrefix/bin/knp" ]; then
+	    echo "Specified KNPPath is not found."
+	    usage
+	fi
     else
-	echo "KNP is not found. Please install KNP (see README)."
-	usage
+	# check KNP
+	KNPBIN=`type knp 2> /dev/null | cut -f3 -d' '`
+	if [ -n "$KNPBIN" ]; then
+	    KNPPrefix=`expr $KNPBIN : "\(.*\)/bin/knp$"`
+	else
+	    echo "KNP is not found. Please install KNP (see README)."
+	    usage
+	fi
     fi
 else
     if [ -n "$MaltParserPath" ]; then
