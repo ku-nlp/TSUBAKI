@@ -113,14 +113,13 @@ make CC=gcc CXX=g++
 付与し、``$DATADIR/html``以下に配置します。
 
 ```
-make DATADIR=/somewhere/data html
+make html
 ```
 
-DATADIRは、上記setup.shの-dで指定したディレクトリを絶対パスで指定してください。
 
 setup.shで-Zオプションを利用した場合はテンポラリディレクトリが大きい必要があるので、/tmpよりも大きいディレクトリをTMP_DIR_BASEオプションで指定してください。
 ```
-make DATADIR=/somewhere/data TMP_DIR_BASE=/somewhere/tmp html
+make TMP_DIR_BASE=/somewhere/tmp html
 ```
 
 ## TSUBAKI標準フォーマット変換, インデックス生成
@@ -131,7 +130,7 @@ TSUBAKI標準フォーマットデータからインデックスを生成しま�
 $TSUBAKI_DIR において次のように実行してください。
 
 ```
-make DATADIR=/somewhere/data indexing
+make indexing
 ```
 
  テンポラリディレクトリとしてデフォルトでは/tmpを使いますが、/tmpに
@@ -139,7 +138,7 @@ make DATADIR=/somewhere/data indexing
 ください。100万文書あたり100GB程度必要です。
 
 ```
-make DATADIR=/somewhere/data TMP_DIR_BASE=/somewhere/tmp indexing
+make TMP_DIR_BASE=/somewhere/tmp indexing
 ```
 
 indexingを一度にすべてではなく、例えば、1,000万ページずつ行いたい場合、
