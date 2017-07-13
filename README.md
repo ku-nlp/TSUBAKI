@@ -63,19 +63,19 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
 
 - 例1: 日本語サンプル文書データを対象にする場合
 ```
-./setup.sh -s sample_doc/ja/src_doc -d /somewhere/data
+./setup.sh -s sample_doc/ja/src_doc -d /somewhere/data -L
 ```
 (/somewhere/data以下にインデックスなどのデータを出力します)
 
 - 例2: 英語サンプル文書データを対象にする場合
 ```
-./setup.sh -e -s sample_doc/en/src_doc -d /somewhere/data -f /somewhere/stanford-parser-full-2013-06-20
+./setup.sh -e -s sample_doc/en/src_doc -d /somewhere/data -L -f /somewhere/stanford-parser-full-2013-06-20
 ```
-- 例3: あるディレクトリ``(/somewhere/src_doc_html)``以下にあるHTML文書データを対象にする場合
+- 例3: あるディレクトリ``(/somewhere/src_doc_html)``以下にあるHTML文書データ(gzip済み)を対象にする場合
 ```
-./setup.sh -s /somewhere/src_doc -d /somewhere/data
+./setup.sh -s /somewhere/src_doc -d /somewhere/data -z
 ```
-(``/somewhere/src_doc``以下の``"*.html"``ファイルを再帰的に探索します)
+(``/somewhere/src_doc``以下の``"*.html.gz"``ファイルを再帰的に探索します)
 
 #### ./setup.shの重要なオプションの説明
 ```
