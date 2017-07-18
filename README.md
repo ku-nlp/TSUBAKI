@@ -163,6 +163,8 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 ./search.sh -c conf/configure 紅葉	# hitcountが5になる
 ```
 
+`./search.sh -c conf/configure 京大`の場合、以下のような出力が得られます。
+
 ```
 --- QUERY (sexp) ---
 ( (ROOT (OR_MAX ((京大/きょうだい 1 3 1 0 0)) ((京大/きょうだい<反義語> 1 3 0 0 0)) ((s31570:京都大学 1 3 0 \
