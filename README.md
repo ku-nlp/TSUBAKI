@@ -206,11 +206,8 @@ TOTAL_TIME 1.86992
 - proximate_feature
 - スニペット始まり位置
 - スニペット終わり位置
-- [マッチしたterm集合(スコアあり)]
-- [マッチしたterm集合(pos list)]
-
-マッチしたterm集合(スコアあり): 「,」がterm区切り (term スコア 頻度 DF)
-マッチしたterm集合(pos list): 「#」がterm区切り, 「term, (pos集合)」
+- [マッチしたterm集合(スコアあり)]:「,」がterm区切り, (term スコア 頻度 DF)
+- [マッチしたterm集合(pos list)]: 「#」がterm区切り, 「term, (pos集合)」
 
 SCORE_TIMEの1番目は検索必須のtermに対するスコア計算、2番目はオプショナルのtermに対するスコア計算にかかった時間を表しています。
 
