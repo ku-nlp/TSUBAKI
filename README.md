@@ -187,8 +187,13 @@ SORT_TIME 0.000953674
 TOTAL_TIME 1.86992
 ```
 
-「QUERY (sexp)」はQueryの内部表現を表わしており、一番内側の括弧内は順に、
-`term termtype(必須:1, オプショナル:3) DF nodeタイプ(termが単語の場合1,それ以外0) indexタイプ(termが単語の場合0, 係り受けの場合1, 単語の場合(アンカー用)2, 係り受けの場合(アンカー用)3) FeatureBit(その他の素性)`を表しています。
+「QUERY (sexp)」はQueryの内部表現を表しており、一番内側の括弧内の意味は順に以下のとおりです。
+- term
+- termtype(必須:1, オプショナル:3)
+- DF
+- nodeタイプ(termが単語の場合1, SYNノードの場合0)
+- indexタイプ(termが単語の場合0, 係り受けの場合1, 単語の場合(アンカー用)2, 係り受けの場合(アンカー用)3)
+- FeatureBit(その他の素性)
 
 「RESULT」以下はヒットした文書を表わしており、一行が1文書で、順に`文書ID スコア 文書長 ページランク strict_term_feature proximate_feature best_begin best_end [マッチしたterm集合(スコアあり)] [マッチしたterm集合(pos list)]
 マッチしたterm集合(スコアあり): 「,」がterm区切り (term スコア 頻度 DF)
