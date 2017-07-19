@@ -63,19 +63,19 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
 
 - 例1: 日本語サンプル文書データを対象にする場合
 ```
-./setup.sh -s sample_doc/ja/src_doc -d /somewhere/data
+./setup.sh -s sample_doc/ja/src_doc -d /somewhere/data -L
 ```
 (/somewhere/data以下にインデックスなどのデータを出力します)
 
 - 例2: 英語サンプル文書データを対象にする場合
 ```
-./setup.sh -e -s sample_doc/en/src_doc -d /somewhere/data -f /somewhere/stanford-parser-full-2013-06-20
+./setup.sh -e -s sample_doc/en/src_doc -d /somewhere/data -L -f /somewhere/stanford-parser-full-2013-06-20
 ```
-- 例3: あるディレクトリ``(/somewhere/src_doc_html)``以下にあるHTML文書データを対象にする場合
+- 例3: あるディレクトリ``(/somewhere/src_doc_html)``以下にあるHTML文書データ(gzip済み)を対象にする場合
 ```
-./setup.sh -s /somewhere/src_doc -d /somewhere/data
+./setup.sh -s /somewhere/src_doc -d /somewhere/data -z
 ```
-(``/somewhere/src_doc``以下の``"*.html"``ファイルを再帰的に探索します)
+(``/somewhere/src_doc``以下の``"*.html.gz"``ファイルを再帰的に探索します)
 
 #### ./setup.shの重要なオプションの説明
 ```
@@ -113,15 +113,16 @@ make CC=gcc CXX=g++
 付与し、``$DATADIR/html``以下に配置します。
 
 ```
-make DATADIR=/somewhere/data html
+make html
 ```
 
-DATADIRは、上記setup.shの-dで指定したディレクトリを絶対パスで指定してください。
 
 setup.shで-Zオプションを利用した場合はテンポラリディレクトリが大きい必要があるので、/tmpよりも大きいディレクトリをTMP_DIR_BASEオプションで指定してください。
 ```
-make DATADIR=/somewhere/data TMP_DIR_BASE=/somewhere/tmp html
+make TMP_DIR_BASE=/somewhere/tmp html
 ```
+
+元のhtmlのファイル名とIDの対応は`$DATADIR/html/filename2sid`に出力されていますので、IDから元のhtmlのファイル名に戻したい時はこのファイルを参照してください。
 
 ## TSUBAKI標準フォーマット変換, インデックス生成
 
@@ -131,7 +132,7 @@ TSUBAKI標準フォーマットデータからインデックスを生成しま�
 $TSUBAKI_DIR において次のように実行してください。
 
 ```
-make DATADIR=/somewhere/data indexing
+make indexing
 ```
 
  テンポラリディレクトリとしてデフォルトでは/tmpを使いますが、/tmpに
@@ -139,7 +140,7 @@ make DATADIR=/somewhere/data indexing
 ください。100万文書あたり100GB程度必要です。
 
 ```
-make DATADIR=/somewhere/data TMP_DIR_BASE=/somewhere/tmp indexing
+make TMP_DIR_BASE=/somewhere/tmp indexing
 ```
 
 indexingを一度にすべてではなく、例えば、1,000万ページずつ行いたい場合、
@@ -163,6 +164,54 @@ $TSUBAKI_DIRにおいて、"./search.sh -c conf/configure クエリ"
 ./search.sh -c conf/configure 京大	# hitcountが6になる
 ./search.sh -c conf/configure 紅葉	# hitcountが5になる
 ```
+
+`./search.sh -c conf/configure 京大`の場合、以下のような出力が得られます。
+
+
+
+```
+--- QUERY (sexp) ---
+( (ROOT (OR_MAX ((京大/きょうだい 1 3 1 0 0)) ((京大/きょうだい<反義語> 1 3 0 0 0)) ((s31570:京都大学 1 3 0 0 0)) ((s31570:京都大学<反義語> 1 3 0 0 0)) ) (OR_MAX ((京大/きょうだい 3 3 1 2 0)) ((京大/きょうだい<反義語\
+> 3 3 0 2 0)) ((s31570:京都大学 3 3 0 2 0)) ((s31570:京都大学<反義語> 3 3 0 2 0)) ) ) )
+--- RESULT ---
+11      110.38  176     0       1       1       6       6       [京大/きょうだい 22.6443 1 3,s31570:京都大学 16.8055 0.495 3,OR_MAX 22.6443 1 3,] [京大/きょうだい,6#s31570:京都大学,6#OR_MAX,6#]
+8       109.784 245     0       1       1       65      65      [京大/きょうだい 21.9826 1 3,s31570:京都大学 16.0798 0.495 3,OR_MAX 21.9826 1 3,] [京大/きょうだい,65#s31570:京都大学,65#OR_MAX,65#]
+28      109.406 291     0       1       1       222     222     [京大/きょうだい 21.5626 1 3,s31570:京都大学 15.6299 0.495 3,OR_MAX 21.5626 1 3,] [京大/きょうだい,222#s31570:京都大学,222#OR_MAX,222#]
+35      104.536 238     0       1       1       111     111     [s31570:京都大学 16.1506 0.495 3,OR_MAX 16.1506 0.495 3,] [s31570:京都大学,111#OR_MAX,111#]
+41      103.708 334     0       1       1       287     287     [s31570:京都大学 15.2315 0.495 3,OR_MAX 15.2315 0.495 3,] [s31570:京都大学,287#OR_MAX,287#]
+32      99.6438 1045    0       1       1       481     481     [s31570:京都大学 10.7153 0.495 3,OR_MAX 10.7153 0.495 3,] [s31570:京都大学,481#OR_MAX,481#]
+
+hitcount 6
+HOSTNAME basil200 39999
+SEARCH_TIME 1.80221
+SCORE_TIME 0.0479221 0.000953674
+SORT_TIME 0.000953674
+TOTAL_TIME 1.86992
+```
+
+「QUERY (sexp)」はQueryの内部表現を表しており、一番内側の括弧内の意味は順に以下のとおりです。
+
+- term
+- termタイプ(必須:1, オプショナル:3)
+- 文書頻度
+- nodeタイプ(termが単語の場合:1, SYNノードの場合:0)
+- indexタイプ(termが単語の場合:0, 係り受けの場合:1, 単語の場合(アンカー用):2, 係り受けの場合(アンカー用):3)
+- FeatureBit(その他の素性)
+
+「RESULT」以下はヒットした文書を表しており、一行が1文書で、その意味は順に以下のとおりです。
+
+- 文書ID
+- スコア
+- 文書長
+- ページランク
+- strict_term_feature
+- proximate_feature
+- スニペット始まり位置
+- スニペット終わり位置
+- [マッチしたterm集合(スコアあり)]:「,」がterm区切り, (term スコア term頻度 文書頻度)
+- [マッチしたterm集合(pos list)]: 「#」がterm区切り, 「term, (pos集合)」
+
+SCORE_TIMEの1番目は検索必須のtermに対するスコア計算、2番目はオプショナルのtermに対するスコア計算にかかった時間を表しています。
 
 
 ### ブラウザからの検索
@@ -200,7 +249,7 @@ scripts/server-all.sh -c conf/configure start
 
 ブラウザでindex.cgiのソースコードが表示される場合は、httpdの設定で
 CGIが実行可能となっていることを確認してください (Apacheでは
-``Options ExecCGI``と``AddHandler cgi-script .cgi``)。
+``Options ExecCGI``と``AddHandler cgi-script .cgi``を追加し、`#Loadmodule cgi_module libexec/apache2/mod_cgi.so`の行のコメントを外してください)。
 
 ### APIによる検索
 
