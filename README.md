@@ -247,7 +247,7 @@ scripts/server-all.sh -c conf/configure start
 
 ブラウザでindex.cgiのソースコードが表示される場合は、httpdの設定で
 CGIが実行可能となっていることを確認してください (Apacheでは
-``Options ExecCGI``と``AddHandler cgi-script .cgi``)。
+``Options ExecCGI``と``AddHandler cgi-script .cgi``を追加し、`#Loadmodule cgi_module libexec/apache2/mod_cgi.so`の行のコメントを外してください)。
 
 ### APIによる検索
 
