@@ -122,6 +122,8 @@ setup.shで-Zオプションを利用した場合はテンポラリディレク�
 make TMP_DIR_BASE=/somewhere/tmp html
 ```
 
+元のhtmlのファイル名とIDの対応は`$DATADIR/html/filename2sid`に出力されていますので、IDから元のhtmlのファイル名に戻したい時はこのファイルを参照してください。
+
 ## TSUBAKI標準フォーマット変換, インデックス生成
 
 検索対象文書に言語解析を適用し、その解析結果をXML形式で出力します。(以
