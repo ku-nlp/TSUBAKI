@@ -131,7 +131,11 @@ class Document {
     }
 
     bool set_freq(double in_freq) {
+      if (NO_USE_TF_MODE)
+      	freq = 1.00;
+      else
 	freq = in_freq;
+
 	return true;
     }
     double get_freq() const {
@@ -179,6 +183,10 @@ class Document {
 	if (freq < 0) {
 	    score = 0;
 	} else {
+	  
+	  if (NO_USE_TF_MODE)
+	    in_freq = 1.00;
+
 	    double tf = ((OKAPI_K1 + 1) * in_freq) / (OKAPI_K1 * ((1 - OKAPI_B) + OKAPI_B * length / AVERAGE_DOC_LENGTH) + in_freq);
 	    double idf = log((TOTAL_NUMBUER_OF_DOCS - in_gdf + 0.5) / (in_gdf + 0.5));
 	    score = tf * idf;
