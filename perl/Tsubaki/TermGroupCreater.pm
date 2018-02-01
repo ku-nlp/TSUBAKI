@@ -510,6 +510,7 @@ sub _createTermGroup {
 	next if (exists $opt->{option}{remove_synids}{$synNd->synid});
 
 	my $_midasi = sprintf ("%s%s", $opt->{option}{ignore_yomi} ? &remove_yomi($synNd->synid) : $synNd->synid, $CONFIG->{USE_OF_FEATURE} ? $synNd->feature : '');
+	my $_midasi_length = 0; # fix me!
 
 	# SynGraphが返す<反義語>ノードは利用する必要はない
 	if ($_midasi =~ /<反義語>/) {
