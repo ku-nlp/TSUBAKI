@@ -60,6 +60,7 @@ sub create {
 	undef,
 	undef,
 	undef,
+	undef,
 	$terms,
 	{
 	    isRoot         => 1,
@@ -293,6 +294,7 @@ sub _create4phrase {
 		      \@midasis,
 		      undef,
 		      undef,
+		      undef,
 		      $opt
 		  ));
 	}
@@ -502,6 +504,7 @@ sub _createTermGroup {
     my $gdf = &_getDF ($basicNd, $synNds, $opt);
 
     my @midasis = ();
+    my @midasi_lengths = ();
     foreach my $synNd (@$synNds) {
 	# print $opt->{option}{remove_synids} ." " . $synNd->synid . "\n";
 	next if (exists $opt->{option}{remove_synids}{$synNd->synid});
@@ -522,6 +525,7 @@ sub _createTermGroup {
 	$_midasi = &removeSyntacticFeatures($_midasi);
 
 	push(@midasis, $_midasi);
+	push(@midasi_lengths, $_midasi_length);
 
 	# 上位語や否定によってタームを拡張する
 	if (!$opt->{english} && !$opt->{option}{disable_synnode}) { # 日本語のみ
@@ -541,6 +545,7 @@ sub _createTermGroup {
 	    undef,
 	    ((defined $basicNd) ? ($opt->{option}{ignore_yomi} ? &remove_yomi($basicNd->synid) : $basicNd->synid) : ''),
 	    \@midasis,
+	    \@midasi_lengths,
 	    $parent,
 	    $children,
 	    $opt
