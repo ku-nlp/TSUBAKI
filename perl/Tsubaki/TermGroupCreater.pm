@@ -510,7 +510,7 @@ sub _createTermGroup {
 	next if (exists $opt->{option}{remove_synids}{$synNd->synid});
 
 	my $_midasi = sprintf ("%s%s", $opt->{option}{ignore_yomi} ? &remove_yomi($synNd->synid) : $synNd->synid, $CONFIG->{USE_OF_FEATURE} ? $synNd->feature : '');
-	my $_midasi_length = 0;
+	my $_midasi_length = 1;
 
 	# SynGraphが返す<反義語>ノードは利用する必要はない
 	if ($_midasi =~ /<反義語>/) {
@@ -530,8 +530,6 @@ sub _createTermGroup {
 	# SYNノードがカバーする基本句数
 	if (!$is_basic_node) {
 	    $_midasi_length = scalar($synNd->tagids);
-	} else {
-	    $_midasi_length = 0;
 	}
 	push(@midasi_lengths, $_midasi_length);
 
