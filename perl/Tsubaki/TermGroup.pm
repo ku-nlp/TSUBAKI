@@ -75,7 +75,8 @@ sub pushbackTerms {
 	$blockTypes->{UNDEF} = 1;
     }
 
-    foreach my $midasi (@$synnodes) {
+    for my $i (0 .. $#{$synnodes}) {
+	my $midasi = $synnodes->[$i];
 	next if (exists $alreadyPushedTexts{$midasi});
 	$alreadyPushedTexts{$midasi} = 1;
 	$this->{text} = $midasi unless exists($this->{text});
@@ -100,7 +101,8 @@ sub pushbackTerms {
 	    gdf => $this->{gdf},
 	    # 最後の基本句から抽出されたタームかどうか
 	    is_last_kihonku => $opt->{is_last_kihonku},
-	    blockTypeFeature => $blockTypeFeature
+	    blockTypeFeature => $blockTypeFeature,
+	    num_of_phrases => $synnode_lengths->[$i]
 					      });
 	push (@{$this->{terms}}, $term);
     }
