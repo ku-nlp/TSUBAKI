@@ -913,6 +913,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	score = document->calc_okapi(freq);
         if (last_num_of_phrases > 1)
             score *= last_num_of_phrases;
+        set_num_of_phrases(last_num_of_phrases);
     }
     else {
         score = raw_score;
