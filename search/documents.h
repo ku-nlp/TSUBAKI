@@ -160,6 +160,9 @@ class Documents {
     unsigned int get_num_of_phrases() {
         return num_of_phrases;
     }
+    void set_num_of_phrases(unsigned int in_num_of_phrases) {
+        num_of_phrases = in_num_of_phrases;
+    }
 
     void set_label (const char* _label, const int type) {
 	label = _label;
