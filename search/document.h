@@ -124,7 +124,7 @@ class Document {
 
     bool calc_score();
     bool set_term_pos(std::string term, std::vector<int> const *in_pos_list, std::vector<double> const *in_score_list);
-    std::vector<int> *get_pos(unsigned int featureBit);
+    std::vector<int> *get_pos(unsigned int featureBit, unsigned int num_of_phrases);
 
     std::vector<double> *get_score_list() {
         return score_list;

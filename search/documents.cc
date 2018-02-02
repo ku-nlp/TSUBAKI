@@ -293,7 +293,7 @@ bool Documents::merge_phrase (CELL *cell, DocumentBuffer *_already_retrieved_doc
 		notFound = true;
 		break;
 	    }
-	    pos_list_list.push_back(_doc->get_pos((*_it)->get_featureBits()));
+	    pos_list_list.push_back(_doc->get_pos((*_it)->get_featureBits(), (*_it)->get_num_of_phrases()));
 	}
 	if (notFound)
 	    continue;
@@ -568,9 +568,8 @@ void Documents::merge_and_or(CELL *cell, DocumentBuffer *_already_retrieved_docs
 	int _isRetrievedByBasicNode = atoi((char *)_Atom(car(cdr(cdr(cdr(car(cell)))))));
 
 	int file = atoi((char *)_Atom(car(cdr(cdr(cdr(cdr(car(cell))))))));
-
-	// Feature bits
 	featureBits = atoi((char *)_Atom(car(cdr(cdr(cdr(cdr(cdr(car(cell)))))))));
+        num_of_phrases = atoi((char *)_Atom(car(cdr(cdr(cdr(cdr(cdr(cdr(car(cell))))))))));
 
 	set_label(current_term, file);
 	if (term_type == 1) {
@@ -789,7 +788,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    doc->set_length(doc_ptr->get_length());
 
 	    // load positions
-            std::vector<int> *pos_list = doc->get_pos((*it)->get_featureBits());
+            std::vector<int> *pos_list = doc->get_pos((*it)->get_featureBits(), (*it)->get_num_of_phrases());
 	    pos_list_list.push_back(pos_list);
 	    score_list_list.push_back(doc->get_score_list());
 
@@ -971,7 +970,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    }
 
             // get pos and score for all types of documents (including DOCUMENTS_TERM_OPTIONAL)
-            std::vector<int> *pos_list = doc->get_pos((*it)->get_featureBits());
+            std::vector<int> *pos_list = doc->get_pos((*it)->get_featureBits(), (*it)->get_num_of_phrases());
 
 	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT ||
 		(*it)->get_type() == DOCUMENTS_AND ||
@@ -1213,7 +1212,7 @@ bool Documents::check_phrase (Document *doc_ptr) {
 	// for TERM_OPTIONAL documents
 	if (doc) {
 	    if ((*it)->get_type() == DOCUMENTS_TERM_STRICT || (*it)->get_type() == DOCUMENTS_AND || (*it)->get_type() == DOCUMENTS_PHRASE || (*it)->get_type() == DOCUMENTS_OR || (*it)->get_type() == DOCUMENTS_OR_OPTIONAL || (*it)->get_type() == DOCUMENTS_OR_MAX || (*it)->get_type() == DOCUMENTS_ROOT || (*it)->get_type() == DOCUMENTS_PROX || (*it)->get_type() == DOCUMENTS_ORDERED_PROX) {
-		pos_list_list.push_back(doc->get_pos((*it)->get_featureBits()));
+		pos_list_list.push_back(doc->get_pos((*it)->get_featureBits(), (*it)->get_num_of_phrases()));
 		document->set_best_pos(doc->get_best_pos());
 	    }
 	    score += doc->get_score();

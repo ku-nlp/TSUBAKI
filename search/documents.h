@@ -100,6 +100,7 @@ class DocumentBuffer {
 
 class Documents {
     unsigned int featureBits;
+    unsigned int num_of_phrases;
     documents_type type;
     double term_df;
     std::vector<std::ifstream *> *index_streams;
@@ -153,6 +154,10 @@ class Documents {
 
     unsigned int get_featureBits() {
         return featureBits;
+    }
+
+    unsigned int get_num_of_phrases() {
+        return num_of_phrases;
     }
 
     void set_label (const char* _label, const int type) {
