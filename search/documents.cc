@@ -863,13 +863,14 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::vector<int> pos_list;
     std::vector<double> score_list;
     double freq = 0;
-    unsigned int cur_num_of_phrases = num_of_phrases_list[sorted_int[0]];
+    unsigned int target_num_of_phrases = 0;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
 	if (cur_pos == -1) {
 	    break;
 	}
         double cur_score = score_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
+        unsigned int cur_num_of_phrases = num_of_phrases_list[sorted_int[0]];
 	best_pos = cur_pos;
 	tid2idx[sorted_int[0]]++;
 
@@ -877,6 +878,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	if (cur_pos > prev_pos) {
 	    pos_list.push_back(cur_pos);
             score_list.push_back(cur_score);
+            target_num_of_phrases = cur_num_of_phrases;
             freq += cur_score;
             prev_pos = cur_pos;
         }
@@ -908,8 +910,8 @@ bool Documents::walk_or(Document *doc_ptr) {
 #endif
 	document->set_freq(freq);
 	score = document->calc_okapi(freq);
-        if (cur_num_of_phrases > 1)
-            score *= cur_num_of_phrases;
+        if (target_num_of_phrases > 1)
+            score *= target_num_of_phrases;
     }
     else {
         score = raw_score;
