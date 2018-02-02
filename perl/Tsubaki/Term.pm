@@ -45,14 +45,16 @@ sub to_S_exp {
 	$featureBit = 0;
     }
 
-    return sprintf("%s((%s %d %d %d %d %d))\n",
+    return sprintf("%s((%s %d %d %d %d %d %d))\n",
 		   (($this->{term_type} =~ /dpnd/) ? $indent : $indent . $Tsubaki::TermGroup::INDENT_CHAR),
 		   $midasi,
 		   $term_type,
 		   $this->{gdf},
 		   (($this->{node_type} eq 'basic')? 1 : 0),
 		   $index_type,
-		   $featureBit);
+		   $featureBit,
+		   $this->{num_of_phrases}
+	);
 }
 
 # 拡張されたタームをORでまとめたノードを作成

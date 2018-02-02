@@ -18,7 +18,7 @@ my $CONFIG = Configure::get_instance();
 our $INDENT_CHAR = "   ";
 
 sub new {
-    my ($class, $gid, $pos, $gdf, $parentGroup, $basic_node, $synnodes, $parent, $children, $opt) = @_;
+    my ($class, $gid, $pos, $gdf, $parentGroup, $basic_node, $synnodes, $synnode_lengths, $parent, $children, $opt) = @_;
 
     my $this;
     $this->{hasChild} = (defined $children && @$children) ? 1 : 0;
@@ -28,6 +28,7 @@ sub new {
     $this->{discrete_level} = 1;
     $this->{search_type} = $opt->{search_type};
     $this->{proximity_size} = $opt->{proximity_size};
+    $this->{is_covered_by_synnode} = 0;
     if ($opt->{isRoot}) {
 	$this->{optionals} = $opt->{optionals};
 	$this->{result} = $opt->{result};
@@ -40,7 +41,7 @@ sub new {
 	$this->{logger} = new Logger(0);
     } else {
 	$this->{gdf} = $gdf;
-	&pushbackTerms ($this, $basic_node, $synnodes, $gid, $pos, $opt);
+	&pushbackTerms ($this, $basic_node, $synnodes, $synnode_lengths, $gid, $pos, $opt);
     }
 
     bless $this;
@@ -61,7 +62,7 @@ sub is_basic_node_from_str {
 
 # termの追加
 sub pushbackTerms {
-    my ($this, $basic_node, $synnodes, $gid, $pos, $opt) = @_;
+    my ($this, $basic_node, $synnodes, $synnode_lengths, $gid, $pos, $opt) = @_;
 
     my $cnt = 0;
     my %alreadyPushedTexts = ();
@@ -74,10 +75,16 @@ sub pushbackTerms {
 	$blockTypes->{UNDEF} = 1;
     }
 
-    foreach my $midasi (@$synnodes) {
+    for my $i (0 .. $#{$synnodes}) {
+	my $midasi = $synnodes->[$i];
 	next if (exists $alreadyPushedTexts{$midasi});
 	$alreadyPushedTexts{$midasi} = 1;
 	$this->{text} = $midasi unless exists($this->{text});
+
+	my $is_basic_node = &is_basic_node_from_str($midasi);
+	unless ($is_basic_node) { # synnode
+	    $this->{is_covered_by_synnode} = 1;
+	}
 
 	my $blockTypeFeature = 0;
 	foreach my $tag (keys %{$blockTypes}) {
@@ -90,11 +97,12 @@ sub pushbackTerms {
 	    pos => $pos,
 	    text => $midasi,
 	    term_type => (($opt->{optional_flag}) ? 'optional_word' : 'word'),
-	    node_type => (&is_basic_node_from_str($midasi)) ? 'basic' : 'syn',
+	    node_type => ($is_basic_node) ? 'basic' : 'syn',
 	    gdf => $this->{gdf},
 	    # 最後の基本句から抽出されたタームかどうか
 	    is_last_kihonku => $opt->{is_last_kihonku},
-	    blockTypeFeature => $blockTypeFeature
+	    blockTypeFeature => $blockTypeFeature,
+	    num_of_phrases => $synnode_lengths->[$i]
 					      });
 	push (@{$this->{terms}}, $term);
     }
@@ -166,9 +174,10 @@ sub _to_S_exp {
 
     # S式の作成
     my $S_exp;
-    if ($this->{hasChild}) {
+    if ($this->{hasChild} && !$this->{is_covered_by_synnode}) {
 	$S_exp = sprintf ("%s(OR\n", $indent) unless ($is_single_node);
     }
+    # Childをもたないもしくは、このスパンがsynnodeでカバーされる
     else {
 	$S_exp = sprintf ("%s(OR_MAX\n", $indent) unless ($is_single_node);
     }

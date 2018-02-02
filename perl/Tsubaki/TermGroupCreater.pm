@@ -60,6 +60,7 @@ sub create {
 	undef,
 	undef,
 	undef,
+	undef,
 	$terms,
 	{
 	    isRoot         => 1,
@@ -293,6 +294,7 @@ sub _create4phrase {
 		      \@midasis,
 		      undef,
 		      undef,
+		      undef,
 		      $opt
 		  ));
 	}
@@ -502,11 +504,13 @@ sub _createTermGroup {
     my $gdf = &_getDF ($basicNd, $synNds, $opt);
 
     my @midasis = ();
+    my @midasi_lengths = ();
     foreach my $synNd (@$synNds) {
 	# print $opt->{option}{remove_synids} ." " . $synNd->synid . "\n";
 	next if (exists $opt->{option}{remove_synids}{$synNd->synid});
 
 	my $_midasi = sprintf ("%s%s", $opt->{option}{ignore_yomi} ? &remove_yomi($synNd->synid) : $synNd->synid, $CONFIG->{USE_OF_FEATURE} ? $synNd->feature : '');
+	my $_midasi_length = 1;
 
 	# SynGraphが返す<反義語>ノードは利用する必要はない
 	if ($_midasi =~ /<反義語>/) {
@@ -514,7 +518,8 @@ sub _createTermGroup {
 	}
 
 	# SYNノードを利用しない場合
-	if ($opt->{option}{disable_synnode} && !&is_basic_node($synNd)) {
+	my $is_basic_node = &is_basic_node($synNd);
+	if ($opt->{option}{disable_synnode} && !$is_basic_node) {
 	    next;
 	}
 
@@ -522,11 +527,19 @@ sub _createTermGroup {
 	$_midasi = &removeSyntacticFeatures($_midasi);
 
 	push(@midasis, $_midasi);
+	# SYNノードがカバーする基本句数
+	if (!$is_basic_node) {
+	    $_midasi_length = scalar($synNd->tagids);
+	}
+	push(@midasi_lengths, $_midasi_length);
 
 	# 上位語や否定によってタームを拡張する
 	if (!$opt->{english} && !$opt->{option}{disable_synnode}) { # 日本語のみ
 	    my $_midasis = &termExpansion($_midasi, $opt);
-	    push(@midasis, @$_midasis) if @$_midasis;
+	    if (@$_midasis) { 
+		push(@midasis, @$_midasis);
+		push(@midasi_lengths, $_midasi_length);
+	    }
 	}
     }
 
@@ -541,6 +554,7 @@ sub _createTermGroup {
 	    undef,
 	    ((defined $basicNd) ? ($opt->{option}{ignore_yomi} ? &remove_yomi($basicNd->synid) : $basicNd->synid) : ''),
 	    \@midasis,
+	    \@midasi_lengths,
 	    $parent,
 	    $children,
 	    $opt
