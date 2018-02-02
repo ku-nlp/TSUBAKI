@@ -53,7 +53,7 @@ bool Document::set_term_pos(std::string term,
     }
 }
 
-std::vector<int> *Document::get_pos(unsigned int featureBit) {
+std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of_phrases) {
     if (pos_list == NULL) {
         pos_list = new std::vector<int>;
         if (pos_buf) {
@@ -117,6 +117,9 @@ std::vector<int> *Document::get_pos(unsigned int featureBit) {
             }
             pos_list->push_back(-1);
             score = calc_okapi(freq);
+            // multiply num_of_phrases to strengthen a synnode term consisting of multiple phrases
+            if (num_of_phrases > 1)
+                score *= num_of_phrases;
 
             // shrink_to_fit
             // std::vector<int>(*pos_list).swap(*pos_list);
