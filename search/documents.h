@@ -133,6 +133,7 @@ class Documents {
 	prox_dist = PROXIMATE_LENGTH;
 	label = "none";
         featureBits = 0;
+        num_of_phrases = 0;
     }
 
     ~Documents() {
