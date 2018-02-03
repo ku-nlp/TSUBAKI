@@ -148,7 +148,21 @@ HTML_FIRST_DIR := $(HTML_TOP_DIR)/000?
 
 ### 検索サーバプログラムのコンパイル
 
-``$TSUBAKI_DIR``において、``make``を実行してください。
+`$DATADIR/idx/average_doc_length.txt`に文書数と平均文書長が書かれています。
+
+```
+num of docs: xxx
+ave doc length: yy
+```
+
+上記の値で、``$TSUBAKI_DIR/search/common.h``の以下の行を書きかえて下さい。
+
+```
+#define TOTAL_NUMBUER_OF_DOCS 100132750
+#define AVERAGE_DOC_LENGTH 907
+```
+
+そして、``$TSUBAKI_DIR``において、``make``を実行してください。
 コンパイルできない場合は，コンパイルの指定を試してみて下さい。
 ```
 make CC=gcc CXX=g++
