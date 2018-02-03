@@ -128,13 +128,13 @@ BINS := $(addsuffix /idx.word.dat, $(IDX_FIRST_DIRS))
 
 MERGED_DF_FILE := $(IDX_TOP_DIR)/merged.dffiles
 DFDB := $(IDX_TOP_DIR)/df.word.cdb.0
-
+AVERAGE_DOC_LENGTH := $(IDX_TOP_DIR)/average_doc_length.txt
 LAST_MAKEFILE = $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
 
 all: $(HTML_RELOCATION_DONE)
 	$(MAKE) -f $(LAST_MAKEFILE) indexing
 
-indexing: $(BINS) $(DOC_LENGTHS) $(URL_DBS) $(DFDB)
+indexing: $(BINS) $(AVERAGE_DOC_LENGTH) $(URL_DBS) $(DFDB)
 
 html: $(HTML_RELOCATION_DONE)
 xml_simple: $(XML_SIMPLE_ZIPS)
@@ -265,6 +265,9 @@ $(BINS): $(IDX_TOP_DIR)/%/idx.word.dat: $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
 
 $(DFS): $(IDX_TOP_DIR)/%.$(DF_SUFFIX): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX)
 	$(PERL) $(BASEDIR)/scripts/idx2df.pl $<
+
+$(AVERAGE_DOC_LENGTH): $(DOC_LENGTHS)
+	$(PERL) $(BASEDIR)/scripts/calc-ave-doc-length.perl -txt $^ > $@
 
 $(DOC_LENGTHS): $(IDX_TOP_DIR)/%/$(DOC_LENGTH_SUFFIX): $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
 	$(PERL) $(BASEDIR)/scripts/make-dlength-db.perl -txt $<
