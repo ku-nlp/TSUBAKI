@@ -110,12 +110,14 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
                     }
 
                     double cur_freq = weight * frq;
-                    score_list->push_back(cur_freq);
+		    score_list->push_back(cur_freq);
                     freq += cur_freq;
                 }
                 pos_buf_ptr += sizeof(int);
             }
             pos_list->push_back(-1);
+	    if (NO_USE_TF_MODE && freq > 1.00)
+		freq = 1.00;
             score = calc_okapi(freq);
             // multiply num_of_phrases to strengthen a synnode term consisting of multiple phrases
             if (num_of_phrases > 1)
