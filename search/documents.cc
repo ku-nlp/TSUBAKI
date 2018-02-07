@@ -911,6 +911,8 @@ bool Documents::walk_or(Document *doc_ptr) {
 #ifdef DEBUG
 	cerr << "NODE FREQ " << freq << endl;
 #endif
+	if (NO_USE_TF_MODE && freq > 1.00)
+	    freq = 1.00;
 	document->set_freq(freq);
 	score = document->calc_okapi(freq);
         if (last_num_of_phrases > 1)
