@@ -253,10 +253,20 @@ sub parse_recieved_data_for_cpp {
 		}
 	    }
 
+	    $gid = 0;
 	    foreach my $term2posStr (split (/\#/, $_position)) {
 		my @term2pos = split (/,/, $term2posStr);
 		my $term = shift @term2pos;
-		$doc->{terminfo}{term2pos}{decode('utf8', $term)} = \@term2pos;
+		my (@pos_list, @num_of_phrases_list);
+		for my $term2pos (@term2pos) {
+		    my ($tmp_pos, $tmp_num_of_phrases) = split(':', $term2pos);
+		    push(@pos_list, $tmp_pos);
+		    push(@num_of_phrases_list, $tmp_num_of_phrases);
+		}
+		$doc->{terminfo}{term2pos}{decode('utf8', $term)} = \@pos_list;
+		$doc->{terminfo}{terms}{$gid}{pos} = \@pos_list;
+		$doc->{terminfo}{terms}{$gid}{num_of_phrases} = \@num_of_phrases_list;
+		$gid++;
 	    }
  	    push (@results, $doc);
 	}

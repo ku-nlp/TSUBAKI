@@ -1229,12 +1229,7 @@ sub printOrdinarySearchResult {
 		    }
 		}
 
-		my %term2pos;
-		while (my ($term, $pos) = each %{$results->[$rank]{terminfo}{term2pos}}) {
-		    $term2pos{$term} = join (",", @$pos) if (defined $pos);
-		}
-
-		my $line = sprintf "<TR><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%s</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='left' style='padding-left:1em;'>%s</TD><TD align='left' style='padding-left:1em;'>%s</TD></TR>\n", $okp, $frq, $tff, $gdf, $idf, (join (" ", @_buf)), $term2pos{$terms->{$gid}{str}};
+		my $line = sprintf "<TR><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='right' style='padding-left:1em;'>%s</TD><TD align='right' style='padding-left:1em;'>%.2f</TD><TD align='left' style='padding-left:1em;'>%s</TD><TD align='left' style='padding-left:1em;'>%s</TD><TD align='left' style='padding-left:1em;'>%s</TD></TR>\n", $okp, $frq, $tff, $gdf, $idf, (join (" ", @_buf)), join(',', @{$terms->{$gid}{pos}}), join(',', @{$terms->{$gid}{num_of_phrases}});
 		if ($gid =~ /\//) {
 		    push (@{$buff{dpnds}}, $line);
 		} else {
@@ -1243,7 +1238,7 @@ sub printOrdinarySearchResult {
 	    }
 	    $output .= sprintf "length=%.2f, pageRank=%s, strictTerm=%s, proxConst=%s<BR>\n", $dleng, $pgrnk, $flagOfStrictTerm, $flagOfProxConst;
 	    $output .= "<TABLE>\n";
-	    $output .= "<TR><TH>okp</TH><TH>frq</TH><TH>tff</TH><TH>gdf</TH><TH>idf</TH><TH>terms</TH><TH>position</TH></TR>\n";
+	    $output .= "<TR><TH>okp</TH><TH>frq</TH><TH>tff</TH><TH>gdf</TH><TH>idf</TH><TH>terms</TH><TH>position</TH><TH>num_of_phrases</TH></TR>\n";
 	    foreach my $type (('words', 'dpnds')) {
 		foreach my $line (@{$buff{$type}}) {
 		    $output .= $line;

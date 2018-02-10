@@ -18,11 +18,14 @@ std::string Document::to_string() {
          it++) {
         _str << (*it)->get_term();
         std::vector<int> *pos_list_ptr = (*it)->get_pos_list();
+        std::vector<unsigned int> *num_of_phrases_list_ptr = (*it)->get_num_of_phrases_list();
+        int i = 0;
         for (std::vector<int>::iterator _it = pos_list_ptr->begin();
              _it != pos_list_ptr->end(); _it++) {
             if ((*_it) == -1)
                 break;
-            _str << "," << (*_it);
+            _str << "," << (*_it) << ":" << num_of_phrases_list_ptr->at(i);
+            i++;
         }
         _str << "#";
     }
@@ -33,24 +36,31 @@ std::string Document::to_string() {
 
 bool Document::set_term_pos(std::string term,
                             std::vector<int> const *in_pos_list,
-                            std::vector<double> const *in_score_list) {
-    if (pos_list ==
-        in_pos_list) { // do nothing if input is the pointer of this->pos_list
-        return true;
-    } else {
+                            std::vector<double> const *in_score_list,
+                            std::vector<unsigned int> const *in_num_of_phrases_list) {
+    // do nothing if input is the pointer of this->pos_list
+    if (pos_list != in_pos_list) {
         // delete pos_list if available
         delete pos_list;
-
         pos_list = new std::vector<int>(*in_pos_list);
+    }
 
+    if (score_list != in_score_list) {
         delete score_list;
         if (in_score_list)
             score_list = new std::vector<double>(*in_score_list);
         else
             score_list = NULL;
-
-        return true;
     }
+
+    if (num_of_phrases_list != in_num_of_phrases_list) {
+        delete num_of_phrases_list;
+        if (num_of_phrases_list)
+            num_of_phrases_list = new std::vector<unsigned int>(*in_num_of_phrases_list);
+        else
+            num_of_phrases_list = NULL;
+    }
+    return true;
 }
 
 std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of_phrases) {
@@ -58,6 +68,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
         pos_list = new std::vector<int>;
         if (pos_buf) {
             score_list = new std::vector<double>;
+            num_of_phrases_list = new std::vector<unsigned int>;
             unsigned char *pos_buf_ptr = pos_buf;
             score = 0;
             pos_num = intchar2int(pos_buf_ptr);
@@ -111,6 +122,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
 
                     double cur_freq = weight * frq;
 		    score_list->push_back(cur_freq);
+                    num_of_phrases_list->push_back(num_of_phrases);
                     freq += cur_freq;
                 }
                 pos_buf_ptr += sizeof(int);
