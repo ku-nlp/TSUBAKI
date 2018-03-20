@@ -864,7 +864,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::vector<int> pos_list;
     std::vector<double> score_list;
     std::vector<unsigned int> num_of_phrases_list;
-    double freq = 0;
+    double sum_freq = 0, sum_score = 0;
     unsigned int max_num_of_phrases = 1;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
@@ -883,7 +883,8 @@ bool Documents::walk_or(Document *doc_ptr) {
             num_of_phrases_list.push_back(cur_num_of_phrases);
             if (max_num_of_phrases < cur_num_of_phrases)
                 max_num_of_phrases = cur_num_of_phrases;
-            freq += cur_score;
+            sum_freq += cur_score;
+            sum_score += document->calc_okapi(cur_score) * cur_num_of_phrases;
             prev_pos = cur_pos;
         }
         else if (cur_pos == prev_pos) {
@@ -896,7 +897,8 @@ bool Documents::walk_or(Document *doc_ptr) {
                 num_of_phrases_list.push_back(cur_num_of_phrases);
                 if (max_num_of_phrases < cur_num_of_phrases)
                     max_num_of_phrases = cur_num_of_phrases;
-                freq = freq - last_score + cur_score;
+                sum_freq = sum_freq - last_score + cur_score;
+                sum_score = sum_score - document->calc_okapi(last_score) * last_num_of_phrases + document->calc_okapi(cur_score) * cur_num_of_phrases;
             }
         }
 
@@ -915,14 +917,11 @@ bool Documents::walk_or(Document *doc_ptr) {
     double score = 0;
     if (type == DOCUMENTS_OR_MAX) {
 #ifdef DEBUG
-	cerr << "NODE FREQ " << freq << endl;
+	cerr << "NODE OKAPI " << sum_score << endl;
 #endif
-	if (NO_USE_TF_MODE && freq > 1.00)
-	    freq = 1.00;
-	document->set_freq(freq);
-	score = document->calc_okapi(freq);
-        if (max_num_of_phrases > 1)
-            score *= max_num_of_phrases;
+	document->set_freq(sum_freq);
+        document->set_score(sum_score);
+	score = sum_score;
     }
     else {
         score = raw_score;
