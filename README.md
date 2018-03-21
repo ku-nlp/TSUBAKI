@@ -158,7 +158,7 @@ ave doc length: yy
 上記の値で、``$TSUBAKI_DIR/search/common.h``の以下の行を書きかえて下さい。
 
 ```
-#define TOTAL_NUMBUER_OF_DOCS 100132750
+#define TOTAL_NUMBER_OF_DOCS 100132750
 #define AVERAGE_DOC_LENGTH 907
 ```
 
