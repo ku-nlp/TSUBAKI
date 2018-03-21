@@ -186,7 +186,7 @@ class Document {
 	    score = 0;
 	} else {
 	    double tf = ((OKAPI_K1 + 1) * in_freq) / (OKAPI_K1 * ((1 - OKAPI_B) + OKAPI_B * length / AVERAGE_DOC_LENGTH) + in_freq);
-	    double idf = log((TOTAL_NUMBUER_OF_DOCS - in_gdf + 0.5) / (in_gdf + 0.5));
+	    double idf = log((TOTAL_NUMBER_OF_DOCS - in_gdf + 0.5) / (in_gdf + 0.5));
 	    score = tf * idf;
 	}
 	return score;
