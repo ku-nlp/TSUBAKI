@@ -867,6 +867,15 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::vector<double> score_list;
     std::vector<unsigned int> num_of_phrases_list;
     std::vector<double> gdf_list;
+    std::map<unsigned int, double> term2score;
+    std::map<unsigned int, double> term2gdf;
+    std::map<unsigned int, double> term2num_of_phrases;
+    for (int i = 0; i < target_num - 1; i++) {
+        term2score.insert(std::make_pair(i, 0));
+        term2gdf.insert(std::make_pair(i, 0));
+        term2num_of_phrases.insert(std::make_pair(i, 0));
+    }
+    unsigned int last_term_index;
     double sum_freq = 0, sum_score = 0;
     unsigned int max_num_of_phrases = 1;
     while (1) {
@@ -888,9 +897,11 @@ bool Documents::walk_or(Document *doc_ptr) {
             gdf_list.push_back(cur_gdf);
             if (max_num_of_phrases < cur_num_of_phrases)
                 max_num_of_phrases = cur_num_of_phrases;
-            sum_freq += cur_score;
-            sum_score += document->calc_okapi(cur_score, cur_gdf) * sqrt(cur_num_of_phrases);
+            term2score[sorted_int[0]] += cur_score;
+            term2gdf[sorted_int[0]] = cur_gdf;
+            term2num_of_phrases[sorted_int[0]] = cur_num_of_phrases;
             prev_pos = cur_pos;
+            last_term_index = sorted_int[0];
         }
         else if (cur_pos == prev_pos) {
             double last_score = score_list.back();
@@ -905,8 +916,9 @@ bool Documents::walk_or(Document *doc_ptr) {
                 gdf_list.push_back(cur_gdf);
                 if (max_num_of_phrases < cur_num_of_phrases)
                     max_num_of_phrases = cur_num_of_phrases;
-                sum_freq = sum_freq - last_score + cur_score;
-                sum_score = sum_score - document->calc_okapi(last_score, last_gdf) * sqrt(last_num_of_phrases) + document->calc_okapi(cur_score, cur_gdf) * sqrt(cur_num_of_phrases);
+                term2score[last_term_index] -= last_score;
+                term2score[sorted_int[0]] += cur_score;
+                term2num_of_phrases[sorted_int[0]] = cur_num_of_phrases;
             }
         }
 
@@ -920,6 +932,13 @@ bool Documents::walk_or(Document *doc_ptr) {
 	}
     }
     pos_list.push_back(-1);
+    
+	for (int i = 0; i < target_num - 1; i++) {
+        if (term2score[i] > 0){
+            sum_freq += term2score[i];
+            sum_score += document->calc_okapi(term2score[i], term2gdf[i]) * term2num_of_phrases[i];
+        }
+    }
 
     // calculate scores
     double score = 0;
