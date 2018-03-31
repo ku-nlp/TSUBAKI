@@ -781,6 +781,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::vector<std::vector<int> *> pos_list_list;
     std::vector<std::vector<double> *> score_list_list;
     std::vector<std::vector<unsigned int> *> num_of_phrases_list_list;
+    std::vector<std::vector<double> *> gdf_list_list;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	Document *doc = (*it)->get_doc(doc_ptr->get_id());
 
@@ -794,6 +795,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    pos_list_list.push_back(pos_list);
 	    score_list_list.push_back(doc->get_score_list());
             num_of_phrases_list_list.push_back(num_of_phrases_list);
+            gdf_list_list.push_back(doc->get_gdf_list());
 
 	    string term = (*it)->get_label();
 	    if ((*it)->get_type() == DOCUMENTS_ROOT ||
@@ -864,6 +866,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::vector<int> pos_list;
     std::vector<double> score_list;
     std::vector<unsigned int> num_of_phrases_list;
+    std::vector<double> gdf_list;
     double sum_freq = 0, sum_score = 0;
     unsigned int max_num_of_phrases = 1;
     while (1) {
@@ -873,6 +876,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	}
         double cur_score = score_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
         unsigned int cur_num_of_phrases = num_of_phrases_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
+        double cur_gdf = gdf_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
 	best_pos = cur_pos;
 	tid2idx[sorted_int[0]]++;
 
@@ -881,24 +885,28 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    pos_list.push_back(cur_pos);
             score_list.push_back(cur_score);
             num_of_phrases_list.push_back(cur_num_of_phrases);
+            gdf_list.push_back(cur_gdf);
             if (max_num_of_phrases < cur_num_of_phrases)
                 max_num_of_phrases = cur_num_of_phrases;
             sum_freq += cur_score;
-            sum_score += document->calc_okapi(cur_score) * sqrt(cur_num_of_phrases);
+            sum_score += document->calc_okapi(cur_score, cur_gdf) * sqrt(cur_num_of_phrases);
             prev_pos = cur_pos;
         }
         else if (cur_pos == prev_pos) {
             double last_score = score_list.back();
             unsigned int last_num_of_phrases = num_of_phrases_list.back();
+            double last_gdf = gdf_list.back();
             if (cur_score * sqrt(cur_num_of_phrases) > last_score * sqrt(last_num_of_phrases)) { // replace the score with the maximum score
                 score_list.pop_back();
                 score_list.push_back(cur_score);
                 num_of_phrases_list.pop_back();
                 num_of_phrases_list.push_back(cur_num_of_phrases);
+                gdf_list.pop_back();
+                gdf_list.push_back(cur_gdf);
                 if (max_num_of_phrases < cur_num_of_phrases)
                     max_num_of_phrases = cur_num_of_phrases;
                 sum_freq = sum_freq - last_score + cur_score;
-                sum_score = sum_score - document->calc_okapi(last_score) * sqrt(last_num_of_phrases) + document->calc_okapi(cur_score) * sqrt(cur_num_of_phrases);
+                sum_score = sum_score - document->calc_okapi(last_score, last_gdf) * sqrt(last_num_of_phrases) + document->calc_okapi(cur_score, cur_gdf) * sqrt(cur_num_of_phrases);
             }
         }
 
@@ -940,7 +948,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     cerr << endl;
 #endif
 
-    document->set_term_pos("OR", &pos_list, &score_list, &num_of_phrases_list);
+    document->set_term_pos("OR", &pos_list, &score_list, &num_of_phrases_list, &gdf_list);
     document->set_best_pos(best_pos);
     document->set_best_region(best_pos, best_pos);
 
@@ -957,6 +965,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     std::vector<std::vector<int> *> pos_list_list;
     std::vector<std::vector<double> *> score_list_list;
     std::vector<std::vector<unsigned int> *> num_of_phrases_list_list;
+    std::vector<std::vector<double> *> gdf_list_list;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	Document *doc = (*it)->get_doc(doc_ptr->get_id());
 
@@ -1003,6 +1012,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 		pos_list_list.push_back(pos_list);
                 score_list_list.push_back(doc->get_score_list());
                 num_of_phrases_list_list.push_back(num_of_phrases_list);
+                gdf_list_list.push_back(doc->get_gdf_list());
 		document->set_best_pos(doc->get_best_pos());
 	    }
 
@@ -1048,7 +1058,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    document->set_proximate_feature();
 	}
 
-	document->set_term_pos("ROOT", pos_list_list[0], score_list_list[0], num_of_phrases_list_list[0]);
+	document->set_term_pos("ROOT", pos_list_list[0], score_list_list[0], num_of_phrases_list_list[0], gdf_list_list[0]);
 	return true;
     }
 
@@ -1085,6 +1095,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     std::vector<int> pos_list;
     std::vector<double> score_list;
     std::vector<unsigned int> num_of_phrases_list;
+    std::vector<double> gdf_list;
     bool skip_first = false;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
@@ -1106,6 +1117,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 
         double cur_score = score_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
         unsigned int cur_num_of_phrases = num_of_phrases_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
+        double cur_gdf = gdf_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
 	tid2idx[sorted_int[0]]++;
 	pos_record[sorted_int[0]] = cur_pos;
 
@@ -1162,6 +1174,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    pos_list.push_back(ave);
             score_list.push_back(cur_score);
             num_of_phrases_list.push_back(cur_num_of_phrases);
+            gdf_list.push_back(cur_gdf);
 	    document->set_phrase_feature();
 	}
 
@@ -1194,7 +1207,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     }
 
     pos_list.push_back(-1);
-    document->set_term_pos("AND", &pos_list, &score_list, &num_of_phrases_list);
+    document->set_term_pos("AND", &pos_list, &score_list, &num_of_phrases_list, &gdf_list);
     document->set_best_pos(best_pos);
     document->set_best_region(best_begin, best_begin + region);
 
