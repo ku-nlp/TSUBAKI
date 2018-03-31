@@ -133,7 +133,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
             score = calc_okapi(freq);
             // multiply num_of_phrases to strengthen a synnode term consisting of multiple phrases
             if (num_of_phrases > 1)
-                score *= num_of_phrases;
+                score *= sqrt(num_of_phrases);
 
             // shrink_to_fit
             // std::vector<int>(*pos_list).swap(*pos_list);

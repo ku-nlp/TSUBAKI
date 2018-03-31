@@ -884,13 +884,13 @@ bool Documents::walk_or(Document *doc_ptr) {
             if (max_num_of_phrases < cur_num_of_phrases)
                 max_num_of_phrases = cur_num_of_phrases;
             sum_freq += cur_score;
-            sum_score += document->calc_okapi(cur_score) * cur_num_of_phrases;
+            sum_score += document->calc_okapi(cur_score) * sqrt(cur_num_of_phrases);
             prev_pos = cur_pos;
         }
         else if (cur_pos == prev_pos) {
             double last_score = score_list.back();
             unsigned int last_num_of_phrases = num_of_phrases_list.back();
-            if (cur_score * cur_num_of_phrases > last_score * last_num_of_phrases) { // replace the score with the maximum score
+            if (cur_score * sqrt(cur_num_of_phrases) > last_score * sqrt(last_num_of_phrases)) { // replace the score with the maximum score
                 score_list.pop_back();
                 score_list.push_back(cur_score);
                 num_of_phrases_list.pop_back();
@@ -898,7 +898,7 @@ bool Documents::walk_or(Document *doc_ptr) {
                 if (max_num_of_phrases < cur_num_of_phrases)
                     max_num_of_phrases = cur_num_of_phrases;
                 sum_freq = sum_freq - last_score + cur_score;
-                sum_score = sum_score - document->calc_okapi(last_score) * last_num_of_phrases + document->calc_okapi(cur_score) * cur_num_of_phrases;
+                sum_score = sum_score - document->calc_okapi(last_score) * sqrt(last_num_of_phrases) + document->calc_okapi(cur_score) * sqrt(cur_num_of_phrases);
             }
         }
 
