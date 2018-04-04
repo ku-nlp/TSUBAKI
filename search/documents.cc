@@ -870,7 +870,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::map<unsigned int, double> term2score;
     std::map<unsigned int, double> term2gdf;
     std::map<unsigned int, double> term2num_of_phrases;
-    for (int i = 0; i < target_num - 1; i++) {
+    for (int i = 0; i < target_num; i++) {
         term2score.insert(std::make_pair(i, 0));
         term2gdf.insert(std::make_pair(i, 0));
         term2num_of_phrases.insert(std::make_pair(i, 0));
@@ -933,8 +933,8 @@ bool Documents::walk_or(Document *doc_ptr) {
     }
     pos_list.push_back(-1);
     
-	for (int i = 0; i < target_num - 1; i++) {
-        if (term2score[i] > 0){
+    for (int i = 0; i < target_num; i++) {
+        if (term2score[i] > 0) {
             sum_freq += term2score[i];
             sum_score += document->calc_okapi(term2score[i], term2gdf[i]) * term2num_of_phrases[i];
         }
