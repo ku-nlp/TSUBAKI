@@ -918,7 +918,9 @@ bool Documents::walk_or(Document *doc_ptr) {
                     max_num_of_phrases = cur_num_of_phrases;
                 term2score[last_term_index] -= last_score;
                 term2score[sorted_int[0]] += cur_score;
+                term2gdf[sorted_int[0]] = cur_gdf;
                 term2num_of_phrases[sorted_int[0]] = cur_num_of_phrases;
+                last_term_index = sorted_int[0];
             }
         }
 
