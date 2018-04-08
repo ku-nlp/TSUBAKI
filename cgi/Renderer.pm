@@ -1462,6 +1462,16 @@ sub getSearchResultForAPICall {
  	$queryString = $params->{'query'};
     }
 
+    my $basic_phrase_num = 0;
+    my $basic_phrase_num_wo_deleted = 0; 
+    if ($params->{get_basic_phrase_num_of_query}) {
+	# クエリ中の基本句数、クエリ削除語を除いた基本句数を得る
+	foreach my $qk (@{$query->{keywords}}) {
+	    my ($_basic_phrase_num, $_basic_phrase_num_wo_deleted) = &get_basic_phrase_num($qk->{result});
+	    $basic_phrase_num += $_basic_phrase_num;
+	    $basic_phrase_num_wo_deleted += $_basic_phrase_num_wo_deleted;
+	}
+    }
     # current time
     my $timestamp = strftime("%Y-%m-%d %T", localtime(time));
 
@@ -1531,7 +1541,11 @@ sub getSearchResultForAPICall {
 	    $attribute{anchor} = $params->{flag_of_anchor_use};
 	    $attribute{site} = (defined $params->{site}) ? $params->{site} : 'null';
 	}
-
+	if ($params->{get_basic_phrase_num_of_query}) {
+	    $attribute{basic_phrase_num} = $basic_phrase_num;
+	    $attribute{basic_phrase_num_wo_deleted} = $basic_phrase_num_wo_deleted;
+	}
+	
 	$writer->startTag('ResultSet', %attribute);
     }
 
@@ -2099,6 +2113,20 @@ sub generateJavascriptCode4Dpnd {
     $importance = 'NECCESARY'   if ($kakarimoto->fstring() =~ /クエリ必須係り受け/);
     $importance = 'UNNECCESARY' if ($kakarimoto->fstring() =~ /クエリ削除係り受け/ || $kakarisaki->fstring() =~ /クエリ削除語/);
     return sprintf ("new Dependency(%d, termGroups[%d], termGroups[%d], $importance)", $qid, $tag2i->{$kakarisaki}, $tag2i->{$kakarimoto});
+}
+
+sub get_basic_phrase_num {
+    my ($result) = @_;
+
+    my $basic_phrase_num = 0;
+    my $basic_phrase_num_wo_deleted = 0;
+    for my $tag ($result->tag) {
+	$basic_phrase_num += 1;
+	if ($tag->fstring !~ /<クエリ削除語>/) {
+	    $basic_phrase_num_wo_deleted += 1
+	}
+    }
+    return $basic_phrase_num, $basic_phrase_num_wo_deleted;
 }
 
 1;
