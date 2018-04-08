@@ -781,6 +781,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::vector<std::vector<int> *> pos_list_list;
     std::vector<std::vector<double> *> score_list_list;
     std::vector<std::vector<unsigned int> *> num_of_phrases_list_list;
+    std::vector<std::vector<double> *> gdf_list_list;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	Document *doc = (*it)->get_doc(doc_ptr->get_id());
 
@@ -794,6 +795,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    pos_list_list.push_back(pos_list);
 	    score_list_list.push_back(doc->get_score_list());
             num_of_phrases_list_list.push_back(num_of_phrases_list);
+            gdf_list_list.push_back(doc->get_gdf_list());
 
 	    string term = (*it)->get_label();
 	    if ((*it)->get_type() == DOCUMENTS_ROOT ||
@@ -864,7 +866,17 @@ bool Documents::walk_or(Document *doc_ptr) {
     std::vector<int> pos_list;
     std::vector<double> score_list;
     std::vector<unsigned int> num_of_phrases_list;
-    double freq = 0;
+    std::vector<double> gdf_list;
+    std::map<unsigned int, double> term2score;
+    std::map<unsigned int, double> term2gdf;
+    std::map<unsigned int, double> term2num_of_phrases;
+    for (int i = 0; i < target_num; i++) {
+        term2score.insert(std::make_pair(i, 0));
+        term2gdf.insert(std::make_pair(i, 0));
+        term2num_of_phrases.insert(std::make_pair(i, 0));
+    }
+    unsigned int last_term_index;
+    double sum_freq = 0, sum_score = 0;
     unsigned int max_num_of_phrases = 1;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
@@ -873,6 +885,7 @@ bool Documents::walk_or(Document *doc_ptr) {
 	}
         double cur_score = score_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
         unsigned int cur_num_of_phrases = num_of_phrases_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
+        double cur_gdf = gdf_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
 	best_pos = cur_pos;
 	tid2idx[sorted_int[0]]++;
 
@@ -881,22 +894,33 @@ bool Documents::walk_or(Document *doc_ptr) {
 	    pos_list.push_back(cur_pos);
             score_list.push_back(cur_score);
             num_of_phrases_list.push_back(cur_num_of_phrases);
+            gdf_list.push_back(cur_gdf);
             if (max_num_of_phrases < cur_num_of_phrases)
                 max_num_of_phrases = cur_num_of_phrases;
-            freq += cur_score;
+            term2score[sorted_int[0]] += cur_score;
+            term2gdf[sorted_int[0]] = cur_gdf;
+            term2num_of_phrases[sorted_int[0]] = cur_num_of_phrases;
             prev_pos = cur_pos;
+            last_term_index = sorted_int[0];
         }
         else if (cur_pos == prev_pos) {
             double last_score = score_list.back();
             unsigned int last_num_of_phrases = num_of_phrases_list.back();
-            if (cur_score * cur_num_of_phrases > last_score * last_num_of_phrases) { // replace the score with the maximum score
+            double last_gdf = gdf_list.back();
+            if (cur_score * sqrt(cur_num_of_phrases) > last_score * sqrt(last_num_of_phrases)) { // replace the score with the maximum score
                 score_list.pop_back();
                 score_list.push_back(cur_score);
                 num_of_phrases_list.pop_back();
                 num_of_phrases_list.push_back(cur_num_of_phrases);
+                gdf_list.pop_back();
+                gdf_list.push_back(cur_gdf);
                 if (max_num_of_phrases < cur_num_of_phrases)
                     max_num_of_phrases = cur_num_of_phrases;
-                freq = freq - last_score + cur_score;
+                term2score[last_term_index] -= last_score;
+                term2score[sorted_int[0]] += cur_score;
+                term2gdf[sorted_int[0]] = cur_gdf;
+                term2num_of_phrases[sorted_int[0]] = cur_num_of_phrases;
+                last_term_index = sorted_int[0];
             }
         }
 
@@ -910,19 +934,23 @@ bool Documents::walk_or(Document *doc_ptr) {
 	}
     }
     pos_list.push_back(-1);
+    
+    for (int i = 0; i < target_num; i++) {
+        if (term2score[i] > 0) {
+            sum_freq += term2score[i];
+            sum_score += document->calc_okapi(term2score[i], term2gdf[i]) * term2num_of_phrases[i];
+        }
+    }
 
     // calculate scores
     double score = 0;
     if (type == DOCUMENTS_OR_MAX) {
 #ifdef DEBUG
-	cerr << "NODE FREQ " << freq << endl;
+	cerr << "NODE OKAPI " << sum_score << endl;
 #endif
-	if (NO_USE_TF_MODE && freq > 1.00)
-	    freq = 1.00;
-	document->set_freq(freq);
-	score = document->calc_okapi(freq);
-        if (max_num_of_phrases > 1)
-            score *= max_num_of_phrases;
+	document->set_freq(sum_freq);
+        document->set_score(sum_score);
+	score = sum_score;
     }
     else {
         score = raw_score;
@@ -941,7 +969,7 @@ bool Documents::walk_or(Document *doc_ptr) {
     cerr << endl;
 #endif
 
-    document->set_term_pos("OR", &pos_list, &score_list, &num_of_phrases_list);
+    document->set_term_pos("OR", &pos_list, &score_list, &num_of_phrases_list, &gdf_list);
     document->set_best_pos(best_pos);
     document->set_best_region(best_pos, best_pos);
 
@@ -958,6 +986,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     std::vector<std::vector<int> *> pos_list_list;
     std::vector<std::vector<double> *> score_list_list;
     std::vector<std::vector<unsigned int> *> num_of_phrases_list_list;
+    std::vector<std::vector<double> *> gdf_list_list;
     for (std::vector<Documents *>::iterator it = children.begin(), end = children.end(); it != end; ++it) {
 	Document *doc = (*it)->get_doc(doc_ptr->get_id());
 
@@ -1004,6 +1033,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 		pos_list_list.push_back(pos_list);
                 score_list_list.push_back(doc->get_score_list());
                 num_of_phrases_list_list.push_back(num_of_phrases_list);
+                gdf_list_list.push_back(doc->get_gdf_list());
 		document->set_best_pos(doc->get_best_pos());
 	    }
 
@@ -1049,7 +1079,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    document->set_proximate_feature();
 	}
 
-	document->set_term_pos("ROOT", pos_list_list[0], score_list_list[0], num_of_phrases_list_list[0]);
+	document->set_term_pos("ROOT", pos_list_list[0], score_list_list[0], num_of_phrases_list_list[0], gdf_list_list[0]);
 	return true;
     }
 
@@ -1086,6 +1116,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     std::vector<int> pos_list;
     std::vector<double> score_list;
     std::vector<unsigned int> num_of_phrases_list;
+    std::vector<double> gdf_list;
     bool skip_first = false;
     while (1) {
 	int cur_pos = pos_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
@@ -1107,6 +1138,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 
         double cur_score = score_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
         unsigned int cur_num_of_phrases = num_of_phrases_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
+        double cur_gdf = gdf_list_list[sorted_int[0]]->at(tid2idx[sorted_int[0]]);
 	tid2idx[sorted_int[0]]++;
 	pos_record[sorted_int[0]] = cur_pos;
 
@@ -1163,6 +1195,7 @@ bool Documents::walk_and(Document *doc_ptr) {
 	    pos_list.push_back(ave);
             score_list.push_back(cur_score);
             num_of_phrases_list.push_back(cur_num_of_phrases);
+            gdf_list.push_back(cur_gdf);
 	    document->set_phrase_feature();
 	}
 
@@ -1195,7 +1228,7 @@ bool Documents::walk_and(Document *doc_ptr) {
     }
 
     pos_list.push_back(-1);
-    document->set_term_pos("AND", &pos_list, &score_list, &num_of_phrases_list);
+    document->set_term_pos("AND", &pos_list, &score_list, &num_of_phrases_list, &gdf_list);
     document->set_best_pos(best_pos);
     document->set_best_region(best_begin, best_begin + region);
 

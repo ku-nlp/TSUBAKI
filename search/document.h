@@ -28,6 +28,7 @@ class Document {
     std::vector<int> *pos_list;
     std::vector<double> *score_list;
     std::vector<unsigned int> *num_of_phrases_list;
+    std::vector<double> *gdf_list;
     std::vector<Term *> terms;
   public:
     Document(int in_id) {
@@ -124,7 +125,7 @@ class Document {
     }
 
     bool calc_score();
-    bool set_term_pos(std::string term, std::vector<int> const *in_pos_list, std::vector<double> const *in_score_list, std::vector<unsigned int> const *in_num_of_phrases_list);
+    bool set_term_pos(std::string term, std::vector<int> const *in_pos_list, std::vector<double> const *in_score_list, std::vector<unsigned int> const *in_num_of_phrases_list, std::vector<double> const *in_gdf_list);
     std::vector<int> *get_pos(unsigned int featureBit, unsigned int num_of_phrases);
 
     std::vector<double> *get_score_list() {
@@ -133,6 +134,10 @@ class Document {
 
     std::vector<unsigned int> *get_num_of_phrases_list() {
         return num_of_phrases_list;
+    }
+
+    std::vector<double> *get_gdf_list() {
+        return gdf_list;
     }
 
     bool set_freq(double in_freq) {
@@ -186,7 +191,7 @@ class Document {
 	    score = 0;
 	} else {
 	    double tf = ((OKAPI_K1 + 1) * in_freq) / (OKAPI_K1 * ((1 - OKAPI_B) + OKAPI_B * length / AVERAGE_DOC_LENGTH) + in_freq);
-	    double idf = log((TOTAL_NUMBUER_OF_DOCS - in_gdf + 0.5) / (in_gdf + 0.5));
+	    double idf = log((TOTAL_NUMBER_OF_DOCS - in_gdf + 0.5) / (in_gdf + 0.5));
 	    score = tf * idf;
 	}
 	return score;

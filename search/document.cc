@@ -37,7 +37,8 @@ std::string Document::to_string() {
 bool Document::set_term_pos(std::string term,
                             std::vector<int> const *in_pos_list,
                             std::vector<double> const *in_score_list,
-                            std::vector<unsigned int> const *in_num_of_phrases_list) {
+                            std::vector<unsigned int> const *in_num_of_phrases_list,
+                            std::vector<double> const *in_gdf_list) {
     // do nothing if input is the pointer of this->pos_list
     if (pos_list != in_pos_list) {
         // delete pos_list if available
@@ -60,6 +61,14 @@ bool Document::set_term_pos(std::string term,
         else
             num_of_phrases_list = NULL;
     }
+
+    if (gdf_list != in_gdf_list) {
+        delete gdf_list;
+        if (in_gdf_list)
+            gdf_list = new std::vector<double>(*in_gdf_list);
+        else
+            gdf_list = NULL;
+    }
     return true;
 }
 
@@ -69,6 +78,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
         if (pos_buf) {
             score_list = new std::vector<double>;
             num_of_phrases_list = new std::vector<unsigned int>;
+            gdf_list = new std::vector<double>;
             unsigned char *pos_buf_ptr = pos_buf;
             score = 0;
             pos_num = intchar2int(pos_buf_ptr);
@@ -121,19 +131,20 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
                     }
 
                     double cur_freq = weight * frq;
+                    if (NO_USE_TF_MODE)
+                        cur_freq = cur_freq / pos_num;
 		    score_list->push_back(cur_freq);
                     num_of_phrases_list->push_back(num_of_phrases);
+                    gdf_list->push_back(gdf);
                     freq += cur_freq;
                 }
                 pos_buf_ptr += sizeof(int);
             }
             pos_list->push_back(-1);
-	    if (NO_USE_TF_MODE && freq > 1.00)
-		freq = 1.00;
             score = calc_okapi(freq);
             // multiply num_of_phrases to strengthen a synnode term consisting of multiple phrases
             if (num_of_phrases > 1)
-                score *= num_of_phrases;
+                score *= sqrt(num_of_phrases);
 
             // shrink_to_fit
             // std::vector<int>(*pos_list).swap(*pos_list);
