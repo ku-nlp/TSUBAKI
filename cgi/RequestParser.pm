@@ -112,6 +112,7 @@ sub getDefaultValues {
     $params{disable_cache} = $CONFIG->{DISABLE_CACHE};
     $params{verbose} = 0;
     $params{query_verbose} = 0;
+    $params{get_basic_phrase_num_of_query} = 0;
     $params{sort_by} = 'score';
     $params{sort_by_CR} = 0;
     $params{score_verbose} = 0;
