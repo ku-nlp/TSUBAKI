@@ -156,10 +156,12 @@ sub createTermsFromEnglish {
 sub createTermsFromJapanese {
     my ($condition, $kihonkus, $ids, $option) = @_;
 
+    my $tagid2df = &get_tagid2df($kihonkus, { option => $option });
+    
     my ($terms, $optionals) =
 	(($condition->{is_phrasal_search} > 0) ?
 	 &_create4phrase ($kihonkus, $ids, "", $option) :
-	 &_create (0, $kihonkus, $ids, undef, "", $option));
+	 &_create (0, $kihonkus, $ids, undef, "", $tagid2df, $option));
 
     # 根拠検索用に「ため」や「ので」を含む文書を検索するようにする
     if ($option->{conjunctive_particle}) {
@@ -190,6 +192,24 @@ sub createTermsFromJapanese {
     }
 
     return ($terms, $optionals);
+}
+
+sub get_tagid2df {
+    my ($kihonkus, $opt) = @_;
+
+    my %tagid2df = {};
+    foreach my $i (0 .. scalar (@$kihonkus) - 1) {
+	foreach my $synnodes ($kihonkus->[$i]->synnodes) {
+	    foreach my $synnode ($synnodes->synnode) {
+		if (&is_basic_node($synnode)) {
+		    my $gdf = &_getDF ($synnode, undef, $opt);
+		    $tagid2df{$i} = $gdf;
+		    last;
+		}
+	    }
+	}
+    }
+    return \%tagid2df;
 }
 
 # キャッシュページハイライト用に、タームからターム（読み付き）へのマップを作成
@@ -308,7 +328,7 @@ sub _create4phrase {
 
 # termオブジェクトを生成
 sub _create {
-    my ($gid, $kihonkus, $tids, $parent, $space, $option) = @_;
+    my ($gid, $kihonkus, $tids, $parent, $space, $tagid2df, $option) = @_;
 
     my ($isLastKihonku, $count, @terms, %optionals, %visitedKihonkus) = (1, 0, (), (), ());
     foreach my $tid (reverse @$tids) {
@@ -329,10 +349,10 @@ sub _create {
 
 	# SYNNODEがカバーしている要素を獲得
 	my $group_id = sprintf ("%s-%s", $gid , $count++);
-	my $children = &_getChildNodes (\%optionals, $group_id, $kihonkus, \@tagids, $broadest_synnodes, $space, $option);
+	my $children = &_getChildNodes (\%optionals, $group_id, $kihonkus, \@tagids, $broadest_synnodes, $space, $tagid2df, $option);
 
 	# タームグループの作成
-	my $termGroups = &_createTermGroup ($group_id, $tid, \@synnodes, $kihonku, $children, { optional_flag => $is_optional_node, is_last_kihonku => $isLastKihonku, option => $option });
+	my $termGroups = &_createTermGroup ($group_id, $tid, \@synnodes, $kihonku, $children, $tagid2df, { optional_flag => $is_optional_node, is_last_kihonku => $isLastKihonku, option => $option });
 	$isLastKihonku = 0;
 
 	foreach my $termGroup (@$termGroups) {
@@ -374,12 +394,29 @@ sub reduceSynNode {
 
 # DFの取得
 sub _getDF {
-    my ($basicNd, $synNds, $opt) = @_;
+    my ($basicNd, $synNds, $opt, $tagid2df, $tid) = @_;
 
+    # 1基本句
     if ($basicNd) {
-	return $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($basicNd->synid) : $basicNd->synid, {exhaustive => 1});
+	if ($tagid2df) {
+	    return $tagid2df->{$tid};
+	}
+	else {
+	    return $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($basicNd->synid) : $basicNd->synid, {exhaustive => 1});
+	}
+    # 複数基本句
     } else {
-	return $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($synNds->[0]->synid) : $synNds->[0]->synid, {exhaustive => 1}) if (defined $synNds);
+	if ($tagid2df) {
+	    # 複数基本句のDFの平均をとる
+	    my $df = 0;
+	    for my $tagid ($synNds->[0]->tagids) {
+		$df += $tagid2df->{$tagid};
+	    }
+	    return $df / scalar($synNds->[0]->tagids);
+	}
+	else {
+	    return $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($synNds->[0]->synid) : $synNds->[0]->synid, {exhaustive => 1}) if (defined $synNds);
+	}
     }
 }
 
@@ -497,11 +534,11 @@ sub termExpansion {
 
 # termグループの作成
 sub _createTermGroup {
-    my ($gid, $tid, $synNds, $parent, $children, $opt) = @_;
+    my ($gid, $tid, $synNds, $parent, $children, $tagid2df, $opt) = @_;
 
     my $basicNd = &getBasicNode($synNds);
     $synNds = &reduceSynNode($basicNd, $synNds, $opt) if ($CONFIG->{MAX_NUMBER_OF_SYNNODES});
-    my $gdf = &_getDF ($basicNd, $synNds, $opt);
+    my $gdf = &_getDF ($basicNd, $synNds, $opt, $tagid2df, $tid);
 
     my @midasis = ();
     my @midasi_lengths = ();
@@ -591,12 +628,12 @@ sub _getBroadestSynNode {
 }
 
 sub _getChildNodes {
-    my ($optionals, $group_id, $kihonkus, $tagids, $broadest_synnodes, $space, $option) = @_;
+    my ($optionals, $group_id, $kihonkus, $tagids, $broadest_synnodes, $space, $tagid2df, $option) = @_;
 
     my $children = undef;
     if (scalar (@$tagids) > 1) {
 	my $_optionals;
-	($children, $_optionals) = &_create ($group_id, $kihonkus, $tagids, $broadest_synnodes, $space ."\t", $option);
+	($children, $_optionals) = &_create ($group_id, $kihonkus, $tagids, $broadest_synnodes, $space ."\t", $tagid2df, $option);
 	foreach my $k (keys %$_optionals) {
 	    $optionals->{$k} = $_optionals->{$k} unless (exists ($optionals->{$k}));
 	}
