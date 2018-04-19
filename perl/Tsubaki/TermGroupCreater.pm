@@ -15,9 +15,13 @@ use Data::Dumper;
 
 my $CONFIG = Configure::get_instance();
 
-my $DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
+my $DFDBS_WORD;
+if ($CONFIG->{USE_WEB_DF}) {
+	tie %{$DFDBS_WORD}, 'CDB_File', $CONFIG->{COMPOUND_NOUN_DFDB_PATH} or die;
+}else{
+	$DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
+}
 my $DFDBS_DPND = new CDB_Reader (sprintf ("%s/df.dpnd.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
-
 
 sub create {
     my ($result, $condition, $option) = @_;
@@ -107,7 +111,7 @@ sub createTermsFromEnglish {
 	    tid => sprintf ("%s-%s", $gid, $count++),
 	    text => $repname,
 	    term_type => 'word',
-	    gdf => $DFDBS_WORD->get($repname),
+	    gdf => &PickDFDB($repname),
 	    blockTypeFeature => $blockTypeFeature,
 	    node_type => 'basic' });
 	push (@{$terms}, $term);
@@ -280,7 +284,7 @@ sub _create4phrase {
 	my $kihonku = $kihonkus->[$tid];
 	foreach my $mrph ($kihonku->mrph) {
 	    my $midasi = sprintf ("%s*", $opt->{option}{ignore_yomi} ? &remove_yomi($mrph->midasi) : $mrph->midasi);
-	    my $gdf = $DFDBS_WORD->get($midasi);
+	    my $gdf = &PickDFDB($midasi);
 
 	    # タームグループの作成
 	    my @midasis = ();
@@ -363,7 +367,7 @@ sub reduceSynNode {
     my @newNodes = ();
 
     push (@newNodes, $basic_node) if (defined $basic_node);
-    foreach my $node (sort {$DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($b->synid) : $b->synid) <=> $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($a->synid) : $a->synid) } @$synnodes) {
+    foreach my $node (sort {&PickDFDB($opt->{option}{ignore_yomi} ? &remove_yomi($b->synid) : $b->synid) <=> &PickDFDB($opt->{option}{ignore_yomi} ? &remove_yomi($a->synid) : $a->synid) } @$synnodes) {
 	next if ($basic_node == $node);
 	push (@newNodes, $node) if (defined $node);
 	last if (++$count >= $N);
@@ -377,9 +381,9 @@ sub _getDF {
     my ($basicNd, $synNds, $opt) = @_;
 
     if ($basicNd) {
-	return $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($basicNd->synid) : $basicNd->synid, {exhaustive => 1});
+	return &PickDFDB($opt->{option}{ignore_yomi} ? &remove_yomi($basicNd->synid) : $basicNd->synid, {exhaustive => 1});
     } else {
-	return $DFDBS_WORD->get($opt->{option}{ignore_yomi} ? &remove_yomi($synNds->[0]->synid) : $synNds->[0]->synid, {exhaustive => 1}) if (defined $synNds);
+	return &PickDFDB($opt->{option}{ignore_yomi} ? &remove_yomi($synNds->[0]->synid) : $synNds->[0]->synid, {exhaustive => 1}) if (defined $synNds);
     }
 }
 
@@ -790,6 +794,18 @@ sub _pushbackDependencyTerms {
 	    }
 	}
     }
+}
+
+sub PickDFDB{
+	my ($string) = @_;
+	if($CONFIG->{USE_WEB_DF}){
+		if ($string =~ m!^([^/]+)!){
+			return $DFDBS_WORD->{$1};
+		}else{
+			return $DFDBS_WORD->{$string};
+		}
+	}
+	return $DFDBS_WORD->get($string);
 }
 
 1;

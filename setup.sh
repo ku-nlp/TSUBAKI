@@ -48,6 +48,7 @@ HTMLExt
 CACHED_HTML_ENCODING_UTF8
 InputisZip
 StartDirID
+UseWebDf
 "
 
 SearchEnginePath=$CWD
@@ -79,6 +80,7 @@ InputisZip=0
 CACHED_HTML_ENCODING_UTF8=0
 AddHtml=0
 StartDirID=0
+UseWebDf=0
  
 usage() {
     echo "Usage: $0 [-j|-e] [-J JUMANPrefix ] [-K KNPPrefix ] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8) [-Z](InputisZip) [-a](AddHtml)"
@@ -86,7 +88,7 @@ usage() {
 }
 
 # getopts
-while getopts c:ejJ:K:U:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZa OPT
+while getopts c:ejJ:K:U:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZaw OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -156,6 +158,8 @@ do
 	    ;;
         h)  usage
             ;;
+	w)  UseWebDf=1
+	    ;;
     esac
 done
 shift `expr $OPTIND - 1`
