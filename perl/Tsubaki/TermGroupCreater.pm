@@ -17,7 +17,9 @@ my $CONFIG = Configure::get_instance();
 
 my $DFDBS_WORD;
 if ($CONFIG->{USE_WEB_DF}) {
-	tie %{$DFDBS_WORD}, 'CDB_File', $CONFIG->{COMPOUND_NOUN_DFDB_PATH} or die;
+#	tie %{$DFDBS_WORD}, 'CDB_File', $CONFIG->{COMPOUND_NOUN_DFDB_PATH} or die;
+#	$DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
+	$DFDBS_WORD = new CDB_Reader (sprintf ("%s/cdb_df_web.keymap", $CONFIG->{WORD_DFDB_PATH}));
 }else{
 	$DFDBS_WORD = new CDB_Reader (sprintf ("%s/df.word.cdb.keymap", $CONFIG->{SYNGRAPH_DFDB_PATH}));
 }
@@ -834,15 +836,15 @@ sub _pushbackDependencyTerms {
 }
 
 sub PickDFDB{
-	my ($string) = @_;
+	my ($string, $option) = @_;
 	if($CONFIG->{USE_WEB_DF}){
 		if ($string =~ m!^([^/]+)!){
-			return $DFDBS_WORD->{$1};
+			return $DFDBS_WORD->get($1, $option);
 		}else{
-			return $DFDBS_WORD->{$string};
+			return $DFDBS_WORD->get($string, $option);
 		}
 	}
-	return $DFDBS_WORD->get($string);
+	return $DFDBS_WORD->get($string, $option);
 }
 
 1;
