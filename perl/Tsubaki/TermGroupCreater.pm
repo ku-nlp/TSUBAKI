@@ -12,6 +12,9 @@ use Tsubaki::TermGroup;
 use KNP::Result;
 use PredicateArgumentFeatureBit;
 use Data::Dumper;
+use Juman;
+
+my $juman = new Juman;
 
 my $CONFIG = Configure::get_instance();
 
@@ -838,7 +841,9 @@ sub _pushbackDependencyTerms {
 sub PickDFDB{
 	my ($string, $option) = @_;
 	if($CONFIG->{USE_WEB_DF}){
-		if ($string =~ m!^([^/]+)!){
+		if ($string =~ m!^([^/]+).*(v|a)$!){
+			return $DFDBS_WORD->get(&get_original_str($1), $option);
+        }elsif ($string =~ m!^([^/]+)!){
 			return $DFDBS_WORD->get($1, $option);
 		}else{
 			return $DFDBS_WORD->get($string, $option);
@@ -846,5 +851,19 @@ sub PickDFDB{
 	}
 	return $DFDBS_WORD->get($string, $option);
 }
+
+sub get_original_str {
+    my ($str) = @_;
+    my $result = $juman->analysis($str);
+    my $first_mrph = ($result->mrph)[0];
+    my $rep = $first_mrph->repname;
+    if ($rep =~ m!^([^/]+)!) {
+    return $1;
+    }
+    else {
+    return $rep;
+    }
+}
+
 
 1;
