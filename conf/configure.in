@@ -265,13 +265,13 @@ ANTONYM_DIC_PATH	@SynGraphPath@/dic/rsk_iwanami/antonym.txt
 STOPWORD_LIST_FILE	@SearchEnginePath@/data/stopwords.en.txt
 
 # クエリ処理用サーバーを利用するかどうか（1：利用する，0：利用しない，デフォルト1）
-USE_OF_QUERY_PARSE_SERVER	0
+USE_OF_QUERY_PARSE_SERVER	@UseQueryServer@
 
 # クエリ処理用サーバーのホスト名（マスターサーバー上で解析する。マスターサーバーが分散化されていれば分散可）
-HOST_OF_QUERY_PARSE_SERVER	localhost
+HOST_OF_QUERY_PARSE_SERVER	@QueryServerHost@
 
 # クエリ処理用サーバーのポート番号
-PORT_OF_QUERY_PARSE_SERVER	60000
+PORT_OF_QUERY_PARSE_SERVER	@QueryServerPort@
 
 # クエリ処理に固有表現認識を利用するかどうか (1: 利用する, 0: 利用しない, デフォルト0)
 # KNPがCRF付きでコンパイルされている必要がある
