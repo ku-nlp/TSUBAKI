@@ -18,6 +18,7 @@ class Document {
     int best_end;
     double freq;
     double gdf;
+    std::string term;
     double score;
     double pagerank;
     unsigned char *pos_buf;
@@ -29,6 +30,7 @@ class Document {
     std::vector<double> *score_list;
     std::vector<unsigned int> *num_of_phrases_list;
     std::vector<double> *gdf_list;
+    std::vector<std::string> *term_list;
     std::vector<Term *> terms;
   public:
     Document(int in_id) {
@@ -125,7 +127,7 @@ class Document {
     }
 
     bool calc_score();
-    bool set_term_pos(std::string term, std::vector<int> const *in_pos_list, std::vector<double> const *in_score_list, std::vector<unsigned int> const *in_num_of_phrases_list, std::vector<double> const *in_gdf_list);
+    bool set_term_pos(std::string term, std::vector<int> const *in_pos_list, std::vector<double> const *in_score_list, std::vector<unsigned int> const *in_num_of_phrases_list, std::vector<double> const *in_gdf_list, std::vector<std::string> const *in_term_list);
     std::vector<int> *get_pos(unsigned int featureBit, unsigned int num_of_phrases);
 
     std::vector<double> *get_score_list() {
@@ -138,6 +140,10 @@ class Document {
 
     std::vector<double> *get_gdf_list() {
         return gdf_list;
+    }
+
+    std::vector<std::string> *get_term_list() {
+        return term_list;
     }
 
     bool set_freq(double in_freq) {
@@ -158,6 +164,9 @@ class Document {
     bool set_score(double in_score) {
 	score = in_score;
 	return true;
+    }
+    void set_term(std::string &in_str) {
+	term = in_str;
     }
 
     bool set_pagerank(double _pagerank) {

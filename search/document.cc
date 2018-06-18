@@ -38,7 +38,8 @@ bool Document::set_term_pos(std::string term,
                             std::vector<int> const *in_pos_list,
                             std::vector<double> const *in_score_list,
                             std::vector<unsigned int> const *in_num_of_phrases_list,
-                            std::vector<double> const *in_gdf_list) {
+                            std::vector<double> const *in_gdf_list,
+                            std::vector<std::string> const *in_term_list) {
     // do nothing if input is the pointer of this->pos_list
     if (pos_list != in_pos_list) {
         // delete pos_list if available
@@ -69,6 +70,14 @@ bool Document::set_term_pos(std::string term,
         else
             gdf_list = NULL;
     }
+
+    if (term_list != in_term_list) {
+        delete term_list;
+        if (in_term_list)
+            term_list = new std::vector<std::string>(*in_term_list);
+        else
+            term_list = NULL;
+    }
     return true;
 }
 
@@ -79,6 +88,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
             score_list = new std::vector<double>;
             num_of_phrases_list = new std::vector<unsigned int>;
             gdf_list = new std::vector<double>;
+            term_list = new std::vector<std::string>;
             unsigned char *pos_buf_ptr = pos_buf;
             score = 0;
             pos_num = intchar2int(pos_buf_ptr);
@@ -136,6 +146,7 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
 		    score_list->push_back(cur_freq);
                     num_of_phrases_list->push_back(num_of_phrases);
                     gdf_list->push_back(gdf);
+                    term_list->push_back(term);
                     freq += cur_freq;
                 }
                 pos_buf_ptr += sizeof(int);
