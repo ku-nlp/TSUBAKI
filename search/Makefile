@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Ilisp -Icdb -O3 -Wall
+CXXFLAGS = -std=c++11 -Ilisp -Icdb -O3 -Wall
 # CXXFLAGS = -Ilisp -Icdb -O3 -Wall -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE=1
 OBJECTS = slave_server.o document.o documents.o
 HEADERS = hash.h common.h term.h document.h documents.h
