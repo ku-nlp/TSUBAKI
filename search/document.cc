@@ -144,8 +144,6 @@ std::vector<int> *Document::get_pos(unsigned int featureBit, unsigned int num_of
                     if (NO_USE_TF_MODE)
                         cur_freq = cur_freq / pos_num;
 		    score_list->push_back(cur_freq);
-                    if (num_of_phrases < 1)
-                        num_of_phrases = 1;
                     num_of_phrases_list->push_back(num_of_phrases);
                     gdf_list->push_back(gdf);
                     term_list->push_back(term);
