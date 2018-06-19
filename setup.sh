@@ -18,6 +18,7 @@ CNS_CDB=$CWD/data/cns.100M.cls.df1000.cdb
 NAME_LIST="
 PerlPath
 SearchEnginePath
+WordDfdbPath
 UtilsPath
 SynGraphPath
 WWW2sfPath
@@ -94,7 +95,7 @@ usage() {
 }
 
 # getopts
-while getopts c:ejJ:K:U:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZawqQ:P: OPT
+while getopts c:ejJ:K:U:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZawqQ:P:O: OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -130,6 +131,8 @@ do
 	    fi
 	    SrcDocumentPathSpecifiedFlag=1
             ;;
+    O)  WordDfdbPath=$OPTARG
+        ;;
 	E)  SearchServerPort=$OPTARG
 	    ;;
 	N)  SnippetServerPort=$OPTARG
