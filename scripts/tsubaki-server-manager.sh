@@ -129,14 +129,13 @@ restart() {
 }
 
 halt() {
-    status_or_stop stop
-
     pid=`ps auxww | grep $USER | grep $CONFIG_FILE | grep tsubaki-server-manager.sh | grep -v ssh | grep start | grep -v grep | perl -lne "push(@list, \\$1) if /^$USER\s+(\d+)/; END {print join(' ', @list) if @list}"`
     if [ -n "$pid" ]; then
  	kill -KILL $pid
 	echo [TSUBAKI SERVER] HALT\ \ \ \(host=$HOSTNAME, pid=$pid, time=$DATE\)
 	echo [TSUBAKI SERVER] HALT\ \ \ \(host=$HOSTNAME, pid=$pid, time=$DATE\) >> $LOGFILE
     fi
+    status_or_stop stop
 }
 
 case $1 in
