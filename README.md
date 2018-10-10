@@ -46,8 +46,8 @@ TSUBAKIは、科研特定領域研究「情報爆発」(2006年度〜2010年度)
     - 日本語構文・格解析システム[KNP](http://nlp.ist.i.kyoto-u.ac.jp/index.php?KNP)のインストール
         - Perlモジュールもインストールしてください
     - SynGraph日本語データベース(同義語・句の辞書)のダウンロード
-        - [データ](http://nlp.ist.i.kyoto-u.ac.jp/nl-resource/SynGraph/SynGraph-wikipedia-syndb.tar.bz2)をダウンロードし、TSUBAKI直下(このディレクトリ)にて展開してください。
-        - データベースがSynGraph/syndb以下に展開されます。
+        - 研究室外の方: [データ](http://nlp.ist.i.kyoto-u.ac.jp/nl-resource/SynGraph/SynGraph-wikipedia-syndb.tar.bz2)をダウンロードし、TSUBAKI直下(このディレクトリ)にて展開してください。データベースがSynGraph/syndb以下に展開されます。
+        - 研究室内: [SynGraphのWiki](https://bitbucket.org/ku_nlp/syngraph/wiki/Home)を参照し、最新版をSynGraph/syndb以下にコピーしてください。
     - 複合名詞の文書頻度データベースのダウンロード
         - [データ](http://nlp.ist.i.kyoto-u.ac.jp/nl-resource/TSUBAKI/data/cns.100M.cls.df1000.cdb)をダウンロードし、TSUBAKI直下のdataディレクトリに設置してください。
 - 英語の文書を検索する場合に必要なツールのインストール
