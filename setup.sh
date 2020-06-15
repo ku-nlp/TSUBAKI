@@ -88,14 +88,15 @@ UseWebDf=0
 UseQueryServer=0
 QueryServerHost=localhost
 QueryServerPort=60000
+NoUseTFMode=0
  
 usage() {
-    echo "Usage: $0 [-j|-e] [-J JUMANPrefix ] [-K KNPPrefix ] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8) [-Z](InputisZip) [-a](AddHtml)"
+    echo "Usage: $0 [-j|-e] [-J JUMANPrefix ] [-K KNPPrefix ] [-U UtilsPath] [-S SynGraphPath] [-W WWW2sfPath] [-C CalcSimilarityByCFPath] [-D DetectBlocksPath] [-d DataPath] [-s SrcDocumentPath] [-c OutputConfFile] [-E SearchServerPort] [-N SnippetServerPort] [-n ServerName] [-T](UseBlockType) [-z](html.gz) [-m MaltParserPath] [-t TsuruokaTaggerPath] [-f StanfordParserPath] [-p](UsePredicateArgumentStructure) [-L](UseCopyForHTML) [-u](HTMLisUTF8) [-Z](InputisZip) [-a](AddHtml) [-F](NoUseTFMode)"
     exit 1
 }
 
 # getopts
-while getopts c:ejJ:K:U:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZawqQ:P:O: OPT
+while getopts c:ejJ:K:U:S:W:C:D:d:s:E:N:n:Tzm:t:pf:LuhZawqQ:P:O:F OPT
 do
     case $OPT in
 	c)  CONFIGURE_FILE=$OPTARG
@@ -174,7 +175,9 @@ do
 	w)  UseWebDf=1
 	    ;;
 	q)  UseQueryServer=1
-		;;
+	    ;;
+	F)  NoUseTFMode=1
+	    ;;
     esac
 done
 shift `expr $OPTIND - 1`
@@ -368,6 +371,11 @@ if [ $AddHtml -eq 1 ]; then
     if [ -f $DocumentPath/html/sid2origid.cdb ]; then
 	rm -fv $DocumentPath/html/sid2origid.cdb
     fi
+fi
+
+# NoUseTFMode: update search/common.h
+if [ $NoUseTFMode -eq 1 ]; then
+    perl -lpe "s/^\#define NO_USE_TF_MODE \d/#define NO_USE_TF_MODE $NoUseTFMode/" -i $CWD/search/common.h
 fi
 
 # take a diff of the configure file and backup it
