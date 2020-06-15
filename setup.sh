@@ -351,6 +351,11 @@ if [ ! -d "$DocumentPath" ]; then
 	echo "Cannot mkdir $DocumentPath"
 	usage
     fi
+else
+    # if indexing has been done, update TOTAL_NUMBER_OF_DOCS/AVERAGE_DOC_LENGTH in "search/common.h"
+    if [ -s "$DocumentPath/idx/average_doc_length.txt" ]; then
+	$CWD/scripts/update-doc-parameters-in-search.sh $DocumentPath/idx/average_doc_length.txt
+    fi
 fi
 
 # AddHTML

@@ -267,7 +267,8 @@ $(DFS): $(IDX_TOP_DIR)/%.$(DF_SUFFIX): $(IDX_TOP_DIR)/%.$(IDX_SUFFIX)
 	$(PERL) $(BASEDIR)/scripts/idx2df.pl $<
 
 $(AVERAGE_DOC_LENGTH): $(DOC_LENGTHS)
-	$(PERL) $(BASEDIR)/scripts/calc-ave-doc-length.perl -txt $^ > $@
+	$(PERL) $(BASEDIR)/scripts/calc-ave-doc-length.perl -txt $^ > $@ && \
+	$(BASEDIR)/scripts/update-doc-parameters-in-search.sh $@
 
 $(DOC_LENGTHS): $(IDX_TOP_DIR)/%/$(DOC_LENGTH_SUFFIX): $(IDX_TOP_DIR)/%/$(ID).$(IDX_SUFFIX)
 	$(PERL) $(BASEDIR)/scripts/make-dlength-db.perl -txt $<
